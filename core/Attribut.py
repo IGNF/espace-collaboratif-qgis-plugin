@@ -13,11 +13,8 @@ class Attribut(object):
     nom=""
     valeur=""
 
-    def __init__(self):
-        '''
-        Constructor
-        '''
+  
         
-    def __init__(self, nom, valeur):
+    def __init__(self, nom="", valeur=""):
         self.nom=nom
         self.valeur=valeur

@@ -1,8 +1,15 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
+
+from Auteur import *
+from Groupe import *
+from ConstanteRipart import *
+from Theme import *
+
 
 class Profil(object):
     '''
@@ -20,7 +27,7 @@ class Profil(object):
     titre=""
         
         
-    #Statut (privilèges) du profil        
+    #Statut (privilï¿½ges) du profil        
     statut=""
         
     #Lien vers le logo du profil
@@ -30,24 +37,20 @@ class Profil(object):
     #Filtre du profil       
     filtre=""
         
-    #La zone géographique de travail du profil        
-    zone=ZoneGeographique()
+    #La zone gï¿½ographique de travail du profil        
+    zone= ConstanteRipart.ZoneGeographique.UNDEFINED
 
         
     #Indique si le profil a acces aux groupes prives
-    prive 
+    prive = False
 
         
-    #Les éventuels thèmes attachés au profil      
-    themes = array(Theme)
+    #Les ï¿½ventuels thï¿½mes attachï¿½s au profil      
+    themes = list()
 
         
     #identifiant geoprofil    
     id_Geoprofil=""
 
 
-    def __init__(self, params):
-        '''
-        Constructor
-        '''
-        
+    

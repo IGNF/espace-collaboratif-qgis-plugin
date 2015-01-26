@@ -4,11 +4,11 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-
+from Enum import *
 
 class ConstanteRipart(object):
     '''
-    classdocs
+    constantes
     '''
    
     #taille maximale pour un document uploadé
@@ -24,6 +24,29 @@ class ConstanteRipart(object):
     RIPART_CLIENT_VERSION = "1_0_0";
 
     
+    STATUT=  Enum( "undefined","submit","pending", "pending1","pending2","valid","valid0","reject","reject0") 
 
-
-    
+    ZoneGeographique = Enum ("UNDEFINED",
+                            #France métropolitaine (Corse incluse).
+                            "FXX",
+                            #Terres Articques Australes.
+                            "ATF"  , 
+                            #Guadeloupe  
+                            "GLP",  
+                            #Guyanne    
+                            "GUF",  
+                            #Martinique  
+                            "MTQ",   
+                            #Mayotte      
+                            "MYT",    
+                            #Nouvelle Caledonie     
+                            "NCL",  
+                            #Polynesie Française   
+                            "PYF",    
+                            #R�union       
+                            "REU",    
+                            #Saint-Pierre et Miquelon    
+                            "SPM",  
+                            #Wallis et Futuna 
+                            "WLF")
+                                

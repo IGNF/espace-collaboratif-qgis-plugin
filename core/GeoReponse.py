@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
 from _pydev_imps._pydev_xmlrpclib import DateTime
+from Groupe import *
+from Auteur import *
+from ConstanteRipart import *
 
 class GeoReponse(object):
     '''
@@ -13,15 +17,15 @@ class GeoReponse(object):
     
     auteur= Auteur()
     
-    reponse = Reponse()
+    reponse =""
     
     date = DateTime()
     
-    statut = Statut()
+    statut = ConstanteRipart.STATUT.undefined
     
     
 
-    def __init__(self, params):
+    def __init__(self):
         '''
         Constructor
         '''

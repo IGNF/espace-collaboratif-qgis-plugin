@@ -1,9 +1,16 @@
+
 '''
 Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-import Client
+from Client import *
+import logging
+import RipartLogger
+from Croquis import *
+from Point import *
+from Enum import *
+
 
 class TestConnection(object):
     '''
@@ -11,16 +18,31 @@ class TestConnection(object):
     '''
     login = "mborne"
     pwd ="mborne"
-    url ="demo-ropart.ign.fr"
+    url ="demo-ripart.ign.fr"
+    
+    
+    # create logger
+   
+    logger=logging.getLogger("ripart.testConnection")
+    logger.info("testzzz")
+    
+    pt= Point(2,40)
+ 
+  
+    
+    c= Croquis("nom" , Croquis.CroquisType.Ligne)
+    
+    c.addPoint(pt)
+    
 
-    def __init__(self, params):
+    def __init__(self):
         '''
         Constructor
         '''
         self.connect()
         
     def connect(self):
-        client = Client(url, login, pwd)
+        client = Client(self.url, self.login,self.pwd)
         print client.connect()
         
         

@@ -6,6 +6,15 @@ Created on 22 janv. 2015
 '''
 
 import logging
+from Point import *
+from ConstanteRipart import *
+from Groupe import *
+from Auteur import *
+from Croquis import *
+from Theme import *
+from GeoReponse import *
+from Enum import *
+from Remarque import *
 
 class Client:
     '''
@@ -21,7 +30,9 @@ class Client:
     
     __message = None
     
-    logging.basicConfig(filename='example.log',level=logging.DEBUG)
+    __logger=logging.getLogger("ripart.Client")
+    
+    
 
     '''
       Constructor
@@ -36,10 +47,22 @@ class Client:
         
     
     def connect(self):
-        result =""
-        logging.debug('This message should go to the log file')
-
+        """
+         Connexion d'un utilisateur par son login et mot de passe
+         :return: Si la connexion se fait, retourne l'id de l'auteur; sinon retour du message d'erreur
+         """
+         
+        result =None
         
-        connectUrl = self.__url + "?action=connect&login=" + self.__login;
+        try:
+            
+            connectUrl = self.__url + "?action=connect&login=" + self.__login;
+            
+            __logger.debug("tentative de connexion; " + connectUrl)
+            
+            data =""
+            
+        except Exception as e:
+            __logger.error(str(e))
         
         return connectUrl

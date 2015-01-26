@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 23 janv. 2015
 
@@ -11,12 +12,9 @@ class Groupe(object):
     id=""
     nom=""
 
-    def __init__(self):
-        '''
-        Constructor
-        '''
+
         
-    def __init__(self, id , nom):
+    def __init__(self, id="" , nom=""):
         '''
         Constructor
         '''
