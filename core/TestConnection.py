@@ -49,4 +49,6 @@ class TestConnection(object):
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
-    TestConnection()
+    t= TestConnection()
+    t.connect()
+    

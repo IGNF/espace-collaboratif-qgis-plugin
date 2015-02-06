@@ -86,8 +86,8 @@ class Remarque(object):
         
     def concatenateThemes(self):
         """
-        Concatène les noms de tous les thèmes de la remarque
-        :return:  concatéation des noms de tous les thèmes de la remarque 
+        ConcatÃ¨ne les noms de tous les thï¿½mes de la remarque
+        :return:  concatï¿½ation des noms de tous les thï¿½mes de la remarque 
         """
         result=""
         

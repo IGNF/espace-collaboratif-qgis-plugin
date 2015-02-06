@@ -7,7 +7,7 @@ Created on 23 janv. 2015
 from _pydev_imps._pydev_xmlrpclib import DateTime
 from Groupe import *
 from Auteur import *
-from ConstanteRipart import *
+import ConstanteRipart
 
 class GeoReponse(object):
     '''

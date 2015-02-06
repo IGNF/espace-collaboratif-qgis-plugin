@@ -7,7 +7,7 @@ Created on 23 janv. 2015
 
 from Auteur import *
 from Groupe import *
-from ConstanteRipart import *
+import ConstanteRipart 
 from Theme import *
 
 
@@ -15,7 +15,7 @@ class Profil(object):
     '''
     classdocs
     '''
-    
+  
     
     #Nom de l'auteur   
     auteur=Auteur()
@@ -52,5 +52,5 @@ class Profil(object):
     #identifiant geoprofil    
     id_Geoprofil=""
 
-
+    #def __init__(self):
     

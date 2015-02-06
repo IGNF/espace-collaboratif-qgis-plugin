@@ -4,7 +4,7 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-from mkgraticule import ymin
+
 
 class Box(object):
     '''
@@ -12,7 +12,10 @@ class Box(object):
     
     '''
 
-
+    XMin=None
+    XMax=None
+    YMin=None
+    YMax=None
   
     
     

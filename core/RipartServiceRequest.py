@@ -31,10 +31,18 @@ class RipartServiceRequest(object):
             req = urllib2.Request(url, data)
             
             req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+            
+            '''opener = urllib2.build_opener()
+            opener.addheaders = [('Accept-Charset', 'utf-8')]
     
-            response = urllib2.urlopen(req)
+            response = opener.open(req)
                
-            d=response.decode('utf-8')
+      
+            response_data=response.read()
+            '''
+            
+            response = urllib2.urlopen(req)
+
             response_data=response.read()
             
         except Exception as e:
