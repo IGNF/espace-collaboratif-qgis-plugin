@@ -7,21 +7,22 @@ Created on 23 janv. 2015
 
 class Auteur(object):
     '''
-    classdocs
+    Classe représentant un auteur
     '''
+    
+    #identifiant de l'auteur
     id=""
+    #nom de l'auteur
     nom=""
     
 
-    def __init__(self, params):
+  
+        
+        
+    def __init__(self, id="", nom=""):
         '''
         Constructor
         '''
-        self.id=""
-        self.nom=""
-        
-        
-    def __init__(self, id, nom):
-        
+      
         self.id=id
         self.nom=nom

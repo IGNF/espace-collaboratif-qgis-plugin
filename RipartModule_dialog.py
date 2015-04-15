@@ -33,7 +33,7 @@ from PyQt4.QtCore import *
 from core import Client
 from core import Attribut
 from core import ConstanteRipart
-
+from core import Profil
 """import sys 
 sys.path.append(r'D:\eclipse\plugins\org.python.pydev_3.9.1.201501081637\pysrc') """
 
@@ -68,11 +68,14 @@ class RipartPluginDialog(QtGui.QDialog, FORM_CLASS):
         login= self.lineEditLogin.text()
         
         pwd= self.lineEditPwd.text()
-        QMessageBox.information(self,"Ripart",login)
+        #QMessageBox.information(self,"Ripart",login)
         
-        client = Client("demo", login,pwd)
-        res= client.connect()
-        QMessageBox.information(self,"Connection",res)
+        c= Client('http://demo-ripart.ign.fr','mborne','mborne')
+              
+     
+        profil = c.getProfil()
+        
+        QMessageBox.information(self,"Connection", c.message)
         
         
         

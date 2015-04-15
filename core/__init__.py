@@ -1,4 +1,7 @@
 from Client import Client
 from Attribut import Attribut
 from Auteur import Auteur
-from ConstanteRipart import ConstanteRipart
+import ConstanteRipart
+from Croquis import Croquis
+from RipartServiceRequest  import RipartServiceRequest 
+from XMLResponse import XMLResponse

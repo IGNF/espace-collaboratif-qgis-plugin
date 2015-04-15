@@ -1,18 +1,19 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-from enum import Enum
 
 
-class ZoneGeographique(Enum):
+
+class ZoneGeographique(object):
     '''
     classdocs
     '''
     UNDEFINED
        
-    #France métropolitaine (Corse incluse).
+    #France mÃ©tropolitaine (Corse incluse).
     FXX
     #Terres Articques Australes.
     ATF    
@@ -26,9 +27,9 @@ class ZoneGeographique(Enum):
     MYT    
     #Nouvelle Caledonie     
     NCL  
-    #Polynesie Française   
+    #Polynesie FranÃ§aise   
     PYF    
-    #Réunion       
+    #Rï¿½union       
     REU    
     #Saint-Pierre et Miquelon    
     SPM  
