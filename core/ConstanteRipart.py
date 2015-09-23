@@ -4,7 +4,7 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-from Enum import *
+from Enum import Enum
 
 #class ConstanteRipart(object):
 '''
@@ -22,6 +22,16 @@ RIPART_CLIENT_PROTOCOL = "_RIPART_AGIS_64512"
 
 #Définition donnant la version de ce programme.
 RIPART_CLIENT_VERSION = "1_0_0"
+
+
+
+RIPART_GEOREM_GET = "georem_get";
+RIPART_GEOREM_POST = "georem_post";
+RIPART_GEOREM_PUT = "georem_put";
+RIPART_CONNECT = "connect";
+RIPART_GEOAUT_GET = "geoaut_get";
+RIPART_QUESTION_POST = "geoquestion_post";
+RIPART_QUESTION_GET = "geoquestion_get";
 
 
 STATUT=  Enum( "undefined","submit","pending", "pending1","pending2","valid","valid0","reject","reject0") 

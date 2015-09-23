@@ -36,4 +36,5 @@ logger.addHandler(fh)
 
 
 
-   
+def getLogPath():
+    return logdir

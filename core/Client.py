@@ -7,7 +7,7 @@ Created on 22 janv. 2015
 '''
 
 import logging
-import RipartLogger
+#import RipartLogger
 from Point import *
 import ConstanteRipart
 from Groupe import *
@@ -22,7 +22,7 @@ from XMLResponse import *
 import hashlib
 import re
 import time
-from pydev_console_utils import Null
+#from pydev_console_utils import Null
 from Box import *
 
 class Client:
@@ -195,17 +195,23 @@ class Client:
         dt = time.strftime("%Y-%m-%d %H:%I:%S")
         dtTmp = dt
         
-        total = self.__getRemarques(zone, box, pagination, date, idGroupe, dicoRems)
+        result= self.__getRemarques(zone, box, pagination, date, idGroupe, dicoRems)
+        
+      
     
-        while total >1 :
+        while int(result['total']) >1 :
             dt = time.strftime("%Y-%m-%d %H:%I:%S")
-            total = self.__getRemarques(zone, box, pagination, dtTmp, idGroupe, dicoRems)
+            result = self.__getRemarques(zone, box, pagination, dtTmp, idGroupe, result['dicoRems'])
             dtTmp= dt
     
-        return dicoRems
+        dicoRems= sorted(result['dicoRems'],reverse=True)    
+        
+        return   dicoRems
     
     
     """
+    Recherche les remarques et retourne le nombre total de remarques trouvées
+    :param zone: 
     """
     def __getRemarques(self,zone,box,pagination, date,idGroupe,dicoRems):
         
@@ -223,12 +229,26 @@ class Client:
         
         if errMessage['code'] =='OK':
             total = xml.getTotalResponse()
-            dicoRems = xml.extractRemarques(dicoRems)
+            dicoRems = xml.extractRemarques(dicoRems)          
+            self.__jeton= xml.getCurrentJeton()
             
+            #TODO Progressbar ?
             
-            
-            # TODO
-        return total
+            while (int(total) - count)  > 0:
+                data = self.georem_get(zone, box, pagination, date, idGroupe, count)
+                xml = XMLResponse(data)
+                
+                count += pagination
+                
+                errMessage2 = xml.checkResponseValidity()
+                if errMessage2['code'] =='OK':
+                     dicoRems = xml.extractRemarques(dicoRems)          
+                     self.__jeton= xml.getCurrentJeton()
+                     
+        
+        return {'total':total, 'dicoRems':dicoRems}
+    
+    
     
     """
     Consulte les informations de l’auteur
@@ -301,6 +321,9 @@ class Client:
     
     
     
+    """
+    méthode pour crypter une chaîne de caractères en MD5
+    """
     @staticmethod
     def getMD5Hash(source):
         hash =hashlib.md5(source).hexdigest()
@@ -317,7 +340,7 @@ if __name__ == "__main__":
     profil= c.getProfil()
     
     
-    c.getRemarques(zone,box,pagination, date,idGroupe)
+   # c.getRemarques(zone,box,pagination, date,idGroupe)
     
     
     #jeton_md5=Client.getMD5Hash("354354_RIPART_AGIS_6451269889536854cb8eb12afd46.85829670")

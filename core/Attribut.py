@@ -7,7 +7,7 @@ Created on 23 janv. 2015
 
 class Attribut(object):
     '''
-    Classe repr�sentant un attribut (d'un croquis)
+    Classe représentant un attribut (d'un croquis)
     sous forme nom/valeur
     '''
     nom=""
@@ -16,5 +16,13 @@ class Attribut(object):
   
         
     def __init__(self, nom="", valeur=""):
+        """
+        Constructeur
+        
+        :param nom: le nom de l'attribut
+        :type nom:string
+        :param valeur: la valeur de l'attribut
+        :type valeur:string
+        """
         self.nom=nom
         self.valeur=valeur

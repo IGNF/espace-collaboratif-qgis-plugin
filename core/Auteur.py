@@ -6,23 +6,26 @@ Created on 23 janv. 2015
 '''
 
 class Auteur(object):
-    '''
+    """
     Classe représentant un auteur
-    '''
+    """
     
     #identifiant de l'auteur
     id=""
+   
     #nom de l'auteur
     nom=""
-    
-
+     
+        
+    def __init__(self, idAuteur="", nom=""):
+        """
+        Constructeur
   
+        :param idAuteur: identifiant de l'auteu r
+        :type idAuteur: string
         
-        
-    def __init__(self, id="", nom=""):
-        '''
-        Constructor
-        '''
-      
-        self.id=id
+        :param nom: nom de l'auteur
+        :type nom:string
+        """
+        self.id=idAuteur
         self.nom=nom

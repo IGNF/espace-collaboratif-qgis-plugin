@@ -7,13 +7,14 @@ Created on 23 janv. 2015
 from Groupe import *
 
 class Theme(object):
-    '''
-    classdocs
-    '''
+    """
+    Classe représentant un thème
+    """
+    
     groupe= Groupe()
 
     def __init__(self, params= None):
-        '''
+        """
         Constructor
-        '''
+        """
         

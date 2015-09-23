@@ -4,23 +4,31 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-from _pydev_imps._pydev_xmlrpclib import DateTime
+#from _pydev_imps._pydev_xmlrpclib import DateTime
+from datetime import datetime
+import xml.etree.cElementTree as et
 from Groupe import *
 from Auteur import *
 import ConstanteRipart
 
+
 class GeoReponse(object):
-    '''
-    classdocs
-    '''
+    """
+    Classe pour définir un objet réponse de Ripart.
+    """
+    #Groupe contenant l'Id et le titre de l'object GeoReponse
     groupe= Groupe()
     
+    # L'auteur de la réponse
     auteur= Auteur()
     
+    # La réponse incluse dans l'object GeoReponse
     reponse =""
     
-    date = DateTime()
+    # La date de la réponse
+    date = datetime.now()
     
+    # Le statut de la GeoReponse
     statut = ConstanteRipart.STATUT.undefined
     
     
@@ -30,19 +38,52 @@ class GeoReponse(object):
         Constructor
         '''
         
-    
+  
     def id(self):
+        """
+        Retourne l'id de la GeoReponse 
+        """
         return self.groupe.id
     
+    
     def titre(self):
+        """
+        Retourne le titre de la GeoReponse 
+        """
         return self.groupe.nom
     
-    '''
-     TODO
-    '''
-    def encodeToXML(self):   
-        pass
+ 
+    def encodeToXML(self): 
+        """
+        Retourne la réponse au format xml
+        """
+        sxml  ="<GEOREP>"
+        sxml +="<ID_GEOREP>" +self.id() + "</ID_GEOREP>"
+        sxml += "<ID_AUTEUR>"+self.auteur.id.__str__()+"</ID_AUTEUR>"
+        sxml +="<AUTEUR>"+self.auteur.nom+"</AUTEUR>"
+        sxml +="<TITRE>"+self.titre()+"</TITRE>"
+        sxml +="<STATUT>"+self.statut.__str__()+"</STATUT>"
+        sxml +="<DATE>"+self.date.strftime("%Y-%m-%d %H:%M:%S")+"</DATE>"
+        sxml +="<REPONSE>"+self.reponse+"</REPONSE>"   
+        sxml +="</GEOREP>"   
+  
+        tree= et.fromstring(sxml)
+        
+        return tree
+      
+        #pass
+ 
+if __name__ == "__main__": 
     
+    rep= GeoReponse()
+    rep.auteur=Auteur("354","zz")
+    rep.reponse="un texte sqfff"
+
+    tree=rep.encodeToXML()
+    
+    print tree.findtext('AUTEUR')
+
+   
     
     
     

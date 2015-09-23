@@ -6,15 +6,15 @@ Created on 23 janv. 2015
 '''
 
 from Auteur import *
-from Groupe import *
+import Groupe 
 import ConstanteRipart 
-from Theme import *
+
 
 
 class Profil(object):
-    '''
-    classdocs
-    '''
+    """
+    Classe représentant le profil de l'utilisateur
+    """
   
     
     #Nom de l'auteur   
@@ -27,7 +27,7 @@ class Profil(object):
     titre=""
         
         
-    #Statut (privil�ges) du profil        
+    #Statut (privilèges) du profil        
     statut=""
         
     #Lien vers le logo du profil
@@ -37,20 +37,20 @@ class Profil(object):
     #Filtre du profil       
     filtre=""
         
-    #La zone g�ographique de travail du profil        
+    #La zone géographique de travail du profil        
     zone= ConstanteRipart.ZoneGeographique.UNDEFINED
 
         
-    #Indique si le profil a acces aux groupes prives
+    #Indique si le profil a accès aux groupes privés
     prive = False
 
         
-    #Les �ventuels th�mes attach�s au profil      
+    #Les éventuels thèmes attacés au profil      
     themes = list()
 
         
     #identifiant geoprofil    
     id_Geoprofil=""
 
-    #def __init__(self):
+   
     

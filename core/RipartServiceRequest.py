@@ -5,14 +5,14 @@ Created on 26 janv. 2015
 @author: AChang-Wailing
 '''
 import logging
-import RipartLogger 
+#import RipartLogger 
 import urllib2
 import urllib
 
 class RipartServiceRequest(object):
-    '''
-    classdocs
-    '''
+    """
+    Classe pour les requêtes http vers le service ripart
+    """
 
     logger= logging.getLogger("ripart.RipartServiceRequest")
 
@@ -53,8 +53,8 @@ class RipartServiceRequest(object):
         
         
         
-'''if __name__ == "__main__":
+        
+if __name__ == "__main__":
      
-      rep= RipartServiceRequest.makeGetRequest("http://demo-ripart.ign.fr",{'action':'connect','login':'mborne'})
-      print rep 
-'''
+    rep= RipartServiceRequest.makeGetRequest("http://demo-ripart.ign.fr",{'action':'connect','login':'mborne'})
+    print rep 

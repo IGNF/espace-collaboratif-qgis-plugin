@@ -6,18 +6,26 @@ Created on 23 janv. 2015
 '''
 
 class Groupe(object):
-    '''
-    classdocs
-    '''
+    """
+    Classe représentant un groupe Ripart
+    """
+    
+    # identifiant du groupe
     id=""
+    
+    # nom du groupe 
     nom=""
 
-
         
-    def __init__(self, id="" , nom=""):
-        '''
+    def __init__(self, idGroup="" , nom=""):
+        """
         Constructor
-        '''
-        self.id=id
+        
+        :param idGroup identifiant du groupe
+        :type string       
+        :param nom le nom du groupe
+        :type string  
+        """
+        self.id=idGroup
         self.nom=nom
         
