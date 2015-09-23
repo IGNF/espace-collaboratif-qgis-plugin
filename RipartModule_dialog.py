@@ -70,7 +70,8 @@ class RipartPluginDialog(QtGui.QDialog, FORM_CLASS):
         pwd= self.lineEditPwd.text()
         #QMessageBox.information(self,"Ripart",login)
         
-        c= Client('http://demo-ripart.ign.fr','mborne','mborne')
+        #c= Client('http://demo-ripart.ign.fr','mborne','mborne')
+        c= Client('http://demo-ripart.ign.fr',login,pwd)
               
      
         profil = c.getProfil()
