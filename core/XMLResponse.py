@@ -7,9 +7,7 @@ Created on 26 janv. 2015
 import logging
 import xml.etree.ElementTree as ET
 from Profil import Profil
-import ConstanteRipart
-import sys
-import collections
+import ConstanteRipart as cst
 from Remarque import Remarque
 from Theme import Theme
 from Point import Point
@@ -17,6 +15,8 @@ from Auteur import Auteur
 from Croquis import Croquis
 from Groupe import  Groupe
 from Attribut import Attribut
+from GeoReponse import GeoReponse
+from datetime import datetime
 
 class XMLResponse(object):
     """
@@ -180,12 +180,7 @@ class XMLResponse(object):
             profil.titre = node.text
             
             node =self.root.find('./PROFIL/ZONE')
-            profil.zone = node.text
-            
-            '''for stat in ConstanteRipart.ZoneGeographique:
-                if node.text == str(stat):
-                    profil.zone = node.text
-                    break'''
+            profil.zone = cst.ZoneGeographique.__getitemFromString__(node.text)
             
             gr = Groupe()
             node =self.root.find('./PROFIL/ID_GEOGROUPE')
@@ -299,7 +294,7 @@ class XMLResponse(object):
            
         
     
-    def extractRemarques(self,remarques):
+    def extractRemarques(self):
         """Extraction des remarques de la réponse xml
         
         :param remarques: dictionnaire  de remarques
@@ -307,7 +302,7 @@ class XMLResponse(object):
         :return: dictionnaire de remarques (dans l'ordre inverse d'identifiants)
         """
         
-        dicRem= {}      
+        remarques= {}      
         
         try:
             georems= self.root.findall('GEOREM')
@@ -369,12 +364,13 @@ class XMLResponse(object):
                 rem.id_partition=(node.find('ID_PARTITION')).text
                 
                 #croquis
-                rem = self.getCroquisForRem(rem, node);
+                rem = self.getCroquisForRem(rem, node)
                 
                 #documents
-                
+                rem = self.getDoc(rem, node)
                 
                 #réponses (GEOREP)
+                rem= self.getGeoRep(rem,node)
                 
                 
                 rem.hash = (node.find('HASH')).text
@@ -402,11 +398,14 @@ class XMLResponse(object):
         
         :param node: le noeud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
         :type node: string
+        
+        :return la remarque avec les croquis
+        :rtype Remarque
         """
             
         objets= node.findall('CROQUIS/objet')
             
-        points = []
+        #points = []
             
         for ob in objets:
             croquis = Croquis()
@@ -421,26 +420,58 @@ class XMLResponse(object):
                 attribut.valeur = att.text
                 croquis.addA
                    
-            #
+            #ajoute les croquis à la remarque
             rem.AddCroquis(croquis)  
-             
-             
-        #TODO 
-            
-            
-               
-        
-            
+                   
         return rem
                 
                 
-            
-            
-            
-            
-            
-            
+    def getDoc(self,rem,node):    
+        """Extraction des documents attachés à une remarque
         
+        :param rem un objet Remarque
+        :type rem: Remarque
+        
+        :param node: le noeud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
+        :type node: string
+        
+        :return la remarque avec les croquis
+        :rtype Remarque
+        """
+        
+        docs= node.findall('DOC')
+        
+        for doc in docs:
+            rem.addDocument(doc)
+            
+        return rem
+    
+    
+    def getGeoRep(self,rem,node):
+        """Extraction des réponses d'une remarque
+        """
+        
+        reponses = node.findall("GEOREP")
+        
+        for rep in reponses:
+            georep = GeoReponse()
+            
+            gr = Groupe()
+            gr.id = rep.find('ID_GEOREP').text
+            gr.nom = rep.find('TITRE').text
+            georep.groupe = gr
+            
+            georep.auteur=Auteur()
+            georep.auteur.id = rep.find('ID_AUTEUR').text
+            georep.auteur.nom = rep.find('AUTEUR').text
+            
+            georep.statut= cst.STATUT.__getitemFromString__(rep.find('STATUT').text)          
+            georep.date= datetime.strptime(rep.find('DATE').text,"%Y-%m-%d %H:%M:%S")    
+            georep.reponse = rep.find('reponse').text
+        
+            rem.addGeoReponse(georep)
+            
+        return rem
         
         
 if __name__ == "__main__":

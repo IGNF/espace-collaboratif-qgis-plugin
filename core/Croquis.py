@@ -5,9 +5,7 @@ Created on 23 janv. 2015
 @author: AChang-Wailing
 '''
 from Enum import Enum
-#from _pydev_imports_tipper import TYPE_ATTR
-
-from Point import *
+from Point import Point
 import xml.etree.ElementTree as ET
 
 
@@ -83,7 +81,7 @@ class Croquis(object):
         """
         self.attributs.append(attribut)
         
-   # def addAttribut(String cle, String valeur)  
+
     
     def getPoint(self,i):
         """Recherche un point dans la liste de Points par sa position dans la liste
@@ -196,11 +194,13 @@ class Croquis(object):
         for pt in self.points:
             coord += pt.longitude.__str__()+ ","+ pt.latitude.__str__() + " "
         
-        if self.type==self.CroquisType.Ligne or self.type==self.CroquisType.Fleche:
+        #if self.type==self.CroquisType.Ligne or self.type==self.CroquisType.Fleche:
+        if self.type in [self.CroquisType.Ligne,self.CroquisType.Fleche]:
             ingeom=ET.SubElement(geom,ns+':LineString')
            
  
-        elif self.type==self.CroquisType.Point or self.type==self.CroquisType.Texte:
+        #elif self.type==self.CroquisType.Point or self.type==self.CroquisType.Texte:
+        elif self.typ in [self.CroquisType.Point,self.CroquisType.Texte]:
             ingeom=ET.SubElement(geom,ns+':Point')
     
         elif self.type == self.CroquisType.Polygone:

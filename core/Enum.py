@@ -16,7 +16,13 @@ def Enum(*names):
         def __getitem__(self, i):  return constants[i]
         def __repr__(self):        return 'Enum' + str(names)
         def __str__(self):         return 'enum ' + str(constants)
-
+        
+        def __getitemFromString__(self,strValue):
+            for e in self:
+                if e.__str__() == strValue:
+                    return e
+            return None
+         
     class EnumValue(object):
         __slots__ = ('__value')
         def __init__(self, value): self.__value = value
@@ -31,6 +37,8 @@ def Enum(*names):
         def __invert__(self):      return constants[maximum - self.__value]
         def __nonzero__(self):     return bool(self.__value)
         def __repr__(self):        return str(names[self.__value])
+        
+        
 
     maximum = len(names) - 1
     constants = [None] * len(names)
@@ -41,6 +49,7 @@ def Enum(*names):
     constants = tuple(constants)
     EnumType = EnumClass()
     return EnumType
+
 
 
 if __name__ == '__main__':

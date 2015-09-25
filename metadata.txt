@@ -11,8 +11,8 @@ name=IGN_Ripart
 qgisMinimumVersion=2.0
 description=IGN_Ripart
 version=0.1
-author=Alexia Chang-Wailing/IGN
-email=a
+author=Alexia Chang-Wailing
+email=alexia.chang-wailing@ign.fr
 
 # End of mandatory metadata
 

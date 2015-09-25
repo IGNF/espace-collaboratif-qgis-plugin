@@ -7,71 +7,70 @@ Created on 22 janv. 2015
 '''
 
 import logging
-#import RipartLogger
-from Point import *
+import xml.etree.ElementTree as ET
+
 import ConstanteRipart
-from Groupe import *
-from Auteur import *
-from Croquis import *
-from Theme import *
-from GeoReponse import *
-from Enum import *
-from Remarque import *
-from RipartServiceRequest import *
-from XMLResponse import *
+#from Groupe import Groupe
+from Auteur import Auteur
+from Croquis import Croquis
+from Theme import Theme
+from GeoReponse import GeoReponse
+from Enum import Enum
+from Remarque import Remarque
+from Profil import Profil
+from RipartServiceRequest import RipartServiceRequest
+from XMLResponse import XMLResponse
 import hashlib
 import re
 import time
-#from pydev_console_utils import Null
-from Box import *
+from Box import Box
+import os.path
 
 class Client:
-    '''
-    classdocs
-    '''
+    """"
+    Cette classe sert de client pour le service RIPart
+    """
+    
     __url=""
     __login = ""
     __password=""
     __jeton = None
     __auteur = None
     __version = None
-    __profil = None
+    __profil = Profil()
     
-    message = None
+    # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
+    message = ""
     
     logger=logging.getLogger("ripart.client")
     
-   
-    
 
-    '''
-      Constructor
-    '''
+
     def __init__(self, url, login, pwd):
-        
+        """Constructeur
+        Initialisation du client et connexion au service ripart
+        """       
         self.__url=url
         self.__login=login
         self.__password=pwd
         self.message = self.connect()
         
         
-    """
-    Connexion d'un utilisateur par son login et mot de passe
-    :return: Si la connexion se fait, retourne l'id de l'auteur; sinon retour du message d'erreur
-    """     
+      
     def connect(self):
+        """ Connexion d'un utilisateur par son login et mot de passe
         
+        :return: Si la connexion se fait, retourne l'id de l'auteur; sinon retour du message d'erreur
+        """  
         result =None
-        
-        try:
-                     
+        try:               
             self.logger.debug("tentative de connexion; " + self.__url + ' connect ' + self.__login)
-            
-            
-            data =RipartServiceRequest.makeGetRequest(self.__url, {'action':'connect','login':self.__login})
+        
+            data =RipartServiceRequest.makeHttpRequest(self.__url, params={'action':'connect','login':self.__login})
             
             xmlResponse = XMLResponse(data)
             
+            #contrôle la validité et récupère les aléas
             errMessage = xmlResponse.checkResponseValidity()
             
             if (errMessage['code']=='OK'):
@@ -87,11 +86,12 @@ class Client:
     
     
     
-    """
-    Deuxième requête pour la connexion 
-    """
+   
     def connect2(self,xml):
+        """Deuxième requête pour la connexion 
         
+        :return ID_AUTEUR ou message d'erreu
+        """    
         result= None
         
         errMessage = xml.checkResponseValidity()
@@ -111,7 +111,7 @@ class Client:
             parameters['session_password_md5']= Client.getMD5Hash(alea1+self.__password)
             parameters['next_session_password_md5']= Client.getMD5Hash(alea2+self.__password)
             
-            data= RipartServiceRequest.makeGetRequest(self.__url, parameters)
+            data= RipartServiceRequest.makeHttpRequest(self.__url, params=parameters)
             xmlResponse = XMLResponse(data)
             errMessage = xmlResponse.checkResponseValidity()
             
@@ -128,25 +128,23 @@ class Client:
             else:
                 result = errMessage['message']
                 raise Exception('result')
-                
-
-        
+       
         return result
     
     
-    """
-    retourne la version du service ripart
-    :return: version du service ripart
-    """
+    
     def getVersion(self):
+        """retourne la version du service ripart
+        :return: version du service ripart
+        """
         return self.__version
     
     
-    """
-    retourne le profil de l'utilisateur
-    :return: le profil
-    """
+   
     def getProfil(self):
+        """retourne le profil de l'utilisateur
+        :return: le profil
+        """       
         
         if self.__profil is None:
             self.__profil = self.getProfilFromService()
@@ -154,11 +152,11 @@ class Client:
         return self.__profil
     
     
-    """
-    requête au service pour le porfil utilisateur
-    :return: le profil de l'utilisateur
-    """
+    
     def getProfilFromService(self):
+        """requête au service pour le profil utilisateur      
+        :return: le profil de l'utilisateur
+        """
         profil= None
        
         data = self.getauth_get()
@@ -179,26 +177,34 @@ class Client:
         
         
       
-    """
-    Recherche les remarques.
-    Boucle sur la méthode privée GetRemarques, pour récupérer d'éventuelles MAJ ou nouvelles remarques
-    faites entre le début et la fin de la requête 
-    """
+    
     def getRemarques(self,zone,box,pagination, date,idGroupe):
+        """Recherche les remarques.
+        Boucle sur la méthode privée GetRemarques, pour récupérer d'éventuelles MAJ ou nouvelles remarques
+        faites entre le début et la fin de la requête 
         
-        remarques =[]
+        :param zone: la zone géographique
+        :type zone: ConstanteRipart.ZoneGeographique
         
-        #on stocke d'abord les objets Remarque dans un dictionnaire, pour éviter d'éventuels doublons.
+        :param box: bounding box dans laquelle on cherche des remarques
+        :type box: Box
+        
+        :param pagination: nombre de remarques par réponse
+        :type pagination int
+        
+        :param idGroupe: identifiant du groupe de l'utilisateur
+        :type idGroupe: int
+        """   
+      
+        #on stocke les objets Remarque dans un dictionnaire, pour éviter d'éventuels doublons.
         dicoRems={}
         
         #la date-heure actuelle (début de la requête)
         dt = time.strftime("%Y-%m-%d %H:%I:%S")
         dtTmp = dt
         
-        result= self.__getRemarques(zone, box, pagination, date, idGroupe, dicoRems)
-        
-      
-    
+        result= self.__getRemarques(zone, box, pagination, date, idGroupe)
+  
         while int(result['total']) >1 :
             dt = time.strftime("%Y-%m-%d %H:%I:%S")
             result = self.__getRemarques(zone, box, pagination, dtTmp, idGroupe, result['dicoRems'])
@@ -206,14 +212,15 @@ class Client:
     
         dicoRems= sorted(result['dicoRems'],reverse=True)    
         
-        return   dicoRems
+        return  dicoRems
     
     
-    """
-    Recherche les remarques et retourne le nombre total de remarques trouvées
-    :param zone: 
-    """
-    def __getRemarques(self,zone,box,pagination, date,idGroupe,dicoRems):
+   
+    def __getRemarques(self,zone,box,pagination, date,idGroupe):
+        """Recherche les remarques et retourne le nombre total de remarques trouvées
+         
+        :param zone: 
+         """
         
         try:
             data=self.georem_get(zone, box, pagination, date, idGroupe, 0)
@@ -229,7 +236,7 @@ class Client:
         
         if errMessage['code'] =='OK':
             total = xml.getTotalResponse()
-            dicoRems = xml.extractRemarques(dicoRems)          
+            dicoRems = xml.extractRemarques()          
             self.__jeton= xml.getCurrentJeton()
             
             #TODO Progressbar ?
@@ -242,22 +249,224 @@ class Client:
                 
                 errMessage2 = xml.checkResponseValidity()
                 if errMessage2['code'] =='OK':
-                     dicoRems = xml.extractRemarques(dicoRems)          
-                     self.__jeton= xml.getCurrentJeton()
+                    dicoRems = xml.extractRemarques()          
+                    self.__jeton= xml.getCurrentJeton()
                      
         
         return {'total':total, 'dicoRems':dicoRems}
     
     
     
-    """
-    Consulte les informations de l’auteur
-    http://ripart.ign.fr/?action=geoaut_get&jeton_md5=XXXX&id_auteur=AA où XXX = MD5(AA+AA+protocole+jeton)
-    """
-    def getauth_get(self):
+    def getRemarque(self, idRemarque):
+        """Requête pour récupérer une remarque avec un identifiant donné
+        ripart.ign.fr/?action=georem_get&jeton_md5=XXXX&id_auteur=AA&id_georem=RR 
+        où XXX = MD5(RR+AA+protocole+jeton).
         
+        :param idRemarque: identifiant de la remarque que l'on souhaite récupérer
+        :type idRemarque: int
+        
+        :return la remarque
+        :rtype Remarque
+        """
+        rem =Remarque()
+        remarques =[]
+        
+        data= self.georem_getById(idRemarque)
+        
+        xmlResponse = XMLResponse(data)
+        errMessage = xmlResponse.checkResponseValidity()
+        
+        total = xmlResponse.getTotalResponse()
+        
+        if errMessage['code']=="OK":
+            self.__jeton =xmlResponse.getCurrentJeton()
+            
+            if total ==1:
+                remarques = xmlResponse.extractRemarques()
+                rem=remarques.values()[0]    
+                
+        return rem
+        
+        
+        
+    def georem_getById(self,id_georem):
+        """Va chercher une remarque donnée par son identifiant
+        
+        :param id_georem: identifiant de la remarque
+        :type id_georem: int
+        :return: remarque au format xml
+        :rtype string (xml)
+        """
+        data=None
+        georem_url =self.__url + "?action=georem_get"
+        
+        if self.__jeton==None or self.__auteur.id==None :
+            return None
+        else:
+            jeton_md5 = self.getMD5Hash(id_georem + self.__auteur.id +ConstanteRipart.RIPART_CLIENT_PROTOCOL+self._jeton)
+            
+            georem_url += "&jeton_md5=" + jeton_md5 + \
+                          "&id_auteur=" + self.__auteur.Id + \
+                          "&id_georem=" + id_georem;
+        
+            data = RipartServiceRequest.makeHttpRequest(georem_url)
+            
+        return data
+    
+    
+    def addReponse(self,remarque,reponse):
+        """Ajoute une réponse à une remarque
+        ripart.ign.fr/?action=georem_put&id_georem=RR&id_auteur=AA&jeton_md5=XXXX&hash=HH 
+        où XXX = MD5(RR+AA+protocole+jeton).
+        
+        :param remarque: la remarque
+        :type remarque: Remarque
+        :param reponse : la réponse
+        :type reponse: string
+        :return la remarque à laquelle a été ajoutée la réponse
+        """
+      
+        try:
+            jeton_md5 = self.getMd5Hash(remarque.id+ self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton)
+            
+            params = {}
+            params['action']=ConstanteRipart.RIPART_GEOREM_PUT
+            params['id_georem']=str(remarque.id)
+            params['id_auteur']=self.__auteur.id
+            params['jeton_md5']=jeton_md5
+            params['hash']=remarque.hash
+            params['reponse']=reponse
+            params['statut']= remarque.statut.__str__()
+            
+            data = RipartServiceRequest.makeHttpRequest(self.__url, data=params)
+            
+            xmlResponse = XMLResponse(data)
+            errMessage = xmlResponse.checkResponseValidity()
+            
+            if errMessage['code']=="OK":
+                rems =[]
+                rems= xmlResponse.extractRemarques()
+                if len(rems) ==1:
+                    remarque=rems.values()[0]
+                else:
+                    raise Exception("Problème survenu lors de l'ajout d'une réponse")
+                
+        except Exception as e:
+            raise Exception(errMessage["message"],e)
+                
+        return remarque
+    
+    
+    
+    def createRemarque(self,remarque):
+        """Ajout d'une nouvelle remarque
+        ripart.ign.fr/?action=georem_post&id_auteur=AA&jeton_md5=XXXX 
+        où XXX = MD5(0+AA+protocole+jeton).
+        
+        :param remarque : la remarque à créer
+        :type remarque: Remarque
+        :return la remarque créée
+        :rtype: Remarque
+        """
+        
+        rem= None
+        try:
+            jeton_md5 = self.getMd5Hash("0" + self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton)
+            
+            params = {}
+            params['action']=ConstanteRipart.RIPART_GEOREM_POST
+            params['jeton_md5']=jeton_md5
+            params['id_auteur']=self.__auteur.id
+            params['version']=self.__version
+            params['geogroupe']= str(self.getProfil().geogroupe.id)
+            params['com']= remarque.commentaire
+            params['lon']= str(remarque.getLongitude())
+            params['lat']= str(remarque.getLatitude())
+            params['zone_geo']= self.getProfil().zone.__str__()
+            
+            
+            #Ajout des thèmes selectionnés en générant le xml associé
+            themes = remarque.themes
+            
+            if themes!= None and len(themes)>0:
+                doc = ET.Element("THEMES")
+                
+                for t in themes:
+                    th= ET.SubElement(doc,"THEME")
+                    grId=ET.SubElement(th,"ID_GEOGROUPE")
+                    grId.text= t.groupe.id
+                    nom= ET.SubElement(th,"NOM")
+                    nom.text=t.groupe.nom
+                    
+                params["themes"]=ET.tostring(doc)
+            
+            #ajout des croquis
+            if not remarque.isCroquisEmpty() :
+                croquis= remarque.croquis
+                gmlurl="http://www.opengis.net/gml"
+                doc = ET.Element("CROQUIS",{"xmlns:gml":gmlurl})
+                
+                for cr in croquis:
+                    doc= cr.encodeToXML(doc)
+                    
+                params["croquis"] =ET.tostring(doc)
+                
+            #département
+            dep = remarque.departement
+            if dep!=None and str(dep.id).strip() not in [None, ""]:
+                params["adm1"]=dep.nom
+                params["nadm1"]=dep.id
+                
+            #commune
+            commune = remarque.commune
+            if commune.strip() not in [None, ""]:
+                params["adm2"]=commune
+            
+            #ajout des documents joints
+            documents = remarque.documents
+            docCnt=0
+            docs= {}
+            
+            for document in documents:
+                if  os.path.isfile(document) :
+                    docCnt +=1
+                    if os.path.getsize(document) > ConstanteRipart.MAX_TAILLE_UPLOAD_FILE:
+                        raise Exception("Le fichier "+ document + " est de taille supérieure à " + \
+                                        ConstanteRipart.MAX_TAILLE_UPLOAD_FILE)  
+                    
+                    docs["upload"+docCnt]=document
+                    
+            #envoi de la requête
+            data = RipartServiceRequest.makeHttpRequest(self.__url,  data=params, files=docs)             
+                    
+            xmlResponse = XMLResponse(data)
+            errMessage= xmlResponse.checkResponseValidity()
+            
+            if errMessage['code'] =='OK': 
+                rems= xmlResponse.extractRemarques()
+                if len(rems)==1:
+                    rem =rems.values()[0]
+                else :
+                    self.logger.error("Problème lors de l'ajout de la remarque")
+                    raise Exception("Problème lors de l'ajout de la remarque")
+            else:
+                self.logger.error(errMessage['message'])
+                raise Exception(errMessage['message'])
+                
+        except Exception as e:
+            self.logger.error(str(e))
+            raise Exception(e)
+                
+        return rem
+    
+    
+    
+   
+    def getauth_get(self):      
+        """Consulte les informations de l’auteur
+        http://ripart.ign.fr/?action=geoaut_get&jeton_md5=XXXX&id_auteur=AA où XXX = MD5(AA+AA+protocole+jeton)
+        """       
         data= None
-        #geoauth_url = self.__url + "?action=geoaut_get"
         
         if (self.__jeton is None or self.__auteur is None or self.__auteur.id is None):
             return None
@@ -268,24 +477,20 @@ class Client:
             jeton_md5 = self.getMD5Hash(tocrypt)
             
             params = {}
-            params['action']='geoaut_get'
+            params['action']=ConstanteRipart.RIPART_GEOAUT_GET
             params['jeton_md5']=jeton_md5
             params['id_auteur']=self.__auteur.id
            
-            data= RipartServiceRequest.makeGetRequest(self.__url, params)
+            data= RipartServiceRequest.makeHttpRequest(self.__url, params=params)
         
         return data
     
-    
-    
-    
-    
-    """
-    Va chercher les remarques sur le service Ripart
-    :return: réponse xml 
-    """
+     
+   
     def georem_get(self,zone,box,pagination,sdate,idGroupe,count,id_georem=0):
-        
+        """Va chercher les remarques sur le service Ripart
+        :return: réponse xml 
+        """     
         data = None
         
         if (self.__jeton is None or self.__auteur.id is None):
@@ -314,7 +519,7 @@ class Client:
             params['tri'] ='id_georem'
             
             
-            data= RipartServiceRequest.makeGetRequest(self.__url, params)
+            data= RipartServiceRequest.makeHttpRequest(self.__url, params=params)
             
         return data
     
@@ -324,14 +529,16 @@ class Client:
     """
     méthode pour crypter une chaîne de caractères en MD5
     """
+    def getMD5Hash(self,source):
+        md5hash =hashlib.md5(source).hexdigest()
+        
+        return md5hash
+     
     @staticmethod
-    def getMD5Hash(source):
-        hash =hashlib.md5(source).hexdigest()
-        
-        return hash
+    def get_MAX_TAILLE_UPLOAD_FILE():
+        return ConstanteRipart.MAX_TAILLE_UPLOAD_FILE
+    
      
-     
-        
      
 if __name__ == "__main__":   
     
@@ -340,10 +547,6 @@ if __name__ == "__main__":
     profil= c.getProfil()
     
     
-   # c.getRemarques(zone,box,pagination, date,idGroupe)
-    
-    
-    #jeton_md5=Client.getMD5Hash("354354_RIPART_AGIS_6451269889536854cb8eb12afd46.85829670")
-    
+ 
     print 'fin'
     

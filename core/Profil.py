@@ -6,7 +6,7 @@ Created on 23 janv. 2015
 '''
 
 from Auteur import *
-import Groupe 
+from Groupe import Groupe
 import ConstanteRipart 
 
 

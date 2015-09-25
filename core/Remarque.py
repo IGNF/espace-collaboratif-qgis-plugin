@@ -48,6 +48,9 @@ class Remarque(object):
     #commune de la remarque
     commune=""
     
+    #texte de la remarque
+    commentaire=""
+    
     #auteur de la remarque
     auteur = Auteur()
     
@@ -201,13 +204,13 @@ class Remarque(object):
         self.position = position   
           
         
-    def setCommentaire(self,message):  
+    def setCommentaire(self,commentaire):  
         """Set du commentaire
         
-        :param message le message 
+        :param commentaire le commentaire (message) de la remarque
         :type string
         """
-        self.message = message
+        self.commentaire = commentaire
         
         
     def addDocument(self, document):

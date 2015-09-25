@@ -32,13 +32,11 @@ class GeoReponse(object):
     statut = ConstanteRipart.STATUT.undefined
     
     
-
     def __init__(self):
         '''
         Constructor
         '''
-        
-  
+         
     def id(self):
         """
         Retourne l'id de la GeoReponse 
@@ -71,7 +69,7 @@ class GeoReponse(object):
         
         return tree
       
-        #pass
+
  
 if __name__ == "__main__": 
     
