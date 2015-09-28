@@ -5,6 +5,7 @@ Created on 26 janv. 2015
 @author: AChang-Wailing
 '''
 import logging
+import RipartLogger 
 import xml.etree.ElementTree as ET
 from Profil import Profil
 import ConstanteRipart as cst
@@ -44,7 +45,7 @@ class XMLResponse(object):
         self.response = response;
         
         try:
-            self.root =ET.fromstring( self.response)
+            self.root =ET.fromstring(self.response)
         except Exception as e:
             self.logger.error(str(e))
          
@@ -52,9 +53,7 @@ class XMLResponse(object):
         self.logger.debug("init")
         
         
-        
-        
-      
+            
     def checkResponseValidity(self):
         """Contrôle la validité de la réponse. 
         
@@ -213,8 +212,7 @@ class XMLResponse(object):
         
     
     def getThemes(self):
-        """Extraction des thèmes associés au profil
-        
+        """Extraction des thèmes associés au profil     
         :return les thèmes 
         """
         
@@ -404,8 +402,7 @@ class XMLResponse(object):
         """
             
         objets= node.findall('CROQUIS/objet')
-            
-        #points = []
+
             
         for ob in objets:
             croquis = Croquis()
@@ -418,10 +415,10 @@ class XMLResponse(object):
                 attribut = Attribut()
                 attribut.nom = att.attrib['name']
                 attribut.valeur = att.text
-                croquis.addA
+                croquis.addAttribut(attribut)
                    
             #ajoute les croquis à la remarque
-            rem.AddCroquis(croquis)  
+            rem.addCroquis(croquis)  
                    
         return rem
                 
@@ -467,7 +464,7 @@ class XMLResponse(object):
             
             georep.statut= cst.STATUT.__getitemFromString__(rep.find('STATUT').text)          
             georep.date= datetime.strptime(rep.find('DATE').text,"%Y-%m-%d %H:%M:%S")    
-            georep.reponse = rep.find('reponse').text
+            georep.reponse = rep.find('REPONSE').text
         
             rem.addGeoReponse(georep)
             

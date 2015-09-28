@@ -7,6 +7,7 @@ Created on 22 janv. 2015
 '''
 
 import logging
+#import RipartLogger 
 import xml.etree.ElementTree as ET
 
 import ConstanteRipart
@@ -37,7 +38,7 @@ class Client:
     __jeton = None
     __auteur = None
     __version = None
-    __profil = Profil()
+    __profil = None
     
     # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
     message = ""
@@ -54,8 +55,7 @@ class Client:
         self.__login=login
         self.__password=pwd
         self.message = self.connect()
-        
-        
+
       
     def connect(self):
         """ Connexion d'un utilisateur par son login et mot de passe
@@ -111,7 +111,7 @@ class Client:
             parameters['session_password_md5']= Client.getMD5Hash(alea1+self.__password)
             parameters['next_session_password_md5']= Client.getMD5Hash(alea2+self.__password)
             
-            data= RipartServiceRequest.makeHttpRequest(self.__url, params=parameters)
+            data= RipartServiceRequest.makeHttpRequest(self.__url, data=parameters)
             xmlResponse = XMLResponse(data)
             errMessage = xmlResponse.checkResponseValidity()
             
@@ -481,7 +481,7 @@ class Client:
             params['jeton_md5']=jeton_md5
             params['id_auteur']=self.__auteur.id
            
-            data= RipartServiceRequest.makeHttpRequest(self.__url, params=params)
+            data= RipartServiceRequest.makeHttpRequest(self.__url, data=params)
         
         return data
     
@@ -529,7 +529,8 @@ class Client:
     """
     méthode pour crypter une chaîne de caractères en MD5
     """
-    def getMD5Hash(self,source):
+    @staticmethod
+    def getMD5Hash(source):
         md5hash =hashlib.md5(source).hexdigest()
         
         return md5hash

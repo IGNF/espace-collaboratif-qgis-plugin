@@ -5,8 +5,8 @@ Created on 23 janv. 2015
 @author: AChang-Wailing
 '''
 from Client import *
-import logging
-import RipartLogger
+#import logging
+import RipartLogger 
 from Croquis import *
 from Point import *
 from Enum import *
@@ -18,7 +18,7 @@ class TestConnection(object):
     '''
     login = "mborne"
     pwd ="mborne"
-    url ="demo-ripart.ign.fr"
+    url ="http://demo-ripart.ign.fr"
     
     
     # create logger
@@ -39,13 +39,14 @@ class TestConnection(object):
         '''
         Constructor
         '''
-        self.connect()
+        #self.connect()
         
     def connect(self):
         client = Client(self.url, self.login,self.pwd)
-        print client.connect()
-        
-        
+        #print client.connect()
+        profil= client.getProfil()
+        #profil= Profil()
+        print "ok"
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

@@ -87,6 +87,30 @@ class Remarque(object):
     def __init__(self):
         """Constructor
         """
+        self.id = None  
+        self.lien =""
+        self.lienPrive=""
+        self.dateCreation = datetime.now()
+        self.dateMiseAJour = datetime.now()
+        self.dateValidation = datetime.now()
+        self.position = Point()
+        self.statut= ConstanteRipart.STATUT.undefined
+        self.departement=Groupe()
+        self.commune=""
+        self.commentaire=""
+        self.auteur = Auteur()
+        self.autorisation=""
+        self.id_partition=""
+        self.groupe= Groupe()
+        self.reponses = []
+        self.croquis = []
+        self.documents= []
+        self.themes = []
+        self.hash= ""
+        self.source=""
+        
+    
+
         
     def concatenateThemes(self):
         """Concatène les noms de tous les thèmes de la remarque

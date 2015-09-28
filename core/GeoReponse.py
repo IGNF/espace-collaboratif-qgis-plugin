@@ -12,6 +12,7 @@ from Auteur import *
 import ConstanteRipart
 
 
+
 class GeoReponse(object):
     """
     Classe pour définir un objet réponse de Ripart.
@@ -36,6 +37,11 @@ class GeoReponse(object):
         '''
         Constructor
         '''
+        self.groupe=Groupe()
+        self.auteur=Auteur()
+        self.reponse= ""
+        self.date = datetime.now()
+        self.statut=ConstanteRipart.STATUT.undefined
          
     def id(self):
         """

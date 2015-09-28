@@ -22,6 +22,8 @@ def Enum(*names):
                 if e.__str__() == strValue:
                     return e
             return None
+        
+      
          
     class EnumValue(object):
         __slots__ = ('__value')

@@ -51,6 +51,8 @@ class Croquis(object):
         
         self.type = typeCroquis
         
+        self.attributs= list()
+        
         if points is None:
             self.points=list()
         else:
@@ -72,6 +74,7 @@ class Croquis(object):
         :param point:  un objet Point
         """
         self.points.append(point)
+        
         
     def addAttribut(self,attribut):
         """Ajoute un attribut à la liste des attributs du croquis
@@ -171,7 +174,9 @@ class Croquis(object):
             return False
         elif (self.type==self.CroquisType.Point or self.type == self.CroquisType.Texte) and nPoints!=1 :
             return False
-        elif self.type ==self.CroquisType.Polygone and self.firstCoord() != self.lastCoord() :
+        elif self.type ==self.CroquisType.Polygone and not self.firstCoord().eq(self.lastCoord()) :
+            return False
+        elif (self.type == self.CroquisType.Vide and nPoints>0):
             return False
         
         return True
@@ -184,8 +189,12 @@ class Croquis(object):
         
         :return le xml au format string
         """
-        objet =ET.Element('objet',{"type": self.type.tostring()})    
+        if (self.type==self.CroquisType.Vide):
+            return xmlDoc
+        
+        objet =ET.Element('objet',{"type": self.type.__str__()})    
         nom = ET.SubElement(objet,'nom')
+        nom.text=self.nom
         
         #la geométrie
         geom= ET.SubElement(objet,'geometrie')
@@ -200,7 +209,7 @@ class Croquis(object):
            
  
         #elif self.type==self.CroquisType.Point or self.type==self.CroquisType.Texte:
-        elif self.typ in [self.CroquisType.Point,self.CroquisType.Texte]:
+        elif self.type in [self.CroquisType.Point,self.CroquisType.Texte]:
             ingeom=ET.SubElement(geom,ns+':Point')
     
         elif self.type == self.CroquisType.Polygone:
@@ -221,7 +230,7 @@ class Croquis(object):
         xmlDoc.append(objet)
         
         return xmlDoc
-        #print ET.tostring(objet)
+       
 
 if __name__ == "__main__":
     c= Croquis()

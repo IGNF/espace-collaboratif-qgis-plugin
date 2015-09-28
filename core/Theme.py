@@ -17,4 +17,5 @@ class Theme(object):
         """
         Constructor
         """
+        self.groupe=Groupe()
         

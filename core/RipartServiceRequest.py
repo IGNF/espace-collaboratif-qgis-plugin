@@ -5,7 +5,8 @@ Created on 26 janv. 2015
 @author: AChang-Wailing
 '''
 import logging
-import lib.requests as requests
+
+import requests
 
 class RipartServiceRequest(object):
     """
@@ -50,35 +51,7 @@ class RipartServiceRequest(object):
     
     
 
-    """def  makeHttpRequest0(url, params):
-    
-        try: 
-            data = urllib.urlencode(params)
-    
-            req = urllib2.Request(url, data)
-            
-            req.add_header('Content-Type', 'application/x-www-form-urlencoded')
-            
-            '''opener = urllib2.build_opener()
-            opener.addheaders = [('Accept-Charset', 'utf-8')]
-    
-            response = opener.open(req)
-               
-      
-            response_data=response.read()
-            '''
-            
-            response = urllib2.urlopen(req)
-
-            response_data=response.read()
-            
-        except Exception as e:
-            RipartServiceRequest.logger.error(str(e))
-            raise
-            
-        return response_data
-        
-      """  
+ 
   
         
         
