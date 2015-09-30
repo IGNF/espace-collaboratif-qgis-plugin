@@ -26,6 +26,7 @@ import re
 import time
 from Box import Box
 import os.path
+from ClientHelper import ClientHelper
 
 class Client:
     """"
@@ -74,13 +75,17 @@ class Client:
             errMessage = xmlResponse.checkResponseValidity()
             
             if (errMessage['code']=='OK'):
-                self.logger.debug('connect �tape OK')
+                self.logger.debug('connect étape OK')
                 result = self.connect2(xmlResponse)
        
                 self.__version= xmlResponse.getVersion()
+            else :
+                result = errMessage["message"]
+                raise Exception(result)
                  
         except Exception as e:
-            self.logger.error(str(e))
+            self.logger.error(e.message)
+            raise Exception(e.message)
         
         return result
     
@@ -126,8 +131,12 @@ class Client:
                 result =connectValues['ID_AUTEUR']
                 
             else:
-                result = errMessage['message']
-                raise Exception('result')
+                result =ClientHelper.getErrorMessage(errMessage['code'])
+                """if errMessage['code']=='bad_pass' or errMessage['code']=='bad_login':
+                    result=u"Login et/ou mot de passe erroné(s)"
+                else:
+                    result = errMessage['message']"""
+                raise Exception(ClientHelper.stringToStringType(result))
        
         return result
     
@@ -161,8 +170,14 @@ class Client:
        
         data = self.getauth_get()
         
+        self.logger.debug("getProfilFromService")
+        
+        
         #on ajoute cette ligne à cause d'un probème d'encodage dans la réponse du service !
         data    = re.sub('(<STATUTXT>)(.*)(</STATUTXT>)','',data, flags=re.MULTILINE)
+        
+        
+        self.logger.debug(data)
         
         
         xml = XMLResponse(data)
@@ -172,6 +187,9 @@ class Client:
             profil = xml.extractProfil()
             profil.auteur = self.__auteur
             self.__jeton = xml.getCurrentJeton()
+        else:
+            result =ClientHelper.getErrorMessage(errMessage['code'])
+            raise Exception(ClientHelper.stringToStringType(result))
             
         return profil
         

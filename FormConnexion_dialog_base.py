@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'RipartModule_dialog_base.ui'
+# Form implementation generated from reading ui file 'FormConnexion_dialog_base.ui'
 #
-# Created: Fri Jan 23 15:59:01 2015
-#      by: PyQt4 UI code generator 4.10.2
+# Created: Wed Sep 30 15:16:27 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,12 +26,12 @@ except AttributeError:
 class Ui_RipartPlugin(object):
     def setupUi(self, RipartPlugin):
         RipartPlugin.setObjectName(_fromUtf8("RipartPlugin"))
-        RipartPlugin.resize(382, 130)
+        RipartPlugin.resize(401, 145)
         RipartPlugin.setAutoFillBackground(False)
         RipartPlugin.setSizeGripEnabled(True)
         RipartPlugin.setModal(True)
         self.btnConnect = QtGui.QPushButton(RipartPlugin)
-        self.btnConnect.setGeometry(QtCore.QRect(210, 70, 75, 23))
+        self.btnConnect.setGeometry(QtCore.QRect(230, 70, 75, 23))
         self.btnConnect.setObjectName(_fromUtf8("btnConnect"))
         self.lblLogin = QtGui.QLabel(RipartPlugin)
         self.lblLogin.setGeometry(QtCore.QRect(111, 11, 61, 16))
@@ -40,22 +40,20 @@ class Ui_RipartPlugin(object):
         self.lblLogin.setFont(font)
         self.lblLogin.setObjectName(_fromUtf8("lblLogin"))
         self.lblPwd = QtGui.QLabel(RipartPlugin)
-        self.lblPwd.setGeometry(QtCore.QRect(111, 37, 111, 16))
+        self.lblPwd.setGeometry(QtCore.QRect(111, 40, 111, 16))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lblPwd.setFont(font)
         self.lblPwd.setObjectName(_fromUtf8("lblPwd"))
-        self.btnFoo = QtGui.QPushButton(RipartPlugin)
-        self.btnFoo.setGeometry(QtCore.QRect(111, 98, 75, 23))
-        self.btnFoo.setObjectName(_fromUtf8("btnFoo"))
         self.lineEditLogin = QtGui.QLineEdit(RipartPlugin)
-        self.lineEditLogin.setGeometry(QtCore.QRect(228, 11, 133, 20))
+        self.lineEditLogin.setGeometry(QtCore.QRect(230, 11, 161, 20))
         self.lineEditLogin.setObjectName(_fromUtf8("lineEditLogin"))
         self.lineEditPwd = QtGui.QLineEdit(RipartPlugin)
-        self.lineEditPwd.setGeometry(QtCore.QRect(228, 37, 133, 20))
+        self.lineEditPwd.setGeometry(QtCore.QRect(230, 40, 161, 20))
+        self.lineEditPwd.setEchoMode(QtGui.QLineEdit.Password)
         self.lineEditPwd.setObjectName(_fromUtf8("lineEditPwd"))
         self.btnCancel = QtGui.QPushButton(RipartPlugin)
-        self.btnCancel.setGeometry(QtCore.QRect(290, 70, 75, 23))
+        self.btnCancel.setGeometry(QtCore.QRect(310, 70, 75, 23))
         self.btnCancel.setObjectName(_fromUtf8("btnCancel"))
         self.label = QtGui.QLabel(RipartPlugin)
         self.label.setGeometry(QtCore.QRect(20, 20, 46, 13))
@@ -65,8 +63,29 @@ class Ui_RipartPlugin(object):
         self.label_2 = QtGui.QLabel(RipartPlugin)
         self.label_2.setGeometry(QtCore.QRect(10, 0, 91, 91))
         self.label_2.setText(_fromUtf8(""))
+        self.label_2.setPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/images/logo_IGN.png")))
         self.label_2.setScaledContents(True)
         self.label_2.setObjectName(_fromUtf8("label_2"))
+        self.lblErreur = QtGui.QLabel(RipartPlugin)
+        self.lblErreur.setGeometry(QtCore.QRect(10, 100, 381, 41))
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.WindowText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.WindowText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(120, 120, 120))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
+        self.lblErreur.setPalette(palette)
+        font = QtGui.QFont()
+        font.setFamily(_fromUtf8("MS Sans Serif"))
+        font.setPointSize(8)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lblErreur.setFont(font)
+        self.lblErreur.setObjectName(_fromUtf8("lblErreur"))
 
         self.retranslateUi(RipartPlugin)
         QtCore.QObject.connect(RipartPlugin, QtCore.SIGNAL(_fromUtf8("accepted()")), self.btnConnect.click)
@@ -78,6 +97,7 @@ class Ui_RipartPlugin(object):
         self.btnConnect.setText(_translate("RipartPlugin", "Connecter", None))
         self.lblLogin.setText(_translate("RipartPlugin", "Votre login", None))
         self.lblPwd.setText(_translate("RipartPlugin", "Votre mot de passe", None))
-        self.btnFoo.setText(_translate("RipartPlugin", "Foo", None))
         self.btnCancel.setText(_translate("RipartPlugin", "Annuler", None))
+        self.lblErreur.setText(_translate("RipartPlugin", "Message d\'erreur", None))
+
 

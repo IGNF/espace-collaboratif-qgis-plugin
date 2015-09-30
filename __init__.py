@@ -24,7 +24,7 @@
 
 import sys 
 sys.path.append(r'D:\eclipse\plugins\org.python.pydev_3.9.1.201501081637\pysrc') 
-import pydevd   
+#import pydevd   
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
@@ -34,5 +34,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
-    from .RipartModule import RipartPlugin
+    from RipartModule import RipartPlugin
     return RipartPlugin(iface)

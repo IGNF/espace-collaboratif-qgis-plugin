@@ -22,15 +22,28 @@
 """
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtGui import QAction, QIcon
+from PyQt4 import QtGui, uic
+from PyQt4.QtGui import QMessageBox
+from qgis.core import *
+
 # Initialize Qt resources from file resources.py
 import resources
+
 # Import the code for the dialog
-from RipartModule_dialog import RipartPluginDialog
+from FormConnexion_dialog import FormConnexionDialog
+from FormInfo import FormInfo
+
+from Contexte import Contexte
+
 import os.path
+from qgis._core import QgsProject
+
 
 
 class RipartPlugin:
     """QGIS Plugin Implementation."""
+    
+    context=None
 
     def __init__(self, iface):
         """Constructor.
@@ -57,9 +70,14 @@ class RipartPlugin:
 
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
+        
+        #Init Contexte
+        self.context= Contexte.getInstance(self,QgsProject.instance())
 
         # Create the dialog (after translation) and keep reference
-        self.dlg = RipartPluginDialog()
+        self.dlgConnexion = FormConnexionDialog()
+        
+        self.dlgInfo=FormInfo()
         
         #sel.dlgUpdate = 
         
@@ -72,7 +90,7 @@ class RipartPlugin:
         self.toolbar.setObjectName(u'RipartPlugin')
         
         
-        
+        #self.contexte.setProjectParams(QgsProject)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -177,8 +195,8 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/update.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'IGN_Ripart'),
-            callback=self.update,
+            text=self.tr(u'Télécharger les remarques RIPart'),
+            callback=self.downloadRemarks,
             parent=self.iface.mainWindow())
 
     def unload(self):
@@ -193,26 +211,53 @@ class RipartPlugin:
     def run(self):
         """Run method that performs all the real work"""
         # show the dialog
-        self.dlg.show()
+        #self.dlg.show()
         # Run the dialog event loop
-        result = self.dlg.exec_()
+        #result = self.dlg.exec_()
         
              
         # See if OK was pressed
-        if result:
+        #if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             #if self.dlg.btnConnect.click():
              
-            pass
-
+        #    pass
+        #self.context.getConnexionRipart(self.dlg)
+        self.context= Contexte.getInstance(self,QgsProject)
+        res= self.context.setConnexionRipartParam()
+        
+        if res=="":       
+            self.dlgConnexion.setContext(self.context)
+            result =  self.dlgConnexion.show()
+        
+        
+    def downloadRemarks(self):
+        msgBox = QtGui.QMessageBox()
+        msgBox.setWindowTitle("ZZ")
+        msgBox.setText(u"Téléchargement")
+        msgBox.addButton(QtGui.QPushButton('Accept'), QtGui.QMessageBox.YesRole)
+        msgBox.addButton(QtGui.QPushButton('Reject'), QtGui.QMessageBox.NoRole)
+        msgBox.addButton(QtGui.QPushButton('Cancel'), QtGui.QMessageBox.RejectRole)
+        #msgBox.exec_()
+        
+        self.contexte= Contexte.getInstance(self,QgsProject)
+        layCnt=self.contexte.mapCan.layerCount()
+        s=u"erroné"
+        #su= s.decode('utf8')
+        msgBox.setText(s)
+        msgBox.exec_()
+        
+        
+        self.dlgInfo.textInfo.setText("sqfsfqsqf")
+        self.dlgInfo.show()
 
     def update(self):
         """Run method that performs all the real work"""
         # show the dialog
-        self.dlg.show()
+        self.dlgConnexion.show()
         # Run the dialog event loop
-        result = self.dlg.exec_()
+        result = self.dlgConnexion.exec_()
         # See if OK was pressed
         if result:
             # Do something useful here - delete the line containing pass and
@@ -221,5 +266,4 @@ class RipartPlugin:
         
    
     
-           
-	 
+    

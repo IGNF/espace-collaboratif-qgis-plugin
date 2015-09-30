@@ -60,4 +60,3 @@ ZoneGeographique = Enum ("UNDEFINED",
                          #Wallis et Futuna 
                          "WLF")
                                 
-    

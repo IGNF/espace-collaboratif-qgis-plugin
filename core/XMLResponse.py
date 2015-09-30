@@ -18,6 +18,7 @@ from Groupe import  Groupe
 from Attribut import Attribut
 from GeoReponse import GeoReponse
 from datetime import datetime
+from ClientHelper import ClientHelper
 
 class XMLResponse(object):
     """
@@ -41,8 +42,12 @@ class XMLResponse(object):
         :param response: la réponse du serveur (xml)
         :type response: string 
         """
-       
-        self.response = response;
+        """if type(response)==type('str'):
+            self.response = response
+        else :
+            self.response = response.encode('utf-8');"""
+            
+        self.response =ClientHelper.stringToStringType(response)
         
         try:
             self.root =ET.fromstring(self.response)

@@ -289,6 +289,145 @@ Elle rève !!
 </GEOREM>
 </geors>"""
 
+    xmlaut2=u"""<?xml version='1.0' encoding='UTF-8'?>
+<geors version='0.1'>
+    <REPONSE type='geoaut_get'>
+        <ERREUR code='OK'>OK</ERREUR>
+        <JETON>152628375956091cbf658ff2.15839337</JETON>
+        <SITE>Demo-RIPart</SITE>
+    </REPONSE>
+    <AUTEUR>
+        <NOM>mborne</NOM>
+        <STATUT>1comite</STATUT>
+        <STATUTXT>R dacteur</STATUTXT>
+    </AUTEUR>
+    <PROFIL>
+        <ID_GEOPROFIL>277</ID_GEOPROFIL>
+        <TITRE>profil éèà</TITRE>
+        <ZONE>FXX</ZONE>
+        <ID_GEOGROUPE>8</ID_GEOGROUPE>
+        <GROUPE>Groupe Test</GROUPE>
+        <LOGO>http://demo-ripart.ign.fr/IMG/rubon8.jpg</LOGO>
+        <FILTRE/>
+        <PRIVE>0</PRIVE>
+    </PROFIL>
+    <THEMES>   
+        <THEME>
+            <ID_GEOGROUPE>7</ID_GEOGROUPE> 
+            <NOM>Route</NOM>
+        </THEME>
+
+        <THEME>
+            <ID_GEOGROUPE>7</ID_GEOGROUPE> 
+            <NOM>Adresse, Lieux-dits</NOM>
+        </THEME>
+
+        <THEME>
+            <ID_GEOGROUPE>7</ID_GEOGROUPE> 
+            <NOM>Points d'intérêt</NOM>
+        </THEME>
+
+        <THEME>
+            <ID_GEOGROUPE>7</ID_GEOGROUPE> 
+            <NOM>Bâti</NOM>
+        </THEME>
+
+        <THEME>
+            <ID_GEOGROUPE>7</ID_GEOGROUPE> 
+            <NOM>Administratif</NOM>
+        </THEME>
+        <THEME>
+            <ID_GEOGROUPE>21</ID_GEOGROUPE> 
+            <NOM>Sentier, GR</NOM>
+        </THEME>
+
+        <THEME>
+            <ID_GEOGROUPE>21</ID_GEOGROUPE> 
+            <NOM>Parcelles, Cadastre</NOM>
+        </THEME>
+
+        <THEME>
+            <ID_GEOGROUPE>21</ID_GEOGROUPE> 
+            <NOM>Autre</NOM>
+        </THEME>
+        <THEME>
+            <ID_GEOGROUPE>11</ID_GEOGROUPE> 
+            <NOM>@BDCarthage</NOM>
+        </THEME>
+        <THEME>
+            <ID_GEOGROUPE>8</ID_GEOGROUPE> 
+            <NOM>Voeux</NOM>
+        </THEME>
+
+        <ATTRIBUT>
+            <ID_GEOGROUPE>8</ID_GEOGROUPE> 
+            <NOM>Voeux</NOM>
+            <ATT>Type</ATT>
+            <TYPE>list</TYPE>
+            <VALEURS>&lt;VAL&gt;&lt;/VAL&gt;&lt;VAL&gt;Santé&lt;/VAL&gt;&lt;VAL&gt;Joie&lt;/VAL&gt;&lt;VAL&gt;Amour&lt;/VAL&gt;&lt;VAL&gt;Bonheur&lt;/VAL&gt;&lt;VAL&gt;Sérénité&lt;/VAL&gt;</VALEURS>
+        </ATTRIBUT>   
+        <THEME>
+            <ID_GEOGROUPE>8</ID_GEOGROUPE> 
+            <NOM>Gestion des routes</NOM>
+        </THEME>
+
+        <ATTRIBUT>
+            <ID_GEOGROUPE>8</ID_GEOGROUPE> 
+            <NOM>Gestion des routes</NOM>
+            <ATT>Type de voie</ATT>
+            <TYPE>text</TYPE>
+            <VALEURS>&lt;VAL&gt;&lt;/VAL&gt;</VALEURS>
+        </ATTRIBUT>  
+        <ATTRIBUT>
+            <ID_GEOGROUPE>8</ID_GEOGROUPE> 
+            <NOM>Gestion des routes</NOM>
+            <ATT>Type 2</ATT>
+            <TYPE>list</TYPE>
+            <VALEURS>&lt;VAL&gt;&lt;/VAL&gt;&lt;VAL&gt;autoroute&lt;/VAL&gt;&lt;VAL&gt;route principale&lt;/VAL&gt;&lt;VAL&gt;route secondaire&lt;/VAL&gt;</VALEURS>
+        </ATTRIBUT>   
+        <ATTRIBUT>
+            <ID_GEOGROUPE>8</ID_GEOGROUPE> 
+            <NOM>Gestion des routes</NOM>
+            <ATT>type 3</ATT>
+            <TYPE>checkbox</TYPE>
+            <VALEURS>&lt;VAL&gt;nature&lt;/VAL&gt;</VALEURS>
+        </ATTRIBUT>
+
+        <ATTRIBUT>
+            <ID_GEOGROUPE>8</ID_GEOGROUPE> 
+            <NOM>Gestion des routes</NOM>
+            <ATT>toto</ATT>
+            <TYPE>list</TYPE>
+            <VALEURS>&lt;VAL&gt;toto&lt;/VAL&gt;&lt;VAL&gt;titi&lt;/VAL&gt;&lt;VAL&gt;tutu&lt;/VAL&gt;</VALEURS>
+        </ATTRIBUT>
+
+        <THEME>
+            <ID_GEOGROUPE>8</ID_GEOGROUPE> 
+            <NOM>Défense</NOM>
+        </THEME>
+    </THEMES>
+    <GEOGROUPE>
+        <ID_GEOGROUPE>8</ID_GEOGROUPE>
+        <NOM>Groupe Test</NOM>
+        <ADMIN/>
+    </GEOGROUPE>
+    <GEOGROUPE>
+        <ID_GEOGROUPE>50</ID_GEOGROUPE>
+        <NOM>ICPE</NOM>
+        <ADMIN/>
+    </GEOGROUPE>
+</geors>"""
+
+
+    xmlValid= u"""<?xml version='1.0' encoding='UTF-8'?>
+<geors version='0.1'>
+<REPONSE type='connect'>
+    <ERREUR code='OK'>OK</ERREUR>
+    <ALEA1>484376529560287b9419a75.70279673</ALEA1>
+    <ALEA2>286485418560291c537f0a9.13606656</ALEA2>
+    <SITE>Demo-RIParté</SITE>
+</REPONSE>
+</geors>"""
     def setUp(self):
         pass
 
@@ -299,6 +438,14 @@ Elle rève !!
 
     def test_responseValidity(self):
         xmlresponse= XMLResponse(self.xml1)
+        
+        result=xmlresponse.checkResponseValidity()
+        
+        self.assertEquals(result['code'], 'OK')
+        self.assertEquals(result['message'], 'OK')
+        
+    def test_responseValidity2(self):
+        xmlresponse= XMLResponse(self.xmlValid)
         
         result=xmlresponse.checkResponseValidity()
         
@@ -373,7 +520,18 @@ Elle rève !!
         
     
         
-
+    def test_getClientProfil(self):
+        xml = XMLResponse(self.xmlaut2)
+        errMessage = xml.checkResponseValidity()
+        
+    
+        self.assertEqual(errMessage['code'], 'OK')
+        
+        
+      
+           
+            
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

@@ -18,7 +18,7 @@ class TestConnection(object):
     '''
     login = "mborne"
     pwd ="mborne"
-    url ="http://demo-ripart.ign.fr"
+    url ="http://zdemo-ripart.ign.fr"
     
     
     # create logger

@@ -7,6 +7,7 @@ Created on 26 janv. 2015
 import logging
 
 import requests
+from ClientHelper import ClientHelper
 
 class RipartServiceRequest(object):
     """
@@ -38,10 +39,15 @@ class RipartServiceRequest(object):
             else :
                 r= requests.post(url, data=data,files=files, verify=False)
      
+            if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
+                raise Exception(u"Problème de connexion: veuillez vérifier l'url\ndu serveur dans le fichier de configuration")
+            
             r.encoding ='utf-8'
             response=r.text
+            
         except Exception as e:
-            RipartServiceRequest.logger.error(str(e))
+            
+            RipartServiceRequest.logger.error(e.message)
             raise
         
         return  response
@@ -49,9 +55,7 @@ class RipartServiceRequest(object):
     
     
     
-    
-
- 
+   
   
         
         
