@@ -29,9 +29,9 @@ class ClientHelper(object):
     @staticmethod
     def getErrorMessage(code):
         if code in ['bad_login','bad_pass']:
-            return 'Login et/ou mot de passe erroné(s)'
+            return ClientHelper.stringToStringType('Login et/ou mot de passe erroné(s)')
         elif code =="no_group":
-            return "Accès refusé. L'utilisateur n'appartient à aucun groupe."
+            return ClientHelper.stringToStringType("Accès refusé. L'utilisateur n'appartient à aucun groupe.")
         else:
             return code
         

@@ -80,10 +80,12 @@ class Client:
        
                 self.__version= xmlResponse.getVersion()
             else :
-                result = errMessage["message"]
+                #result = errMessage["message"]
+                result =ClientHelper.getErrorMessage(errMessage['code'])
                 raise Exception(result)
                  
         except Exception as e:
+            
             self.logger.error(e.message)
             raise Exception(e.message)
         
@@ -136,7 +138,7 @@ class Client:
                     result=u"Login et/ou mot de passe erroné(s)"
                 else:
                     result = errMessage['message']"""
-                raise Exception(ClientHelper.stringToStringType(result))
+                raise Exception(result)
        
         return result
     

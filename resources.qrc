@@ -2,6 +2,9 @@
     <qresource prefix="/plugins/RipartPlugin" >
         <file>images/connect.png</file>
        <file>images/update.png</file>
+       <file>images/answer.png</file>
+       <file>images/create.png</file>
+       <file>images/cleaning.png</file>
 	   <file>images/logo_IGN.png</file>
     </qresource>
 </RCC>

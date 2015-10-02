@@ -1,0 +1,23 @@
+<Paramètres_connexion_à_Ripart>
+  <Serveur>
+    <URLHost>https://demo-ripart.ign.fr</URLHost>
+    <Login>mborne</Login>
+  </Serveur>
+  <ArcMap>
+    <Date_extraction>01/06/2000 00:00:00</Date_extraction>
+    <Pagination>100</Pagination>
+    <Zone_extraction>
+    </Zone_extraction>
+    <Thèmes_préférés>
+      <Thème>Administratif</Thème>
+    </Thèmes_préférés>
+    <Afficher_Croquis>Oui</Afficher_Croquis>
+    <Import_pour_groupe>false</Import_pour_groupe>
+    <Attributs_croquis>
+      <Calque_Nom>polygones</Calque_Nom>
+      <Calque_Champ>Id</Calque_Champ>
+      <Calque_Champ>comment</Calque_Champ>
+      <Calque_Champ>date</Calque_Champ>
+    </Attributs_croquis>
+  </ArcMap>
+</Paramètres_connexion_à_Ripart>

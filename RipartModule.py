@@ -36,7 +36,7 @@ from FormInfo import FormInfo
 from Contexte import Contexte
 
 import os.path
-from qgis._core import QgsProject
+from qgis._core import QgsProject,  QgsMessageLog
 
 
 
@@ -72,7 +72,7 @@ class RipartPlugin:
                 QCoreApplication.installTranslator(self.translator)
         
         #Init Contexte
-        self.context= Contexte.getInstance(self,QgsProject.instance())
+        #self.context= Contexte.getInstance(self,QgsProject.instance())
 
         # Create the dialog (after translation) and keep reference
         self.dlgConnexion = FormConnexionDialog()
@@ -181,6 +181,7 @@ class RipartPlugin:
 
         return action
 
+
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -189,6 +190,7 @@ class RipartPlugin:
             icon_path,
             text=self.tr(u'Connexion au service RIPart'),
             callback=self.run,
+            status_tip=self.tr(u'Connexion au service RIPart'),
             parent=self.iface.mainWindow())
       
         
@@ -197,7 +199,34 @@ class RipartPlugin:
             icon_path,
             text=self.tr(u'Télécharger les remarques RIPart'),
             callback=self.downloadRemarks,
+            status_tip=self.tr(u'Télécharger les remarques RIPart'),
             parent=self.iface.mainWindow())
+        
+        
+        icon_path = ':/plugins/RipartPlugin/images/answer.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Répondre à une remarque RIPart'),
+            callback=self.answerToRemark,
+            status_tip=self.tr(u'Répondre à une remarque RIPart'),
+            parent=self.iface.mainWindow())
+        
+        icon_path = ':/plugins/RipartPlugin/images/create.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Nouvelle remarque'),
+            callback=self.createRemark,
+            status_tip=self.tr(u'Nouvelle remarque'),
+            parent=self.iface.mainWindow())
+        
+        icon_path = ':/plugins/RipartPlugin/images/cleaning.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Supprimer les remarques de la carte en cours'),
+            callback=self.removeRemarks,
+            status_tip=self.tr(u'Supprimer les remarques de la carte en cours'),
+            parent=self.iface.mainWindow())
+        
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -210,25 +239,15 @@ class RipartPlugin:
 
     def run(self):
         """Run method that performs all the real work"""
-        # show the dialog
-        #self.dlg.show()
-        # Run the dialog event loop
-        #result = self.dlg.exec_()
-        
-             
-        # See if OK was pressed
-        #if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            #if self.dlg.btnConnect.click():
-             
-        #    pass
-        #self.context.getConnexionRipart(self.dlg)
         self.context= Contexte.getInstance(self,QgsProject)
+        if self.context ==None :
+            return
         res= self.context.setConnexionRipartParam()
         
-        if res=="":       
+       
+        if self.context:       
             self.dlgConnexion.setContext(self.context)
+            self.dlgConnexion.lblErreur.setVisible(False)
             result =  self.dlgConnexion.show()
         
         
@@ -249,8 +268,17 @@ class RipartPlugin:
         msgBox.exec_()
         
         
-        self.dlgInfo.textInfo.setText("sqfsfqsqf")
+        self.dlgInfo.textInfo.setText(u"éésqfsfqsqf")
         self.dlgInfo.show()
+        
+    def answerToRemark(self):
+        print "answer"
+        
+    def createRemark(self):
+        print "create"
+        
+    def removeRemarks(self):
+        print "remove"
 
     def update(self):
         """Run method that performs all the real work"""

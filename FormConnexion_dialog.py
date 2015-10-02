@@ -22,6 +22,8 @@
 """
 
 import os
+import logging
+import core.RipartLogger 
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QMessageBox
@@ -53,6 +55,9 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
     context= None
     urlhost =""
     
+    #logger
+    logger=logging.getLogger("FormConnexionDialog")
+    
     def __init__(self, parent=None):
         """Constructor."""
         super(FormConnexionDialog, self).__init__(parent)
@@ -71,11 +76,15 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
       
         self.btnCancel.clicked.connect(self.close)
      
- 
+        
     
     @pyqtSlot()
     def connectToService(self):
+        self.logger.debug("connectToService")
+        
         self.lblErreur.setVisible(False)
+        
+      
               
         login= self.lineEditLogin.text()
         pwd= self.lineEditPwd.text()
@@ -93,6 +102,7 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
                 
                 if profil != None :
                     self.context.profil= profil
+                    self.context.saveLogin(login)
                     
                 self.setEnabled(False)
                
@@ -113,26 +123,12 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
                                
             except Exception as e:       
                 #self.lblErreur.setText(ClientHelper.getEncodeType(str(e)))
-                self.lblErreur.setText(e.message)
+                self.lblErreur.setText(ClientHelper.getEncodeType(e.message))
                 self.lblErreur.setVisible(True)
                 #QMessageBox.information(self,"IGN Ripart - ERREUR",ClientHelper.getEncodeType(str(e)))
               
               
             
-            
-       
-        #QMessageBox.information(self,"Ripart",login)
-        
-        #c= Client('http://demo-ripart.ign.fr','mborne','mborne')
-        #c= Client('http://demo-ripart.ign.fr',login,pwd)
-              
-     
-        # profil = c.getProfil()
-        
-        #QMessageBox.information(self,"Connection", c.message )
-        
-        #context = Contexte.getInstance()
-        #context.getCo
         
     def setContext(self,context):
         self.context=context
