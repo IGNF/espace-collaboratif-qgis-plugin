@@ -9,6 +9,7 @@ Created on 22 janv. 2015
 import logging
 #import RipartLogger 
 import xml.etree.ElementTree as ET
+from collections import OrderedDict
 
 import ConstanteRipart
 #from Groupe import Groupe
@@ -203,7 +204,7 @@ class Client:
         Boucle sur la méthode privée GetRemarques, pour récupérer d'éventuelles MAJ ou nouvelles remarques
         faites entre le début et la fin de la requête 
         
-        :param zone: la zone géographique
+        :param zone: code de la zone géographique
         :type zone: ConstanteRipart.ZoneGeographique
         
         :param box: bounding box dans laquelle on cherche des remarques
@@ -211,6 +212,9 @@ class Client:
         
         :param pagination: nombre de remarques par réponse
         :type pagination int
+        
+        :param date: date à partir de laquelle on cherche les remarques
+        :type date: str  (yyyy-mm-dd HH:MM:SS)
         
         :param idGroupe: identifiant du groupe de l'utilisateur
         :type idGroupe: int
@@ -227,10 +231,14 @@ class Client:
   
         while int(result['total']) >1 :
             dt = time.strftime("%Y-%m-%d %H:%I:%S")
-            result = self.__getRemarques(zone, box, pagination, dtTmp, idGroupe, result['dicoRems'])
+            tmp=self.__getRemarques(zone, box, pagination, dtTmp, idGroupe)
+            
+            result['dicoRems'].update(tmp['dicoRems'])
+            result['total']=tmp['total']
             dtTmp= dt
     
-        dicoRems= sorted(result['dicoRems'],reverse=True)    
+        dicoRems= OrderedDict(sorted(result['dicoRems'].items(), key=lambda t: t[0],reverse=True))
+                               
         
         return  dicoRems
     
@@ -239,7 +247,20 @@ class Client:
     def __getRemarques(self,zone,box,pagination, date,idGroupe):
         """Recherche les remarques et retourne le nombre total de remarques trouvées
          
-        :param zone: 
+        :param zone: code de la zone géographique
+        :type zone: ConstanteRipart.ZoneGeographique
+        
+        :param box: bounding box dans laquelle on cherche des remarques
+        :type box: Box
+        
+        :param pagination: nombre de remarques par réponse
+        :type pagination int
+        
+        :param date: date à partir de laquelle on cherche les remarques
+        :type date: str  (yyyy-mm-dd HH:MM:SS)
+        
+        :param idGroupe: identifiant du groupe de l'utilisateur
+        :type idGroupe: int
          """
         
         try:
@@ -248,11 +269,14 @@ class Client:
             self.logger.error(str(e))
             raise 
         
+        self.logger.debug("DATA:"+ data)
         xml = XMLResponse(data)
         errMessage = xml.checkResponseValidity()
         
         total = 0
-        count=pagination
+        dicoRems={}
+       
+        count=int(pagination)
         
         if errMessage['code'] =='OK':
             total = xml.getTotalResponse()
@@ -265,11 +289,11 @@ class Client:
                 data = self.georem_get(zone, box, pagination, date, idGroupe, count)
                 xml = XMLResponse(data)
                 
-                count += pagination
+                count += int(pagination)
                 
                 errMessage2 = xml.checkResponseValidity()
                 if errMessage2['code'] =='OK':
-                    dicoRems = xml.extractRemarques()          
+                    dicoRems.update(xml.extractRemarques())          
                     self.__jeton= xml.getCurrentJeton()
                      
         
@@ -323,11 +347,11 @@ class Client:
         if self.__jeton==None or self.__auteur.id==None :
             return None
         else:
-            jeton_md5 = self.getMD5Hash(id_georem + self.__auteur.id +ConstanteRipart.RIPART_CLIENT_PROTOCOL+self._jeton)
+            jeton_md5 = self.getMD5Hash(str(id_georem) + self.__auteur.id +ConstanteRipart.RIPART_CLIENT_PROTOCOL+self.__jeton)
             
             georem_url += "&jeton_md5=" + jeton_md5 + \
-                          "&id_auteur=" + self.__auteur.Id + \
-                          "&id_georem=" + id_georem;
+                          "&id_auteur=" + self.__auteur.id + \
+                          "&id_georem=" + str(id_georem);
         
             data = RipartServiceRequest.makeHttpRequest(georem_url)
             
@@ -527,7 +551,7 @@ class Client:
             
             if (box !=None):       
                 if ( box.XMin != None and box.XMax != None and box.YMin!=None and box.YMax!= None):  
-                    params['box']= str(box.XMin)+','+str(box.XMax) +','+ str(box.YMin) +',' +str(box.YMax)
+                    params['box']= str(box.XMin) +','+ str(box.YMin) +','+str(box.XMax)+',' +str(box.YMax)
             
             if idGroupe > -1:
                 params['id_geogroupe']= idGroupe
@@ -539,7 +563,7 @@ class Client:
             params['tri'] ='id_georem'
             
             
-            data= RipartServiceRequest.makeHttpRequest(self.__url, params=params)
+            data= RipartServiceRequest.makeHttpRequest(self.__url, data=params)
             
         return data
     

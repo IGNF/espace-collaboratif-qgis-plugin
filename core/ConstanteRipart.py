@@ -59,4 +59,5 @@ ZoneGeographique = Enum ("UNDEFINED",
                          "SPM",  
                          #Wallis et Futuna 
                          "WLF")
-                                
+
+namespace={'gml':'http://www.opengis.net/gml'}                                

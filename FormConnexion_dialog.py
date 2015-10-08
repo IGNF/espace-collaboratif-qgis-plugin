@@ -37,7 +37,7 @@ from core.Client import Client
 from core import ConstanteRipart
 from core import Profil
 from core.ClientHelper import ClientHelper
-from Contexte import Contexte
+#from Contexte import Contexte
 from qgis.core import *
 
 from FormInfo import FormInfo
@@ -54,6 +54,8 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
     
     context= None
     urlhost =""
+    connect=False
+    cancel=False
     
     #logger
     logger=logging.getLogger("FormConnexionDialog")
@@ -67,24 +69,52 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-
-
-        
+   
         self.lblErreur.setVisible(False)
            
         self.btnConnect.clicked.connect(self.connectToService)
       
-        self.btnCancel.clicked.connect(self.close)
+        self.btnCancel.clicked.connect(self.cancel)
      
+    
+    def setLogin(self,login):
+        self.lineEditLogin.setText(login)  
+    
+    def getLogin(self):
+        return self.lineEditLogin.text()
+    
+    def getPwd(self):
+        return self.lineEditPwd.text()
+    
+    
+    def setErreur(self,message):
+        self.lblErreur.setText(message)
+        self.lblErreur.setVisible(True)
         
+        
+    def getEvent(self):
+        if self.cancel :
+            return 0
+        elif self.connect:
+            return 1
+        else :
+            return -1    
     
     @pyqtSlot()
     def connectToService(self):
         self.logger.debug("connectToService")
+
+        login= self.lineEditLogin.text()
+        pwd= self.lineEditPwd.text()
         
-        self.lblErreur.setVisible(False)
-        
-      
+        if len(login)==0 or len(pwd)==0 :
+            QMessageBox.information(self,"Ripart","Veuillez saisir votre login et votre mot de passe")
+        else:
+            self.cancel=False
+            self.connect=True
+            
+            self.close()
+        """self.lblErreur.setVisible(False)
               
         login= self.lineEditLogin.text()
         pwd= self.lineEditPwd.text()
@@ -104,6 +134,7 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
                     self.context.profil= profil
                     self.context.saveLogin(login)
                     
+                    
                 self.setEnabled(False)
                
                 dlgInfo=FormInfo()
@@ -120,13 +151,17 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
                 if dlgInfo.Accepted:
                     self.close()
                     self.setEnabled(True)
+                    self.context.login=login
+                    self.context.pwd=pwd
+                    self.context.client= client
+                    #self.context.addRipartLayersToMap()
                                
             except Exception as e:       
                 #self.lblErreur.setText(ClientHelper.getEncodeType(str(e)))
                 self.lblErreur.setText(ClientHelper.getEncodeType(e.message))
                 self.lblErreur.setVisible(True)
                 #QMessageBox.information(self,"IGN Ripart - ERREUR",ClientHelper.getEncodeType(str(e)))
-              
+        """      
               
             
         
@@ -142,5 +177,8 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         
     @pyqtSlot()
     def cancel(self):
-        self.reject
+        #self.reject
+        self.cancel=True
+        self.connect=False
+        self.close()
        

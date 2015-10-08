@@ -28,7 +28,7 @@ class Croquis(object):
     type = CroquisType.Vide
     
     # Nom du croquis
-    nom = None
+    nom = ""
     
     #La liste des attributs (clé,valeur)
     attributs = list()
@@ -36,10 +36,10 @@ class Croquis(object):
     #La liste des points composants le croquis (coordonnées)
     points = list()
     
-
+    coordinates=""
   
 
-    def __init__(self, nom=None, typeCroquis=CroquisType.Vide, points=None):
+    def __init__(self, nom="", typeCroquis=CroquisType.Vide, points=None):
         """
         Constructeur d'un croquis
         
@@ -65,7 +65,8 @@ class Croquis(object):
         """
         self.type=typeCroquis
          
-         
+     
+       
          
     def addPoint(self,point):
         """
@@ -230,7 +231,21 @@ class Croquis(object):
         xmlDoc.append(objet)
         
         return xmlDoc
+    
+    
+    def getAttributsInStringFormat(self):
+        """
+        """
+        satt=""  
+        for n in self.attributs:
+            att=self.attributs[n]
+            satt +=  att.nom + "='"+att.valeur +"'|"
        
+        if len(satt)>0:
+            satt=satt[:-1]
+            
+    def getCoordinates(self):
+        return self.coordinates     
 
 if __name__ == "__main__":
     c= Croquis()

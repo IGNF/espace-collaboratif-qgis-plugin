@@ -20,6 +20,9 @@
  *                                                                         *
  ***************************************************************************/
 """
+import logging
+from core.RipartLoggerCl import RipartLogger
+
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtGui import QAction, QIcon
 from PyQt4 import QtGui, uic
@@ -34,16 +37,20 @@ from FormConnexion_dialog import FormConnexionDialog
 from FormInfo import FormInfo
 
 from Contexte import Contexte
+from core.Client import Client
 
 import os.path
 from qgis._core import QgsProject,  QgsMessageLog
 
+from ImporterRipart import ImporterRipart
+from RipartException import RipartException
 
 
 class RipartPlugin:
     """QGIS Plugin Implementation."""
     
     context=None
+    logger= None
 
     def __init__(self, iface):
         """Constructor.
@@ -53,6 +60,9 @@ class RipartPlugin:
             application at run time.
         :type iface: QgsInterface
         """
+        self.logger=RipartLogger("RipartPlugin").getRipartLogger()
+        
+        
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
@@ -242,34 +252,27 @@ class RipartPlugin:
         self.context= Contexte.getInstance(self,QgsProject)
         if self.context ==None :
             return
-        res= self.context.setConnexionRipartParam()
-        
-       
-        if self.context:       
-            self.dlgConnexion.setContext(self.context)
-            self.dlgConnexion.lblErreur.setVisible(False)
-            result =  self.dlgConnexion.show()
+      
+        if self.context:    
+            res=self.context.getConnexionRipart(newLogin=True)   
         
         
     def downloadRemarks(self):
-        msgBox = QtGui.QMessageBox()
-        msgBox.setWindowTitle("ZZ")
-        msgBox.setText(u"Téléchargement")
-        msgBox.addButton(QtGui.QPushButton('Accept'), QtGui.QMessageBox.YesRole)
-        msgBox.addButton(QtGui.QPushButton('Reject'), QtGui.QMessageBox.NoRole)
-        msgBox.addButton(QtGui.QPushButton('Cancel'), QtGui.QMessageBox.RejectRole)
-        #msgBox.exec_()
         
-        self.contexte= Contexte.getInstance(self,QgsProject)
-        layCnt=self.contexte.mapCan.layerCount()
-        s=u"erroné"
-        #su= s.decode('utf8')
-        msgBox.setText(s)
-        msgBox.exec_()
+        try:
+            self.context= Contexte.getInstance(self,QgsProject)
+            
+            importRipart= ImporterRipart(self.context)
+            importRipart.doImport()
+        except RipartException as e:
+            self.logger.error(e.message)
         
         
-        self.dlgInfo.textInfo.setText(u"éésqfsfqsqf")
-        self.dlgInfo.show()
+
+    def connectToRipart(self,context):
+        client = Client(context.urlHostRipart, context.login, context.pwd)
+        return client        
+       
         
     def answerToRemark(self):
         print "answer"

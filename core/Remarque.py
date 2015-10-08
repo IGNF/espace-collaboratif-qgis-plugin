@@ -11,7 +11,7 @@ from  Groupe import Groupe
 from Auteur import Auteur
 from Theme  import Theme
 from datetime import datetime
-
+from ClientHelper import ClientHelper
 
 class Remarque(object):
     """
@@ -110,6 +110,15 @@ class Remarque(object):
         self.source=""
         
     
+    def getAttribut(self,attName, subAtt=None):
+        att= getattr(self, attName)
+        if att==None:
+            return ""
+        elif subAtt!=None:
+            
+            return ClientHelper.getValForDB(getattr(att,subAtt))
+        else:
+            return ClientHelper.getValForDB(att)   
 
         
     def concatenateThemes(self):
@@ -122,7 +131,7 @@ class Remarque(object):
         
         for t in self.themes:
             if isinstance(t, Theme):           
-                result += t.groupe.nom
+                result += ClientHelper.getValForDB(t.groupe.nom)
                 
         return result         
                 
@@ -163,7 +172,7 @@ class Remarque(object):
         if len(self.documents)==0 :
             return ""
         else :
-            return self.documents[0]
+            return self.documents[0].text
          
     
     

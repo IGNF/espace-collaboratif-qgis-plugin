@@ -191,9 +191,10 @@ class XMLResponse(object):
             gr = node.text
             
             node =self.root.find('./PROFIL/GROUPE')
-            gr= node.text
+            profil.geogroupe.nom= node.text
             
-            profil.geogroupe= gr
+            node =self.root.find('./PROFIL/ID_GEOGROUPE')
+            profil.geogroupe.id= node.text
                
             node =self.root.find('./PROFIL/LOGO')
             profil.logo= node.text
@@ -317,7 +318,12 @@ class XMLResponse(object):
                 
                 rem.id= (node.find('ID_GEOREM')).text
                 
-                rem.autorisation= (node.find('AUTORISATION')).text              
+                if (int(rem.id) <=2688 ) :
+                    self.logger.debug('rem.id '+ rem.id)
+                
+                nfind=node.find('AUTORISATION')
+                if nfind !=None:
+                    rem.autorisation= nfind.text              
               
                 for th in node.findall('THEME'):                    
                     nomGroupe = (th.find('NOM')).text
@@ -329,42 +335,72 @@ class XMLResponse(object):
                     
                 rem.themes= themes
                 
+                nfind=node.find('LIEN')
+                if nfind !=None:
+                    rem.lien = nfind.text
+                    rem.lien.replace("&amp;" , "&");
                 
-                rem.lien = (node.find('LIEN')).text
-                rem.lien.replace("&amp;" , "&");
+                nfind=node.find('LIEN_PRIVE')
+                if nfind!=None:
+                    rem.lienPrive = nfind.text
+                    rem.lienPrive.replace("&amp;" , "&");
                 
-                rem.lienPrive = (node.find('LIEN_PRIVE')).text
-                rem.lienPrive.replace("&amp;" , "&");
+                nfind=node.find('DATE')
+                if nfind!=None:
+                    rem.dateCreation= nfind.text
                 
-                rem.dateCreation= (node.find('DATE')).text
+                nfind=node.find('MAJ')
+                if nfind!=None:
+                    rem.dateMiseAJour=nfind.text
                 
-                rem.dateMiseAJour=(node.find('MAJ')).text
-                
-                rem.dateValidation=(node.find('DATE_VALID')).text
+                nfind=node.find('DATE_VALID')
+                if nfind!=None:                   
+                    rem.dateValidation=nfind.text
                 
                 lon =(node.find('LON')).text
                 lat= (node.find('LAT')).text
                 rem.position = Point(lon,lat)
                 
-                rem.statut =(node.find('STATUT')).text
+                nfind=node.find('STATUT')
+                if nfind!=None:
+                    rem.statut =nfind.text
                 
                 rem.departement= Groupe()
-                rem.departement.id= (node.find('ID_DEP')).text
-                rem.departement.nom =(node.find('DEPARTEMENT')).text
+                nfind=node.find('ID_DEP')
+                if nfind!=None:
+                    rem.departement.id= nfind.text
+                nfind=node.find('DEPARTEMENT')
+                if nfind!=None:
+                    rem.departement.nom =nfind.text
                 
-                rem.commune= (node.find('COMMUNE')).text
+                nfind=node.find('COMMUNE')
+                if nfind!=None:               
+                    rem.commune= nfind.text
                 
-                rem.commentaire= (node.find('COMMENTAIRE')).text
+                nfind=node.find('COMMENTAIRE')
+                if nfind!=None:
+                    rem.commentaire= nfind.text
+                
                 
                 rem.auteur = Auteur()
-                rem.auteur.id = (node.find('ID_AUTEUR')).text
-                rem.auteur.nom =(node.find('AUTEUR')).text
+                nfind=node.find('ID_AUTEUR')
+                if nfind !=None:
+                    rem.auteur.id = nfind.text
+                nfind=node.find('AUTEUR')
+                if nfind!=None:
+                    rem.auteur.nom =nfind.text
                 
                 rem.groupe =Groupe()
-                rem.groupe.id =(node.find('ID_GEOGROUPE')).text
-                rem.groupe.nom =(node.find('GROUPE')).text
+                nfind=node.find('ID_GEOGROUPE')
+                if nfind!=None:
+                    rem.groupe.id =nfind.text
+                nfind=node.find('GROUPE')
+                if nfind!=None:
+                    rem.groupe.nom =nfind.text
 
-                rem.id_partition=(node.find('ID_PARTITION')).text
+                nfind=node.find('ID_PARTITION')
+                if nfind !=None:
+                    rem.id_partition=nfind.text
                 
                 #croquis
                 rem = self.getCroquisForRem(rem, node)
@@ -391,7 +427,11 @@ class XMLResponse(object):
         return remarques
         
         
-        
+    def getNodeText(self,node):
+        if node!=None:
+            return node.text
+        else:
+            return ""
         
     def getCroquisForRem (self , rem, node):
         """ Extrait les croquis d'une remarque et les ajoute dans l'objet Remarque (rem)
@@ -421,6 +461,20 @@ class XMLResponse(object):
                 attribut.nom = att.attrib['name']
                 attribut.valeur = att.text
                 croquis.addAttribut(attribut)
+                
+            
+            #géométrie
+            coords= ob.iterfind('.//gml:coordinates',cst.namespace)
+            for c in coords:
+                tmp=c.text.replace(" ",";") 
+                tmp=tmp.replace(","," ")
+                tmp=tmp.replace(";",",")
+                croquis.coordinates=tmp
+                pts=c.text.split(" ")
+                for spt in pts:
+                    pt=spt.split(",")  
+                    croquis.addPoint(Point(pt[0],pt[1])) 
+            # [b.text for b in ob.iterfind('.//gml:coordinates',{'gml':'http://www.opengis.net/gml'})]
                    
             #ajoute les croquis à la remarque
             rem.addCroquis(croquis)  

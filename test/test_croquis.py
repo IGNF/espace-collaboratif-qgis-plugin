@@ -9,10 +9,26 @@ import xml.etree.ElementTree as ET
 from core.Croquis import Croquis 
 from core.Point import Point
 from core.Attribut import Attribut
+from core.XMLResponse import XMLResponse
+from core.Remarque import Remarque
 
 class Test(unittest.TestCase):
 
-    
+    xml="""<CROQUIS xmlns:gml="http://www.opengis.net/gml">
+ <objet type="Ligne">
+  <nom></nom>
+  <geometrie>
+   <gml:LineString>
+    <gml:coordinates>-1.5796599735262775,46.416677052441457 -1.5793006602337949,46.417212825275676 -1.579064584433467,46.417476660881178 -1.5786314226107703,46.417583345622631</gml:coordinates>
+   </gml:LineString>
+  </geometrie>
+  <attributs>
+   <attribut name="Type GéoConcept">toto</attribut>
+   <attribut name="Sous-type GéoConcept">toto</attribut>
+  </attributs>
+ </objet>
+</CROQUIS>
+"""
     def setUp(self):
         pass
 
@@ -129,6 +145,15 @@ class Test(unittest.TestCase):
         '</objet>'+  \
         '</CROQUIS>'
 
+
+    """def test_geometry(self):
+        xmlresponse= XMLResponse(self.xml)
+        rem= Remarque()
+        
+        xmlresponse.getCroquisForRem(rem, node)
+    """
+    
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

@@ -25,7 +25,12 @@ from core.Profil import Profil
 from pyspatialite import dbapi2 as db
 #import sqlite3
 
-from qgis.core import QgsDataSourceURI,QgsVectorLayer, QgsMapLayerRegistry
+from qgis._core import QgsDataSourceURI,QgsVectorLayer, QgsMapLayerRegistry
+
+from FormConnexion_dialog import FormConnexionDialog
+from FormInfo import FormInfo
+from core.Client import Client
+from core.ClientHelper import ClientHelper
 
 class Contexte(object):
     """
@@ -40,11 +45,16 @@ class Contexte(object):
     urlHostRipart=""    
     profil=None
     
+    client=None
+    
+    loginWindow=None
  
     #le répertoire du projet qgis
     projectDir= ""    
     #le nom du fichier (projet qgis)
     projectFileName=""
+    
+    dbPath=""
     
     #répertoire du plugin
     plugin_path = os.path.dirname(os.path.realpath(__file__))
@@ -54,12 +64,14 @@ class Contexte(object):
     
     #
     QObject= None
+    QgsProject=None
     
     #map canvas,la carte courante
     mapCan = None
     
-    #Le système géodésique employé par le service Ripart.
+    #Le système géodésique employé par le service Ripart (WGS84; EPSG:2154)
     spatialRef= None
+    
     
     conn=None
 
@@ -71,6 +83,7 @@ class Contexte(object):
         Constructor
         ''' 
         self.QObject=QObject
+        self.QgsProject= QgsProject
         self.mapCan = QObject.iface.mapCanvas()
         
         self.iface= QObject.iface
@@ -84,6 +97,11 @@ class Contexte(object):
         #self.logger.debug("test logger Contexte")
         self.spatialRef = QgsCoordinateReferenceSystem( RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
         
+        #s = QSettings()
+        #s.setValue("/Projections/defaultBehaviour", "useProject")
+        #defaultCrs= s.value('/Projections/projectDefaultCrs')
+        #s.setValue('/Projections/projectDefaultCrs', 'EPSG:4326')
+        
         try:
             #set du répertoire et fichier du projet qgis
             self.setProjectParams(QgsProject)
@@ -93,11 +111,11 @@ class Contexte(object):
             
             self.getOrCreateDatabase()
             
-            self.addRipartLayersToMap()
+            #self.addRipartLayersToMap()
             
         except RipartException as e:
             #self.logger.setLevel(logging.DEBUG)
-            self.logger.debug(e.message)
+            self.logger.error("init contexte:" + e.message)
    
             raise
               
@@ -112,12 +130,14 @@ class Contexte(object):
                 #QgsMessageLog.logMessage("Your plugin code has been executed correctly", level=QgsMessageLog.INFO, tag="ripart")
             except RipartException as e:
                 Contexte.instance=None
+                raise e
             
         elif  (Contexte.instance.projectDir!= QgsProject.instance().homePath() or
-              Contexte.instance.projectFileName!=ntpath.basename(QgsProject.instance().fileName())) :
+              Contexte.instance.projectFileName+".qgs"!=ntpath.basename(QgsProject.instance().fileName())) :
             Contexte.instance = Contexte(QObject,QgsProject)
             Contexte.instance.logger.debug("nouvelle instance de contexte créée")
        
+        #Contexte.instance.addRipartLayersToMap()
         
         return Contexte.instance
     
@@ -161,7 +181,7 @@ class Contexte(object):
     def setConnexionRipartParam(self):
         """Set des informations de connexion (login + url)
         """
-        self.logger.debug("getConnexionRipart")
+        self.logger.debug("setConnexionRipart")
         ret=""
         if len(self.projectFileName)==0:
             """msgBox = QMessageBox()
@@ -175,6 +195,72 @@ class Contexte(object):
         
         return ret
     
+     
+     
+     
+    def getConnexionRipart(self,newLogin=False):
+        self.logger.debug("GetConnexionRipart ")
+        
+        result= -1;
+        
+        self.urlHostRipart=RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost).text
+        self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
+ 
+        
+        self.loginWindow = FormConnexionDialog()
+        
+        self.login = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_Login).text
+        
+        if (self.login =="" or self.pwd=="" or newLogin):
+            self.loginWindow.setLogin(self.login)
+            self.loginWindow.exec_()
+
+            while (result<0):      
+                if self.loginWindow.cancel:
+                    print "rejected"
+                    self.loginWindow = None
+                    result=0
+                elif self.loginWindow.connect :
+                    print "connect"
+                    self.login = self.loginWindow.getLogin()
+                    self.pwd=self.loginWindow.getPwd()
+                    
+                    try: 
+                        client = Client(self.urlHostRipart, self.login, self.pwd)
+                        profil = client.getProfil()
+                        
+                        if profil != None :
+                            self.profil= profil
+                            self.saveLogin(self.login)
+                          
+                            dlgInfo=FormInfo()
+                            dlgInfo.textInfo.setText(u"<b>Connexion réussie au service Ripart.</b>")
+                            dlgInfo.textInfo.append("<br/>Serveur : "+ self.urlHostRipart)
+                            dlgInfo.textInfo.append("Login : "+  self.login)
+                            dlgInfo.textInfo.append("Profil: "+ profil.titre)
+                            dlgInfo.textInfo.append("Zone : "+ profil.zone.__str__())
+    
+                            dlgInfo.exec_()
+                            
+                            if dlgInfo.Accepted:
+                                self.client=client
+                                result= 1
+                    except Exception as e:
+                        result=-1
+                        self.pwd=""
+                        self.loginWindow.setErreur(ClientHelper.getEncodeType(e.message))
+                        self.loginWindow.exec_()
+                        
+        else: 
+            try: 
+                client = Client(self.urlHostRipart, self.login, self.pwd)   
+                result=1
+                self.client=client
+            except RipartException as e:
+                print e.message
+                
+        return result
+    
     
 
     def saveLogin(self,login):
@@ -186,41 +272,47 @@ class Contexte(object):
         """
         """
         dbName = self.projectFileName +"_RIPART"
-        dbPath = self.projectDir+"/"+dbName+".sqlite"
+        self.dbPath = self.projectDir+"/"+dbName+".sqlite"
         
         createDb=False
             
-        if not os.path.isfile(dbPath) :
+        if not os.path.isfile(self.dbPath) :
             createDb=True
             try:
                 shutil.copy(self.plugin_path+"\\"+RipartHelper.ripart_files_dir+"\\"+ RipartHelper.ripart_db,
-                             dbPath)
+                             self.dbPath)
                 self.logger.debug("copy ripart.sqlite" )
             except Exception as e:
                 self.logger.error("no ripart.sqlite found in plugin directory" + e.message)
                 raise e
-            
-        self.conn= db.connect(dbPath)
-
-        # creating a Cursor
-        cur = self.conn.cursor()
-       
-        sql="SELECT name FROM sqlite_master WHERE type='table' AND name='Remarque_Ripart'"  
-        cur.execute(sql)       
-        if cur.fetchone() ==None:
-            #create layer Remarque_Ripart
-            RipartHelper.createRemarqueTable(self.conn)
-        
-        for lay in RipartHelper.croquis_layers:  
-            sql="SELECT name FROM sqlite_master WHERE type='table' AND name='"+lay+"'"
+        try:    
+            self.conn= db.connect(self.dbPath)
+    
+            # creating a Cursor
+            cur = self.conn.cursor()
+           
+            sql="SELECT name FROM sqlite_master WHERE type='table' AND name='Remarque_Ripart'"  
             cur.execute(sql)       
             if cur.fetchone() ==None:
-                #create layer 
-                RipartHelper.createCroquisTable(self.conn,lay,RipartHelper.croquis_layers[lay])
-    
-        cur.close()
-        self.conn.close()
+                #create layer Remarque_Ripart
+                RipartHelper.createRemarqueTable(self.conn)
+            
+            for lay in RipartHelper.croquis_layers:  
+                sql="SELECT name FROM sqlite_master WHERE type='table' AND name='"+lay+"'"
+                cur.execute(sql)       
+                if cur.fetchone() ==None:
+                    #create layer 
+                    RipartHelper.createCroquisTable(self.conn,lay,RipartHelper.croquis_layers[lay])
+                    
+        except RipartException as e:
+            self.logger.error(e.message)
+            raise
+        finally:
+            cur.close()
+            self.conn.close()
         
+      
+      
       
     def addRipartLayersToMap(self):
         """Add ripart layers to the current map """
@@ -232,21 +324,93 @@ class Contexte(object):
         ripartLayers= RipartHelper.croquis_layers
         ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
         
-        for table in ripartLayers: 
+        
+        root = self.QgsProject.instance().layerTreeRoot()
+        
+        for table in RipartHelper.croquis_layers_name: 
             if table not in maplayers:
                 uri.setDataSource('',  table, 'geom')
-                vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')    
-                QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                uri.setSrid('4326')
+                vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite') 
+                vlayer.setCrs(QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId))
+                QgsMapLayerRegistry.instance().addMapLayer(vlayer,False)
+                                
+                root.insertLayer(0,vlayer)
         
+        self.mapCan.refresh()
         
+           
+           
             
     def getMapLayers(self):
         """Return the list of layer names which are loaded in the map"""
         
-        layers = self.QObject.iface.mapCanvas().layers()
+        layers = self.mapCan.layers()
+        
         layerNames=[]
+        maplayers={}
         for l in layers:
             layerNames.append(l.name())
+            maplayers[l.name()]= l.id()
         
-        return layerNames
-             
+        return maplayers
+    
+    
+    def getLayerByName(self,layName):
+        layers = self.mapCan.layers()
+   
+        for l in layers:
+            if l.name() == layName :
+                return l
+        
+        return None
+    
+    def emptyAllRipartLayers(self):
+        """
+        """
+        ripartLayers= RipartHelper.croquis_layers
+        ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
+        
+       
+        try:
+        
+            self.conn= db.connect(self.dbPath)
+            
+            for table in ripartLayers:
+                RipartHelper.emptyTable(self.conn, table)
+                
+            self.conn.commit()    
+        except RipartException as e:
+            self.logger.error(e.message)
+            raise
+        finally:
+            self.conn.close()
+        
+        self.refresh_layers()
+        
+        
+        
+    def refresh_layers(self):
+        """
+        """
+        for layer in self.mapCan.layers():
+            layer.triggerRepaint()
+
+
+    def addRemarques(self,rems):
+        """
+        """
+        try:
+            self.conn= db.connect(self.dbPath)
+        
+            for remId in rems:
+                RipartHelper.insertRemarques(self.conn, rems[remId])
+   
+            self.conn.commit()   
+           
+        except Exception as e:
+            self.logger.error(e.message)
+            raise
+        finally:
+            self.conn.close()
+        

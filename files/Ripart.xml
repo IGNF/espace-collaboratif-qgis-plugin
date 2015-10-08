@@ -3,7 +3,7 @@
     <URLHost>https://demo-ripart.ign.fr</URLHost>
     <Login>mborne</Login>
   </Serveur>
-  <ArcMap>
+  <Map>
     <Date_extraction>01/06/2000 00:00:00</Date_extraction>
     <Pagination>100</Pagination>
     <Zone_extraction>
@@ -19,5 +19,5 @@
       <Calque_Champ>comment</Calque_Champ>
       <Calque_Champ>date</Calque_Champ>
     </Attributs_croquis>
-  </ArcMap>
+  </Map>
 </Paramètres_connexion_à_Ripart>

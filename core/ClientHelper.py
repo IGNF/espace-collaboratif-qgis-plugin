@@ -5,6 +5,7 @@ Created on 30 sept. 2015
 @author: AChang-Wailing
 '''
 
+
 class ClientHelper(object):
     '''
     classdocs
@@ -13,18 +14,32 @@ class ClientHelper(object):
 
     @staticmethod
     def stringToStringType(val):
+        
+        if val==None:
+            return ""
 
-        if type(val)==type('str'):
+        elif type(val)==type('str'):
             return val
         else :
             return val.encode('utf-8');
     
     @staticmethod
     def getEncodeType(val):
-        if type(val)==type('str'):
+        
+        if val==None:
+            return u""
+        elif type(val)==type('str'):
             return val.decode('utf8')
         else :
             return val
+        
+    @staticmethod
+    def getValForDB(val):
+        val=ClientHelper.stringToStringType(val)
+        val=val.replace("'","''")
+        val=val.replace('"','""')
+        return val
+        
         
     @staticmethod
     def getErrorMessage(code):
