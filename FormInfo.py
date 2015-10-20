@@ -41,4 +41,6 @@ class FormInfo(QtGui.QDialog, FORM_CLASS):
         
     def addMessage(self, str):
         
-        self.textInfo.append("sfqfs")
+        self.textInfo.append(str)
+        
+        

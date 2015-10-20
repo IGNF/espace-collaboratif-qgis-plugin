@@ -20,6 +20,7 @@ from GeoReponse import GeoReponse
 from datetime import datetime
 from ClientHelper import ClientHelper
 
+
 class XMLResponse(object):
     """
     Classe pour le parsing des réponses xml et l'extraction des informations nécessaires
@@ -318,8 +319,6 @@ class XMLResponse(object):
                 
                 rem.id= (node.find('ID_GEOREM')).text
                 
-                if (int(rem.id) <=2688 ) :
-                    self.logger.debug('rem.id '+ rem.id)
                 
                 nfind=node.find('AUTORISATION')
                 if nfind !=None:
@@ -465,17 +464,24 @@ class XMLResponse(object):
             
             #géométrie
             coords= ob.iterfind('.//gml:coordinates',cst.namespace)
+            coordinates=""
             for c in coords:
-                tmp=c.text.replace(" ",";") 
-                tmp=tmp.replace(","," ")
-                tmp=tmp.replace(";",",")
-                croquis.coordinates=tmp
                 pts=c.text.split(" ")
                 for spt in pts:
-                    pt=spt.split(",")  
-                    croquis.addPoint(Point(pt[0],pt[1])) 
-            # [b.text for b in ob.iterfind('.//gml:coordinates',{'gml':'http://www.opengis.net/gml'})]
-                   
+                    pt= Point()
+                    latlon=spt.split(",")  
+                    if len(latlon)==4:
+                        pt.longitude=float(latlon[0] + "."+latlon[1])
+                        pt.latitude=float(latlon[2] + "."+latlon[3])
+                    elif len(latlon)==2:
+                        pt.longitude=float(latlon[0] )
+                        pt.latitude=float(latlon[1] )
+                        
+                    coordinates += str(pt.longitude) + " "+ str(pt.latitude) + ","
+                    croquis.addPoint(pt) 
+                    
+            croquis.coordinates= coordinates[:-1]  
+
             #ajoute les croquis à la remarque
             rem.addCroquis(croquis)  
                    

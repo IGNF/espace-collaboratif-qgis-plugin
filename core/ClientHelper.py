@@ -51,3 +51,11 @@ class ClientHelper(object):
             return code
         
         return code
+    
+    
+    @staticmethod
+    def notNoneValue(val):
+        if val ==None:
+            return ""
+        else: 
+            return val

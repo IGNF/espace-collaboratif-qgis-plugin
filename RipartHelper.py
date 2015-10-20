@@ -39,7 +39,7 @@ class RipartHelper(object):
 
     calque_Remarque_Lyr = "Remarque_Ripart.lyr"
 
-    nom_Champ_IdRemarque = u"N°remarque"
+    """nom_Champ_IdRemarque = u"N°remarque"
     nom_Champ_Auteur = "Auteur"
     nom_Champ_Commune = "Commune"
     nom_Champ_Departement = u"Département"
@@ -59,7 +59,7 @@ class RipartHelper(object):
     nom_Champ_LienRemarque = "Lien_remarque"
     nom_Champ_NomCroquis = "Nom"
     nom_Champ_Attributs = "Attributs_croquis"
-    nom_Champ_LienBDuni = "Lien_object_BDUni"
+    nom_Champ_LienBDuni = "Lien_object_BDUni"""
 
     xml_UrlHost = "./Serveur/URLHost"
     xml_Login = "./Serveur/Login"
@@ -237,6 +237,8 @@ class RipartHelper(object):
         
         try:
             RipartHelper.logger.debug("INSERT rem id:" + rem.id)
+          
+                
             ptx=rem.position.longitude
             pty= rem.position.latitude
             
@@ -247,7 +249,7 @@ class RipartHelper(object):
                 "Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation, geom) "+ \
                 "VALUES (" + \
                  rem.id +", '" + \
-                 rem.auteur.nom +"', '" + \
+                 ClientHelper.getValForDB(rem.auteur.nom) +"', '" + \
                  rem.getAttribut("commune") +"', '" + \
                  rem.getAttribut("departement","nom") +"', '" + \
                  rem.getAttribut("departement","id")+"', '" + \
@@ -257,10 +259,10 @@ class RipartHelper(object):
                  rem.concatenateThemes()+"', '" + \
                  rem.statut.__str__()+"', '" + \
                  rem.getAttribut("commentaire") +"', '" + \
-                 rem.concatenateReponse() +"', '" + \
+                 ClientHelper.getValForDB(rem.concatenateReponse()) +"', '" + \
                  rem.getAttribut("lien") +"', '" + \
                  rem.getAttribut("lienPrive") +"', '" + \
-                 rem.getFirstDocument() +"', '" + \
+                 ClientHelper.getValForDB(rem.getFirstDocument()) +"', '" + \
                  rem.getAttribut("autorisation") + "', " + \
                  geom +")"
                

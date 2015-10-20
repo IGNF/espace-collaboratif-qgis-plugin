@@ -228,7 +228,8 @@ class Client:
         dtTmp = dt
         
         result= self.__getRemarques(zone, box, pagination, date, idGroupe)
-  
+        
+   
         while int(result['total']) >1 :
             dt = time.strftime("%Y-%m-%d %H:%I:%S")
             tmp=self.__getRemarques(zone, box, pagination, dtTmp, idGroupe)
@@ -325,7 +326,7 @@ class Client:
         if errMessage['code']=="OK":
             self.__jeton =xmlResponse.getCurrentJeton()
             
-            if total ==1:
+            if int(total) == 1:
                 remarques = xmlResponse.extractRemarques()
                 rem=remarques.values()[0]    
                 
@@ -371,7 +372,8 @@ class Client:
         """
       
         try:
-            jeton_md5 = self.getMd5Hash(remarque.id+ self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton)
+            tohash=remarque.id+ self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton
+            jeton_md5 = self.getMD5Hash(tohash)
             
             params = {}
             params['action']=ConstanteRipart.RIPART_GEOREM_PUT

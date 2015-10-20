@@ -23,11 +23,13 @@
 import logging
 from core.RipartLoggerCl import RipartLogger
 
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, SIGNAL, Qt
+from PyQt4.QtGui import QAction, QIcon, QMenu
 from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox
+from PyQt4.QtGui import QMessageBox,QToolButton
 from qgis.core import *
+
+
 
 # Initialize Qt resources from file resources.py
 import resources
@@ -45,6 +47,8 @@ from qgis._core import QgsProject,  QgsMessageLog
 from ImporterRipart import ImporterRipart
 from RipartException import RipartException
 
+from FormRepondre import FormRepondreDialog
+from RepondreRipart import RepondreRipart
 
 class RipartPlugin:
     """QGIS Plugin Implementation."""
@@ -89,8 +93,7 @@ class RipartPlugin:
         
         self.dlgInfo=FormInfo()
         
-        #sel.dlgUpdate = 
-        
+     
 
         # Declare instance attributes
         self.actions = []
@@ -189,7 +192,9 @@ class RipartPlugin:
 
         self.actions.append(action)
 
+
         return action
+
 
 
     def initGui(self):
@@ -237,7 +242,43 @@ class RipartPlugin:
             status_tip=self.tr(u'Supprimer les remarques de la carte en cours'),
             parent=self.iface.mainWindow())
         
+     
+           
+        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer l'add-in RIPart", self.iface.mainWindow())
+        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur de l'add-in RIPart", self.iface.mainWindow())
+        self.log= QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log de l'add-in RIPart", self.iface.mainWindow())
+        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos de l'add-in RiPart", self.iface.mainWindow())
+        
+      
+        
+        self.config.triggered.connect( self.configurePref )
+        self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration de l'add-in RIPart."))
+        #self.action2.triggered.connect( self.test2 )
 
+        
+        self.toolButton = QToolButton()
+        self.toolButton.setDefaultAction( self.config) 
+        self.toolButton.setPopupMode( QToolButton.InstantPopup )
+  
+        self.helpMenu= QMenu("Aide")
+        self.helpMenu.addAction(self.config)
+        self.helpMenu.addAction(self.help)
+        self.helpMenu.addAction(self.log)
+        self.helpMenu.addAction(self.about)
+        self.toolButton2 = QToolButton()
+        self.toolButton2.setMenu( self.helpMenu )
+        self.toolButton2.setPopupMode( QToolButton.InstantPopup)
+        self.toolButton2.setToolButtonStyle (Qt.ToolButtonTextOnly)
+        self.toolButton2.setText("Aide")
+        
+        #self.iface.addToolBarWidget( self.toolButton)
+        #self.iface.addToolBarWidget( self.toolButton2)
+        
+        # self.toolbar.addWidget(self.toolButton)
+        self.toolbar.addWidget(self.toolButton2)
+        
+       
+        
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -260,13 +301,15 @@ class RipartPlugin:
     def downloadRemarks(self):
         
         try:
-            self.context= Contexte.getInstance(self,QgsProject)
-            
+            self.context= Contexte.getInstance(self,QgsProject)            
             importRipart= ImporterRipart(self.context)
             importRipart.doImport()
-        except RipartException as e:
+        except Exception as e:
             self.logger.error(e.message)
-        
+            self.context.iface.messageBar(). \
+            pushMessage("Erreur",
+                         u"Un problème est survenu dans le téléchargement des remarques", \
+                         level=2, duration=10)
         
 
     def connectToRipart(self,context):
@@ -275,13 +318,42 @@ class RipartPlugin:
        
         
     def answerToRemark(self):
-        print "answer"
+        try:
+            self.context= Contexte.getInstance(self,QgsProject)  
+            reponse = RepondreRipart(self.context)
+            reponse.do()
+        except Exception as e:
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            u"Un problème est survenu lors de l'ajout de la réponse", \
+                             level=2, duration=10)
+        
+        
+        
         
     def createRemark(self):
         print "create"
         
     def removeRemarks(self):
         print "remove"
+        try:
+            self.context= Contexte.getInstance(self,QgsProject)
+        
+            message=u"Êtes-vous sûr de vouloir supprimer les remarques RIPart de la carte en cours?"
+            
+            reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+            if reply == QtGui.QMessageBox.Yes:
+                self.context.emptyAllRipartLayers()
+            else : 
+                return
+                    
+            
+        except Exception as e:
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            u"Un problème est survenu lors de la suppression des remarques", \
+                             level=2, duration=10)
+        
 
     def update(self):
         """Run method that performs all the real work"""
@@ -296,5 +368,9 @@ class RipartPlugin:
             pass
         
    
-    
-    
+    def configurePref(self):
+        print "configure"
+    def test1(self):
+        print "test1"
+    def test2(self):
+        print "test2"

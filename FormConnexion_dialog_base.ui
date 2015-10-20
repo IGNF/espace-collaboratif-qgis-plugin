@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Connexion au service Ripart</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
+  </property>
   <property name="autoFillBackground">
    <bool>false</bool>
   </property>

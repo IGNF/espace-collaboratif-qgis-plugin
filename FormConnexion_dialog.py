@@ -46,8 +46,7 @@ from FormInfo import FormInfo
 sys.path.append(r'D:\eclipse\plugins\org.python.pydev_3.9.1.201501081637\pysrc') """
 
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'FormConnexion_dialog_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnexion_dialog_base.ui'))
 
 
 class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
@@ -112,57 +111,8 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         else:
             self.cancel=False
             self.connect=True
-            
             self.close()
-        """self.lblErreur.setVisible(False)
-              
-        login= self.lineEditLogin.text()
-        pwd= self.lineEditPwd.text()
-
-        if len(login)==0 or len(pwd)==0 :
-            QMessageBox.information(self,"Ripart","Veuillez saisir votre login et votre mot de passe")
-        else:
-            
-            #connexion au serveur
-            try:
-                
-                client = Client(self.urlhost, login, pwd)
-                
-                profil=client.getProfil()
-                
-                if profil != None :
-                    self.context.profil= profil
-                    self.context.saveLogin(login)
-                    
-                    
-                self.setEnabled(False)
-               
-                dlgInfo=FormInfo()
-                dlgInfo.textInfo.setText(u"<b>Connexion réussie au service Ripart.</b>")
-                dlgInfo.textInfo.append("<br/>Serveur : "+ self.urlhost)
-                dlgInfo.textInfo.append("Login : "+  login)
-                dlgInfo.textInfo.append("Profil: "+ profil.titre)
-                dlgInfo.textInfo.append("Zone : "+ profil.zone.__str__())
-                
-             
-                r=dlgInfo.exec_()
-               
-                #r=QMessageBox.information(self,"Ripart connexion",self.urlhost+'\n'+profil.titre)
-                if dlgInfo.Accepted:
-                    self.close()
-                    self.setEnabled(True)
-                    self.context.login=login
-                    self.context.pwd=pwd
-                    self.context.client= client
-                    #self.context.addRipartLayersToMap()
-                               
-            except Exception as e:       
-                #self.lblErreur.setText(ClientHelper.getEncodeType(str(e)))
-                self.lblErreur.setText(ClientHelper.getEncodeType(e.message))
-                self.lblErreur.setVisible(True)
-                #QMessageBox.information(self,"IGN Ripart - ERREUR",ClientHelper.getEncodeType(str(e)))
-        """      
-              
+       
             
         
     def setContext(self,context):
@@ -181,4 +131,3 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         self.cancel=True
         self.connect=False
         self.close()
-       

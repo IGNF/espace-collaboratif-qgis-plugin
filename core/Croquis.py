@@ -7,6 +7,7 @@ Created on 23 janv. 2015
 from Enum import Enum
 from Point import Point
 import xml.etree.ElementTree as ET
+from ClientHelper import ClientHelper
 
 
 class Croquis(object):
@@ -225,8 +226,8 @@ class Croquis(object):
         #les attributs
         xattributs= ET.SubElement(objet,'attributs')
         for att in self.attributs:
-            xatt= ET.SubElement(xattributs,'attribut',{'name':att.nom})
-            xatt.text = att.valeur
+            xatt= ET.SubElement(xattributs,'attribut',{'name':ClientHelper.notNoneValue(att.nom)})
+            xatt.text =ClientHelper.notNoneValue( att.valeur)
             
         xmlDoc.append(objet)
         
@@ -237,15 +238,20 @@ class Croquis(object):
         """
         """
         satt=""  
-        for n in self.attributs:
-            att=self.attributs[n]
-            satt +=  att.nom + "='"+att.valeur +"'|"
+        for att in self.attributs:       
+            satt +=  ClientHelper.notNoneValue(att.nom) + "='"+ ClientHelper.notNoneValue(att.valeur) +"'|"
        
         if len(satt)>0:
             satt=satt[:-1]
+        
+        return satt
             
     def getCoordinates(self):
+        
         return self.coordinates     
+
+
+
 
 if __name__ == "__main__":
     c= Croquis()

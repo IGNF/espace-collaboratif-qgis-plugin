@@ -114,8 +114,7 @@ class Remarque(object):
         att= getattr(self, attName)
         if att==None:
             return ""
-        elif subAtt!=None:
-            
+        elif subAtt!=None:       
             return ClientHelper.getValForDB(getattr(att,subAtt))
         else:
             return ClientHelper.getValForDB(att)   
@@ -194,7 +193,7 @@ class Remarque(object):
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 
-                concatenate += ".</font></b><br>" + rep.reponse + "</li><br><br>";
+                concatenate += ".</font></b><br/>" + ClientHelper.stringToStringType(rep.reponse.strip().replace("\n","<br/>")) + "</li>";
             
         return concatenate
     
@@ -217,7 +216,7 @@ class Remarque(object):
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 
-                concatenate += ".\n" + rep.reponse + "\n";
+                concatenate += ".\n" + ClientHelper.stringToStringType(rep.reponse.strip()) + "\n";
             
         return concatenate
     

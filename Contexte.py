@@ -65,6 +65,7 @@ class Contexte(object):
     #
     QObject= None
     QgsProject=None
+    iface=None
     
     #map canvas,la carte courante
     mapCan = None
@@ -76,6 +77,9 @@ class Contexte(object):
     conn=None
 
     logger=None
+    
+    progressMessageBar=None
+    progress=None
     
 
     def __init__(self, QObject,QgsProject):
@@ -153,7 +157,9 @@ class Contexte(object):
             msgBox.setText(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart")
             ret = msgBox.exec_()"""
 
-            self.iface.messageBar().pushMessage("Attention", u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart", level=1)
+            self.iface.messageBar().pushMessage("Attention",
+                                                 u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart",
+                                                  level=1, duration =10)
             raise RipartException(u"Projet QGIS non enregistré") 
     
         fname=ntpath.basename(QgsProject.instance().fileName())
@@ -366,12 +372,11 @@ class Contexte(object):
         return None
     
     def emptyAllRipartLayers(self):
-        """
+        """Supprime toutes les remarques vide les tables de la base ripart.sqlite 
         """
         ripartLayers= RipartHelper.croquis_layers
         ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
-        
-       
+              
         try:
         
             self.conn= db.connect(self.dbPath)
@@ -402,10 +407,15 @@ class Contexte(object):
         """
         try:
             self.conn= db.connect(self.dbPath)
-        
+         
+            i=1
+  
             for remId in rems:
                 RipartHelper.insertRemarques(self.conn, rems[remId])
-   
+                
+                #self.progress.setValue(i + 1)
+                #i+=1
+       
             self.conn.commit()   
            
         except Exception as e:
@@ -413,4 +423,49 @@ class Contexte(object):
             raise
         finally:
             self.conn.close()
+     
+     
+     
+    def updateRemarqueInSqlite(self,rem):
+        """Met à jour une remarque (après l'ajout d'une réponse 
         
+        :param rem : la remarque à mettre à jour
+        :type rem: Remarque
+        """
+        try:
+            self.conn= db.connect(self.dbPath)
+            
+            sql ="UPDATE "+ RipartHelper.nom_Calque_Remarque+" SET " + \
+                " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") +"'," + \
+                " Date_validation= '" + rem.getAttribut("dateValidation") +"'," + \
+                " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) +"' "\
+                " WHERE NoRemarque = " + str(rem.id)
+            
+            cur= self.conn.cursor()
+            cur.execute(sql)
+            
+            self.conn.commit()
+
+        except Exception as e :
+            self.logger.error(e.message)
+            raise
+        finally:
+            cur.close()
+            self.conn.close()
+        
+    def startProgressbar(self):  
+        self.progressMessageBar = self.iface.messageBar().createMessage(u"Téléchargement des remarques en cours...")
+        self.progress = QProgressBar()
+        self.progress.setMaximum(100)
+        self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        self.progressMessageBar.layout().addWidget(self.progress)
+        
+        self.progress=self.progress
+        
+        
+        
+    """def getRemarqueById(self,remId):
+        
+        remarque= self.client.getRemarque(remId)     
+        
+        return remarque"""

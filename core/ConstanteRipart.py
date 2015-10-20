@@ -34,7 +34,21 @@ RIPART_QUESTION_POST = "geoquestion_post";
 RIPART_QUESTION_GET = "geoquestion_get";
 
 
-STATUT=  Enum( "undefined","submit","pending", "pending1","pending2","valid","valid0","reject","reject0") 
+STATUT=  Enum( "undefined","submit","pending","pending0", "pending1","pending2","valid","valid0","reject","reject0") 
+
+openStatut = ["undefined","submit","pending","pending0", "pending1","pending2"]
+
+statutLibelle=[u"Reçue dans nos services",
+               u"En cours de traitement",
+               u"Demande de qualification",
+               u"En attente de saisie",
+               u"En attente de validation",
+               u"Prise en compte",
+               u"Déjà prise en compte",
+               u"Rejetée (hors spec.)",
+               u"Rejetée (hors propos)"]
+
+statuts =["submit","pending","pending0", "pending1","pending2","valid","valid0","reject","reject0"]
 
 ZoneGeographique = Enum ("UNDEFINED",
                          #France métropolitaine (Corse incluse).

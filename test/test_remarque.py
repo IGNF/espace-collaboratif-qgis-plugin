@@ -16,6 +16,7 @@ from core.Point import Point
 import core.ConstanteRipart as cst
 from datetime import  datetime
 import copy
+from Contexte import Contexte
 #import xml.etree.cElementTree as et
 
 class TestRemarque(unittest.TestCase):
@@ -159,8 +160,14 @@ class TestRemarque(unittest.TestCase):
         
         self.assertEquals(isCroquisEmpty,True,"No croquis in rem, but croquis found")
         
-                
-
+    """def test_updateRemarque(self):
+        rem = Remarque()
+        rem.id=2871
+        rem.dateMiseAJour = datetime.now().strftime("%Y-%m-%d %H:%I:%S")
+        rem.dateValidation = datetime.now().strftime("%Y-%m-%d %H:%I:%S")
+        
+        context= Contexte.getInstance(None, None)
+    """
 if __name__ == "__main__":
    
     unittest.main()
