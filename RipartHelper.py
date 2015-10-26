@@ -12,6 +12,8 @@ from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform
 from core.ClientHelper import ClientHelper
 from RipartException import RipartException
 import collections
+from datetime import datetime
+from PyQt4.QtGui import QMessageBox
 
 class RipartHelper(object):
     """"
@@ -61,6 +63,7 @@ class RipartHelper(object):
     nom_Champ_Attributs = "Attributs_croquis"
     nom_Champ_LienBDuni = "Lien_object_BDUni"""
 
+    xmlServeur="./Serveur"
     xml_UrlHost = "./Serveur/URLHost"
     xml_Login = "./Serveur/Login"
     xml_DateExtraction = "./Map/Date_extraction"
@@ -72,13 +75,14 @@ class RipartHelper(object):
     xml_BaliseNomCalque = "Calque_Nom"
     xml_BaliseChampCalque = "Calque_Champ"
     xml_Group = "./Map/Import_pour_groupe"
+    xml_Map="./Map"
 
     url_Manuel = "C:\\Ripart\\Manuel d'utilisation de l'add-in RIPart pour ArcMap.pdf" 
 
-    dateDefaut = "01/01/1900"
+    defaultDate = "1900-01-01 00:00:00"
+    defaultPagination=100
     longueurMaxChamp = 5000
     
-    #epsgCrs= 2154
     epsgCrs = 4326
     
     
@@ -94,12 +98,18 @@ class RipartHelper(object):
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
             urlhost= xmlroot.find(RipartHelper.xml_UrlHost)     
-            
+            if urlhost==None:
+                urlhost=RipartHelper.addXmlElement(projectDir,"URLHost","Serveur")
+                #urlhost=""
+                
         except Exception as e:
             RipartHelper.logger.error(str(e))
+           
         
         return urlhost
     
+ 
+        
     @staticmethod
     def load_login(projectDir):
         login=""
@@ -107,9 +117,12 @@ class RipartHelper(object):
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
             login= xmlroot.find(RipartHelper.xml_Login)     
-            
+            if login==None:
+                login=RipartHelper.addXmlElement(projectDir,"Login","Serveur")
+                
         except Exception as e:
             RipartHelper.logger.error(str(e))
+        
         
         return login
     
@@ -140,6 +153,18 @@ class RipartHelper(object):
         
         return  calque
 
+    """@staticmethod
+    def load_pagination(projectDir):
+        urlhost=""
+        try:    
+            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot =tree.getroot()
+            urlhost= xmlroot.find(RipartHelper.xml_Pagination)     
+            
+        except Exception as e:
+            RipartHelper.logger.error(str(e))
+        
+        return urlhost"""
 
     @staticmethod
     def load_ripartXmlTag(projectDir,tag):
@@ -153,7 +178,86 @@ class RipartHelper(object):
             RipartHelper.logger.error(str(e))
         
         return  calque
+    
+    @staticmethod
+    def addXmlElement(projectDir,elem,parentElem):
+        tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+        xmlroot =tree.getroot()
+        if parentElem!="root":
+            parentNode= xmlroot.find(parentElem)  
+        else:
+            parentNode=xmlroot  
+        if parentNode==None:
+            parentNode=RipartHelper.addXmlElement(projectDir, parentElem, "root")
+            
+        elementNode=ET.SubElement(parentNode,elem)
         
+        tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+        
+        return elementNode
+    
+    @staticmethod
+    def load_attCroquis(projectDir):
+        
+        attCroquis={}
+        try:
+            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot =tree.getroot()
+            nodes=xmlroot.findall(RipartHelper.xml_AttributsCroquis)
+            
+            for cr in nodes:
+                nomCalque=cr.find(RipartHelper.xml_BaliseNomCalque).text
+                attCroquis[nomCalque]=[]
+                fields=cr.iter(RipartHelper.xml_BaliseChampCalque)
+                for f in fields:
+                    attCroquis[nomCalque].append(f.text)
+                
+        except Exception as e:
+            RipartHelper.logger.error(str(e))
+            
+        return attCroquis
+    
+    @staticmethod
+    def setXmlTagValue(projectDir,tag,value):
+        try:
+            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot =tree.getroot()
+            node= xmlroot.find(tag)  
+            node.text=value
+            
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+           
+        except Exception as e:
+            RipartHelper.logger.error(e.message)
+            
+    @staticmethod
+    def setAttributsCroquis(projectDir,calqueName,values):
+        try:
+            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot =tree.getroot()
+            mapNode= xmlroot.find(RipartHelper.xml_Map)
+            
+            nodeAtributsCroquis= ET.SubElement(mapNode,'Attributs_croquis')
+            nodeNom= ET.SubElement(nodeAtributsCroquis,'Calque_Nom')
+            nodeNom.text=calqueName
+            for val in values:
+                field= ET.SubElement(nodeAtributsCroquis,'Calque_Champ')
+                field.text=val
+            
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+        except Exception as e:
+            print e.message
+        
+    @staticmethod
+    def removeAttCroquis(projectDir,):
+        tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+        xmlroot =tree.getroot()
+        maptag= xmlroot.find('Map')
+        for c in maptag.findall('Attributs_croquis'):
+            maptag.remove(c)
+        tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+            
+         
     @staticmethod    
     def createRemarqueTable(conn):   
         """Création de la table Remarque_Ripart"""
@@ -244,7 +348,7 @@ class RipartHelper(object):
             
             geom= " GeomFromText('POINT("+ ptx+" "+pty +")', 4326)"
             
-            sql="INSERT INTO "+ RipartHelper.nom_Calque_Remarque + \
+            """sql="INSERT INTO "+ RipartHelper.nom_Calque_Remarque + \
                 " (NoRemarque, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ," + \
                 "Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation, geom) "+ \
                 "VALUES (" + \
@@ -265,9 +369,31 @@ class RipartHelper(object):
                  ClientHelper.getValForDB(rem.getFirstDocument()) +"', '" + \
                  rem.getAttribut("autorisation") + "', " + \
                  geom +")"
+            """    
+            sql=u"INSERT INTO "+ RipartHelper.nom_Calque_Remarque 
+            sql+= u" (NoRemarque, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ," 
+            sql+= u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation, geom) "
+            sql+= u"VALUES (" 
+            sql+= rem.id +", '" 
+            sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.auteur.nom) +"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("commune") +"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("departement","nom") +"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("departement","id")+"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("dateCreation")+"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("dateMiseAJour")+"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("dateValidation")+"', '" )
+            sql+= ClientHelper.getEncodeType(rem.concatenateThemes()+"', '") 
+            sql+= ClientHelper.getEncodeType(rem.statut.__str__()+"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("commentaire") +"', '")
+            sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.concatenateReponse()) +"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("lien") +"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("lienPrive") +"', '" )
+            sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.getFirstDocument()) +"', '" )
+            sql+= ClientHelper.getEncodeType(rem.getAttribut("autorisation") + "', ") 
+            sql+= ClientHelper.getEncodeType(geom +")")
                
             RipartHelper.logger.debug("INSERT sql:" + sql)
-            sql =ClientHelper.getEncodeType(sql)    
+            #sql =ClientHelper.getEncodeType(sql)    
             
             cur.execute(sql)
             rowcount=cur.rowcount
@@ -366,5 +492,50 @@ class RipartHelper(object):
         bbox= xform.transform(filtreExtent)
         
         return bbox
+        
+    @staticmethod
+    def formatDate(sdate):
+        """
+        Transforme une date donnée au format dd/MM/yyyy %H:%M:%S en yyyy-MM-dd %H:%M:%S
+        
+        :param sdate la date à tranformer
+        :type sdate: string
+        
+        :return date au format yyyy-MM-dd %H:%M:%S
+        :rtype: string
+        """
+        try:
+            if len(sdate.split("/"))>0:
+                dt= datetime.strptime(sdate, '%d/%m/%Y %H:%M:%S')
+                rdate= dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif len(sdate.split("-"))>0:
+                rdate=sdate
+        except Exception as e:
+            rdate=RipartHelper.defaultDate
+        return rdate
+    
+    """@staticmethod
+    def checkDateFormatFr(self,date):
+        try:
+            dt= datetime.strptime(date, '%d/%m/%Y %H:%M:%S')
+        except:
+            try: 
+                dt= datetime.strptime(date, '%d/%m/%Y')
+    
+    @staticmethod        
+    def checkDateFormatEn(self,date):
+        try:
+            dt= datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+        except:
+            try: 
+                dt= datetime.strptime(date, '%Y-%m-%d')
+    """           
+    @staticmethod   
+    def showMessageBox( message):
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle("IGN RIPart")
+        msgBox.setIcon(QMessageBox.Warning)
+        msgBox.setText(message)
+        ret = msgBox.exec_()
         
         

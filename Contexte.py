@@ -9,7 +9,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtGui import QMessageBox
 from qgis.core import *
-from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog
+from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest
 from RipartException import RipartException
 
 import os.path
@@ -25,12 +25,13 @@ from core.Profil import Profil
 from pyspatialite import dbapi2 as db
 #import sqlite3
 
-from qgis._core import QgsDataSourceURI,QgsVectorLayer, QgsMapLayerRegistry
+from qgis._core import QgsDataSourceURI,QgsVectorLayer, QgsMapLayerRegistry,QGis
 
 from FormConnexion_dialog import FormConnexionDialog
 from FormInfo import FormInfo
 from core.Client import Client
 from core.ClientHelper import ClientHelper
+
 
 class Contexte(object):
     """
@@ -72,8 +73,7 @@ class Contexte(object):
     
     #Le système géodésique employé par le service Ripart (WGS84; EPSG:2154)
     spatialRef= None
-    
-    
+      
     conn=None
 
     logger=None
@@ -98,14 +98,9 @@ class Contexte(object):
         
         self.logger=RipartLogger("Contexte").getRipartLogger()
 
-        #self.logger.debug("test logger Contexte")
+
         self.spatialRef = QgsCoordinateReferenceSystem( RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
-        
-        #s = QSettings()
-        #s.setValue("/Projections/defaultBehaviour", "useProject")
-        #defaultCrs= s.value('/Projections/projectDefaultCrs')
-        #s.setValue('/Projections/projectDefaultCrs', 'EPSG:4326')
-        
+         
         try:
             #set du répertoire et fichier du projet qgis
             self.setProjectParams(QgsProject)
@@ -179,7 +174,7 @@ class Contexte(object):
                 self.logger.debug("copy ripart.xml" )
             except Exception as e:
                 self.logger.error("no ripart.xml found in plugin directory" + e.message)
-                raise e
+                raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pqs été trouvé.")
            
     
     
@@ -196,8 +191,8 @@ class Contexte(object):
             msgBox.setText(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart")
             ret = msgBox.exec_()"""
         else:
-            self.urlHostRipart = RipartHelper.load_urlhost(self.projectDir).text;
-            self.login = RipartHelper.load_login(self.projectDir).text;
+            self.urlHostRipart = RipartHelper.load_urlhost(self.projectDir).text
+            self.login = RipartHelper.load_login(self.projectDir).text
         
         return ret
     
@@ -362,6 +357,19 @@ class Contexte(object):
         return maplayers
     
     
+    def getMapPolygonLayers(self):
+        """
+        """
+        layers = self.mapCan.layers()
+        polylayers={}
+        
+        for l in layers:
+            if l.wkbType()==QGis.WKBPolygon or l.wkbType()==QGis.WKBMultiPolygon:
+                polylayers[l.id()]=l.name()
+                
+        return polylayers
+    
+    
     def getLayerByName(self,layName):
         layers = self.mapCan.layers()
    
@@ -370,6 +378,10 @@ class Contexte(object):
                 return l
         
         return None
+    
+    
+    def getLayerByName2(self,layName):
+        return QgsMapLayerRegistry.instance().mapLayersByName(layName)[0]
     
     def emptyAllRipartLayers(self):
         """Supprime toutes les remarques vide les tables de la base ripart.sqlite 
@@ -402,19 +414,19 @@ class Contexte(object):
             layer.triggerRepaint()
 
 
-    def addRemarques(self,rems):
+    def addRemarques(self,rems,importer):
         """
         """
         try:
             self.conn= db.connect(self.dbPath)
-         
-            i=1
-  
+
             for remId in rems:
                 RipartHelper.insertRemarques(self.conn, rems[remId])
                 
                 #self.progress.setValue(i + 1)
                 #i+=1
+                importer.progressVal+=1
+                importer.progress.setValue(importer.progressVal)
        
             self.conn.commit()   
            
@@ -424,7 +436,22 @@ class Contexte(object):
         finally:
             self.conn.close()
      
-     
+    def addRemarques2(self,remId):
+        """
+        """
+        try:
+            self.conn= db.connect(self.dbPath)
+    
+            i=1
+            
+            RipartHelper.insertRemarques(self.conn, rems[remId])
+            self.conn.commit()   
+           
+        except Exception as e:
+            self.logger.error(e.message)
+            raise
+        finally:
+            self.conn.close() 
      
     def updateRemarqueInSqlite(self,rem):
         """Met à jour une remarque (après l'ajout d'une réponse 
@@ -453,17 +480,16 @@ class Contexte(object):
             cur.close()
             self.conn.close()
         
-    def startProgressbar(self):  
-        self.progressMessageBar = self.iface.messageBar().createMessage(u"Téléchargement des remarques en cours...")
-        self.progress = QProgressBar()
-        self.progress.setMaximum(100)
-        self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
-        self.progressMessageBar.layout().addWidget(self.progress)
-        
-        self.progress=self.progress
-        
-        
-        
+   
+    
+    def countRemarqueByStatut(self,statut):
+        print "statut"   
+        remLay=self.getLayerByName2(RipartHelper.nom_Calque_Remarque)
+        expression='"Statut" = \''+ statut +'\''
+        filtFeatures=remLay.getFeatures(QgsFeatureRequest().setFilterExpression( expression ))
+        return len(list(filtFeatures))
+    
+    
     """def getRemarqueById(self,remId):
         
         remarque= self.client.getRemarque(remId)     

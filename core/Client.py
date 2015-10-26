@@ -28,6 +28,8 @@ import time
 from Box import Box
 import os.path
 from ClientHelper import ClientHelper
+from PyQt4.QtGui import QMessageBox, QProgressBar
+from PyQt4.QtCore import *
 
 class Client:
     """"
@@ -180,7 +182,7 @@ class Client:
         data    = re.sub('(<STATUTXT>)(.*)(</STATUTXT>)','',data, flags=re.MULTILINE)
         
         
-        self.logger.debug(data)
+        #self.logger.debug(data)
         
         
         xml = XMLResponse(data)
@@ -198,7 +200,10 @@ class Client:
         
         
       
-    
+    def setIface(self,iface):
+        self.iface=iface
+        
+        
     def getRemarques(self,zone,box,pagination, date,idGroupe):
         """Recherche les remarques.
         Boucle sur la méthode privée GetRemarques, pour récupérer d'éventuelles MAJ ou nouvelles remarques
@@ -219,6 +224,15 @@ class Client:
         :param idGroupe: identifiant du groupe de l'utilisateur
         :type idGroupe: int
         """   
+        
+        self.progressMessageBar = self.iface.messageBar().createMessage(u"Téléchargement des remarques depuis le serveur ...")
+        self.progress = QProgressBar()
+     
+        self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+       
+        self.progressMessageBar.layout().addWidget(self.progress)
+        self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
+        self.progress.setValue(0)
       
         #on stocke les objets Remarque dans un dictionnaire, pour éviter d'éventuels doublons.
         dicoRems={}
@@ -229,7 +243,7 @@ class Client:
         
         result= self.__getRemarques(zone, box, pagination, date, idGroupe)
         
-   
+    
         while int(result['total']) >1 :
             dt = time.strftime("%Y-%m-%d %H:%I:%S")
             tmp=self.__getRemarques(zone, box, pagination, dtTmp, idGroupe)
@@ -270,7 +284,7 @@ class Client:
             self.logger.error(str(e))
             raise 
         
-        self.logger.debug("DATA:"+ data)
+        #self.logger.debug("DATA:"+ data)
         xml = XMLResponse(data)
         errMessage = xml.checkResponseValidity()
         
@@ -279,11 +293,20 @@ class Client:
        
         count=int(pagination)
         
+        
+        
         if errMessage['code'] =='OK':
             total = xml.getTotalResponse()
             dicoRems = xml.extractRemarques()          
             self.__jeton= xml.getCurrentJeton()
             
+            if int(pagination) > int(total):
+                progressMax = int(pagination)
+            else:
+                progressMax= int(total)
+                
+            self.progress.setMaximum(progressMax)
+            self.progress.setValue(count)
             #TODO Progressbar ?
             
             while (int(total) - count)  > 0:
@@ -296,8 +319,10 @@ class Client:
                 if errMessage2['code'] =='OK':
                     dicoRems.update(xml.extractRemarques())          
                     self.__jeton= xml.getCurrentJeton()
-                     
-        
+                
+                  
+                self.progress.setValue(count)
+                
         return {'total':total, 'dicoRems':dicoRems}
     
     

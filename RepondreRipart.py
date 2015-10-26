@@ -18,6 +18,8 @@ import core.ConstanteRipart as cst
 from FormRepondre import FormRepondreDialog
 import time
 from qgis.gui import QgsMessageBar
+
+
 class RepondreRipart(object):
     '''
     classdocs
@@ -48,8 +50,7 @@ class RepondreRipart(object):
                     return
                 
                 remIds=[]
-                for feat in selFeats:
-                    print("sel") 
+                for feat in selFeats:  
                     remIds.append(feat.attribute('NoRemarque'))
                     
             res=self.context.getConnexionRipart()    
@@ -67,7 +68,7 @@ class RepondreRipart(object):
                     return
                
                 if remarque.autorisation not in ["RW+","RW-"] :
-                    mess=u"Vous n'êtes pas autorisé à modifier la remarque Ripart n°"+remId
+                    mess=u"Vous n'êtes pas autorisé à modifier la remarque Ripart n°"+ str(remId)
                     self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
                     return
                 
@@ -78,9 +79,9 @@ class RepondreRipart(object):
                 r=formReponse.exec_()
                 
                 if formReponse.answer :
-                    #remarque.statut=formReponse.newStat
-                    #remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep))  
-                    remMaj =remarque            
+                    remarque.statut=formReponse.newStat
+                    remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep))  
+                    #remMaj =remarque            
                     self.context.updateRemarqueInSqlite(remMaj)
                     mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
                     self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)

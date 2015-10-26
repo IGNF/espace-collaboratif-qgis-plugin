@@ -7,14 +7,17 @@ Created on 1 oct. 2015
 import logging
 from core.RipartLoggerCl import RipartLogger
 from PyQt4 import QtCore, QtGui
-from qgis.core import  QgsGeometry
+from qgis.core import  QgsGeometry,QgsCoordinateReferenceSystem,QgsCoordinateTransform
 from RipartHelper import RipartHelper
 from core.Box import Box
 from core.Client import Client
-from PyQt4.QtGui import QMessageBox, QProgressBar
+from PyQt4.QtGui import QMessageBox, QProgressBar, QApplication
 from core.ClientHelper import ClientHelper
 from PyQt4.QtCore import *
 import time
+from FormAttenteChargement import FormAttenteChargement
+from pyspatialite import dbapi2 as db
+import core.ConstanteRipart as cst
 
 class ImporterRipart(object):
     """Importation des remarques dans le projet QGIS
@@ -27,6 +30,9 @@ class ImporterRipart(object):
     
     progressMessageBar=None
     progress=None
+    progressVal=0
+    
+    attenteChargement=None
 
     def __init__(self,context):
         '''
@@ -34,13 +40,17 @@ class ImporterRipart(object):
         '''
         self.context=context
         
+        self.attenteChargement= FormAttenteChargement()
         
-        """self.progressMessageBar = self.context.iface.messageBar().createMessage(u"Téléchargemenrt de remarques en cours...")
+        self.progressMessageBar = self.context.iface.messageBar().createMessage(u"Placement des remarques sur la carte...")
         self.progress = QProgressBar()
-        self.progress.setMaximum(10)
+        self.progress.setMaximum(200)
+        
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        #self.progress.setTextVisible(False)
         self.progressMessageBar.layout().addWidget(self.progress)
         
+        """self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
         self.context.progress=self.progress"""
         
         """for i in range(10):
@@ -86,13 +96,35 @@ class ImporterRipart(object):
                     
                     bbox= Box(filtreExtent.xMinimum(),filtreExtent.yMinimum(),filtreExtent.xMaximum(),filtreExtent.yMaximum())
             else:
-                bbox= None
+                message="Impossible de déterminer dans le fichier de paramétrage Ripart, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
+                          "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
+                          "(Cela risque de prendre un temps long.)"
+                if self.noFilterWarningDialog(message):
+                    bbox= None
+                else : 
+                    return
    
+            QApplication.setOverrideCursor(Qt.BusyCursor)
+            
+      
+            #self.attenteChargement.setModal(False)
+            #self.attenteChargement.setVisible(True)
+           
+            
             #vider les tables ripart
             self.context.emptyAllRipartLayers()
             
+            #self.progressVal=1
+            #self.progress.setValue(self.progressVal)
+            
             pagination =RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination).text
+            if pagination ==None :
+                pagination = RipartHelper.defaultPagination
+           
             date= RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_DateExtraction).text
+            
+            date= RipartHelper.formatDate(date)
+ 
             groupFilter=RipartHelper.load_ripartXmlTag(self.context.projectDir,RipartHelper.xml_Group).text
             
             if groupFilter=='true':
@@ -105,11 +137,18 @@ class ImporterRipart(object):
             #self.context.progress.setMaximum( len(remsToKeep))  
             #self.context.startProgressbar()
             #self.context.iface.messageBar().pushWidget( self.context.progressMessageBar, self.context.iface.messageBar().INFO)
+            #self.progressVal+=1
+            #self.progress.setValue(self.progressVal)
             
+            self.context.client.setIface(self.context.iface)
             rems = self.context.client.getRemarques(self.context.profil.zone, bbox, pagination,date, groupId)
-                
-         
-            
+
+            self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
+    
+            #self.progress.setMaximum(len(rems)+10)
+            self.progress.setValue(100)
+           
+
             #Filtrage spatial affiné des remarques.
             if bbox!=None:
                 remsToKeep ={}
@@ -122,22 +161,107 @@ class ImporterRipart(object):
                     
                     if RipartHelper.isInGeometry(ptgeom, filtreLay):
                         remsToKeep[key]=rems[key]
+                    
             else:
                 remsToKeep= rems
                 
-            #self.context.zoom(remsToKeep)        
-            
+            cnt= len(remsToKeep)
+    
             try:  
                          
-                self.context.addRemarques(remsToKeep)
+                #self.context.addRemarques(remsToKeep,self)
+                ######
+                i=100
+                try:
+                    self.context.conn= db.connect(self.context.dbPath)
+    
+                    for remId in remsToKeep:
+                        RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
+            
+                        i+=1
+                        self.progressVal= int(round(i*100/cnt))
+                        self.progress.setValue(self.progressVal)
+                   
+               
+                    self.context.conn.commit()   
+                   
+                except Exception as e:
+                    self.logger.error(e.message)
+                    raise
+                finally:
+                    self.context.conn.close()
                 
-     
+                
+                
+                ###########
+                if cnt>1:
+                
+                    remLayer=self.context.getLayerByName2(RipartHelper.nom_Calque_Remarque)
+                    remLayer.updateExtents()
+                    box = remLayer.extent()
+                    self.setMapExtent(box)
+                    
+                elif filtreLay!=None:
+                    box=filtreLay.extent()
+                    self.setMapExtent(box)
+                    
+               
+                    
+               
+              
+                
+                #Résultat 
+                self.context.iface.messageBar().clearWidgets() 
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                
+                submit= self.context.countRemarqueByStatut(cst.STATUT.submit.__str__())
+                pending= self.context.countRemarqueByStatut(cst.STATUT.pending.__str__()) + \
+                         self.context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) + \
+                         self.context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) + \
+                         self.context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
+                reject =self.context.countRemarqueByStatut(cst.STATUT.reject.__str__()) 
+                valid = self.context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.context.countRemarqueByStatut(cst.STATUT.valid0.__str__())
+                
+                resultMessage="Extraction réussie avec succès de " + str(cnt)+ " remarque(s) RIPart depuis le serveur \n" +\
+                              "avec la répartition suivante : \n\n"+\
+                              "- "+ str(submit) +" remarque(s) nouvelle(s).\n" +\
+                              "- "+ str(pending) +" remarque(s) en cours de traitement.\n" +\
+                              "- "+ str(valid) +" remarque(s)  validée(s).\n" +\
+                              "- "+ str(reject) +" remarque(s) rejetée(s).\n" 
+                              
+                resultMessage= ClientHelper.getEncodeType(resultMessage)
+                              
+                RipartHelper.showMessageBox(resultMessage)
+                
             except Exception as e:
                 raise
 
             finally:
                 self.context.iface.messageBar().clearWidgets()   
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                #self.attenteChargement.close()
+                
             
         
+    def noFilterWarningDialog(self,message):
+               
+        message=ClientHelper.getEncodeType(message)
+        reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+        if reply == QtGui.QMessageBox.Yes:
+            return True
+        else : 
+            return False
         
-        
+    def setMapExtent(self,box):
+        source_crs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
+                    
+        mapCrs=self.context.mapCan.mapRenderer().destinationCrs().authid()
+        dest_crs=QgsCoordinateReferenceSystem(mapCrs)
+                    
+        transform = QgsCoordinateTransform(source_crs, dest_crs)
+        new_box = transform.transformBoundingBox(box)
+                    
+        #distance pour le buffer: 10% de la distance minimale (hauteur ou largeur)
+        dist= min(new_box.width(),new_box.height())*0.1  
+        #zoom sur la couche Remarque_Ripart
+        self.context.mapCan.setExtent(new_box.buffer(dist))

@@ -189,7 +189,7 @@ class Remarque(object):
                 count -=1
                 
                 if len(rep.auteur.nom)!=0 : 
-                    concatenate +=" par " + rep.auteur.nom
+                    concatenate +=" par " + ClientHelper.stringToStringType(rep.auteur.nom)
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 
@@ -212,7 +212,7 @@ class Remarque(object):
                 count -=1
                 
                 if len(rep.auteur.nom)!=0 : 
-                    concatenate +=" par " + rep.auteur.nom
+                    concatenate +=" par " +  ClientHelper.stringToStringType(rep.auteur.nom)
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 

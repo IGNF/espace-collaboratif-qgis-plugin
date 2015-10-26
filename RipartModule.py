@@ -26,7 +26,7 @@ from core.RipartLoggerCl import RipartLogger
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, SIGNAL, Qt
 from PyQt4.QtGui import QAction, QIcon, QMenu
 from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox,QToolButton
+from PyQt4.QtGui import QMessageBox,QToolButton,QApplication
 from qgis.core import *
 
 
@@ -37,6 +37,7 @@ import resources
 # Import the code for the dialog
 from FormConnexion_dialog import FormConnexionDialog
 from FormInfo import FormInfo
+from FormConfigure import FormConfigure
 
 from Contexte import Contexte
 from core.Client import Client
@@ -93,7 +94,7 @@ class RipartPlugin:
         
         self.dlgInfo=FormInfo()
         
-     
+       
 
         # Declare instance attributes
         self.actions = []
@@ -310,7 +311,7 @@ class RipartPlugin:
             pushMessage("Erreur",
                          u"Un problème est survenu dans le téléchargement des remarques", \
                          level=2, duration=10)
-        
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
 
     def connectToRipart(self,context):
         client = Client(context.urlHostRipart, context.login, context.pwd)
@@ -370,6 +371,25 @@ class RipartPlugin:
    
     def configurePref(self):
         print "configure"
+        
+        try:
+            self.context= Contexte.getInstance(self,QgsProject)   
+            self.context.checkConfigFile()    
+            self.dlgConfigure=FormConfigure(context=self.context)
+              
+            self.dlgConfigure.exec_()
+            
+        except Exception as e:
+            self.logger.error(e.message)
+            self.context.iface.messageBar(). \
+            pushMessage("Erreur",
+                         u"Un problème est survenu dans le chargement de la configuration."+e.message, \
+                        level=2, duration=10)
+                     
+        
+        
+        
+    
     def test1(self):
         print "test1"
     def test2(self):
