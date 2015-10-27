@@ -180,11 +180,7 @@ class Client:
         
         #on ajoute cette ligne à cause d'un probème d'encodage dans la réponse du service !
         data    = re.sub('(<STATUTXT>)(.*)(</STATUTXT>)','',data, flags=re.MULTILINE)
-        
-        
-        #self.logger.debug(data)
-        
-        
+             
         xml = XMLResponse(data)
         errMessage = xml.checkResponseValidity()
         
@@ -225,6 +221,7 @@ class Client:
         :type idGroupe: int
         """   
         
+        #progressbar pour le chargement des remarques
         self.progressMessageBar = self.iface.messageBar().createMessage(u"Téléchargement des remarques depuis le serveur ...")
         self.progress = QProgressBar()
      
@@ -284,7 +281,6 @@ class Client:
             self.logger.error(str(e))
             raise 
         
-        #self.logger.debug("DATA:"+ data)
         xml = XMLResponse(data)
         errMessage = xml.checkResponseValidity()
         
@@ -292,9 +288,7 @@ class Client:
         dicoRems={}
        
         count=int(pagination)
-        
-        
-        
+      
         if errMessage['code'] =='OK':
             total = xml.getTotalResponse()
             dicoRems = xml.extractRemarques()          
@@ -307,8 +301,7 @@ class Client:
                 
             self.progress.setMaximum(progressMax)
             self.progress.setValue(count)
-            #TODO Progressbar ?
-            
+     
             while (int(total) - count)  > 0:
                 data = self.georem_get(zone, box, pagination, date, idGroupe, count)
                 xml = XMLResponse(data)
@@ -319,8 +312,7 @@ class Client:
                 if errMessage2['code'] =='OK':
                     dicoRems.update(xml.extractRemarques())          
                     self.__jeton= xml.getCurrentJeton()
-                
-                  
+            
                 self.progress.setValue(count)
                 
         return {'total':total, 'dicoRems':dicoRems}

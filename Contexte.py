@@ -46,8 +46,10 @@ class Contexte(object):
     urlHostRipart=""    
     profil=None
     
+    #client pour le service RIPart
     client=None
     
+    #fenêtre de connexion
     loginWindow=None
  
     #le répertoire du projet qgis
@@ -55,6 +57,7 @@ class Contexte(object):
     #le nom du fichier (projet qgis)
     projectFileName=""
     
+    #chemin vers la base de donnée sqlite
     dbPath=""
     
     #répertoire du plugin
@@ -63,7 +66,7 @@ class Contexte(object):
     #fichier xml de configuration
     ripartXmlFile=""
     
-    #
+    #objets QGis
     QObject= None
     QgsProject=None
     iface=None
@@ -74,11 +77,13 @@ class Contexte(object):
     #Le système géodésique employé par le service Ripart (WGS84; EPSG:2154)
     spatialRef= None
       
+    #connexion à la base de données
     conn=None
-
+    
+    #le logger
     logger=None
     
-    progressMessageBar=None
+    #progressMessageBar=None
     progress=None
     
 
@@ -98,7 +103,6 @@ class Contexte(object):
         
         self.logger=RipartLogger("Contexte").getRipartLogger()
 
-
         self.spatialRef = QgsCoordinateReferenceSystem( RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
          
         try:
@@ -109,35 +113,29 @@ class Contexte(object):
             self.checkConfigFile()      
             
             self.getOrCreateDatabase()
-            
-            #self.addRipartLayersToMap()
-            
-        except RipartException as e:
-            #self.logger.setLevel(logging.DEBUG)
-            self.logger.error("init contexte:" + e.message)
-   
-            raise
-              
-        
       
+        except RipartException as e:
+            self.logger.error("init contexte:" + e.message)
+            raise
+
+    
     @staticmethod    
     def getInstance(QObject=None,QgsProject=None):
+        """Retourne l'instance du Contexte
+        """
         if not Contexte.instance:
             try:
                 Contexte.instance= Contexte(QObject,QgsProject)
                 Contexte.instance.logger.debug("instance de contexte créée")
-                #QgsMessageLog.logMessage("Your plugin code has been executed correctly", level=QgsMessageLog.INFO, tag="ripart")
             except RipartException as e:
                 Contexte.instance=None
-                raise e
+                #raise e
             
         elif  (Contexte.instance.projectDir!= QgsProject.instance().homePath() or
               Contexte.instance.projectFileName+".qgs"!=ntpath.basename(QgsProject.instance().fileName())) :
             Contexte.instance = Contexte(QObject,QgsProject)
             Contexte.instance.logger.debug("nouvelle instance de contexte créée")
-       
-        #Contexte.instance.addRipartLayersToMap()
-        
+
         return Contexte.instance
     
     
@@ -145,16 +143,12 @@ class Contexte(object):
         """set des paramètres du projet
         """
         self.projectDir=QgsProject.instance().homePath()
-        if self.projectDir =="":
-            """msgBox = QMessageBox()
-            msgBox.setWindowTitle("IGN RIPart")
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setText(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart")
-            ret = msgBox.exec_()"""
-
-            self.iface.messageBar().pushMessage("Attention",
+        if self.projectDir =="":   
+            """self.iface.messageBar().pushMessage("Attention",
                                                  u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart",
                                                   level=1, duration =10)
+            """
+            RipartHelper.showMessageBox(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart")
             raise RipartException(u"Projet QGIS non enregistré") 
     
         fname=ntpath.basename(QgsProject.instance().fileName())
@@ -185,11 +179,11 @@ class Contexte(object):
         self.logger.debug("setConnexionRipart")
         ret=""
         if len(self.projectFileName)==0:
-            """msgBox = QMessageBox()
+            msgBox = QMessageBox()
             msgBox.setWindowTitle("IGN RIPart")
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setText(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart")
-            ret = msgBox.exec_()"""
+            ret = msgBox.exec_()
         else:
             self.urlHostRipart = RipartHelper.load_urlhost(self.projectDir).text
             self.login = RipartHelper.load_login(self.projectDir).text
@@ -204,13 +198,22 @@ class Contexte(object):
         
         result= -1;
         
-        self.urlHostRipart=RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost).text
-        self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
+        try:
+            self.urlHostRipart=RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,"Serveur").text
+            self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
+        except Exception as e:
+            self.logger.error("URLHOST inexistant dans fichier configuration")
+            RipartHelper.showMessageBox( u"L'url du serveur doit être renseignée dans la configuration avant de pouvoir se connecter.\n(Aide>Configurer le plugin RIPart>Adresse de connexion ...)" )
+            return
  
         
         self.loginWindow = FormConnexionDialog()
         
-        self.login = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_Login).text
+        loginXmlNode=RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_Login,"Serveur")
+        if loginXmlNode==None:
+            self.login=""
+        else:
+            self.login = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_Login,"Serveur").text
         
         if (self.login =="" or self.pwd=="" or newLogin):
             self.loginWindow.setLogin(self.login)
@@ -235,7 +238,7 @@ class Contexte(object):
                             self.saveLogin(self.login)
                           
                             dlgInfo=FormInfo()
-                            dlgInfo.textInfo.setText(u"<b>Connexion réussie au service Ripart.</b>")
+                            dlgInfo.textInfo.setText(u"<b>Connexion réussie au service RIPart.</b>")
                             dlgInfo.textInfo.append("<br/>Serveur : "+ self.urlHostRipart)
                             dlgInfo.textInfo.append("Login : "+  self.login)
                             dlgInfo.textInfo.append("Profil: "+ profil.titre)
@@ -249,6 +252,7 @@ class Contexte(object):
                     except Exception as e:
                         result=-1
                         self.pwd=""
+                        self.logger.error(e.message)         
                         self.loginWindow.setErreur(ClientHelper.getEncodeType(e.message))
                         self.loginWindow.exec_()
                         

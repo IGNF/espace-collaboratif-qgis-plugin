@@ -31,34 +31,24 @@ class ImporterRipart(object):
     progressMessageBar=None
     progress=None
     progressVal=0
-    
-    attenteChargement=None
+
 
     def __init__(self,context):
         '''
         Constructor
         '''
         self.context=context
-        
-        self.attenteChargement= FormAttenteChargement()
+   
         
         self.progressMessageBar = self.context.iface.messageBar().createMessage(u"Placement des remarques sur la carte...")
         self.progress = QProgressBar()
-        self.progress.setMaximum(200)
-        
-        self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
-        #self.progress.setTextVisible(False)
+        self.progress.setMaximum(200)        
+        self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)     
         self.progressMessageBar.layout().addWidget(self.progress)
-        
-        """self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
-        self.context.progress=self.progress"""
-        
-        """for i in range(10):
-            time.sleep(1)
-            self.progress.setValue(i + 1)
-        """
      
     def doImport(self):
+        """Téléchargement et import des remarques dans la carte
+        """
         self.logger.debug("doImport")
         
         filtreLay=None
@@ -69,8 +59,6 @@ class ImporterRipart(object):
         if not res:
             return
         else: 
-        
-          
             filtre=  RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
               
             if (filtre!=None):    
@@ -105,47 +93,29 @@ class ImporterRipart(object):
                     return
    
             QApplication.setOverrideCursor(Qt.BusyCursor)
-            
-      
-            #self.attenteChargement.setModal(False)
-            #self.attenteChargement.setVisible(True)
-           
-            
+
             #vider les tables ripart
             self.context.emptyAllRipartLayers()
-            
-            #self.progressVal=1
-            #self.progress.setValue(self.progressVal)
-            
-            pagination =RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination).text
+              
+            pagination =RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination,"Map").text
             if pagination ==None :
                 pagination = RipartHelper.defaultPagination
            
-            date= RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_DateExtraction).text
+            date= RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_DateExtraction,"Map").text
             
             date= RipartHelper.formatDate(date)
  
-            groupFilter=RipartHelper.load_ripartXmlTag(self.context.projectDir,RipartHelper.xml_Group).text
+            groupFilter=RipartHelper.load_ripartXmlTag(self.context.projectDir,RipartHelper.xml_Group,"Map").text
             
             if groupFilter=='true':
                 groupId=self.context.profil.geogroupe.id
             else:
                 groupId=-1
-        
-            #self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
-           
-            #self.context.progress.setMaximum( len(remsToKeep))  
-            #self.context.startProgressbar()
-            #self.context.iface.messageBar().pushWidget( self.context.progressMessageBar, self.context.iface.messageBar().INFO)
-            #self.progressVal+=1
-            #self.progress.setValue(self.progressVal)
-            
+   
             self.context.client.setIface(self.context.iface)
             rems = self.context.client.getRemarques(self.context.profil.zone, bbox, pagination,date, groupId)
 
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
-    
-            #self.progress.setMaximum(len(rems)+10)
             self.progress.setValue(100)
            
 
@@ -168,21 +138,16 @@ class ImporterRipart(object):
             cnt= len(remsToKeep)
     
             try:  
-                         
-                #self.context.addRemarques(remsToKeep,self)
-                ######
                 i=100
                 try:
                     self.context.conn= db.connect(self.context.dbPath)
     
                     for remId in remsToKeep:
                         RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
-            
                         i+=1
                         self.progressVal= int(round(i*100/cnt))
                         self.progress.setValue(self.progressVal)
-                   
-               
+  
                     self.context.conn.commit()   
                    
                 except Exception as e:
@@ -191,11 +156,7 @@ class ImporterRipart(object):
                 finally:
                     self.context.conn.close()
                 
-                
-                
-                ###########
-                if cnt>1:
-                
+                if cnt>1:                
                     remLayer=self.context.getLayerByName2(RipartHelper.nom_Calque_Remarque)
                     remLayer.updateExtents()
                     box = remLayer.extent()
@@ -205,11 +166,7 @@ class ImporterRipart(object):
                     box=filtreLay.extent()
                     self.setMapExtent(box)
                     
-               
-                    
-               
-              
-                
+          
                 #Résultat 
                 self.context.iface.messageBar().clearWidgets() 
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -239,7 +196,6 @@ class ImporterRipart(object):
             finally:
                 self.context.iface.messageBar().clearWidgets()   
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
-                #self.attenteChargement.close()
                 
             
         

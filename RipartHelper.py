@@ -63,8 +63,9 @@ class RipartHelper(object):
     nom_Champ_Attributs = "Attributs_croquis"
     nom_Champ_LienBDuni = "Lien_object_BDUni"""
 
-    xmlServeur="./Serveur"
-    xml_UrlHost = "./Serveur/URLHost"
+    xmlServeur="Serveur"
+    xmlMap="Map"
+    """xml_UrlHost = "./Serveur/URLHost"
     xml_Login = "./Serveur/Login"
     xml_DateExtraction = "./Map/Date_extraction"
     xml_Pagination = "./Map/Pagination"
@@ -72,9 +73,21 @@ class RipartHelper(object):
     xml_Zone_extraction = "./Map/Zone_extraction"
     xml_AfficherCroquis = "./Map/Afficher_Croquis"
     xml_AttributsCroquis = "./Map/Attributs_croquis"
+    """
+    xml_UrlHost = "URLHost"
+    xml_Login = "Login"
+    xml_DateExtraction = "Date_extraction"
+    xml_Pagination = "Pagination"
+    xml_Themes = "Thèmes_préférés/Thème"
+    xml_Zone_extraction = "Zone_extraction"
+    xml_AfficherCroquis = "Afficher_Croquis"
+    xml_AttributsCroquis = "Attributs_croquis"
+    
+    
     xml_BaliseNomCalque = "Calque_Nom"
     xml_BaliseChampCalque = "Calque_Champ"
-    xml_Group = "./Map/Import_pour_groupe"
+    #xml_Group = "./Map/Import_pour_groupe"
+    xml_Group ="Import_pour_groupe"
     xml_Map="./Map"
 
     url_Manuel = "C:\\Ripart\\Manuel d'utilisation de l'add-in RIPart pour ArcMap.pdf" 
@@ -90,6 +103,12 @@ class RipartHelper(object):
        
   
     logger=RipartLogger("RipartHelper").getRipartLogger()
+    
+    @staticmethod
+    def getXPath(tagName,parentName):
+        xpath="./"+parentName+"/"+tagName
+        return xpath
+    
 
     @staticmethod
     def load_urlhost(projectDir):
@@ -97,7 +116,7 @@ class RipartHelper(object):
         try:    
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
-            urlhost= xmlroot.find(RipartHelper.xml_UrlHost)     
+            urlhost= xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_UrlHost,"Serveur"))     
             if urlhost==None:
                 urlhost=RipartHelper.addXmlElement(projectDir,"URLHost","Serveur")
                 #urlhost=""
@@ -108,22 +127,21 @@ class RipartHelper(object):
         
         return urlhost
     
- 
-        
+   
+    
     @staticmethod
     def load_login(projectDir):
         login=""
         try:    
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
-            login= xmlroot.find(RipartHelper.xml_Login)     
+            login= xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_Login,"Serveur"))     
             if login==None:
                 login=RipartHelper.addXmlElement(projectDir,"Login","Serveur")
                 
         except Exception as e:
             RipartHelper.logger.error(str(e))
-        
-        
+    
         return login
     
     @staticmethod
@@ -131,7 +149,7 @@ class RipartHelper(object):
         try:
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
-            xlogin= xmlroot.find(RipartHelper.xml_Login)  
+            xlogin= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Login,"Serveur"))
             xlogin.text=login 
             
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
@@ -146,41 +164,61 @@ class RipartHelper(object):
         try:    
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
-            calque= xmlroot.find(RipartHelper.xml_Zone_extraction)     
+            calque= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Zone_extraction,"Map"))     
             
         except Exception as e:
             RipartHelper.logger.error(str(e))
         
         return  calque
 
-    """@staticmethod
-    def load_pagination(projectDir):
-        urlhost=""
-        try:    
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            urlhost= xmlroot.find(RipartHelper.xml_Pagination)     
-            
-        except Exception as e:
-            RipartHelper.logger.error(str(e))
-        
-        return urlhost"""
+ 
 
     @staticmethod
-    def load_ripartXmlTag(projectDir,tag):
-        calque=""
+    def load_ripartXmlTag(projectDir,tag,parent=None):
+        """Recherche un élément (tag) dans le fichier xml.
+        Si l'élément n'existe pas ,il est créé
+        
+        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
+        :type projectDir: string
+        
+        :param tag: xpath de l'élément cherché
+        :type tag: string
+        
+        :param parent: xpath de l'élément parent
+        :type parent: string
+        
+        :return l'élément xml recherché
+        :rtype Element
+        """
+        node=None
         try:    
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
-            calque= xmlroot.find(tag)     
+            node= xmlroot.find(RipartHelper.getXPath(tag,parent))     
+            
+            if node==None:
+                node=RipartHelper.addXmlElement(projectDir, tag, parent)
             
         except Exception as e:
             RipartHelper.logger.error(str(e))
         
-        return  calque
+        return  node
+    
+    
     
     @staticmethod
     def addXmlElement(projectDir,elem,parentElem):
+        """Ajoute un élément xml "elem", avec comme élémént paren "parentElem"
+        
+        :param elem: le nom de l'élément(tag) à ajouter
+        :type elem: string
+        
+        :param parentElem: le nom de l'élément parent
+        :type parentElem: string
+        
+        :return l'élément xml créé
+        :rtype: Element
+        """
         tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
         xmlroot =tree.getroot()
         if parentElem!="root":
@@ -196,6 +234,7 @@ class RipartHelper(object):
         
         return elementNode
     
+    
     @staticmethod
     def load_attCroquis(projectDir):
         
@@ -203,7 +242,7 @@ class RipartHelper(object):
         try:
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
-            nodes=xmlroot.findall(RipartHelper.xml_AttributsCroquis)
+            nodes=xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_AttributsCroquis,"Map"))
             
             for cr in nodes:
                 nomCalque=cr.find(RipartHelper.xml_BaliseNomCalque).text
@@ -218,17 +257,19 @@ class RipartHelper(object):
         return attCroquis
     
     @staticmethod
-    def setXmlTagValue(projectDir,tag,value):
+    def setXmlTagValue(projectDir,tag,value,parent=None):
         try:
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
-            node= xmlroot.find(tag)  
+            node= xmlroot.find(RipartHelper.getXPath(tag, parent))  
             node.text=value
             
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
            
         except Exception as e:
             RipartHelper.logger.error(e.message)
+            
+
             
     @staticmethod
     def setAttributsCroquis(projectDir,calqueName,values):
@@ -514,22 +555,7 @@ class RipartHelper(object):
             rdate=RipartHelper.defaultDate
         return rdate
     
-    """@staticmethod
-    def checkDateFormatFr(self,date):
-        try:
-            dt= datetime.strptime(date, '%d/%m/%Y %H:%M:%S')
-        except:
-            try: 
-                dt= datetime.strptime(date, '%d/%m/%Y')
-    
-    @staticmethod        
-    def checkDateFormatEn(self,date):
-        try:
-            dt= datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
-        except:
-            try: 
-                dt= datetime.strptime(date, '%Y-%m-%d')
-    """           
+   
     @staticmethod   
     def showMessageBox( message):
         msgBox = QMessageBox()

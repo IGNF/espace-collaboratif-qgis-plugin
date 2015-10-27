@@ -21,9 +21,8 @@ from qgis.gui import QgsMessageBar
 
 
 class RepondreRipart(object):
-    '''
-    classdocs
-    '''
+    """"Classe pour les réponses Ripart
+    """
     logger=RipartLogger("RepondreRipart").getRipartLogger()
     context=None
 
@@ -85,11 +84,7 @@ class RepondreRipart(object):
                     self.context.updateRemarqueInSqlite(remMaj)
                     mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
                     self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
-                    """widget = self.context.iface.messageBar().createMessage("Test","Testing")
-                    combo = QComboBox()
-                    widget.layout().addWidget(combo)
-                    self.context.iface.messageBar().pushWidget(widget, level=4)
-                    combo.addItems("ASD")"""
+                  
 
         except Exception as e:
             self.logger.error(e.message)

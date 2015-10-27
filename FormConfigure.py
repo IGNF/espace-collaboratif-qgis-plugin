@@ -20,7 +20,6 @@ import calendar
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
 
 
-
 class FormConfigure(QtGui.QDialog, FORM_CLASS):
     """
     Dialogue pour la configuration des préférences de téléchargement des remarques
@@ -35,6 +34,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         
         :param context le contexte 
         :type context Contexte
+        
         
         """  
         super(FormConfigure, self).__init__(parent)
@@ -59,11 +59,6 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         
         
         #pré-remplissage des champs d'après le fichier de configuration
-        """urlHost=context.projectDir).text
-        self.context.iface.messageBar(). \
-            pushMessage("Erreur",
-                         u"Un problème est survenu dans le chargement de la configuration."+e.message, \
-                        level=2, duration=10)"""
         self.lineEditUrl.setText(RipartHelper.load_urlhost(context.projectDir).text)
         
         login=RipartHelper.load_login(context.projectDir).text
@@ -72,7 +67,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         if login!="" and login!= None:
             self.checkBoxLogin.setChecked(True)
         
-        pagination= RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Pagination).text
+        pagination= RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Pagination,"Map").text
         if pagination=="" or pagination ==None:
             pagination =100
             
@@ -81,7 +76,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         self.spinBoxPagination.setValue(int(pagination))
 
         
-        date=RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_DateExtraction).text
+        date=RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_DateExtraction,"Map").text
         if date !=None :
             date = RipartHelper.formatDate(date)
             dt= datetime.strptime(date,'%Y-%m-%d %H:%M:%S')
@@ -104,7 +99,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         self.setComboBoxFilter()
         
         
-        groupFilter=RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Group).text
+        groupFilter=RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Group,"Map").text
         if groupFilter!=None and groupFilter=="true":
             self.checkBoxGroup.setChecked(True)
         if self.context.profil!=None:
@@ -124,7 +119,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         self.comboBoxFiltre.clear()
         self.comboBoxFiltre.addItems(polyList)
         
-        zone=RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction).text
+        zone=RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction,"Map").text
         
         index = self.comboBoxFiltre.findText(zone, Qt.MatchCaseSensitive)
         if index >= 0:
@@ -153,7 +148,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         self.comboBoxFiltre.clear()
         self.comboBoxFiltre.addItems(polyList)
         
-        zone=RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction).text
+        zone=RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction,"Map").text
         
         self.setZoneFilter(zone)
     """    
@@ -290,21 +285,21 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         errMessage=""
         
         #Url
-        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_UrlHost,self.lineEditUrl.text())
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_UrlHost,self.lineEditUrl.text(),"Serveur")
         
         #login      
         if self.checkBoxLogin.isChecked():
             login=self.lineEditLogin.text()
         else:
             login=""
-        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Login,login)
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Login,login,"Serveur")
         
         #pagination
         if self.checkBoxPagination.isChecked():
             pag= str(self.spinBoxPagination.value())
         else :
             pag= ""
-        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Pagination,pag)
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Pagination,pag,"Map")
                 
         #date
         if self.checkBoxDate.isChecked():
@@ -313,7 +308,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         else : 
             sdate=""
             
-        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_DateExtraction,sdate)
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_DateExtraction,sdate,"Map")
        
         
         #zone de filtrage
@@ -322,7 +317,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         else :
             filtre =""
         
-        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Zone_extraction,filtre)
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Zone_extraction,filtre,"Map")
         
         
         #filtre groupe
@@ -331,10 +326,10 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         else:
             groupFilter=""
             
-        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Group,groupFilter)
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Group,groupFilter,"Map")
         
         #attributs croquis
-        #RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_AttributsCroquis,"")
+        #RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_AttributsCroquis,"","Map")
         RipartHelper.removeAttCroquis(self.context.projectDir)
         if self.checkBoxAttributs.isChecked():
             checkedItems=self.getCheckedTreeItems()

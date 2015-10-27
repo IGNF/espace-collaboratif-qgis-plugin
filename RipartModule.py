@@ -243,12 +243,26 @@ class RipartPlugin:
             status_tip=self.tr(u'Supprimer les remarques de la carte en cours'),
             parent=self.iface.mainWindow())
         
-     
+        icon_path = ':/plugins/RipartPlugin/images/viewRem.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Voir la remarque'),
+            callback=self.viewRem,
+            status_tip=self.tr(u'Voir la remarque'),
+            parent=self.iface.mainWindow())
+        
+        icon_path = ':/plugins/RipartPlugin/images/magicwand.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Voir les objets associés'),
+            callback=self.magicwand,
+            status_tip=self.tr(u'Voir les objets associés'),
+            parent=self.iface.mainWindow())
            
-        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer l'add-in RIPart", self.iface.mainWindow())
-        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur de l'add-in RIPart", self.iface.mainWindow())
-        self.log= QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log de l'add-in RIPart", self.iface.mainWindow())
-        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos de l'add-in RiPart", self.iface.mainWindow())
+        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin RIPart", self.iface.mainWindow())
+        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin RIPart", self.iface.mainWindow())
+        self.log= QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin RIPart", self.iface.mainWindow())
+        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin RIPart", self.iface.mainWindow())
         
       
         
@@ -290,19 +304,24 @@ class RipartPlugin:
 
 
     def run(self):
-        """Run method that performs all the real work"""
+        """Fenêtre de connexion"""
+        
         self.context= Contexte.getInstance(self,QgsProject)
         if self.context ==None :
             return
       
         if self.context:    
-            res=self.context.getConnexionRipart(newLogin=True)   
+            res=self.context.getConnexionRipart(newLogin=True)  
+
         
         
     def downloadRemarks(self):
         
         try:
-            self.context= Contexte.getInstance(self,QgsProject)            
+            self.context= Contexte.getInstance(self,QgsProject)   
+            if self.context ==None :
+                return    
+                 
             importRipart= ImporterRipart(self.context)
             importRipart.doImport()
         except Exception as e:
@@ -321,6 +340,8 @@ class RipartPlugin:
     def answerToRemark(self):
         try:
             self.context= Contexte.getInstance(self,QgsProject)  
+            if self.context ==None :
+                return 
             reponse = RepondreRipart(self.context)
             reponse.do()
         except Exception as e:
@@ -339,7 +360,8 @@ class RipartPlugin:
         print "remove"
         try:
             self.context= Contexte.getInstance(self,QgsProject)
-        
+            if self.context ==None :
+                return 
             message=u"Êtes-vous sûr de vouloir supprimer les remarques RIPart de la carte en cours?"
             
             reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
@@ -357,7 +379,8 @@ class RipartPlugin:
         
 
     def update(self):
-        """Run method that performs all the real work"""
+        """
+        """
         # show the dialog
         self.dlgConnexion.show()
         # Run the dialog event loop
@@ -374,6 +397,9 @@ class RipartPlugin:
         
         try:
             self.context= Contexte.getInstance(self,QgsProject)   
+            if self.context ==None :
+                return 
+            
             self.context.checkConfigFile()    
             self.dlgConfigure=FormConfigure(context=self.context)
               
@@ -387,7 +413,11 @@ class RipartPlugin:
                         level=2, duration=10)
                      
         
-        
+    def magicwand(self):
+        print("magicwand") 
+    
+    def viewRem(self):
+        print("viewRem")   
         
     
     def test1(self):
