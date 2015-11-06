@@ -235,19 +235,20 @@ class Client:
         dicoRems={}
         
         #la date-heure actuelle (début de la requête)
-        dt = time.strftime("%Y-%m-%d %H:%I:%S")
+        dt = time.strftime("%Y-%m-%d %H:%M:%S")
         dtTmp = dt
         
         result= self.__getRemarques(zone, box, pagination, date, idGroupe)
         
     
         while int(result['total']) >1 :
-            dt = time.strftime("%Y-%m-%d %H:%I:%S")
+            dt = time.strftime("%Y-%m-%d %H:%M:%S")
             tmp=self.__getRemarques(zone, box, pagination, dtTmp, idGroupe)
             
             result['dicoRems'].update(tmp['dicoRems'])
             result['total']=tmp['total']
             dtTmp= dt
+            self.logger.debug("loop on total result "+ " total="+result['total'] +",datetime="+dt )
     
         dicoRems= OrderedDict(sorted(result['dicoRems'].items(), key=lambda t: t[0],reverse=True))
                                
@@ -365,7 +366,7 @@ class Client:
         if self.__jeton==None or self.__auteur.id==None :
             return None
         else:
-            jeton_md5 = self.getMD5Hash(str(id_georem) + self.__auteur.id +ConstanteRipart.RIPART_CLIENT_PROTOCOL+self.__jeton)
+            jeton_md5 =Client.getMD5Hash(str(id_georem) + self.__auteur.id +ConstanteRipart.RIPART_CLIENT_PROTOCOL+self.__jeton)
             
             georem_url += "&jeton_md5=" + jeton_md5 + \
                           "&id_auteur=" + self.__auteur.id + \
@@ -390,7 +391,7 @@ class Client:
       
         try:
             tohash=remarque.id+ self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton
-            jeton_md5 = self.getMD5Hash(tohash)
+            jeton_md5 =Client.getMD5Hash(tohash)
             
             params = {}
             params['action']=ConstanteRipart.RIPART_GEOREM_PUT
@@ -434,7 +435,7 @@ class Client:
         
         rem= None
         try:
-            jeton_md5 = self.getMd5Hash("0" + self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton)
+            jeton_md5 =Client.getMD5Hash("0" + self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton)
             
             params = {}
             params['action']=ConstanteRipart.RIPART_GEOREM_POST
@@ -490,17 +491,28 @@ class Client:
             docCnt=0
             docs= {}
             
+            files={}
             for document in documents:
                 if  os.path.isfile(document) :
                     docCnt +=1
                     if os.path.getsize(document) > ConstanteRipart.MAX_TAILLE_UPLOAD_FILE:
                         raise Exception("Le fichier "+ document + " est de taille supérieure à " + \
-                                        ConstanteRipart.MAX_TAILLE_UPLOAD_FILE)  
+                                        str(ConstanteRipart.MAX_TAILLE_UPLOAD_FILE))  
                     
-                    docs["upload"+docCnt]=document
+                    docs["upload"+str(docCnt)]=document
                     
-            #envoi de la requête
-            data = RipartServiceRequest.makeHttpRequest(self.__url,  data=params, files=docs)             
+                    #params["upload"+str(docCnt)]=document
+                    
+                    #files["upload"+str(docCnt)]=({},open(document, 'rb'))
+                    #files = {"upload"+str(docCnt): open('D:/Ripart/doc/Manuel utilisateur add-in RIPart pour ArcMap.pdf', 'rb')}
+                    fname=os.path.basename(document)
+                    files = {"upload"+str(docCnt):  (fname, open(document, 'rb'))}
+                    params ['filename']=os.path.basename(document)
+   
+       
+            # TODO uncomment !!!        
+            """#envoi de la requête
+            data = RipartServiceRequest.makeHttpRequest(self.__url,  data=params, files=files)             
                     
             xmlResponse = XMLResponse(data)
             errMessage= xmlResponse.checkResponseValidity()
@@ -515,7 +527,12 @@ class Client:
             else:
                 self.logger.error(errMessage['message'])
                 raise Exception(errMessage['message'])
-                
+            
+            
+            self.__jeton = xmlResponse.getCurrentJeton()
+            """
+            ##################
+            
         except Exception as e:
             self.logger.error(str(e))
             raise Exception(e)
@@ -537,7 +554,7 @@ class Client:
         else:
             tocrypt= self.__auteur.id + self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton
 
-            jeton_md5 = self.getMD5Hash(tocrypt)
+            jeton_md5 =Client.getMD5Hash(tocrypt)
             
             params = {}
             params['action']=ConstanteRipart.RIPART_GEOAUT_GET
@@ -561,7 +578,7 @@ class Client:
         else:
             
             tocrypt=str(id_georem )+ self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton
-            jeton_md5 = self.getMD5Hash(tocrypt)
+            jeton_md5 =Client.getMD5Hash(tocrypt)
             
             params = {}
             params['action']='georem_get'

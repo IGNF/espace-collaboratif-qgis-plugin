@@ -8,6 +8,7 @@ from Enum import Enum
 from Point import Point
 import xml.etree.ElementTree as ET
 from ClientHelper import ClientHelper
+from datetime import date
 
 
 class Croquis(object):
@@ -204,7 +205,8 @@ class Croquis(object):
        
         for pt in self.points:
             coord += pt.longitude.__str__()+ ","+ pt.latitude.__str__() + " "
-        
+            
+        coord=coord[:-1]
         #if self.type==self.CroquisType.Ligne or self.type==self.CroquisType.Fleche:
         if self.type in [self.CroquisType.Ligne,self.CroquisType.Fleche]:
             ingeom=ET.SubElement(geom,ns+':LineString')
@@ -217,7 +219,7 @@ class Croquis(object):
         elif self.type == self.CroquisType.Polygone:
             pol=ET.SubElement(geom,ns+':Polygon')
             outer=ET.SubElement(pol,ns+':outerBoundaryIs')
-            ingeom= ET.SubElement(pol,ns+':LinearRing')
+            ingeom= ET.SubElement(outer,ns+':LinearRing')
       
         
         coordEl=ET.SubElement(ingeom,ns+':coordinates')
@@ -225,7 +227,7 @@ class Croquis(object):
         
         #les attributs
         xattributs= ET.SubElement(objet,'attributs')
-        for att in self.attributs:
+        for att in self.attributs:           
             xatt= ET.SubElement(xattributs,'attribut',{'name':ClientHelper.notNoneValue(att.nom)})
             xatt.text =ClientHelper.notNoneValue( att.valeur)
             
@@ -246,9 +248,11 @@ class Croquis(object):
         
         return satt
             
-    def getCoordinates(self):
-        
-        return self.coordinates     
+    def getCoordinatesFromPoints(self):
+        coord=""
+        for pt in self.points:
+            coord+=str(pt.longitude) + " "+ str(pt.latitude)+","
+        return coord[:-1]    
 
 
 

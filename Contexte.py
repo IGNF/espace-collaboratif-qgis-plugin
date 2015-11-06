@@ -9,7 +9,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtGui import QMessageBox
 from qgis.core import *
-from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest
+from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,QgsGeometry
 from RipartException import RipartException
 
 import os.path
@@ -31,7 +31,11 @@ from FormConnexion_dialog import FormConnexionDialog
 from FormInfo import FormInfo
 from core.Client import Client
 from core.ClientHelper import ClientHelper
+from core.Attribut import Attribut
+from core.Point import Point
+from core.Croquis import Croquis
 
+import math
 
 class Contexte(object):
     """
@@ -362,7 +366,7 @@ class Contexte(object):
     
     
     def getMapPolygonLayers(self):
-        """
+        """Retourne les calques qui sont de type polygon ou multipolygon
         """
         layers = self.mapCan.layers()
         polylayers={}
@@ -493,9 +497,321 @@ class Contexte(object):
         filtFeatures=remLay.getFeatures(QgsFeatureRequest().setFilterExpression( expression ))
         return len(list(filtFeatures))
     
+    #############Création nouvelle remarque ###########
     
-    """def getRemarqueById(self,remId):
+    def hasMapSelectedFeatures(self):
+        mapLayers = self.mapCan.layers()
+        for l in mapLayers:
+            if len(l.selectedFeatures())>0:
+                return True        
+        return False    
+    
+    def getMapSelectedFeaturesCount(self):
+        cnt=0
+        mapLayers = self.mapCan.layers()
+        for l in mapLayers:
+            cnt+=len(l.selectedFeatures())
+                     
+        return cnt 
+    
+    def makeCroquisFromSelection(self):
+        """Transforme en croquis Ripart les object sélectionnés dans la carte en cours.
+        Le système de référence spatial doit être celui du service Ripart(i.e. 4326), donc il faut transformer les
+        coordonnées si la carte est dans un autre système de réf.
+        """
+        #dictionnaire : key: nom calque, value: liste des attributs 
+        attCroquis=RipartHelper.load_attCroquis(self.projectDir)
         
-        remarque= self.client.getRemarque(remId)     
+        #Recherche tous les features sélectionnés sur la carte (pour les transformer en croquis)
+        listCroquis=[]
+        mapLayers = self.mapCan.layers()
+        for l in mapLayers:
+ 
+            for f in l.selectedFeatures():
+                fattributes= f.attributes()
+             
+                ###CENTROID ??? 
+                """centroid= f.geometry().centroid()
+                centroidPt=centroid.asPoint()
+                
+                destCrs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
+                transformer = QgsCoordinateTransform(l.crs(), destCrs)
+                centroidPt=transformer.transform(centroidPt)
+                """
+                ######### 
+                croquiss=[]
+                ftype= f.geometry().wkbType()
+                geom= f.geometry()
+                #if geom.isMultipart():
+                #explode to single parts
+                if ftype == QGis.WKBMultiPolygon:
+                    for poly in geom.asMultiPolygon():
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolygon(poly),QGis.WKBPolygon,l.crs(),f[0]))
+                        
+                elif ftype== QGis.WKBMultiLineString:
+                    for line in geom.asMultiPolyline():
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolyline(line),QGis.WKBLineString,l.crs(),f[0]))
+                        
+                elif ftype== QGis.WKBMultiPoint:
+                    for pt in geom.asMultiPoint():
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPoint(pt),QGis.WKBPoint,l.crs(),f[0]))
+               
+                else :    
+                    #croquisTemp=(self.makeCroquis(geom,ftype,l.crs(),f[0]))
+                    croquiss.append(self.makeCroquis(geom,ftype,l.crs(),f[0]))
+                
+                if len(croquiss)==0:
+                    continue
+                
+                for croquisTemp in croquiss:
+                    if l.name() in attCroquis:
+                        for att in attCroquis[l.name()]:
+                            idx= l.fieldNameIndex(att)
+                            attribut= Attribut(att,f.attributes()[idx])
+                            croquisTemp.addAttribut(attribut)
+                        
+                    listCroquis.append(croquisTemp)
+    
+        return listCroquis
+    
+    
+    def makeCroquis(self, geom, ftype, layerCrs,fId):
+        """Génère un croquis Ripart à partir d'une géométrie
+        Les coordonnées des points du croquis doivent être transformées dans le crs de Ripart (4326)
         
-        return remarque"""
+        :param geom: la géométrie à transformer en croquis
+        :type geom: QgsGeometry
+        
+        :param ftype: le type de l'objet géométrique
+        :param type ftype: QGis.WkbType
+        
+        :param layerCrs: le syst de coordonnées de référence du calque dont provient le feature
+        :type layerCrs: QgsCoordinateReferenceSystem
+        
+        :param fId: l'id de l'objet géométrique (valeur du premier attribut du feature)
+        :type fId: int
+        
+        :return le croquis créé 
+        :rtype Croquis ou None s'il y a eu une erreur
+        """
+        croquisAndCentroids=[]
+        
+        #croquiss=[]
+        
+        newCroquis= Croquis()
+        geomPoints=[]
+        
+        centroid=Point()
+        
+        try:
+            destCrs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
+            
+            transformer = QgsCoordinateTransform(layerCrs, destCrs)
+            #wgsGeom=transformer.transform(geom)
+            
+            #if geom.isMultipart():
+                #explode to single parts
+                
+            if ftype == QGis.WKBMultiPolygon:
+                #for poly in geom.asMultiPolygon():
+                    #croquiss.append(self.makeCroquis(poly,ftype,layerCrs,fId))
+                pass
+            elif ftype==QGis.WKBPolygon:
+                geomPoints=geom.asPolygon()
+                if len(geomPoints)>0:
+                    geomPoints=geomPoints[0]      #les points du polygone
+                else: 
+                    self.logger.debug(u"geomPoints problem " + str(fId))        
+                newCroquis.type=newCroquis.CroquisType.Polygone
+                
+            elif ftype==QGis.WKBMultiLineString :
+                geomPoints = geom.asMultiPolyline()
+                
+            elif ftype==QGis.WKBLineString:
+                geomPoints = geom.asPolyline()
+                newCroquis.type=newCroquis.CroquisType.Ligne
+            
+            elif ftype==QGis.WKBMultiPoint:
+                geomPoints=geom.asMultiPoint()
+                
+            elif ftype==QGis.WKBPoint:
+                geomPoints=[geom.asPoint()]
+                newCroquis.type=newCroquis.CroquisType.Point
+            else :
+                newCroquis.type=newCroquis.CroquisType.Vide
+                    
+            for pt in geomPoints:
+                pt=transformer.transform(pt)
+                newCroquis.addPoint(Point(pt.x(),pt.y()))
+            
+        except Exception as e:
+            self.logger.error(u"in makeCroquis:"+e.message)
+            return None
+        
+        
+        #croquisAndCentroid.append([newCroquis,centroid])
+
+        return newCroquis
+    
+    
+    
+    def getPositionRemarque(self,listCroquis):
+        """Recherche et retourne la position de la remarque (point).
+        La position est calculée à partir des croquis associés à la remarque
+        """
+            
+        #crée la table temporaire dans spatialite et calcule les centroides de chaque croquis
+        res=self._createTempCroquisTable(listCroquis)
+            
+        #trouve le barycentre de l'ensemble des centroïdes
+        if type(res)==list:
+            barycentre= self._getBarycentre()
+            #position= self._getNearestPoint(barycentre,listPoints)
+            return barycentre
+        else:               
+            return None
+      
+            
+    
+    def _createTempCroquisTable(self,listCroquis):
+        """Crée une table temporaire dans sqlite pour les nouveaux croquis
+        La table contient la géométrie des croquis au format texte (WKT).
+        Retourne la liste des points des croquis
+        
+        :param listCroquis : la liste des nouveaux croquis
+        :type listCroquis: list
+        
+        :return une liste contenant tous les points des croquis
+        :rtype: list de Point
+        """
+        
+        dbName = self.projectFileName +"_RIPART"
+        self.dbPath = self.projectDir+"/"+dbName+".sqlite"
+        
+        tmpTable ="tmpTable"
+        
+        allCroquisPoints=[]
+        
+        if len(listCroquis)==0:
+            return None
+        
+        cr= listCroquis[0]
+        geomType="POLYGON"
+ 
+        if cr.type==cr.CroquisType.Ligne:
+            geomType="LINESTRING"
+        elif cr.type==cr.CroquisType.Polygone:
+            geomType="POLYGON"
+            
+        try:
+            self.conn= db.connect(self.dbPath)
+            cur = self.conn.cursor()
+            
+            sql=u"Drop table if Exists "+tmpTable
+            cur.execute(sql)
+            
+            sql=u"CREATE TABLE "+tmpTable+" (" + \
+                u"id INTEGER NOT NULL PRIMARY KEY, textGeom TEXT, centroid TEXT)"  
+            cur.execute(sql)
+            
+            i=0
+            for cr in listCroquis: 
+                i+=1
+                if cr.type==cr.CroquisType.Ligne:
+                    #geomType="LINESTRING"
+                    textGeom="LINESTRING("
+                    textGeomEnd=")"
+                elif cr.type==cr.CroquisType.Polygone:
+                    #geomType="POLYGON"   
+                    textGeom="POLYGON(("
+                    textGeomEnd="))"                 
+                elif cr.type==cr.CroquisType.Point:
+                    #geomType="POINT"
+                    textGeom="POINT("
+                    textGeomEnd=")"
+                
+                for pt in cr.points:       
+                    textGeom +=  str(pt.longitude) + " " + str(pt.latitude)+","
+                    allCroquisPoints.append(pt)
+                    
+                textGeom = textGeom[:-1] + textGeomEnd
+ 
+                sql="INSERT INTO "+ tmpTable + "(id,textGeom,centroid) VALUES ("+ str(i) + ",'"+ textGeom +"',"+\
+                    "AsText(centroid( ST_GeomFromText('"+ textGeom +"'))))"
+                cur.execute(sql)
+
+            self.conn.commit()
+            
+            
+            #calculate the posiotin of the remark
+            # position= self.getPositionRemarque(listCroquis,allCroquisPoints,self.conn)
+           
+        except Exception as e:
+            self.logger.error("createTempCroquisTable "+e.message)
+            return False
+        finally:
+            cur.close()
+            self.conn.close()         
+            
+        return allCroquisPoints
+            
+        
+    
+        
+    def _getBarycentre(self):    
+        tmpTable ="tmpTable" 
+        point=None
+        try:
+            dbName = self.projectFileName +"_RIPART"
+            self.dbPath = self.projectDir+"/"+dbName+".sqlite"
+            self.conn= db.connect(self.dbPath)
+            cur = self.conn.cursor()
+            
+            sql ="SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from "  + tmpTable 
+            cur.execute(sql)
+            
+            rows = cur.fetchall()
+            sumX=0
+            sumY=0
+            
+            for row in rows:
+                sumX+=row[0]
+                sumY+=row[1]
+            
+            ptX= sumX/float(len(rows))
+            ptY= sumY/float(len(rows))
+            
+            barycentre= Point(ptX,ptY)
+            
+            """ 
+            #trouver le point le plus proche du barycentre
+            sql ="SELECT textGeom  from "  + tmpTable 
+            cur.execute(sql)
+            
+            nearestDist=-1
+            nearestPoint=barycentre
+           
+            for row in rows:
+                dist=math.hypot(row[0]-barycentre.longitude, row[1]-barycentre.latitude)
+                if nearestDist<0 or dist<nearestDist:
+                    nearestDist=dist
+                    nearestPoint=Point(row[0],row[1])
+             """   
+            
+            
+        except Exception as e:
+            self.logger.error("getBarycentre "+e.message)
+            point=None
+        
+        return barycentre
+    
+    def _getNearestPoint(self,barycentre, ptsList):
+        pass
+    
+    
+    def getMapCoordReferenceSystem(self):
+        mapCrs=self.mapCan.mapRenderer().destinationCrs().authid()
+        refSys=QgsCoordinateReferenceSystem(mapCrs)
+        
+        return refSys
+        

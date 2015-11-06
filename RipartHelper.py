@@ -8,12 +8,15 @@ import logging
 from core.RipartLoggerCl import RipartLogger
 import xml.etree.ElementTree as ET
 from pyspatialite import dbapi2 as db
-from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform
+from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform,QGis
 from core.ClientHelper import ClientHelper
 from RipartException import RipartException
 import collections
 from datetime import datetime
 from PyQt4.QtGui import QMessageBox
+
+from core.Croquis import Croquis
+from core.Point import  Point
 
 class RipartHelper(object):
     """"
@@ -78,7 +81,8 @@ class RipartHelper(object):
     xml_Login = "Login"
     xml_DateExtraction = "Date_extraction"
     xml_Pagination = "Pagination"
-    xml_Themes = "Thèmes_préférés/Thème"
+    xml_Themes = "Themes_pref"
+    xml_Theme="Theme"
     xml_Zone_extraction = "Zone_extraction"
     xml_AfficherCroquis = "Afficher_Croquis"
     xml_AttributsCroquis = "Attributs_croquis"
@@ -96,6 +100,7 @@ class RipartHelper(object):
     defaultPagination=100
     longueurMaxChamp = 5000
     
+    #Système de coordonnées de référence de Ripart
     epsgCrs = 4326
     
     
@@ -207,7 +212,7 @@ class RipartHelper(object):
     
     
     @staticmethod
-    def addXmlElement(projectDir,elem,parentElem):
+    def addXmlElement(projectDir,elem,parentElem,value=None):
         """Ajoute un élément xml "elem", avec comme élémént paren "parentElem"
         
         :param elem: le nom de l'élément(tag) à ajouter
@@ -230,6 +235,9 @@ class RipartHelper(object):
             
         elementNode=ET.SubElement(parentNode,elem)
         
+        if value!=None:
+            elementNode.text=value
+                    
         tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
         
         return elementNode
@@ -255,6 +263,88 @@ class RipartHelper(object):
             RipartHelper.logger.error(str(e))
             
         return attCroquis
+    
+    @staticmethod
+    def load_preferredThemes(projectDir):
+        """
+        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
+        :type projectDir: string
+
+        """
+        prefThemes=[]
+        try:    
+            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot =tree.getroot()
+            #prefThsTag= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Themes,"Map"))  
+            
+            
+            prefThs= xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_Themes+"/"+RipartHelper.xml_Theme,"Map"))
+             
+            #ths=prefThsTag.findall(RipartHelper.xml_Theme)
+       
+            for n in  prefThs:
+                prefThemes.append(n.text)  
+                
+            """for th in prefThsTag:
+                ths=prefThsTag.findall(RipartHelper.xml_Theme)
+                
+                if ths!=None:
+                    for n in ths:
+                        prefThemes.append(n.text)
+            """   
+            
+        except Exception as e:
+            RipartHelper.logger.error(str(e))
+        
+        return  prefThemes
+    
+    @staticmethod
+    def save_preferredThemes(projectDir,prefThemes):
+        """
+        """
+        #first load Themes_prefs tag (create the tag if the tag doesn't exist yet)
+        themesNode= RipartHelper.load_ripartXmlTag(projectDir,RipartHelper.xml_Themes,"Map")
+        RipartHelper.removeNode(projectDir, RipartHelper.xml_Theme,"Map/"+RipartHelper.xml_Themes )
+        
+        for th in prefThemes:
+            
+            RipartHelper.addXmlElement(projectDir,  RipartHelper.xml_Theme, "Map/"+RipartHelper.xml_Themes, th.groupe.nom)
+    
+    @staticmethod
+    def addNode(projectDir,tag,value, parentTag=None):
+        try:
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            if parentTag == None:
+                parentNode = xmlroot
+            else:   
+                parentNode = xmlroot.find(parentTag)
+                
+            newTag=ET.SubElement(parentNode, tag)
+            newTag.text=value
+               
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+            
+        except Exception as e:
+            RipartHelper.logger.error(e.message)
+    
+    @staticmethod
+    def removeNode(projectDir,tag, parentTag=None):
+        try:
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            if parentTag == None:
+                parentNode = xmlroot
+            else:   
+                parentNode = xmlroot.find(parentTag)
+                
+            for c in parentNode.findall(tag):
+                parentNode.remove(c)
+               
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+            
+        except Exception as e:
+            RipartHelper.logger.error(e.message)
     
     @staticmethod
     def setXmlTagValue(projectDir,tag,value,parent=None):
@@ -357,6 +447,7 @@ class RipartHelper(object):
         
         cur.close()
         
+        
     @staticmethod    
     def emptyTable(conn,table):
 
@@ -376,53 +467,49 @@ class RipartHelper(object):
     
     @staticmethod
     def insertRemarques(conn,rem):
+        """Insertion d'une nouvelle remarque dans la table Remarque_Ripart
+        
+        @param conn: la connexion à la base de données
+        @type conn: 
+        
+        @param rem: la remarque à ajouter
+        @type rem: Reamarque  
+        """
         RipartHelper.logger.debug("insertRemarques")
         
         cur = conn.cursor()
         
         try:
-            RipartHelper.logger.debug("INSERT rem id:" + rem.id)
-          
-                
+            RipartHelper.logger.debug("INSERT rem id:" + str(rem.id))
+             
             ptx=rem.position.longitude
             pty= rem.position.latitude
             
-            geom= " GeomFromText('POINT("+ ptx+" "+pty +")', 4326)"
+            geom= " GeomFromText('POINT("+ str(ptx)+" "+str(pty) +")', 4326)"
             
-            """sql="INSERT INTO "+ RipartHelper.nom_Calque_Remarque + \
-                " (NoRemarque, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ," + \
-                "Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation, geom) "+ \
-                "VALUES (" + \
-                 rem.id +", '" + \
-                 ClientHelper.getValForDB(rem.auteur.nom) +"', '" + \
-                 rem.getAttribut("commune") +"', '" + \
-                 rem.getAttribut("departement","nom") +"', '" + \
-                 rem.getAttribut("departement","id")+"', '" + \
-                 rem.getAttribut("dateCreation")+"', '" + \
-                 rem.getAttribut("dateMiseAJour")+"', '" + \
-                 rem.getAttribut("dateValidation")+"', '" + \
-                 rem.concatenateThemes()+"', '" + \
-                 rem.statut.__str__()+"', '" + \
-                 rem.getAttribut("commentaire") +"', '" + \
-                 ClientHelper.getValForDB(rem.concatenateReponse()) +"', '" + \
-                 rem.getAttribut("lien") +"', '" + \
-                 rem.getAttribut("lienPrive") +"', '" + \
-                 ClientHelper.getValForDB(rem.getFirstDocument()) +"', '" + \
-                 rem.getAttribut("autorisation") + "', " + \
-                 geom +")"
-            """    
+            if type(rem.dateCreation)==datetime:
+                rem.dateCreation=RipartHelper.formatDatetime(rem.dateCreation)
+            if type(rem.dateMiseAJour)==datetime:
+                rem.dateMiseAJour=RipartHelper.formatDatetime(rem.dateMiseAJour)
+            if type(rem.dateValidation)==datetime:
+                rem.dateValidation=RipartHelper.formatDatetime(rem.dateValidation)
+            
+            if rem.dateValidation==None: 
+                rem.dateValidation=""
+                
+             
             sql=u"INSERT INTO "+ RipartHelper.nom_Calque_Remarque 
             sql+= u" (NoRemarque, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ," 
             sql+= u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation, geom) "
             sql+= u"VALUES (" 
-            sql+= rem.id +", '" 
+            sql+= str(rem.id) +", '" 
             sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.auteur.nom) +"', '" )
             sql+= ClientHelper.getEncodeType(rem.getAttribut("commune") +"', '" )
             sql+= ClientHelper.getEncodeType(rem.getAttribut("departement","nom") +"', '" )
             sql+= ClientHelper.getEncodeType(rem.getAttribut("departement","id")+"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("dateCreation")+"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("dateMiseAJour")+"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("dateValidation")+"', '" )
+            sql+= rem.dateCreation+"', '" 
+            sql+= rem.dateMiseAJour +"', '" 
+            sql+= rem.dateValidation+"', '" 
             sql+= ClientHelper.getEncodeType(rem.concatenateThemes()+"', '") 
             sql+= ClientHelper.getEncodeType(rem.statut.__str__()+"', '" )
             sql+= ClientHelper.getEncodeType(rem.getAttribut("commentaire") +"', '")
@@ -440,8 +527,7 @@ class RipartHelper(object):
             rowcount=cur.rowcount
             if rowcount!=1:
                 print "error"
-                
-            
+                           
             if len(rem.croquis) >0 :
                 croquis= rem.croquis
                 geom=None
@@ -451,27 +537,28 @@ class RipartHelper(object):
                     if len(cr.points)==0:
                         return
                         
-                    values= "("+rem.id + ",'"+ \
+                    values= "("+str(rem.id) + ",'"+ \
                             ClientHelper.getValForDB(cr.nom ) + "', '" + \
                             ClientHelper.getValForDB(cr.getAttributsInStringFormat()) + "', %s)"
                             
                     sql += values
                           
                     sgeom= " GeomFromText('%s(%s)', 4326)" 
-                    coord= cr.coordinates
-                    if cr.type=="Point" :                        
+                    coord= cr.getCoordinatesFromPoints()
+
+                    if str(cr.type)=="Point" :                        
                         geom= sgeom % ('POINT',coord)
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Point,geom)
-                    elif cr.type =="Texte":
+                    elif str(cr.type) =="Texte":
                         geom= sgeom % ('POINT',coord)
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Texte,geom)
-                    elif cr.type=="Ligne":
+                    elif str(cr.type)=="Ligne":
                         geom= sgeom % ('LINESTRING',coord)
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Ligne,geom)
-                    elif cr.type =="Fleche" :
+                    elif str(cr.type) =="Fleche" :
                         geom= sgeom % ('LINESTRING',coord)
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Ligne,geom)
-                    elif cr.type=='Polygone':
+                    elif str(cr.type)=='Polygone':
                         geom= sgeom % ('POLYGON(',coord+")")
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Polygone,geom)
                     cur.execute(sql) 
@@ -482,6 +569,8 @@ class RipartHelper(object):
             raise
         finally:
             cur.close()
+    
+    
         
     
     @staticmethod
@@ -555,7 +644,86 @@ class RipartHelper(object):
             rdate=RipartHelper.defaultDate
         return rdate
     
-   
+    @staticmethod
+    def formatDatetime(dt):
+        rdate=dt.strftime('%Y-%m-%d %H:%M:%S')
+        return rdate
+    
+    
+    @staticmethod
+    def creerPointRemarqueRipart(listCroquis):
+        """
+        Calcule le point d'application pour une nouvelle remarque Ripart à partir des croquis associées:
+        On calcule le centroïde de chaque croquis de la liste donnée,
+        puis le barycentre de l'ensemble de ces centroïdes calculés et 
+        enfin on retient le centroïde le plus proche du barycentre calculé (pour que la remarque soit proche d'un croquis)
+        """
+        position=Point()
+        cntCr= len(listCroquis)
+        
+        if cntCr==0:
+            return None
+        elif cntCr==1:
+            if listCroquis[0].type== listCroquis[0].CroquisType.Point :
+                return listCroquis[0].firstCoord()
+            else:
+                position= RipartHelper.Tra
+        
+            
+    @staticmethod
+    def getCroquisCentroid(croquis):
+        """Calcule le centroïde d'un objet croquis Ripart.   
+        
+        :param croquis : le croquis pour lequel on calcule le centroïde
+        :type croquis : core.Croquis
+        
+        :return le centroide 
+        :rtype Point
+        """  
+        #le croquis n'est pas défini     
+        if croquis.type==croquis.CroquisType.Vide or len(croquis.points)==0:
+            return None
+        
+        #le croquis se résume à un point
+        if croquis.type==croquis.CroquisType.Point :
+            return croquis.firstCoord()
+        
+        #crée une table spatialite 
+        #self.createTempCroquisTable(croquis)
+        
+        #RipartHelper.centroid(croquis.points)
+        
+  
+    """@staticmethod
+    def getMapCrs(sourceCrs):
+        source_crs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
+                    
+        mapCrs=self.context.mapCan.mapRenderer().destinationCrs().authid()
+        dest_crs=QgsCoordinateReferenceSystem(mapCrs)
+                    
+        transform = QgsCoordinateTransform(source_crs, dest_crs)
+        new_box = transform.transformBoundingBox(box)
+    """
+    
+    
+    """@staticmethod     
+    def createTempCroquisTable(croquis):
+       
+        dbName = self.projectFileName +"_RIPART"
+        self.dbPath = self.projectDir+"/"+dbName+".sqlite"
+        cur = conn.cursor()
+        
+        sql=u"CREATE TABLE "+"tmpTable"+" (" + \
+            u"id INTEGER NOT NULL PRIMARY KEY)"  
+        cur.execute(sql)
+        
+        # creating a POINT Geometry column
+        sql = "SELECT AddGeometryColumn('"+table+"',"
+        sql += "'geom', "+str(RipartHelper.epsgCrs)+",'"+geomType+"', 'XY')"
+        cur.execute(sql)
+        
+        cur.close()
+   """
     @staticmethod   
     def showMessageBox( message):
         msgBox = QMessageBox()

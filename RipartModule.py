@@ -50,6 +50,7 @@ from RipartException import RipartException
 
 from FormRepondre import FormRepondreDialog
 from RepondreRipart import RepondreRipart
+from CreerRipart import CreerRipart
 
 class RipartPlugin:
     """QGIS Plugin Implementation."""
@@ -218,6 +219,13 @@ class RipartPlugin:
             status_tip=self.tr(u'Télécharger les remarques RIPart'),
             parent=self.iface.mainWindow())
         
+        icon_path = ':/plugins/RipartPlugin/images/viewRem.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Voir la remarque'),
+            callback=self.viewRem,
+            status_tip=self.tr(u'Voir la remarque'),
+            parent=self.iface.mainWindow())
         
         icon_path = ':/plugins/RipartPlugin/images/answer.png'
         self.add_action(
@@ -243,13 +251,7 @@ class RipartPlugin:
             status_tip=self.tr(u'Supprimer les remarques de la carte en cours'),
             parent=self.iface.mainWindow())
         
-        icon_path = ':/plugins/RipartPlugin/images/viewRem.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Voir la remarque'),
-            callback=self.viewRem,
-            status_tip=self.tr(u'Voir la remarque'),
-            parent=self.iface.mainWindow())
+       
         
         icon_path = ':/plugins/RipartPlugin/images/magicwand.png'
         self.add_action(
@@ -316,7 +318,8 @@ class RipartPlugin:
         
         
     def downloadRemarks(self):
-        
+        """Downloads remarks
+        """
         try:
             self.context= Contexte.getInstance(self,QgsProject)   
             if self.context ==None :
@@ -332,12 +335,17 @@ class RipartPlugin:
                          level=2, duration=10)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
+
     def connectToRipart(self,context):
+        """Connection to the ripart service 
+        """
         client = Client(context.urlHostRipart, context.login, context.pwd)
         return client        
        
         
     def answerToRemark(self):
+        """Answer to a remark
+        """
         try:
             self.context= Contexte.getInstance(self,QgsProject)  
             if self.context ==None :
@@ -354,7 +362,19 @@ class RipartPlugin:
         
         
     def createRemark(self):
-        print "create"
+        """Create a new remark
+        """
+        try:
+            self.context= Contexte.getInstance(self,QgsProject)  
+            if self.context ==None :
+                return 
+            create = CreerRipart(self.context)
+            create.do()
+        except Exception as e:
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            u"Un problème est survenu lors de la création de la remarque", \
+                             level=2, duration=10)
         
     def removeRemarks(self):
         print "remove"

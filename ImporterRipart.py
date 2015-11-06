@@ -15,7 +15,7 @@ from PyQt4.QtGui import QMessageBox, QProgressBar, QApplication
 from core.ClientHelper import ClientHelper
 from PyQt4.QtCore import *
 import time
-from FormAttenteChargement import FormAttenteChargement
+
 from pyspatialite import dbapi2 as db
 import core.ConstanteRipart as cst
 

@@ -5,6 +5,8 @@ Created on 23 janv. 2015
 @author: AChang-Wailing
 '''
 
+from PyQt4.QtCore import *
+
 class Attribut(object):
     '''
     Classe représentant un attribut (d'un croquis)
@@ -25,4 +27,13 @@ class Attribut(object):
         :type valeur:string
         """
         self.nom=nom
+        
+        typeAtt=type(valeur)
+        if typeAtt==QDate:
+            valeur=valeur.toString('yyyy-MM-dd')
+        elif typeAtt==QDateTime:
+            valeur=valeur.toString('yyyy-MM-dd hh:mm:ss')
+        elif typeAtt!=unicode:
+            valeur=str(valeur)
+            
         self.valeur=valeur

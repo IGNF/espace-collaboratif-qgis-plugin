@@ -476,9 +476,10 @@ class XMLResponse(object):
                     elif len(latlon)==2:
                         pt.longitude=float(latlon[0] )
                         pt.latitude=float(latlon[1] )
-                        
-                    coordinates += str(pt.longitude) + " "+ str(pt.latitude) + ","
-                    croquis.addPoint(pt) 
+                      
+                    if pt.longitude!=None and pt.latitude!=None:  
+                        coordinates += str(pt.longitude) + " "+ str(pt.latitude) + ","
+                        croquis.addPoint(pt) 
                     
             croquis.coordinates= coordinates[:-1]  
 

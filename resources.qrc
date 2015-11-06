@@ -11,5 +11,7 @@
 	   <file>images/Book.png</file>
 	   <file>images/Log.png</file>
 	   <file>images/About.png</file>
+	   <file>images/viewRem.png</file>
+	   <file>images/magicwand.png</file>
     </qresource>
 </RCC>

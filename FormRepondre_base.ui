@@ -14,7 +14,7 @@
    <string>IGN RIPart : Ajout d'une nouvelle réponse</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="IGN" resource="resources.qrc">
+   <iconset theme="IGN">
     <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
   </property>
   <widget class="QDialogButtonBox" name="btnCancel">
@@ -188,7 +188,7 @@
    </property>
   </widget>
  </widget>
-
+ <resources/>
  <connections>
   <connection>
    <sender>btnCancel</sender>

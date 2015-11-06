@@ -34,7 +34,7 @@ class Remarque(object):
     dateMiseAJour = datetime.now()
     
     #date de validation de la remarque Ripart
-    dateValidation = datetime.now()
+    dateValidation = None
     
     #position de la remarque ripart (lon/lat)
     position = Point()
@@ -92,7 +92,7 @@ class Remarque(object):
         self.lienPrive=""
         self.dateCreation = datetime.now()
         self.dateMiseAJour = datetime.now()
-        self.dateValidation = datetime.now()
+        self.dateValidation = None
         self.position = Point()
         self.statut= ConstanteRipart.STATUT.undefined
         self.departement=Groupe()
@@ -130,9 +130,9 @@ class Remarque(object):
         
         for t in self.themes:
             if isinstance(t, Theme):           
-                result += ClientHelper.getValForDB(t.groupe.nom)
+                result += ClientHelper.getValForDB(t.groupe.nom)+"|"
                 
-        return result         
+        return result[:-1]         
                 
                 
     def isCroquisEmpty(self):
