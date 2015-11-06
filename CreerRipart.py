@@ -147,19 +147,6 @@ class CreerRipart(object):
         #create new remark (ripart service)
         remarqueNouvelle=client.createRemarque(tmpRem)  
 
-       
-        #TODO uncomment !!!!
-        #rem= client.getRemarque(remarqueNouvelle.id)
-        
-        #rem= client.getRemarque(2893)
-      
-        #TODO comment !!!!
-        #remarqueNouvelle=tmpRem
-        #remarqueNouvelle.id=10000
-        #rem=remarqueNouvelle
-        ######
-        
-        #self.logger.info(u"Succès de la création de la nouvelle remarque n°" + str(rem.id))
         self.logger.info(u"Succès de la création de la nouvelle remarque n°" + str(remarqueNouvelle.id))
         
         RipartHelper.insertRemarques(self.context.conn, remarqueNouvelle)

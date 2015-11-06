@@ -511,7 +511,7 @@ class Client:
    
        
             # TODO uncomment !!!        
-            """#envoi de la requête
+            #envoi de la requête
             data = RipartServiceRequest.makeHttpRequest(self.__url,  data=params, files=files)             
                     
             xmlResponse = XMLResponse(data)
@@ -530,7 +530,7 @@ class Client:
             
             
             self.__jeton = xmlResponse.getCurrentJeton()
-            """
+            
             ##################
             
         except Exception as e:

@@ -46,18 +46,14 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         self.setupUi(self)
         # Save reference to the QGIS interface
         
-        self.context=context
-        
+        self.context=context    
         self.setFocus()
-        
-        
+              
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
         
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
-        
-        
-        
+  
         #pré-remplissage des champs d'après le fichier de configuration
         self.lineEditUrl.setText(RipartHelper.load_urlhost(context.projectDir).text)
         
@@ -92,13 +88,11 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         self.dateMY=False
         self.calendarWidget.selectionChanged.connect(self.dateChanged)
         self.calendarWidget.currentPageChanged.connect(self.dateMYChanged)
-        
-        
+          
         self.spinBox.setValue(cntDays)
         
         self.setComboBoxFilter()
-        
-        
+         
         groupFilter=RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Group,"Map").text
         if groupFilter!=None and groupFilter=="true":
             self.checkBoxGroup.setChecked(True)
@@ -228,6 +222,8 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         """
         print (item.text(column))
         state=item.checkState(column)
+        if state==Qt.Checked :
+            self.checkBoxAttributs.setChecked(True)
         if item.parent()==None:
             childCount=item.childCount()
             for i in range(childCount):

@@ -22,21 +22,25 @@ import core.ConstanteRipart as cst
 class ImporterRipart(object):
     """Importation des remarques dans le projet QGIS
     """
-   
-
     logger=RipartLogger("ImporterRipart").getRipartLogger()
     
+    #le contexte de la carte
     context=None
     
+    #barre de progression (des remarques importées)
     progressMessageBar=None
     progress=None
     progressVal=0
 
 
     def __init__(self,context):
-        '''
+        """
         Constructor
-        '''
+        Initialisation du contexte et de la progressbar
+        
+        :param context: le contexte de la carte actuelle
+        :type context: Contexte
+        """
         self.context=context
    
         self.progressMessageBar = self.context.iface.messageBar().createMessage(u"Placement des remarques sur la carte...")
@@ -45,8 +49,10 @@ class ImporterRipart(object):
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)     
         self.progressMessageBar.layout().addWidget(self.progress)
      
+     
     def doImport(self):
         """Téléchargement et import des remarques dans la carte
+        
         """
         self.logger.debug("doImport")
         
