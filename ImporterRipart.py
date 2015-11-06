@@ -39,7 +39,6 @@ class ImporterRipart(object):
         '''
         self.context=context
    
-        
         self.progressMessageBar = self.context.iface.messageBar().createMessage(u"Placement des remarques sur la carte...")
         self.progress = QProgressBar()
         self.progress.setMaximum(200)        
@@ -78,7 +77,7 @@ class ImporterRipart(object):
                         return
                  
                 else:  
-                    #emprise=> getExtent + trabnsfrom in 4326 crs 
+                    #emprise=> getExtent + transform in 4326 crs 
                     #filtreExtent= filtreLay.extent()
                     filtreExtent= RipartHelper.getBboxFromLayer(filtreLay) 
                     
@@ -157,7 +156,7 @@ class ImporterRipart(object):
                     self.context.conn.close()
                 
                 if cnt>1:                
-                    remLayer=self.context.getLayerByName2(RipartHelper.nom_Calque_Remarque)
+                    remLayer=self.context.getLayerByName(RipartHelper.nom_Calque_Remarque)
                     remLayer.updateExtents()
                     box = remLayer.extent()
                     self.setMapExtent(box)

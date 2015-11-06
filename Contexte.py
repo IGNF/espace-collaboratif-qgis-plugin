@@ -324,16 +324,17 @@ class Contexte(object):
       
       
     def addRipartLayersToMap(self):
-        """Add ripart layers to the current map """
+        """Add ripart layers to the current map 
+        """
+        
         uri =QgsDataSourceURI()
         uri.setDatabase(self.projectFileName +"_RIPART.sqlite")
         
-        maplayers=self.getMapLayers()
+        maplayers=self.getAllMapLayers()
         
         ripartLayers= RipartHelper.croquis_layers
         ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
-        
-        
+          
         root = self.QgsProject.instance().layerTreeRoot()
         
         for table in RipartHelper.croquis_layers_name: 
@@ -351,8 +352,8 @@ class Contexte(object):
            
            
             
-    def getMapLayers(self):
-        """Return the list of layer names which are loaded in the map"""
+    """def getCheckedMapLayers(self):
+        '''Return the list of layer names which are loaded in the map (and checked)'''
         
         layers = self.mapCan.layers()
         
@@ -363,11 +364,26 @@ class Contexte(object):
             maplayers[l.name()]= l.id()
         
         return maplayers
-    
-    
-    def getMapPolygonLayers(self):
-        """Retourne les calques qui sont de type polygon ou multipolygon
         """
+    
+    def getAllMapLayers(self):
+        """Return the list of layer names which are loaded in the map"""
+        
+        layers = QgsMapLayerRegistry.instance().mapLayers()
+
+        layerNames=[]
+        maplayers={}
+        for key in layers:
+            l=layers[key]
+            layerNames.append(l.name())
+            maplayers[l.name()]= l.id()
+        
+        return maplayers
+    
+    
+    """def getMapPolygonLayers(self):
+       '''Retourne les calques qui sont de type polygon ou multipolygon
+       '''
         layers = self.mapCan.layers()
         polylayers={}
         
@@ -376,9 +392,25 @@ class Contexte(object):
                 polylayers[l.id()]=l.name()
                 
         return polylayers
+    """
+    
+    def getMapPolygonLayers(self):
+        """Retourne les calques qui sont de type polygon ou multipolygon
+        """
+        layers = QgsMapLayerRegistry.instance().mapLayers()
+        
+        polylayers={}
+        
+        for key in layers:
+            l=layers[key]
+            if l.wkbType()==QGis.WKBPolygon or l.wkbType()==QGis.WKBMultiPolygon:
+                polylayers[l.id()]=l.name()
+                
+        return polylayers
     
     
-    def getLayerByName(self,layName):
+    
+    """def getLayerByName(self,layName):
         layers = self.mapCan.layers()
    
         for l in layers:
@@ -386,10 +418,15 @@ class Contexte(object):
                 return l
         
         return None
+    """
     
-    
-    def getLayerByName2(self,layName):
-        return QgsMapLayerRegistry.instance().mapLayersByName(layName)[0]
+    def getLayerByName(self,layName):
+        mapByName= QgsMapLayerRegistry.instance().mapLayersByName(layName)
+        if len(mapByName) >0:
+            return mapByName[0]
+        else:
+            return None
+        #return QgsMapLayerRegistry.instance().mapLayersByName(layName)[0]
     
     def emptyAllRipartLayers(self):
         """Supprime toutes les remarques vide les tables de la base ripart.sqlite 
@@ -492,7 +529,7 @@ class Contexte(object):
     
     def countRemarqueByStatut(self,statut):
         print "statut"   
-        remLay=self.getLayerByName2(RipartHelper.nom_Calque_Remarque)
+        remLay=self.getLayerByName(RipartHelper.nom_Calque_Remarque)
         expression='"Statut" = \''+ statut +'\''
         filtFeatures=remLay.getFeatures(QgsFeatureRequest().setFilterExpression( expression ))
         return len(list(filtFeatures))
