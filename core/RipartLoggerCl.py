@@ -6,19 +6,30 @@ Created on 2 oct. 2015
 '''
 import logging
 import os
+from datetime import datetime
+import dateutil.relativedelta
+import string
+
 class RipartLogger(object):
-    '''
-    classdocs
-    '''
+    """Paramètres du log
+    """
+    
     logger=None
+    logpath=None
 
     def __init__(self,param=""):
         '''
         Constructor
         '''
-        # fonctionne sous windows ou linux
-        #par ex: C:\Users\<nom_utlisateur>  ou /home/<nom_utlisateur>
-        logdir = os.getenv('HOME') + os.path.sep + "ripart" + os.path.sep 
+           
+        #trouve le dossier d'installation du plugin et le nom du fichier de log (yyyymmdd_ripart.log)
+        lastSlashIdx=string.rfind(os.path.dirname(__file__),"\\")
+        logdir= os.path.join(os.path.dirname(__file__)[:lastSlashIdx],"logs")   
+            
+        today= datetime.now().date().strftime('%Y%m%d')
+        logFilename= today+"_ripart.log"   
+        self.logpath=os.path.abspath(os.path.join(logdir,logFilename))
+        
                 
         if not os.path.exists(logdir):
             os.makedirs(logdir)
@@ -26,14 +37,14 @@ class RipartLogger(object):
         if param=="":
             param= "ripart"
             
-        self.logger = logging.getLogger(param)
+        self.logger = logging.getLogger(param)    
                 
         self.logger.setLevel(logging.DEBUG)
               
-        if not os.path.exists(logdir  + "ripart.log"):
-            file(logdir  + "ripart.log", 'w').close()
-                
-        fh = logging.FileHandler(logdir  + "ripart.log")
+        if not os.path.exists(self.logpath):
+            file(self.logpath, 'w').close()
+            
+        fh = logging.FileHandler(self.logpath)
                 
         fh.setLevel(logging.DEBUG)
                 
@@ -44,13 +55,34 @@ class RipartLogger(object):
         # add the handlers to the logger
         self.logger.addHandler(fh)
         
-        
+        #supprime les anciens fichiers de log
+        self.removeOldLogs(logdir)
 
-
-     
+   
     def getRipartLogger(self):
+        """Retourne le logger
+        """
         return self.logger
         
+     
+    def removeOldLogs(self,logdir):
+        """Supprime les fichiers de logs plus vieux qu'un mois
         
+        :param logdir: le répertoire des fichiers de log
+        :type logdir: string
+        """
+        today= datetime.now().date()
+        lastMonth=today + dateutil.relativedelta.relativedelta(months=-1)
+
+        last=lastMonth.strftime('%Y%m%d')
+   
+      
+        if os.path.exists(logdir):
+            for f in os.listdir(logdir):
+                if f[ :8] < last:
+                    os.remove(os.path.join(logdir,f))
+           
+           
         
-        
+    def getLogpath(self):
+        return self.logpath 

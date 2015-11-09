@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>viewRemark</class>
+ <widget class="QDialog" name="viewRemark">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>360</width>
+    <height>473</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>IGN RIPart : Historique de la remarque</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="IGN">
+    <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
+  </property>
+  <widget class="QDialogButtonBox" name="btnCancel">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>440</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Ok</set>
+   </property>
+   <property name="centerButtons">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblStatut">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>61</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Statut</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblMessage">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>50</y>
+     <width>331</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Message de la remarque</string>
+   </property>
+  </widget>
+  <widget class="QTextBrowser" name="textMessage">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>70</y>
+     <width>341</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblOldResponse">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>180</y>
+     <width>331</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Réponse(s) antérieure(s)</string>
+   </property>
+  </widget>
+  <widget class="QTextBrowser" name="textOldRep">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>200</y>
+     <width>341</width>
+     <height>221</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+  </widget>
+  <widget class="QLabel" name="textStatut">
+   <property name="geometry">
+    <rect>
+     <x>70</x>
+     <y>10</y>
+     <width>331</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>statut</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>btnCancel</sender>
+   <signal>accepted()</signal>
+   <receiver>viewRemark</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnCancel</sender>
+   <signal>rejected()</signal>
+   <receiver>viewRemark</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

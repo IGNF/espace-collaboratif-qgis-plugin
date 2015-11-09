@@ -81,4 +81,3 @@ class Ui_InfoDialog(object):
         InfoDialog.setWindowTitle(_translate("InfoDialog", "IGN RIPart", None))
         self.btnOK.setText(_translate("InfoDialog", "Ok", None))
 
-import resources_rc

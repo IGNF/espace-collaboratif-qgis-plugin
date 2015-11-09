@@ -4,7 +4,7 @@ Created on 8 oct. 2015
 
 @author: AChang-Wailing
 '''
-import logging
+
 from core.RipartLoggerCl import RipartLogger
 import time
 from PyQt4 import QtCore, QtGui
@@ -18,6 +18,7 @@ import core.ConstanteRipart as cst
 from FormRepondre import FormRepondreDialog
 import time
 from qgis.gui import QgsMessageBar
+from FormView import FormView
 
 
 class RepondreRipart(object):
@@ -31,9 +32,10 @@ class RepondreRipart(object):
         Constructor
         '''
         self.context=context
-     
         
-    def do(self):  
+        
+        
+    def do(self, isView=False):  
         try:
             
             activeLayer = self.context.iface.activeLayer()
@@ -58,7 +60,7 @@ class RepondreRipart(object):
                 remId=int(remIds[0])
                 remarque= client.getRemarque(remId)
                 
-                if remarque.statut.__str__() not in cst.openStatut:  
+                if remarque.statut.__str__() not in cst.openStatut and not isView:  
                     mess= "Impossible de répondre à la remarque Ripart n°"+ str(remId) + \
                           ", car elle est clôturée depuis le "+ remarque.dateValidation
                           
@@ -66,25 +68,32 @@ class RepondreRipart(object):
                     self.context.iface.messageBar().pushMessage("Attention",ClientHelper.getEncodeType(mess), level=1, duration=5)
                     return
                
-                if remarque.autorisation not in ["RW+","RW-"] :
+                if remarque.autorisation not in ["RW+","RW-"] and not isView:
                     mess=u"Vous n'êtes pas autorisé à modifier la remarque Ripart n°"+ str(remId)
                     self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
                     return
                 
-                formReponse= FormRepondreDialog()
-                
-                res=formReponse.setRemarque(remarque)
-             
-                r=formReponse.exec_()
-                
-                if formReponse.answer :
-                    remarque.statut=formReponse.newStat
-                    remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep))  
-                    #remMaj =remarque            
-                    self.context.updateRemarqueInSqlite(remMaj)
-                    mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
-                    self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
-                  
+                if isView:
+                    self.logger.debug("view remark")
+                    formView= FormView()
+                    formView.setRemarque(remarque)
+                    formView.exec_()
+                    
+                else:    
+                    self.logger.debug("answer to remark")               
+                    formReponse= FormRepondreDialog()
+                    
+                    res=formReponse.setRemarque(remarque)
+                 
+                    r=formReponse.exec_()
+                    
+                    if formReponse.answer :
+                        remarque.statut=formReponse.newStat
+                        remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep))            
+                        self.context.updateRemarqueInSqlite(remMaj)
+                        mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
+                        self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
+                      
 
         except Exception as e:
             self.logger.error(e.message)

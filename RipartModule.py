@@ -20,44 +20,40 @@
  *                                                                         *
  ***************************************************************************/
 """
-import logging
+
+import os.path
 from core.RipartLoggerCl import RipartLogger
 
+
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, SIGNAL, Qt
-from PyQt4.QtGui import QAction, QIcon, QMenu
 from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox,QToolButton,QApplication
+from PyQt4.QtGui import  QAction, QIcon, QMenu,QMessageBox,QToolButton,QApplication
 from qgis.core import *
+from qgis._core import QgsProject,  QgsMessageLog
 import ConfigParser
-
-
 
 # Initialize Qt resources from file resources.py
 import resources
 
-# Import the code for the dialog
+# modules ripart
 from FormConnexion_dialog import FormConnexionDialog
 from FormInfo import FormInfo
 from FormConfigure import FormConfigure
-
 from Contexte import Contexte
 from core.Client import Client
-
-import os.path
-from qgis._core import QgsProject,  QgsMessageLog
-
 from ImporterRipart import ImporterRipart
-from RipartException import RipartException
-
 from FormRepondre import FormRepondreDialog
 from RepondreRipart import RepondreRipart
 from CreerRipart import CreerRipart
+import core.ConstanteRipart as cst
+
 
 class RipartPlugin:
     """QGIS Plugin Implementation."""
     
     context=None
     logger= None
+    ripartLogger=None
 
     def __init__(self, iface):
         """Constructor.
@@ -67,7 +63,8 @@ class RipartPlugin:
             application at run time.
         :type iface: QgsInterface
         """
-        self.logger=RipartLogger("RipartPlugin").getRipartLogger()
+        self.ripartLogger=RipartLogger("RipartPlugin")
+        self.logger=self.ripartLogger.getRipartLogger()
         
         
         # Save reference to the QGIS interface
@@ -88,25 +85,19 @@ class RipartPlugin:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
         
-        #Init Contexte
-        #self.context= Contexte.getInstance(self,QgsProject.instance())
-
+      
         # Create the dialog (after translation) and keep reference
         self.dlgConnexion = FormConnexionDialog()
         
-        #self.dlgInfo=FormInfo()
-        
-       
-
-        # Declare instance attributes
+  
+        # La toolbar du plugin
         self.actions = []
         self.menu = self.tr(u'&IGN_Ripart')
-        # TODO: We are going to let the user set this up in a future iteration
+
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
         
-        
-        #self.contexte.setProjectParams(QgsProject)
+ 
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -195,7 +186,6 @@ class RipartPlugin:
 
         self.actions.append(action)
 
-
         return action
 
 
@@ -210,8 +200,7 @@ class RipartPlugin:
             callback=self.run,
             status_tip=self.tr(u'Connexion au service RIPart'),
             parent=self.iface.mainWindow())
-      
-        
+              
         icon_path = ':/plugins/RipartPlugin/images/update.png'
         self.add_action(
             icon_path,
@@ -251,9 +240,7 @@ class RipartPlugin:
             callback=self.removeRemarks,
             status_tip=self.tr(u'Supprimer les remarques de la carte en cours'),
             parent=self.iface.mainWindow())
-        
-       
-        
+               
         icon_path = ':/plugins/RipartPlugin/images/magicwand.png'
         self.add_action(
             icon_path,
@@ -266,22 +253,14 @@ class RipartPlugin:
         self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin RIPart", self.iface.mainWindow())
         self.log= QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin RIPart", self.iface.mainWindow())
         self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin RIPart", self.iface.mainWindow())
-        
-      
-        
+             
         self.config.triggered.connect( self.configurePref )
         self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration de l'add-in RIPart."))
         
         self.about.triggered.connect( self.ripAbout)
-     
+        self.help.triggered.connect(self.showHelp)
+        self.log.triggered.connect(self.showLog)
 
-        
-        """self.toolButton = QToolButton()
-        self.toolButton.setDefaultAction( self.config) 
-        self.toolButton.setPopupMode( QToolButton.InstantPopup )
-        
-        """
-  
         self.helpMenu= QMenu("Aide")
         self.helpMenu.addAction(self.config)
         self.helpMenu.addAction(self.help)
@@ -418,7 +397,8 @@ class RipartPlugin:
         
    
     def configurePref(self):
-        print "configure"
+        """Lance la fenêtre de configuration des préférences 
+        """
         
         try:
             self.context= Contexte.getInstance(self,QgsProject)   
@@ -441,8 +421,25 @@ class RipartPlugin:
     def magicwand(self):
         print("magicwand") 
     
+    
     def viewRem(self):
-        print("viewRem")   
+        """Visualisation de la remarque  (message, réponses et statut)
+        """  
+        try:
+            self.context= Contexte.getInstance(self,QgsProject)  
+            if self.context ==None :
+                return 
+           
+            reponse = RepondreRipart(self.context)
+            reponse.do(isView=True)
+                       
+        except Exception as e:
+            self.logger.error("viewRem "+ e.message)
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            u"Un problème est survenu", \
+                             level=2, duration=10)
+        
         
     
     def ripAbout(self):
@@ -472,4 +469,25 @@ class RipartPlugin:
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date )
        
         dlgInfo.exec_()
+  
+  
+  
+    def showHelp(self):
+        """Ouvre le document d'aide utilisateur
+        """
+        file_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__),"files",cst.helpFile))
+        
+        os.startfile(file_path)
+        
+        
+        
+    def showLog(self):
+        """Ouvre le dernier fichier de log
+        """
+        logpath=self.ripartLogger.getLogpath()
+        if logpath!=None:
+            os.startfile(logpath)
+  
+  
   

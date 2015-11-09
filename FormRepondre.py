@@ -42,7 +42,7 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
         self.btnCancel.clicked.connect(self.cancel)
         
       
-        for i in range(0,8) :
+        for i in range(0,9) :
             self.cboxStatut.addItem(cst.statutLibelle[i],i)
           
         

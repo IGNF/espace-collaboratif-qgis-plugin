@@ -22,22 +22,17 @@
 """
 
 import os
-import logging
-import core.RipartLogger 
+from core.RipartLoggerCl import RipartLogger
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QMessageBox
-
-
 from PyQt4.QtCore import *
 
-
 from core.Client import Client
-
 from core import ConstanteRipart
 from core import Profil
 from core.ClientHelper import ClientHelper
-#from Contexte import Contexte
+
 from qgis.core import *
 
 from FormInfo import FormInfo
@@ -57,7 +52,7 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
     cancel=False
     
     #logger
-    logger=logging.getLogger("FormConnexionDialog")
+    logger=RipartLogger("FormConnexionDialog").getRipartLogger()
     
     def __init__(self, parent=None):
         """Constructor."""

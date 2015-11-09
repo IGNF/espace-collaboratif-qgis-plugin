@@ -15,7 +15,7 @@ from RipartException import RipartException
 import os.path
 import shutil
 from  RipartHelper import  RipartHelper
-import logging
+
 from core.RipartLoggerCl import RipartLogger
 
 import ntpath
@@ -23,7 +23,6 @@ from core.Profil import Profil
 
 # importing pyspatialite
 from pyspatialite import dbapi2 as db
-#import sqlite3
 
 from qgis._core import QgsDataSourceURI,QgsVectorLayer, QgsMapLayerRegistry,QGis
 
@@ -106,7 +105,7 @@ class Contexte(object):
         self.urlHostRipart=""
         
         self.logger=RipartLogger("Contexte").getRipartLogger()
-
+  
         self.spatialRef = QgsCoordinateReferenceSystem( RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
          
         try:

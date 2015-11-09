@@ -5,7 +5,6 @@ Created on 27 oct. 2015
 @author: AChang-Wailing
 '''
 from core.RipartLoggerCl import RipartLogger
-from core.RipartLoggerCl import RipartLogger
 from FormCreerRemarque import FormCreerRemarque
 from RipartHelper import RipartHelper
 from core.Remarque import Remarque

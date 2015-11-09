@@ -4,7 +4,7 @@ Created on 29 sept. 2015
 
 @author: AChang-Wailing
 '''
-import logging
+
 from core.RipartLoggerCl import RipartLogger
 import xml.etree.ElementTree as ET
 from pyspatialite import dbapi2 as db
