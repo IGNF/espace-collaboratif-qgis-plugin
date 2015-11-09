@@ -28,6 +28,7 @@ from PyQt4.QtGui import QAction, QIcon, QMenu
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QMessageBox,QToolButton,QApplication
 from qgis.core import *
+import ConfigParser
 
 
 
@@ -93,7 +94,7 @@ class RipartPlugin:
         # Create the dialog (after translation) and keep reference
         self.dlgConnexion = FormConnexionDialog()
         
-        self.dlgInfo=FormInfo()
+        #self.dlgInfo=FormInfo()
         
        
 
@@ -238,9 +239,9 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/create.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Nouvelle remarque'),
+            text=self.tr(u'Créer une nouvelle remarque'),
             callback=self.createRemark,
-            status_tip=self.tr(u'Nouvelle remarque'),
+            status_tip=self.tr(u'Créer une nouvelle remarque'),
             parent=self.iface.mainWindow())
         
         icon_path = ':/plugins/RipartPlugin/images/cleaning.png'
@@ -270,12 +271,16 @@ class RipartPlugin:
         
         self.config.triggered.connect( self.configurePref )
         self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration de l'add-in RIPart."))
-        #self.action2.triggered.connect( self.test2 )
+        
+        self.about.triggered.connect( self.ripAbout)
+     
 
         
-        self.toolButton = QToolButton()
+        """self.toolButton = QToolButton()
         self.toolButton.setDefaultAction( self.config) 
         self.toolButton.setPopupMode( QToolButton.InstantPopup )
+        
+        """
   
         self.helpMenu= QMenu("Aide")
         self.helpMenu.addAction(self.config)
@@ -440,7 +445,31 @@ class RipartPlugin:
         print("viewRem")   
         
     
-    def test1(self):
-        print "test1"
-    def test2(self):
-        print "test2"
+    def ripAbout(self):
+        """Montre la fenêtre "about" avec les informations de version du plugin 
+        """
+        version='0.'
+        date='2015'
+        
+        file_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__),'metadata.txt'))
+     
+        parser = ConfigParser.ConfigParser()
+        parser.optionxform = str
+        parser.read(file_path)
+        if parser.has_section('general'):
+            try:
+                version=parser.get('general','version')
+                date=parser.get('general','date')
+            except Exception as e:
+                self.logger.error("No version/date in metadata")
+       
+        
+        dlgInfo=FormInfo()
+        dlgInfo.textInfo.setText(u"<b>RIPart</b>")
+        dlgInfo.textInfo.append(u"<br/>Plugin intégrant les services RIPart")
+        dlgInfo.textInfo.append(u"<br/>Version: "+ version )
+        dlgInfo.textInfo.append(u"\u00A9 IGN - " + date )
+       
+        dlgInfo.exec_()
+  

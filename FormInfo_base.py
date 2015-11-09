@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'FormInfo_base.ui'
 #
-# Created: Wed Sep 30 13:55:45 2015
+# Created: Mon Nov 09 08:37:36 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -57,7 +57,10 @@ class Ui_InfoDialog(object):
         self.label.setPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/icon.png")))
         self.label.setObjectName(_fromUtf8("label"))
         self.logo = QtGui.QLabel(InfoDialog)
-        self.logo.setGeometry(QtCore.QRect(10, 0, 131, 151))
+        self.logo.setGeometry(QtCore.QRect(10, 0, 121, 141))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.logo.setFont(font)
         self.logo.setText(_fromUtf8(""))
         self.logo.setPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/images/logo_IGN.png")))
         self.logo.setScaledContents(True)
@@ -78,4 +81,4 @@ class Ui_InfoDialog(object):
         InfoDialog.setWindowTitle(_translate("InfoDialog", "IGN RIPart", None))
         self.btnOK.setText(_translate("InfoDialog", "Ok", None))
 
-
+import resources_rc

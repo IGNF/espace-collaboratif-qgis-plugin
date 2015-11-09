@@ -6,17 +6,20 @@
 
 # This file should be included when you package your plugin.# Mandatory items:
 
+
 [general]
 name=IGN_Ripart
 qgisMinimumVersion=2.0
 description=IGN_Ripart
 version=0.1
-author=Alexia Chang-Wailing
+author=alexia chang-wailing
 email=alexia.chang-wailing@ign.fr
 
 # End of mandatory metadata
 
+
 # Optional items:
+date=09/11/2015
 
 # Uncomment the following line and add your changelog:
 # changelog=

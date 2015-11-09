@@ -135,8 +135,8 @@
     <rect>
      <x>10</x>
      <y>0</y>
-     <width>91</width>
-     <height>91</height>
+     <width>101</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="text">
@@ -208,7 +208,9 @@
    </property>
   </widget>
  </widget>
-
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>RipartPlugin</sender>
