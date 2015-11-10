@@ -6,22 +6,22 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>360</width>
-    <height>473</height>
+    <width>362</width>
+    <height>547</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>IGN RIPart : Historique de la remarque</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="IGN">
+   <iconset theme="IGN" resource="resources.qrc">
     <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
   </property>
   <widget class="QDialogButtonBox" name="btnCancel">
    <property name="geometry">
     <rect>
      <x>280</x>
-     <y>440</y>
+     <y>520</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -60,7 +60,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>50</y>
+     <y>40</y>
      <width>331</width>
      <height>16</height>
     </rect>
@@ -80,7 +80,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>70</y>
+     <y>60</y>
      <width>341</width>
      <height>91</height>
     </rect>
@@ -95,7 +95,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>180</y>
+     <y>170</y>
      <width>331</width>
      <height>16</height>
     </rect>
@@ -115,7 +115,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>200</y>
+     <y>190</y>
      <width>341</width>
      <height>221</height>
     </rect>
@@ -146,8 +146,65 @@
     <string>statut</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="btnCroquis">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>420</y>
+     <width>71</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sélection/désélection des croquis associés à la remarque&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Croquis</string>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/plugins/RipartPlugin/images/magicwand.png</normaloff>:/plugins/RipartPlugin/images/magicwand.png</iconset>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblCntCroquis">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>420</y>
+     <width>181</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Nombre de croquis sélectionnés: -</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="textEditCntCroquisDetail">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>460</y>
+     <width>251</width>
+     <height>81</height>
+    </rect>
+   </property>
+   <property name="lineWidth">
+    <number>0</number>
+   </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>btnCancel</sender>

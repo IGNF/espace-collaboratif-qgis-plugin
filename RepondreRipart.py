@@ -8,6 +8,7 @@ Created on 8 oct. 2015
 from core.RipartLoggerCl import RipartLogger
 import time
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import *
 from qgis.core import  QgsGeometry
 from RipartHelper import RipartHelper
 from core.Box import Box
@@ -50,9 +51,15 @@ class RepondreRipart(object):
                     self.context.iface.messageBar().pushMessage("Attention", u'Pas de remarque sélectionnée', level=1, duration=10)
                     return
                 
+       
                 remIds=[]
                 for feat in selFeats:  
                     remIds.append(feat.attribute('NoRemarque'))
+                    
+                if len(remIds)>1:
+                    self.context.iface.messageBar().pushMessage("Attention", 
+                                        u'Plusieurs remarques sélectionnées. Une seule sera prise en compte (remarque no='+str(remIds[0])+')',
+                                        level=1, duration=10)
                     
             res=self.context.getConnexionRipart()    
             if res==1:
@@ -75,9 +82,11 @@ class RepondreRipart(object):
                 
                 if isView:
                     self.logger.debug("view remark")
-                    formView= FormView()
+                    formView= FormView(self.context)
                     formView.setRemarque(remarque)
-                    formView.exec_()
+                    formView.setWindowFlags(Qt.WindowStaysOnTopHint)
+                    formView.show()
+                    return formView
                     
                 else:    
                     self.logger.debug("answer to remark")               
@@ -99,4 +108,4 @@ class RepondreRipart(object):
             self.logger.error(e.message)
             raise
         
-        
+       

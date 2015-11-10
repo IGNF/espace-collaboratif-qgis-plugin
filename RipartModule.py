@@ -46,6 +46,7 @@ from FormRepondre import FormRepondreDialog
 from RepondreRipart import RepondreRipart
 from CreerRipart import CreerRipart
 import core.ConstanteRipart as cst
+from Magicwand import Magicwand
 
 
 class RipartPlugin:
@@ -272,10 +273,7 @@ class RipartPlugin:
         self.toolButton2.setToolButtonStyle (Qt.ToolButtonTextOnly)
         self.toolButton2.setText("Aide")
         
-        #self.iface.addToolBarWidget( self.toolButton)
-        #self.iface.addToolBarWidget( self.toolButton2)
-        
-        # self.toolbar.addWidget(self.toolButton)
+
         self.toolbar.addWidget(self.toolButton2)
         
        
@@ -287,6 +285,7 @@ class RipartPlugin:
                 self.tr(u'&IGN_Ripart'),
                 action)
             self.iface.removeToolBarIcon(action)
+
 
 
     def run(self):
@@ -318,6 +317,7 @@ class RipartPlugin:
                          u"Un problème est survenu dans le téléchargement des remarques", \
                          level=2, duration=10)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
+
 
 
     def connectToRipart(self,context):
@@ -361,7 +361,10 @@ class RipartPlugin:
                              level=2, duration=10)
         
     def removeRemarks(self):
-        print "remove"
+        """Remove all remarks from current map
+        (empty the tables from ripart table of the sqlite DB)
+        """
+        
         try:
             self.context= Contexte.getInstance(self,QgsProject)
             if self.context ==None :
@@ -373,8 +376,7 @@ class RipartPlugin:
                 self.context.emptyAllRipartLayers()
             else : 
                 return
-                    
-            
+                             
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
@@ -382,9 +384,8 @@ class RipartPlugin:
                              level=2, duration=10)
         
 
-    def update(self):
-        """
-        """
+    """def update(self):
+        
         # show the dialog
         self.dlgConnexion.show()
         # Run the dialog event loop
@@ -394,7 +395,7 @@ class RipartPlugin:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             pass
-        
+     """   
    
     def configurePref(self):
         """Lance la fenêtre de configuration des préférences 
@@ -419,7 +420,14 @@ class RipartPlugin:
                      
         
     def magicwand(self):
-        print("magicwand") 
+      
+        try:
+            self.context= Contexte.getInstance(self,QgsProject)  
+            magicw=Magicwand(self.context)
+            magicw.selectRipartObjects()
+           
+        except Exception as e:
+            self.logger.error("magicWand "+ e.message)
     
     
     def viewRem(self):
@@ -431,7 +439,7 @@ class RipartPlugin:
                 return 
            
             reponse = RepondreRipart(self.context)
-            reponse.do(isView=True)
+            self.formView=reponse.do(isView=True)
                        
         except Exception as e:
             self.logger.error("viewRem "+ e.message)

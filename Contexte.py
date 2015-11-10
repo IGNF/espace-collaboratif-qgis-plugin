@@ -331,8 +331,8 @@ class Contexte(object):
         
         maplayers=self.getAllMapLayers()
         
-        ripartLayers= RipartHelper.croquis_layers
-        ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
+        #ripartLayers= RipartHelper.croquis_layers
+        #ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
           
         root = self.QgsProject.instance().layerTreeRoot()
         
@@ -526,8 +526,7 @@ class Contexte(object):
         
    
     
-    def countRemarqueByStatut(self,statut):
-        print "statut"   
+    def countRemarqueByStatut(self,statut):  
         remLay=self.getLayerByName(RipartHelper.nom_Calque_Remarque)
         expression='"Statut" = \''+ statut +'\''
         filtFeatures=remLay.getFeatures(QgsFeatureRequest().setFilterExpression( expression ))
@@ -542,13 +541,14 @@ class Contexte(object):
                 return True        
         return False    
     
-    def getMapSelectedFeaturesCount(self):
+    """def getMapSelectedFeaturesCount(self):
         cnt=0
         mapLayers = self.mapCan.layers()
         for l in mapLayers:
             cnt+=len(l.selectedFeatures())
                      
         return cnt 
+    """
     
     def makeCroquisFromSelection(self):
         """Transforme en croquis Ripart les object sélectionnés dans la carte en cours.
@@ -841,13 +841,121 @@ class Contexte(object):
         
         return barycentre
     
-    def _getNearestPoint(self,barycentre, ptsList):
+    """def _getNearestPoint(self,barycentre, ptsList):
         pass
-    
+    """
     
     def getMapCoordReferenceSystem(self):
         mapCrs=self.mapCan.mapRenderer().destinationCrs().authid()
         refSys=QgsCoordinateReferenceSystem(mapCrs)
         
         return refSys
+    
+    
+    
+    ## magicwand
+    
+    def oneCroquisOrRemarkSelected(self):
+        cntSelectedCroquis=0
+        cntSelectedRemarks=0
+        mapLayers = self.mapCan.layers() 
         
+        for cr in RipartHelper.croquis_layers:
+            crLay= self.getLayerByName(cr)
+            cntSelectedCroquis+=len(crLay.selectedFeatures())
+            
+        remLay= self.getLayerByName(RipartHelper.nom_Calque_Remarque)
+        
+        cntSelectedRemarks+=len(remLay.selectedFeatures())
+        
+        message1="Veuillez ne sélectionner qu'une seule Remarque"
+        
+        if cntSelectedCroquis>1 or cntSelectedRemarks>1:
+            pass 
+        
+    
+    def getSelectedRipartFeatures(self):
+        #key: layer name, value: noRemarque
+        croquisLays={}
+        
+        remNos=""
+        
+        mapLayers = self.mapCan.layers() 
+        
+        for l in mapLayers:
+            if l.name() in RipartHelper.croquis_layers and len(l.selectedFeatures())>0:
+                croquisLays[l.name()]=  []
+                for feat in l.selectedFeatures():
+                    idx= l.fieldNameIndex("NoRemarque")
+                    noRemarque= feat.attributes()[idx]
+                    remNos+=str(noRemarque)+","
+                    croquisLays[l.name()].append(feat.id())
+                    
+
+        remarqueLay=self.getLayerByName(RipartHelper.nom_Calque_Remarque) 
+        feats=remarqueLay.selectedFeatures()
+        
+        for f in feats:
+            idx= remarqueLay.fieldNameIndex("NoRemarque")
+            noRemarque= f.attributes()[idx]
+          
+            remNos+=str(noRemarque)+","
+            croquisLays=self.getCroquisForRemark(noRemarque,croquisLays)
+        
+       
+        self.selectRemarkByNo(remNos[:-1])
+        
+        for cr in croquisLays:
+            lay=self.getLayerByName(cr) 
+            lay.setSelectedFeatures( croquisLays[cr])
+        
+    
+       
+    
+    
+        
+    def selectRemarkByNo(self,noRemarques):
+        
+        self.conn= db.connect(self.dbPath)
+        cur = self.conn.cursor()
+        
+        table=RipartHelper.nom_Calque_Remarque
+        lay=self.getLayerByName(table) 
+        
+        sql="SELECT * FROM " + table +"  WHERE noRemarque in (" + noRemarques +")"
+        rows=cur.execute(sql)       
+            
+        featIds=[]
+            
+        for row in rows:
+            print row[0]
+            featIds.append(row[0])
+           
+
+        lay.setSelectedFeatures( featIds )
+        
+       
+        
+       
+    
+    def getCroquisForRemark(self,noRemarque,croquisSelFeats):
+       
+        crlayers= RipartHelper.croquis_layers
+        
+        self.conn= db.connect(self.dbPath)
+        cur = self.conn.cursor()
+        
+        for table in crlayers:
+            sql="SELECT * FROM " + table +"  WHERE noRemarque= " + str(noRemarque)
+            rows=cur.execute(sql)       
+            
+            featIds=[]
+            
+            for row in rows:
+                featIds.append(row[0])
+                if not table in  croquisSelFeats:
+                    croquisSelFeats[table]=[]
+                croquisSelFeats[table].append(row[0])
+            
+  
+        return croquisSelFeats   

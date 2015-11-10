@@ -37,7 +37,8 @@ class RipartHelper(object):
     croquis_layers ={nom_Calque_Croquis_Polygone:'POLYGON',nom_Calque_Croquis_Ligne:'LINESTRING',
                     nom_Calque_Croquis_Fleche:'LINESTRING',nom_Calque_Croquis_Texte:'POINT',
                     nom_Calque_Croquis_Point:'POINT'}
-    #croquis_layers =collections.OrderedDict([(key, c[key]) for key in c])
+     
+    #liste des nom, car le dictionnaire ne préserve pas l'ordre des éléments
     croquis_layers_name=[nom_Calque_Croquis_Polygone,nom_Calque_Croquis_Ligne,
                     nom_Calque_Croquis_Fleche,nom_Calque_Croquis_Texte,
                     nom_Calque_Croquis_Point,nom_Calque_Remarque]
@@ -68,15 +69,7 @@ class RipartHelper(object):
 
     xmlServeur="Serveur"
     xmlMap="Map"
-    """xml_UrlHost = "./Serveur/URLHost"
-    xml_Login = "./Serveur/Login"
-    xml_DateExtraction = "./Map/Date_extraction"
-    xml_Pagination = "./Map/Pagination"
-    xml_Themes = "./Map/Thèmes_préférés/Thème"
-    xml_Zone_extraction = "./Map/Zone_extraction"
-    xml_AfficherCroquis = "./Map/Afficher_Croquis"
-    xml_AttributsCroquis = "./Map/Attributs_croquis"
-    """
+  
     xml_UrlHost = "URLHost"
     xml_Login = "Login"
     xml_DateExtraction = "Date_extraction"
