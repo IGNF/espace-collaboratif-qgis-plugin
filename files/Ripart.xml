@@ -1,6 +1,6 @@
 <Paramètres_connexion_à_Ripart>
   <Serveur>
-    <URLHost>https://demo-ripart.ign.fr</URLHost>
+    <URLHost>http://demo-ripart.ign.fr</URLHost>
 
   </Serveur>
   <Map>

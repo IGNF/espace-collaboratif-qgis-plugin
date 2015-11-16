@@ -327,13 +327,14 @@ class Contexte(object):
         """
         
         uri =QgsDataSourceURI()
-        uri.setDatabase(self.projectFileName +"_RIPART.sqlite")
+ 
+        dbName = self.projectFileName +"_RIPART"
+        self.dbPath = self.projectDir+"/"+dbName+".sqlite"
+        uri.setDatabase(self.dbPath)
+        self.logger.debug(uri.uri())
         
         maplayers=self.getAllMapLayers()
         
-        #ripartLayers= RipartHelper.croquis_layers
-        #ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
-          
         root = self.QgsProject.instance().layerTreeRoot()
         
         for table in RipartHelper.croquis_layers_name: 
@@ -345,25 +346,14 @@ class Contexte(object):
                 QgsMapLayerRegistry.instance().addMapLayer(vlayer,False)
                                 
                 root.insertLayer(0,vlayer)
+                
+                self.logger.debug("Layer "+vlayer.name() + " added to map")
         
         self.mapCan.refresh()
         
-           
-           
+          
             
-    """def getCheckedMapLayers(self):
-        '''Return the list of layer names which are loaded in the map (and checked)'''
-        
-        layers = self.mapCan.layers()
-        
-        layerNames=[]
-        maplayers={}
-        for l in layers:
-            layerNames.append(l.name())
-            maplayers[l.name()]= l.id()
-        
-        return maplayers
-        """
+  
     
     def getAllMapLayers(self):
         """Return the list of layer names which are loaded in the map"""
@@ -428,7 +418,7 @@ class Contexte(object):
         #return QgsMapLayerRegistry.instance().mapLayersByName(layName)[0]
     
     def emptyAllRipartLayers(self):
-        """Supprime toutes les remarques vide les tables de la base ripart.sqlite 
+        """Supprime toutes les remarques, vide les tables de la base ripart.sqlite 
         """
         ripartLayers= RipartHelper.croquis_layers
         ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
@@ -440,6 +430,8 @@ class Contexte(object):
             for table in ripartLayers:
                 RipartHelper.emptyTable(self.conn, table)
                 
+            ripartLayers.pop(RipartHelper.nom_Calque_Remarque,None)
+             
             self.conn.commit()    
         except RipartException as e:
             self.logger.error(e.message)
