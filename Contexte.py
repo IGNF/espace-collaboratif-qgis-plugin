@@ -116,6 +116,8 @@ class Contexte(object):
             self.checkConfigFile()      
             
             self.getOrCreateDatabase()
+            
+            self.copyRipartStyleFiles()
       
         except RipartException as e:
             self.logger.error("init contexte:" + e.message)
@@ -174,7 +176,16 @@ class Contexte(object):
                 raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pqs été trouvé.")
            
     
-    
+    def copyRipartStyleFiles(self):
+        """Copie les fichiers de styles (pour les remarques et croquis ripart)
+        """
+        styleFilesDir=self.projectDir+"\\"+ RipartHelper.qmlStylesDir
+        
+   
+        RipartHelper.copy(self.plugin_path+"\\"+RipartHelper.ripart_files_dir+"\\"+RipartHelper.qmlStylesDir,
+                          styleFilesDir)
+        
+  
     
     def setConnexionRipartParam(self):
         """Set des informations de connexion (login + url)
@@ -348,6 +359,10 @@ class Contexte(object):
                 root.insertLayer(0,vlayer)
                 
                 self.logger.debug("Layer "+vlayer.name() + " added to map")
+                
+                
+                style= os.path.join(self.projectDir, "ripartStyles",table+".qml")
+                vlayer.loadNamedStyle(style)
         
         self.mapCan.refresh()
         
@@ -370,18 +385,7 @@ class Contexte(object):
         return maplayers
     
     
-    """def getMapPolygonLayers(self):
-       '''Retourne les calques qui sont de type polygon ou multipolygon
-       '''
-        layers = self.mapCan.layers()
-        polylayers={}
-        
-        for l in layers:
-            if l.wkbType()==QGis.WKBPolygon or l.wkbType()==QGis.WKBMultiPolygon:
-                polylayers[l.id()]=l.name()
-                
-        return polylayers
-    """
+ 
     
     def getMapPolygonLayers(self):
         """Retourne les calques qui sont de type polygon ou multipolygon

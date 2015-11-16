@@ -77,4 +77,6 @@ ZoneGeographique = Enum ("UNDEFINED",
 
 namespace={'gml':'http://www.opengis.net/gml'}      
 
-helpFile="RIPart-Manuel_utilisateur_plugin_QGIS.pdf"                    
+helpFile="RIPart-Manuel_utilisateur_plugin_QGIS.pdf"    
+
+

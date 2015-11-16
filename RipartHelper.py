@@ -18,6 +18,10 @@ from PyQt4.QtGui import QMessageBox
 from core.Croquis import Croquis
 from core.Point import  Point
 
+import errno
+import shutil
+import os
+
 class RipartHelper(object):
     """"
     Classe contenant des utilitaires pour le plugin
@@ -25,7 +29,12 @@ class RipartHelper(object):
     
     ripart_files_dir="files"
     ripart_db = "ripart.sqlite"
+    
+    #fichier de configuration
     nom_Fichier_Parametres_Ripart = "Ripart.xml"
+    
+    #dossier des fichiers de style .qml
+    qmlStylesDir="ripartStyles"          
 
     nom_Calque_Remarque = "Remarque_Ripart"
     nom_Calque_Croquis_Fleche = "Croquis_Ripart_Fleche"
@@ -87,8 +96,6 @@ class RipartHelper(object):
     xml_Group ="Import_pour_groupe"
     xml_Map="./Map"
 
-    url_Manuel = "C:\\Ripart\\Manuel d'utilisation de l'add-in RIPart pour ArcMap.pdf" 
-
     defaultDate = "1900-01-01 00:00:00"
     defaultPagination=100
     longueurMaxChamp = 5000
@@ -97,9 +104,6 @@ class RipartHelper(object):
     epsgCrs = 4326
     
     
-    #xmlroot=""
-       
-  
     logger=RipartLogger("RipartHelper").getRipartLogger()
     
     @staticmethod
@@ -725,4 +729,17 @@ class RipartHelper(object):
         msgBox.setText(message)
         ret = msgBox.exec_()
         
+    
+    @staticmethod         
+    def copy(src, dest):
+        try:
+            if not os.path.exists(dest):
+                shutil.copytree(src, dest)
         
+        except OSError as e:
+            # If the error was caused because the source wasn't a directory
+            if e.errno == errno.ENOTDIR:
+                if not os.path.exists(dest):
+                    shutil.copy(src, dest)
+            else:
+                print('Directory not copied. Error: %s' % e)
