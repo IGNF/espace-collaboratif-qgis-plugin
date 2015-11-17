@@ -192,7 +192,9 @@ class Remarque(object):
                     concatenate +=" par " + ClientHelper.stringToStringType(rep.auteur.nom)
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
-                
+                if rep.statut is not None:
+                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts.index(rep.statut.__str__())].encode('utf8')
+             
                 concatenate += ".</font></b><br/>" + ClientHelper.stringToStringType(rep.reponse.strip().replace("\n","<br/>")) + "</li>";
             
         return concatenate

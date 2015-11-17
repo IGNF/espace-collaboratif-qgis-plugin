@@ -49,6 +49,7 @@ import core.ConstanteRipart as cst
 from Magicwand import Magicwand
 
 
+
 class RipartPlugin:
     """QGIS Plugin Implementation."""
     
@@ -420,7 +421,10 @@ class RipartPlugin:
                      
         
     def magicwand(self):
-      
+        """Sélectionne la/les remarque(s) associée(s) au(x) croquis sélectionnés 
+          ou le/les croquis associé(s) à la remarque sélectionnée.
+          On ne peut pas sélectionnner des remarques et des croquis (soit remarques, soit croquis)  
+        """
         try:
             self.context= Contexte.getInstance(self,QgsProject)  
             magicw=Magicwand(self.context)

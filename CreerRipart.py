@@ -10,22 +10,23 @@ from RipartHelper import RipartHelper
 from core.Remarque import Remarque
 
 class CreerRipart(object):
-    '''
-    classdocs
-    '''
+    """
+    Classe pour la création d'une nouvelle remarque ripart
+    
+    """
     logger=RipartLogger("CreerRipart").getRipartLogger()
     context=None
 
     def __init__(self, context):
-        '''
+        """
         Constructor
-        '''
+        """
         self.context=context
         
-        
-        
-        
+       
     def do(self): 
+        """Création de la nouvelle remarque
+        """
         self.context.iface.messageBar().clearWidgets()
 
         try:
@@ -33,11 +34,11 @@ class CreerRipart(object):
        
             if  not hasSelectedFeature:
                 RipartHelper.showMessageBox(u"Aucun object sélectionné.\nIl est donc impossible de déterminer le point d'application de la nouvelle remarque à créer.")
-                return
+                return    #si pas d'objet sélectionné, on arrête le processus
             
             
             res=self.context.getConnexionRipart()    
-            if res!=1:
+            if res!=1:    #si la connexion a échouée, on arrête le processus
                 return
             
             #Création des croquis à partir de la sélection de features
@@ -46,7 +47,7 @@ class CreerRipart(object):
             
             self.logger.debug(str(len(croquisList)) + u" croquis générés")
         
-            
+            #ouverture du formulaire de création de la remarque
             formCreate= FormCreerRemarque(context=self.context,croquisCnt=len(croquisList))
             r=formCreate.exec_()
             
@@ -54,9 +55,9 @@ class CreerRipart(object):
                 return
             
             else:
+                #création de la remarque
                 self._createNewRemark(formCreate,croquisList)
-            
-        
+              
         except Exception as e:
             self.logger.error(e.message)
             self.context.iface.messageBar().pushMessage("", u"Problème dans la création de remarque(s)",level=2, duration =15)  
@@ -82,22 +83,21 @@ class CreerRipart(object):
             RipartHelper.save_preferredThemes(self.context.projectDir,selectedThemes)
             
             tmpRem.addThemeList(selectedThemes)  
-             
-            client= self.context.client
             
+            #liste contenant les identifiants des nouvelles remarques créées
             listNewRemIds=[]
             
+            #si on doit attaché un document
             if formCreate.optionWithAttDoc():
                 tmpRem.addDocument(formCreate.getAttachedDoc())
            
-            if formCreate.isSingleRemark():
-                
+            #création d'une seule remarque
+            if formCreate.isSingleRemark():  
                 remarqueNouvelle=self._prepareAndSendRemark(tmpRem,croquisList,formCreate.optionWithCroquis())
                 if remarqueNouvelle==None:
                     self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création de la remarque",level=2, duration =15)  
                      
-                listNewRemIds.append(remarqueNouvelle.id)
-                
+                listNewRemIds.append(remarqueNouvelle.id)        
             
             #création de plusieurs remarques  
             else:             
@@ -113,9 +113,7 @@ class CreerRipart(object):
                     listNewRemIds.append(remarqueNouvelle.id)
    
             self.context.refresh_layers()
-            #self.context.iface.messageBar().pushMessage("",
-            #                                     u"Succès de la création de " + str(len(listNewRemIds)) + u" nouvelle(s) remarque(s) Ripart",
-            #                                    level=1, duration =10)
+          
             RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouvelles remarques Riparts") 
              
         except Exception as e:

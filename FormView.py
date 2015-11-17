@@ -38,6 +38,8 @@ class FormView(QtGui.QDialog, FORM_CLASS):
         
         self.textEditCntCroquisDetail.setFrameStyle(QtGui.QFrame.NoFrame)
         self.textEditCntCroquisDetail.viewport().setAutoFillBackground(False)
+        
+        self.btnDoc.clicked.connect(self.openDoc)
     
     
     def setRemarque(self,remarque):
@@ -47,6 +49,14 @@ class FormView(QtGui.QDialog, FORM_CLASS):
         self.textMessage.setText(ClientHelper.getEncodeType(remarque.commentaire))
         self.textOldRep.setHtml(ClientHelper.getEncodeType(remarque.concatenateReponseHTML()))
         self.remarqueId= remarque.id
+        
+        self.doc=remarque.getFirstDocument()
+        self.btnDoc.setText("Pas de document joint")
+        if self.doc !="":
+            self.btnDoc.setText("Voir document joint")
+            self.btnDoc.setEnabled(True)
+            
+            
         
     def toggleCroquis(self):
         if self.selCroquis == None:
@@ -92,4 +102,5 @@ class FormView(QtGui.QDialog, FORM_CLASS):
             self.logger.error("deselectCroquis "+ e.message)
     
     
-    
+    def openDoc(self):
+        os.startfile(self.doc)

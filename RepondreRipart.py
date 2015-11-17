@@ -105,7 +105,7 @@ class RepondreRipart(object):
                       
 
         except Exception as e:
-            self.logger.error(e.message)
+            self.logger.error(e.message + ";" + str(e))
             raise
         
        

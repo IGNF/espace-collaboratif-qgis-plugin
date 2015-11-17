@@ -9,32 +9,26 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtGui import QMessageBox
 from qgis.core import *
-from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,QgsGeometry
+from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,QgsGeometry,QgsDataSourceURI,QgsVectorLayer, QgsMapLayerRegistry,QGis
 from RipartException import RipartException
 
 import os.path
 import shutil
-from  RipartHelper import  RipartHelper
-
-from core.RipartLoggerCl import RipartLogger
-
 import ntpath
-from core.Profil import Profil
-
-# importing pyspatialite
 from pyspatialite import dbapi2 as db
 
-from qgis._core import QgsDataSourceURI,QgsVectorLayer, QgsMapLayerRegistry,QGis
-
-from FormConnexion_dialog import FormConnexionDialog
-from FormInfo import FormInfo
+from  RipartHelper import  RipartHelper
+from core.RipartLoggerCl import RipartLogger
+from core.Profil import Profil
 from core.Client import Client
 from core.ClientHelper import ClientHelper
 from core.Attribut import Attribut
 from core.Point import Point
 from core.Croquis import Croquis
+from FormConnexion_dialog import FormConnexionDialog
+from FormInfo import FormInfo
 
-import math
+#import math
 
 class Contexte(object):
     """
@@ -57,6 +51,7 @@ class Contexte(object):
  
     #le répertoire du projet qgis
     projectDir= ""    
+    
     #le nom du fichier (projet qgis)
     projectFileName=""
     
@@ -93,6 +88,8 @@ class Contexte(object):
     def __init__(self, QObject,QgsProject):
         '''
         Constructor
+        
+        Initialisation du contexte
         ''' 
         self.QObject=QObject
         self.QgsProject= QgsProject
@@ -115,8 +112,10 @@ class Contexte(object):
             #contrôle l'existence du fichier de configuration
             self.checkConfigFile()      
             
+            #set de la base de données
             self.getOrCreateDatabase()
             
+            #set des fichiers de style
             self.copyRipartStyleFiles()
       
         except RipartException as e:
@@ -134,8 +133,7 @@ class Contexte(object):
                 Contexte.instance.logger.debug("instance de contexte créée")
             except RipartException as e:
                 Contexte.instance=None
-                #raise e
-            
+          
         elif  (Contexte.instance.projectDir!= QgsProject.instance().homePath() or
               Contexte.instance.projectFileName+".qgs"!=ntpath.basename(QgsProject.instance().fileName())) :
             Contexte.instance = Contexte(QObject,QgsProject)
@@ -176,16 +174,17 @@ class Contexte(object):
                 raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pqs été trouvé.")
            
     
+    
     def copyRipartStyleFiles(self):
         """Copie les fichiers de styles (pour les remarques et croquis ripart)
         """
         styleFilesDir=self.projectDir+"\\"+ RipartHelper.qmlStylesDir
         
-   
         RipartHelper.copy(self.plugin_path+"\\"+RipartHelper.ripart_files_dir+"\\"+RipartHelper.qmlStylesDir,
                           styleFilesDir)
         
   
+    
     
     def setConnexionRipartParam(self):
         """Set des informations de connexion (login + url)
@@ -208,6 +207,14 @@ class Contexte(object):
      
      
     def getConnexionRipart(self,newLogin=False):
+        """Connexion au service ripart 
+        
+        :param newLogin: booléen indiquant si on fait un nouveau login (fonctionalité "Connexion au service Ripart")
+        :type newLogin: boolean
+        
+        :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
+        :rtype int
+        """
         self.logger.debug("GetConnexionRipart ")
         
         result= -1;
@@ -283,12 +290,16 @@ class Contexte(object):
     
 
     def saveLogin(self,login):
+        """Sauvegarde du login dans le contexte et dans le fichier ripart.xml
+        """
         self.login=login
         RipartHelper.save_login( self.projectDir, login)
     
    
     def getOrCreateDatabase(self):
-        """
+        """Retourne la base de données spatialite, contenant les tables des remarques et croquis
+        Si la BD n'existe pas, elle est créée
+        
         """
         dbName = self.projectFileName +"_RIPART"
         self.dbPath = self.projectDir+"/"+dbName+".sqlite"
@@ -358,20 +369,22 @@ class Contexte(object):
                                 
                 root.insertLayer(0,vlayer)
                 
-                self.logger.debug("Layer "+vlayer.name() + " added to map")
+                self.logger.debug("Layer "+vlayer.name() + " added to map")          
                 
-                
+                #ajoute les styles aux couches
                 style= os.path.join(self.projectDir, "ripartStyles",table+".qml")
                 vlayer.loadNamedStyle(style)
         
         self.mapCan.refresh()
         
           
-            
   
-    
     def getAllMapLayers(self):
-        """Return the list of layer names which are loaded in the map"""
+        """Return the list of layer names which are loaded in the map
+        
+        :return dictionnaire des couches chargées sur la carte (key: layer name, value: layer id)
+        :rtype dictionary
+        """
         
         layers = QgsMapLayerRegistry.instance().mapLayers()
 
@@ -385,10 +398,12 @@ class Contexte(object):
         return maplayers
     
     
- 
     
     def getMapPolygonLayers(self):
         """Retourne les calques qui sont de type polygon ou multipolygon
+        
+        :return dictionnaire des couches de type polygon(key: layer id, value: layer name)
+        :rtype dictionary
         """
         layers = QgsMapLayerRegistry.instance().mapLayers()
         
@@ -400,27 +415,24 @@ class Contexte(object):
                 polylayers[l.id()]=l.name()
                 
         return polylayers
-    
-    
-    
-    """def getLayerByName(self,layName):
-        layers = self.mapCan.layers()
-   
-        for l in layers:
-            if l.name() == layName :
-                return l
-        
-        return None
-    """
+ 
     
     def getLayerByName(self,layName):
+        """Retourne le calque donné par son nom
+        
+        :param layName: le nom du calque 
+        :type layName: string
+        
+        :return: le premier calque ayant pour nom celui donné en paramètre
+        :rtype: QgsVectorLayer
+        """
         mapByName= QgsMapLayerRegistry.instance().mapLayersByName(layName)
         if len(mapByName) >0:
             return mapByName[0]
         else:
             return None
-        #return QgsMapLayerRegistry.instance().mapLayersByName(layName)[0]
-    
+        
+      
     def emptyAllRipartLayers(self):
         """Supprime toutes les remarques, vide les tables de la base ripart.sqlite 
         """
@@ -448,53 +460,15 @@ class Contexte(object):
         
         
     def refresh_layers(self):
-        """
+        """Rafraichissement de la carte
         """
         for layer in self.mapCan.layers():
             layer.triggerRepaint()
 
 
-    def addRemarques(self,rems,importer):
-        """
-        """
-        try:
-            self.conn= db.connect(self.dbPath)
-
-            for remId in rems:
-                RipartHelper.insertRemarques(self.conn, rems[remId])
-                
-                #self.progress.setValue(i + 1)
-                #i+=1
-                importer.progressVal+=1
-                importer.progress.setValue(importer.progressVal)
-       
-            self.conn.commit()   
-           
-        except Exception as e:
-            self.logger.error(e.message)
-            raise
-        finally:
-            self.conn.close()
-     
-    def addRemarques2(self,remId):
-        """
-        """
-        try:
-            self.conn= db.connect(self.dbPath)
-    
-            i=1
-            
-            RipartHelper.insertRemarques(self.conn, rems[remId])
-            self.conn.commit()   
-           
-        except Exception as e:
-            self.logger.error(e.message)
-            raise
-        finally:
-            self.conn.close() 
      
     def updateRemarqueInSqlite(self,rem):
-        """Met à jour une remarque (après l'ajout d'une réponse 
+        """Met à jour une remarque (après l'ajout d'une réponse) 
         
         :param rem : la remarque à mettre à jour
         :type rem: Remarque
@@ -522,29 +496,33 @@ class Contexte(object):
         
    
     
-    def countRemarqueByStatut(self,statut):  
+    def countRemarqueByStatut(self,statut): 
+        """Retourne le nombre de remarques ayant le statut donné en paramètre
+        
+        :param statut: le statut de la remarque (=code renvoyé par le service)
+        :type statut: string
+        """ 
         remLay=self.getLayerByName(RipartHelper.nom_Calque_Remarque)
         expression='"Statut" = \''+ statut +'\''
         filtFeatures=remLay.getFeatures(QgsFeatureRequest().setFilterExpression( expression ))
         return len(list(filtFeatures))
     
+    
+    
     #############Création nouvelle remarque ###########
     
     def hasMapSelectedFeatures(self):
+        """Vérifie s'il y a des objets sélectionnés
+        
+        :return true si de objets sont sélectionnés, false sinon
+        :rtype boolean
+        """
         mapLayers = self.mapCan.layers()
         for l in mapLayers:
             if len(l.selectedFeatures())>0:
                 return True        
         return False    
-    
-    """def getMapSelectedFeaturesCount(self):
-        cnt=0
-        mapLayers = self.mapCan.layers()
-        for l in mapLayers:
-            cnt+=len(l.selectedFeatures())
-                     
-        return cnt 
-    """
+
     
     def makeCroquisFromSelection(self):
         """Transforme en croquis Ripart les object sélectionnés dans la carte en cours.
@@ -571,25 +549,28 @@ class Contexte(object):
                 centroidPt=transformer.transform(centroidPt)
                 """
                 ######### 
+                
+                #la liste des croquis
                 croquiss=[]
+                
+                #le type du feature
                 ftype= f.geometry().wkbType()
+        
                 geom= f.geometry()
-                #if geom.isMultipart():
-                #explode to single parts
+                
+                #if geom.isMultipart() => explode to single parts
                 if ftype == QGis.WKBMultiPolygon:
                     for poly in geom.asMultiPolygon():
                         croquiss.append(self.makeCroquis(QgsGeometry.fromPolygon(poly),QGis.WKBPolygon,l.crs(),f[0]))
                         
                 elif ftype== QGis.WKBMultiLineString:
                     for line in geom.asMultiPolyline():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolyline(line),QGis.WKBLineString,l.crs(),f[0]))
-                        
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolyline(line),QGis.WKBLineString,l.crs(),f[0]))              
+               
                 elif ftype== QGis.WKBMultiPoint:
                     for pt in geom.asMultiPoint():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPoint(pt),QGis.WKBPoint,l.crs(),f[0]))
-               
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPoint(pt),QGis.WKBPoint,l.crs(),f[0]))       
                 else :    
-                    #croquisTemp=(self.makeCroquis(geom,ftype,l.crs(),f[0]))
                     croquiss.append(self.makeCroquis(geom,ftype,l.crs(),f[0]))
                 
                 if len(croquiss)==0:
@@ -625,30 +606,16 @@ class Contexte(object):
         
         :return le croquis créé 
         :rtype Croquis ou None s'il y a eu une erreur
-        """
-        croquisAndCentroids=[]
-        
-        #croquiss=[]
-        
+        """   
         newCroquis= Croquis()
-        geomPoints=[]
-        
-        centroid=Point()
-        
+        geomPoints=[]        
+       
         try:
             destCrs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
-            
+                       
             transformer = QgsCoordinateTransform(layerCrs, destCrs)
-            #wgsGeom=transformer.transform(geom)
-            
-            #if geom.isMultipart():
-                #explode to single parts
-                
-            if ftype == QGis.WKBMultiPolygon:
-                #for poly in geom.asMultiPolygon():
-                    #croquiss.append(self.makeCroquis(poly,ftype,layerCrs,fId))
-                pass
-            elif ftype==QGis.WKBPolygon:
+
+            if ftype==QGis.WKBPolygon:
                 geomPoints=geom.asPolygon()
                 if len(geomPoints)>0:
                     geomPoints=geomPoints[0]      #les points du polygone
@@ -680,9 +647,7 @@ class Contexte(object):
             self.logger.error(u"in makeCroquis:"+e.message)
             return None
         
-        
-        #croquisAndCentroid.append([newCroquis,centroid])
-
+     
         return newCroquis
     
     
@@ -690,6 +655,12 @@ class Contexte(object):
     def getPositionRemarque(self,listCroquis):
         """Recherche et retourne la position de la remarque (point).
         La position est calculée à partir des croquis associés à la remarque
+        
+        :param listCroquis: la liste des croquis
+        :type listCroquis: list de Croquis
+        
+        :return la position de la remarque 
+        :rtype Point
         """
             
         #crée la table temporaire dans spatialite et calcule les centroides de chaque croquis
@@ -728,13 +699,7 @@ class Contexte(object):
             return None
         
         cr= listCroquis[0]
-        geomType="POLYGON"
- 
-        if cr.type==cr.CroquisType.Ligne:
-            geomType="LINESTRING"
-        elif cr.type==cr.CroquisType.Polygone:
-            geomType="POLYGON"
-            
+      
         try:
             self.conn= db.connect(self.dbPath)
             cur = self.conn.cursor()
@@ -749,16 +714,13 @@ class Contexte(object):
             i=0
             for cr in listCroquis: 
                 i+=1
-                if cr.type==cr.CroquisType.Ligne:
-                    #geomType="LINESTRING"
+                if cr.type==cr.CroquisType.Ligne:             
                     textGeom="LINESTRING("
                     textGeomEnd=")"
                 elif cr.type==cr.CroquisType.Polygone:
-                    #geomType="POLYGON"   
                     textGeom="POLYGON(("
                     textGeomEnd="))"                 
                 elif cr.type==cr.CroquisType.Point:
-                    #geomType="POINT"
                     textGeom="POINT("
                     textGeomEnd=")"
                 
@@ -774,10 +736,7 @@ class Contexte(object):
 
             self.conn.commit()
             
-            
-            #calculate the posiotin of the remark
-            # position= self.getPositionRemarque(listCroquis,allCroquisPoints,self.conn)
-           
+   
         except Exception as e:
             self.logger.error("createTempCroquisTable "+e.message)
             return False
@@ -790,7 +749,13 @@ class Contexte(object):
         
     
         
-    def _getBarycentre(self):    
+    def _getBarycentre(self):   
+        """Calcul du barycentre de l'ensemble des croquis à partir des centroides de chaque croquis;
+        ces centroides sont stockés dans la table temporaire "tmpTable"
+        
+        :return: le barycentre
+        :rtype: Point
+        """ 
         tmpTable ="tmpTable" 
         point=None
         try:
@@ -814,103 +779,24 @@ class Contexte(object):
             ptY= sumY/float(len(rows))
             
             barycentre= Point(ptX,ptY)
-            
-            """ 
-            #trouver le point le plus proche du barycentre
-            sql ="SELECT textGeom  from "  + tmpTable 
-            cur.execute(sql)
-            
-            nearestDist=-1
-            nearestPoint=barycentre
-           
-            for row in rows:
-                dist=math.hypot(row[0]-barycentre.longitude, row[1]-barycentre.latitude)
-                if nearestDist<0 or dist<nearestDist:
-                    nearestDist=dist
-                    nearestPoint=Point(row[0],row[1])
-             """   
-            
-            
+       
         except Exception as e:
             self.logger.error("getBarycentre "+e.message)
             point=None
         
         return barycentre
     
-    """def _getNearestPoint(self,barycentre, ptsList):
-        pass
-    """
+  
     
-    def getMapCoordReferenceSystem(self):
-        mapCrs=self.mapCan.mapRenderer().destinationCrs().authid()
-        refSys=QgsCoordinateReferenceSystem(mapCrs)
-        
-        return refSys
-    
-    
-    
-    ## magicwand
-    
-    def oneCroquisOrRemarkSelected(self):
-        cntSelectedCroquis=0
-        cntSelectedRemarks=0
-        mapLayers = self.mapCan.layers() 
-        
-        for cr in RipartHelper.croquis_layers:
-            crLay= self.getLayerByName(cr)
-            cntSelectedCroquis+=len(crLay.selectedFeatures())
-            
-        remLay= self.getLayerByName(RipartHelper.nom_Calque_Remarque)
-        
-        cntSelectedRemarks+=len(remLay.selectedFeatures())
-        
-        message1="Veuillez ne sélectionner qu'une seule Remarque"
-        
-        if cntSelectedCroquis>1 or cntSelectedRemarks>1:
-            pass 
-        
-    
-    def getSelectedRipartFeatures(self):
-        #key: layer name, value: noRemarque
-        croquisLays={}
-        
-        remNos=""
-        
-        mapLayers = self.mapCan.layers() 
-        
-        for l in mapLayers:
-            if l.name() in RipartHelper.croquis_layers and len(l.selectedFeatures())>0:
-                croquisLays[l.name()]=  []
-                for feat in l.selectedFeatures():
-                    idx= l.fieldNameIndex("NoRemarque")
-                    noRemarque= feat.attributes()[idx]
-                    remNos+=str(noRemarque)+","
-                    croquisLays[l.name()].append(feat.id())
-                    
-
-        remarqueLay=self.getLayerByName(RipartHelper.nom_Calque_Remarque) 
-        feats=remarqueLay.selectedFeatures()
-        
-        for f in feats:
-            idx= remarqueLay.fieldNameIndex("NoRemarque")
-            noRemarque= f.attributes()[idx]
-          
-            remNos+=str(noRemarque)+","
-            croquisLays=self.getCroquisForRemark(noRemarque,croquisLays)
-        
-       
-        self.selectRemarkByNo(remNos[:-1])
-        
-        for cr in croquisLays:
-            lay=self.getLayerByName(cr) 
-            lay.setSelectedFeatures( croquisLays[cr])
-        
-    
-       
-    
-    
+    ################### magicwand  ##################################################
+   
         
     def selectRemarkByNo(self,noRemarques):
+        """Sélection des remarques données par leur no
+        
+        :param noRemarques : les no de remarques à sélectionner
+        :type noRemarques: list de string
+        """
         
         self.conn= db.connect(self.dbPath)
         cur = self.conn.cursor()
@@ -927,15 +813,24 @@ class Contexte(object):
             print row[0]
             featIds.append(row[0])
            
-
         lay.setSelectedFeatures( featIds )
         
        
-        
-       
+  
     
     def getCroquisForRemark(self,noRemarque,croquisSelFeats):
-       
+        """Retourne les croquis associés à une remarque
+        
+        :param noRemarque: le no de la remarque 
+        :type noRemarque: int
+        
+        :param ccroquisSelFeats: dictionnaire contenant les croquis 
+                                 (key: le nom de la table du croquis, value: liste des identifiants de croquis) 
+        :type croquisSelFeats: dictionnary
+        
+        :return: dictionnaire contenant les croquis 
+        :rtype: dictionnary
+        """    
         crlayers= RipartHelper.croquis_layers
         
         self.conn= db.connect(self.dbPath)
@@ -953,5 +848,4 @@ class Contexte(object):
                     croquisSelFeats[table]=[]
                 croquisSelFeats[table].append(row[0])
             
-  
         return croquisSelFeats   
