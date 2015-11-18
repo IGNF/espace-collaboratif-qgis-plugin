@@ -16,6 +16,7 @@ import os.path
 import shutil
 import ntpath
 from pyspatialite import dbapi2 as db
+import urllib
 
 from  RipartHelper import  RipartHelper
 from core.RipartLoggerCl import RipartLogger
@@ -28,11 +29,10 @@ from core.Croquis import Croquis
 from FormConnexion_dialog import FormConnexionDialog
 from FormInfo import FormInfo
 
-#import math
 
 class Contexte(object):
     """
-    Contexte et initialisation  
+    Contexte et initialisation de la "session" 
     """
     #instance du Contexte 
     instance =None
@@ -81,10 +81,9 @@ class Contexte(object):
     #le logger
     logger=None
     
-    #progressMessageBar=None
-    progress=None
-    
 
+    #progress=None
+    
     def __init__(self, QObject,QgsProject):
         '''
         Constructor
@@ -117,8 +116,17 @@ class Contexte(object):
             
             #set des fichiers de style
             self.copyRipartStyleFiles()
-      
-        except RipartException as e:
+            
+            
+            try:
+                formatFile =urllib.urlopen('http://ripart.ign.fr/?page=doctype')
+            except Exception as e:
+                formatFile =open( os.path.join(self.plugin_path,'files','formats.txt'), 'r')            
+            finally:
+                lines=formatFile.readlines()
+                self.formats=[x.split("\t")[0] for x in lines]
+                
+        except Exception as e:
             self.logger.error("init contexte:" + e.message)
             raise
 
@@ -128,32 +136,41 @@ class Contexte(object):
         """Retourne l'instance du Contexte
         """
         if not Contexte.instance:
-            try:
-                Contexte.instance= Contexte(QObject,QgsProject)
-                Contexte.instance.logger.debug("instance de contexte créée")
-            except RipartException as e:
-                Contexte.instance=None
+            Contexte.instance=Contexte._createInstance(QObject,QgsProject)
           
         elif  (Contexte.instance.projectDir!= QgsProject.instance().homePath() or
-              Contexte.instance.projectFileName+".qgs"!=ntpath.basename(QgsProject.instance().fileName())) :
-            Contexte.instance = Contexte(QObject,QgsProject)
-            Contexte.instance.logger.debug("nouvelle instance de contexte créée")
+              Contexte.instance.projectFileName+".qgs"!=ntpath.basename(QgsProject.instance().fileName())) :       
+            Contexte.instance=Contexte._createInstance(QObject,QgsProject)
 
         return Contexte.instance
+    
+    
+    
+    @staticmethod   
+    def _createInstance(QObject,QgsProject):
+        """Création de l'instance du contexte
+        """
+        try:
+            Contexte.instance = Contexte(QObject,QgsProject)
+            Contexte.instance.logger.debug("nouvelle instance de contexte créée")
+        except Exception as e:
+            Contexte.instance=None
+            return None
+        
+        return Contexte.instance
+    
     
     
     def setProjectParams(self,QgsProject):
         """set des paramètres du projet
         """
         self.projectDir=QgsProject.instance().homePath()
-        if self.projectDir =="":   
-            """self.iface.messageBar().pushMessage("Attention",
-                                                 u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart",
-                                                  level=1, duration =10)
-            """
+        
+        if self.projectDir =="":    
             RipartHelper.showMessageBox(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart")
-            raise RipartException(u"Projet QGIS non enregistré") 
+            raise Exception(u"Projet QGIS non enregistré") 
     
+        #nom du fichier du projet enregistré
         fname=ntpath.basename(QgsProject.instance().fileName())
         
         self.projectFileName= fname[:fname.find(".")]
@@ -173,7 +190,7 @@ class Contexte(object):
                 self.logger.error("no ripart.xml found in plugin directory" + e.message)
                 raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pqs été trouvé.")
            
-    
+       
     
     def copyRipartStyleFiles(self):
         """Copie les fichiers de styles (pour les remarques et croquis ripart)
@@ -184,27 +201,7 @@ class Contexte(object):
                           styleFilesDir)
         
   
-    
-    
-    def setConnexionRipartParam(self):
-        """Set des informations de connexion (login + url)
-        """
-        self.logger.debug("setConnexionRipart")
-        ret=""
-        if len(self.projectFileName)==0:
-            msgBox = QMessageBox()
-            msgBox.setWindowTitle("IGN RIPart")
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setText(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart")
-            ret = msgBox.exec_()
-        else:
-            self.urlHostRipart = RipartHelper.load_urlhost(self.projectDir).text
-            self.login = RipartHelper.load_login(self.projectDir).text
-        
-        return ret
-    
-     
-     
+  
      
     def getConnexionRipart(self,newLogin=False):
         """Connexion au service ripart 
@@ -297,7 +294,7 @@ class Contexte(object):
     
    
     def getOrCreateDatabase(self):
-        """Retourne la base de données spatialite, contenant les tables des remarques et croquis
+        """Retourne la base de données spatialite contenant les tables des remarques et croquis
         Si la BD n'existe pas, elle est créée
         
         """
@@ -539,17 +536,7 @@ class Contexte(object):
  
             for f in l.selectedFeatures():
                 fattributes= f.attributes()
-             
-                ###CENTROID ??? 
-                """centroid= f.geometry().centroid()
-                centroidPt=centroid.asPoint()
-                
-                destCrs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
-                transformer = QgsCoordinateTransform(l.crs(), destCrs)
-                centroidPt=transformer.transform(centroidPt)
-                """
-                ######### 
-                
+              
                 #la liste des croquis
                 croquiss=[]
                 
@@ -669,7 +656,6 @@ class Contexte(object):
         #trouve le barycentre de l'ensemble des centroïdes
         if type(res)==list:
             barycentre= self._getBarycentre()
-            #position= self._getNearestPoint(barycentre,listPoints)
             return barycentre
         else:               
             return None

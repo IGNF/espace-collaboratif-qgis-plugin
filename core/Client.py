@@ -501,10 +501,6 @@ class Client:
                     
                     docs["upload"+str(docCnt)]=document
                     
-                    #params["upload"+str(docCnt)]=document
-                    
-                    #files["upload"+str(docCnt)]=({},open(document, 'rb'))
-                    #files = {"upload"+str(docCnt): open('D:/Ripart/doc/Manuel utilisateur add-in RIPart pour ArcMap.pdf', 'rb')}
                     fname=os.path.basename(document)
                     files = {"upload"+str(docCnt):  (fname, open(document, 'rb'))}
                     params ['filename']=os.path.basename(document)

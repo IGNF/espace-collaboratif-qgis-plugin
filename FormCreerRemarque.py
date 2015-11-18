@@ -8,33 +8,34 @@ import os
 import urllib
 
 from core.RipartLoggerCl import RipartLogger 
+
 from PyQt4 import QtGui, uic
 from PyQt4.Qt import QDialogButtonBox,QListWidgetItem, QPixmap
 from PyQt4.QtCore import *
+
 import core.ConstanteRipart as cst
 from core.ClientHelper import ClientHelper
-from RipartHelper import RipartHelper
 from core.Remarque import Remarque
 import core.ConstanteRipart as cst
 from core.Theme import Theme
 from core.Groupe import Groupe
+from RipartHelper import RipartHelper
 
 
 FORM_CLASS , _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
 
 
 class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
-    '''
-    classdocs
-    '''
-    
-    
+    """
+    Formulaire pour la création d'une nouvelle remarque
+    """ 
     logger=RipartLogger("FormCreerRemarque").getRipartLogger()
     context=None
     
     send=False
     cancel=False
     
+    #le nom du fichier sélectionné (document joint)
     selFileName=None
     
     #dictionnaire des thèmes sélectionnés (key: nom du theme, value: l'objet Theme)
@@ -43,6 +44,7 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
     #liste des thèmes du profil (objets Theme)
     profilThemesList=[]
     
+    #taille maximale du document joint
     docMaxSize=cst.MAX_TAILLE_UPLOAD_FILE
 
     def __init__(self, context,croquisCnt, parent=None):
@@ -82,8 +84,7 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
         pixmap.loadFromData(data)
         pixmap=pixmap.scaled(41,41,Qt.KeepAspectRatio )   
         self.lblProfilIcon.setPixmap(pixmap)
-        
-        
+          
         #les noms des thèmes préférés (du fichier de configuration)
         preferredThemes= RipartHelper.load_preferredThemes(self.context.projectDir)
         print preferredThemes
@@ -101,8 +102,6 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
                     
                 self.listWidgetThemes.addItem(item)
                 
-                #self.profilThemesList[th.groupe.nom]=th
-         
         self.profilThemesList=profil.themes   
    
         self.docMaxSize=self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
@@ -116,6 +115,8 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
     
    
     def getMessage(self):
+        """Retourne le message de la remarque
+        """
         return self.textEditMessage.text() 
     
     
@@ -135,7 +136,13 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
     
     
     def _getThemeObject(self,themeName):
-        """Retrouve l'objet THEME à partir de son nom
+        """Retourne l'objet THEME à partir de son nom
+        
+        :param themeName: le nom du thème
+        :type themeName: string
+        
+        :return l'objet Theme
+        :rtype: Theme
         """
         for th in self.profilThemesList:
             if th.groupe.nom == themeName:
@@ -143,29 +150,41 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
         return None
                 
     def countSelectecTheme(self):
+        """Compte et retourne le nombre de thèmes sélectionnés
+        
+        :return le nombre de thèmes sélectionnés
+        :rtype: int
+        """
         return len(self.getSelectedThemes())
     
     
     def getAttachedDoc(self):
+        """Retourne le nom du fichier sélectionné 
+        
+        :return nom du fichier sélectionné
+        :rtype: string
+        """
         if self.checkBoxAttDoc.isChecked():
             return self.selFileName
         else: 
             return ""
     
     def optionWithAttDoc(self):
+        """
+        :rtype : boolean
+        """
         return self.checkBoxAttDoc.isChecked()
         
     def optionWithCroquis(self):
+        """
+        :rtype : boolean
+        """
         return self.checkBoxJoinCroquis.isChecked()
     
     
-    def onListWidgetThemes_click(self):
-        print("do ")
-        
-    
-        
     def send(self):
-        
+        """Envoi de la requête de création au service ripart
+        """
         if self.textEditMessage.toPlainText().strip()=="":
             self.lblMessageError.setStyleSheet("QLabel { background-color : #F5A802; font-weight:bold}");
             self.lblMessageError.setText(u"Le message est obligatoire" )
@@ -194,8 +213,7 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
                 print("with croquis")
                 #tmpRem.addCroquis(croquis)
         """
-       
-        
+   
         self.close()
     
         
@@ -216,14 +234,14 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
             filename = QtGui.QFileDialog.getOpenFileName(self, u'Document à joindre à la remarque', '.',filters)
             if filename!="":
                 extension = os.path.splitext(filename)[1]           
-                if extension in [".exe",".EXE",".php",".dll"] :
+                if extension[1:] not in self.context.formats :
                     message=u"Les fichiers de type '" + extension + u"' ne sont pas autorisées comme pièce-jointe dans le service Ripart."
                     RipartHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.Unchecked)
                     
                 elif os.path.getsize(filename)>self.docMaxSize:
                     message=u"Le fichier \"" + filename +\
-                           u"\" ne peut être envoyé au service Ripart, car sa taile (" +\
+                           u"\" ne peut être envoyé au service Ripart, car sa taille (" +\
                            str(os.path.getsize(filename) / 1000)+\
                            u" Ko) dépasse celle maximalle autorisée (" + str(self.docMaxSize/1000) + u" Ko)"
                             
@@ -241,6 +259,8 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
         else:
             self.lblDoc.setProperty("visible",False)
             self.selFileName=None
+            
+            
             
     def cancel(self):
         self.cancel=True

@@ -6,7 +6,7 @@ Created on 23 janv. 2015
 '''
 from Enum import Enum
 
-#class ConstanteRipart(object):
+import os
 '''
 constantes
 '''

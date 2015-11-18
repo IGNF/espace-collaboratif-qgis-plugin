@@ -8,7 +8,6 @@ import os
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QMessageBox
-
 from PyQt4.QtCore import *
 import FormInfo_base
 
@@ -16,10 +15,9 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo
 
 class FormInfo(QtGui.QDialog, FORM_CLASS):
     '''
-    classdocs
+    Fenêtre donnant des informations 
     '''
     
-
     def __init__(self, parent=None):
         """Constructor."""
          

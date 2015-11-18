@@ -8,6 +8,7 @@ Created on 29 sept. 2015
 from core.RipartLoggerCl import RipartLogger
 import xml.etree.ElementTree as ET
 from pyspatialite import dbapi2 as db
+
 from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform,QGis
 from core.ClientHelper import ClientHelper
 from RipartException import RipartException
@@ -103,17 +104,24 @@ class RipartHelper(object):
     #Système de coordonnées de référence de Ripart
     epsgCrs = 4326
     
-    
     logger=RipartLogger("RipartHelper").getRipartLogger()
+    
     
     @staticmethod
     def getXPath(tagName,parentName):
+        """Construction du xpath
+        """
         xpath="./"+parentName+"/"+tagName
         return xpath
     
 
     @staticmethod
     def load_urlhost(projectDir):
+        """Retourne l'url sauvegardé dans le fichier de configuration xml
+        
+        :param projectDir: le chemin vers le répertoire du projet
+        :type projectDir: string
+        """
         urlhost=""
         try:    
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
@@ -121,18 +129,21 @@ class RipartHelper(object):
             urlhost= xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_UrlHost,"Serveur"))     
             if urlhost==None:
                 urlhost=RipartHelper.addXmlElement(projectDir,"URLHost","Serveur")
-                #urlhost=""
-                
+                 
         except Exception as e:
             RipartHelper.logger.error(str(e))
-           
-        
+    
         return urlhost
     
    
     
     @staticmethod
     def load_login(projectDir):
+        """Retourne le login sauvegardé dans le fichier de configuration xml
+        
+        :param projectDir: le chemin vers le répertoire du projet
+        :type projectDir: string
+        """
         login=""
         try:    
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
@@ -146,8 +157,17 @@ class RipartHelper(object):
     
         return login
     
+    
     @staticmethod
     def save_login(projectDir,login):
+        """Enregistre le login dans le fichier de configuration
+        
+        :param projectDir: le chemin vers le répertoire du projet
+        :type projectDir: string
+        
+        :param login: le login
+        :type login: string
+        """
         try:
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
@@ -162,6 +182,11 @@ class RipartHelper(object):
      
     @staticmethod
     def load_CalqueFiltrage(projectDir):
+        """Retourne le nom du calque de filtrage sauvegardé dans le fichier de configuration xml
+        
+        :param projectDir: le chemin vers le répertoire du projet
+        :type projectDir: string
+        """
         calque=""
         try:    
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
@@ -242,7 +267,11 @@ class RipartHelper(object):
     
     @staticmethod
     def load_attCroquis(projectDir):
+        """Retourne les attributs de croquis sauvegardés dans le fichier de configuration xml
         
+        :param projectDir: le chemin vers le répertoire du projet
+        :type projectDir: string
+        """
         attCroquis={}
         try:
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
@@ -263,49 +292,44 @@ class RipartHelper(object):
     
     @staticmethod
     def load_preferredThemes(projectDir):
-        """
-        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
+        """Retourne les thèmes sauvegardés dans le fichier de configuration xml
+        
+        :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
-
         """
         prefThemes=[]
         try:    
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
-            #prefThsTag= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Themes,"Map"))  
-            
             
             prefThs= xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_Themes+"/"+RipartHelper.xml_Theme,"Map"))
-             
-            #ths=prefThsTag.findall(RipartHelper.xml_Theme)
-       
+
             for n in  prefThs:
                 prefThemes.append(n.text)  
-                
-            """for th in prefThsTag:
-                ths=prefThsTag.findall(RipartHelper.xml_Theme)
-                
-                if ths!=None:
-                    for n in ths:
-                        prefThemes.append(n.text)
-            """   
-            
+         
         except Exception as e:
             RipartHelper.logger.error(str(e))
         
         return  prefThemes
     
+    
     @staticmethod
     def save_preferredThemes(projectDir,prefThemes):
-        """
+        """Enregistre les thèmes dans le fichier de config
+        
+        :param projectDir: le chemin vers le répertoire du projet
+        :type projectDir: string
+        
+        :param prefThemes: la liste de  thèmes
+        :type prefThemes: list de Theme
         """
         #first load Themes_prefs tag (create the tag if the tag doesn't exist yet)
         themesNode= RipartHelper.load_ripartXmlTag(projectDir,RipartHelper.xml_Themes,"Map")
         RipartHelper.removeNode(projectDir, RipartHelper.xml_Theme,"Map/"+RipartHelper.xml_Themes )
         
         for th in prefThemes:
-            
             RipartHelper.addXmlElement(projectDir,  RipartHelper.xml_Theme, "Map/"+RipartHelper.xml_Themes, th.groupe.nom)
+            
     
     @staticmethod
     def addNode(projectDir,tag,value, parentTag=None):
@@ -343,8 +367,11 @@ class RipartHelper(object):
         except Exception as e:
             RipartHelper.logger.error(e.message)
     
+    
     @staticmethod
     def setXmlTagValue(projectDir,tag,value,parent=None):
+        """Donne une valeur à un tag du fichier de config
+        """
         try:
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
@@ -388,7 +415,8 @@ class RipartHelper(object):
          
     @staticmethod    
     def createRemarqueTable(conn):   
-        """Création de la table Remarque_Ripart"""
+        """Création de la table Remarque_Ripart
+        """
         
         sql=u"CREATE TABLE Remarque_Ripart (" + \
             u"id INTEGER NOT NULL PRIMARY KEY," + \
@@ -424,7 +452,16 @@ class RipartHelper(object):
   
     @staticmethod     
     def createCroquisTable(conn,table,geomType):
-        """
+        """Création d'une table de croquis
+        
+        :param conn: la connexion à la base de données
+        :type conn: 
+        
+        :param table: le nom de la table à créer
+        :type table: string
+        
+        :param geomType: le type de la géométrie 
+        :type: string
         """
         cur = conn.cursor()
         
@@ -447,6 +484,14 @@ class RipartHelper(object):
         
     @staticmethod    
     def emptyTable(conn,table):
+        """Vide le contenu de la table donnée en paramètre
+        
+        :param conn: la connexion à la base de données
+        :type conn: 
+        
+        :param table: la table à vider
+        :type: string
+        """
 
         cur = conn.cursor()
         try:
@@ -517,13 +562,12 @@ class RipartHelper(object):
             sql+= ClientHelper.getEncodeType(rem.getAttribut("autorisation") + "', ") 
             sql+= ClientHelper.getEncodeType(geom +")")
                
-            RipartHelper.logger.debug("INSERT sql:" + sql)
-            #sql =ClientHelper.getEncodeType(sql)    
-            
+            #RipartHelper.logger.debug("INSERT sql:" + sql)
+           
             cur.execute(sql)
             rowcount=cur.rowcount
             if rowcount!=1:
-                print "error"
+                RipartHelper.logger.error("No row inserted:" + sql)
                            
             if len(rem.croquis) >0 :
                 croquis= rem.croquis
@@ -574,13 +618,12 @@ class RipartHelper(object):
     def isInGeometry(pt, geomLayer):
         """Si le point est dans la géométrie (définie par les objets d'une couche donnée)
         
-        :param pt 
+        :param pt le point
         :type pt : geometry
         
-        :param
-        :param geomLayer layer
+        :param geomlayer: le calque
+        :param geomLayer: QgsVectorlayer
         """
-        #pt =QgsGeometry.fromWkt("POINT(3 4)")
         
         layerCrs=  geomLayer.crs()
         destCrs= QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
@@ -600,15 +643,15 @@ class RipartHelper(object):
             
         return isWithin            
     
-    #@staticmethod
-    #def transformGeomToRipartCrs(geom, sourceCrs):
-        
-        
-    
+  
     
     @staticmethod
     def getBboxFromLayer(filtreLay):
+        """Retourne la bbox du calque donné en paramètre
         
+        :param filtreLay: le calque
+        :type filtreLay: QgsVectorlayer
+        """
         filtreExtent= filtreLay.extent()
         
         filtCrs= filtreLay.crs()
@@ -619,6 +662,7 @@ class RipartHelper(object):
         bbox= xform.transform(filtreExtent)
         
         return bbox
+        
         
     @staticmethod
     def formatDate(sdate):
@@ -641,20 +685,25 @@ class RipartHelper(object):
             rdate=RipartHelper.defaultDate
         return rdate
     
+    
     @staticmethod
     def formatDatetime(dt):
+        """Retourne la date au format '%Y-%m-%d %H:%M:%S'
+        
+        :param dt : la date
+        :type dt: datetime
+        """
         rdate=dt.strftime('%Y-%m-%d %H:%M:%S')
         return rdate
     
     
-    @staticmethod
+    """ @staticmethod
     def creerPointRemarqueRipart(listCroquis):
-        """
-        Calcule le point d'application pour une nouvelle remarque Ripart à partir des croquis associées:
+        '''
+        Calcule le point d'application pour une nouvelle remarque Ripart à partir des croquis associés:
         On calcule le centroïde de chaque croquis de la liste donnée,
-        puis le barycentre de l'ensemble de ces centroïdes calculés et 
-        enfin on retient le centroïde le plus proche du barycentre calculé (pour que la remarque soit proche d'un croquis)
-        """
+        puis le centroïde de l'ensemble de ces centroïdes calculés 
+        '''
         position=Point()
         cntCr= len(listCroquis)
         
@@ -665,18 +714,18 @@ class RipartHelper(object):
                 return listCroquis[0].firstCoord()
             else:
                 position= RipartHelper.Tra
-        
+    """   
             
-    @staticmethod
+    """@staticmethod
     def getCroquisCentroid(croquis):
-        """Calcule le centroïde d'un objet croquis Ripart.   
+        ''''Calcule le centroïde d'un objet croquis Ripart.   
         
         :param croquis : le croquis pour lequel on calcule le centroïde
         :type croquis : core.Croquis
         
         :return le centroide 
         :rtype Point
-        """  
+        ''' 
         #le croquis n'est pas défini     
         if croquis.type==croquis.CroquisType.Vide or len(croquis.points)==0:
             return None
@@ -689,40 +738,16 @@ class RipartHelper(object):
         #self.createTempCroquisTable(croquis)
         
         #RipartHelper.centroid(croquis.points)
-        
+     """   
   
-    """@staticmethod
-    def getMapCrs(sourceCrs):
-        source_crs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
-                    
-        mapCrs=self.context.mapCan.mapRenderer().destinationCrs().authid()
-        dest_crs=QgsCoordinateReferenceSystem(mapCrs)
-                    
-        transform = QgsCoordinateTransform(source_crs, dest_crs)
-        new_box = transform.transformBoundingBox(box)
-    """
-    
-    
-    """@staticmethod     
-    def createTempCroquisTable(croquis):
-       
-        dbName = self.projectFileName +"_RIPART"
-        self.dbPath = self.projectDir+"/"+dbName+".sqlite"
-        cur = conn.cursor()
-        
-        sql=u"CREATE TABLE "+"tmpTable"+" (" + \
-            u"id INTEGER NOT NULL PRIMARY KEY)"  
-        cur.execute(sql)
-        
-        # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('"+table+"',"
-        sql += "'geom', "+str(RipartHelper.epsgCrs)+",'"+geomType+"', 'XY')"
-        cur.execute(sql)
-        
-        cur.close()
-   """
+   
     @staticmethod   
     def showMessageBox( message):
+        """Affiche une fen^tre avec le message donné
+        
+        :param message
+        :type message: string
+        """
         msgBox = QMessageBox()
         msgBox.setWindowTitle("IGN RIPart")
         msgBox.setIcon(QMessageBox.Warning)
@@ -732,6 +757,14 @@ class RipartHelper(object):
     
     @staticmethod         
     def copy(src, dest):
+        """Copie un fichier ou un répertoire 
+        
+        :param src: le fichier ou répertoire source
+        :type src: string
+        
+        :param destt : le fichier ou répertoire de destionation
+        :type dest: string
+        """
         try:
             if not os.path.exists(dest):
                 shutil.copytree(src, dest)

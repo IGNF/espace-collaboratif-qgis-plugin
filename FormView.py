@@ -18,7 +18,8 @@ context=None
 remarqueId=None
 
 class FormView(QtGui.QDialog, FORM_CLASS):
-    """Forme de visualisation de l'historique de la remarque
+    """
+    Forme de visualisation de l'historique de la remarque + sélection/déselection croquis + ouverture document joint 
     """
     selCroquis=None
     

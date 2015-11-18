@@ -6,18 +6,20 @@ Created on 1 oct. 2015
 '''
 import logging
 from core.RipartLoggerCl import RipartLogger
+
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtGui import QMessageBox, QProgressBar, QApplication
+from PyQt4.QtCore import *
 from qgis.core import  QgsGeometry,QgsCoordinateReferenceSystem,QgsCoordinateTransform
+
+from pyspatialite import dbapi2 as db
+
 from RipartHelper import RipartHelper
 from core.Box import Box
 from core.Client import Client
-from PyQt4.QtGui import QMessageBox, QProgressBar, QApplication
 from core.ClientHelper import ClientHelper
-from PyQt4.QtCore import *
-import time
-
-from pyspatialite import dbapi2 as db
 import core.ConstanteRipart as cst
+
 
 class ImporterRipart(object):
     """Importation des remarques dans le projet QGIS
@@ -51,8 +53,7 @@ class ImporterRipart(object):
      
      
     def doImport(self):
-        """Téléchargement et import des remarques dans la carte
-        
+        """Téléchargement et import des remarques dans la carte   
         """
         self.logger.debug("doImport")
         
@@ -205,7 +206,8 @@ class ImporterRipart(object):
             
         
     def noFilterWarningDialog(self,message):
-               
+        """Avertissement si pas de filtre spatial
+        """       
         message=ClientHelper.getEncodeType(message)
         reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
@@ -214,6 +216,10 @@ class ImporterRipart(object):
             return False
         
     def setMapExtent(self,box):
+        """set de l'étendue de la carte
+        
+        :param box: bounding box
+        """
         source_crs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
                     
         mapCrs=self.context.mapCan.mapRenderer().destinationCrs().authid()

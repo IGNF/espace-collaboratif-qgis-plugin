@@ -6,25 +6,25 @@ Created on 8 oct. 2015
 '''
 
 from core.RipartLoggerCl import RipartLogger
-import time
+
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import *
+from PyQt4.QtGui import QMessageBox,QComboBox
 from qgis.core import  QgsGeometry
+from qgis.gui import QgsMessageBar
+
 from RipartHelper import RipartHelper
 from core.Box import Box
 from core.Client import Client
-from PyQt4.QtGui import QMessageBox,QComboBox
 from core.ClientHelper import ClientHelper
 import core.ConstanteRipart as cst
 from FormRepondre import FormRepondreDialog
-import time
-from qgis.gui import QgsMessageBar
 from FormView import FormView
-
 
 class RepondreRipart(object):
     """"Classe pour les réponses Ripart
     """
+    
     logger=RipartLogger("RepondreRipart").getRipartLogger()
     context=None
 
@@ -37,6 +37,11 @@ class RepondreRipart(object):
         
         
     def do(self, isView=False):  
+        """Affichage de la fenêtre de réponse ou de la fenêtre de visualisation de la remarque
+        
+        :param isView: true si on veut afficher la fenêtre de visualisation, false pour la fenêtre de réponse
+        :type isView: boolean
+        """
         try:
             
             activeLayer = self.context.iface.activeLayer()
@@ -70,8 +75,7 @@ class RepondreRipart(object):
                 if remarque.statut.__str__() not in cst.openStatut and not isView:  
                     mess= "Impossible de répondre à la remarque Ripart n°"+ str(remId) + \
                           ", car elle est clôturée depuis le "+ remarque.dateValidation
-                          
-                          
+                                                    
                     self.context.iface.messageBar().pushMessage("Attention",ClientHelper.getEncodeType(mess), level=1, duration=5)
                     return
                

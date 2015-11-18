@@ -5,21 +5,23 @@ Created on 8 oct. 2015
 @author: AChang-Wailing
 '''
 import os
-import logging
-from core.RipartLoggerCl import RipartLogger 
+
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtCore import *
+
+from core.RipartLoggerCl import RipartLogger 
 import core.ConstanteRipart as cst
 from core.ClientHelper import ClientHelper
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormRepondre_base.ui'))
 
+
 class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
-    '''
-    classdocs
-    '''
+    """
+    Formulaire de réponse à une remarque
+    """
     
     answer= False
     cancel = True
@@ -38,10 +40,9 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
         self.setupUi(self)
          
         self.btnSend.clicked.connect(self.sendResponse)
-      
         self.btnCancel.clicked.connect(self.cancel)
         
-      
+        
         for i in range(0,9) :
             self.cboxStatut.addItem(cst.statutLibelle[i],i)
           

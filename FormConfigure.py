@@ -5,17 +5,16 @@ Created on 20 oct. 2015
 @author: AChang-Wailing
 '''
 import os
+from datetime import datetime
+import calendar
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QMessageBox
-
 from PyQt4.QtCore import *
-import FormConfigurerRipart_base
-
-from RipartHelper import RipartHelper
-from datetime import datetime
 from PyQt4.Qt import QTreeWidgetItem, QDialogButtonBox
-import calendar
+
+import FormConfigurerRipart_base
+from RipartHelper import RipartHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
 
@@ -32,10 +31,10 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         """
         Constructor
         
+        Pré-remplissage des champs d'après le fichier de configuration
+        
         :param context le contexte 
         :type context Contexte
-        
-        
         """  
         super(FormConfigure, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -54,7 +53,6 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
   
-        #pré-remplissage des champs d'après le fichier de configuration
         self.lineEditUrl.setText(RipartHelper.load_urlhost(context.projectDir).text)
         
         login=RipartHelper.load_login(context.projectDir).text
@@ -104,9 +102,9 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         
     
     def setComboBoxFilter(self):
-        '''
+        """
         Set de la liste des couches de type "polygone" susceptibles d'être utilisées comme zone d'extraction
-        '''
+        """
         polyLayers=self.context.getMapPolygonLayers()
         
         polyList=[val for key,val in polyLayers.iteritems() if val!=RipartHelper.nom_Calque_Croquis_Polygone]
@@ -122,31 +120,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         else :
             self.checkBoxFiltre.setChecked(False)
     
-    
-    """def setZoneFilter(self,zone):    
-        index = self.comboBoxFiltre.findText(zone, Qt.MatchCaseSensitive)
-        if index >= 0:
-            self.comboBoxFiltre.setCurrentIndex(index)
-            self.checkBoxFiltre.setChecked(True)
-        else :
-            self.checkBoxFiltre.setChecked(False)
-            
-        
-    def initComboZoneFilter(self):
-        '''
-        Initialisation de la liste des couches de type "polygone" susceptibles d'être utilisées comme zone d'extraction
-        '''
-        polyLayers=self.context.getMapPolygonLayers()
-        
-        polyList=[val for key,val in polyLayers.iteritems() if val!=RipartHelper.nom_Calque_Croquis_Polygone]
-        self.comboBoxFiltre.clear()
-        self.comboBoxFiltre.addItems(polyList)
-        
-        zone=RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction,"Map").text
-        
-        self.setZoneFilter(zone)
-    """    
-  
+
         
     def setAttributCroquis(self):
         """
@@ -202,7 +176,14 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         Adds subitems to the tree view
         The subitems are the attributes of the layers 
         
-        :param item l'item de l'arbre (calque) auquel il faut ajouter les sous-items (attributs)
+        :param item: l'item de l'arbre (calque) auquel il faut ajouter les sous-items (attributs)
+        :type item: QTreeWidgetItem
+        
+        :param layer: le calque
+        :type layer: QgsVectorlayer
+        
+        :param attList: un dictionnaire des attributs à ajouter (key:nom du calque, value:liste des attributs du calque)
+        :type attList: dictionary 
         """
         fieldNames = [field.name() for field in layer.pendingFields() ]
         
@@ -218,9 +199,14 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
             
     
     def onClickItem (self, item, column):
-        """Clic sur un item =>set de l'état de l'élémént parent ou des éléments enfants
-        """
-        print (item.text(column))
+        """Clic sur un item =>set de l'état de l'élément parent ou des éléments enfants
+        
+        :param item: item de l'arbre sur lequel on a cliqué
+        :type item: QTreeWidgetItem
+        
+        :param column: le no de colonne
+        :type column: int 
+        """      
         state=item.checkState(column)
         if state==Qt.Checked :
             self.checkBoxAttributs.setChecked(True)
@@ -236,7 +222,10 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
     
     
     def getParentState(self,item):
-        """
+        """Retourne l'état (coché ou non) du noeud parent
+        
+        :param item: l'élément de l'arbre
+        :type item: 
         """
         parent =item.parent()
         childCount=parent.childCount()
@@ -261,6 +250,9 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         
     
     def getCheckedTreeItems(self):
+        """Retourne les items de l'arbre des attributs qui sont cochés
+        """
+        
         tree=self.treeWidget
         checkedItems={}
         for i in range(0,self.treeWidget.topLevelItemCount()):
@@ -278,7 +270,8 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         
     
     def save(self):
-        errMessage=""
+        """Sauvegarde la configuration des différents paramètres dans le fichier xml
+        """
         
         #Url
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_UrlHost,self.lineEditUrl.text(),"Serveur")
@@ -306,7 +299,6 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
             
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_DateExtraction,sdate,"Map")
        
-        
         #zone de filtrage
         if self.checkBoxFiltre.isChecked():
             filtre=self.comboBoxFiltre.currentText()
@@ -325,33 +317,32 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Group,groupFilter,"Map")
         
         #attributs croquis
-        #RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_AttributsCroquis,"","Map")
         RipartHelper.removeAttCroquis(self.context.projectDir)
         if self.checkBoxAttributs.isChecked():
             checkedItems=self.getCheckedTreeItems()
             for calque in checkedItems:
                 RipartHelper.setAttributsCroquis(self.context.projectDir, calque,checkedItems[calque])
-        else:
-            print "att not checked"
+       
     
     def keyPressEvent(self, event):
+        """Pour désactiver la fermeture de la fenêtre lors d'un clic sur "Enter"
+        """
         key = event.key()
         if key ==Qt.Key_Return or key ==Qt.Key_Enter:
             #print"do nothing"
             pass
     
     def dateChanged(self):
-        print "date changed"
+        """Action lors d'un changement de date
+        =>Modification du nombre de jours
+       """
         self.dateSelected=True
         d=self.calendarWidget.selectedDate()
-       
-        #if d!=None:
-        #    sdate=d.toString('dd/MM/yyyy') + " 00:00:00"  
-        
-    
         self.spinBox.setValue(self.getCountDays(d))
         
     def dateMYChanged(self):
+        """Action lors d'une modification du mois ou de l'année
+        """
         self.dateMYChanged=True
         qd=self.calendarWidget.selectedDate()
         m=self.calendarWidget.monthShown()
@@ -361,12 +352,15 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         if not date.isValid():
             maxday=calendar.monthrange(y,m)[1]
             date =QDate(y,m,maxday)
-        print date.toString('dd/MM/yyyy') 
+        #print date.toString('dd/MM/yyyy') 
         self.calendarWidget.setSelectedDate(date)
         
         
     def getCountDays(self,qdate):
-        """
+        """Compte le nombre de jours entre la date donnée et la date d'aujourd'hui
+        
+        :param qdate: la date 
+        :type qdate: QDate
         """
         date= qdate.toPyDate()
         dt= datetime.now().date()

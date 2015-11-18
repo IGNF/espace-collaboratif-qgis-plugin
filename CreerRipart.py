@@ -9,6 +9,8 @@ from FormCreerRemarque import FormCreerRemarque
 from RipartHelper import RipartHelper
 from core.Remarque import Remarque
 
+
+
 class CreerRipart(object):
     """
     Classe pour la création d'une nouvelle remarque ripart
@@ -121,12 +123,25 @@ class CreerRipart(object):
         
         finally:
             self.context.conn.close()   
-            #self.context.iface.messageBar().clearWidgets()
             
             
             
             
     def _prepareAndSendRemark(self,tmpRem,croquisList,optionWithCroquis): 
+        """Trouve la position de la remarque, ajoute les croquis et envoie la requête au service Ripart
+        
+        :param tmpRem: remarque temporaire
+        :type tmpRem: Remarque
+        
+        :param croquisList: la liste de croquis à ajouter à la remarque
+        :type croquisList: List
+        
+        :param optionWithCroquis: option d'ajouter ou non les croquis à la remarque
+        :type optionWithCroquis: boolean
+        
+        :return: La Remarque créée
+        :rtype: Remarque
+        """
         
         client= self.context.client
         

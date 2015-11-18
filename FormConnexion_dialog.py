@@ -1,51 +1,27 @@
 # -*- coding: utf-8 -*-
-"""
-/***************************************************************************
- RipartPluginDialog
-                                 A QGIS plugin
- IGN_Ripart
-                             -------------------
-        begin                : 2015-01-21
-        git sha              : $Format:%H$
-        copyright            : (C) 2015 by Alexia Chang-Wailing/IGN
-        email                : a
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-"""
 
 import os
-from core.RipartLoggerCl import RipartLogger
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtCore import *
+from qgis.core import *
 
+from core.RipartLoggerCl import RipartLogger
 from core.Client import Client
 from core import ConstanteRipart
 from core import Profil
 from core.ClientHelper import ClientHelper
 
-from qgis.core import *
-
 from FormInfo import FormInfo
-
-"""import sys 
-sys.path.append(r'D:\eclipse\plugins\org.python.pydev_3.9.1.201501081637\pysrc') """
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnexion_dialog_base.ui'))
 
 
 class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
-    
+    """ Fenêtre de login
+    """
     context= None
     urlhost =""
     connect=False
@@ -56,6 +32,7 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
     
     def __init__(self, parent=None):
         """Constructor."""
+        
         super(FormConnexionDialog, self).__init__(parent)
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
@@ -80,13 +57,14 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
     def getPwd(self):
         return self.lineEditPwd.text()
     
-    
     def setErreur(self,message):
         self.lblErreur.setText(message)
         self.lblErreur.setVisible(True)
         
         
     def getEvent(self):
+        """Retour de différents codes suivant l'action effectuée
+        """
         if self.cancel :
             return 0
         elif self.connect:
@@ -96,6 +74,9 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
     
     @pyqtSlot()
     def connectToService(self):
+        """Connexion au service Ripart
+        """
+        
         self.logger.debug("connectToService")
 
         login= self.lineEditLogin.text()
@@ -111,6 +92,8 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
             
         
     def setContext(self,context):
+        """Set du contexte
+        """
         self.context=context
         self.lineEditLogin.setText(context.login)
         self.lineEditPwd.setText("")
@@ -122,7 +105,6 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         
     @pyqtSlot()
     def cancel(self):
-        #self.reject
         self.cancel=True
         self.connect=False
         self.close()
