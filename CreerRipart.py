@@ -41,6 +41,7 @@ class CreerRipart(object):
             
             res=self.context.getConnexionRipart()    
             if res!=1:    #si la connexion a échouée, on arrête le processus
+                self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)    
                 return
             
             #Création des croquis à partir de la sélection de features
@@ -157,8 +158,8 @@ class CreerRipart(object):
             tmpRem.addCroquisList(croquisList)
                    
         #create new remark (ripart service)
-        remarqueNouvelle=client.createRemarque(tmpRem)  
-
+        remarqueNouvelle=client.createRemarque(tmpRem) 
+        
         self.logger.info(u"Succès de la création de la nouvelle remarque n°" + str(remarqueNouvelle.id))
         
         RipartHelper.insertRemarques(self.context.conn, remarqueNouvelle)

@@ -696,50 +696,7 @@ class RipartHelper(object):
         rdate=dt.strftime('%Y-%m-%d %H:%M:%S')
         return rdate
     
-    
-    """ @staticmethod
-    def creerPointRemarqueRipart(listCroquis):
-        '''
-        Calcule le point d'application pour une nouvelle remarque Ripart à partir des croquis associés:
-        On calcule le centroïde de chaque croquis de la liste donnée,
-        puis le centroïde de l'ensemble de ces centroïdes calculés 
-        '''
-        position=Point()
-        cntCr= len(listCroquis)
-        
-        if cntCr==0:
-            return None
-        elif cntCr==1:
-            if listCroquis[0].type== listCroquis[0].CroquisType.Point :
-                return listCroquis[0].firstCoord()
-            else:
-                position= RipartHelper.Tra
-    """   
-            
-    """@staticmethod
-    def getCroquisCentroid(croquis):
-        ''''Calcule le centroïde d'un objet croquis Ripart.   
-        
-        :param croquis : le croquis pour lequel on calcule le centroïde
-        :type croquis : core.Croquis
-        
-        :return le centroide 
-        :rtype Point
-        ''' 
-        #le croquis n'est pas défini     
-        if croquis.type==croquis.CroquisType.Vide or len(croquis.points)==0:
-            return None
-        
-        #le croquis se résume à un point
-        if croquis.type==croquis.CroquisType.Point :
-            return croquis.firstCoord()
-        
-        #crée une table spatialite 
-        #self.createTempCroquisTable(croquis)
-        
-        #RipartHelper.centroid(croquis.points)
-     """   
-  
+ 
    
     @staticmethod   
     def showMessageBox( message):

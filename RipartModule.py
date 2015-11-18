@@ -24,7 +24,6 @@
 import os.path
 from core.RipartLoggerCl import RipartLogger
 
-
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, SIGNAL, Qt
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import  QAction, QIcon, QMenu,QMessageBox,QToolButton,QApplication
@@ -385,18 +384,7 @@ class RipartPlugin:
                              level=2, duration=10)
         
 
-    """def update(self):
-        
-        # show the dialog
-        self.dlgConnexion.show()
-        # Run the dialog event loop
-        result = self.dlgConnexion.exec_()
-        # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
-     """   
+ 
    
     def configurePref(self):
         """Lance la fenêtre de configuration des préférences 
@@ -446,7 +434,7 @@ class RipartPlugin:
             self.formView=reponse.do(isView=True)
                        
         except Exception as e:
-            self.logger.error("viewRem "+ e.message)
+            self.logger.error("viewRem "+ e.message+";"+ str(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"Un problème est survenu", \

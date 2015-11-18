@@ -66,7 +66,8 @@ class RepondreRipart(object):
                                         u'Plusieurs remarques sélectionnées. Une seule sera prise en compte (remarque no='+str(remIds[0])+')',
                                         level=1, duration=10)
                     
-            res=self.context.getConnexionRipart()    
+            res=self.context.getConnexionRipart()  
+          
             if res==1:
                 client= self.context.client
                 remId=int(remIds[0])
@@ -86,8 +87,8 @@ class RepondreRipart(object):
                 
                 if isView:
                     self.logger.debug("view remark")
-                    formView= FormView(self.context)
-                    formView.setRemarque(remarque)
+                    formView= FormView(self.context)                
+                    formView.setRemarque(remarque) 
                     formView.setWindowFlags(Qt.WindowStaysOnTopHint)
                     formView.show()
                     return formView
@@ -106,7 +107,9 @@ class RepondreRipart(object):
                         self.context.updateRemarqueInSqlite(remMaj)
                         mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
                         self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
-                      
+            else:
+                self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)    
+                return       
 
         except Exception as e:
             self.logger.error(e.message + ";" + str(e))

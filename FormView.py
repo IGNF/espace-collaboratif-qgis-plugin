@@ -32,9 +32,9 @@ class FormView(QtGui.QDialog, FORM_CLASS):
         super(FormView, self).__init__(None)
         
         self.setupUi(self)
-        
+      
         self.context= context
-        
+              
         self.btnCroquis.clicked.connect(self.toggleCroquis)
         
         self.textEditCntCroquisDetail.setFrameStyle(QtGui.QFrame.NoFrame)
@@ -42,21 +42,26 @@ class FormView(QtGui.QDialog, FORM_CLASS):
         
         self.btnDoc.clicked.connect(self.openDoc)
     
-    
-    def setRemarque(self,remarque):
-        self.lblMessage.setText(u"Message de la remarque n°" + remarque.id)
-        statutIndex=cst.statuts.index(remarque.statut )
-        self.textStatut.setText( cst.statutLibelle[statutIndex])
-        self.textMessage.setText(ClientHelper.getEncodeType(remarque.commentaire))
-        self.textOldRep.setHtml(ClientHelper.getEncodeType(remarque.concatenateReponseHTML()))
-        self.remarqueId= remarque.id
+       
         
-        self.doc=remarque.getFirstDocument()
-        self.btnDoc.setText("Pas de document joint")
-        if self.doc !="":
-            self.btnDoc.setText("Voir document joint")
-            self.btnDoc.setEnabled(True)
+    def setRemarque(self,remarque):
+        try:
+            self.lblMessage.setText(u"Message de la remarque n°" + remarque.id)
+            statutIndex=cst.statuts.index(remarque.statut )
+            self.textStatut.setText( cst.statutLibelle[statutIndex])
+            self.textMessage.setText(ClientHelper.getEncodeType(remarque.commentaire))
+            self.textOldRep.setHtml(ClientHelper.getEncodeType(remarque.concatenateReponseHTML()))
+            self.remarqueId= remarque.id
             
+            self.doc=remarque.getFirstDocument()
+            self.btnDoc.setText("Pas de document joint")
+            if self.doc !="":
+                self.btnDoc.setText("Voir document joint")
+                self.btnDoc.setEnabled(True)
+            
+        except Exception as e:
+            self.logger.error("setRemarque")
+            raise e  
             
         
     def toggleCroquis(self):

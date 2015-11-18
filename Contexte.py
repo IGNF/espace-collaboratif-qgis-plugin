@@ -120,12 +120,20 @@ class Contexte(object):
             
             try:
                 formatFile =urllib.urlopen('http://ripart.ign.fr/?page=doctype')
-            except Exception as e:
-                formatFile =open( os.path.join(self.plugin_path,'files','formats.txt'), 'r')            
-            finally:
+                if formatFile.code!=200:
+                    raise
+                
                 lines=formatFile.readlines()
                 self.formats=[x.split("\t")[0] for x in lines]
                 
+                if self.formats[0].startswith("<!DOCTYPE html") :
+                    raise
+                
+            except Exception as e:
+                formatFile =open( os.path.join(self.plugin_path,'files','formats.txt'), 'r')      
+                lines=formatFile.readlines()
+                self.formats=[x.split("\t")[0] for x in lines]      
+          
         except Exception as e:
             self.logger.error("init contexte:" + e.message)
             raise
