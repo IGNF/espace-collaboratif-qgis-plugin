@@ -289,6 +289,7 @@ class Contexte(object):
                 self.client=client
             except RipartException as e:
                 print e.message
+                result=-1
                 
         return result
     

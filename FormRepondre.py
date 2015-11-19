@@ -9,6 +9,7 @@ import os
 from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtCore import *
+from PyQt4.Qt import  QDialogButtonBox
 
 from core.RipartLoggerCl import RipartLogger 
 import core.ConstanteRipart as cst
@@ -41,7 +42,7 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
          
         self.btnSend.clicked.connect(self.sendResponse)
         self.btnCancel.clicked.connect(self.cancel)
-        
+        self.btnCancel.button(QDialogButtonBox.Cancel).setText("Annuler")
         
         for i in range(0,9) :
             self.cboxStatut.addItem(cst.statutLibelle[i],i)

@@ -248,7 +248,7 @@
        <bool>false</bool>
       </property>
       <property name="text">
-       <string>Calque pour filtrage spécial</string>
+       <string>Calque pour filtrage spatial</string>
       </property>
      </widget>
     </item>

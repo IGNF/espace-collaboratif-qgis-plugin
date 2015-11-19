@@ -197,9 +197,9 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/connect.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Connexion au service RIPart'),
+            text=self.tr(u'Se connecter au service RIPart'),
             callback=self.run,
-            status_tip=self.tr(u'Connexion au service RIPart'),
+            status_tip=self.tr(u'Se connecter au service RIPart'),
             parent=self.iface.mainWindow())
               
         icon_path = ':/plugins/RipartPlugin/images/update.png'
@@ -339,7 +339,7 @@ class RipartPlugin:
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu lors de l'ajout de la réponse", \
+                            u"Un problème est survenu lors de l'ajout de la réponse ou lors de la connexion avec le service RIPart. Veuillez réessayer.", \
                              level=2, duration=10)
         
         
@@ -437,7 +437,7 @@ class RipartPlugin:
             self.logger.error("viewRem "+ e.message+";"+ str(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu", \
+                            u"lors de la connexion avec le service RIPart. Veuillez réessayer.", \
                              level=2, duration=10)
         
         
