@@ -193,7 +193,7 @@ class Remarque(object):
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 if rep.statut is not None:
-                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts.index(rep.statut.__str__())].encode('utf8')
+                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts().index(rep.statut.__str__())].encode('utf8')
              
                 concatenate += ".</font></b><br/>" + ClientHelper.stringToStringType(rep.reponse.strip().replace("\n","<br/>")) + "</li>";
             
@@ -223,11 +223,7 @@ class Remarque(object):
         return concatenate
     
     
-    # obsolète ??    
-    #def reponsesEncodeToXML(self):
-    #    """
-    #     Retourne les GeoReponse de la Remarque sous forme d'un XML
-    #    """
+ 
         
     def setPosition(self, position):
         """ Set de la position de la remarque

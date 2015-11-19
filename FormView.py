@@ -47,7 +47,7 @@ class FormView(QtGui.QDialog, FORM_CLASS):
     def setRemarque(self,remarque):
         try:
             self.lblMessage.setText(u"Message de la remarque n°" + remarque.id)
-            statutIndex=cst.statuts.index(remarque.statut )
+            statutIndex=cst.statuts().index(remarque.statut )
             self.textStatut.setText( cst.statutLibelle[statutIndex])
             self.textMessage.setText(ClientHelper.getEncodeType(remarque.commentaire))
             self.textOldRep.setHtml(ClientHelper.getEncodeType(remarque.concatenateReponseHTML()))

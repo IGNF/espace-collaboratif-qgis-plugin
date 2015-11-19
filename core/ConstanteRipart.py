@@ -49,7 +49,7 @@ statutLibelle=[u"Reçue dans nos services",
                u"Rejetée (hors spec.)",
                u"Rejetée (hors propos)"]
 
-statuts =["submit","pending","pending0", "pending1","pending2","valid","valid0","reject","reject0"]
+
 
 ZoneGeographique = Enum ("UNDEFINED",
                          #France métropolitaine (Corse incluse).
@@ -80,3 +80,16 @@ namespace={'gml':'http://www.opengis.net/gml'}
 helpFile="RIPart-Manuel_utilisateur_plugin_QGIS.pdf"    
 
 
+def statuts():
+    statuts=[STATUT.submit.__str__(),
+             STATUT.pending.__str__(),
+             STATUT.pending0.__str__(),
+             STATUT.pending1.__str__(),
+             STATUT.pending2.__str__(),
+             STATUT.valid.__str__(),
+             STATUT.valid0.__str__(),
+             STATUT.reject.__str__(),
+             STATUT.reject0.__str__()
+             ]
+    return statuts
+    

@@ -56,7 +56,7 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
      
         
     def setStatut(self,statut):
-        st=[i for i in range(len(cst.statutLibelle)) if cst.statuts[i]==statut]
+        st=[i for i in range(len(cst.statutLibelle)) if cst.statuts()[i]==statut]
         self.cboxStatut.setCurrentIndex(st[0])
       
         
@@ -64,7 +64,7 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
         self.cancel=False
         self.answer=True
         self.newRep=self.textNewRep.toPlainText()
-        self.newStat= cst.statuts[self.cboxStatut.currentIndex()]
+        self.newStat= cst.statuts()[self.cboxStatut.currentIndex()]
         self.close()
         
         
