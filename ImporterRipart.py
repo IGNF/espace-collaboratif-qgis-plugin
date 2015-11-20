@@ -75,7 +75,7 @@ class ImporterRipart(object):
                 
                 filtreLay=self.context.getLayerByName(filtre)
                 bbox=self.getSpatialFilterBbox(filtre,filtreLay)
-                if not bbox:
+                if bbox==-999:
                     return
             
             else:
@@ -196,7 +196,7 @@ class ImporterRipart(object):
                 if reply == QtGui.QMessageBox.Yes:
                     bbox=None
                 else : 
-                    return False
+                    return -999
                  
         else:  
             #emprise=> getExtent + transform in 4326 crs 
