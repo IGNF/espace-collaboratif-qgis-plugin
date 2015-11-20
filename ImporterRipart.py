@@ -62,33 +62,20 @@ class ImporterRipart(object):
         res=self.context.getConnexionRipart()
         
         self.context.addRipartLayersToMap()
+        
         if not res:
+            #la connexion a échouée, on ne fait rien
             return
         else: 
+            #filtre spatial
             filtre=  RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
               
             if (filtre!=None):    
                 self.logger.debug("Spatial filter :"+filtre)
+                
                 filtreLay=self.context.getLayerByName(filtre)
-                if filtreLay ==None: 
-                    message="La carte en cours ne contient pas le calque '" + \
-                            filtre + \
-                            "' définit pour être le filtrage spatial (ou le calque n'est pas activé).\n\n"+\
-                            "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
-                            "(Cela risque de prendre un temps long.)"
-                    message=ClientHelper.getEncodeType(message)
-                    reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-                    if reply == QtGui.QMessageBox.Yes:
-                        bbox=None
-                    else : 
-                        return
-                 
-                else:  
-                    #emprise=> getExtent + transform in 4326 crs 
-                    #filtreExtent= filtreLay.extent()
-                    filtreExtent= RipartHelper.getBboxFromLayer(filtreLay) 
-                    
-                    bbox= Box(filtreExtent.xMinimum(),filtreExtent.yMinimum(),filtreExtent.xMaximum(),filtreExtent.yMaximum())
+                bbox=self.getSpatialFilterBbox(filtre,filtreLay)
+            
             else:
                 message="Impossible de déterminer dans le fichier de paramétrage Ripart, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
                           "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
@@ -174,27 +161,8 @@ class ImporterRipart(object):
                     
           
                 #Résultat 
-                self.context.iface.messageBar().clearWidgets() 
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                
-                submit= self.context.countRemarqueByStatut(cst.STATUT.submit.__str__())
-                pending= self.context.countRemarqueByStatut(cst.STATUT.pending.__str__()) + \
-                         self.context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) + \
-                         self.context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) + \
-                         self.context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
-                reject =self.context.countRemarqueByStatut(cst.STATUT.reject.__str__()) 
-                valid = self.context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.context.countRemarqueByStatut(cst.STATUT.valid0.__str__())
-                
-                resultMessage="Extraction réussie avec succès de " + str(cnt)+ " remarque(s) RIPart depuis le serveur \n" +\
-                              "avec la répartition suivante : \n\n"+\
-                              "- "+ str(submit) +" remarque(s) nouvelle(s).\n" +\
-                              "- "+ str(pending) +" remarque(s) en cours de traitement.\n" +\
-                              "- "+ str(valid) +" remarque(s)  validée(s).\n" +\
-                              "- "+ str(reject) +" remarque(s) rejetée(s).\n" 
-                              
-                resultMessage= ClientHelper.getEncodeType(resultMessage)
-                              
-                RipartHelper.showMessageBox(resultMessage)
+                self.showImportResult(cnt)
+               
                 
             except Exception as e:
                 raise
@@ -203,7 +171,38 @@ class ImporterRipart(object):
                 self.context.iface.messageBar().clearWidgets()   
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 
+     
+    def getSpatialFilterBbox(self,filtre,filtreLay):
+        """Retourne la boundingbox du filtre spatial
+        
+        :param filtre: le nom du calque utilisé comme filtre
+        :type: string
+        
+        :param filtreLay: le layer correspondant 
+        :type filtreLay: QgsVectorLayer
+        """
+        bbox=None
+        
+        if filtreLay ==None: 
+                message="La carte en cours ne contient pas le calque '" + \
+                        filtre + \
+                        "' définit pour être le filtrage spatial (ou le calque n'est pas activé).\n\n"+\
+                        "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
+                        "(Cela risque de prendre un temps long.)"
+                message=ClientHelper.getEncodeType(message)
+                reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.Yes:
+                    bbox=None
+                else : 
+                    return
+                 
+        else:  
+            #emprise=> getExtent + transform in 4326 crs 
+            filtreExtent= RipartHelper.getBboxFromLayer(filtreLay) 
+                    
+            bbox= Box(filtreExtent.xMinimum(),filtreExtent.yMinimum(),filtreExtent.xMaximum(),filtreExtent.yMaximum()) 
             
+        return bbox  
         
     def noFilterWarningDialog(self,message):
         """Avertissement si pas de filtre spatial
@@ -232,3 +231,35 @@ class ImporterRipart(object):
         dist= min(new_box.width(),new_box.height())*0.1  
         #zoom sur la couche Remarque_Ripart
         self.context.mapCan.setExtent(new_box.buffer(dist))
+        
+        
+    def showImportResult(self,cnt):
+        """Résultat de l'import
+        
+        :param cnt: le nombre de remarques importées
+        :type cnt: int
+        """
+        
+        self.context.iface.messageBar().clearWidgets() 
+        QApplication.setOverrideCursor(Qt.ArrowCursor)
+                
+        submit= self.context.countRemarqueByStatut(cst.STATUT.submit.__str__())
+        pending= self.context.countRemarqueByStatut(cst.STATUT.pending.__str__()) + \
+                self.context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) + \
+                self.context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) + \
+                self.context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
+        reject =self.context.countRemarqueByStatut(cst.STATUT.reject.__str__()) 
+        valid = self.context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.context.countRemarqueByStatut(cst.STATUT.valid0.__str__())
+                
+        resultMessage="Extraction réussie avec succès de " + str(cnt)+ " remarque(s) RIPart depuis le serveur \n" +\
+                    "avec la répartition suivante : \n\n"+\
+                    "- "+ str(submit) +" remarque(s) nouvelle(s).\n" +\
+                    "- "+ str(pending) +" remarque(s) en cours de traitement.\n" +\
+                    "- "+ str(valid) +" remarque(s)  validée(s).\n" +\
+                    "- "+ str(reject) +" remarque(s) rejetée(s).\n" 
+                              
+        resultMessage= ClientHelper.getEncodeType(resultMessage)
+                              
+        RipartHelper.showMessageBox(resultMessage)    
+    
+    

@@ -30,15 +30,11 @@ class FormInfo(QtGui.QDialog, FORM_CLASS):
         self.setupUi(self)
         # Save reference to the QGIS interface
         
-        
         self.textInfo.setText("")
         self.btnOK.clicked.connect(self.close)
+      
         
-        #self.setWindowFlags( Qt.WindowStaysOnTopHint)
-        
-        
-    def addMessage(self, str):
-        
-        self.textInfo.append(str)
+    def addMessage(self, mess):
+        self.textInfo.append(mess)
         
         

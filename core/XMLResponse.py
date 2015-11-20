@@ -222,8 +222,7 @@ class XMLResponse(object):
         """
         
         themes=[]
-        #profil= Profil()
-        
+       
         try:            
             nodes =self.root.findall('THEMES/THEME')      
     
@@ -240,26 +239,6 @@ class XMLResponse(object):
             
         return themes
     
-    
-        
-    """
-    Extraction du nouveau jeton
-    :return: le jeton
-    """       
-    """def getCurrentJeton(self):
-        jeton =""
-        
-        try:
-            node =self.root.find('./REPONSE/JETON')
-            jeton = node.text
-        
-        except Exception as e:
-            self.logger.error('getCurrentJeton:' + str(e) )
-            raise Exception ("Jeton non valide")
-        
-        return jeton
-    """
-
 
     
     def getVersion(self):

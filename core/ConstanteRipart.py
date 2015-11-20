@@ -77,7 +77,7 @@ ZoneGeographique = Enum ("UNDEFINED",
 
 namespace={'gml':'http://www.opengis.net/gml'}      
 
-helpFile="RIPart-Manuel_utilisateur_plugin_QGIS.pdf"    
+helpFile="Manuel utilisateur plugin RIPart pour QGIS.pdf"    
 
 
 def statuts():

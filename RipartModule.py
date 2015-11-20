@@ -471,16 +471,17 @@ class RipartPlugin:
         dlgInfo.exec_()
   
   
-    # @TODO !!! lien vers le bon manuel !!!
+    # @TODO !!! lien vers le bon manuel (à partir de http://logiciels.ign.fr)!!!
     def showHelp(self):
         """Ouvre le document d'aide utilisateur   
         """
-        #file_path = os.path.abspath(os.path.join(
-        #    os.path.dirname(__file__),"files",cst.helpFile))
+        file_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__),"files",cst.helpFile))
         
-        #os.startfile(file_path)
+        os.startfile(file_path)
         
-        os.startfile("http://logiciels.ign.fr/IMG/pdf/add-in-ripart_1-0.pdf")        
+        #TODO lien web 
+        #os.startfile("http://logiciels.ign.fr/IMG/pdf/add-in-ripart_1-0.pdf")        
         
     def showLog(self):
         """Ouvre le dernier fichier de log

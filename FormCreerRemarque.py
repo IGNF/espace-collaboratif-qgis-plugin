@@ -130,7 +130,6 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
             if it.checkState()==Qt.Checked:
                 themeObj=self._getThemeObject(it.text())
                 selectedThemes.append(themeObj)
-                #selectedThemes.append(self.profilThemesList[it.text()])  
                 
         return selectedThemes
     
@@ -194,26 +193,6 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
         self.send=True
         self.cancel=False
         
-        """tmpRem= Remarque()
-            
-        tmpRem.setCommentaire(self.textEditMessage.toPlainText())
-        
-        selectedThemes= self.getSelectedThemes()
-        RipartHelper.save_preferredThemes(self.context.projectDir,selectedThemes)
-        
-        tmpRem.addThemeList(selectedThemes)
-        
-        tmpRem.addDocument(self.getAttachedDoc())
-        
-        if self.isSingleRemark():
-            #tmpRem.setPosition(position)
-            print("single remark")
-            
-            if self.optionWithCroquis():
-                print("with croquis")
-                #tmpRem.addCroquis(croquis)
-        """
-   
         self.close()
     
         
@@ -223,12 +202,12 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
             filters = "Text files (*.txt);;Images (*.png *.xpm *.jpg)"
             
             filters =  u"All files (*.*);;"+\
-                       u"Images (*.BMP;*.JPG;*.GIF;*.JPG2000;*.TIFF;*.ECW;*.PSD);;" +\
-                        u"Tracées (*.KML;*.GPX;*.SWG;*.WMF;*.AI);;"+\
-                         u"Textes (*.TXT;*.PDF;*.RTF;*.DOC;*.DOCX;*.ODT);;"+\
-                        u"Tableurs (*.XML;*.CSV;*XLS;*.XLSX;*.ODS);;"+\
-                         u"Base de données (*.MDB;*.MDBX;*.ODB;*.DBF);;"+\
-                         u"SIG (*.SHP;*.LYR;*.GDB;*.MXD;*GCM;*.GCR;*.DXF;*.DWG;*.QGS;*.MIF;*MID)"
+                    u"Images (*.BMP;*.JPG;*.GIF;*.JPG2000;*.TIFF;*.ECW;*.PSD);;" +\
+                    u"Tracées (*.KML;*.GPX;*.SWG;*.WMF;*.AI);;"+\
+                    u"Textes (*.TXT;*.PDF;*.RTF;*.DOC;*.DOCX;*.ODT);;"+\
+                    u"Tableurs (*.XML;*.CSV;*XLS;*.XLSX;*.ODS);;"+\
+                    u"Base de données (*.MDB;*.MDBX;*.ODB;*.DBF);;"+\
+                    u"SIG (*.SHP;*.LYR;*.GDB;*.MXD;*GCM;*.GCR;*.DXF;*.DWG;*.QGS;*.MIF;*MID)"
                         
             
             filename = QtGui.QFileDialog.getOpenFileName(self, u'Document à joindre à la remarque', '.',filters)

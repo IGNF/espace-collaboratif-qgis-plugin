@@ -9,7 +9,6 @@ from datetime import datetime
 import calendar
 
 from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox
 from PyQt4.QtCore import *
 from PyQt4.Qt import QTreeWidgetItem, QDialogButtonBox
 
