@@ -42,7 +42,7 @@ class Point(object):
             return False
     
     
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     
     a=Point(1,2)
     b=Point(2.1,3)
@@ -56,3 +56,4 @@ if __name__ == "__main__":
     print a.isEmpty()
     
     print Point().isEmpty()
+"""

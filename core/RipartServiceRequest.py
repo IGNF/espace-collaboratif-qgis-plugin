@@ -4,7 +4,7 @@ Created on 26 janv. 2015
 
 @author: AChang-Wailing
 '''
-import logging
+from RipartLoggerCl import RipartLogger
 
 import requests
 from ClientHelper import ClientHelper
@@ -14,7 +14,7 @@ class RipartServiceRequest(object):
     Classe pour les requêtes http vers le service ripart
     """
 
-    logger= logging.getLogger("ripart.RipartServiceRequest")
+    logger=RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
 
     @staticmethod
     def  makeHttpRequest(url, params=None, data=None, files=None):  

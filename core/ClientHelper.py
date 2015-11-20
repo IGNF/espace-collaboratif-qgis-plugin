@@ -11,7 +11,6 @@ class ClientHelper(object):
     classdocs
     '''
 
-
     @staticmethod
     def stringToStringType(val):
         
@@ -55,6 +54,8 @@ class ClientHelper(object):
     
     @staticmethod
     def notNoneValue(val):
+        """Retourne une chaine vide si le paramètre = None
+        """
         if val ==None:
             return ""
         else: 

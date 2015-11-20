@@ -23,6 +23,7 @@ class Attribut(object):
         
         :param nom: le nom de l'attribut
         :type nom:string
+        
         :param valeur: la valeur de l'attribut
         :type valeur:string
         """

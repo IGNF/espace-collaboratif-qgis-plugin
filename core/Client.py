@@ -6,13 +6,17 @@ Created on 22 janv. 2015
 @author: AChang-Wailing
 '''
 
-import logging
-#import RipartLogger 
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
+import hashlib
+import re
+import time
+import os.path
+
+from PyQt4.QtGui import QMessageBox, QProgressBar
+from PyQt4.QtCore import *
 
 import ConstanteRipart
-#from Groupe import Groupe
 from Auteur import Auteur
 from Croquis import Croquis
 from Theme import Theme
@@ -22,14 +26,11 @@ from Remarque import Remarque
 from Profil import Profil
 from RipartServiceRequest import RipartServiceRequest
 from XMLResponse import XMLResponse
-import hashlib
-import re
-import time
 from Box import Box
-import os.path
 from ClientHelper import ClientHelper
-from PyQt4.QtGui import QMessageBox, QProgressBar
-from PyQt4.QtCore import *
+
+from RipartLoggerCl import RipartLogger
+
 
 class Client:
     """"
@@ -47,8 +48,8 @@ class Client:
     # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
     message = ""
     
-    logger=logging.getLogger("ripart.client")
-    
+
+    logger=RipartLogger("ripart.client").getRipartLogger()
 
 
     def __init__(self, url, login, pwd):
@@ -506,7 +507,6 @@ class Client:
                     params ['filename']=os.path.basename(document)
    
        
-            # TODO uncomment !!!        
             #envoi de la requête
             data = RipartServiceRequest.makeHttpRequest(self.__url,  data=params, files=files)             
                     
@@ -527,7 +527,7 @@ class Client:
             
             self.__jeton = xmlResponse.getCurrentJeton()
             
-            ##################
+ 
             
         except Exception as e:
             self.logger.error(str(e))

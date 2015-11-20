@@ -19,7 +19,7 @@ email=alexia.chang-wailing@ign.fr
 
 
 # Optional items:
-date=09/11/2015
+date=19/11/2015
 
 # Uncomment the following line and add your changelog:
 # changelog=
@@ -33,7 +33,7 @@ tracker=
 repository=
 icon=images/connect.png
 # experimental flag
-experimental=True
+experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False

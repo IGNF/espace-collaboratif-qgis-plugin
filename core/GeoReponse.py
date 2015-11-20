@@ -4,7 +4,7 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-#from _pydev_imps._pydev_xmlrpclib import DateTime
+
 from datetime import datetime
 import xml.etree.cElementTree as et
 from Groupe import *
@@ -77,7 +77,7 @@ class GeoReponse(object):
       
 
  
-if __name__ == "__main__": 
+"""if __name__ == "__main__": 
     
     rep= GeoReponse()
     rep.auteur=Auteur("354","zz")
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     tree=rep.encodeToXML()
     
     print tree.findtext('AUTEUR')
-
+"""
    
     
     

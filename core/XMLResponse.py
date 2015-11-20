@@ -4,8 +4,7 @@ Created on 26 janv. 2015
 
 @author: AChang-Wailing
 '''
-import logging
-import RipartLogger 
+
 import xml.etree.ElementTree as ET
 from Profil import Profil
 import ConstanteRipart as cst
@@ -19,7 +18,7 @@ from Attribut import Attribut
 from GeoReponse import GeoReponse
 from datetime import datetime
 from ClientHelper import ClientHelper
-
+from RipartLoggerCl import RipartLogger
 
 class XMLResponse(object):
     """
@@ -32,9 +31,8 @@ class XMLResponse(object):
     # racine du document xml
     root=""
     
-    
-    logger=logging.getLogger("ripart.XMLResponse")
-    
+
+    logger=RipartLogger("ripart.XMLResponse").getRipartLogger()
     
 
     def __init__(self, response):

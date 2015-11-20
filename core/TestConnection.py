@@ -5,12 +5,12 @@ Created on 23 janv. 2015
 @author: AChang-Wailing
 '''
 from Client import *
-#import logging
-import RipartLogger 
+
+
 from Croquis import *
 from Point import *
 from Enum import *
-
+from RipartLoggerCl import RipartLogger
 
 class TestConnection(object):
     '''
@@ -23,7 +23,9 @@ class TestConnection(object):
     
     # create logger
    
-    logger=logging.getLogger("ripart.testConnection")
+    #logger=logging.getLogger("ripart.testConnection")
+    logger=RipartLogger("ripart.testConnection").getRipartLogger()
+    
     logger.info("testzzz")
     
     pt= Point(2,40)

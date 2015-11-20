@@ -257,14 +257,3 @@ class Croquis(object):
 
 
 
-if __name__ == "__main__":
-    c= Croquis()
-    
-    pt= Point(2,3)
-    
-    print c.CroquisType.Point
-    for each in c.CroquisType:
-            print 'Day:', each
-
-    c= Croquis("le croquis",Croquis.CroquisType.Point,[Point(1,20)])
-    print c.nom

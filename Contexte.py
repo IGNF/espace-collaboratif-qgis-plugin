@@ -81,8 +81,6 @@ class Contexte(object):
     #le logger
     logger=None
     
-
-    #progress=None
     
     def __init__(self, QObject,QgsProject):
         '''
