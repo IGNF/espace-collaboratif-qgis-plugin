@@ -75,6 +75,8 @@ class ImporterRipart(object):
                 
                 filtreLay=self.context.getLayerByName(filtre)
                 bbox=self.getSpatialFilterBbox(filtre,filtreLay)
+                if not bbox:
+                    return
             
             else:
                 message="Impossible de déterminer dans le fichier de paramétrage Ripart, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
@@ -194,7 +196,7 @@ class ImporterRipart(object):
                 if reply == QtGui.QMessageBox.Yes:
                     bbox=None
                 else : 
-                    return
+                    return False
                  
         else:  
             #emprise=> getExtent + transform in 4326 crs 
