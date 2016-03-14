@@ -45,7 +45,11 @@ class Box(object):
             self.YMax=max(yMin,yMax)
    
              
-            
+     
+    def boxToString(self):
+        strBox= str(self.XMin) + "," + str(self.YMin) + "," + str(self.XMax) + "," + str(self.YMax) 
+        
+        return strBox    
             
     def isEmpty(self):
         """

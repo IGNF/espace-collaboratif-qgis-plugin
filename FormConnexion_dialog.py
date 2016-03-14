@@ -42,6 +42,7 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         self.setupUi(self)
    
         self.lblErreur.setVisible(False)
+        self.textError.setVisible(False)
            
         self.btnConnect.clicked.connect(self.connectToService)
       
@@ -60,7 +61,8 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
     def setErreur(self,message):
         self.lblErreur.setText(message)
         self.lblErreur.setVisible(True)
-        
+        self.textError.setText(message)
+        self.textError.setVisible(True)
         
     def getEvent(self):
         """Retour de différents codes suivant l'action effectuée
@@ -100,6 +102,8 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         self.setUrlHost(context.urlHostRipart)  
     
     def setUrlHost(self,urlhost):
+        """Set de l'url du service ripart
+        """
         self.urlhost = urlhost
   
         

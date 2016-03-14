@@ -7,7 +7,10 @@ Created on 26 janv. 2015
 from RipartLoggerCl import RipartLogger
 
 import requests
+from requests.auth import HTTPBasicAuth
+
 from ClientHelper import ClientHelper
+
 
 class RipartServiceRequest(object):
     """
@@ -17,7 +20,7 @@ class RipartServiceRequest(object):
     logger=RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
 
     @staticmethod
-    def  makeHttpRequest(url, params=None, data=None, files=None):  
+    def  makeHttpRequest(url,authent = None, params=None, data=None, files=None):  
         """  Effectue une requête HTTP GET ou POST
         
         :param url: url de base de la requête
@@ -32,15 +35,17 @@ class RipartServiceRequest(object):
         :return la réponse du serveur (xml)
         :rtype: string
         """
-        response= ""        
+        response= ""    
+        
+            
         try: 
             if (data ==None and files ==None):   
-                r = requests.get(url,params=params, verify=False)
+                r = requests.get(url,auth=HTTPBasicAuth(authent['login'], authent['password']),params=params, verify=False)
             else :
                 r= requests.post(url, data=data,files=files, verify=False)
      
-            if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
-                raise Exception(u"Problème de connexion: veuillez vérifier l'url\ndu serveur dans le fichier de configuration")
+            """if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
+                raise Exception(u"Problème de connexion: veuillez vérifier l'url\ndu serveur dans le fichier de configuration")"""
             
             r.encoding ='utf-8'
             response=r.text

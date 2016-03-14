@@ -12,6 +12,7 @@ from Auteur import Auteur
 from Theme  import Theme
 from datetime import datetime
 from ClientHelper import ClientHelper
+from RipartLoggerCl import RipartLogger
 
 class Remarque(object):
     """
@@ -83,6 +84,7 @@ class Remarque(object):
     
     source=""
     
+    logger=RipartLogger("ripart.client").getRipartLogger()
 
     def __init__(self):
         """Constructor
@@ -218,7 +220,14 @@ class Remarque(object):
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 
-                concatenate += ".\n" + ClientHelper.stringToStringType(rep.reponse.strip()) + "\n";
+                try:
+                    if (rep.reponse!=None): 
+                        concatenate += ".\n" + ClientHelper.stringToStringType(rep.reponse.strip()) + "\n";
+                    else : 
+                        self.logger.error("No message in response "+ self.id)
+                except Exception as e:
+                    self.logger.error(e.message)
+                    
             
         return concatenate
     

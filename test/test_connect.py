@@ -11,9 +11,9 @@ from core.Box import Box
 
 class testConnect(unittest.TestCase):
 
-    login = "mborne"
-    pwd ="mborne"
-    url ="http://demo-ripart.ign.fr"
+    login = "ac"
+    pwd ="zzz1801"
+    url ="https://qlf-collaboratif.ign.fr"
     
     
   

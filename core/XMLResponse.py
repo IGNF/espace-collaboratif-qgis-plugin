@@ -176,6 +176,10 @@ class XMLResponse(object):
         profil = Profil()
         
         try:
+            #aut= Auteur()
+            node =self.root.find('./AUTEUR/NOM') 
+            profil.auteur.nom =node.text
+            
             node =self.root.find('./PROFIL/ID_GEOPROFIL')  
             profil.id_Geoprofil = node.text
             
@@ -259,7 +263,19 @@ class XMLResponse(object):
         return v
     
     
-   
+    
+    def getDate(self):
+        """Retourne la date de la réponse xml
+        """
+        try:
+            node = self.root.find('PAGE/DATE')
+            date = node.text
+        except Exception as e:
+            self.logger.error('getTotalResponse :'+ str(e))
+        
+        return date
+    
+    
     def getTotalResponse(self):
         """Retourne le nombre total de réponses
         :return: nombre total de réponse
@@ -388,7 +404,7 @@ class XMLResponse(object):
                 rem= self.getGeoRep(rem,node)
                 
                 
-                rem.hash = (node.find('HASH')).text
+                #rem.hash = (node.find('HASH')).text
                 rem.source =(node.find('SOURCE')).text
                 
                 remarques[rem.id]=rem

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'FormConnexion_dialog_base.ui'
 #
-# Created: Wed Sep 30 15:16:27 2015
+# Created: Mon Mar 14 14:40:35 2016
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,10 @@ except AttributeError:
 class Ui_RipartPlugin(object):
     def setupUi(self, RipartPlugin):
         RipartPlugin.setObjectName(_fromUtf8("RipartPlugin"))
-        RipartPlugin.resize(401, 145)
+        RipartPlugin.resize(401, 184)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/images/ign.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        RipartPlugin.setWindowIcon(icon)
         RipartPlugin.setAutoFillBackground(False)
         RipartPlugin.setSizeGripEnabled(True)
         RipartPlugin.setModal(True)
@@ -61,7 +64,7 @@ class Ui_RipartPlugin(object):
         self.label.setPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/icon.png")))
         self.label.setObjectName(_fromUtf8("label"))
         self.label_2 = QtGui.QLabel(RipartPlugin)
-        self.label_2.setGeometry(QtCore.QRect(10, 0, 91, 91))
+        self.label_2.setGeometry(QtCore.QRect(10, 0, 101, 111))
         self.label_2.setText(_fromUtf8(""))
         self.label_2.setPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/images/logo_IGN.png")))
         self.label_2.setScaledContents(True)
@@ -86,6 +89,35 @@ class Ui_RipartPlugin(object):
         font.setWeight(75)
         self.lblErreur.setFont(font)
         self.lblErreur.setObjectName(_fromUtf8("lblErreur"))
+        self.textError = QtGui.QTextEdit(RipartPlugin)
+        self.textError.setGeometry(QtCore.QRect(0, 110, 401, 71))
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.WindowText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Text, brush)
+        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.WindowText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Text, brush)
+        brush = QtGui.QBrush(QtGui.QColor(120, 120, 120))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(120, 120, 120))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Text, brush)
+        self.textError.setPalette(palette)
+        font = QtGui.QFont()
+        font.setFamily(_fromUtf8("MS Sans Serif"))
+        font.setBold(True)
+        font.setWeight(75)
+        self.textError.setFont(font)
+        self.textError.setReadOnly(True)
+        self.textError.setObjectName(_fromUtf8("textError"))
 
         self.retranslateUi(RipartPlugin)
         QtCore.QObject.connect(RipartPlugin, QtCore.SIGNAL(_fromUtf8("accepted()")), self.btnConnect.click)
@@ -99,5 +131,10 @@ class Ui_RipartPlugin(object):
         self.lblPwd.setText(_translate("RipartPlugin", "Votre mot de passe", None))
         self.btnCancel.setText(_translate("RipartPlugin", "Annuler", None))
         self.lblErreur.setText(_translate("RipartPlugin", "Message d\'erreur", None))
+        self.textError.setHtml(_translate("RipartPlugin", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'MS Sans Serif\'; font-size:8.25pt; font-weight:600; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p></body></html>", None))
 
-
+import resources_rc

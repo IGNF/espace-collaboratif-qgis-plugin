@@ -297,7 +297,7 @@ class RipartPlugin:
       
         if self.context:    
             res=self.context.getConnexionRipart(newLogin=True)  
-
+            
         
         
     def downloadRemarks(self):

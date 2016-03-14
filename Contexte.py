@@ -98,6 +98,9 @@ class Contexte(object):
         self.pwd=""
         self.urlHostRipart=""
         
+        self.profil = None
+        self.ripClient = None
+        
         self.logger=RipartLogger("Contexte").getRipartLogger()
   
         self.spatialRef = QgsCoordinateReferenceSystem( RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
@@ -273,10 +276,13 @@ class Contexte(object):
                             if dlgInfo.Accepted:
                                 self.client=client
                                 result= 1
+                        else :
+                            print "error"
                     except Exception as e:
                         result=-1
                         self.pwd=""
-                        self.logger.error(e.message)         
+                        self.logger.error(e.message)        
+                       
                         self.loginWindow.setErreur(ClientHelper.getEncodeType(e.message))
                         self.loginWindow.exec_()
                         
@@ -288,7 +294,10 @@ class Contexte(object):
             except RipartException as e:
                 print e.message
                 result=-1
-                
+        
+        if result ==1:
+            self.ripClient = client
+        
         return result
     
     

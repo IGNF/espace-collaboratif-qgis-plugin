@@ -42,15 +42,14 @@ class ClientHelper(object):
         
     @staticmethod
     def getErrorMessage(code):
-        if code in ['bad_login','bad_pass']:
+        if code == 401:
             return ClientHelper.stringToStringType('Login et/ou mot de passe erroné(s)')
-        elif code =="no_group":
-            return ClientHelper.stringToStringType("Accès refusé. L'utilisateur n'appartient à aucun groupe.")
+        elif code =="no_profile":
+            return ClientHelper.stringToStringType("Accès refusé. Pas de profil actif.")
         else:
-            return code
-        
-        return code
-    
+            return ClientHelper.stringToStringType("Impossible d'accéder au service Ripart") 
+                           
+ 
     
     @staticmethod
     def notNoneValue(val):

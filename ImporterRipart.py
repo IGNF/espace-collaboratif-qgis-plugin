@@ -57,13 +57,18 @@ class ImporterRipart(object):
         """
         self.logger.debug("doImport")
         
+        params={}    #paramètres pour la requête au service Ripart
+        
         filtreLay=None
         
-        res=self.context.getConnexionRipart()
+        if  self.context.ripClient == None :
+            res=self.context.getConnexionRipart()
+            if self.context.ripClient == None : #la connexion a échouée, on ne fait rien
+                return
         
         self.context.addRipartLayersToMap()
         
-        if not res:
+        if self.context.ripClient == None :
             #la connexion a échouée, on ne fait rien
             return
         else: 
@@ -104,11 +109,23 @@ class ImporterRipart(object):
             
             if groupFilter=='true':
                 groupId=self.context.profil.geogroupe.id
-            else:
-                groupId=-1
+                
+                params['group'] = str(groupId)
+            #else:
+            #    groupId=-1
    
             self.context.client.setIface(self.context.iface)
-            rems = self.context.client.getRemarques(self.context.profil.zone, bbox, pagination,date, groupId)
+            
+            
+            params['territory'] = self.context.profil.zone
+            if bbox !=None:
+                params['box'] = bbox.boxToString()
+            params['pagination'] = pagination
+            params['updatingDate'] = date
+           
+            
+            rems = self.context.client.getGeoRems(params)
+            #rems = self.context.client.getRemarques(self.context.profil.zone, bbox, pagination,date, groupId)
 
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
             self.progress.setValue(100)
