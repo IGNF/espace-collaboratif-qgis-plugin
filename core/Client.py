@@ -63,6 +63,11 @@ class Client:
         self.__login=login
         self.__password=pwd
         #self.message = self.connect()
+        
+        
+        
+    def setIface(self,iface):
+        self.iface=iface
 
       
     def connect(self):
@@ -86,9 +91,6 @@ class Client:
         return self
     
     
-   
-  
-    
     
     def getVersion(self):
         """retourne la version du service ripart
@@ -101,9 +103,7 @@ class Client:
     def getProfil(self):
         """retourne le profil de l'utilisateur
         :return: le profil
-        """  
-        
-       
+        """       
         if self.__profil is None:
             self.__profil = self.getProfilFromService()
         
@@ -139,29 +139,6 @@ class Client:
         return profil
         
     
-    """def getGeoRems0(self):
-        georems=None
-        
-        data =  requests.get(self.__url +"/api/georem/georems_get.xml", 
-                             auth=HTTPBasicAuth(self.__login, self.__password))   
-          
-        xml = XMLResponse(data.text)
-        errMessage = xml.checkResponseValidity()
-        
-        if errMessage['code'] =='OK':
-            georems = xml.extractRemarques()
-            
-        else:
-            result =ClientHelper.getErrorMessage(errMessage['code'])
-            raise Exception(ClientHelper.stringToStringType(result))
-            
-        return georems
-    """  
-      
-    def setIface(self,iface):
-        self.iface=iface
-        
-        
 
     def getGeoRems(self,parameters):
         """Recherche les remarques.
@@ -180,14 +157,7 @@ class Client:
         self.progressMessageBar.layout().addWidget(self.progress)
         self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
         self.progress.setValue(0)
-      
-        #on stocke les objets Remarque dans un dictionnaire, pour éviter d'éventuels doublons.
-        #dicoRems={}
-        
-        #la date-heure actuelle (début de la requête)
-        #dt = time.strftime("%Y-%m-%d %H:%M:%S")
-        #dtTmp = dt
-           
+                
         result = self.__getGeoRemsTotal(parameters)
         total = int(result["total"])   #nb de remarques récupérées
         sdate = result["sdate"];    #date de la réponse du serveur
@@ -266,137 +236,16 @@ class Client:
                 errMessage2 = xml.checkResponseValidity()
                 if errMessage2['code'] =='OK':
                     dicoRems.update(xml.extractRemarques())          
-                    self.__jeton= xml.getCurrentJeton()
+                    
             
                 self.progress.setValue(count)
                 
         return {'total':total, 'sdate': sdate, 'dicoRems':dicoRems}
 
         
-    def getRemarques(self,zone,box,pagination, date,idGroupe):
-        """Recherche les remarques.
-        Boucle sur la méthode privée GetRemarques, pour récupérer d'éventuelles MAJ ou nouvelles remarques
-        faites entre le début et la fin de la requête 
-        
-        :param zone: code de la zone géographique
-        :type zone: ConstanteRipart.ZoneGeographique
-        
-        :param box: bounding box dans laquelle on cherche des remarques
-        :type box: Box
-        
-        :param pagination: nombre de remarques par réponse
-        :type pagination int
-        
-        :param date: date à partir de laquelle on cherche les remarques
-        :type date: str  (yyyy-mm-dd HH:MM:SS)
-        
-        :param idGroupe: identifiant du groupe de l'utilisateur
-        :type idGroupe: int
-        """   
-        
-        #progressbar pour le chargement des remarques
-        self.progressMessageBar = self.iface.messageBar().createMessage(u"Téléchargement des remarques depuis le serveur ...")
-        self.progress = QProgressBar()
-     
-        self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
-       
-        self.progressMessageBar.layout().addWidget(self.progress)
-        self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
-        self.progress.setValue(0)
-      
-        #on stocke les objets Remarque dans un dictionnaire, pour éviter d'éventuels doublons.
-        dicoRems={}
-        
-        #la date-heure actuelle (début de la requête)
-        dt = time.strftime("%Y-%m-%d %H:%M:%S")
-        dtTmp = dt
-        
-        result= self.__getRemarques(zone, box, pagination, date, idGroupe)
-        
     
-        while int(result['total']) >1 :
-            dt = time.strftime("%Y-%m-%d %H:%M:%S")
-            tmp=self.__getRemarques(zone, box, pagination, dtTmp, idGroupe)
-            
-            result['dicoRems'].update(tmp['dicoRems'])   #add the tmp result to the result['dicoRems'] dictionnary
-            result['total']=tmp['total']
-            dtTmp= dt
-            self.logger.debug("loop on total result "+ " total="+result['total'] +",datetime="+dt )
-    
-        dicoRems= OrderedDict(sorted(result['dicoRems'].items(), key=lambda t: t[0],reverse=True))
-                               
-        
-        return  dicoRems
-    
-    
-   
-    def __getRemarques(self,zone,box,pagination, date,idGroupe):
-        """Recherche les remarques et retourne le nombre total de remarques trouvées
-         
-        :param zone: code de la zone géographique
-        :type zone: ConstanteRipart.ZoneGeographique
-        
-        :param box: bounding box dans laquelle on cherche des remarques
-        :type box: Box
-        
-        :param pagination: nombre de remarques par réponse
-        :type pagination int
-        
-        :param date: date à partir de laquelle on cherche les remarques
-        :type date: str  (yyyy-mm-dd HH:MM:SS)
-        
-        :param idGroupe: identifiant du groupe de l'utilisateur
-        :type idGroupe: int
-         """
-        
-        try:
-            data=self.georem_get(zone, box, pagination, date, idGroupe, 0)
-        except Exception as e:
-            self.logger.error(str(e))
-            raise 
-        
-        xml = XMLResponse(data)
-        errMessage = xml.checkResponseValidity()
-        
-        total = 0
-        dicoRems={}
-       
-        count=int(pagination)
-      
-        if errMessage['code'] =='OK':
-            total = xml.getTotalResponse()
-            dicoRems = xml.extractRemarques()          
-            self.__jeton= xml.getCurrentJeton()
-            
-            if int(pagination) > int(total):
-                progressMax = int(pagination)
-            else:
-                progressMax= int(total)
-                
-            self.progress.setMaximum(progressMax)
-            self.progress.setValue(count)
-     
-            while (int(total) - count)  > 0:
-                data = self.georem_get(zone, box, pagination, date, idGroupe, count)
-                xml = XMLResponse(data)
-                
-                count += int(pagination)
-                
-                errMessage2 = xml.checkResponseValidity()
-                if errMessage2['code'] =='OK':
-                    dicoRems.update(xml.extractRemarques())          
-                    self.__jeton= xml.getCurrentJeton()
-            
-                self.progress.setValue(count)
-                
-        return {'total':total, 'dicoRems':dicoRems}
-    
-    
-    
-    def getRemarque(self, idRemarque):
+    def getGeoRem(self, idRemarque):
         """Requête pour récupérer une remarque avec un identifiant donné
-        ripart.ign.fr/?action=georem_get&jeton_md5=XXXX&id_auteur=AA&id_georem=RR 
-        où XXX = MD5(RR+AA+protocole+jeton).
         
         :param idRemarque: identifiant de la remarque que l'on souhaite récupérer
         :type idRemarque: int
@@ -404,10 +253,19 @@ class Client:
         :return la remarque
         :rtype Remarque
         """
+        
         rem =Remarque()
         remarques =[]
         
-        data= self.georem_getById(idRemarque)
+        parameters ={}
+        
+        auth={}
+        auth['login']=self.__login
+        auth['password']=self.__password
+        
+        uri =self.__url +"/api/georem/georem_get/" + str(idRemarque)+".xml"
+        
+        data= RipartServiceRequest.makeHttpRequest(uri,authent=auth)   
         
         xmlResponse = XMLResponse(data)
         errMessage = xmlResponse.checkResponseValidity()
@@ -415,40 +273,17 @@ class Client:
         total = xmlResponse.getTotalResponse()
         
         if errMessage['code']=="OK":
-            self.__jeton =xmlResponse.getCurrentJeton()
-            
+           
             if int(total) == 1:
                 remarques = xmlResponse.extractRemarques()
                 rem=remarques.values()[0]    
                 
         return rem
         
-        
-        
-    def georem_getById(self,id_georem):
-        """Va chercher une remarque donnée par son identifiant
-        
-        :param id_georem: identifiant de la remarque
-        :type id_georem: int
-        :return: remarque au format xml
-        :rtype string (xml)
-        """
-        data=None
-        georem_url =self.__url + "?action=georem_get"
-        
-        if self.__jeton==None or self.__auteur.id==None :
-            return None
-        else:
-            jeton_md5 =Client.getMD5Hash(str(id_georem) + self.__auteur.id +ConstanteRipart.RIPART_CLIENT_PROTOCOL+self.__jeton)
-            
-            georem_url += "&jeton_md5=" + jeton_md5 + \
-                          "&id_auteur=" + self.__auteur.id + \
-                          "&id_georem=" + str(id_georem);
-        
-            data = RipartServiceRequest.makeHttpRequest(georem_url)
-            
-        return data
     
+    
+    
+       
     
     def addReponse(self,remarque,reponse):
         """Ajoute une réponse à une remarque

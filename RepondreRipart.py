@@ -70,8 +70,9 @@ class RepondreRipart(object):
           
             if res==1:
                 client= self.context.client
-                remId=int(remIds[0])
-                remarque= client.getRemarque(remId)
+                remId=remIds[0]
+                remarque= client.getGeoRem(remId)
+                #remarque= client.getRemarque(remId)
                 
                 if remarque.statut.__str__() not in cst.openStatut and not isView:  
                     mess= "Impossible de répondre à la remarque Ripart n°"+ str(remId) + \
@@ -80,7 +81,7 @@ class RepondreRipart(object):
                     self.context.iface.messageBar().pushMessage("Attention",ClientHelper.getEncodeType(mess), level=1, duration=5)
                     return
                
-                if remarque.autorisation not in ["RW+","RW-"] and not isView:
+                if remarque.autorisation not in ["RW","RW+","RW-"] and not isView:
                     mess=u"Vous n'êtes pas autorisé à modifier la remarque Ripart n°"+ str(remId)
                     self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
                     return
