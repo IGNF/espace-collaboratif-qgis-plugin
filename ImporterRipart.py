@@ -62,133 +62,129 @@ class ImporterRipart(object):
         filtreLay=None
         
         if  self.context.ripClient == None :
-            res=self.context.getConnexionRipart()
+            self.context.getConnexionRipart()
             if self.context.ripClient == None : #la connexion a échouée, on ne fait rien
+                self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)            
                 return
         
         self.context.addRipartLayersToMap()
         
-        if self.context.ripClient == None :
-            #la connexion a échouée, on ne fait rien
-            return
-        else: 
-            #filtre spatial
-            filtre=  RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
+        
+        #filtre spatial
+        filtre=  RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
               
-            if (filtre!=None):    
-                self.logger.debug("Spatial filter :"+filtre)
-                
-                filtreLay=self.context.getLayerByName(filtre)
-                bbox=self.getSpatialFilterBbox(filtre,filtreLay)
-                if bbox==-999:
-                    return
+        if (filtre!=None):    
+            self.logger.debug("Spatial filter :"+filtre)
             
-            else:
-                message="Impossible de déterminer dans le fichier de paramétrage Ripart, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
-                          "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
-                          "(Cela risque de prendre un temps long.)"
-                if self.noFilterWarningDialog(message):
-                    bbox= None
-                else : 
-                    return
+            filtreLay=self.context.getLayerByName(filtre)
+            bbox=self.getSpatialFilterBbox(filtre,filtreLay)
+            if bbox==-999:
+                return
+            
+        else:
+            message="Impossible de déterminer dans le fichier de paramétrage Ripart, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
+                    "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
+                    "(Cela risque de prendre un temps long.)"
+            if self.noFilterWarningDialog(message):
+                bbox= None
+            else : 
+                return
    
-            QApplication.setOverrideCursor(Qt.BusyCursor)
+        QApplication.setOverrideCursor(Qt.BusyCursor)
 
-            #vider les tables ripart
-            self.context.emptyAllRipartLayers()
+        #vider les tables ripart
+        self.context.emptyAllRipartLayers()
               
-            pagination =RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination,"Map").text
-            if pagination ==None :
-                pagination = RipartHelper.defaultPagination
+        pagination =RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination,"Map").text
+        if pagination ==None :
+            pagination = RipartHelper.defaultPagination
            
-            date= RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_DateExtraction,"Map").text
+        date= RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_DateExtraction,"Map").text
             
-            date= RipartHelper.formatDate(date)
+        date= RipartHelper.formatDate(date)
  
-            groupFilter=RipartHelper.load_ripartXmlTag(self.context.projectDir,RipartHelper.xml_Group,"Map").text
+        groupFilter=RipartHelper.load_ripartXmlTag(self.context.projectDir,RipartHelper.xml_Group,"Map").text
             
-            if groupFilter=='true':
-                groupId=self.context.profil.geogroupe.id
+        if groupFilter=='true':
+            groupId=self.context.profil.geogroupe.id
                 
-                params['group'] = str(groupId)
-            #else:
-            #    groupId=-1
-   
-            self.context.client.setIface(self.context.iface)
+            params['group'] = str(groupId)
+           
+        self.context.client.setIface(self.context.iface)
             
             
-            params['territory'] = self.context.profil.zone
-            if bbox !=None:
-                params['box'] = bbox.boxToString()
-            params['pagination'] = pagination
-            params['updatingDate'] = date
+        params['territory'] = self.context.profil.zone
+        if bbox !=None:
+            params['box'] = bbox.boxToString()
+            
+        params['pagination'] = pagination
+        params['updatingDate'] = date
            
             
-            rems = self.context.client.getGeoRems(params)
-            #rems = self.context.client.getRemarques(self.context.profil.zone, bbox, pagination,date, groupId)
+        rems = self.context.client.getGeoRems(params)
+        #rems = self.context.client.getRemarques(self.context.profil.zone, bbox, pagination,date, groupId)
 
-            self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
-            self.progress.setValue(100)
+        self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
+        self.progress.setValue(100)
            
 
-            #Filtrage spatial affiné des remarques.
-            if bbox!=None:
-                remsToKeep ={}
+        #Filtrage spatial affiné des remarques.
+        if bbox!=None:
+            remsToKeep ={}
 
-                for key in rems:
-                    ptx= rems[key].position.longitude
-                    pty = rems[key].position.latitude
-                    pt ="POINT("+ ptx + " "+ pty +")"
-                    ptgeom= QgsGeometry.fromWkt(pt)
+            for key in rems:
+                ptx= rems[key].position.longitude
+                pty = rems[key].position.latitude
+                pt ="POINT("+ ptx + " "+ pty +")"
+                ptgeom= QgsGeometry.fromWkt(pt)
                     
-                    if RipartHelper.isInGeometry(ptgeom, filtreLay):
-                        remsToKeep[key]=rems[key]
+                if RipartHelper.isInGeometry(ptgeom, filtreLay):
+                    remsToKeep[key]=rems[key]
                     
-            else:
-                remsToKeep= rems
+        else:
+            remsToKeep= rems
                 
-            cnt= len(remsToKeep)
+        cnt= len(remsToKeep)
     
-            try:  
-                i=100
-                try:
-                    self.context.conn= db.connect(self.context.dbPath)
+        try:  
+            i=100
+            try:
+                self.context.conn= db.connect(self.context.dbPath)
     
-                    for remId in remsToKeep:
-                        RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
-                        i+=1
-                        self.progressVal= int(round(i*100/cnt))
-                        self.progress.setValue(self.progressVal)
+                for remId in remsToKeep:
+                    RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
+                    i+=1
+                    self.progressVal= int(round(i*100/cnt))
+                    self.progress.setValue(self.progressVal)
   
-                    self.context.conn.commit()   
+                self.context.conn.commit()   
                    
-                except Exception as e:
-                    self.logger.error(e.message)
-                    raise
-                finally:
-                    self.context.conn.close()
+            except Exception as e:
+                self.logger.error(e.message)
+                raise
+            finally:
+                self.context.conn.close()
                 
-                if cnt>1:                
-                    remLayer=self.context.getLayerByName(RipartHelper.nom_Calque_Remarque)
-                    remLayer.updateExtents()
-                    box = remLayer.extent()
-                    self.setMapExtent(box)
+            if cnt>1:                
+                remLayer=self.context.getLayerByName(RipartHelper.nom_Calque_Remarque)
+                remLayer.updateExtents()
+                box = remLayer.extent()
+                self.setMapExtent(box)
                     
-                elif filtreLay!=None:
-                    box=filtreLay.extent()
-                    self.setMapExtent(box)
-                    
-          
-                #Résultat 
-                self.showImportResult(cnt)
+            elif filtreLay!=None:
+                box=filtreLay.extent()
+                self.setMapExtent(box)
+
+            #Résultat 
+            self.showImportResult(cnt)
                
                 
-            except Exception as e:
-                raise
+        except Exception as e:
+            raise
 
-            finally:
-                self.context.iface.messageBar().clearWidgets()   
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+        finally:
+            self.context.iface.messageBar().clearWidgets()   
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
                 
      
     def getSpatialFilterBbox(self,filtre,filtreLay):

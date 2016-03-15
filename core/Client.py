@@ -229,7 +229,7 @@ class Client:
                 
                 parameters["offset"]= count.__str__()
             
-                data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",authent=auth,params=parameters)     
+                data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",authent=self.__auth,params=parameters)     
                 xml = XMLResponse(data)
                 
                 count += int(pagination)
@@ -320,9 +320,105 @@ class Client:
         return  remModif
     
    
-    
-    
     def createRemarque(self,remarque):
+        """Ajout d'une nouvelle remarque
+        :param remarque : la remarque à créer
+        :type remarque: Remarque
+        :return la remarque créée
+        :rtype: Remarque
+        """
+        rem= None
+        
+        try:
+            params = {}
+            params['version']= ConstanteRipart.RIPART_CLIENT_VERSION
+            params['protocol']=ConstanteRipart.RIPART_CLIENT_PROTOCOL
+            params['comment']= ClientHelper.stringToStringType(remarque.commentaire)         
+            geometry = "POINT(" + str(remarque.getLongitude()) +" " + str(remarque.getLatitude()) + ")"
+            params['geometry']= "POINT(0.542525 48.971069)"   #geometry
+            params['territory']= self.getProfil().zone.__str__()
+            
+            #Ajout des thèmes selectionnés
+            themes = remarque.themes
+            
+            if themes!= None and len(themes)>0:
+                doc = ET.Element("THEMES")
+                
+                attributes =""
+                
+                for t in themes:
+                    """th= ET.SubElement(doc,"THEME")
+                    grId=ET.SubElement(th,"ID_GEOGROUPE")
+                    grId.text= t.groupe.id
+                    nom= ET.SubElement(th,"NOM")
+                    nom.text=t.groupe.nom"""
+                    
+                    attributes +=  '"' + t.groupe.id + "::" + t.groupe.nom + "\"=>\"1\","
+                    
+                attributes = attributes[:-1]
+                params["attributes"]=attributes
+            
+            
+            #ajout des croquis
+            if not remarque.isCroquisEmpty() :
+                croquis= remarque.croquis
+                gmlurl="http://www.opengis.net/gml"
+                doc = ET.Element("CROQUIS",{"xmlns:gml":gmlurl})
+                
+                for cr in croquis:
+                    doc= cr.encodeToXML(doc)
+                    
+                params["sketch"] =ET.tostring(doc)
+                
+                
+            #ajout des documents joints
+            documents = remarque.documents
+            docCnt=0
+            docs= {}
+            
+            files={}
+            for document in documents:
+                if  os.path.isfile(document) :
+                    docCnt +=1
+                    if os.path.getsize(document) > ConstanteRipart.MAX_TAILLE_UPLOAD_FILE:
+                        raise Exception("Le fichier "+ document + " est de taille supérieure à " + \
+                                        str(ConstanteRipart.MAX_TAILLE_UPLOAD_FILE))  
+                    
+                    docs["upload"+str(docCnt)]=document
+                    
+                    fname=os.path.basename(document)
+                    files = {"upload"+str(docCnt):  (fname, open(document, 'rb'))}
+                    params['filename']=os.path.basename(document)
+   
+   
+   
+            #envoi de la requête
+            uri = self.__url +"/api/georem/georem_post.xml"
+            data = RipartServiceRequest.makeHttpRequest(uri, authent= self.__auth, data=params, files=files)             
+                    
+            xmlResponse = XMLResponse(data)
+            errMessage= xmlResponse.checkResponseValidity()
+            
+            if errMessage['code'] =='OK': 
+                rems= xmlResponse.extractRemarques()
+                if len(rems)==1:
+                    rem =rems.values()[0]
+                else :
+                    self.logger.error("Problème lors de l'ajout de la remarque")
+                    raise Exception("Problème lors de l'ajout de la remarque")
+            else:
+                self.logger.error(errMessage['message'])
+                raise Exception(errMessage['message'])
+        
+            
+        except Exception as e:
+            self.logger.error(str(e))
+            raise Exception(e)
+                
+        return rem
+        
+    
+    def createRemarque0(self,remarque):
         """Ajout d'une nouvelle remarque
         ripart.ign.fr/?action=georem_post&id_auteur=AA&jeton_md5=XXXX 
         où XXX = MD5(0+AA+protocole+jeton).
@@ -524,10 +620,7 @@ class Client:
                 self.logger.error(errMessage['message'])
                 raise Exception(errMessage['message'])
             
-            
-            self.__jeton = xmlResponse.getCurrentJeton()
-            
- 
+        
             
         except Exception as e:
             self.logger.error(str(e))

@@ -41,7 +41,6 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
    
-        self.lblErreur.setVisible(False)
         self.textError.setVisible(False)
            
         self.btnConnect.clicked.connect(self.connectToService)
@@ -59,8 +58,6 @@ class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
         return self.lineEditPwd.text()
     
     def setErreur(self,message):
-        self.lblErreur.setText(message)
-        self.lblErreur.setVisible(True)
         self.textError.setText(message)
         self.textError.setVisible(True)
         

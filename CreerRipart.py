@@ -38,16 +38,17 @@ class CreerRipart(object):
                 RipartHelper.showMessageBox(u"Aucun object sélectionné.\nIl est donc impossible de déterminer le point d'application de la nouvelle remarque à créer.")
                 return    #si pas d'objet sélectionné, on arrête le processus
             
+ 
+            if  self.context.ripClient == None :
+                self.context.getConnexionRipart()
+                if self.context.ripClient == None : #la connexion a échouée, on ne fait rien
+                    self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)            
+                    return
             
-            res=self.context.getConnexionRipart()    
-            if res!=1:    #si la connexion a échouée, on arrête le processus
-                self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)    
-                return
             
             #Création des croquis à partir de la sélection de features
             croquisList=self.context.makeCroquisFromSelection()
-            
-            
+                       
             self.logger.debug(str(len(croquisList)) + u" croquis générés")
         
             #ouverture du formulaire de création de la remarque
@@ -90,7 +91,7 @@ class CreerRipart(object):
             #liste contenant les identifiants des nouvelles remarques créées
             listNewRemIds=[]
             
-            #si on doit attaché un document
+            #si on doit attacher un document
             if formCreate.optionWithAttDoc():
                 tmpRem.addDocument(formCreate.getAttachedDoc())
            

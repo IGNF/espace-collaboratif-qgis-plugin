@@ -66,53 +66,54 @@ class RepondreRipart(object):
                                         u'Plusieurs remarques sélectionnées. Une seule sera prise en compte (remarque no='+str(remIds[0])+')',
                                         level=1, duration=10)
                     
-            res=self.context.getConnexionRipart()  
+            #res=self.context.getConnexionRipart()  
+            if  self.context.ripClient == None :
+                self.context.getConnexionRipart()
+                if self.context.ripClient == None : #la connexion a échouée, on ne fait rien
+                    self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)       
+                    return
           
-            if res==1:
-                client= self.context.client
-                remId=remIds[0]
-                remarque= client.getGeoRem(remId)
-                #remarque= client.getRemarque(remId)
-                
-                if remarque.statut.__str__() not in cst.openStatut and not isView:  
-                    mess= "Impossible de répondre à la remarque Ripart n°"+ str(remId) + \
-                          ", car elle est clôturée depuis le "+ remarque.dateValidation
+            
+            client= self.context.client
+            remId=remIds[0]
+            remarque= client.getGeoRem(remId)
+             
+            if remarque.statut.__str__() not in cst.openStatut and not isView:  
+                mess= "Impossible de répondre à la remarque Ripart n°"+ str(remId) + \
+                         ", car elle est clôturée depuis le "+ remarque.dateValidation
                                                     
-                    self.context.iface.messageBar().pushMessage("Attention",ClientHelper.getEncodeType(mess), level=1, duration=5)
-                    return
+                self.context.iface.messageBar().pushMessage("Attention",ClientHelper.getEncodeType(mess), level=1, duration=5)
+                return
                
-                if remarque.autorisation not in ["RW","RW+","RW-"] and not isView:
-                    mess=u"Vous n'êtes pas autorisé à modifier la remarque Ripart n°"+ str(remId)
-                    self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
-                    return
+            if remarque.autorisation not in ["RW","RW+","RW-"] and not isView:
+                mess=u"Vous n'êtes pas autorisé à modifier la remarque Ripart n°"+ str(remId)
+                self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
+                return
                 
-                if isView:
-                    self.logger.debug("view remark")
-                    formView= FormView(self.context)                
-                    formView.setRemarque(remarque) 
-                    formView.setWindowFlags(Qt.WindowStaysOnTopHint)
-                    formView.show()
-                    return formView
+            if isView:
+                self.logger.debug("view remark")
+                formView= FormView(self.context)                
+                formView.setRemarque(remarque) 
+                formView.setWindowFlags(Qt.WindowStaysOnTopHint)
+                formView.show()
+                return formView
                     
-                else:    
-                    self.logger.debug("answer to remark")               
-                    formReponse= FormRepondreDialog()
+            else:    
+                self.logger.debug("answer to remark")               
+                formReponse= FormRepondreDialog()
                     
-                    res=formReponse.setRemarque(remarque)
+                res=formReponse.setRemarque(remarque)
                  
-                    r=formReponse.exec_()
+                r=formReponse.exec_()
                     
-                    if formReponse.answer :
-                        remarque.statut=formReponse.newStat
-                        remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep),
-                                                 ClientHelper.stringToStringType(formReponse.repTitre) )            
-                        self.context.updateRemarqueInSqlite(remMaj)
-                        mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
-                        self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
-            else:
-                self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)    
-                return       
-
+                if formReponse.answer :
+                    remarque.statut=formReponse.newStat
+                    remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep),
+                                                ClientHelper.stringToStringType(formReponse.repTitre) )            
+                    self.context.updateRemarqueInSqlite(remMaj)
+                    mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
+                    self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
+               
         except Exception as e:
             self.logger.error(e.message + ";" + str(e))
             raise

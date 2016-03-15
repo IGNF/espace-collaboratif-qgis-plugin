@@ -77,13 +77,13 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
 
         profil= self.context.client.getProfil()
         
-        self.groupBoxProfil.setTitle(profil.geogroupe.nom)
+        self.groupBoxProfil.setTitle(profil.auteur.nom + " (" + profil.geogroupe.nom + ")")
         
-        data = urllib.urlopen(profil.logo).read()
+        """data = urllib.urlopen(profil.logo).read()
         pixmap= QPixmap()
         pixmap.loadFromData(data)
         pixmap=pixmap.scaled(41,41,Qt.KeepAspectRatio )   
-        self.lblProfilIcon.setPixmap(pixmap)
+        self.lblProfilIcon.setPixmap(pixmap)"""
           
         #les noms des thèmes préférés (du fichier de configuration)
         preferredThemes= RipartHelper.load_preferredThemes(self.context.projectDir)
