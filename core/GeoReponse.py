@@ -31,6 +31,7 @@ class GeoReponse(object):
     
     # Le statut de la GeoReponse
     statut = ConstanteRipart.STATUT.undefined
+
     
     
     def __init__(self):
@@ -42,6 +43,7 @@ class GeoReponse(object):
         self.reponse= ""
         self.date = datetime.now()
         self.statut=ConstanteRipart.STATUT.undefined
+    
          
     def id(self):
         """

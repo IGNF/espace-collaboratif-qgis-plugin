@@ -53,7 +53,7 @@ class ImporterRipart(object):
      
      
     def doImport(self):
-        """Téléchargement et import des remarques dans la carte   
+        """Téléchargement et import des remarques sur la carte   
         """
         self.logger.debug("doImport")
         

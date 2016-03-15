@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>360</width>
-    <height>473</height>
+    <height>521</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,7 +21,7 @@
    <property name="geometry">
     <rect>
      <x>280</x>
-     <y>440</y>
+     <y>490</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -40,7 +40,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>440</y>
+     <y>490</y>
      <width>141</width>
      <height>23</height>
     </rect>
@@ -140,7 +140,7 @@
      <x>10</x>
      <y>200</y>
      <width>341</width>
-     <height>91</height>
+     <height>101</height>
     </rect>
    </property>
    <property name="font">
@@ -173,9 +173,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>330</y>
+     <y>370</y>
      <width>341</width>
-     <height>91</height>
+     <height>101</height>
     </rect>
    </property>
    <property name="font">
@@ -185,6 +185,37 @@
    </property>
    <property name="readOnly">
     <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblTitre">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>340</y>
+     <width>51</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+     <weight>75</weight>
+     <italic>true</italic>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Titre</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="textTitre">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>340</y>
+     <width>291</width>
+     <height>21</height>
+    </rect>
    </property>
   </widget>
  </widget>

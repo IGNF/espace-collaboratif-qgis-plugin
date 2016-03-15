@@ -28,6 +28,7 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
     cancel = True
     newRep =""
     newStat =""
+    repTitre = ""
 
     def __init__(self, parent=None):
         """Constructor."""
@@ -66,6 +67,7 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
         self.answer=True
         self.newRep=self.textNewRep.toPlainText()
         self.newStat= cst.statuts()[self.cboxStatut.currentIndex()]
+        self.repTitre = self.textTitre.text()
         self.close()
         
         
@@ -73,3 +75,5 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
         self.cancel=True
         self.answer=False
         self.close()
+        
+        

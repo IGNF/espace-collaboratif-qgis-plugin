@@ -188,16 +188,19 @@ class Remarque(object):
             count= len(self.reponses)
             for rep in self.reponses:
                 concatenate +="<li><b><font color=\"green\">Réponse n°" + count.__str__();
-                count -=1
-                
+                count -=1  
                 if len(rep.auteur.nom)!=0 : 
                     concatenate +=" par " + ClientHelper.stringToStringType(rep.auteur.nom)
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 if rep.statut is not None:
-                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts().index(rep.statut.__str__())].encode('utf8')
-             
-                concatenate += ".</font></b><br/>" + ClientHelper.stringToStringType(rep.reponse.strip().replace("\n","<br/>")) + "</li>";
+                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts().index(rep.statut.__str__())].encode('utf8')           
+                concatenate += ".</font></b><br/>"
+                
+                if rep.titre() is not None and  rep.titre()!="" :
+                    concatenate += "<b>" +  ClientHelper.stringToStringType(rep.titre().strip()) +"</b><br/>";
+                if (rep.reponse!=None ): 
+                    concatenate +=  ClientHelper.stringToStringType(rep.reponse.strip().replace("\n","<br/>")) + "</li>";
             
         return concatenate
     

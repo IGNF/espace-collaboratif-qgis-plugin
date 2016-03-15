@@ -104,7 +104,8 @@ class RepondreRipart(object):
                     
                     if formReponse.answer :
                         remarque.statut=formReponse.newStat
-                        remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep))            
+                        remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep),
+                                                 ClientHelper.stringToStringType(formReponse.repTitre) )            
                         self.context.updateRemarqueInSqlite(remMaj)
                         mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
                         self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)

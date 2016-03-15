@@ -42,7 +42,7 @@ class RipartServiceRequest(object):
             if (data ==None and files ==None):   
                 r = requests.get(url,auth=HTTPBasicAuth(authent['login'], authent['password']),params=params, verify=False)
             else :
-                r= requests.post(url, data=data,files=files, verify=False)
+                r= requests.post(url,auth=HTTPBasicAuth(authent['login'], authent['password']), data=data,files=files, verify=False)
      
             """if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
                 raise Exception(u"Problème de connexion: veuillez vérifier l'url\ndu serveur dans le fichier de configuration")"""

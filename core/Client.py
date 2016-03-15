@@ -42,10 +42,10 @@ class Client:
     __url=""
     __login = ""
     __password=""
-    __jeton = None
     __auteur = None
     __version = None
     __profil = None
+    __auth = None
     
     
     # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
@@ -62,7 +62,12 @@ class Client:
         self.__url=url
         self.__login=login
         self.__password=pwd
-        #self.message = self.connect()
+        
+           
+        self.__auth={}
+        self.__auth['login']=self.__login
+        self.__auth['password']=self.__password
+      
         
         
         
@@ -194,13 +199,9 @@ class Client:
         total = 0
         dicoRems={}
         
-        auth={}
-        auth['login']=self.__login
-        auth['password']=self.__password
-       
         try:
             data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml", 
-                                                        authent=auth,
+                                                        authent= self.__auth,
                                                         params=parameters)
         except Exception as e:
             self.logger.error(str(e))
@@ -252,20 +253,15 @@ class Client:
         
         :return la remarque
         :rtype Remarque
-        """
-        
+        """   
         rem =Remarque()
         remarques =[]
         
         parameters ={}
-        
-        auth={}
-        auth['login']=self.__login
-        auth['password']=self.__password
-        
+       
         uri =self.__url +"/api/georem/georem_get/" + str(idRemarque)+".xml"
         
-        data= RipartServiceRequest.makeHttpRequest(uri,authent=auth)   
+        data= RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth)   
         
         xmlResponse = XMLResponse(data)
         errMessage = xmlResponse.checkResponseValidity()
@@ -281,36 +277,31 @@ class Client:
         return rem
         
     
-    
-    
-       
-    
-    def addReponse(self,remarque,reponse):
+    def addReponse(self,remarque,reponse,titreReponse):
         """Ajoute une réponse à une remarque
-        ripart.ign.fr/?action=georem_put&id_georem=RR&id_auteur=AA&jeton_md5=XXXX&hash=HH 
-        où XXX = MD5(RR+AA+protocole+jeton).
-        
+
         :param remarque: la remarque
         :type remarque: Remarque
+        
         :param reponse : la réponse
         :type reponse: string
+        
+        :param titreReponse: le titre de la réponse
+        :type titreReponse : string 
+        
         :return la remarque à laquelle a été ajoutée la réponse
         """
-      
+        remModif = None
+        
         try:
-            tohash=remarque.id+ self.__auteur.id + ConstanteRipart.RIPART_CLIENT_PROTOCOL + self.__jeton
-            jeton_md5 =Client.getMD5Hash(tohash)
+            parameters= {}
+            parameters['id'] = str(remarque.id)
+            parameters['title'] = titreReponse
+            parameters['content'] = reponse
+            parameters['status'] = remarque.statut.__str__()
             
-            params = {}
-            params['action']=ConstanteRipart.RIPART_GEOREM_PUT
-            params['id_georem']=str(remarque.id)
-            params['id_auteur']=self.__auteur.id
-            params['jeton_md5']=jeton_md5
-            params['hash']=remarque.hash
-            params['reponse']=reponse
-            params['statut']= remarque.statut.__str__()
-            
-            data = RipartServiceRequest.makeHttpRequest(self.__url, data=params)
+            uri = self.__url +"/api/georem/georep_post.xml"
+            data = RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,data= parameters)  
             
             xmlResponse = XMLResponse(data)
             errMessage = xmlResponse.checkResponseValidity()
@@ -319,15 +310,16 @@ class Client:
                 rems =[]
                 rems= xmlResponse.extractRemarques()
                 if len(rems) ==1:
-                    remarque=rems.values()[0]
+                    remModif=rems.values()[0]
                 else:
                     raise Exception("Problème survenu lors de l'ajout d'une réponse")
-                
+       
         except Exception as e:
             raise Exception(errMessage["message"],e)
                 
-        return remarque
+        return  remModif
     
+   
     
     
     def createRemarque(self,remarque):
