@@ -282,8 +282,11 @@ class Contexte(object):
                         result=-1
                         self.pwd=""
                         self.logger.error(e.message)        
-                       
-                        self.loginWindow.setErreur(ClientHelper.getEncodeType(e.message))
+                        
+                        try:
+                            self.loginWindow.setErreur(ClientHelper.getEncodeType(e.message))
+                        except Exception as e2:
+                            self.loginWindow.setErreur(ClientHelper.getEncodeType("la connexion a échouée"))
                         self.loginWindow.exec_()
                         
         else: 
