@@ -19,7 +19,7 @@ email=alexia.chang-wailing@ign.fr
 
 
 # Optional items:
-date=30/11/2015
+date=16/03/2016
 
 # Uncomment the following line and add your changelog:
 # changelog=

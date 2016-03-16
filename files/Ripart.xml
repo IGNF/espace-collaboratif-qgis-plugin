@@ -1,6 +1,6 @@
 <Paramètres_connexion_à_Ripart>
   <Serveur>
-    <URLHost>http://demo-ripart.ign.fr</URLHost>
+    <URLHost>https://qlf-collaboratif.ign.fr/collaboratif-site</URLHost>
 
   </Serveur>
   <Map>
@@ -12,12 +12,6 @@
       <Thème>Administratif</Thème>
     </Thèmes_préférés>
     <Afficher_Croquis>Oui</Afficher_Croquis>
-    <Import_pour_groupe>false</Import_pour_groupe>
-    <Attributs_croquis>
-      <Calque_Nom>polygones</Calque_Nom>
-      <Calque_Champ>Id</Calque_Champ>
-      <Calque_Champ>comment</Calque_Champ>
-      <Calque_Champ>date</Calque_Champ>
-    </Attributs_croquis>
+    <Import_pour_groupe>true</Import_pour_groupe>
   </Map>
 </Paramètres_connexion_à_Ripart>

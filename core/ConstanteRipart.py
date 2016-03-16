@@ -6,7 +6,7 @@ Created on 23 janv. 2015
 '''
 from Enum import Enum
 
-import os
+#import os
 '''
 constantes
 '''
@@ -18,8 +18,8 @@ MAX_TAILLE_UPLOAD_FILE =  5000000
 NB_DEFAULT_REMARQUES_PAGINATION = 100
 
 #Définition du protocole signant au près du service Ripart l'origine de ce programme. 
-#RIPART_CLIENT_PROTOCOL = "_RIPART_QGIS_99712"
-RIPART_CLIENT_PROTOCOL = "RIPART_GCEXT_8123"
+RIPART_CLIENT_PROTOCOL = "_RIPART_QGIS_99712"
+
 
 #Définition donnant la version de ce programme.
 RIPART_CLIENT_VERSION = "1_0_0"

@@ -8,12 +8,13 @@ Created on 30 sept. 2015
 
 class ClientHelper(object):
     '''
-    classdocs
+    Méthodes utiles
     '''
 
     @staticmethod
     def stringToStringType(val):
-        
+        """Retourne un string à partir d'un texte unicode ou string
+        """
         if val==None:
             return ""
 
@@ -24,7 +25,8 @@ class ClientHelper(object):
     
     @staticmethod
     def getEncodeType(val):
-        
+        """Retourne une valeur unicode à partir d'un texte (unicode ou string)
+        """
         if val==None:
             return u""
         elif type(val)==type('str'):

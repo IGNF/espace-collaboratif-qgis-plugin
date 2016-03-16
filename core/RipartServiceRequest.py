@@ -49,9 +49,7 @@ class RipartServiceRequest(object):
             
             r.encoding ='utf-8'
             response=r.text
-            
-            RipartServiceRequest.logger.error(response)
-            
+
         except Exception as e:
             
             RipartServiceRequest.logger.error(e.message)
