@@ -84,7 +84,7 @@ class ImporterRipart(object):
         else:
             message="Impossible de déterminer dans le fichier de paramétrage Ripart, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
                     "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
-                    "(Cela risque de prendre un temps long.)"
+                    "(Cela risque de prendre un certain temps)."
             if self.noFilterWarningDialog(message):
                 bbox= None
             else : 
