@@ -69,7 +69,7 @@ class RepondreRipart(object):
             #res=self.context.getConnexionRipart()  
             if  self.context.ripClient == None :
                 self.context.getConnexionRipart()
-                if self.context.ripClient == None : #la connexion a échouée, on ne fait rien
+                if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
                     self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)       
                     return
           

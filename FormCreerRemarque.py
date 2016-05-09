@@ -214,7 +214,7 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
             if filename!="":
                 extension = os.path.splitext(filename)[1]           
                 if extension[1:] not in self.context.formats :
-                    message=u"Les fichiers de type '" + extension + u"' ne sont pas autorisées comme pièce-jointe dans le service Ripart."
+                    message=u"Les fichiers de type '" + extension + u"' ne sont pas autorisés comme pièce-jointe dans le service Ripart."
                     RipartHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.Unchecked)
                     

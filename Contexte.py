@@ -131,6 +131,7 @@ class Contexte(object):
                     raise
                 
             except Exception as e:
+                self.logger.error("init contexte:" + e.message)
                 formatFile =open( os.path.join(self.plugin_path,'files','formats.txt'), 'r')      
                 lines=formatFile.readlines()
                 self.formats=[x.split("\t")[0] for x in lines]      
@@ -286,7 +287,7 @@ class Contexte(object):
                         try:
                             self.loginWindow.setErreur(ClientHelper.getEncodeType(e.message))
                         except Exception as e2:
-                            self.loginWindow.setErreur(ClientHelper.getEncodeType("la connexion a échouée"))
+                            self.loginWindow.setErreur(ClientHelper.getEncodeType("la connexion a échoué"))
                         self.loginWindow.exec_()
                         
         else: 

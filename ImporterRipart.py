@@ -63,7 +63,7 @@ class ImporterRipart(object):
         
         if  self.context.ripClient == None :
             self.context.getConnexionRipart()
-            if self.context.ripClient == None : #la connexion a échouée, on ne fait rien
+            if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
                 self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)            
                 return
         
@@ -203,9 +203,9 @@ class ImporterRipart(object):
                         filtre + \
                         "' définit pour être le filtrage spatial (ou le calque n'est pas activé).\n\n"+\
                         "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
-                        "(Cela risque de prendre un temps long.)"
+                        "(Cela risque de prendre un certain temps)."
                 message=ClientHelper.getEncodeType(message)
-                reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply= QMessageBox.question(None,'IGN RIPart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
                     bbox=None
                 else : 
@@ -223,7 +223,7 @@ class ImporterRipart(object):
         """Avertissement si pas de filtre spatial
         """       
         message=ClientHelper.getEncodeType(message)
-        reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+        reply= QMessageBox.question(None,'IGN RIPart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             return True
         else : 

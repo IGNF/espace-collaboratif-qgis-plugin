@@ -371,7 +371,7 @@ class RipartPlugin:
                 return 
             message=u"Êtes-vous sûr de vouloir supprimer les remarques RIPart de la carte en cours?"
             
-            reply= QMessageBox.question(None,'IGN Ripart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+            reply= QMessageBox.question(None,'IGN RIPart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 self.context.emptyAllRipartLayers()
             else : 
