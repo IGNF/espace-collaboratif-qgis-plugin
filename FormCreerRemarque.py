@@ -87,7 +87,7 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
           
         #les noms des thèmes préférés (du fichier de configuration)
         preferredThemes= RipartHelper.load_preferredThemes(self.context.projectDir)
-        print preferredThemes
+        #print preferredThemes
         
         if len(profil.themes)>0:
             #boucle sur tous les thèmes du profil
