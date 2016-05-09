@@ -11,7 +11,8 @@
 name=IGN_Ripart
 qgisMinimumVersion=2.0
 description=IGN_Ripart
-version=0.1.1
+version=1.0.0
+
 author=alexia chang-wailing
 email=alexia.chang-wailing@ign.fr
 
@@ -19,7 +20,7 @@ email=alexia.chang-wailing@ign.fr
 
 
 # Optional items:
-date=16/03/2016
+date=09/05/2016
 
 # Uncomment the following line and add your changelog:
 # changelog=
