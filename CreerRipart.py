@@ -118,7 +118,7 @@ class CreerRipart(object):
    
             self.context.refresh_layers()
           
-            RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouvelles remarques Riparts") 
+            RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouvelle(s) remarque(s) RIPart") 
              
         except Exception as e:
             self.logger.error("in _createNewRemark "+ e.message)
@@ -160,6 +160,7 @@ class CreerRipart(object):
                    
         #create new remark (ripart service)
         remarqueNouvelle=client.createRemarque(tmpRem) 
+        
         
         self.logger.info(u"Succès de la création de la nouvelle remarque n°" + str(remarqueNouvelle.id))
         

@@ -436,7 +436,7 @@ class Contexte(object):
         
         for key in layers:
             l=layers[key]
-            if l.wkbType()==QGis.WKBPolygon or l.wkbType()==QGis.WKBMultiPolygon:
+            if l.geometryType ()==QGis.Polygon :
                 polylayers[l.id()]=l.name()
                 
         return polylayers
@@ -571,22 +571,24 @@ class Contexte(object):
                 croquiss=[]
                 
                 #le type du feature
-                ftype= f.geometry().wkbType()
+                ftype= f.geometry().type()
         
                 geom= f.geometry()
                 
+                isMultipart= geom.isMultipart()
+                
                 #if geom.isMultipart() => explode to single parts
-                if ftype == QGis.WKBMultiPolygon:
+                if isMultipart and ftype==QGis.Polygon:
                     for poly in geom.asMultiPolygon():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolygon(poly),QGis.WKBPolygon,l.crs(),f[0]))
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolygon(poly),QGis.Polygon,l.crs(),f[0]))
                         
-                elif ftype== QGis.WKBMultiLineString:
+                elif isMultipart and ftype==QGis.Line:
                     for line in geom.asMultiPolyline():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolyline(line),QGis.WKBLineString,l.crs(),f[0]))              
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolyline(line),QGis.Line,l.crs(),f[0]))              
                
-                elif ftype== QGis.WKBMultiPoint:
+                elif isMultipart and ftype==QGis.Point:
                     for pt in geom.asMultiPoint():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPoint(pt),QGis.WKBPoint,l.crs(),f[0]))       
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPoint(pt),QGis.Point,l.crs(),f[0]))       
                 else :    
                     croquiss.append(self.makeCroquis(geom,ftype,l.crs(),f[0]))
                 
@@ -632,7 +634,7 @@ class Contexte(object):
                        
             transformer = QgsCoordinateTransform(layerCrs, destCrs)
 
-            if ftype==QGis.WKBPolygon:
+            if ftype==QGis.Polygon:
                 geomPoints=geom.asPolygon()
                 if len(geomPoints)>0:
                     geomPoints=geomPoints[0]      #les points du polygone
@@ -640,17 +642,11 @@ class Contexte(object):
                     self.logger.debug(u"geomPoints problem " + str(fId))        
                 newCroquis.type=newCroquis.CroquisType.Polygone
                 
-            elif ftype==QGis.WKBMultiLineString :
-                geomPoints = geom.asMultiPolyline()
-                
-            elif ftype==QGis.WKBLineString:
+            elif ftype==QGis.Line:
                 geomPoints = geom.asPolyline()
                 newCroquis.type=newCroquis.CroquisType.Ligne
             
-            elif ftype==QGis.WKBMultiPoint:
-                geomPoints=geom.asMultiPoint()
-                
-            elif ftype==QGis.WKBPoint:
+            elif ftype==QGis.Point:
                 geomPoints=[geom.asPoint()]
                 newCroquis.type=newCroquis.CroquisType.Point
             else :
