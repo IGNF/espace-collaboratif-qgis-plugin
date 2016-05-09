@@ -109,13 +109,21 @@ class RepondreRipart(object):
                 if formReponse.answer :
                     remarque.statut=formReponse.newStat
                     remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep),
-                                                ClientHelper.stringToStringType(formReponse.repTitre) )            
+                                                ClientHelper.stringToStringType(formReponse.repTitre) ) 
+                           
                     self.context.updateRemarqueInSqlite(remMaj)
                     mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
+                    
+                    if hasattr(activeLayer, "setCacheImage"):
+                        activeLayer.setCacheImage(None)
+                    activeLayer.triggerRepaint()
+                    activeLayer.removeSelection()
+                   
+                    
                     self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
                
         except Exception as e:
-            self.logger.error(e.message + ";" + str(e))
+            self.logger.error(e.message + ";" + str(type(e)) + " " +str(e))
             raise
         
        

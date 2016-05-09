@@ -28,6 +28,7 @@ from core.Point import Point
 from core.Croquis import Croquis
 from FormConnexion_dialog import FormConnexionDialog
 from FormInfo import FormInfo
+import core.ConstanteRipart as cst
 
 
 class Contexte(object):
@@ -496,13 +497,15 @@ class Contexte(object):
             sql ="UPDATE "+ RipartHelper.nom_Calque_Remarque+" SET " + \
                 " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") +"'," + \
                 " Date_validation= '" + rem.getAttribut("dateValidation") +"'," + \
-                " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) +"' "\
+                " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) +"', " + \
+                " Statut='" + str(cst.STATUT.__getitemFromString__(rem.statut))  +"' " +\
                 " WHERE NoRemarque = " + str(rem.id)
             
             cur= self.conn.cursor()
             cur.execute(sql)
             
             self.conn.commit()
+            
 
         except Exception as e :
             self.logger.error(e.message)
