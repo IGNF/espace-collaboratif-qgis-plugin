@@ -436,7 +436,8 @@ class Contexte(object):
         
         for key in layers:
             l=layers[key]
-            if l.geometryType ()==QGis.Polygon :
+            
+            if type(l) is QgsVectorLayer and l.geometryType ()!=None and l.geometryType ()==QGis.Polygon :
                 polylayers[l.id()]=l.name()
                 
         return polylayers

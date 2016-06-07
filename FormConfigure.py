@@ -11,6 +11,8 @@ import calendar
 from PyQt4 import QtGui, uic
 from PyQt4.QtCore import *
 from PyQt4.Qt import QTreeWidgetItem, QDialogButtonBox
+from qgis.core import *
+
 
 import FormConfigurerRipart_base
 from RipartHelper import RipartHelper
@@ -141,7 +143,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         topItems=[]
         
         for lay in maplayers :
-            if not lay.name() in ripartLayers:
+            if type(lay) is QgsVectorLayer and not lay.name() in ripartLayers:
                 item = QTreeWidgetItem()
                 item.setText(0,unicode (lay.name()))
                 inConfig=lay.name() in attCroq

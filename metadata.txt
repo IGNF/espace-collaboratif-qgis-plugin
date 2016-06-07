@@ -9,18 +9,18 @@
 
 [general]
 name=IGN_Ripart
-qgisMinimumVersion=2.0
+qgisMinimumVersion=2.4
 description=IGN_Ripart
-version=1.0.0
+version=1.0.1
 
 author=alexia chang-wailing
-email=alexia.chang-wailing@ign.fr
+email=service-client@ign.fr
 
 # End of mandatory metadata
 
 
 # Optional items:
-date=09/05/2016
+date=07/06/2016
 
 # Uncomment the following line and add your changelog:
 # changelog=
