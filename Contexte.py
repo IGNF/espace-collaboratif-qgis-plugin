@@ -16,7 +16,7 @@ import os.path
 import shutil
 import ntpath
 from pyspatialite import dbapi2 as db
-import urllib
+
 
 from  RipartHelper import  RipartHelper
 from core.RipartLoggerCl import RipartLogger
