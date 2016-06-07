@@ -46,7 +46,7 @@ from RepondreRipart import RepondreRipart
 from CreerRipart import CreerRipart
 import core.ConstanteRipart as cst
 from Magicwand import Magicwand
-
+from RipartHelper import RipartHelper
 
 
 class RipartPlugin:
@@ -323,7 +323,7 @@ class RipartPlugin:
     def connectToRipart(self,context):
         """Connection to the ripart service 
         """
-        client = Client(context.urlHostRipart, context.login, context.pwd)
+        client = Client(context.urlHostRipart, context.login, context.pwd, context.proxy)
         return client        
        
         
@@ -478,7 +478,7 @@ class RipartPlugin:
         file_path = os.path.abspath(os.path.join(
             os.path.dirname(__file__),"files",cst.helpFile))
         
-        os.startfile(file_path)
+        RipartHelper.open_file(file_path)
         
         #TODO lien web 
         #os.startfile("http://logiciels.ign.fr/IMG/pdf/add-in-ripart_1-0.pdf")        
@@ -488,7 +488,7 @@ class RipartPlugin:
         """
         logpath=self.ripartLogger.getLogpath()
         if logpath!=None:
-            os.startfile(logpath)
+            RipartHelper.open_file(logpath)
   
   
-  
+    

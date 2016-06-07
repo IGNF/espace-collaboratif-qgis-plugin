@@ -79,6 +79,9 @@ class Contexte(object):
     #connexion à la base de données
     conn=None
     
+    #proxy
+    proxy = None
+    
     #le logger
     logger=None
     
@@ -105,13 +108,19 @@ class Contexte(object):
         self.logger=RipartLogger("Contexte").getRipartLogger()
   
         self.spatialRef = QgsCoordinateReferenceSystem( RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
+        
+      
          
         try:
             #set du répertoire et fichier du projet qgis
             self.setProjectParams(QgsProject)
-           
+            
+     
             #contrôle l'existence du fichier de configuration
             self.checkConfigFile()      
+            
+            #set proxy
+            #self.proxy = RipartHelper.load_proxy()
             
             #set de la base de données
             self.getOrCreateDatabase()
@@ -198,24 +207,24 @@ class Contexte(object):
     def checkConfigFile(self):
         """Contrôle de l'existence du fichier de configuration
         """
-        ripartxml=self.projectDir+"\\"+ RipartHelper.nom_Fichier_Parametres_Ripart
+        ripartxml=self.projectDir+os.path.sep+ RipartHelper.nom_Fichier_Parametres_Ripart
         if not os.path.isfile(ripartxml) :
             try:
-                shutil.copy(self.plugin_path+"\\"+RipartHelper.ripart_files_dir+"\\"+ RipartHelper.nom_Fichier_Parametres_Ripart,
+                shutil.copy(self.plugin_path+os.path.sep+RipartHelper.ripart_files_dir+os.path.sep+ RipartHelper.nom_Fichier_Parametres_Ripart,
                              ripartxml)
                 self.logger.debug("copy ripart.xml" )
             except Exception as e:
                 self.logger.error("no ripart.xml found in plugin directory" + e.message)
-                raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pqs été trouvé.")
+                raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pas été trouvé.")
            
        
     
     def copyRipartStyleFiles(self):
         """Copie les fichiers de styles (pour les remarques et croquis ripart)
         """
-        styleFilesDir=self.projectDir+"\\"+ RipartHelper.qmlStylesDir
+        styleFilesDir=self.projectDir + os.path.sep + RipartHelper.qmlStylesDir
         
-        RipartHelper.copy(self.plugin_path+"\\"+RipartHelper.ripart_files_dir+"\\"+RipartHelper.qmlStylesDir,
+        RipartHelper.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.pathsep + RipartHelper.qmlStylesDir,
                           styleFilesDir)
         
   
@@ -251,6 +260,12 @@ class Contexte(object):
         else:
             self.login = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_Login,"Serveur").text
         
+        xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_proxy,"Serveur").text
+        if (xmlproxy== None or str(xmlproxy).strip()!='' ):     
+            self.proxy ={'https': str(xmlproxy).strip()}
+        else :
+            self.proxy = None
+        
         if (self.login =="" or self.pwd=="" or newLogin):
             self.loginWindow.setLogin(self.login)
             self.loginWindow.exec_()
@@ -266,7 +281,7 @@ class Contexte(object):
                     self.pwd=self.loginWindow.getPwd()
                     
                     try: 
-                        client = Client(self.urlHostRipart, self.login, self.pwd)
+                        client = Client(self.urlHostRipart, self.login, self.pwd,self.proxy)
                         profil = client.getProfil()
                         
                         if profil != None :
@@ -300,7 +315,7 @@ class Contexte(object):
                         
         else: 
             try: 
-                client = Client(self.urlHostRipart, self.login, self.pwd)   
+                client = Client(self.urlHostRipart, self.login, self.pwd, self.pwd,self.proxy)   
                 result=1
                 self.client=client
             except RipartException as e:
@@ -334,7 +349,7 @@ class Contexte(object):
         if not os.path.isfile(self.dbPath) :
             createDb=True
             try:
-                shutil.copy(self.plugin_path+"\\"+RipartHelper.ripart_files_dir+"\\"+ RipartHelper.ripart_db,
+                shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep + RipartHelper.ripart_db,
                              self.dbPath)
                 self.logger.debug("copy ripart.sqlite" )
             except Exception as e:

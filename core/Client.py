@@ -26,6 +26,9 @@ from RipartLoggerCl import RipartLogger
 
 import requests
 from requests.auth import HTTPBasicAuth
+import urllib
+import os
+#from qgis.core import QgsNetworkAccessManager
 
 class Client:
     """"
@@ -39,6 +42,8 @@ class Client:
     __version = None
     __profil = None
     __auth = None
+
+    __proxies = None 
     
     
     # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
@@ -47,7 +52,7 @@ class Client:
     logger=RipartLogger("ripart.client").getRipartLogger()
 
 
-    def __init__(self, url, login, pwd):
+    def __init__(self, url, login, pwd, proxies):
         """Constructeur
         Initialisation du client et connexion au service ripart
         """       
@@ -58,7 +63,13 @@ class Client:
         self.__auth={}
         self.__auth['login']=self.__login
         self.__auth['password']=self.__password
-      
+         
+        #self.__proxies = urllib.getproxies()
+        #self.__proxies = {'http' : 'http://proxy.ign.fr:3128','https':'http://proxy.ign.fr:3128'}
+
+
+        self.__proxies = proxies
+        
              
     def setIface(self,iface):
         """sets the QgsInterface instance, to be able to access the QGIS application objects (map canvas, menus, ...)
@@ -75,7 +86,16 @@ class Client:
         try:               
             self.logger.debug("tentative de connexion; " + self.__url + ' connect ' + self.__login)
             
-            r= requests.get(self.__url, auth=HTTPBasicAuth(self.__login, self.__password))
+            #ne = QgsNetworkAccessManager.instance()
+
+            #urllib.getproxies()
+            #r= requests.get(self.__url, auth=HTTPBasicAuth(self.__login, self.__password))
+            """if (proxies ==None):
+                r= requests.get(self.__url, auth=HTTPBasicAuth(self.__login, self.__password))
+            else:
+                r= requests.get(self.__url, proxies=self.__proxies,auth=HTTPBasicAuth(self.__login, self.__password))"""
+
+            r= requests.get(self.__url, proxies=self.__proxies,auth=HTTPBasicAuth(self.__login, self.__password))
                     
         except Exception as e:         
             self.logger.error(e.message)
@@ -107,10 +127,22 @@ class Client:
         :return: le profil de l'utilisateur
         """
         profil= None
+
+        self.logger.debug("getProfilFromService " + self.__url +"/api/georem/geoaut_get.xml")
+
+        #proxies = urllib.getproxies()
+        #self.logger.debug("proxies " + str(proxies))
         
+        #ne = QgsNetworkAccessManager.instance()
+        #self.logger.debug("proxies " + str(self.__proxies))
+
+        """data =  requests.get(self.__url +"/api/georem/geoaut_get.xml",
+                auth=HTTPBasicAuth(self.__login, self.__password) )   """
         data =  requests.get(self.__url +"/api/georem/geoaut_get.xml", 
-                             auth=HTTPBasicAuth(self.__login, self.__password))   
-          
+                             auth=HTTPBasicAuth(self.__login, self.__password),
+                             proxies= self.__proxies)   
+
+        #self.logger.debug("getProfilFromService " + data._content)
         xml = XMLResponse(data.text)
         errMessage = xml.checkResponseValidity()
         
@@ -187,6 +219,7 @@ class Client:
         try:
             data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml", 
                                                         authent= self.__auth,
+                                                        proxies = self.__proxies,
                                                         params=parameters)
         except Exception as e:
             self.logger.error(str(e))
@@ -213,8 +246,12 @@ class Client:
             while (total - count)  > 0:
                 
                 parameters["offset"]= count.__str__()
-            
-                data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",authent=self.__auth,params=parameters)     
+                """if (proxies ==None):
+                     data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",authent=self.__auth,params=parameters)     
+                else:
+                    data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",authent=self.__auth,proxies = self.__proxies,params=parameters)     """
+                data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",authent=self.__auth,proxies = self.__proxies,params=parameters)
+                
                 xml = XMLResponse(data)
                 
                 count += int(pagination)
@@ -244,7 +281,11 @@ class Client:
         
         uri =self.__url +"/api/georem/georem_get/" + str(idRemarque)+".xml"
         
-        data= RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth)   
+        """if self.__proxies==None:
+            data= RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth)   
+        else:
+            data= RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,proxies = self.__proxies)   """
+        data= RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,proxies = self.__proxies) 
         
         xmlResponse = XMLResponse(data)
         errMessage = xmlResponse.checkResponseValidity()
@@ -284,8 +325,12 @@ class Client:
             parameters['status'] = remarque.statut.__str__()
             
             uri = self.__url +"/api/georem/georep_post.xml"
-            data = RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,data= parameters)  
             
+            """if self.__proxies==None:
+                data = RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,data= parameters) 
+            else: 
+                data = RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,proxies = self.__proxies,data= parameters) """
+            data = RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,proxies = self.__proxies,data= parameters)    
             xmlResponse = XMLResponse(data)
             errMessage = xmlResponse.checkResponseValidity()
             
@@ -375,7 +420,12 @@ class Client:
    
             #envoi de la requête
             uri = self.__url +"/api/georem/georem_post.xml"
-            data = RipartServiceRequest.makeHttpRequest(uri, authent= self.__auth, data=params, files=files)             
+            
+            """if self.__proxies==None:
+                data = RipartServiceRequest.makeHttpRequest(uri, authent= self.__auth, data=params, files=files)    
+            else:
+                data = RipartServiceRequest.makeHttpRequest(uri, authent= self.__auth,proxies = self.__proxies, data=params, files=files)    """    
+            data = RipartServiceRequest.makeHttpRequest(uri, authent= self.__auth,proxies = self.__proxies, data=params, files=files) 
                     
             xmlResponse = XMLResponse(data)
             errMessage= xmlResponse.checkResponseValidity()

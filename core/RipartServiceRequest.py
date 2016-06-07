@@ -20,7 +20,7 @@ class RipartServiceRequest(object):
     logger=RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
 
     @staticmethod
-    def  makeHttpRequest(url,authent = None, params=None, data=None, files=None):  
+    def  makeHttpRequest(url,authent = None, proxies=None, params=None, data=None, files=None):  
         """  Effectue une requête HTTP GET ou POST
         
         :param url: url de base de la requête
@@ -37,12 +37,11 @@ class RipartServiceRequest(object):
         """
         response= ""    
         
-            
         try: 
             if (data ==None and files ==None):   
-                r = requests.get(url,auth=HTTPBasicAuth(authent['login'], authent['password']),params=params, verify=False)
+                r = requests.get(url,auth=HTTPBasicAuth(authent['login'], authent['password']), proxies= proxies,params=params, verify=False)
             else :
-                r= requests.post(url,auth=HTTPBasicAuth(authent['login'], authent['password']), data=data,files=files, verify=False)
+                r= requests.post(url,auth=HTTPBasicAuth(authent['login'], authent['password']),proxies= proxies, data=data,files=files, verify=False)
      
             if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
                 RipartServiceRequest.logger.error(r.text)
@@ -58,8 +57,7 @@ class RipartServiceRequest(object):
         
         return  response
     
-    
-    
+ 
     
    
   

@@ -21,7 +21,7 @@ from core.Point import  Point
 
 import errno
 import shutil
-import os
+import os, sys, subprocess
 
 class RipartHelper(object):
     """"
@@ -96,6 +96,8 @@ class RipartHelper(object):
     #xml_Group = "./Map/Import_pour_groupe"
     xml_Group ="Import_pour_groupe"
     xml_Map="./Map"
+    
+    xml_proxy="Proxy"
 
     defaultDate = "1900-01-01 00:00:00"
     defaultPagination=100
@@ -173,6 +175,49 @@ class RipartHelper(object):
             xmlroot =tree.getroot()
             xlogin= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Login,"Serveur"))
             xlogin.text=login 
+            
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+           
+        except Exception as e:
+            RipartHelper.logger.error(e.message)
+            
+       
+    @staticmethod
+    def load_proxy(projectDir):
+        """Retourne le proxy sauvegardé dans le fichier de configuration xml
+        
+        :param projectDir: le chemin vers le répertoire du projet
+        :type projectDir: string
+        """
+        proxy=""
+        try:    
+            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot =tree.getroot()
+            proxy= xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_proxy,"Serveur"))     
+            if proxy==None:
+                proxy=RipartHelper.addXmlElement(projectDir,RipartHelper.xml_proxy,"Serveur")
+                
+        except Exception as e:
+            RipartHelper.logger.error(str(e))
+    
+        return proxy
+    
+    
+    @staticmethod
+    def save_proxy(projectDir,proxy):
+        """Enregistre le proxy dans le fichier de configuration
+        
+        :param projectDir: le chemin vers le répertoire du projet
+        :type projectDir: string
+        
+        :param login: le login
+        :type login: string
+        """
+        try:
+            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot =tree.getroot()
+            xproxy= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_proxy,"Serveur"))
+            xproxy.text=proxy
             
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
            
@@ -733,3 +778,12 @@ class RipartHelper(object):
                     shutil.copy(src, dest)
             else:
                 print('Directory not copied. Error: %s' % e)
+                
+                
+    @staticmethod  
+    def open_file(filename):
+        if sys.platform == "win32":
+            os.startfile(filename)
+        else:
+            opener ="open" if sys.platform == "darwin" else "xdg-open"
+            subprocess.call([opener, filename])

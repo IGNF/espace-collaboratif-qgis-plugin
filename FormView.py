@@ -11,6 +11,7 @@ from PyQt4 import QtGui, uic
 import core.ConstanteRipart as cst
 from core.ClientHelper import ClientHelper
 from Magicwand import Magicwand
+from RipartHelper import RipartHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormView_base.ui'))
 
@@ -109,4 +110,5 @@ class FormView(QtGui.QDialog, FORM_CLASS):
     
     
     def openDoc(self):
-        os.startfile(self.doc)
+        #os.startfile(self.doc)
+        RipartHelper.open_file(self.doc)

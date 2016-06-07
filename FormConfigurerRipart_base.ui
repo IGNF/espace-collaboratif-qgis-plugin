@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>684</width>
-    <height>515</height>
+    <height>582</height>
    </rect>
   </property>
   <property name="font">
@@ -29,7 +29,7 @@
    <property name="geometry">
     <rect>
      <x>330</x>
-     <y>480</y>
+     <y>530</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -47,7 +47,7 @@
      <x>0</x>
      <y>10</y>
      <width>671</width>
-     <height>461</height>
+     <height>471</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout_2">
@@ -123,6 +123,29 @@
        <font>
         <pointsize>10</pointsize>
        </font>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QCheckBox" name="checkBoxPagination">
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Pagination</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QSpinBox" name="spinBoxPagination">
+      <property name="minimum">
+       <number>10</number>
+      </property>
+      <property name="maximum">
+       <number>2147483647</number>
       </property>
      </widget>
     </item>
@@ -349,30 +372,54 @@ en attribut pour les nouveaux croquis</string>
       </column>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="QCheckBox" name="checkBoxPagination">
-      <property name="font">
-       <font>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Pagination</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
-     <widget class="QSpinBox" name="spinBoxPagination">
-      <property name="minimum">
-       <number>10</number>
-      </property>
-      <property name="maximum">
-       <number>2147483647</number>
-      </property>
-     </widget>
-    </item>
    </layout>
+  </widget>
+  <widget class="QLabel" name="lblProxy">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>480</y>
+     <width>251</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Proxy</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEditProxy">
+   <property name="geometry">
+    <rect>
+     <x>275</x>
+     <y>480</y>
+     <width>395</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>2</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="frame">
+    <bool>true</bool>
+   </property>
   </widget>
  </widget>
  <tabstops>

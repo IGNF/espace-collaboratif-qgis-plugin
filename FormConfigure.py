@@ -100,6 +100,10 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
                 
         self.setAttributCroquis()
         
+        proxy=RipartHelper.load_proxy(context.projectDir).text
+        
+        self.lineEditProxy.setText(proxy)
+        
         
     
     def setComboBoxFilter(self):
@@ -323,6 +327,9 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
             checkedItems=self.getCheckedTreeItems()
             for calque in checkedItems:
                 RipartHelper.setAttributsCroquis(self.context.projectDir, calque,checkedItems[calque])
+                
+        #proxy         
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_proxy,self.lineEditProxy.text(),"Serveur")
        
     
     def keyPressEvent(self, event):
