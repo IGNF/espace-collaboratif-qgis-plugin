@@ -224,7 +224,7 @@ class Contexte(object):
         """
         styleFilesDir=self.projectDir + os.path.sep + RipartHelper.qmlStylesDir
         
-        RipartHelper.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.pathsep + RipartHelper.qmlStylesDir,
+        RipartHelper.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep + RipartHelper.qmlStylesDir,
                           styleFilesDir)
         
   
