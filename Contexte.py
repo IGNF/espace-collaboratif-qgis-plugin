@@ -118,10 +118,7 @@ class Contexte(object):
      
             #contrôle l'existence du fichier de configuration
             self.checkConfigFile()      
-            
-            #set proxy
-            #self.proxy = RipartHelper.load_proxy()
-            
+
             #set de la base de données
             self.getOrCreateDatabase()
             
@@ -261,7 +258,7 @@ class Contexte(object):
             self.login = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_Login,"Serveur").text
         
         xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_proxy,"Serveur").text
-        if (xmlproxy== None or str(xmlproxy).strip()!='' ):     
+        if (xmlproxy!= None and str(xmlproxy).strip()!='' ):     
             self.proxy ={'https': str(xmlproxy).strip()}
         else :
             self.proxy = None

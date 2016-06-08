@@ -110,5 +110,4 @@ class FormView(QtGui.QDialog, FORM_CLASS):
     
     
     def openDoc(self):
-        #os.startfile(self.doc)
         RipartHelper.open_file(self.doc)
