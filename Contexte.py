@@ -559,7 +559,7 @@ class Contexte(object):
         """
         mapLayers = self.mapCan.layers()
         for l in mapLayers:
-            if len(l.selectedFeatures())>0:
+            if type(l) is QgsVectorLayer and len(l.selectedFeatures())>0:
                 return True        
         return False    
 
@@ -576,7 +576,8 @@ class Contexte(object):
         listCroquis=[]
         mapLayers = self.mapCan.layers()
         for l in mapLayers:
- 
+            if type(l) is not QgsVectorLayer:
+                continue
             for f in l.selectedFeatures():
                 fattributes= f.attributes()
               
