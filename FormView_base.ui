@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>IGN RIPart : Historique de la remarque</string>
+   <string>IGN RIPart : Historique du signalement</string>
   </property>
   <property name="windowIcon">
    <iconset theme="IGN">
@@ -94,7 +94,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Message de la remarque</string>
+       <string>Message du signalement</string>
       </property>
      </widget>
     </item>

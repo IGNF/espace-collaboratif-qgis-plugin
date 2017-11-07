@@ -205,41 +205,41 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/update.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Télécharger les remarques RIPart'),
+            text=self.tr(u'Télécharger les signalements'),
             callback=self.downloadRemarks,
-            status_tip=self.tr(u'Télécharger les remarques RIPart'),
+            status_tip=self.tr(u'Télécharger les signalements'),
             parent=self.iface.mainWindow())
         
         icon_path = ':/plugins/RipartPlugin/images/viewRem.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Voir la remarque'),
+            text=self.tr(u'Voir le signalement'),
             callback=self.viewRem,
-            status_tip=self.tr(u'Voir la remarque'),
+            status_tip=self.tr(u'Voir le signalement'),
             parent=self.iface.mainWindow())
         
         icon_path = ':/plugins/RipartPlugin/images/answer.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Répondre à une remarque RIPart'),
+            text=self.tr(u'Répondre à un signalement'),
             callback=self.answerToRemark,
-            status_tip=self.tr(u'Répondre à une remarque RIPart'),
+            status_tip=self.tr(u'Répondre à un signalement'),
             parent=self.iface.mainWindow())
         
         icon_path = ':/plugins/RipartPlugin/images/create.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Créer une nouvelle remarque'),
+            text=self.tr(u'Créer un nouveau signalement'),
             callback=self.createRemark,
-            status_tip=self.tr(u'Créer une nouvelle remarque'),
+            status_tip=self.tr(u'Créer un nouveau signalement'),
             parent=self.iface.mainWindow())
         
         icon_path = ':/plugins/RipartPlugin/images/cleaning.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Supprimer les remarques de la carte en cours'),
+            text=self.tr(u'Supprimer les signalements de la carte en cours'),
             callback=self.removeRemarks,
-            status_tip=self.tr(u'Supprimer les remarques de la carte en cours'),
+            status_tip=self.tr(u'Supprimer les signalements de la carte en cours'),
             parent=self.iface.mainWindow())
                
         icon_path = ':/plugins/RipartPlugin/images/magicwand.png'
@@ -314,7 +314,7 @@ class RipartPlugin:
             self.logger.error(e.message)
             self.context.iface.messageBar(). \
             pushMessage("Erreur",
-                         u"Un problème est survenu dans le téléchargement des remarques", \
+                         u"Un problème est survenu dans le téléchargement des signalements", \
                          level=2, duration=10)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
@@ -357,7 +357,7 @@ class RipartPlugin:
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu lors de la création de la remarque", \
+                            u"Un problème est survenu lors de la création du signalement", \
                              level=2, duration=10)
         
     def removeRemarks(self):
@@ -369,7 +369,7 @@ class RipartPlugin:
             self.context= Contexte.getInstance(self,QgsProject)
             if self.context ==None :
                 return 
-            message=u"Êtes-vous sûr de vouloir supprimer les remarques RIPart de la carte en cours?"
+            message=u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
             
             reply= QMessageBox.question(None,'IGN RIPart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
@@ -380,7 +380,7 @@ class RipartPlugin:
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu lors de la suppression des remarques", \
+                            u"Un problème est survenu lors de la suppression des signalements", \
                              level=2, duration=10)
         
 
@@ -409,9 +409,9 @@ class RipartPlugin:
                      
         
     def magicwand(self):
-        """Sélectionne la/les remarque(s) associée(s) au(x) croquis sélectionnés 
-          ou le/les croquis associé(s) à la remarque sélectionnée.
-          On ne peut pas sélectionnner des remarques et des croquis (soit remarques, soit croquis)  
+        """Sélectionne le/les signalement(s) associé(s) au(x) croquis sélectionnés 
+          ou le/les croquis associé(s) au signalement sélectionné.
+          On ne peut pas sélectionnner des signalements et des croquis (soit signalements, soit croquis)  
         """
         try:
             self.context= Contexte.getInstance(self,QgsProject)  
@@ -423,7 +423,7 @@ class RipartPlugin:
     
     
     def viewRem(self):
-        """Visualisation de la remarque  (message, réponses et statut)
+        """Visualisation du signalement (message, réponses et statut)
         """  
         try:
             self.context= Contexte.getInstance(self,QgsProject)  

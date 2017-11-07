@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>IGN RIPart : Créer une nouvelle remarque </string>
+   <string>IGN RIPart : Créer un nouveau signalement</string>
   </property>
   <widget class="QGroupBox" name="groupBoxProfil">
    <property name="geometry">
@@ -274,7 +274,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Nouvelle remarque</string>
+     <string>Nouveau signalement</string>
     </property>
    </widget>
    <widget class="QLabel" name="lblMessageError">
