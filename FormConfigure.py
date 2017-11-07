@@ -137,7 +137,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
        
         maplayers= self.context.mapCan.layers()
         
-        ripartLayers=[RipartHelper.nom_Calque_Remarque,
+        ripartLayers=[RipartHelper.nom_Calque_Signalement,
                      RipartHelper.nom_Calque_Croquis_Ligne,
                      RipartHelper.nom_Calque_Croquis_Fleche,
                      RipartHelper.nom_Calque_Croquis_Point,

@@ -37,7 +37,7 @@ class RipartHelper(object):
     #dossier des fichiers de style .qml
     qmlStylesDir="ripartStyles"          
 
-    nom_Calque_Remarque = "Remarque_Ripart"
+    nom_Calque_Signalement = "Signalement"
     nom_Calque_Croquis_Fleche = "Croquis_Ripart_Fleche"
     nom_Calque_Croquis_Texte = "Croquis_Ripart_Texte"
     nom_Calque_Croquis_Polygone = "Croquis_Ripart_Polygone"
@@ -51,11 +51,11 @@ class RipartHelper(object):
     #liste des nom, car le dictionnaire ne préserve pas l'ordre des éléments
     croquis_layers_name=[nom_Calque_Croquis_Polygone,nom_Calque_Croquis_Ligne,
                     nom_Calque_Croquis_Fleche,nom_Calque_Croquis_Texte,
-                    nom_Calque_Croquis_Point,nom_Calque_Remarque]
+                    nom_Calque_Croquis_Point,nom_Calque_Signalement]
 
-    calque_Remarque_Lyr = "Remarque_Ripart.lyr"
+    calque_Signalement_Lyr = "Signalement.lyr"
 
-    """nom_Champ_IdRemarque = u"N°remarque"
+    """nom_Champ_IdSignalement = u"N°signalement"
     nom_Champ_Auteur = "Auteur"
     nom_Champ_Commune = "Commune"
     nom_Champ_Departement = u"Département"
@@ -72,7 +72,7 @@ class RipartHelper(object):
     nom_Champ_Document = "Document"
     nom_Champ_Autorisation = "Autorisation"
 
-    nom_Champ_LienRemarque = "Lien_remarque"
+    nom_Champ_LienSignalement = "Lien_signalement"
     nom_Champ_NomCroquis = "Nom"
     nom_Champ_Attributs = "Attributs_croquis"
     nom_Champ_LienBDuni = "Lien_object_BDUni"""
@@ -460,12 +460,12 @@ class RipartHelper(object):
          
     @staticmethod    
     def createRemarqueTable(conn):   
-        """Création de la table Remarque_Ripart
+        """Création de la table Signalement
         """
         
-        sql=u"CREATE TABLE Remarque_Ripart (" + \
+        sql=u"CREATE TABLE Signalement (" + \
             u"id INTEGER NOT NULL PRIMARY KEY," + \
-            u"NoRemarque INTEGER,"  + \
+            u"NoSignalement INTEGER,"  + \
             u"Auteur TEXT, " + \
             u"Commune TEXT, " + \
             u"Département TEXT, " + \
@@ -486,7 +486,7 @@ class RipartHelper(object):
         r=cur.execute(sql)
         
         # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('Remarque_Ripart',"
+        sql = "SELECT AddGeometryColumn('Signalement',"
         sql += "'geom', "+str(RipartHelper.epsgCrs)+", 'POINT', 'XY')"
         cur.execute(sql)
         
@@ -512,7 +512,7 @@ class RipartHelper(object):
         
         sql=u"CREATE TABLE "+table+" (" + \
             u"id INTEGER NOT NULL PRIMARY KEY," + \
-            u"NoRemarque INTEGER,"  + \
+            u"NoSignalement INTEGER,"  + \
             u"Nom TEXT ,"+ \
             u"Attributs_croquis,"+ \
             u"Lien_objet_BDUNI TEXT) " 
@@ -554,7 +554,7 @@ class RipartHelper(object):
     
     @staticmethod
     def insertRemarques(conn,rem):
-        """Insertion d'une nouvelle remarque dans la table Remarque_Ripart
+        """Insertion d'une nouvelle remarque dans la table Signalement
         
         @param conn: la connexion à la base de données
         @type conn: 
@@ -585,8 +585,8 @@ class RipartHelper(object):
                 rem.dateValidation=""
                 
              
-            sql=u"INSERT INTO "+ RipartHelper.nom_Calque_Remarque 
-            sql+= u" (NoRemarque, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ," 
+            sql=u"INSERT INTO "+ RipartHelper.nom_Calque_Signalement
+            sql+= u" (NoSignalement, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ," 
             sql+= u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation, geom) "
             sql+= u"VALUES (" 
             sql+= str(rem.id) +", '" 
@@ -619,7 +619,7 @@ class RipartHelper(object):
                 geom=None
              
                 for cr in croquis:
-                    sql="INSERT INTO %s (NoRemarque, Nom,Attributs_croquis,geom) VALUES "
+                    sql="INSERT INTO %s (NoSignalement, Nom,Attributs_croquis,geom) VALUES "
                     if len(cr.points)==0:
                         return
                         
@@ -679,7 +679,6 @@ class RipartHelper(object):
         isWithin=False
         
         for featPoly in featsPoly:
-            #geomPoly = xform.transform(featPoly.geometry())
             geomPoly = featPoly.geometry()
             geomPoly.transform(xform)
             

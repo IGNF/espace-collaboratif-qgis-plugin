@@ -240,7 +240,7 @@ class Client:
 
         
 
-    def getGeoRem(self, idRemarque):
+    def getGeoRem(self, idSignalement):
         """Requête pour récupérer une remarque avec un identifiant donné
         
         :param idRemarque: identifiant de la remarque que l'on souhaite récupérer
@@ -252,7 +252,7 @@ class Client:
         rem =Remarque()
         remarques =[]
         
-        uri =self.__url +"/api/georem/georem_get/" + str(idRemarque)+".xml"
+        uri =self.__url +"/api/georem/georem_get/" + str(idSignalement)+".xml"
         
         data= RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,proxies = self.__proxies) 
         

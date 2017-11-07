@@ -358,10 +358,10 @@ class Contexte(object):
             # creating a Cursor
             cur = self.conn.cursor()
            
-            sql="SELECT name FROM sqlite_master WHERE type='table' AND name='Remarque_Ripart'"  
+            sql="SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"  
             cur.execute(sql)       
             if cur.fetchone() ==None:
-                #create layer Remarque_Ripart
+                #create layer Signalement
                 RipartHelper.createRemarqueTable(self.conn)
             
             for lay in RipartHelper.croquis_layers:  
@@ -475,7 +475,7 @@ class Contexte(object):
         """Supprime toutes les remarques, vide les tables de la base ripart.sqlite 
         """
         ripartLayers= RipartHelper.croquis_layers
-        ripartLayers[RipartHelper.nom_Calque_Remarque]="POINT"
+        ripartLayers[RipartHelper.nom_Calque_Signalement]="POINT"
               
         try:
         
@@ -484,7 +484,7 @@ class Contexte(object):
             for table in ripartLayers:
                 RipartHelper.emptyTable(self.conn, table)
                 
-            ripartLayers.pop(RipartHelper.nom_Calque_Remarque,None)
+            ripartLayers.pop(RipartHelper.nom_Calque_Signalement,None)
              
             self.conn.commit()    
         except RipartException as e:
@@ -514,12 +514,12 @@ class Contexte(object):
         try:
             self.conn= db.connect(self.dbPath)
             
-            sql ="UPDATE "+ RipartHelper.nom_Calque_Remarque+" SET " + \
+            sql ="UPDATE "+ RipartHelper.nom_Calque_Signalement+" SET " + \
                 " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") +"'," + \
                 " Date_validation= '" + rem.getAttribut("dateValidation") +"'," + \
                 " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) +"', " + \
                 " Statut='" + str(cst.STATUT.__getitemFromString__(rem.statut))  +"' " +\
-                " WHERE NoRemarque = " + str(rem.id)
+                " WHERE NoSignalement = " + str(rem.id)
             
             cur= self.conn.cursor()
             cur.execute(sql)
@@ -542,7 +542,7 @@ class Contexte(object):
         :param statut: le statut de la remarque (=code renvoyé par le service)
         :type statut: string
         """ 
-        remLay=self.getLayerByName(RipartHelper.nom_Calque_Remarque)
+        remLay=self.getLayerByName(RipartHelper.nom_Calque_Signalement)
         expression='"Statut" = \''+ statut +'\''
         filtFeatures=remLay.getFeatures(QgsFeatureRequest().setFilterExpression( expression ))
         return len(list(filtFeatures))
@@ -817,20 +817,20 @@ class Contexte(object):
     ################### magicwand  ##################################################
    
         
-    def selectRemarkByNo(self,noRemarques):
+    def selectRemarkByNo(self,noSignalements):
         """Sélection des remarques données par leur no
         
-        :param noRemarques : les no de remarques à sélectionner
-        :type noRemarques: list de string
+        :param noSignalements : les no de signalements à sélectionner
+        :type noSignalements: list de string
         """
         
         self.conn= db.connect(self.dbPath)
         cur = self.conn.cursor()
         
-        table=RipartHelper.nom_Calque_Remarque
+        table=RipartHelper.nom_Calque_Signalement
         lay=self.getLayerByName(table) 
         
-        sql="SELECT * FROM " + table +"  WHERE noRemarque in (" + noRemarques +")"
+        sql="SELECT * FROM " + table +"  WHERE noSignalement in (" + noSignalements +")"
         rows=cur.execute(sql)       
             
         featIds=[]
@@ -844,11 +844,11 @@ class Contexte(object):
        
   
     
-    def getCroquisForRemark(self,noRemarque,croquisSelFeats):
+    def getCroquisForRemark(self,noSignalement,croquisSelFeats):
         """Retourne les croquis associés à une remarque
         
-        :param noRemarque: le no de la remarque 
-        :type noRemarque: int
+        :param noSignalement: le no de la remarque 
+        :type noSignalement: int
         
         :param ccroquisSelFeats: dictionnaire contenant les croquis 
                                  (key: le nom de la table du croquis, value: liste des identifiants de croquis) 
@@ -863,7 +863,7 @@ class Contexte(object):
         cur = self.conn.cursor()
         
         for table in crlayers:
-            sql="SELECT * FROM " + table +"  WHERE noRemarque= " + str(noRemarque)
+            sql="SELECT * FROM " + table +"  WHERE noSignalement= " + str(noSignalement)
             rows=cur.execute(sql)       
             
             featIds=[]

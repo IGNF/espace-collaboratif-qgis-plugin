@@ -45,7 +45,7 @@ class ImporterRipart(object):
         """
         self.context=context
    
-        self.progressMessageBar = self.context.iface.messageBar().createMessage(u"Placement des remarques sur la carte...")
+        self.progressMessageBar = self.context.iface.messageBar().createMessage(u"Placement des signalements sur la carte...")
         self.progress = QProgressBar()
         self.progress.setMaximum(200)        
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)     
@@ -83,7 +83,7 @@ class ImporterRipart(object):
             
         else:
             message="Impossible de déterminer dans le fichier de paramétrage Ripart, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
-                    "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
+                    "Souhaitez-vous poursuivre l'importation des signalements sur la France entière ? "+\
                     "(Cela risque de prendre un certain temps)."
             if self.noFilterWarningDialog(message):
                 bbox= None
@@ -166,7 +166,7 @@ class ImporterRipart(object):
                 self.context.conn.close()
                 
             if cnt>1:                
-                remLayer=self.context.getLayerByName(RipartHelper.nom_Calque_Remarque)
+                remLayer=self.context.getLayerByName(RipartHelper.nom_Calque_Signalement)
                 remLayer.updateExtents()
                 box = remLayer.extent()
                 self.setMapExtent(box)
@@ -244,7 +244,7 @@ class ImporterRipart(object):
                     
         #distance pour le buffer: 10% de la distance minimale (hauteur ou largeur)
         dist= min(new_box.width(),new_box.height())*0.1  
-        #zoom sur la couche Remarque_Ripart
+        #zoom sur la couche Signalement
         self.context.mapCan.setExtent(new_box.buffer(dist))
         
         
@@ -266,12 +266,12 @@ class ImporterRipart(object):
         reject =self.context.countRemarqueByStatut(cst.STATUT.reject.__str__()) 
         valid = self.context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.context.countRemarqueByStatut(cst.STATUT.valid0.__str__())
                 
-        resultMessage="Extraction réussie avec succès de " + str(cnt)+ " remarque(s) RIPart depuis le serveur \n" +\
+        resultMessage="Extraction réussie avec succès de " + str(cnt)+ " signalement(s) depuis le serveur \n" +\
                     "avec la répartition suivante : \n\n"+\
-                    "- "+ str(submit) +" remarque(s) nouvelle(s).\n" +\
-                    "- "+ str(pending) +" remarque(s) en cours de traitement.\n" +\
-                    "- "+ str(valid) +" remarque(s)  validée(s).\n" +\
-                    "- "+ str(reject) +" remarque(s) rejetée(s).\n" 
+                    "- "+ str(submit) +" signalement(s) nouveau(x).\n" +\
+                    "- "+ str(pending) +" signalement(s) en cours de traitement.\n" +\
+                    "- "+ str(valid) +" signalement(s)  validée(s).\n" +\
+                    "- "+ str(reject) +" signalement(s) rejetée(s).\n" 
                               
         resultMessage= ClientHelper.getEncodeType(resultMessage)
                               

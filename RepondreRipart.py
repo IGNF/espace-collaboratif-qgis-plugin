@@ -37,7 +37,7 @@ class RepondreRipart(object):
         
         
     def do(self, isView=False):  
-        """Affichage de la fenêtre de réponse ou de la fenêtre de visualisation de la remarque
+        """Affichage de la fenêtre de réponse ou de la fenêtre de visualisation du signalement
         
         :param isView: true si on veut afficher la fenêtre de visualisation, false pour la fenêtre de réponse
         :type isView: boolean
@@ -45,28 +45,27 @@ class RepondreRipart(object):
         try:
             
             activeLayer = self.context.iface.activeLayer()
-            if activeLayer==None or activeLayer.name() != RipartHelper.nom_Calque_Remarque:
-                self.context.iface.messageBar().pushMessage("Attention", u'Le calque "Remarque_Ripart" doit être le calque actif', level=1, duration=5)
+            if activeLayer==None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
+                self.context.iface.messageBar().pushMessage("Attention", u'Le calque "Signalement" doit être le calque actif', level=1, duration=5)
                 return
             else:
                 #get selected features
                 selFeats = activeLayer.selectedFeatures()
                 
                 if len(selFeats)==0:
-                    self.context.iface.messageBar().pushMessage("Attention", u'Pas de remarque sélectionnée', level=1, duration=10)
+                    self.context.iface.messageBar().pushMessage("Attention", u'Pas de signalement sélectionné', level=1, duration=10)
                     return
                 
        
                 remIds=[]
                 for feat in selFeats:  
-                    remIds.append(feat.attribute('NoRemarque'))
+                    remIds.append(feat.attribute('NoSignalement'))
                     
                 if len(remIds)>1:
                     self.context.iface.messageBar().pushMessage("Attention", 
-                                        u'Plusieurs remarques sélectionnées. Une seule sera prise en compte (remarque no='+str(remIds[0])+')',
+                                        u'Plusieurs signalements sélectionnés. Un seul sera pris en compte (signalement no='+str(remIds[0])+')',
                                         level=1, duration=10)
                     
-            #res=self.context.getConnexionRipart()  
             if  self.context.ripClient == None :
                 self.context.getConnexionRipart()
                 if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
@@ -79,14 +78,14 @@ class RepondreRipart(object):
             remarque= client.getGeoRem(remId)
              
             if remarque.statut.__str__() not in cst.openStatut and not isView:  
-                mess= "Impossible de répondre à la remarque Ripart n°"+ str(remId) + \
-                         ", car elle est clôturée depuis le "+ remarque.dateValidation
+                mess= "Impossible de répondre au signalement n°"+ str(remId) + \
+                         ", car il est clôturé depuis le "+ remarque.dateValidation
                                                     
                 self.context.iface.messageBar().pushMessage("Attention",ClientHelper.getEncodeType(mess), level=1, duration=5)
                 return
                
             if remarque.autorisation not in ["RW","RW+","RW-"] and not isView:
-                mess=u"Vous n'êtes pas autorisé à modifier la remarque Ripart n°"+ str(remId)
+                mess=u"Vous n'êtes pas autorisé à modifier le signalement n°"+ str(remId)
                 self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
                 return
                 
@@ -112,7 +111,7 @@ class RepondreRipart(object):
                                                 ClientHelper.stringToStringType(formReponse.repTitre) ) 
                            
                     self.context.updateRemarqueInSqlite(remMaj)
-                    mess=u"de l'ajout d'une réponse à la remarque Ripart n°" + str(remId) 
+                    mess=u"de l'ajout d'une réponse au signalement n°" + str(remId) 
                     
                     if hasattr(activeLayer, "setCacheImage"):
                         activeLayer.setCacheImage(None)

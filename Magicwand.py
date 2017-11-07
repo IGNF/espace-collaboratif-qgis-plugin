@@ -55,7 +55,7 @@ class Magicwand(object):
         for l in mapLayers:
             if l.name() in RipartHelper.croquis_layers and len(l.selectedFeatures())>0:
                 selectedCroquis=True
-            if l.name()==RipartHelper.nom_Calque_Remarque  and len(l.selectedFeatures())>0:
+            if l.name()==RipartHelper.nom_Calque_Signalement  and len(l.selectedFeatures())>0:
                 selectedRemarque=True
                 
         if selectedCroquis and selectedRemarque:
@@ -88,9 +88,9 @@ class Magicwand(object):
             if l.name() in RipartHelper.croquis_layers and len(l.selectedFeatures())>0:
 
                 for feat in l.selectedFeatures():
-                    idx= l.fieldNameIndex("NoRemarque")
-                    noRemarque= feat.attributes()[idx]
-                    remNos+=str(noRemarque)+","         
+                    idx= l.fieldNameIndex("NoSignalement")
+                    noSignalement= feat.attributes()[idx]
+                    remNos+=str(noSignalement)+","         
                     l.removeSelection()
                         
         self.context.selectRemarkByNo(remNos[:-1])
@@ -100,16 +100,16 @@ class Magicwand(object):
     def selectAssociatedCroquis(self):
         """Sélectionne les croquis associés aux remarques sélectionnées et déselectionne les remarques
         """
-        #key: layer name, value: noRemarque
+        #key: layer name, value: noSignalement
         croquisLays={}
         
-        remarqueLay=self.context.getLayerByName(RipartHelper.nom_Calque_Remarque) 
+        remarqueLay=self.context.getLayerByName(RipartHelper.nom_Calque_Signalement) 
         feats=remarqueLay.selectedFeatures()
         
         for f in feats:
-            idx= remarqueLay.fieldNameIndex("NoRemarque")
-            noRemarque= f.attributes()[idx]
-            croquisLays=self.context.getCroquisForRemark(noRemarque,croquisLays)
+            idx= remarqueLay.fieldNameIndex("NoSignalement")
+            noSignalement= f.attributes()[idx]
+            croquisLays=self.context.getCroquisForRemark(noSignalement,croquisLays)
             
 
         for cr in croquisLays:
