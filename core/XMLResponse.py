@@ -461,18 +461,21 @@ class XMLResponse(object):
             for c in coords:
                 pts=c.text.split(" ")
                 for spt in pts:
-                    pt= Point()
-                    latlon=spt.split(",")  
-                    if len(latlon)==4:
-                        pt.longitude=float(latlon[0] + "."+latlon[1])
-                        pt.latitude=float(latlon[2] + "."+latlon[3])
-                    elif len(latlon)==2:
-                        pt.longitude=float(latlon[0] )
-                        pt.latitude=float(latlon[1] )
+                    try:
+                        pt= Point()
+                        latlon=spt.split(",")  
+                        if len(latlon)==4:
+                            pt.longitude=float(latlon[0] + "."+latlon[1])
+                            pt.latitude=float(latlon[2] + "."+latlon[3])
+                        elif len(latlon)==2:
+                            pt.longitude=float(latlon[0] )
+                            pt.latitude=float(latlon[1] )
                       
-                    if pt.longitude!=None and pt.latitude!=None:  
-                        coordinates += str(pt.longitude) + " "+ str(pt.latitude) + ","
-                        croquis.addPoint(pt) 
+                        if pt.longitude!=None and pt.latitude!=None:  
+                            coordinates += str(pt.longitude) + " "+ str(pt.latitude) + ","
+                            croquis.addPoint(pt) 
+                    except:
+                        continue
                     
             croquis.coordinates= coordinates[:-1]  
 
