@@ -15,8 +15,8 @@ class ThemeAttribut(object):
     theme=""
     nom=""
     valeur=""
-
-  
+    valeurs = []
+    type = None
         
     def __init__(self, theme="", nom="", valeur=""):
         """
@@ -31,3 +31,11 @@ class ThemeAttribut(object):
         self.theme = theme
         self.nom=nom
         self.valeur=valeur
+        
+        self.valeurs = []
+        
+    def addValeur(self, val):
+        self.valeurs.append(val)
+        
+    def setType(self,attType):
+        self.type=attType

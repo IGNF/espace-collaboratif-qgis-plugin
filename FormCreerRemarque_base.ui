@@ -53,15 +53,34 @@
      <attribute name="title">
       <string>Thèmes</string>
      </attribute>
-     <widget class="QListWidget" name="listWidgetThemes">
+     <widget class="QTreeWidget" name="treeWidget">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>0</y>
         <width>391</width>
-        <height>201</height>
+        <height>211</height>
        </rect>
       </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="itemsExpandable">
+       <bool>true</bool>
+      </property>
+      <column>
+       <property name="text">
+        <string>thème</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>attribut</string>
+       </property>
+      </column>
      </widget>
     </widget>
     <widget class="QWidget" name="tabOption">

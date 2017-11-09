@@ -350,7 +350,7 @@ class RipartHelper(object):
             prefThs= xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_Themes+"/"+RipartHelper.xml_Theme,"Map"))
 
             for n in  prefThs:
-                prefThemes.append(n.text)  
+                prefThemes.append(ClientHelper.stringToStringType(n.text))  
          
         except Exception as e:
             RipartHelper.logger.error(str(e))

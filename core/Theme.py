@@ -14,11 +14,11 @@ class Theme(object):
     groupe= Groupe()
     
     #liste d'attributs
-    attributs= []
+    attributs=[]
 
     def __init__(self, params= None):
         """
         Constructor
         """
         self.groupe=Groupe()
-        self.attributs=[]
+        self.attributs= []

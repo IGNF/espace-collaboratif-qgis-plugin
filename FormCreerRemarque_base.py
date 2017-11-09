@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'FormCreerRemarque_base.ui'
 #
-# Created: Wed Oct 28 14:06:03 2015
-#      by: PyQt4 UI code generator 4.11.3
+# Created: Wed Nov 08 12:02:48 2017
+#      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -46,6 +46,24 @@ class Ui_dlgCreateRem(object):
         self.listWidgetThemes = QtGui.QListWidget(self.tabTheme)
         self.listWidgetThemes.setGeometry(QtCore.QRect(0, 0, 391, 201))
         self.listWidgetThemes.setObjectName(_fromUtf8("listWidgetThemes"))
+        self.treeWidget = QtGui.QTreeWidget(self.tabTheme)
+        self.treeWidget.setGeometry(QtCore.QRect(10, 10, 351, 171))
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.treeWidget.sizePolicy().hasHeightForWidth())
+        self.treeWidget.setSizePolicy(sizePolicy)
+        self.treeWidget.setObjectName(_fromUtf8("treeWidget"))
+        self.treeWidget.headerItem().setText(0, _fromUtf8("theme"))
+        item_0 = QtGui.QTreeWidgetItem(self.treeWidget)
+        item_1 = QtGui.QTreeWidgetItem(item_0)
+        item_1.setCheckState(1, QtCore.Qt.Unchecked)
+        item_1 = QtGui.QTreeWidgetItem(item_0)
+        brush = QtGui.QBrush(QtGui.QColor(255, 255, 127))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        item_1.setBackground(1, brush)
+        item_1.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEditable|QtCore.Qt.ItemIsDragEnabled|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
+        item_1 = QtGui.QTreeWidgetItem(item_0)
         self.tabWidget.addTab(self.tabTheme, _fromUtf8(""))
         self.tabOption = QtGui.QWidget()
         self.tabOption.setObjectName(_fromUtf8("tabOption"))
@@ -62,6 +80,7 @@ class Ui_dlgCreateRem(object):
         font.setBold(False)
         font.setWeight(50)
         self.checkBoxJoinCroquis.setFont(font)
+        self.checkBoxJoinCroquis.setChecked(True)
         self.checkBoxJoinCroquis.setObjectName(_fromUtf8("checkBoxJoinCroquis"))
         self.verticalLayout.addWidget(self.checkBoxJoinCroquis)
         self.checkBoxAttDoc = QtGui.QCheckBox(self.verticalLayoutWidget)
@@ -135,6 +154,7 @@ class Ui_dlgCreateRem(object):
         font.setBold(False)
         font.setWeight(50)
         self.lblProfilIcon.setFont(font)
+        self.lblProfilIcon.setText(_fromUtf8(""))
         self.lblProfilIcon.setObjectName(_fromUtf8("lblProfilIcon"))
         self.label = QtGui.QLabel(self.groupBoxProfil)
         self.label.setGeometry(QtCore.QRect(10, 30, 161, 16))
@@ -157,8 +177,16 @@ class Ui_dlgCreateRem(object):
         QtCore.QMetaObject.connectSlotsByName(dlgCreateRem)
 
     def retranslateUi(self, dlgCreateRem):
-        dlgCreateRem.setWindowTitle(_translate("dlgCreateRem", "IGN RIPart : Créer une nouvelle remarque ", None))
+        dlgCreateRem.setWindowTitle(_translate("dlgCreateRem", "IGN RIPart : Créer un nouveau signalement", None))
         self.groupBoxProfil.setTitle(_translate("dlgCreateRem", "Profil", None))
+        self.treeWidget.headerItem().setText(1, _translate("dlgCreateRem", "att", None))
+        __sortingEnabled = self.treeWidget.isSortingEnabled()
+        self.treeWidget.setSortingEnabled(False)
+        self.treeWidget.topLevelItem(0).setText(0, _translate("dlgCreateRem", "th1", None))
+        self.treeWidget.topLevelItem(0).child(0).setText(0, _translate("dlgCreateRem", "possible?", None))
+        self.treeWidget.topLevelItem(0).child(1).setText(0, _translate("dlgCreateRem", "comment", None))
+        self.treeWidget.topLevelItem(0).child(2).setText(0, _translate("dlgCreateRem", "liste", None))
+        self.treeWidget.setSortingEnabled(__sortingEnabled)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTheme), _translate("dlgCreateRem", "Thèmes", None))
         self.checkBoxJoinCroquis.setText(_translate("dlgCreateRem", "Joindre un croquis", None))
         self.checkBoxAttDoc.setText(_translate("dlgCreateRem", "Joindre un document", None))
@@ -167,6 +195,5 @@ class Ui_dlgCreateRem(object):
         self.radioBtnMultiple.setText(_translate("dlgCreateRem", "Créer remarques distinctes", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabOption), _translate("dlgCreateRem", "Options", None))
         self.lblMessage.setText(_translate("dlgCreateRem", "Message", None))
-        self.lblProfilIcon.setText(_translate("dlgCreateRem", "TextLabel", None))
-        self.label.setText(_translate("dlgCreateRem", "Nouvelle remarque", None))
+        self.label.setText(_translate("dlgCreateRem", "Nouveau signalement", None))
 

@@ -227,20 +227,41 @@ class XMLResponse(object):
         """
         
         themes=[]
-       
-        try:            
+        themesAttDict= {}
+        
+        try: 
+            
+            thAttributs = []
+            thAttNodes = self.root.findall('THEMES/ATTRIBUT')
+            for attNode in thAttNodes :
+                         
+                nomTh = ClientHelper.stringToStringType(attNode.find('NOM').text)
+                nomAtt = attNode.find('ATT').text
+                attType = attNode.find('TYPE').text
+                
+                thAttribut = ThemeAttribut(nomTh,nomAtt,None)
+                thAttribut.setType(attType)
+                
+                for val in attNode.findall('VALEURS/VAL'):
+                    thAttribut.addValeur(val.text)
+
+                thAttributs.append(thAttribut)
+                if nomTh not in themesAttDict:
+                    themesAttDict[nomTh] = []
+                themesAttDict[nomTh].append(thAttribut)
+                
+                #self.logger.debug("THEMEATTRIBUTS:"+ str(thAttribut))
+                
             nodes =self.root.findall('THEMES/THEME')      
     
             for node in nodes :
                 theme = Theme()
                 theme.groupe= Groupe()       
                 theme.groupe.nom = (node.find('NOM')).text
-                theme.groupe.id = (node.find('ID_GEOGROUPE')).text                         
+                theme.groupe.id = (node.find('ID_GEOGROUPE')).text 
+                if ClientHelper.stringToStringType(theme.groupe.nom) in themesAttDict:
+                    (theme.attributs).extend(themesAttDict[ClientHelper.stringToStringType(theme.groupe.nom)])
                 themes.append(theme)
-            
-            """attributs = self.root.findall('ATTRIBUTE')
-            for attribut in attributs :
-                att="1"""
                 
         except Exception as e:
             self.logger.error(str(e) )

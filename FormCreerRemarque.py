@@ -87,20 +87,65 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
           
         #les noms des thèmes préférés (du fichier de configuration)
         preferredThemes= RipartHelper.load_preferredThemes(self.context.projectDir)
-        #print preferredThemes
+            
+     
+        
+        
+        self.treeWidget.setColumnWidth(0,160)
+        self.treeWidget.setColumnWidth(1,150)
         
         if len(profil.themes)>0:
             #boucle sur tous les thèmes du profil
             for th in profil.themes:
-                item= QListWidgetItem()
-                item.setData(Qt.DisplayRole,th.groupe.nom)
                 
-                if th.groupe.nom in preferredThemes:
-                    item.setData(Qt.CheckStateRole, Qt.Checked)
-                else : 
-                    item.setData(Qt.CheckStateRole, Qt.Unchecked)
-                    
-                self.listWidgetThemes.addItem(item)
+                thItem= QtGui.QTreeWidgetItem(self.treeWidget)
+              
+                
+                thItem.setText(0,th.groupe.nom)
+                
+                self.treeWidget.addTopLevelItem(thItem)
+                
+                if ClientHelper.stringToStringType(th.groupe.nom) in preferredThemes:
+                    thItem.setCheckState(0,Qt.Checked)
+                    thItem.setExpanded(True)
+                else:
+                    thItem.setCheckState(0,Qt.Unchecked)
+                
+                
+                for att in th.attributs:
+                    attLabel = att.nom
+                    attType = att.type
+                    attVal = att.valeurs[0]
+            
+                    if attType == "text": 
+                        label = QtGui.QLabel(att.nom,self.treeWidget)
+                        valeur = QtGui.QLineEdit(self.treeWidget)
+                        valeur.setText(attVal)
+                        txtItem =  QtGui.QTreeWidgetItem()
+                        thItem.addChild(txtItem)
+                        self.treeWidget.setItemWidget(txtItem, 0, label)
+                        self.treeWidget.setItemWidget(txtItem, 1, valeur)    
+                    elif attType == "checkbox" :
+                        label = QtGui.QLabel(att.nom,self.treeWidget)
+                        valeur = QtGui.QCheckBox(self.treeWidget)
+                        if attVal == 'True' : valeur.setChecked(True)
+                        else: valeur.setChecked(False)
+                        
+                        attItem =  QtGui.QTreeWidgetItem()
+                        thItem.addChild(attItem)
+                        self.treeWidget.setItemWidget(attItem, 0, label)
+                        self.treeWidget.setItemWidget(attItem, 1, valeur)  
+                    else:
+                        label = QtGui.QLabel(att.nom,self.treeWidget)
+                        listAtt = QtGui.QComboBox(self.treeWidget)
+                        attItem =  QtGui.QTreeWidgetItem()
+                        
+                        listAtt.insertItems(0,att.valeurs)
+                        
+                        thItem.addChild(attItem)
+                        self.treeWidget.setItemWidget(attItem, 0, label)
+                        self.treeWidget.setItemWidget(attItem, 1, listAtt)  
+  
                 
         self.profilThemesList=profil.themes   
    
