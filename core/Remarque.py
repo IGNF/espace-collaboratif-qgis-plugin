@@ -132,7 +132,19 @@ class Remarque(object):
         
         for t in self.themes:
             if isinstance(t, Theme):           
-                result += ClientHelper.getValForDB(t.groupe.nom)+"|"
+                result += ClientHelper.getValForDB(t.groupe.nom)
+                
+                #attributs du thème
+                z=0
+                for att in t.attributs:
+                    if z==0:
+                        result += "(" 
+                        z+=1
+                    result += att.nom + "=" + att.valeur +","
+                if z>0:
+                    result = result[:-1]
+                    result += ")"
+                result += "|"
                 
         return result[:-1]         
                 

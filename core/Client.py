@@ -148,7 +148,7 @@ class Client:
         :type parameters : dictionary
         """   
         #progressbar pour le chargement des remarques
-        self.progressMessageBar = self.iface.messageBar().createMessage(u"Téléchargement des remarques depuis le serveur ...")
+        self.progressMessageBar = self.iface.messageBar().createMessage(u"Téléchargement des signalements depuis le serveur ...")
         self.progress = QProgressBar()
      
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)

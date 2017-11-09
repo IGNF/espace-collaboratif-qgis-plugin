@@ -10,6 +10,7 @@ from Profil import Profil
 import ConstanteRipart as cst
 from Remarque import Remarque
 from Theme import Theme
+from ThemeAttribut import ThemeAttribut
 from Point import Point
 from Auteur import Auteur
 from Croquis import Croquis
@@ -236,6 +237,10 @@ class XMLResponse(object):
                 theme.groupe.nom = (node.find('NOM')).text
                 theme.groupe.id = (node.find('ID_GEOGROUPE')).text                         
                 themes.append(theme)
+            
+            """attributs = self.root.findall('ATTRIBUTE')
+            for attribut in attributs :
+                att="1"""
                 
         except Exception as e:
             self.logger.error(str(e) )
@@ -323,6 +328,13 @@ class XMLResponse(object):
                     
                     theme = Theme()
                     theme.groupe = Groupe(idGroupe, nomGroupe)
+                    
+                    for att in th.findall('ATTRIBUT'):
+                        nomAtt=att.attrib["nom"]
+                        valAtt=att.text
+                        attribut= ThemeAttribut(nomGroupe, nomAtt, valAtt)
+                        theme.attributs.append(attribut)
+                    
                     themes.append(theme)
                     
                 rem.themes= themes

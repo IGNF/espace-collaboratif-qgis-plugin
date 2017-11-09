@@ -11,7 +11,7 @@
 name=IGN_Ripart
 qgisMinimumVersion=2.4
 description=IGN_Ripart
-version=1.0.3
+version=2.0
 
 author=alexia chang-wailing
 email=service-client@ign.fr

@@ -560,7 +560,7 @@ class RipartHelper(object):
         @type conn: 
         
         @param rem: la remarque à ajouter
-        @type rem: Reamarque  
+        @type rem: Remarque  
         """
         RipartHelper.logger.debug("insertRemarques")
         
