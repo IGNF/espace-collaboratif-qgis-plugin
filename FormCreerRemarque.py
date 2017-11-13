@@ -20,6 +20,7 @@ import core.ConstanteRipart as cst
 from core.Theme import Theme
 from core.Groupe import Groupe
 from RipartHelper import RipartHelper
+from core.ThemeAttribut import ThemeAttribut
 
 
 FORM_CLASS , _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
@@ -79,31 +80,25 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
         
         self.groupBoxProfil.setTitle(profil.auteur.nom + " (" + profil.geogroupe.nom + ")")
         
-        """data = urllib.urlopen(profil.logo).read()
-        pixmap= QPixmap()
-        pixmap.loadFromData(data)
-        pixmap=pixmap.scaled(41,41,Qt.KeepAspectRatio )   
-        self.lblProfilIcon.setPixmap(pixmap)"""
-          
         #les noms des thèmes préférés (du fichier de configuration)
         preferredThemes= RipartHelper.load_preferredThemes(self.context.projectDir)
             
-     
-        
-        
+        #largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
         self.treeWidget.setColumnWidth(0,160)
         self.treeWidget.setColumnWidth(1,150)
+
         
         if len(profil.themes)>0:
             #boucle sur tous les thèmes du profil
             for th in profil.themes:
-                
+                #ajout du thème dans le treeview
                 thItem= QtGui.QTreeWidgetItem(self.treeWidget)
-              
-                
-                thItem.setText(0,th.groupe.nom)
-                
+                thItem.setText(0,th.groupe.nom)    
+                thItem.setText(1,th.groupe.id)
                 self.treeWidget.addTopLevelItem(thItem)
+                
+                #Pour masquer la 2ème colonne (qui contient le groupe id)
+                thItem.setTextColor(1,QtGui.QColor(255,255,255,0))
                 
                 if ClientHelper.stringToStringType(th.groupe.nom) in preferredThemes:
                     thItem.setCheckState(0,Qt.Checked)
@@ -111,7 +106,7 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
                 else:
                     thItem.setCheckState(0,Qt.Unchecked)
                 
-                
+                #ajout des attributs du thème
                 for att in th.attributs:
                     attLabel = att.nom
                     attType = att.type
@@ -128,8 +123,10 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
                     elif attType == "checkbox" :
                         label = QtGui.QLabel(att.nom,self.treeWidget)
                         valeur = QtGui.QCheckBox(self.treeWidget)
-                        if attVal == 'True' : valeur.setChecked(True)
-                        else: valeur.setChecked(False)
+                        if attVal == 'True' : 
+                            valeur.setChecked(True)
+                        else:
+                            valeur.setChecked(False)
                         
                         attItem =  QtGui.QTreeWidgetItem()
                         thItem.addChild(attItem)
@@ -169,13 +166,33 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
         """Retourne la liste des thèmes (objets de type THEME) sélectionnés
         """
         selectedThemes=[]
-  
-        for i in range(0,len(self.listWidgetThemes)) :
-            it=self.listWidgetThemes.item(i)
-            if it.checkState()==Qt.Checked:
-                themeObj=self._getThemeObject(it.text())
-                selectedThemes.append(themeObj)
+        
+        root = self.treeWidget.invisibleRootItem()
+        for i in range(root.childCount()):
+            thItem = root.child(i)
+   
+            if thItem.checkState(0)  == Qt.Checked :
+                theme = Theme()
+                theme.groupe.nom = thItem.text(0)
+                theme.groupe.id = thItem.text(1)
                 
+                for j in range(thItem.childCount()):
+                    
+                    att = thItem.child(j)
+                    label = self.treeWidget.itemWidget(att,0).text()
+                    widg = self.treeWidget.itemWidget(att,1)
+                    if type(widg) == QtGui.QCheckBox :
+                        val = widg.checkState()
+                    elif type(widg) == QtGui.QLineEdit :
+                        val = widg.text() 
+                    else :
+                        val = widg.currentText()
+      
+                    attribut = ThemeAttribut(theme.groupe.nom,ClientHelper.stringToStringType(label), str(val) )
+                    theme.attributs.append(attribut)
+
+                selectedThemes.append(theme)               
+            
         return selectedThemes
     
     

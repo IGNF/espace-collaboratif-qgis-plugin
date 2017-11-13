@@ -347,7 +347,16 @@ class Client:
                     nom= ET.SubElement(th,"NOM")
                     nom.text=t.groupe.nom"""
                     
-                    attributes +=  '"' + t.groupe.id + "::" + t.groupe.nom + "\"=>\"1\","
+                    groupeIdAndNom = '"' + t.groupe.id + "::" + t.groupe.nom 
+                    
+                    attributes +=  groupeIdAndNom + "\"=>\"1\","
+                    
+                    for at in t.attributs :
+                        attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
+                    
+                    """attributes = attributes[:-1]
+                    attributes += u"\n"""
+                        
                     
                 attributes = attributes[:-1]
                 params["attributes"]=attributes
@@ -383,6 +392,8 @@ class Client:
                     files = {"upload"+str(docCnt):  open(ClientHelper.stringToStringType(document), 'rb')}
 
    
+            # raise Exception("TEST")
+        
             #envoi de la requête
             uri = self.__url +"/api/georem/georem_post.xml"
             

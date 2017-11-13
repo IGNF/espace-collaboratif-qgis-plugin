@@ -35,7 +35,7 @@ class CreerRipart(object):
             hasSelectedFeature=self.context.hasMapSelectedFeatures()
        
             if  not hasSelectedFeature:
-                RipartHelper.showMessageBox(u"Aucun object sélectionné.\nIl est donc impossible de déterminer le point d'application de la nouvelle remarque à créer.")
+                RipartHelper.showMessageBox(u"Aucun object sélectionné.\nIl est donc impossible de déterminer le point d'application du nouveau signalement à créer.")
                 return    #si pas d'objet sélectionné, on arrête le processus
             
  
@@ -64,7 +64,7 @@ class CreerRipart(object):
               
         except Exception as e:
             self.logger.error(e.message)
-            self.context.iface.messageBar().pushMessage("", u"Problème dans la création de remarque(s)",level=2, duration =15)  
+            self.context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)",level=2, duration =15)  
             
          
         
@@ -84,6 +84,7 @@ class CreerRipart(object):
             tmpRem.setCommentaire(formCreate.textEditMessage.toPlainText())
             
             selectedThemes= formCreate.getSelectedThemes()
+            
             RipartHelper.save_preferredThemes(self.context.projectDir,selectedThemes)
             
             tmpRem.addThemeList(selectedThemes)  
@@ -99,7 +100,7 @@ class CreerRipart(object):
             if formCreate.isSingleRemark():  
                 remarqueNouvelle=self._prepareAndSendRemark(tmpRem,croquisList,formCreate.optionWithCroquis())
                 if remarqueNouvelle==None:
-                    self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création de la remarque",level=2, duration =15)  
+                    self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création du signalement ",level=2, duration =15)  
                      
                 listNewRemIds.append(remarqueNouvelle.id)        
             
@@ -111,17 +112,17 @@ class CreerRipart(object):
                     tmpRem.clearCroquis()
                     remarqueNouvelle=self._prepareAndSendRemark(tmpRem,[cr],formCreate.optionWithCroquis())
                     if remarqueNouvelle==None:                 
-                        self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création d'une remarque",level=2, duration =15)  
+                        self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création d'un signalement",level=2, duration =15)  
                         continue
                     
                     listNewRemIds.append(remarqueNouvelle.id)
    
             self.context.refresh_layers()
           
-            RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouvelle(s) remarque(s) RIPart") 
+            RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouveau(x) signalement(s)") 
              
         except Exception as e:
-            self.logger.error("in _createNewRemark "+ e.message)
+            self.logger.error("in _createNewRemark "+ str(e.message))
         
         finally:
             self.context.conn.close()   
@@ -162,7 +163,7 @@ class CreerRipart(object):
         remarqueNouvelle=client.createRemarque(tmpRem) 
         
         
-        self.logger.info(u"Succès de la création de la nouvelle remarque n°" + str(remarqueNouvelle.id))
+        self.logger.info(u"Succès de la création du nouveau signalement n°" + str(remarqueNouvelle.id))
         
         RipartHelper.insertRemarques(self.context.conn, remarqueNouvelle)
         self.context.conn.commit()
