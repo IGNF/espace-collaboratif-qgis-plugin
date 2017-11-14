@@ -353,11 +353,7 @@ class Client:
                     
                     for at in t.attributs :
                         attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
-                    
-                    """attributes = attributes[:-1]
-                    attributes += u"\n"""
-                        
-                    
+
                 attributes = attributes[:-1]
                 params["attributes"]=attributes
             

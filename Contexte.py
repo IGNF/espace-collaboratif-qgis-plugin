@@ -513,20 +513,19 @@ class Contexte(object):
         """
         try:
             self.conn= db.connect(self.dbPath)
-            
-            sql ="UPDATE "+ RipartHelper.nom_Calque_Signalement+" SET " + \
-                " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") +"'," + \
-                " Date_validation= '" + rem.getAttribut("dateValidation") +"'," + \
-                " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) +"', " + \
-                " Statut='" + str(cst.STATUT.__getitemFromString__(rem.statut))  +"' " +\
-                " WHERE NoSignalement = " + str(rem.id)
-            
+                          
+            sql = "UPDATE "+ RipartHelper.nom_Calque_Signalement+" SET "
+            sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") +"'," 
+            sql += " Date_validation= '" + rem.getAttribut("dateValidation") +"'," 
+            sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) +"', "
+            sql += " Statut='" + rem.statut  +"' "
+            sql += " WHERE NoSignalement = " + rem.id
+             
             cur= self.conn.cursor()
             cur.execute(sql)
             
             self.conn.commit()
             
-
         except Exception as e :
             self.logger.error(e.message)
             raise
