@@ -45,8 +45,9 @@ class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
         self.btnCancel.clicked.connect(self.cancel)
         self.btnCancel.button(QDialogButtonBox.Cancel).setText("Annuler")
         
-        for i in range(0,9) :
-            self.cboxStatut.addItem(cst.statutLibelle[i],i)
+        for i in range(0,9):
+            if cst.statutLibelle[i]!="En attente de validation":
+                self.cboxStatut.addItem(cst.statutLibelle[i],i)
           
         
     
