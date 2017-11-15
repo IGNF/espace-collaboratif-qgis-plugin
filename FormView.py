@@ -41,8 +41,11 @@ class FormView(QtGui.QDialog, FORM_CLASS):
         self.textEditCntCroquisDetail.setFrameStyle(QtGui.QFrame.NoFrame)
         self.textEditCntCroquisDetail.viewport().setAutoFillBackground(False)
         
-        self.btnDoc.clicked.connect(self.openDoc)
-    
+        self.btnDoc.clicked.connect(lambda:self.openDoc(0))
+        self.btnDoc_2.clicked.connect(lambda:self.openDoc(1))
+        self.btnDoc_3.clicked.connect(lambda:self.openDoc(2))
+        self.btnDoc_4.clicked.connect(lambda:self.openDoc(3))
+     
        
         
     def setRemarque(self,remarque):
@@ -54,11 +57,18 @@ class FormView(QtGui.QDialog, FORM_CLASS):
             self.textOldRep.setHtml(ClientHelper.getEncodeType(remarque.concatenateReponseHTML()))
             self.remarqueId= remarque.id
             
-            self.doc=remarque.getFirstDocument()
-            self.btnDoc.setText("Pas de document joint")
+            self.doc=remarque.getAllDocuments()
+            
             if self.doc !="":
-                self.btnDoc.setText("Voir document joint")
                 self.btnDoc.setEnabled(True)
+                self.docs = self.doc.split()
+
+                for i in range(2,len(self.docs)+1):
+                    btn= self.findChild(QtGui.QPushButton, "btnDoc_"+ str(i))
+                    #btn.setText("Document 1")
+                    btn.setEnabled(True)
+                   
+                
             
         except Exception as e:
             self.logger.error("setRemarque")
@@ -109,5 +119,7 @@ class FormView(QtGui.QDialog, FORM_CLASS):
             self.logger.error("deselectCroquis "+ e.message)
     
     
-    def openDoc(self):
-        RipartHelper.open_file(self.doc)
+    def openDoc(self, n):
+        RipartHelper.open_file(self.docs[n])
+            
+            

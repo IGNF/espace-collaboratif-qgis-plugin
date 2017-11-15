@@ -151,13 +151,13 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>399</y>
-     <width>151</width>
+     <y>400</y>
+     <width>75</width>
      <height>23</height>
     </rect>
    </property>
    <property name="text">
-    <string>Voir document joint</string>
+    <string>Document 1</string>
    </property>
   </widget>
   <widget class="QLabel" name="lblCntCroquis">
@@ -221,12 +221,63 @@
     <bool>true</bool>
    </property>
   </widget>
+  <widget class="QPushButton" name="btnDoc_2">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>400</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Document 2</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnDoc_3">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>400</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Document3</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnDoc_4">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>400</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Document 4</string>
+   </property>
+  </widget>
   <zorder>btnDoc</zorder>
   <zorder>lblCntCroquis</zorder>
   <zorder>btnCroquis</zorder>
   <zorder>textEditCntCroquisDetail</zorder>
   <zorder>btnCancel</zorder>
   <zorder>verticalLayoutWidget</zorder>
+  <zorder>btnDoc_2</zorder>
+  <zorder>btnDoc_3</zorder>
+  <zorder>btnDoc_4</zorder>
  </widget>
  <resources/>
  <connections>

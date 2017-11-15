@@ -603,7 +603,7 @@ class RipartHelper(object):
             sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.concatenateReponse()) +"', '" )
             sql+= ClientHelper.getEncodeType(rem.getAttribut("lien") +"', '" )
             sql+= ClientHelper.getEncodeType(rem.getAttribut("lienPrive") +"', '" )
-            sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.getFirstDocument()) +"', '" )
+            sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.getAllDocuments()) +"', '" )
             sql+= ClientHelper.getEncodeType(rem.getAttribut("autorisation") + "', ") 
             sql+= ClientHelper.getEncodeType(geom +")")
                

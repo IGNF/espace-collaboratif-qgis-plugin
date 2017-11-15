@@ -186,7 +186,17 @@ class Remarque(object):
             return ""
         else :
             return self.documents[0].text
-         
+    
+    def getAllDocuments(self):
+        """Retourne les documents attachés à la remarque (s'il y en a)
+        """
+        if len(self.documents)==0 :
+            return ""
+        else :
+            docs=""
+            for i in range(len(self.documents)):
+                docs += self.documents[i].text + " "
+            return docs[:-1]     
     
     
     def concatenateReponseHTML(self):
