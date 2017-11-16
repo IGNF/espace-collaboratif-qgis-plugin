@@ -338,7 +338,7 @@ class Client:
             if themes!= None and len(themes)>0:
                 doc = ET.Element("THEMES")
                 
-                attributes =""
+                attributes = ""
                 
                 for t in themes:
                     """th= ET.SubElement(doc,"THEME")
@@ -347,15 +347,15 @@ class Client:
                     nom= ET.SubElement(th,"NOM")
                     nom.text=t.groupe.nom"""
                     
-                    groupeIdAndNom = '"' + t.groupe.id + "::" + t.groupe.nom 
+                    groupeIdAndNom = ClientHelper.stringToStringType ('"' + t.groupe.id + "::" + t.groupe.nom )
                     
-                    attributes +=  groupeIdAndNom + "\"=>\"1\","
+                    attributes +=  ClientHelper.stringToStringType(groupeIdAndNom + "\"=>\"1\",")
                     
                     for at in t.attributs :
                         attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
 
                 attributes = attributes[:-1]
-                params["attributes"]=attributes
+                params["attributes"]= attributes
             
             
             #ajout des croquis
@@ -388,7 +388,7 @@ class Client:
                     files = {"upload"+str(docCnt):  open(ClientHelper.stringToStringType(document), 'rb')}
 
    
-            # raise Exception("TEST")
+            #raise Exception("TEST")
         
             #envoi de la requête
             uri = self.__url +"/api/georem/georem_post.xml"

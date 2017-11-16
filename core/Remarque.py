@@ -140,7 +140,7 @@ class Remarque(object):
                     if z==0:
                         result += "(" 
                         z+=1
-                    result += att.nom + "=" + att.valeur +","
+                    result += ClientHelper.getValForDB(att.nom + "=" + att.valeur +",")
                 if z>0:
                     result = result[:-1]
                     result += ")"

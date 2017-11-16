@@ -250,7 +250,6 @@ class XMLResponse(object):
                     themesAttDict[nomTh] = []
                 themesAttDict[nomTh].append(thAttribut)
                 
-                #self.logger.debug("THEMEATTRIBUTS:"+ str(thAttribut))
                 
             nodes =self.root.findall('THEMES/THEME')      
     
