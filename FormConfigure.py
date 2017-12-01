@@ -5,7 +5,7 @@ Created on 20 oct. 2015
 @author: AChang-Wailing
 '''
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import calendar
 
 from PyQt4 import QtGui, uic
@@ -89,6 +89,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         self.calendarWidget.currentPageChanged.connect(self.dateMYChanged)
           
         self.spinBox.setValue(cntDays)
+        self.spinBox.valueChanged.connect(self.spinboxChanged)
         
         self.setComboBoxFilter()
          
@@ -375,3 +376,14 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         cntDays= abs((dt- date).days)
         
         return cntDays
+    
+    def spinboxChanged(self):
+        """Action lors d'un changement du nb de jours
+           =>Modification de la date
+        """
+        delta = self.spinBox.value()
+        now = datetime.now().date()
+        calendarDate = now - timedelta(days=delta)
+        self.calendarWidget.setSelectedDate(calendarDate)
+        
+        
