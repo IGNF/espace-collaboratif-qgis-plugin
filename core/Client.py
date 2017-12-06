@@ -21,12 +21,14 @@ from Remarque import Remarque
 from RipartServiceRequest import RipartServiceRequest
 from XMLResponse import XMLResponse
 from ClientHelper import ClientHelper
+from NoProfileException import NoProfileException
 
 from RipartLoggerCl import RipartLogger
 
 import requests
 from requests.auth import HTTPBasicAuth
 import os
+
 
 
 class Client:
@@ -158,6 +160,7 @@ class Client:
         self.progress.setValue(0)
                 
         result = self.__getGeoRemsTotal(parameters)
+
         total = int(result["total"])   #nb de remarques récupérées
         sdate = result["sdate"];    #date de la réponse du serveur
         
@@ -203,9 +206,10 @@ class Client:
           
         xml = XMLResponse(data)
         errMessage = xml.checkResponseValidity()
+        
 
         count=int(pagination)
-      
+
         if errMessage['code'] =='OK':
             total = int(xml.getTotalResponse())
             sdate = xml.getDate();
@@ -215,28 +219,34 @@ class Client:
                 progressMax = int(pagination)
             else:
                 progressMax= total
-                
+                    
             self.progress.setMaximum(progressMax)
             self.progress.setValue(count)
-     
+         
             while (total - count)  > 0:
-                
+                    
                 parameters["offset"]= count.__str__()
-             
+                 
                 data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",authent=self.__auth,proxies = self.__proxies,params=parameters)
-                
+                    
                 xml = XMLResponse(data)
-                
+                    
                 count += int(pagination)
-                
+                    
                 errMessage2 = xml.checkResponseValidity()
                 if errMessage2['code'] =='OK':
                     dicoRems.update(xml.extractRemarques())          
-                    
-            
-                self.progress.setValue(count)
+                        
                 
-        return {'total':total, 'sdate': sdate, 'dicoRems':dicoRems}
+                self.progress.setValue(count)
+            
+                    
+            return {'total':total, 'sdate': sdate, 'dicoRems':dicoRems}
+        
+        else:
+            err =errMessage.get('message')
+            raise NoProfileException(err)
+       
 
         
 
@@ -383,8 +393,7 @@ class Client:
                         raise Exception("Le fichier "+ document + " est de taille supérieure à " + \
                                         str(ConstanteRipart.MAX_TAILLE_UPLOAD_FILE))  
          
-                    #fname=os.path.basename(document)
-  
+                  
                     files = {"upload"+str(docCnt):  open(ClientHelper.stringToStringType(document), 'rb')}
 
    

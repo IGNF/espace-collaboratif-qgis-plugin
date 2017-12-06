@@ -78,7 +78,10 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
 
         profil= self.context.client.getProfil()
         
-        self.groupBoxProfil.setTitle(profil.auteur.nom + " (" + profil.geogroupe.nom + ")")
+        if profil.geogroupe.nom !=None :
+            self.groupBoxProfil.setTitle(profil.auteur.nom + " (" + profil.geogroupe.nom + ")")
+        else:
+            self.groupBoxProfil.setTitle(profil.auteur.nom + u" (Profil par défaut)")
         
         #les noms des thèmes préférés (du fichier de configuration)
         preferredThemes= RipartHelper.load_preferredThemes(self.context.projectDir)

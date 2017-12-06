@@ -47,7 +47,7 @@ from CreerRipart import CreerRipart
 import core.ConstanteRipart as cst
 from Magicwand import Magicwand
 from RipartHelper import RipartHelper
-
+from core.NoProfileException import NoProfileException
 
 class RipartPlugin:
     """QGIS Plugin Implementation."""
@@ -310,6 +310,14 @@ class RipartPlugin:
                  
             importRipart= ImporterRipart(self.context)
             importRipart.doImport()
+        except NoProfileException as e:
+            self.context.iface.messageBar().clearWidgets()
+            self.logger.error(e.message)
+            self.context.iface.messageBar(). \
+            pushMessage("Remarque",
+                         e.message, \
+                         level=1, duration=20)
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
         except Exception as e:
             self.logger.error(e.message)
             self.context.iface.messageBar(). \

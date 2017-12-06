@@ -19,7 +19,7 @@ from core.Box import Box
 from core.Client import Client
 from core.ClientHelper import ClientHelper
 import core.ConstanteRipart as cst
-
+from core.NoProfileException import NoProfileException
 
 class ImporterRipart(object):
     """Importation des remarques dans le projet QGIS
@@ -66,6 +66,9 @@ class ImporterRipart(object):
             if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
                 self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)            
                 return
+        
+        if self.context.profil.geogroupe.nom == None :
+            raise NoProfileException(u"Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
         
         self.context.addRipartLayersToMap()
         
@@ -122,7 +125,6 @@ class ImporterRipart(object):
            
             
         rems = self.context.client.getGeoRems(params)
-        #rems = self.context.client.getRemarques(self.context.profil.zone, bbox, pagination,date, groupId)
 
         self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
         self.progress.setValue(100)
