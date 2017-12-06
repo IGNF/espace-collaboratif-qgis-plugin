@@ -16,6 +16,7 @@ import os.path
 import shutil
 import ntpath
 from pyspatialite import dbapi2 as db
+import ConfigParser
 
 
 from  RipartHelper import  RipartHelper
@@ -109,8 +110,9 @@ class Contexte(object):
   
         self.spatialRef = QgsCoordinateReferenceSystem( RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
         
-      
-         
+        #version in metadata
+        cst.RIPART_CLIENT_VERSION = self.getMetadata('general','version')
+        
         try:
             #set du répertoire et fichier du projet qgis
             self.setProjectParams(QgsProject)
@@ -153,7 +155,14 @@ class Contexte(object):
         except Exception as e:
             self.logger.error("init contexte:" + e.message)
             raise
-
+    
+    def getMetadata(self,category, param):
+       
+        config = ConfigParser.RawConfigParser()
+        config.read(self.plugin_path + '\\metadata.txt')
+        return config.get('general', 'version')
+    
+   
     
     @staticmethod    
     def getInstance(QObject=None,QgsProject=None):

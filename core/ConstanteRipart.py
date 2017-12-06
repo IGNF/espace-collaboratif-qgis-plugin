@@ -6,7 +6,7 @@ Created on 23 janv. 2015
 '''
 from Enum import Enum
 
-#import os
+
 '''
 constantes
 '''
@@ -22,7 +22,7 @@ RIPART_CLIENT_PROTOCOL = "_RIPART_QGIS_99712"
 
 
 #Définition donnant la version de ce programme.
-RIPART_CLIENT_VERSION = "1_0_0"
+RIPART_CLIENT_VERSION = ""
 
 
 
@@ -69,7 +69,7 @@ ZoneGeographique = Enum ("UNDEFINED",
                          "NCL",  
                          #Polynesie Française   
                          "PYF",    
-                         #R�union       
+                         #Réunion       
                          "REU",    
                          #Saint-Pierre et Miquelon    
                          "SPM",  
@@ -79,6 +79,7 @@ ZoneGeographique = Enum ("UNDEFINED",
 namespace={'gml':'http://www.opengis.net/gml'}      
 
 helpFile="Manuel utilisateur plugin RIPart pour QGIS.pdf"    
+
 
 
 def statuts():
