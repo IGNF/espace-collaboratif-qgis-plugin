@@ -55,15 +55,15 @@
   </edittypes>
   <renderer-v2 attr="Statut" symbollevels="0" type="categorizedSymbol">
     <categories>
-      <category render="true" symbol="0" value="submit" label="Reçue dans nos services"/>
+      <category render="true" symbol="0" value="submit" label="Reçu dans nos services"/>
       <category render="true" symbol="1" value="pending" label="En cours de traitement"/>
       <category render="true" symbol="2" value="pending0" label="Demande de qualification"/>
       <category render="true" symbol="3" value="pending1" label="En attente de saisie"/>
       <category render="true" symbol="4" value="pending2" label="En attente de validation"/>
-      <category render="true" symbol="5" value="valid" label="Prise en compte"/>
-      <category render="true" symbol="6" value="valid0" label="Déjà prise en compte"/>
-      <category render="true" symbol="7" value="reject" label="Rejetée (hors spec.)"/>
-      <category render="true" symbol="8" value="reject0" label="Rejetée (hors propos)"/>
+      <category render="true" symbol="5" value="valid" label="Pris en compte"/>
+      <category render="true" symbol="6" value="valid0" label="Déjà pris en compte"/>
+      <category render="true" symbol="7" value="reject" label="Rejeté (hors spec.)"/>
+      <category render="true" symbol="8" value="reject0" label="Rejeté (hors propos)"/>
     </categories>
     <symbols>
       <symbol alpha="1" type="marker" name="0">

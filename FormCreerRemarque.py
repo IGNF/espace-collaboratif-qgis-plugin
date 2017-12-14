@@ -185,13 +185,13 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
                     label = self.treeWidget.itemWidget(att,0).text()
                     widg = self.treeWidget.itemWidget(att,1)
                     if type(widg) == QtGui.QCheckBox :
-                        val = widg.checkState()
+                        val = str(widg.checkState())
                     elif type(widg) == QtGui.QLineEdit :
                         val = widg.text() 
                     else :
                         val = widg.currentText()
       
-                    attribut = ThemeAttribut(theme.groupe.nom,ClientHelper.stringToStringType(label), str(val) )
+                    attribut = ThemeAttribut(theme.groupe.nom,ClientHelper.stringToStringType(label), ClientHelper.stringToStringType(val) )
                     theme.attributs.append(attribut)
 
                 selectedThemes.append(theme)               

@@ -272,8 +272,8 @@ class ImporterRipart(object):
                     "avec la répartition suivante : \n\n"+\
                     "- "+ str(submit) +" signalement(s) nouveau(x).\n" +\
                     "- "+ str(pending) +" signalement(s) en cours de traitement.\n" +\
-                    "- "+ str(valid) +" signalement(s)  validée(s).\n" +\
-                    "- "+ str(reject) +" signalement(s) rejetée(s).\n" 
+                    "- "+ str(valid) +" signalement(s)  validé(s).\n" +\
+                    "- "+ str(reject) +" signalement(s) rejeté(s).\n" 
                               
         resultMessage= ClientHelper.getEncodeType(resultMessage)
                               

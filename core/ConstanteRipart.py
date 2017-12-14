@@ -35,20 +35,20 @@ RIPART_QUESTION_POST = "geoquestion_post";
 RIPART_QUESTION_GET = "geoquestion_get";
 
 
-STATUT=  Enum( "undefined","submit","pending","pending0", "pending1","pending2","valid","valid0","reject","reject0") 
+STATUT=  Enum( "undefined","submit","pending","pending0", "pending1","valid","valid0","reject","reject0","pending2") 
 
 openStatut = [STATUT.undefined.__str__(),STATUT.submit.__str__(),STATUT.pending.__str__(),STATUT.pending0.__str__(),
                STATUT.pending1.__str__(),STATUT.pending2.__str__()]
 
-statutLibelle=[u"Reçue dans nos services",
+statutLibelle=[u"Reçu dans nos services",
                u"En cours de traitement",
                u"Demande de qualification",
-               u"En attente de saisie",
-               u"En attente de validation",
-               u"Prise en compte",
-               u"Déjà prise en compte",
-               u"Rejetée (hors spec.)",
-               u"Rejetée (hors propos)"]
+               u"En attente de saisie",  
+               u"Pris en compte",
+               u"Déjà pris en compte",
+               u"Rejeté (hors spec.)",
+               u"Rejeté (hors propos)",
+               u"En attente de validation"]
 
 
 
@@ -87,11 +87,11 @@ def statuts():
              STATUT.pending.__str__(),
              STATUT.pending0.__str__(),
              STATUT.pending1.__str__(),
-             STATUT.pending2.__str__(),
              STATUT.valid.__str__(),
              STATUT.valid0.__str__(),
              STATUT.reject.__str__(),
-             STATUT.reject0.__str__()
+             STATUT.reject0.__str__(),
+             STATUT.pending2.__str__()
              ]
     return statuts
     
