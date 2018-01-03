@@ -49,6 +49,8 @@ from Magicwand import Magicwand
 from RipartHelper import RipartHelper
 from core.NoProfileException import NoProfileException
 
+import logging
+
 class RipartPlugin:
     """QGIS Plugin Implementation."""
     
@@ -279,14 +281,44 @@ class RipartPlugin:
        
         
     def unload(self):
+        
+        log = logging.getLogger()
+        
+        logs = logging.Logger.manager.loggerDict
+        cntLogs = len(logs)
+        
+        for lg in logs:
+            logger = logs[lg]
+            if isinstance(logger,logging.Logger) :
+                handlers = logger.handlers
+                cntHandlers = len(logger.handlers)
+                for i in range(cntHandlers-1,-1,-1):
+                   try:
+                       if  os.path.basename(handlers[i].baseFilename)[-10:] == u"ripart.log" :
+                           handlers[i].close()
+                           logger.removeHandler(handlers[i])
+                   except AttributeError as e:
+                       continue        
+        
+        logdir =os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs') #'C:/Users/AChang-Wailing/.qgis2/python/plugins/RipartPlugin/logs'
+        if os.path.exists(logdir):
+            for f in os.listdir(logdir):  
+                    file = open(os.path.join(logdir,f),'r+')
+                    file.close()
+                    try:        
+                        os.remove(os.path.join(logdir,f))
+                    except Exception as e:
+                        e=e.message
+            
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&IGN_Ripart'),
                 action)
             self.iface.removeToolBarIcon(action)
-
-
+            #action.setVisible(False)
+        del self.toolbar
+            
 
     def run(self):
         """Fenêtre de connexion"""
@@ -498,6 +530,7 @@ class RipartPlugin:
         logpath=self.ripartLogger.getLogpath()
         if logpath!=None:
             RipartHelper.open_file(logpath)
+          
   
   
     
