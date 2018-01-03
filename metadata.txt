@@ -24,7 +24,7 @@ date=14/12/2017
 
 # Uncomment the following line and add your changelog:
 changelog=
-1.0.3 : update install instructions in doc
+2.0 : handle alert attributes, diplay and upload up to 4 attached files, bug fixes...
 
 # Tags are comma separated with spaces allowed
 tags=
