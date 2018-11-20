@@ -4,12 +4,14 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
+from __future__ import absolute_import
 
+from builtins import object
 from datetime import datetime
 import xml.etree.cElementTree as et
-from Groupe import *
-from Auteur import *
-import ConstanteRipart
+from .Groupe import *
+from .Auteur import *
+from . import ConstanteRipart
 
 
 

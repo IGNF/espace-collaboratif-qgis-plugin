@@ -4,22 +4,25 @@ Created on 8 oct. 2015
 
 @author: AChang-Wailing
 '''
+from __future__ import absolute_import
 
-from core.RipartLoggerCl import RipartLogger
+from builtins import str
+from builtins import object
+from .core.RipartLoggerCl import RipartLogger
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import *
-from PyQt4.QtGui import QMessageBox,QComboBox
+from qgis.PyQt import QtCore, QtGui
+from PyQt5.QtCore import *
+from qgis.PyQt.QtWidgets import QMessageBox, QComboBox
 from qgis.core import  QgsGeometry
 from qgis.gui import QgsMessageBar
 
-from RipartHelper import RipartHelper
-from core.Box import Box
-from core.Client import Client
-from core.ClientHelper import ClientHelper
-import core.ConstanteRipart as cst
-from FormRepondre import FormRepondreDialog
-from FormView import FormView
+from .RipartHelper import RipartHelper
+from .core.Box import Box
+from .core.Client import Client
+from .core.ClientHelper import ClientHelper
+from .core import ConstanteRipart as cst
+from .FormRepondre import FormRepondreDialog
+from .FormView import FormView
 
 class RepondreRipart(object):
     """"Classe pour les réponses Ripart
@@ -119,10 +122,10 @@ class RepondreRipart(object):
                     activeLayer.removeSelection()
                    
                     
-                    self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
+                    self.context.iface.messageBar().pushMessage(u"Succès", mess, level=2, duration=15)
                
         except Exception as e:
-            self.logger.error(e.message + ";" + str(type(e)) + " " +str(e))
+            self.logger.error(format(e) + ";" + str(type(e)) + " " +str(e))
             raise
         
        

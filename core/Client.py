@@ -5,33 +5,36 @@ Created on 22 janv. 2015
 
 @author: AChang-Wailing
 '''
+#from __future__ import absolute_import
 
+from builtins import str
+from builtins import object
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 import re
 import time
 import os.path
 
-from PyQt4.QtGui import QMessageBox, QProgressBar
-from PyQt4.QtCore import *
+from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
+from PyQt5.QtCore import *
 
-import ConstanteRipart
-from Enum import Enum
-from Remarque import Remarque
-from RipartServiceRequest import RipartServiceRequest
-from XMLResponse import XMLResponse
-from ClientHelper import ClientHelper
-from NoProfileException import NoProfileException
+from . import ConstanteRipart
+from .Enum import Enum
+from .Remarque import Remarque
+from .RipartServiceRequest import RipartServiceRequest
+from .XMLResponse import XMLResponse
+from .ClientHelper import ClientHelper
+from .NoProfileException import NoProfileException
 
-from RipartLoggerCl import RipartLogger
+from .RipartLoggerCl import RipartLogger
 
-import requests
-from requests.auth import HTTPBasicAuth
+from . import requests
+from .requests.auth import HTTPBasicAuth
 import os
 
 
 
-class Client:
+class Client(object):
     """"
     Cette classe sert de client pour le service RIPart
     """
@@ -84,8 +87,8 @@ class Client:
             r= requests.get(self.__url, proxies=self.__proxies,auth=HTTPBasicAuth(self.__login, self.__password))
                     
         except Exception as e:         
-            self.logger.error(e.message)
-            raise Exception(e.message)
+            self.logger.error(format(e))
+            raise Exception(format(e))
         
         return self
     
@@ -115,13 +118,17 @@ class Client:
         profil= None
 
         self.logger.debug("getProfilFromService " + self.__url +"/api/georem/geoaut_get.xml")
-
+        self.logger.debug("login is:" + self.__login + "," +  self.__password)
 
         data =  requests.get(self.__url +"/api/georem/geoaut_get.xml", 
                              auth=HTTPBasicAuth(self.__login, self.__password),
                              proxies= self.__proxies)   
 
+        #self.logger.debug("data auth :"+data.text)
+        self.logger.debug("data auth ")
         xml = XMLResponse(data.text)
+  
+        
         errMessage = xml.checkResponseValidity()
         
         if errMessage['code'] =='OK':
@@ -156,7 +163,8 @@ class Client:
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
        
         self.progressMessageBar.layout().addWidget(self.progress)
-        self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
+        #self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
+        self.iface.messageBar().pushWidget(self.progressMessageBar, level=2)
         self.progress.setValue(0)
                 
         result = self.__getGeoRemsTotal(parameters)
@@ -176,7 +184,7 @@ class Client:
 
         
         # tri des remarques par ordre décroissant d'id
-        dicoRems= OrderedDict(sorted(result['dicoRems'].items(), key=lambda t: t[0],reverse=True))
+        dicoRems= OrderedDict(sorted(list(result['dicoRems'].items()), key=lambda t: t[0],reverse=True))
                  
         return dicoRems
 
@@ -275,7 +283,7 @@ class Client:
            
             if int(total) == 1:
                 remarques = xmlResponse.extractRemarques()
-                rem=remarques.values()[0]    
+                rem=list(remarques.values())[0]    
                 
         return rem
         
@@ -313,7 +321,7 @@ class Client:
                 rems =[]
                 rems= xmlResponse.extractRemarques()
                 if len(rems) ==1:
-                    remModif=rems.values()[0]
+                    remModif=list(rems.values())[0]
                 else:
                     raise Exception("Problème survenu lors de l'ajout d'une réponse")
        
@@ -410,7 +418,7 @@ class Client:
             if errMessage['code'] =='OK': 
                 rems= xmlResponse.extractRemarques()
                 if len(rems)==1:
-                    rem =rems.values()[0]
+                    rem =list(rems.values())[0]
                 else :
                     self.logger.error("Problème lors de l'ajout de la remarque")
                     raise Exception("Problème lors de l'ajout de la remarque")

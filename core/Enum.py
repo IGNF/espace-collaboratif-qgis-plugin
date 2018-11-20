@@ -4,8 +4,12 @@
 Taken from http://code.activestate.com/recipes/413486-first-class-enums-in-python/
 (released under PSF license)
 """
+from __future__ import print_function
 
 
+from past.builtins import cmp
+from builtins import str
+from builtins import object
 def Enum(*names):
     ##assert names, "Empty enums are not supported" # <- Don't like empty enums? Uncomment!
 
@@ -37,7 +41,7 @@ def Enum(*names):
             assert self.EnumType is other.EnumType, "Only values from the same enum are comparable"
             return cmp(self.__value, other.__value)
         def __invert__(self):      return constants[maximum - self.__value]
-        def __nonzero__(self):     return bool(self.__value)
+        def __bool__(self):     return bool(self.__value)
         def __repr__(self):        return str(names[self.__value])
         
         
@@ -54,24 +58,40 @@ def Enum(*names):
 
 
 
-if __name__ == '__main__':
-    print '\n*** Enum Demo ***'
-    print '--- Days of week ---'
-    Days = Enum('Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su')
-    print Days
-    print Days.Mo
-    print Days.Fr
-    print Days.Mo < Days.Fr
-    print list(Days)
-    for each in Days:
-        print 'Day:', each
-    print '--- Yes/No ---'
+"""if __name__ == '__main__':
+    # fix_print_with_import
+    print('\n*** Enum Demo ***')
+    # fix_print_with_import
+    # fix_print_with_import
+print('--- Days of week ---')
+Days = Enum('Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su')
+    # fix_print_with_import
+    # fix_print_with_import
+print(Days)
+    # fix_print_with_import
+    # fix_print_with_import
+print(Days.Mo)
+    # fix_print_with_import
+    # fix_print_with_import
+print(Days.Fr)
+    # fix_print_with_import
+    # fix_print_with_import
+print(Days.Mo < Days.Fr)
+    # fix_print_with_import
+    # fix_print_with_import
+print(list(Days))
+for each in Days:
+        # fix_print_with_import
+    print('Day:', each)
+    # fix_print_with_import
+    print('--- Yes/No ---')
     Confirmation = Enum('No', 'Yes')
     answer = Confirmation.No
-    print 'Your answer is not', ~answer
+    # fix_print_with_import
+    # fix_print_with_import
+print('Your answer is not', ~answer)"""
 
-    def __init__(self, params):
-        '''
-        Constructor
-        '''
+def __init__(self, params):
+    """ Constructor """
+
         

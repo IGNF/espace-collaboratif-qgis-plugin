@@ -2,95 +2,61 @@
 
 # Form implementation generated from reading ui file 'FormConnexion_dialog_base.ui'
 #
-# Created: Mon Mar 14 14:40:35 2016
-#      by: PyQt4 UI code generator 4.11.3
+# Created by: PyQt5 UI code generator 5.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt4 import QtCore, QtGui
-
-try:
-    _fromUtf8 = QtCore.QString.fromUtf8
-except AttributeError:
-    def _fromUtf8(s):
-        return s
-
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig)
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_RipartPlugin(object):
     def setupUi(self, RipartPlugin):
-        RipartPlugin.setObjectName(_fromUtf8("RipartPlugin"))
-        RipartPlugin.resize(401, 184)
+        RipartPlugin.setObjectName("RipartPlugin")
+        RipartPlugin.resize(401, 156)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/images/ign.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/ign.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         RipartPlugin.setWindowIcon(icon)
         RipartPlugin.setAutoFillBackground(False)
         RipartPlugin.setSizeGripEnabled(True)
         RipartPlugin.setModal(True)
-        self.btnConnect = QtGui.QPushButton(RipartPlugin)
+        self.btnConnect = QtWidgets.QPushButton(RipartPlugin)
         self.btnConnect.setGeometry(QtCore.QRect(230, 70, 75, 23))
-        self.btnConnect.setObjectName(_fromUtf8("btnConnect"))
-        self.lblLogin = QtGui.QLabel(RipartPlugin)
+        self.btnConnect.setObjectName("btnConnect")
+        self.lblLogin = QtWidgets.QLabel(RipartPlugin)
         self.lblLogin.setGeometry(QtCore.QRect(111, 11, 61, 16))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lblLogin.setFont(font)
-        self.lblLogin.setObjectName(_fromUtf8("lblLogin"))
-        self.lblPwd = QtGui.QLabel(RipartPlugin)
+        self.lblLogin.setObjectName("lblLogin")
+        self.lblPwd = QtWidgets.QLabel(RipartPlugin)
         self.lblPwd.setGeometry(QtCore.QRect(111, 40, 111, 16))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lblPwd.setFont(font)
-        self.lblPwd.setObjectName(_fromUtf8("lblPwd"))
-        self.lineEditLogin = QtGui.QLineEdit(RipartPlugin)
+        self.lblPwd.setObjectName("lblPwd")
+        self.lineEditLogin = QtWidgets.QLineEdit(RipartPlugin)
         self.lineEditLogin.setGeometry(QtCore.QRect(230, 11, 161, 20))
-        self.lineEditLogin.setObjectName(_fromUtf8("lineEditLogin"))
-        self.lineEditPwd = QtGui.QLineEdit(RipartPlugin)
+        self.lineEditLogin.setObjectName("lineEditLogin")
+        self.lineEditPwd = QtWidgets.QLineEdit(RipartPlugin)
         self.lineEditPwd.setGeometry(QtCore.QRect(230, 40, 161, 20))
-        self.lineEditPwd.setEchoMode(QtGui.QLineEdit.Password)
-        self.lineEditPwd.setObjectName(_fromUtf8("lineEditPwd"))
-        self.btnCancel = QtGui.QPushButton(RipartPlugin)
+        self.lineEditPwd.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.lineEditPwd.setObjectName("lineEditPwd")
+        self.btnCancel = QtWidgets.QPushButton(RipartPlugin)
         self.btnCancel.setGeometry(QtCore.QRect(310, 70, 75, 23))
-        self.btnCancel.setObjectName(_fromUtf8("btnCancel"))
-        self.label = QtGui.QLabel(RipartPlugin)
+        self.btnCancel.setObjectName("btnCancel")
+        self.label = QtWidgets.QLabel(RipartPlugin)
         self.label.setGeometry(QtCore.QRect(20, 20, 46, 13))
-        self.label.setText(_fromUtf8(""))
-        self.label.setPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/icon.png")))
-        self.label.setObjectName(_fromUtf8("label"))
-        self.label_2 = QtGui.QLabel(RipartPlugin)
+        self.label.setText("")
+        self.label.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/icon.png"))
+        self.label.setObjectName("label")
+        self.label_2 = QtWidgets.QLabel(RipartPlugin)
         self.label_2.setGeometry(QtCore.QRect(10, 0, 101, 111))
-        self.label_2.setText(_fromUtf8(""))
-        self.label_2.setPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/RipartPlugin/images/logo_IGN.png")))
+        self.label_2.setText("")
+        self.label_2.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
         self.label_2.setScaledContents(True)
-        self.label_2.setObjectName(_fromUtf8("label_2"))
-        self.lblErreur = QtGui.QLabel(RipartPlugin)
-        self.lblErreur.setGeometry(QtCore.QRect(10, 100, 381, 41))
-        palette = QtGui.QPalette()
-        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.WindowText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.WindowText, brush)
-        brush = QtGui.QBrush(QtGui.QColor(120, 120, 120))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
-        self.lblErreur.setPalette(palette)
-        font = QtGui.QFont()
-        font.setFamily(_fromUtf8("MS Sans Serif"))
-        font.setPointSize(8)
-        font.setBold(True)
-        font.setWeight(75)
-        self.lblErreur.setFont(font)
-        self.lblErreur.setObjectName(_fromUtf8("lblErreur"))
-        self.textError = QtGui.QTextEdit(RipartPlugin)
-        self.textError.setGeometry(QtCore.QRect(0, 110, 401, 71))
+        self.label_2.setObjectName("label_2")
+        self.textError = QtWidgets.QTextEdit(RipartPlugin)
+        self.textError.setEnabled(True)
+        self.textError.setGeometry(QtCore.QRect(0, 110, 401, 41))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
@@ -98,43 +64,54 @@ class Ui_RipartPlugin(object):
         brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Text, brush)
+        brush = QtGui.QBrush(QtGui.QColor(240, 240, 240))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
         brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.WindowText, brush)
         brush = QtGui.QBrush(QtGui.QColor(255, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Text, brush)
+        brush = QtGui.QBrush(QtGui.QColor(240, 240, 240))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
         brush = QtGui.QBrush(QtGui.QColor(120, 120, 120))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
         brush = QtGui.QBrush(QtGui.QColor(120, 120, 120))
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Text, brush)
+        brush = QtGui.QBrush(QtGui.QColor(240, 240, 240))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
         self.textError.setPalette(palette)
         font = QtGui.QFont()
-        font.setFamily(_fromUtf8("MS Sans Serif"))
+        font.setFamily("MS Sans Serif")
         font.setBold(True)
         font.setWeight(75)
         self.textError.setFont(font)
+        self.textError.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.textError.setLineWidth(0)
         self.textError.setReadOnly(True)
-        self.textError.setObjectName(_fromUtf8("textError"))
+        self.textError.setObjectName("textError")
 
         self.retranslateUi(RipartPlugin)
-        QtCore.QObject.connect(RipartPlugin, QtCore.SIGNAL(_fromUtf8("accepted()")), self.btnConnect.click)
+        RipartPlugin.accepted.connect(self.btnConnect.click)
         QtCore.QMetaObject.connectSlotsByName(RipartPlugin)
 
     def retranslateUi(self, RipartPlugin):
-        RipartPlugin.setWindowTitle(_translate("RipartPlugin", "Connexion au service Ripart", None))
-        self.btnConnect.setWhatsThis(_translate("RipartPlugin", "<html><head/><body><p>connexion au service</p></body></html>", None))
-        self.btnConnect.setText(_translate("RipartPlugin", "Connecter", None))
-        self.lblLogin.setText(_translate("RipartPlugin", "Votre login", None))
-        self.lblPwd.setText(_translate("RipartPlugin", "Votre mot de passe", None))
-        self.btnCancel.setText(_translate("RipartPlugin", "Annuler", None))
-        self.lblErreur.setText(_translate("RipartPlugin", "Message d\'erreur", None))
+        _translate = QtCore.QCoreApplication.translate
+        RipartPlugin.setWindowTitle(_translate("RipartPlugin", "Connexion au service RIPart"))
+        self.btnConnect.setWhatsThis(_translate("RipartPlugin", "<html><head/><body><p>connexion au service</p></body></html>"))
+        self.btnConnect.setText(_translate("RipartPlugin", "Connecter"))
+        self.lblLogin.setText(_translate("RipartPlugin", "Votre login"))
+        self.lblPwd.setText(_translate("RipartPlugin", "Votre mot de passe"))
+        self.btnCancel.setText(_translate("RipartPlugin", "Annuler"))
         self.textError.setHtml(_translate("RipartPlugin", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Sans Serif\'; font-size:8.25pt; font-weight:600; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p></body></html>", None))
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p></body></html>"))
 
 import resources_rc

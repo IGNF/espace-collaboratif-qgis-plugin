@@ -4,15 +4,18 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 """
+from __future__ import absolute_import
 
-from Point import Point
-import ConstanteRipart
-from  Groupe import Groupe
-from Auteur import Auteur
-from Theme  import Theme
+from builtins import range
+from builtins import object
+from .Point import Point
+from . import ConstanteRipart
+from  .Groupe import Groupe
+from .Auteur import Auteur
+from .Theme  import Theme
 from datetime import datetime
-from ClientHelper import ClientHelper
-from RipartLoggerCl import RipartLogger
+from .ClientHelper import ClientHelper
+from .RipartLoggerCl import RipartLogger
 
 class Remarque(object):
     """
@@ -251,7 +254,7 @@ class Remarque(object):
                     else : 
                         self.logger.error("No message in response "+ self.id)
                 except Exception as e:
-                    self.logger.error(e.message)
+                    self.logger.error(format(e))
                     
             
         return concatenate

@@ -6,6 +6,7 @@ Created on 30 sept. 2015
 '''
 
 
+from builtins import object
 class ClientHelper(object):
     '''
     Méthodes utiles
@@ -27,10 +28,11 @@ class ClientHelper(object):
     def getEncodeType(val):
         """Retourne une valeur unicode à partir d'un texte (unicode ou string)
         """
+        
         if val==None:
             return u""
-        elif type(val)==type('str'):
-            return val.decode('utf8')
+        #elif type(val)==type('str'):
+        #   return val.decode('utf8')
         else :
             return val
         

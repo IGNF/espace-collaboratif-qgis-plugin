@@ -2,107 +2,106 @@
 
 # Form implementation generated from reading ui file 'FormRepondre_base.ui'
 #
-# Created: Fri Oct 09 07:59:34 2015
-#      by: PyQt4 UI code generator 4.11.3
+# Created by: PyQt5 UI code generator 5.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt4 import QtCore, QtGui
-
-try:
-    _fromUtf8 = QtCore.QString.fromUtf8
-except AttributeError:
-    def _fromUtf8(s):
-        return s
-
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig)
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_addResponse(object):
     def setupUi(self, addResponse):
-        addResponse.setObjectName(_fromUtf8("addResponse"))
-        addResponse.resize(360, 473)
-        icon = QtGui.QIcon.fromTheme(_fromUtf8("IGN"))
+        addResponse.setObjectName("addResponse")
+        addResponse.resize(360, 521)
+        icon = QtGui.QIcon.fromTheme("IGN")
         addResponse.setWindowIcon(icon)
-        self.btnCancel = QtGui.QDialogButtonBox(addResponse)
-        self.btnCancel.setGeometry(QtCore.QRect(280, 440, 75, 23))
+        self.btnCancel = QtWidgets.QDialogButtonBox(addResponse)
+        self.btnCancel.setGeometry(QtCore.QRect(280, 490, 75, 23))
         self.btnCancel.setOrientation(QtCore.Qt.Horizontal)
-        self.btnCancel.setStandardButtons(QtGui.QDialogButtonBox.Cancel)
+        self.btnCancel.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel)
         self.btnCancel.setCenterButtons(False)
-        self.btnCancel.setObjectName(_fromUtf8("btnCancel"))
-        self.btnSend = QtGui.QPushButton(addResponse)
-        self.btnSend.setGeometry(QtCore.QRect(130, 440, 141, 23))
-        self.btnSend.setObjectName(_fromUtf8("btnSend"))
-        self.lblStatut = QtGui.QLabel(addResponse)
+        self.btnCancel.setObjectName("btnCancel")
+        self.btnSend = QtWidgets.QPushButton(addResponse)
+        self.btnSend.setGeometry(QtCore.QRect(130, 490, 141, 23))
+        self.btnSend.setObjectName("btnSend")
+        self.lblStatut = QtWidgets.QLabel(addResponse)
         self.lblStatut.setGeometry(QtCore.QRect(10, 10, 61, 16))
         font = QtGui.QFont()
         font.setPointSize(11)
         font.setBold(True)
         font.setWeight(75)
         self.lblStatut.setFont(font)
-        self.lblStatut.setObjectName(_fromUtf8("lblStatut"))
-        self.cboxStatut = QtGui.QComboBox(addResponse)
+        self.lblStatut.setObjectName("lblStatut")
+        self.cboxStatut = QtWidgets.QComboBox(addResponse)
         self.cboxStatut.setGeometry(QtCore.QRect(70, 10, 271, 22))
-        self.cboxStatut.setObjectName(_fromUtf8("cboxStatut"))
-        self.lblMessage = QtGui.QLabel(addResponse)
+        self.cboxStatut.setObjectName("cboxStatut")
+        self.lblMessage = QtWidgets.QLabel(addResponse)
         self.lblMessage.setGeometry(QtCore.QRect(10, 50, 331, 16))
         font = QtGui.QFont()
         font.setPointSize(11)
         font.setBold(True)
         font.setWeight(75)
         self.lblMessage.setFont(font)
-        self.lblMessage.setObjectName(_fromUtf8("lblMessage"))
-        self.textMessage = QtGui.QTextBrowser(addResponse)
+        self.lblMessage.setObjectName("lblMessage")
+        self.textMessage = QtWidgets.QTextBrowser(addResponse)
         self.textMessage.setGeometry(QtCore.QRect(10, 70, 341, 91))
         font = QtGui.QFont()
         font.setPointSize(8)
         self.textMessage.setFont(font)
-        self.textMessage.setObjectName(_fromUtf8("textMessage"))
-        self.lblOldResponse = QtGui.QLabel(addResponse)
+        self.textMessage.setObjectName("textMessage")
+        self.lblOldResponse = QtWidgets.QLabel(addResponse)
         self.lblOldResponse.setGeometry(QtCore.QRect(10, 180, 331, 16))
         font = QtGui.QFont()
         font.setPointSize(11)
         font.setBold(True)
         font.setWeight(75)
         self.lblOldResponse.setFont(font)
-        self.lblOldResponse.setObjectName(_fromUtf8("lblOldResponse"))
-        self.textOldRep = QtGui.QTextBrowser(addResponse)
-        self.textOldRep.setGeometry(QtCore.QRect(10, 200, 341, 91))
+        self.lblOldResponse.setObjectName("lblOldResponse")
+        self.textOldRep = QtWidgets.QTextBrowser(addResponse)
+        self.textOldRep.setGeometry(QtCore.QRect(10, 200, 341, 101))
         font = QtGui.QFont()
         font.setPointSize(8)
         self.textOldRep.setFont(font)
-        self.textOldRep.setObjectName(_fromUtf8("textOldRep"))
-        self.lblNewResponse = QtGui.QLabel(addResponse)
+        self.textOldRep.setObjectName("textOldRep")
+        self.lblNewResponse = QtWidgets.QLabel(addResponse)
         self.lblNewResponse.setGeometry(QtCore.QRect(10, 310, 331, 16))
         font = QtGui.QFont()
         font.setPointSize(11)
         font.setBold(True)
         font.setWeight(75)
         self.lblNewResponse.setFont(font)
-        self.lblNewResponse.setObjectName(_fromUtf8("lblNewResponse"))
-        self.textNewRep = QtGui.QTextBrowser(addResponse)
-        self.textNewRep.setGeometry(QtCore.QRect(10, 330, 341, 91))
+        self.lblNewResponse.setObjectName("lblNewResponse")
+        self.textNewRep = QtWidgets.QTextBrowser(addResponse)
+        self.textNewRep.setGeometry(QtCore.QRect(10, 370, 341, 101))
         font = QtGui.QFont()
         font.setPointSize(8)
         self.textNewRep.setFont(font)
         self.textNewRep.setReadOnly(False)
-        self.textNewRep.setObjectName(_fromUtf8("textNewRep"))
+        self.textNewRep.setObjectName("textNewRep")
+        self.lblTitre = QtWidgets.QLabel(addResponse)
+        self.lblTitre.setGeometry(QtCore.QRect(10, 340, 51, 16))
+        font = QtGui.QFont()
+        font.setPointSize(11)
+        font.setBold(True)
+        font.setItalic(True)
+        font.setWeight(75)
+        self.lblTitre.setFont(font)
+        self.lblTitre.setObjectName("lblTitre")
+        self.textTitre = QtWidgets.QLineEdit(addResponse)
+        self.textTitre.setGeometry(QtCore.QRect(60, 340, 291, 21))
+        self.textTitre.setObjectName("textTitre")
 
         self.retranslateUi(addResponse)
-        QtCore.QObject.connect(self.btnCancel, QtCore.SIGNAL(_fromUtf8("accepted()")), addResponse.accept)
-        QtCore.QObject.connect(self.btnCancel, QtCore.SIGNAL(_fromUtf8("rejected()")), addResponse.reject)
+        self.btnCancel.accepted.connect(addResponse.accept)
+        self.btnCancel.rejected.connect(addResponse.reject)
         QtCore.QMetaObject.connectSlotsByName(addResponse)
 
     def retranslateUi(self, addResponse):
-        addResponse.setWindowTitle(_translate("addResponse", "IGN RIPart : Ajout d\'une nouvelle réponse", None))
-        self.btnSend.setText(_translate("addResponse", "Envoyer la réponse", None))
-        self.lblStatut.setText(_translate("addResponse", "Statut", None))
-        self.lblMessage.setText(_translate("addResponse", "Message de la remarque", None))
-        self.lblOldResponse.setText(_translate("addResponse", "Réponse(s) antérieure(s)", None))
-        self.lblNewResponse.setText(_translate("addResponse", "Nouvelle réponse", None))
+        _translate = QtCore.QCoreApplication.translate
+        addResponse.setWindowTitle(_translate("addResponse", "IGN RIPart : Ajout d\'une nouvelle réponse"))
+        self.btnSend.setText(_translate("addResponse", "Envoyer la réponse"))
+        self.lblStatut.setText(_translate("addResponse", "Statut"))
+        self.lblMessage.setText(_translate("addResponse", "Message de la remarque"))
+        self.lblOldResponse.setText(_translate("addResponse", "Réponse(s) antérieure(s)"))
+        self.lblNewResponse.setText(_translate("addResponse", "Nouvelle réponse"))
+        self.lblTitre.setText(_translate("addResponse", "Titre"))
 

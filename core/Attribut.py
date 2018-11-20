@@ -5,7 +5,9 @@ Created on 23 janv. 2015
 @author: AChang-Wailing
 '''
 
-from PyQt4.QtCore import *
+from builtins import str
+from builtins import object
+from PyQt5.QtCore import *
 
 class Attribut(object):
     '''
@@ -34,7 +36,7 @@ class Attribut(object):
             valeur=valeur.toString('yyyy-MM-dd')
         elif typeAtt==QDateTime:
             valeur=valeur.toString('yyyy-MM-dd hh:mm:ss')
-        elif typeAtt!=unicode:
+        elif typeAtt!=str:
             valeur=str(valeur)
             
         self.valeur=valeur

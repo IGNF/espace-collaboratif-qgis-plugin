@@ -4,14 +4,18 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-from Client import *
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import str
+from builtins import object
+from .Client import *
 
 
-from Croquis import *
-from Point import *
-from Enum import *
-from RipartLoggerCl import RipartLogger
-from RipartServiceRequest import RipartServiceRequest
+from .Croquis import *
+from .Point import *
+from .Enum import *
+from .RipartLoggerCl import RipartLogger
+from .RipartServiceRequest import RipartServiceRequest
 
 class TestConnection(object):
     '''
@@ -54,7 +58,9 @@ class TestConnection(object):
         params['updatingDate']=""
         georems= client.getGeoRems()
       
-        print "ok"
+        # fix_print_with_import
+        # fix_print_with_import
+print("ok")
         
     def postRem(self):
         #client= Client(self.url, self.login,self.pwd)
@@ -103,7 +109,7 @@ class TestConnection(object):
             if errMessage['code'] =='OK': 
                 rems= xmlResponse.extractRemarques()
                 if len(rems)==1:
-                    rem =rems.values()[0]
+                    rem =list(rems.values())[0]
                 else :
                     self.logger.error("Problème lors de l'ajout de la remarque")
                     raise Exception("Problème lors de l'ajout de la remarque")

@@ -4,7 +4,8 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-from Enum import Enum
+#from __future__ import absolute_import
+from .Enum import Enum
 
 
 '''

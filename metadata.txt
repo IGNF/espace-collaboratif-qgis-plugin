@@ -6,34 +6,34 @@
 
 # This file should be included when you package your plugin.# Mandatory items:
 
-
 [general]
-name=IGN_Ripart
-qgisMinimumVersion=2.4
-description=IGN_Ripart
-version=2.0.5
+name=RipartPlugin3new
+qgisMinimumVersion=3.0
+description=ripart QGIS3
+version=3.0.0
+author=IGN
+email=@ign.fr
 
-author=alexia chang-wailing
-email=service-client@ign.fr
+about=Provide a brief description of the plugin and its purpose.
 
+tracker=http://bugs
+repository=http://repo
 # End of mandatory metadata
 
+# Recommended items:
 
 # Optional items:
-date=03/01/2018
+date=12/11/2018
 
 # Uncomment the following line and add your changelog:
-changelog=
-2.0 : handle alert attributes, diplay and upload up to 4 attached files, bug fixes...
+# changelog=
 
 # Tags are comma separated with spaces allowed
-tags=
+tags=python
 
-
-homepage=
-tracker=
-repository=
-icon=images/connect.png
+homepage=http://homepage
+category=Plugins
+icon=icon.png
 # experimental flag
 experimental=False
 

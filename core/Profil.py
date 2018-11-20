@@ -4,10 +4,12 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
+from __future__ import absolute_import
 
-from Auteur import *
-from Groupe import Groupe
-import ConstanteRipart 
+from builtins import object
+from .Auteur import *
+from .Groupe import Groupe
+from . import ConstanteRipart 
 
 
 

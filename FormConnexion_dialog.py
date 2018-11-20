@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
 
+
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox
-from PyQt4.QtCore import *
+from qgis.PyQt import QtGui, uic, QtWidgets 
+from qgis.PyQt.QtWidgets import QMessageBox
+from PyQt5.QtCore import *
 from qgis.core import *
 
-from core.RipartLoggerCl import RipartLogger
-from core.Client import Client
-from core import ConstanteRipart
-from core import Profil
-from core.ClientHelper import ClientHelper
+from .core.RipartLoggerCl import RipartLogger
+from .core.Client import Client
+from .core import ConstanteRipart
+from .core import Profil
+from .core.ClientHelper import ClientHelper
 
-from FormInfo import FormInfo
+from .FormInfo import FormInfo
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnexion_dialog_base.ui'))
 
 
-class FormConnexionDialog(QtGui.QDialog, FORM_CLASS):
+class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
     """ Fenêtre de login
     """
     context= None

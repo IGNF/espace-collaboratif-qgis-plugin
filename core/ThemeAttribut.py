@@ -5,7 +5,8 @@ Created on 08/11/2017
 @author: AChang-Wailing
 '''
 
-from PyQt4.QtCore import *
+from builtins import object
+from PyQt5.QtCore import *
 
 class ThemeAttribut(object):
     '''

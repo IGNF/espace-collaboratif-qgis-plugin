@@ -4,22 +4,26 @@ Created on 1 oct. 2015
 
 @author: AChang-Wailing
 '''
+#from __future__ import absolute_import
+#from builtins import str
+#from builtins import object
 import logging
-from core.RipartLoggerCl import RipartLogger
+from .core.RipartLoggerCl import RipartLogger
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtGui import QMessageBox, QProgressBar, QApplication
-from PyQt4.QtCore import *
+from qgis.PyQt import QtCore, QtGui
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
+from PyQt5.QtCore import *
 from qgis.core import  QgsGeometry,QgsCoordinateReferenceSystem,QgsCoordinateTransform
 
-from pyspatialite import dbapi2 as db
+import sqlite3
 
-from RipartHelper import RipartHelper
-from core.Box import Box
-from core.Client import Client
-from core.ClientHelper import ClientHelper
-import core.ConstanteRipart as cst
-from core.NoProfileException import NoProfileException
+from .RipartHelper import RipartHelper
+from .core.Box import Box
+from .core.Client import Client
+from .core.ClientHelper import ClientHelper
+from .core import ConstanteRipart as cst
+from .core.NoProfileException import NoProfileException
 
 class ImporterRipart(object):
     """Importation des remarques dans le projet QGIS
@@ -60,6 +64,8 @@ class ImporterRipart(object):
         params={}    #paramètres pour la requête au service Ripart
         
         filtreLay=None
+        
+        self.logger.debug(self.context.ripClient)
         
         if  self.context.ripClient == None :
             self.context.getConnexionRipart()
@@ -126,7 +132,7 @@ class ImporterRipart(object):
             
         rems = self.context.client.getGeoRems(params)
 
-        self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
+        #self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
         self.progress.setValue(100)
            
 
@@ -151,7 +157,7 @@ class ImporterRipart(object):
         try:  
             i=100
             try:
-                self.context.conn= db.connect(self.context.dbPath)
+                self.context.conn= sqlite3.connect(self.context.dbPath)
     
                 for remId in remsToKeep:
                     RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
@@ -162,7 +168,7 @@ class ImporterRipart(object):
                 self.context.conn.commit()   
                    
             except Exception as e:
-                self.logger.error(e.message)
+                self.logger.error(format(e))
                 raise
             finally:
                 self.context.conn.close()
@@ -207,8 +213,8 @@ class ImporterRipart(object):
                         "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
                         "(Cela risque de prendre un certain temps)."
                 message=ClientHelper.getEncodeType(message)
-                reply= QMessageBox.question(None,'IGN RIPart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-                if reply == QtGui.QMessageBox.Yes:
+                reply= QMessageBox.question(None,'IGN RIPart',message,QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+                if reply == QtWidgets.QMessageBox.Yes:
                     bbox=None
                 else : 
                     return -999
@@ -225,8 +231,8 @@ class ImporterRipart(object):
         """Avertissement si pas de filtre spatial
         """       
         message=ClientHelper.getEncodeType(message)
-        reply= QMessageBox.question(None,'IGN RIPart',message,QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+        reply= QMessageBox.question(None,'IGN RIPart',message,QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
             return True
         else : 
             return False

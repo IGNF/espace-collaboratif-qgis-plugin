@@ -4,7 +4,9 @@ Created on 23 janv. 2015
 
 @author: AChang-Wailing
 '''
-from Groupe import *
+from __future__ import absolute_import
+from builtins import object
+from .Groupe import *
 
 class Theme(object):
     """

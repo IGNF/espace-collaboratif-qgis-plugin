@@ -5,6 +5,7 @@ Created on 23 janv. 2015
 @author: AChang-Wailing
 '''
 
+from builtins import object
 class Point(object):
     """
     Classe représentant un Point Ripart, donné en longitude/latitude

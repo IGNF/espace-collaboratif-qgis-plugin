@@ -4,23 +4,28 @@ Created on 20 oct. 2015
 
 @author: AChang-Wailing
 '''
+'''from __future__ import absolute_import
+from builtins import str
+from builtins import range'''
 import os
 from datetime import datetime, timedelta
 import calendar
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtCore import *
-from PyQt4.Qt import QTreeWidgetItem, QDialogButtonBox
-from qgis.core import *
+from qgis.PyQt import QtGui, uic, QtWidgets 
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt, QDate
+from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
+#from qgis.core import *
+from qgis._core import QgsProject,  QgsMessageLog
+'''from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt'''
 
-
-import FormConfigurerRipart_base
-from RipartHelper import RipartHelper
+from . import FormConfigurerRipart_base
+from .RipartHelper import RipartHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
 
 
-class FormConfigure(QtGui.QDialog, FORM_CLASS):
+class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     """
     Dialogue pour la configuration des préférences de téléchargement des remarques
     """
@@ -113,7 +118,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         """
         polyLayers=self.context.getMapPolygonLayers()
         
-        polyList=[val for key,val in polyLayers.iteritems() if val!=RipartHelper.nom_Calque_Croquis_Polygone]
+        polyList=[val for key,val in polyLayers.items() if val!=RipartHelper.nom_Calque_Croquis_Polygone]
         self.comboBoxFiltre.clear()
         self.comboBoxFiltre.addItems(polyList)
         
@@ -150,7 +155,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         for lay in maplayers :
             if type(lay) is QgsVectorLayer and not lay.name() in ripartLayers:
                 item = QTreeWidgetItem()
-                item.setText(0,unicode (lay.name()))
+                item.setText(0,str (lay.name()))
                 inConfig=lay.name() in attCroq
                 if inConfig:
                     state=Qt.Checked
@@ -174,7 +179,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
        
         self.treeWidget.insertTopLevelItems(0, topItems)
         
-        self.connect(self.treeWidget, SIGNAL("itemClicked(QTreeWidgetItem*, int)"),self.onClickItem)
+        self.treeWidget.itemClicked.connect(self.onClickItem)
     
     
     def addSubItems(self,item,layer,attList):
@@ -195,7 +200,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         
         for f in fieldNames:
             subItem=  QTreeWidgetItem()
-            subItem.setText(0,unicode(f))
+            subItem.setText(0,str(f))
             
             if attList !=None and f in attList: 
                 subItem.setCheckState(0,Qt.Checked)

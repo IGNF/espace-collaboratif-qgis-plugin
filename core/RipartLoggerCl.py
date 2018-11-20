@@ -4,11 +4,14 @@ Created on 2 oct. 2015
 
 @author: AChang-Wailing
 '''
+from builtins import object
 import logging
 import os
 from datetime import datetime
 import dateutil.relativedelta
 import string
+import importlib
+
 
 class RipartLogger(object):
     """Paramètres du log
@@ -23,7 +26,9 @@ class RipartLogger(object):
         '''
            
         #trouve le dossier d'installation du plugin et le nom du fichier de log (yyyymmdd_ripart.log)
-        lastSlashIdx=string.rfind(os.path.dirname(__file__),"\\")
+        p = os.path.dirname(__file__)
+        lastSlashIdx=p.rfind("\\")
+        #lastSlashIdx=string.rfind(os.path.dirname(__file__),"\\")
         logdir= os.path.join(os.path.dirname(__file__)[:lastSlashIdx],"logs")   
             
         today= datetime.now().date().strftime('%Y%m%d')
@@ -41,8 +46,8 @@ class RipartLogger(object):
                 
         self.logger.setLevel(logging.DEBUG)
               
-        if not os.path.exists(self.logpath):
-            file(self.logpath, 'w').close()
+        #if not os.path.exists(self.logpath):
+        #    file(self.logpath, 'w').close()
             
         fh = logging.FileHandler(self.logpath)
                 

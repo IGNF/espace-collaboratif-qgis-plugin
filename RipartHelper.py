@@ -4,26 +4,31 @@ Created on 29 sept. 2015
 
 @author: AChang-Wailing
 '''
+'''from __future__ import print_function
+from __future__ import absolute_import'''
 
-from core.RipartLoggerCl import RipartLogger
+from builtins import str
+#from builtins import object
+from .core.RipartLoggerCl import RipartLogger
 import xml.etree.ElementTree as ET
-from pyspatialite import dbapi2 as db
+#from pyspatialite import dbapi2 as db
+import sqlite3;
 
-from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform,QGis
-from core.ClientHelper import ClientHelper
-from RipartException import RipartException
+from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform
+from .core.ClientHelper import ClientHelper
+from .RipartException import RipartException
 import collections
 from datetime import datetime
-from PyQt4.QtGui import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 
-from core.Croquis import Croquis
-from core.Point import  Point
+from .core.Croquis import Croquis
+from .core.Point import  Point
 
 import errno
 import shutil
 import os, sys, subprocess
 
-class RipartHelper(object):
+class RipartHelper:
     """"
     Classe contenant des utilitaires pour le plugin
     """
@@ -179,7 +184,7 @@ class RipartHelper(object):
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
            
         except Exception as e:
-            RipartHelper.logger.error(e.message)
+            RipartHelper.logger.error(format(e))
             
        
     @staticmethod
@@ -222,7 +227,7 @@ class RipartHelper(object):
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
            
         except Exception as e:
-            RipartHelper.logger.error(e.message)
+            RipartHelper.logger.error(format(e))
         
      
     @staticmethod
@@ -392,7 +397,7 @@ class RipartHelper(object):
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
             
         except Exception as e:
-            RipartHelper.logger.error(e.message)
+            RipartHelper.logger.error(format(e))
     
     @staticmethod
     def removeNode(projectDir,tag, parentTag=None):
@@ -410,7 +415,7 @@ class RipartHelper(object):
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
             
         except Exception as e:
-            RipartHelper.logger.error(e.message)
+            RipartHelper.logger.error(format(e))
     
     
     @staticmethod
@@ -426,7 +431,7 @@ class RipartHelper(object):
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
            
         except Exception as e:
-            RipartHelper.logger.error(e.message)
+            RipartHelper.logger.error(format(e))
             
 
             
@@ -446,7 +451,8 @@ class RipartHelper(object):
             
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
         except Exception as e:
-            print e.message
+            # fix_print_with_import
+            print(format(e))
         
     @staticmethod
     def removeAttCroquis(projectDir,):
@@ -651,7 +657,7 @@ class RipartHelper(object):
                 
         
         except Exception as e:
-            RipartHelper.logger.error(e.message)
+            RipartHelper.logger.error(format(e))
             raise
         finally:
             cur.close()

@@ -4,10 +4,13 @@ Created on 27 oct. 2015
 
 @author: AChang-Wailing
 '''
-from core.RipartLoggerCl import RipartLogger
-from FormCreerRemarque import FormCreerRemarque
-from RipartHelper import RipartHelper
-from core.Remarque import Remarque
+from __future__ import absolute_import
+from builtins import str
+from builtins import object
+from .core.RipartLoggerCl import RipartLogger
+from .FormCreerRemarque import FormCreerRemarque
+from .RipartHelper import RipartHelper
+from .core.Remarque import Remarque
 
 
 
@@ -63,7 +66,7 @@ class CreerRipart(object):
                 self._createNewRemark(formCreate,croquisList)
               
         except Exception as e:
-            self.logger.error(e.message)
+            self.logger.error(format(e))
             self.context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)",level=2, duration =15)  
             
          
@@ -122,7 +125,7 @@ class CreerRipart(object):
             RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouveau(x) signalement(s)") 
              
         except Exception as e:
-            self.logger.error("in _createNewRemark "+ str(e.message))
+            self.logger.error("in _createNewRemark "+ str(format(e)))
         
         finally:
             self.context.conn.close()   

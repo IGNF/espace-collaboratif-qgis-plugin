@@ -4,21 +4,24 @@ Created on 9 nov. 2015
 
 @author: AChang-Wailing
 '''
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
 import os
 import logging
-from core.RipartLoggerCl import RipartLogger 
-from PyQt4 import QtGui, uic
-import core.ConstanteRipart as cst
-from core.ClientHelper import ClientHelper
-from Magicwand import Magicwand
-from RipartHelper import RipartHelper
+from .core.RipartLoggerCl import RipartLogger 
+from qgis.PyQt import QtGui, uic,QtWidgets
+from .core import ConstanteRipart as cst
+from .core.ClientHelper import ClientHelper
+from .Magicwand import Magicwand
+from .RipartHelper import RipartHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormView_base.ui'))
 
 context=None
 remarqueId=None
 
-class FormView(QtGui.QDialog, FORM_CLASS):
+class FormView(QtWidgets.QDialog, FORM_CLASS):
     """
     Forme de visualisation de l'historique de la remarque + sélection/déselection croquis + ouverture document joint 
     """
@@ -103,7 +106,7 @@ class FormView(QtGui.QDialog, FORM_CLASS):
             self.textEditCntCroquisDetail.setText(cntMessage)
            
         except Exception as e:
-            self.logger.error("selectCroquis "+ e.message)
+            self.logger.error("selectCroquis "+ format(e))
       
             
     def deselectCroquis(self):
@@ -116,7 +119,7 @@ class FormView(QtGui.QDialog, FORM_CLASS):
             self.textEditCntCroquisDetail.setText(u"")
             
         except Exception as e:
-            self.logger.error("deselectCroquis "+ e.message)
+            self.logger.error("deselectCroquis "+ format(e))
     
     
     def openDoc(self, n):

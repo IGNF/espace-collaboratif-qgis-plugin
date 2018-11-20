@@ -5,6 +5,7 @@ Created on 23 janv. 2015
 @author: AChang-Wailing
 '''
 
+from builtins import object
 class Groupe(object):
     """
     Classe représentant un groupe Ripart

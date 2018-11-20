@@ -3,7 +3,7 @@ Created on 1 oct. 2015
 
 @author: AChang-Wailing
 '''
-from qgis.utils import *
+#from qgis.utils import *
 class RipartException (Exception):
     '''
     classdocs

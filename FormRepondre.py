@@ -4,22 +4,24 @@ Created on 8 oct. 2015
 
 @author: AChang-Wailing
 '''
+from __future__ import absolute_import
+from builtins import range
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox
-from PyQt4.QtCore import *
-from PyQt4.Qt import  QDialogButtonBox
+from qgis.PyQt import QtGui, uic, QtWidgets
+from qgis.PyQt.QtWidgets import QMessageBox
+from PyQt5.QtCore import *
+from PyQt5.Qt import  QDialogButtonBox
 
-from core.RipartLoggerCl import RipartLogger 
-import core.ConstanteRipart as cst
-from core.ClientHelper import ClientHelper
+from .core.RipartLoggerCl import RipartLogger 
+from .core import ConstanteRipart as cst
+from .core.ClientHelper import ClientHelper
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormRepondre_base.ui'))
 
 
-class FormRepondreDialog(QtGui.QDialog, FORM_CLASS):
+class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
     """
     Formulaire de réponse à une remarque
     """

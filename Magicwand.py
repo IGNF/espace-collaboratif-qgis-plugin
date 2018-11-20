@@ -4,9 +4,14 @@ Created on 10 nov. 2015
 
 @author: AChang-Wailing
 '''
+#from __future__ import absolute_import
 
-from RipartHelper import RipartHelper
-from __builtin__ import False
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
+from .RipartHelper import RipartHelper
+#from builtins import False
 
 
 class Magicwand(object):

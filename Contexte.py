@@ -4,32 +4,39 @@ Created on 29 sept. 2015
 
 @author: AChang-Wailing
 '''
+#from __future__ import print_function
+#from __future__ import absolute_import
+#from future import standard_library
+#standard_library.install_aliases()
+#from builtins import str
+#from builtins import object
 from qgis.utils import *
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.QtGui import QMessageBox
-from qgis.core import *
-from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,QgsGeometry,QgsDataSourceURI,QgsVectorLayer, QgsMapLayerRegistry,QGis
-from RipartException import RipartException
+#from PyQt5.QtCore import 
+from PyQt5 import QtGui
+from qgis.PyQt.QtWidgets import QMessageBox
+#from qgis.core import *
+from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,\
+                      QgsGeometry,QgsDataSourceUri,QgsVectorLayer,QgsProject
+                      
+from .RipartException import RipartException
 
 import os.path
 import shutil
 import ntpath
-from pyspatialite import dbapi2 as db
-import ConfigParser
+import sqlite3
+import configparser
 
-
-from  RipartHelper import  RipartHelper
-from core.RipartLoggerCl import RipartLogger
-from core.Profil import Profil
-from core.Client import Client
-from core.ClientHelper import ClientHelper
-from core.Attribut import Attribut
-from core.Point import Point
-from core.Croquis import Croquis
-from FormConnexion_dialog import FormConnexionDialog
-from FormInfo import FormInfo
-import core.ConstanteRipart as cst
+from  .RipartHelper import  RipartHelper
+from .core.RipartLoggerCl import RipartLogger
+from .core.Profil import Profil
+from .core.Client import Client
+from .core.ClientHelper import ClientHelper
+from .core.Attribut import Attribut
+from .core.Point import Point
+from .core.Croquis import Croquis
+from .FormConnexion_dialog import FormConnexionDialog
+from .FormInfo import FormInfo
+from .core import ConstanteRipart as cst
 
 
 class Contexte(object):
@@ -117,7 +124,6 @@ class Contexte(object):
             #set du répertoire et fichier du projet qgis
             self.setProjectParams(QgsProject)
             
-     
             #contrôle l'existence du fichier de configuration
             self.checkConfigFile()      
 
@@ -147,18 +153,18 @@ class Contexte(object):
                     raise
                 
             except Exception as e:
-                self.logger.error("init contexte:" + e.message)
+                self.logger.error("init contexte:" + format(e))
                 formatFile =open( os.path.join(self.plugin_path,'files','formats.txt'), 'r')      
                 lines=formatFile.readlines()
                 self.formats=[x.split("\n")[0] for x in lines]  '''    
           
         except Exception as e:
-            self.logger.error("init contexte:" + e.message)
+            self.logger.error("init contexte:" + format(e))
             raise
     
     def getMetadata(self,category, param):
        
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read(self.plugin_path + '\\metadata.txt')
         return config.get('general', 'version')
     
@@ -172,7 +178,7 @@ class Contexte(object):
             Contexte.instance=Contexte._createInstance(QObject,QgsProject)
           
         elif  (Contexte.instance.projectDir!= QgsProject.instance().homePath() or
-              Contexte.instance.projectFileName+".qgs"!=ntpath.basename(QgsProject.instance().fileName())) :       
+              ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName+".qgs",Contexte.instance.projectFileName+".qgs.qgz"]) :       
             Contexte.instance=Contexte._createInstance(QObject,QgsProject)
 
         return Contexte.instance
@@ -185,7 +191,7 @@ class Contexte(object):
         """
         try:
             Contexte.instance = Contexte(QObject,QgsProject)
-            Contexte.instance.logger.debug("nouvelle instance de contexte créée")
+            Contexte.instance.logger.debug("nouvelle instance de contexte créée" )
         except Exception as e:
             Contexte.instance=None
             return None
@@ -220,7 +226,7 @@ class Contexte(object):
                              ripartxml)
                 self.logger.debug("copy ripart.xml" )
             except Exception as e:
-                self.logger.error("no ripart.xml found in plugin directory" + e.message)
+                self.logger.error("no ripart.xml found in plugin directory" + format(e))
                 raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pas été trouvé.")
            
        
@@ -278,14 +284,16 @@ class Contexte(object):
 
             while (result<0):      
                 if self.loginWindow.cancel:
-                    print "rejected"
+                    # fix_print_with_import
+                    print("rejected")
                     self.loginWindow = None
                     result=0
                 elif self.loginWindow.connect :
-                    print "connect"
+                    # fix_print_with_import
+                    print("connect")
                     self.login = self.loginWindow.getLogin()
                     self.pwd=self.loginWindow.getPwd()
-                    
+                    print("login " + self.login)
                     try: 
                         client = Client(self.urlHostRipart, self.login, self.pwd,self.proxy)
                         profil = client.getProfil()
@@ -306,15 +314,17 @@ class Contexte(object):
                             if dlgInfo.Accepted:
                                 self.client=client
                                 result= 1
+                                self.logger.debug("result 1")
                         else :
-                            print "error"
+                            # fix_print_with_import
+                            print("error")
                     except Exception as e:
                         result=-1
                         self.pwd=""
-                        self.logger.error(e.message)        
+                        self.logger.error(format(e))        
                         
                         try:
-                            self.loginWindow.setErreur(ClientHelper.getEncodeType(e.message))
+                            self.loginWindow.setErreur(ClientHelper.getEncodeType(format(e)))
                         except Exception as e2:
                             self.loginWindow.setErreur(ClientHelper.getEncodeType("la connexion a échoué"))
                         self.loginWindow.exec_()
@@ -325,11 +335,14 @@ class Contexte(object):
                 result=1
                 self.client=client
             except RipartException as e:
-                print e.message
+                # fix_print_with_import
+                print(format(e))
                 result=-1
         
         if result ==1:
+            self.logger.debug("result 1 b")
             self.ripClient = client
+            self.logger.debug("ripclient")
         
         return result
     
@@ -359,10 +372,10 @@ class Contexte(object):
                              self.dbPath)
                 self.logger.debug("copy ripart.sqlite" )
             except Exception as e:
-                self.logger.error("no ripart.sqlite found in plugin directory" + e.message)
+                self.logger.error("no ripart.sqlite found in plugin directory" + format(e))
                 raise e
         try:    
-            self.conn= db.connect(self.dbPath)
+            self.conn= sqlite3.connect(self.dbPath)
     
             # creating a Cursor
             cur = self.conn.cursor()
@@ -381,7 +394,7 @@ class Contexte(object):
                     RipartHelper.createCroquisTable(self.conn,lay,RipartHelper.croquis_layers[lay])
                     
         except RipartException as e:
-            self.logger.error(e.message)
+            self.logger.error(format(e))
             raise
         finally:
             cur.close()
@@ -394,7 +407,7 @@ class Contexte(object):
         """Add ripart layers to the current map 
         """
         
-        uri =QgsDataSourceURI()
+        uri =QgsDataSourceUri()
  
         dbName = self.projectFileName +"_RIPART"
         self.dbPath = self.projectDir+"/"+dbName+".sqlite"
@@ -411,7 +424,7 @@ class Contexte(object):
                 uri.setSrid('4326')
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite') 
                 vlayer.setCrs(QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId))
-                QgsMapLayerRegistry.instance().addMapLayer(vlayer,False)
+                QgsProject.instance().addMapLayer(vlayer,False)
                                 
                 root.insertLayer(0,vlayer)
                 
@@ -432,7 +445,7 @@ class Contexte(object):
         :rtype dictionary
         """
         
-        layers = QgsMapLayerRegistry.instance().mapLayers()
+        layers = QgsProject.instance().mapLayers()
 
         layerNames=[]
         maplayers={}
@@ -451,7 +464,7 @@ class Contexte(object):
         :return dictionnaire des couches de type polygon(key: layer id, value: layer name)
         :rtype dictionary
         """
-        layers = QgsMapLayerRegistry.instance().mapLayers()
+        layers = QgsProject.instance().mapLayers()
         
         polylayers={}
         
@@ -473,7 +486,7 @@ class Contexte(object):
         :return: le premier calque ayant pour nom celui donné en paramètre
         :rtype: QgsVectorLayer
         """
-        mapByName= QgsMapLayerRegistry.instance().mapLayersByName(layName)
+        mapByName= QgsProject.instance().mapLayersByName(layName)
         if len(mapByName) >0:
             return mapByName[0]
         else:
@@ -488,7 +501,7 @@ class Contexte(object):
               
         try:
         
-            self.conn= db.connect(self.dbPath)
+            self.conn= sqlite3.connect(self.dbPath)
             
             for table in ripartLayers:
                 RipartHelper.emptyTable(self.conn, table)
@@ -497,7 +510,7 @@ class Contexte(object):
              
             self.conn.commit()    
         except RipartException as e:
-            self.logger.error(e.message)
+            self.logger.error(format(e))
             raise
         finally:
             self.conn.close()
@@ -521,7 +534,7 @@ class Contexte(object):
         :type rem: Remarque
         """
         try:
-            self.conn= db.connect(self.dbPath)
+            self.conn= sqlite3.connect(self.dbPath)
                           
             sql = "UPDATE "+ RipartHelper.nom_Calque_Signalement+" SET "
             sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") +"'," 
@@ -536,7 +549,7 @@ class Contexte(object):
             self.conn.commit()
             
         except Exception as e :
-            self.logger.error(e.message)
+            self.logger.error(format(e))
             raise
         finally:
             cur.close()
@@ -679,7 +692,7 @@ class Contexte(object):
                 newCroquis.addPoint(Point(pt.x(),pt.y()))
             
         except Exception as e:
-            self.logger.error(u"in makeCroquis:"+e.message)
+            self.logger.error(u"in makeCroquis:"+format(e))
             return None
         
      
@@ -735,7 +748,7 @@ class Contexte(object):
         cr= listCroquis[0]
       
         try:
-            self.conn= db.connect(self.dbPath)
+            self.conn= sqlite3.connect(self.dbPath)
             cur = self.conn.cursor()
             
             sql=u"Drop table if Exists "+tmpTable
@@ -772,7 +785,7 @@ class Contexte(object):
             
    
         except Exception as e:
-            self.logger.error("createTempCroquisTable "+e.message)
+            self.logger.error("createTempCroquisTable "+format(e))
             return False
         finally:
             cur.close()
@@ -795,7 +808,7 @@ class Contexte(object):
         try:
             dbName = self.projectFileName +"_RIPART"
             self.dbPath = self.projectDir+"/"+dbName+".sqlite"
-            self.conn= db.connect(self.dbPath)
+            self.conn= sqlite3.connect(self.dbPath)
             cur = self.conn.cursor()
             
             sql ="SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from "  + tmpTable 
@@ -815,7 +828,7 @@ class Contexte(object):
             barycentre= Point(ptX,ptY)
        
         except Exception as e:
-            self.logger.error("getBarycentre "+e.message)
+            self.logger.error("getBarycentre "+format(e))
             point=None
         
         return barycentre
@@ -832,7 +845,7 @@ class Contexte(object):
         :type noSignalements: list de string
         """
         
-        self.conn= db.connect(self.dbPath)
+        self.conn= sqlite3.connect(self.dbPath)
         cur = self.conn.cursor()
         
         table=RipartHelper.nom_Calque_Signalement
@@ -844,7 +857,8 @@ class Contexte(object):
         featIds=[]
             
         for row in rows:
-            print row[0]
+            # fix_print_with_import
+            print(row[0])
             featIds.append(row[0])
            
         lay.setSelectedFeatures( featIds )
@@ -867,7 +881,7 @@ class Contexte(object):
         """    
         crlayers= RipartHelper.croquis_layers
         
-        self.conn= db.connect(self.dbPath)
+        self.conn= sqlite3.connect(self.dbPath)
         cur = self.conn.cursor()
         
         for table in crlayers:

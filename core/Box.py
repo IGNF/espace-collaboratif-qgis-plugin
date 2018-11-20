@@ -6,6 +6,8 @@ Created on 23 janv. 2015
 '''
 
 
+from builtins import str
+from builtins import object
 class Box(object):
     """
     Représente une boite englobante

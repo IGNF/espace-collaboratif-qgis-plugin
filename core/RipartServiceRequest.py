@@ -4,12 +4,15 @@ Created on 26 janv. 2015
 
 @author: AChang-Wailing
 '''
-from RipartLoggerCl import RipartLogger
 
-import requests
-from requests.auth import HTTPBasicAuth
 
-from ClientHelper import ClientHelper
+from builtins import object
+from .RipartLoggerCl import RipartLogger
+
+from . import requests
+from .requests.auth import HTTPBasicAuth
+
+from .ClientHelper import ClientHelper
 
 
 class RipartServiceRequest(object):
@@ -51,7 +54,7 @@ class RipartServiceRequest(object):
 
         except Exception as e:
             
-            RipartServiceRequest.logger.error(e.message)
+            RipartServiceRequest.logger.error(format(e))
            
             raise Exception (u"Connexion impossible.\nVeuillez vérifier les paramètres de connexion\n(Aide>Configurer le plugin RIPart)")
         

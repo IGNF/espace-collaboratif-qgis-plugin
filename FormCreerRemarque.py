@@ -4,29 +4,34 @@ Created on 27 oct. 2015
 
 @author: AChang-Wailing
 '''
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
 import os
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
-from core.RipartLoggerCl import RipartLogger 
+from .core.RipartLoggerCl import RipartLogger 
 
-from PyQt4 import QtGui, uic
-from PyQt4.Qt import QDialogButtonBox,QListWidgetItem, QPixmap
-from PyQt4.QtCore import *
+from qgis.PyQt import QtGui, uic, QtWidgets
+from PyQt5.Qt import QDialogButtonBox,QListWidgetItem, QPixmap
+from PyQt5.QtCore import *
 
-import core.ConstanteRipart as cst
-from core.ClientHelper import ClientHelper
-from core.Remarque import Remarque
-import core.ConstanteRipart as cst
-from core.Theme import Theme
-from core.Groupe import Groupe
-from RipartHelper import RipartHelper
-from core.ThemeAttribut import ThemeAttribut
+from .core import ConstanteRipart as cst
+from .core.ClientHelper import ClientHelper
+from .core.Remarque import Remarque
+from .core import ConstanteRipart as cst
+from .core.Theme import Theme
+from .core.Groupe import Groupe
+from .RipartHelper import RipartHelper
+from .core.ThemeAttribut import ThemeAttribut
 
 
 FORM_CLASS , _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
 
 
-class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
+class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     """
     Formulaire pour la création d'une nouvelle remarque
     """ 

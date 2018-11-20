@@ -4,22 +4,26 @@ Created on 26 janv. 2015
 
 @author: AChang-Wailing
 '''
+#from __future__ import print_function
+#from __future__ import absolute_import
 
+from builtins import str
+from builtins import object
 import xml.etree.ElementTree as ET
-from Profil import Profil
-import ConstanteRipart as cst
-from Remarque import Remarque
-from Theme import Theme
-from ThemeAttribut import ThemeAttribut
-from Point import Point
-from Auteur import Auteur
-from Croquis import Croquis
-from Groupe import  Groupe
-from Attribut import Attribut
-from GeoReponse import GeoReponse
+from .Profil import Profil
+from . import ConstanteRipart as cst
+from .Remarque import Remarque
+from .Theme import Theme
+from .ThemeAttribut import ThemeAttribut
+from .Point import Point
+from .Auteur import Auteur
+from .Croquis import Croquis
+from .Groupe import  Groupe
+from .Attribut import Attribut
+from .GeoReponse import GeoReponse
 from datetime import datetime
-from ClientHelper import ClientHelper
-from RipartLoggerCl import RipartLogger
+from .ClientHelper import ClientHelper
+from .RipartLoggerCl import RipartLogger
 
 class XMLResponse(object):
     """
@@ -42,20 +46,21 @@ class XMLResponse(object):
         :param response: la réponse du serveur (xml)
         :type response: string 
         """
-        """if type(response)==type('str'):
-            self.response = response
-        else :
-            self.response = response.encode('utf-8');"""
-            
+        self.logger.debug("init 1:" )
+        
         self.response =ClientHelper.stringToStringType(response)
+        
+        self.logger.debug("xmlreponse 2 :" )
+        #self.logger.debug("self.response :" +self.response)
         
         try:
             self.root =ET.fromstring(self.response)
+            self.logger.debug(str(self.root))
         except Exception as e:
             self.logger.error(str(e))
          
         
-        self.logger.debug("init")
+        self.logger.debug("init !!")
         
         
             
@@ -582,4 +587,6 @@ if __name__ == "__main__":
     
   
     version= xml.getVersion()
-    print version
+    # fix_print_with_import
+    # fix_print_with_import
+    print(version)
