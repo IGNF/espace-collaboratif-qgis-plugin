@@ -36,7 +36,7 @@ from qgis.PyQt import QtGui, uic
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
 #from qgis.core import *
-from qgis._core import QgsProject,  QgsMessageLog
+from qgis.core import QgsProject,  QgsMessageLog
 import configparser
 
 # Initialize Qt resources from file resources.py
@@ -358,7 +358,7 @@ class RipartPlugin:
             self.context.iface.messageBar(). \
             pushMessage("Remarque",
                          format(e), \
-                         level=1, duration=20)
+                         level=0, duration=20)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
         except Exception as e:
             self.logger.error(format(e))
@@ -484,7 +484,7 @@ class RipartPlugin:
             self.formView=reponse.do(isView=True)
                        
         except Exception as e:
-            self.logger.error("viewRem "+ format(e)+";"+ str(e))
+            self.logger.error("viewRem "+ format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"lors de la connexion avec le service RIPart. Veuillez réessayer.", \

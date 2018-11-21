@@ -4,26 +4,22 @@ Created on 29 sept. 2015
 
 @author: AChang-Wailing
 '''
-#from __future__ import print_function
-#from __future__ import absolute_import
-#from future import standard_library
-#standard_library.install_aliases()
-#from builtins import str
-#from builtins import object
+
 from qgis.utils import *
 #from PyQt5.QtCore import 
 from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
-#from qgis.core import *
+
 from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,\
-                      QgsGeometry,QgsDataSourceUri,QgsVectorLayer,QgsProject
+                      QgsGeometry,QgsDataSourceUri,QgsVectorLayer,QgsProject, QgsPolygon
                       
 from .RipartException import RipartException
 
 import os.path
 import shutil
 import ntpath
-import sqlite3
+from qgis.utils import spatialite_connect
+import sqlite3 as sqlite
 import configparser
 
 from  .RipartHelper import  RipartHelper
@@ -375,7 +371,8 @@ class Contexte(object):
                 self.logger.error("no ripart.sqlite found in plugin directory" + format(e))
                 raise e
         try:    
-            self.conn= sqlite3.connect(self.dbPath)
+            #self.conn= sqlite3.connect(self.dbPath)
+            self.conn = spatialite_connect(self.dbPath)
     
             # creating a Cursor
             cur = self.conn.cursor()
@@ -471,7 +468,7 @@ class Contexte(object):
         for key in layers:
             l=layers[key]
             
-            if type(l) is QgsVectorLayer and l.geometryType ()!=None and l.geometryType ()==QGis.Polygon :
+            if type(l) is QgsVectorLayer and l.geometryType ()!=None and l.geometryType ()==QgsPolygon :
                 polylayers[l.id()]=l.name()
                 
         return polylayers
@@ -501,7 +498,8 @@ class Contexte(object):
               
         try:
         
-            self.conn= sqlite3.connect(self.dbPath)
+            #self.conn= sqlite3.connect(self.dbPath)
+            self.conn = spatialite_connect(self.dbPath)
             
             for table in ripartLayers:
                 RipartHelper.emptyTable(self.conn, table)
@@ -534,7 +532,8 @@ class Contexte(object):
         :type rem: Remarque
         """
         try:
-            self.conn= sqlite3.connect(self.dbPath)
+            #self.conn= sqlite3.connect(self.dbPath)
+            self.conn = spatialite_connect(self.dbPath)
                           
             sql = "UPDATE "+ RipartHelper.nom_Calque_Signalement+" SET "
             sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") +"'," 
@@ -613,17 +612,17 @@ class Contexte(object):
                 isMultipart= geom.isMultipart()
                 
                 #if geom.isMultipart() => explode to single parts
-                if isMultipart and ftype==QGis.Polygon:
+                if isMultipart and ftype==qgis.core.Polygon:
                     for poly in geom.asMultiPolygon():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolygon(poly),QGis.Polygon,l.crs(),f[0]))
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolygon(poly),qgis.core.Polygon,l.crs(),f[0]))
                         
-                elif isMultipart and ftype==QGis.Line:
+                elif isMultipart and ftype==qgis.core.Line:
                     for line in geom.asMultiPolyline():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolyline(line),QGis.Line,l.crs(),f[0]))              
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolyline(line),qgis.core.Line,l.crs(),f[0]))              
                
-                elif isMultipart and ftype==QGis.Point:
+                elif isMultipart and ftype==qgis.core.Point:
                     for pt in geom.asMultiPoint():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPoint(pt),QGis.Point,l.crs(),f[0]))       
+                        croquiss.append(self.makeCroquis(QgsGeometry.fromPoint(pt),qgis.core.Point,l.crs(),f[0]))       
                 else :    
                     croquiss.append(self.makeCroquis(geom,ftype,l.crs(),f[0]))
                 
@@ -669,7 +668,7 @@ class Contexte(object):
                        
             transformer = QgsCoordinateTransform(layerCrs, destCrs)
 
-            if ftype==QGis.Polygon:
+            if ftype==qgis.core.Polygon:
                 geomPoints=geom.asPolygon()
                 if len(geomPoints)>0:
                     geomPoints=geomPoints[0]      #les points du polygone
@@ -677,11 +676,11 @@ class Contexte(object):
                     self.logger.debug(u"geomPoints problem " + str(fId))        
                 newCroquis.type=newCroquis.CroquisType.Polygone
                 
-            elif ftype==QGis.Line:
+            elif ftype==qgis.core.Line:
                 geomPoints = geom.asPolyline()
                 newCroquis.type=newCroquis.CroquisType.Ligne
             
-            elif ftype==QGis.Point:
+            elif ftype==qgis.core.Point:
                 geomPoints=[geom.asPoint()]
                 newCroquis.type=newCroquis.CroquisType.Point
             else :
@@ -748,7 +747,8 @@ class Contexte(object):
         cr= listCroquis[0]
       
         try:
-            self.conn= sqlite3.connect(self.dbPath)
+            #self.conn= sqlite3.connect(self.dbPath)
+            self.conn = spatialite_connect(self.dbPath)
             cur = self.conn.cursor()
             
             sql=u"Drop table if Exists "+tmpTable
@@ -808,7 +808,9 @@ class Contexte(object):
         try:
             dbName = self.projectFileName +"_RIPART"
             self.dbPath = self.projectDir+"/"+dbName+".sqlite"
-            self.conn= sqlite3.connect(self.dbPath)
+            #self.conn= sqlite3.connect(self.dbPath)
+            self.conn = spatialite_connect(self.dbPath)
+            
             cur = self.conn.cursor()
             
             sql ="SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from "  + tmpTable 
@@ -845,7 +847,8 @@ class Contexte(object):
         :type noSignalements: list de string
         """
         
-        self.conn= sqlite3.connect(self.dbPath)
+        #self.conn= sqlite3.connect(self.dbPath)
+        self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
         
         table=RipartHelper.nom_Calque_Signalement
@@ -881,7 +884,8 @@ class Contexte(object):
         """    
         crlayers= RipartHelper.croquis_layers
         
-        self.conn= sqlite3.connect(self.dbPath)
+        #self.conn= sqlite3.connect(self.dbPath)
+        self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
         
         for table in crlayers:

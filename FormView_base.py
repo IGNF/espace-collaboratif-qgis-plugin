@@ -97,6 +97,7 @@ class Ui_viewRemark(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.textEditCntCroquisDetail.sizePolicy().hasHeightForWidth())
         self.textEditCntCroquisDetail.setSizePolicy(sizePolicy)
+        self.textEditCntCroquisDetail.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.textEditCntCroquisDetail.setLineWidth(0)
         self.textEditCntCroquisDetail.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.textEditCntCroquisDetail.setReadOnly(True)

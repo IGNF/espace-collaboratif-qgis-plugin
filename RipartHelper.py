@@ -11,10 +11,12 @@ from builtins import str
 #from builtins import object
 from .core.RipartLoggerCl import RipartLogger
 import xml.etree.ElementTree as ET
-#from pyspatialite import dbapi2 as db
-import sqlite3;
 
-from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform
+from qgis.utils import spatialite_connect
+import sqlite3 as sqlite
+
+
+from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform,QgsVectorLayer
 from .core.ClientHelper import ClientHelper
 from .RipartException import RipartException
 import collections
@@ -492,9 +494,13 @@ class RipartHelper:
         r=cur.execute(sql)
         
         # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('Signalement',"
-        sql += "'geom', "+str(RipartHelper.epsgCrs)+", 'POINT', 'XY')"
+        
+        sql = "SELECT AddGeometryColumn('Signalement','geom', "+str(RipartHelper.epsgCrs)+",  'POINT', 'XY')" 
+        
+        cur = conn.cursor()
         cur.execute(sql)
+        
+        cur.commit()
         
         cur.close()
         
@@ -527,7 +533,7 @@ class RipartHelper:
         
         # creating a POINT Geometry column
         sql = "SELECT AddGeometryColumn('"+table+"',"
-        sql += "'geom', "+str(RipartHelper.epsgCrs)+",'"+geomType+"', 'XY')"
+        sql += "'geom',"+str(RipartHelper.epsgCrs)+",'"+geomType+"', 'XY')"
         cur.execute(sql)
         
         cur.close()
@@ -569,17 +575,13 @@ class RipartHelper:
         @type rem: Remarque  
         """
         RipartHelper.logger.debug("insertRemarques")
-        
-        cur = conn.cursor()
-        
+             
         try:
             RipartHelper.logger.debug("INSERT rem id:" + str(rem.id))
              
             ptx=rem.position.longitude
             pty= rem.position.latitude
-            
-            geom= " GeomFromText('POINT("+ str(ptx)+" "+str(pty) +")', 4326)"
-            
+             
             if type(rem.dateCreation)==datetime:
                 rem.dateCreation=RipartHelper.formatDatetime(rem.dateCreation)
             if type(rem.dateMiseAJour)==datetime:
@@ -590,10 +592,11 @@ class RipartHelper:
             if rem.dateValidation==None: 
                 rem.dateValidation=""
                 
+            geom= " GeomFromText('POINT("+ str(ptx)+" "+str(pty) +")', 4326)"
              
             sql=u"INSERT INTO "+ RipartHelper.nom_Calque_Signalement
             sql+= u" (NoSignalement, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ," 
-            sql+= u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation, geom) "
+            sql+= u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation,geom) "
             sql+= u"VALUES (" 
             sql+= str(rem.id) +", '" 
             sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.auteur.nom) +"', '" )
@@ -614,7 +617,7 @@ class RipartHelper:
             sql+= ClientHelper.getEncodeType(geom +")")
                
             #RipartHelper.logger.debug("INSERT sql:" + sql)
-           
+            cur = conn.cursor()
             cur.execute(sql)
             rowcount=cur.rowcount
             if rowcount!=1:
@@ -655,12 +658,14 @@ class RipartHelper:
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Polygone,geom)
                     cur.execute(sql) 
                 
+            #conn.commit()
         
         except Exception as e:
             RipartHelper.logger.error(format(e))
             raise
         finally:
             cur.close()
+            
     
     
         

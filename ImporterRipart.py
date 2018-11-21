@@ -14,9 +14,10 @@ from qgis.PyQt import QtCore, QtGui
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
 from PyQt5.QtCore import *
-from qgis.core import  QgsGeometry,QgsCoordinateReferenceSystem,QgsCoordinateTransform
+from qgis.core import  QgsGeometry,QgsCoordinateReferenceSystem,QgsCoordinateTransform,QgsProject,QgsVectorLayer
 
-import sqlite3
+from qgis.utils import spatialite_connect
+import sqlite3 as sqlite
 
 from .RipartHelper import RipartHelper
 from .core.Box import Box
@@ -54,6 +55,7 @@ class ImporterRipart(object):
         self.progress.setMaximum(200)        
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)     
         self.progressMessageBar.layout().addWidget(self.progress)
+        
      
      
     def doImport(self):
@@ -133,7 +135,7 @@ class ImporterRipart(object):
         rems = self.context.client.getGeoRems(params)
 
         #self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
-        self.progress.setValue(100)
+        self.progress.setValue(10)
            
 
         #Filtrage spatial affiné des remarques.
@@ -157,8 +159,8 @@ class ImporterRipart(object):
         try:  
             i=100
             try:
-                self.context.conn= sqlite3.connect(self.context.dbPath)
-    
+                self.context.conn = spatialite_connect(self.context.dbPath)
+
                 for remId in remsToKeep:
                     RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
                     i+=1
@@ -175,7 +177,7 @@ class ImporterRipart(object):
                 
             if cnt>1:                
                 remLayer=self.context.getLayerByName(RipartHelper.nom_Calque_Signalement)
-                remLayer.updateExtents()
+                remLayer.updateExtents(True)
                 box = remLayer.extent()
                 self.setMapExtent(box)
                     
@@ -244,16 +246,16 @@ class ImporterRipart(object):
         """
         source_crs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
                     
-        mapCrs=self.context.mapCan.mapRenderer().destinationCrs().authid()
+        mapCrs=self.context.mapCan.mapSettings().destinationCrs().authid()
         dest_crs=QgsCoordinateReferenceSystem(mapCrs)
                     
-        transform = QgsCoordinateTransform(source_crs, dest_crs)
+        transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance() )
         new_box = transform.transformBoundingBox(box)
                     
         #distance pour le buffer: 10% de la distance minimale (hauteur ou largeur)
         dist= min(new_box.width(),new_box.height())*0.1  
         #zoom sur la couche Signalement
-        self.context.mapCan.setExtent(new_box.buffer(dist))
+        self.context.mapCan.setExtent(new_box.buffered(dist))
         
         
     def showImportResult(self,cnt):

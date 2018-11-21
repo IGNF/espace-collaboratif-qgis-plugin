@@ -41,7 +41,7 @@ class FormView(QtWidgets.QDialog, FORM_CLASS):
               
         self.btnCroquis.clicked.connect(self.toggleCroquis)
         
-        self.textEditCntCroquisDetail.setFrameStyle(QtGui.QFrame.NoFrame)
+        #self.textEditCntCroquisDetail.setFrameStyle(QtGui.QFrame.NoFrame)
         self.textEditCntCroquisDetail.viewport().setAutoFillBackground(False)
         
         self.btnDoc.clicked.connect(lambda:self.openDoc(0))

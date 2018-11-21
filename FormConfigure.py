@@ -4,20 +4,16 @@ Created on 20 oct. 2015
 
 @author: AChang-Wailing
 '''
-'''from __future__ import absolute_import
-from builtins import str
-from builtins import range'''
+
 import os
+import os.path
 from datetime import datetime, timedelta
 import calendar
 
-from qgis.PyQt import QtGui, uic, QtWidgets 
+from PyQt5 import QtGui, uic, QtWidgets 
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
-#from qgis.core import *
-from qgis._core import QgsProject,  QgsMessageLog
-'''from qgis.PyQt.QtWidgets import QMessageBox
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt'''
+from qgis.core import QgsProject,QgsMessageLog,QgsVectorLayer
 
 from . import FormConfigurerRipart_base
 from .RipartHelper import RipartHelper
@@ -196,7 +192,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         :param attList: un dictionnaire des attributs à ajouter (key:nom du calque, value:liste des attributs du calque)
         :type attList: dictionary 
         """
-        fieldNames = [field.name() for field in layer.pendingFields() ]
+        fieldNames = [field.name() for field in layer.fields() ]
         
         for f in fieldNames:
             subItem=  QTreeWidgetItem()

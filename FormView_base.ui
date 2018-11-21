@@ -211,6 +211,9 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <property name="frameShape">
+    <enum>QFrame::NoFrame</enum>
+   </property>
    <property name="lineWidth">
     <number>0</number>
    </property>
