@@ -36,7 +36,7 @@ from qgis.PyQt import QtGui, uic
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
 #from qgis.core import *
-from qgis.core import QgsProject,  QgsMessageLog
+from qgis.core import QgsProject,  QgsMessageLog, QgsWkbTypes
 import configparser
 
 # Initialize Qt resources from file resources.py

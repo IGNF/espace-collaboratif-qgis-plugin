@@ -13,7 +13,7 @@ import calendar
 from PyQt5 import QtGui, uic, QtWidgets 
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
-from qgis.core import QgsProject,QgsMessageLog,QgsVectorLayer
+from qgis.core import QgsProject,QgsMessageLog,QgsVectorLayer,QgsWkbTypes
 
 from . import FormConfigurerRipart_base
 from .RipartHelper import RipartHelper

@@ -11,7 +11,7 @@ from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,\
-                      QgsGeometry,QgsDataSourceUri,QgsVectorLayer,QgsProject, QgsPolygon
+                      QgsGeometry,QgsDataSourceUri,QgsVectorLayer,QgsProject, QgsPolygon,QgsWkbTypes
                       
 from .RipartException import RipartException
 
@@ -467,7 +467,7 @@ class Contexte(object):
         for key in layers:
             l=layers[key]
             
-            if type(l) is QgsVectorLayer and l.geometryType ()!=None and l.geometryType ()==QgsPolygon :
+            if type(l) is QgsVectorLayer and l.geometryType ()!=None and l.geometryType ()== QgsWkbTypes.PolygonGeometry:
                 polylayers[l.id()]=l.name()
                 
         return polylayers
@@ -629,7 +629,7 @@ class Contexte(object):
                 for croquisTemp in croquiss:
                     if l.name() in attCroquis:
                         for att in attCroquis[l.name()]:
-                            idx= l.fieldNameIndex(att)
+                            idx= l.fields().lookupField(att)
                             attribut= Attribut(att,f.attributes()[idx])
                             croquisTemp.addAttribut(attribut)
                         
@@ -663,7 +663,7 @@ class Contexte(object):
         try:
             destCrs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
                        
-            transformer = QgsCoordinateTransform(layerCrs, destCrs)
+            transformer = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
 
             if ftype==qgis.core.Polygon:
                 geomPoints=geom.asPolygon()
@@ -861,7 +861,7 @@ class Contexte(object):
             print(row[0])
             featIds.append(row[0])
            
-        lay.setSelectedFeatures( featIds )
+        lay.selectByIds( featIds )
         
        
   

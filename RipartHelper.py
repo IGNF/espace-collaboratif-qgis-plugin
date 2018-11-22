@@ -16,7 +16,7 @@ from qgis.utils import spatialite_connect
 import sqlite3 as sqlite
 
 
-from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform,QgsVectorLayer
+from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform,QgsVectorLayer,QgsProject
 from .core.ClientHelper import ClientHelper
 from .RipartException import RipartException
 import collections
@@ -683,7 +683,7 @@ class RipartHelper:
         
         layerCrs=  geomLayer.crs()
         destCrs= QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
-        xform= QgsCoordinateTransform(layerCrs, destCrs)
+        xform= QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
         
         featsPoly = geomLayer.getFeatures()
  
@@ -712,7 +712,7 @@ class RipartHelper:
         filtCrs= filtreLay.crs()
         destCrs= QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
         
-        xform= QgsCoordinateTransform(filtCrs, destCrs)
+        xform= QgsCoordinateTransform(filtCrs, destCrs, QgsProject.instance())
         
         bbox= xform.transform(filtreExtent)
         

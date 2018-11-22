@@ -95,7 +95,7 @@ class FormView(QtWidgets.QDialog, FORM_CLASS):
             
             for cr in self.selCroquis:
                 lay=self.context.getLayerByName(cr) 
-                lay.setSelectedFeatures( self.selCroquis[cr])
+                lay.selectByIds( self.selCroquis[cr])
                 
                 nbCroquis+=len(self.selCroquis[cr])
                 
