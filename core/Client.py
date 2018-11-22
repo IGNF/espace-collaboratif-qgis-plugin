@@ -158,14 +158,15 @@ class Client(object):
         """   
         
         #progressbar pour le chargement des remarques
-        self.progressMessageBar = self.iface.messageBar().createMessage(u"Téléchargement des signalements depuis le serveur ...")
+        self.progressMessageBar = self.iface.messageBar().createMessage("Téléchargement des signalements depuis le serveur ...")
+
         self.progress = QProgressBar()
      
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
        
         self.progressMessageBar.layout().addWidget(self.progress)
-        #self.iface.messageBar().pushWidget(self.progressMessageBar, self.iface.messageBar().INFO)
-        self.iface.messageBar().pushWidget(self.progressMessageBar, level=2)
+        self.iface.messageBar().pushWidget(self.progressMessageBar, level= 0)
+        #♣self.iface.messageBar().pushWidget(self.progress, level=0)
         self.progress.setValue(0)
                 
         result = self.__getGeoRemsTotal(parameters)

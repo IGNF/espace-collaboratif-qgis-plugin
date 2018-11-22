@@ -88,7 +88,7 @@ class RepondreRipart(object):
                 return
                
             if remarque.autorisation not in ["RW","RW+","RW-"] and not isView:
-                mess=u"Vous n'êtes pas autorisé à modifier le signalement n°"+ str(remId)
+                mess="Vous n'êtes pas autorisé à modifier le signalement n°"+ str(remId)
                 self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
                 return
                 
@@ -114,7 +114,7 @@ class RepondreRipart(object):
                                                 ClientHelper.stringToStringType(formReponse.repTitre) ) 
                            
                     self.context.updateRemarqueInSqlite(remMaj)
-                    mess=u"de l'ajout d'une réponse au signalement n°" + str(remId) 
+                    mess="de l'ajout d'une réponse au signalement n°" + str(remId) 
                     
                     if hasattr(activeLayer, "setCacheImage"):
                         activeLayer.setCacheImage(None)
@@ -122,7 +122,7 @@ class RepondreRipart(object):
                     activeLayer.removeSelection()
                    
                     
-                    self.context.iface.messageBar().pushMessage(u"Succès", mess, level=2, duration=15)
+                    self.context.iface.messageBar().pushMessage("Succès", mess, level=2, duration=15)
                
         except Exception as e:
             self.logger.error(format(e) + ";" + str(type(e)) + " " +str(e))

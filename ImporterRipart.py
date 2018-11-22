@@ -50,12 +50,12 @@ class ImporterRipart(object):
         """
         self.context=context
    
-        self.progressMessageBar = self.context.iface.messageBar().createMessage(u"Placement des signalements sur la carte...")
+        self.progressMessageBar = self.context.iface.messageBar().createMessage("Placement des signalements sur la carte...")
         self.progress = QProgressBar()
         self.progress.setMaximum(200)        
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)     
         self.progressMessageBar.layout().addWidget(self.progress)
-        
+        #self.progress.setValue(0)
      
      
     def doImport(self):
@@ -72,11 +72,11 @@ class ImporterRipart(object):
         if  self.context.ripClient == None :
             self.context.getConnexionRipart()
             if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
-                self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)            
+                self.context.iface.messageBar().pushMessage("","Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)            
                 return
         
         if self.context.profil.geogroupe.nom == None :
-            raise NoProfileException(u"Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
+            raise NoProfileException("Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
         
         self.context.addRipartLayersToMap()
         
@@ -134,7 +134,7 @@ class ImporterRipart(object):
             
         rems = self.context.client.getGeoRems(params)
 
-        #self.context.iface.messageBar().pushWidget(self.progressMessageBar, self.context.iface.messageBar().INFO)
+        self.context.iface.messageBar().pushWidget(self.progressMessageBar, level = 0)
         self.progress.setValue(10)
            
 
@@ -164,8 +164,9 @@ class ImporterRipart(object):
                 for remId in remsToKeep:
                     RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
                     i+=1
-                    self.progressVal= int(round(i*100/cnt))
-                    self.progress.setValue(self.progressVal)
+                    if cnt>0:
+                        self.progressVal= int(round(i*100/cnt))
+                        self.progress.setValue(self.progressVal)
   
                 self.context.conn.commit()   
                    
@@ -215,8 +216,8 @@ class ImporterRipart(object):
                         "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
                         "(Cela risque de prendre un certain temps)."
                 message=ClientHelper.getEncodeType(message)
-                reply= QMessageBox.question(None,'IGN RIPart',message,QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
-                if reply == QtWidgets.QMessageBox.Yes:
+                reply= QMessageBox.question(None,'IGN RIPart',message,QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.Yes:
                     bbox=None
                 else : 
                     return -999
@@ -233,8 +234,8 @@ class ImporterRipart(object):
         """Avertissement si pas de filtre spatial
         """       
         message=ClientHelper.getEncodeType(message)
-        reply= QMessageBox.question(None,'IGN RIPart',message,QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
-        if reply == QtWidgets.QMessageBox.Yes:
+        reply= QMessageBox.question(None,'IGN RIPart',message,QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
             return True
         else : 
             return False

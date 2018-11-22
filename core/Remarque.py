@@ -219,7 +219,7 @@ class Remarque(object):
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 if rep.statut is not None:
-                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts().index(rep.statut.__str__())].encode('utf8')           
+                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts().index(rep.statut.__str__())]     
                 concatenate += ".</font></b><br/>"
                 
                 if rep.titre() is not None and  rep.titre()!="" :
@@ -244,13 +244,13 @@ class Remarque(object):
                 count -=1
                 
                 if len(rep.auteur.nom)!=0 : 
-                    concatenate +=" par " +  ClientHelper.stringToStringType(rep.auteur.nom)
+                    concatenate +=" par " +  rep.auteur.nom
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 
                 try:
                     if (rep.reponse!=None): 
-                        concatenate += ".\n" + ClientHelper.stringToStringType(rep.reponse.strip()) + "\n";
+                        concatenate += ".\n" + rep.reponse.strip() + "\n";
                     else : 
                         self.logger.error("No message in response "+ self.id)
                 except Exception as e:

@@ -19,10 +19,11 @@ class ClientHelper(object):
         if val==None:
             return ""
 
-        elif type(val)==type('str'):
-            return val
+        #elif type(val)==type('str'):
+            #return val
         else :
-            return val.encode('utf-8');
+            #return val.encode('utf-8');
+            return val
     
     @staticmethod
     def getEncodeType(val):
@@ -30,7 +31,7 @@ class ClientHelper(object):
         """
         
         if val==None:
-            return u""
+            return ""
         #elif type(val)==type('str'):
         #   return val.decode('utf8')
         else :

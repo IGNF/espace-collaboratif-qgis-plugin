@@ -125,7 +125,7 @@ class CreerRipart(object):
             RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouveau(x) signalement(s)") 
              
         except Exception as e:
-            self.logger.error("in _createNewRemark "+ str(format(e)))
+            self.logger.error("in _createNewRemark "+ format(e))
         
         finally:
             self.context.conn.close()   

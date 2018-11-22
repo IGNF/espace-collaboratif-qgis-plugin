@@ -6,7 +6,7 @@ Created on 29 sept. 2015
 '''
 
 from qgis.utils import *
-#from PyQt5.QtCore import 
+
 from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
 
@@ -371,7 +371,6 @@ class Contexte(object):
                 self.logger.error("no ripart.sqlite found in plugin directory" + format(e))
                 raise e
         try:    
-            #self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
     
             # creating a Cursor
@@ -496,9 +495,7 @@ class Contexte(object):
         ripartLayers= RipartHelper.croquis_layers
         ripartLayers[RipartHelper.nom_Calque_Signalement]="POINT"
               
-        try:
-        
-            #self.conn= sqlite3.connect(self.dbPath)
+        try:       
             self.conn = spatialite_connect(self.dbPath)
             
             for table in ripartLayers:
