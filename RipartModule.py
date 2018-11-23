@@ -308,7 +308,7 @@ class RipartPlugin:
                    except AttributeError as e:
                        continue        
         
-        logdir =os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs') #'C:/Users/AChang-Wailing/.qgis2/python/plugins/RipartPlugin/logs'
+        logdir =os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs') #'C:/Users/AChang-Wailing/AppData/Roaming/.../logs'
         if os.path.exists(logdir):
             for f in os.listdir(logdir):  
                     file = open(os.path.join(logdir,f),'r+')

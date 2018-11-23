@@ -146,7 +146,7 @@ class Client(object):
             
         return profil
         
-    
+   
 
     def getGeoRems(self,parameters):
         """Recherche les remarques.
@@ -161,12 +161,14 @@ class Client(object):
         self.progressMessageBar = self.iface.messageBar().createMessage("Téléchargement des signalements depuis le serveur ...")
 
         self.progress = QProgressBar()
+        self.progress.setMaximum(200)      
      
         self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
        
         self.progressMessageBar.layout().addWidget(self.progress)
+        
         self.iface.messageBar().pushWidget(self.progressMessageBar, level= 0)
-        #♣self.iface.messageBar().pushWidget(self.progress, level=0)
+        self.iface.mainWindow().repaint()
         self.progress.setValue(0)
                 
         result = self.__getGeoRemsTotal(parameters)
@@ -217,7 +219,6 @@ class Client(object):
         xml = XMLResponse(data)
         errMessage = xml.checkResponseValidity()
         
-
         count=int(pagination)
 
         if errMessage['code'] =='OK':
