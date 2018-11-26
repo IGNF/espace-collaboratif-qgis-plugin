@@ -3,12 +3,10 @@
 '''
 Created on 22 janv. 2015
 
+version 3.0.0, 26/11/2018
+
 @author: AChang-Wailing
 '''
-#from __future__ import absolute_import
-
-from builtins import str
-from builtins import object
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 import re

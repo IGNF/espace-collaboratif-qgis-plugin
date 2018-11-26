@@ -2,12 +2,10 @@
 '''
 Created on 8 oct. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
-from __future__ import absolute_import
-
-from builtins import str
-from builtins import object
 from .core.RipartLoggerCl import RipartLogger
 
 from qgis.PyQt import QtCore, QtGui

@@ -2,9 +2,11 @@
 '''
 Created on 30 sept. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
-#from __future__ import absolute_import
+
 import os
 
 from PyQt5 import uic

@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 '''
-Created on 23 janv. 2015
+Created on 26/11/2018
 
 @author: AChang-Wailing
 '''
 
-
-from builtins import str
-from builtins import object
 class Box(object):
     """
     Représente une boite englobante

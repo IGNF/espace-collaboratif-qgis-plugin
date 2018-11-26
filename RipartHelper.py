@@ -2,19 +2,15 @@
 '''
 Created on 29 sept. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
-'''from __future__ import print_function
-from __future__ import absolute_import'''
-
-from builtins import str
-#from builtins import object
 from .core.RipartLoggerCl import RipartLogger
 import xml.etree.ElementTree as ET
 
 from qgis.utils import spatialite_connect
 import sqlite3 as sqlite
-
 
 from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform,QgsVectorLayer,QgsProject
 from .core.ClientHelper import ClientHelper

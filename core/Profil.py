@@ -2,15 +2,14 @@
 '''
 Created on 23 janv. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
-from __future__ import absolute_import
 
-from builtins import object
 from .Auteur import *
 from .Groupe import Groupe
 from . import ConstanteRipart 
-
 
 
 class Profil(object):

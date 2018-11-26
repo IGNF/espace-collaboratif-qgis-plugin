@@ -2,10 +2,12 @@
 '''
 Created on 08/11/2017
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
 
-from builtins import object
+
 from PyQt5.QtCore import *
 
 class ThemeAttribut(object):

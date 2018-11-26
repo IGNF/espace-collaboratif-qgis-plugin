@@ -2,11 +2,11 @@
 '''
 Created on 9 nov. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
-from __future__ import absolute_import
-from builtins import str
-from builtins import range
+
 import os
 import logging
 from .core.RipartLoggerCl import RipartLogger 

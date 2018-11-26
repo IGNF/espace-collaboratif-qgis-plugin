@@ -2,11 +2,11 @@
 '''
 Created on 26 janv. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
 
-
-from builtins import object
 from .RipartLoggerCl import RipartLogger
 
 from . import requests
