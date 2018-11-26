@@ -193,7 +193,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     label = self.treeWidget.itemWidget(att,0).text()
                     widg = self.treeWidget.itemWidget(att,1)
                     if type(widg) == QtWidgets.QCheckBox :
-                        val = str(widg.checkState())
+                        state = widg.checkState()
+                        if state == 0:
+                            val = "0"
+                        else :
+                            val = "1"
                     elif type(widg) == QtWidgets.QLineEdit :
                         val = widg.text() 
                     else :

@@ -56,8 +56,8 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
     def setRemarque(self,remarque):
         self.lblMessage.setText(u"Message de la remarque n°" + remarque.id);
         self.setStatut(remarque.statut)
-        self.textMessage.setText(ClientHelper.getEncodeType(remarque.commentaire))
-        self.textOldRep.setHtml(ClientHelper.getEncodeType(remarque.concatenateReponseHTML()))
+        self.textMessage.setText(ClientHelper.notNoneValue(remarque.commentaire))
+        self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateReponseHTML()))
      
         
     def setStatut(self,statut):
