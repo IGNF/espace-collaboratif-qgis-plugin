@@ -108,7 +108,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 self.treeWidget.addTopLevelItem(thItem)
                 
                 #Pour masquer la 2ème colonne (qui contient le groupe id)
-                thItem.setTextColor(1,QtWidgets.QColor(255,255,255,0))
+                #thItem.setTextColor(1,QtWidgets.QColor(255,255,255,0))
+                thItem.setForeground(1, QtGui.QBrush(Qt.white))
                 
                 if ClientHelper.stringToStringType(th.groupe.nom) in preferredThemes:
                     thItem.setCheckState(0,Qt.Checked)
@@ -120,12 +121,14 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 for att in th.attributs:
                     attLabel = att.nom
                     attType = att.type
-                    attVal = att.valeurs[0]
+                    '''if (len(att.valeurs)>0):
+                        attVal = att.valeurs[0]'''
+                    attDefaultval = att.defaultval
             
                     if attType == "text": 
                         label = QtWidgets.QLabel(att.nom,self.treeWidget)
                         valeur = QtWidgets.QLineEdit(self.treeWidget)
-                        valeur.setText(attVal)
+                        valeur.setText(attDefaultval)
                         txtItem =  QTreeWidgetItem()
                         thItem.addChild(txtItem)
                         self.treeWidget.setItemWidget(txtItem, 0, label)
@@ -133,15 +136,15 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     elif attType == "checkbox" :
                         label = QtWidgets.QLabel(att.nom,self.treeWidget)
                         valeur = QtWidgets.QCheckBox(self.treeWidget)
-                        if attVal == 'True' : 
+                        if attDefaultval == 'True' : 
                             valeur.setChecked(True)
                         else:
-                            valeur.setChecked(False)
-                        
+                            valeur.setChecked(False)     
                         attItem =  QTreeWidgetItem()
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, valeur)  
+                    
                     else:
                         label = QtWidgets.QLabel(att.nom,self.treeWidget)
                         listAtt = QtWidgets.QComboBox(self.treeWidget)
@@ -282,7 +285,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     u"SIG (*.SHP;*.LYR;*.GDB;*.MXD;*GCM;*.GCR;*.DXF;*.DWG;*.QGS;*.MIF;*MID)"
                         
             
-            filename = QtWidgets.QFileDialog.getOpenFileName(self, u'Document à joindre à la remarque', '.',filters)
+            filename,_ = QtWidgets.QFileDialog.getOpenFileName(self, 'Document à joindre à la remarque', '.',filters)
             if filename!="":
                 extension = os.path.splitext(filename)[1]           
                 if extension[1:] not in self.context.formats :

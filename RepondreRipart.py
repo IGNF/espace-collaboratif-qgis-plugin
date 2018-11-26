@@ -49,14 +49,14 @@ class RepondreRipart(object):
             
             activeLayer = self.context.iface.activeLayer()
             if activeLayer==None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
-                self.context.iface.messageBar().pushMessage("Attention", u'Le calque "Signalement" doit être le calque actif', level=1, duration=5)
+                self.context.iface.messageBar().pushMessage("Attention", 'Le calque "Signalement" doit être le calque actif', level=1, duration=5)
                 return
             else:
                 #get selected features
                 selFeats = activeLayer.selectedFeatures()
                 
                 if len(selFeats)==0:
-                    self.context.iface.messageBar().pushMessage("Attention", u'Pas de signalement sélectionné', level=1, duration=10)
+                    self.context.iface.messageBar().pushMessage("Attention", 'Pas de signalement sélectionné', level=1, duration=10)
                     return
                 
        
@@ -70,7 +70,9 @@ class RepondreRipart(object):
                                         level=1, duration=10)
                     
             if  self.context.ripClient == None :
-                self.context.getConnexionRipart()
+                connResult =self.context.getConnexionRipart()
+                if not connResult:
+                    return 0
                 if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
                     self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)       
                     return
@@ -122,7 +124,7 @@ class RepondreRipart(object):
                     activeLayer.removeSelection()
                    
                     
-                    self.context.iface.messageBar().pushMessage("Succès", mess, level=2, duration=15)
+                    self.context.iface.messageBar().pushMessage("Succès", mess, level=0, duration=15)
                
         except Exception as e:
             self.logger.error(format(e) + ";" + str(type(e)) + " " +str(e))

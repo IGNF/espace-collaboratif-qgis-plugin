@@ -16,6 +16,7 @@ class ThemeAttribut(object):
     theme=""
     nom=""
     valeur=""
+    defaultval = None
     valeurs = []
     type = None
         
@@ -37,6 +38,9 @@ class ThemeAttribut(object):
         
     def addValeur(self, val):
         self.valeurs.append(val)
+    
+    def setDefaultVal(self, val):
+        self.defaultval = val
         
     def setType(self,attType):
         self.type=attType

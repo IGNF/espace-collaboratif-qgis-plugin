@@ -70,7 +70,9 @@ class ImporterRipart(object):
         self.logger.debug(self.context.ripClient)
         
         if  self.context.ripClient == None :
-            self.context.getConnexionRipart()
+            connResult =self.context.getConnexionRipart()
+            if not connResult:
+                return 0
             if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
                 self.context.iface.messageBar().pushMessage("","Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)            
                 return
@@ -135,8 +137,6 @@ class ImporterRipart(object):
         rems = self.context.client.getGeoRems(params)
 
         self.context.iface.messageBar().pushWidget(self.progressMessageBar, level = 0)
-        self.progress.setValue(10)
-           
 
         #Filtrage spatial affiné des remarques.
         if bbox!=None:

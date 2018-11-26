@@ -8,9 +8,9 @@
     <Pagination>100</Pagination>
     <Zone_extraction>
     </Zone_extraction>
-    <Thèmes_préférés>
-      <Thème>Administratif</Thème>
-    </Thèmes_préférés>
+    <Themes_pref>
+        <Theme>Administratif</Theme>
+    </Themes_pref>
     <Afficher_Croquis>Oui</Afficher_Croquis>
     <Import_pour_groupe>true</Import_pour_groupe>
   </Map>

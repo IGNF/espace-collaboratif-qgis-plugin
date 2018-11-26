@@ -249,6 +249,9 @@ class XMLResponse(object):
                 
                 for val in attNode.findall('VALEURS/VAL'):
                     thAttribut.addValeur(val.text)
+                
+                for val in attNode.findall('VALEURS/DEFAULTVAL'):
+                    thAttribut.defaultval =val.text
 
                 thAttributs.append(thAttribut)
                 if nomTh not in themesAttDict:

@@ -338,6 +338,8 @@ class RipartPlugin:
         if self.context:    
             res=self.context.getConnexionRipart(newLogin=True)  
             self.logger.debug(res)
+        if not res:
+            self.logger.debug("cancel")
        
         
     def downloadRemarks(self):
@@ -347,18 +349,18 @@ class RipartPlugin:
             self.context= Contexte.getInstance(self,QgsProject)   
             if self.context ==None :
                 return  
-            
-            self.logger.debug('context' +  str(self.context.profil.titre))  
-                 
+                
             importRipart= ImporterRipart(self.context)
-            importRipart.doImport()
+            result = importRipart.doImport()
+            if result == 0:  
+                return 
         except NoProfileException as e:
             self.context.iface.messageBar().clearWidgets()
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
             pushMessage("Remarque",
                          format(e), \
-                         level=0, duration=20)
+                         level=2, duration=20)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
         except Exception as e:
             self.logger.error(format(e))
