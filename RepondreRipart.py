@@ -84,7 +84,7 @@ class RepondreRipart(object):
                 mess= "Impossible de répondre au signalement n°"+ str(remId) + \
                          ", car il est clôturé depuis le "+ remarque.dateValidation
                                                     
-                self.context.iface.messageBar().pushMessage("Attention",ClientHelper.getEncodeType(mess), level=1, duration=5)
+                self.context.iface.messageBar().pushMessage("Attention",mess, level=1, duration=5)
                 return
                
             if remarque.autorisation not in ["RW","RW+","RW-"] and not isView:
@@ -110,8 +110,8 @@ class RepondreRipart(object):
                     
                 if formReponse.answer :
                     remarque.statut=formReponse.newStat
-                    remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep),
-                                                ClientHelper.stringToStringType(formReponse.repTitre) ) 
+                    remMaj=client.addReponse(remarque,ClientHelper.notNoneValue(formReponse.newRep),
+                                                ClientHelper.notNoneValue(formReponse.repTitre) ) 
                            
                     self.context.updateRemarqueInSqlite(remMaj)
                     mess="de l'ajout d'une réponse au signalement n°" + str(remId) 

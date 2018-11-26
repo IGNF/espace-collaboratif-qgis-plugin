@@ -322,9 +322,9 @@ class Contexte(object):
                         self.logger.error(format(e))        
                         
                         try:
-                            self.loginWindow.setErreur(ClientHelper.getEncodeType(format(e)))
+                            self.loginWindow.setErreur(ClientHelper.notNoneValue(format(e)))
                         except Exception as e2:
-                            self.loginWindow.setErreur(ClientHelper.getEncodeType("la connexion a échoué"))
+                            self.loginWindow.setErreur("la connexion a échoué")
                         self.loginWindow.exec_()
                         
         else: 

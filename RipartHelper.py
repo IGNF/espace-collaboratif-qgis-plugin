@@ -353,7 +353,7 @@ class RipartHelper:
             prefThs= xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_Themes+"/"+RipartHelper.xml_Theme,"Map"))
 
             for n in  prefThs:
-                prefThemes.append(ClientHelper.stringToStringType(n.text))  
+                prefThemes.append(ClientHelper.notNoneValue(n.text))  
          
         except Exception as e:
             RipartHelper.logger.error(str(e))
@@ -595,24 +595,24 @@ class RipartHelper:
             sql+= u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation,geom) "
             sql+= u"VALUES (" 
             sql+= str(rem.id) +", '" 
-            sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.auteur.nom) +"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("commune") +"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("departement","nom") +"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("departement","id")+"', '" )
+            sql+= ClientHelper.getValForDB(rem.auteur.nom) +"', '" 
+            sql+= rem.getAttribut("commune") +"', '" 
+            sql+= rem.getAttribut("departement","nom") +"', '" 
+            sql+= rem.getAttribut("departement","id")+"', '" 
             sql+= rem.dateCreation+"', '" 
             sql+= rem.dateMiseAJour +"', '" 
             sql+= rem.dateValidation+"', '" 
-            sql+= ClientHelper.getEncodeType(rem.concatenateThemes()+"', '") 
-            sql+= ClientHelper.getEncodeType(rem.statut.__str__()+"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("commentaire") +"', '")
-            sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.concatenateReponse()) +"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("lien") +"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("lienPrive") +"', '" )
-            sql+= ClientHelper.getEncodeType(ClientHelper.getValForDB(rem.getAllDocuments()) +"', '" )
-            sql+= ClientHelper.getEncodeType(rem.getAttribut("autorisation") + "', ") 
-            sql+= ClientHelper.getEncodeType(geom +")")
+            sql+= rem.concatenateThemes()+"', '"
+            sql+= rem.statut.__str__()+"', '" 
+            sql+= rem.getAttribut("commentaire") +"', '"
+            sql+= ClientHelper.getValForDB(rem.concatenateReponse()) +"', '" 
+            sql+= rem.getAttribut("lien") +"', '" 
+            sql+= rem.getAttribut("lienPrive") +"', '" 
+            sql+= ClientHelper.getValForDB(rem.getAllDocuments()) +"', '" 
+            sql+= rem.getAttribut("autorisation") + "', "
+            sql+= geom +")"
                
-            #RipartHelper.logger.debug("INSERT sql:" + sql)
+
             cur = conn.cursor()
             cur.execute(sql)
             rowcount=cur.rowcount

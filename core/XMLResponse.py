@@ -46,7 +46,7 @@ class XMLResponse(object):
         """
         self.logger.debug("init 1:" )
         
-        self.response =ClientHelper.stringToStringType(response)
+        self.response =ClientHelper.notNoneValue(response)
         
         self.logger.debug("xmlreponse 2 :" )
         #self.logger.debug("self.response :" +self.response)
@@ -238,7 +238,7 @@ class XMLResponse(object):
             thAttNodes = self.root.findall('THEMES/ATTRIBUT')
             for attNode in thAttNodes :
                          
-                nomTh = ClientHelper.stringToStringType(attNode.find('NOM').text)
+                nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
                 nomAtt = attNode.find('ATT').text
                 attType = attNode.find('TYPE').text
                 
@@ -264,8 +264,8 @@ class XMLResponse(object):
                 theme.groupe= Groupe()       
                 theme.groupe.nom = (node.find('NOM')).text
                 theme.groupe.id = (node.find('ID_GEOGROUPE')).text 
-                if ClientHelper.stringToStringType(theme.groupe.nom) in themesAttDict:
-                    (theme.attributs).extend(themesAttDict[ClientHelper.stringToStringType(theme.groupe.nom)])
+                if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
+                    (theme.attributs).extend(themesAttDict[ClientHelper.notNoneValue(theme.groupe.nom)])
                 themes.append(theme)
                 
         except Exception as e:

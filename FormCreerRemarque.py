@@ -109,7 +109,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 #thItem.setTextColor(1,QtWidgets.QColor(255,255,255,0))
                 thItem.setForeground(1, QtGui.QBrush(Qt.white))
                 
-                if ClientHelper.stringToStringType(th.groupe.nom) in preferredThemes:
+                if ClientHelper.notNoneValue(th.groupe.nom) in preferredThemes:
                     thItem.setCheckState(0,Qt.Checked)
                     thItem.setExpanded(True)
                 else:
@@ -199,7 +199,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     else :
                         val = widg.currentText()
       
-                    attribut = ThemeAttribut(theme.groupe.nom,ClientHelper.stringToStringType(label), ClientHelper.stringToStringType(val) )
+                    attribut = ThemeAttribut(theme.groupe.nom,ClientHelper.notNoneValue(label), ClientHelper.notNoneValue(val) )
                     theme.attributs.append(attribut)
 
                 selectedThemes.append(theme)               

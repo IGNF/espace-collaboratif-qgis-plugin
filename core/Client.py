@@ -140,7 +140,7 @@ class Client(object):
             else: 
                 result =ClientHelper.getErrorMessage( data.status_code)
           
-            raise Exception(ClientHelper.stringToStringType(result))
+            raise Exception(ClientHelper.notNoneValue(result))
             
         return profil
         
@@ -346,7 +346,7 @@ class Client(object):
             params = {}
             params['version']= ConstanteRipart.RIPART_CLIENT_VERSION
             params['protocol']=ConstanteRipart.RIPART_CLIENT_PROTOCOL
-            params['comment']= ClientHelper.stringToStringType(remarque.commentaire)         
+            params['comment']= ClientHelper.notNoneValue(remarque.commentaire)         
             geometry = "POINT(" + str(remarque.getLongitude()) +" " + str(remarque.getLatitude()) + ")"
             params['geometry']= geometry
             params['territory']= self.getProfil().zone.__str__()
@@ -366,9 +366,9 @@ class Client(object):
                     nom= ET.SubElement(th,"NOM")
                     nom.text=t.groupe.nom"""
                     
-                    groupeIdAndNom = ClientHelper.stringToStringType ('"' + t.groupe.id + "::" + t.groupe.nom )
+                    groupeIdAndNom = ClientHelper.notNoneValue ('"' + t.groupe.id + "::" + t.groupe.nom )
                     
-                    attributes +=  ClientHelper.stringToStringType(groupeIdAndNom + "\"=>\"1\",")
+                    attributes +=  ClientHelper.notNoneValue(groupeIdAndNom + "\"=>\"1\",")
                     
                     for at in t.attributs :
                         attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
@@ -403,7 +403,7 @@ class Client(object):
                                         str(ConstanteRipart.MAX_TAILLE_UPLOAD_FILE))  
          
                   
-                    files = {"upload"+str(docCnt):  open(ClientHelper.stringToStringType(document), 'rb')}
+                    files = {"upload"+str(docCnt):  open(ClientHelper.notNoneValue(document), 'rb')}
 
    
             #raise Exception("TEST")

@@ -215,7 +215,7 @@ class ImporterRipart(object):
                         "' définit pour être le filtrage spatial (ou le calque n'est pas activé).\n\n"+\
                         "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
                         "(Cela risque de prendre un certain temps)."
-                message=ClientHelper.getEncodeType(message)
+        
                 reply= QMessageBox.question(None,'IGN RIPart',message,QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     bbox=None
@@ -233,7 +233,7 @@ class ImporterRipart(object):
     def noFilterWarningDialog(self,message):
         """Avertissement si pas de filtre spatial
         """       
-        message=ClientHelper.getEncodeType(message)
+        message=ClientHelper.notNoneValue(message)
         reply= QMessageBox.question(None,'IGN RIPart',message,QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
             return True
@@ -284,7 +284,7 @@ class ImporterRipart(object):
                     "- "+ str(valid) +" signalement(s)  validé(s).\n" +\
                     "- "+ str(reject) +" signalement(s) rejeté(s).\n" 
                               
-        resultMessage= ClientHelper.getEncodeType(resultMessage)
+        resultMessage= resultMessage
                               
         RipartHelper.showMessageBox(resultMessage)    
     
