@@ -136,25 +136,6 @@ class Contexte(object):
             lines=formatFile.readlines()
             self.formats=[x.split("\n")[0] for x in lines]  
             
-            '''Deprecated
-            try:
-            #Appel à un service pour obtenir les formats autorisés. Ce service n'existe plus, mais possible que dans 
-            #le futur un nouveau service soit créé
-                formatFile =urllib.urlopen('http://ripart.ign.fr/?page=doctype')
-                if formatFile.code!=200:
-                    raise
-                
-                lines=formatFile.readlines()
-                self.formats=[x.split("\t")[0] for x in lines]
-                
-                if self.formats[0].startswith("<!DOCTYPE html") :
-                    raise
-                
-            except Exception as e:
-                self.logger.error("init contexte:" + format(e))
-                formatFile =open( os.path.join(self.plugin_path,'files','formats.txt'), 'r')      
-                lines=formatFile.readlines()
-                self.formats=[x.split("\n")[0] for x in lines]  '''    
           
         except Exception as e:
             self.logger.error("init contexte:" + format(e))

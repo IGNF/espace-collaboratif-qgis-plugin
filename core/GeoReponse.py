@@ -80,18 +80,6 @@ class GeoReponse(object):
         return tree
       
 
- 
-"""if __name__ == "__main__": 
-    
-    rep= GeoReponse()
-    rep.auteur=Auteur("354","zz")
-    rep.reponse="un texte sqfff"
-
-    tree=rep.encodeToXML()
-    
-    print tree.findtext('AUTEUR')
-"""
-   
     
     
     

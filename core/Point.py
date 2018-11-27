@@ -44,19 +44,3 @@ class Point(object):
         else :
             return False
     
-    
-"""if __name__ == "__main__":
-    
-    a=Point(1,2)
-    b=Point(2.1,3)
-    
-    c= Point(1,2)
-    r= a.eq( b)
-    
-    print r
-    print a.eq(c)
-    
-    print a.isEmpty()
-    
-    print Point().isEmpty()
-"""

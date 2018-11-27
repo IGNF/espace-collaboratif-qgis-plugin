@@ -58,39 +58,6 @@ def Enum(*names):
 
 
 
-"""if __name__ == '__main__':
-    # fix_print_with_import
-    print('\n*** Enum Demo ***')
-    # fix_print_with_import
-    # fix_print_with_import
-print('--- Days of week ---')
-Days = Enum('Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su')
-    # fix_print_with_import
-    # fix_print_with_import
-print(Days)
-    # fix_print_with_import
-    # fix_print_with_import
-print(Days.Mo)
-    # fix_print_with_import
-    # fix_print_with_import
-print(Days.Fr)
-    # fix_print_with_import
-    # fix_print_with_import
-print(Days.Mo < Days.Fr)
-    # fix_print_with_import
-    # fix_print_with_import
-print(list(Days))
-for each in Days:
-        # fix_print_with_import
-    print('Day:', each)
-    # fix_print_with_import
-    print('--- Yes/No ---')
-    Confirmation = Enum('No', 'Yes')
-    answer = Confirmation.No
-    # fix_print_with_import
-    # fix_print_with_import
-print('Your answer is not', ~answer)"""
-
 def __init__(self, params):
     """ Constructor """
 

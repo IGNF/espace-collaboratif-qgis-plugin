@@ -17,7 +17,6 @@ class Attribut(object):
     nom=""
     valeur=""
 
-  
         
     def __init__(self, nom="", valeur=""):
         """
