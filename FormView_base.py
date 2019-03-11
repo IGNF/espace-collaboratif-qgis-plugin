@@ -131,7 +131,7 @@ class Ui_viewRemark(object):
 
     def retranslateUi(self, viewRemark):
         _translate = QtCore.QCoreApplication.translate
-        viewRemark.setWindowTitle(_translate("viewRemark", "IGN RIPart : Historique du signalement"))
+        viewRemark.setWindowTitle(_translate("viewRemark", "IGN Espace Collaboratif: Historique du signalement"))
         self.lblStatut.setText(_translate("viewRemark", "Statut"))
         self.textStatut.setText(_translate("viewRemark", "statut"))
         self.lblMessage.setText(_translate("viewRemark", "Message du signalement"))

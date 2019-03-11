@@ -391,7 +391,7 @@ class RipartPlugin:
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu lors de l'ajout de la réponse ou lors de la connexion avec le service RIPart. Veuillez réessayer.", \
+                            u"Un problème est survenu lors de l'ajout de la réponse ou lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.", \
                              level=2, duration=10)
         
         
@@ -423,7 +423,7 @@ class RipartPlugin:
                 return 
             message=u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
             
-            reply= QMessageBox.question(None,'IGN RIPart',message,QMessageBox.Yes, QMessageBox.No)
+            reply= QMessageBox.question(None,'IGN Espace Collaboratif',message,QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.context.emptyAllRipartLayers()
             else : 
@@ -489,7 +489,7 @@ class RipartPlugin:
             self.logger.error("viewRem "+ format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"lors de la connexion avec le service RIPart. Veuillez réessayer.", \
+                            u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.", \
                              level=2, duration=10)
         
         
@@ -515,8 +515,8 @@ class RipartPlugin:
        
         
         dlgInfo=FormInfo()
-        dlgInfo.textInfo.setText(u"<b>RIPart</b>")
-        dlgInfo.textInfo.append(u"<br/>Plugin intégrant les services RIPart")
+        dlgInfo.textInfo.setText(u"<b>Plugin Espace Collaboratif</b>")
+        dlgInfo.textInfo.append(u"<br/>Plugin intégrant le service de signalement de l'IGN")
         dlgInfo.textInfo.append(u"<br/>Version: "+ version )
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date )
        

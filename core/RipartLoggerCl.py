@@ -27,14 +27,14 @@ class RipartLogger(object):
         Constructor
         '''
            
-        #trouve le dossier d'installation du plugin et le nom du fichier de log (yyyymmdd_ripart.log)
+        #trouve le dossier d'installation du plugin et le nom du fichier de log (yyyymmdd_espaceco.log)
         p = os.path.dirname(__file__)
         lastSlashIdx=p.rfind("\\")
         #lastSlashIdx=string.rfind(os.path.dirname(__file__),"\\")
         logdir= os.path.join(os.path.dirname(__file__)[:lastSlashIdx],"logs")   
             
         today= datetime.now().date().strftime('%Y%m%d')
-        logFilename= today+"_ripart.log"   
+        logFilename= today+"_espaceco.log"   
         self.logpath=os.path.abspath(os.path.join(logdir,logFilename))
         
                 
@@ -42,7 +42,7 @@ class RipartLogger(object):
             os.makedirs(logdir)
                 
         if param=="":
-            param= "ripart"
+            param= "espaceco"
             
         self.logger = logging.getLogger(param)    
                 

@@ -102,7 +102,7 @@ class Ui_RipartPlugin(object):
 
     def retranslateUi(self, RipartPlugin):
         _translate = QtCore.QCoreApplication.translate
-        RipartPlugin.setWindowTitle(_translate("RipartPlugin", "Connexion au service RIPart"))
+        RipartPlugin.setWindowTitle(_translate("RipartPlugin", "Connexion au service"))
         self.btnConnect.setWhatsThis(_translate("RipartPlugin", "<html><head/><body><p>connexion au service</p></body></html>"))
         self.btnConnect.setText(_translate("RipartPlugin", "Connecter"))
         self.lblLogin.setText(_translate("RipartPlugin", "Votre login"))

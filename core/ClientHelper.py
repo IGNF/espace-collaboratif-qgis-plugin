@@ -27,7 +27,7 @@ class ClientHelper(object):
         elif code =="no_profile":
             return ClientHelper.notNoneValue("Accès refusé. Pas de profil actif.")
         else:
-            return ClientHelper.notNoneValue("Impossible d'accéder au service Ripart") 
+            return ClientHelper.notNoneValue("Impossible d'accéder à l'Espace Collaboratif") 
                            
  
     

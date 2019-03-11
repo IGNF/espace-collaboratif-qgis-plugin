@@ -222,8 +222,8 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Configuration du plugin RIPart"))
-        self.lblUrl.setText(_translate("Dialog", "Adresse de connexion au service RIPart"))
+        Dialog.setWindowTitle(_translate("Dialog", "Configuration du plugin"))
+        self.lblUrl.setText(_translate("Dialog", "Adresse de connexion au service"))
         self.checkBoxLogin.setText(_translate("Dialog", "Login par défaut"))
         self.checkBoxPagination.setText(_translate("Dialog", "Pagination"))
         self.checkBoxDate.setText(_translate("Dialog", "Date d\'extraction"))

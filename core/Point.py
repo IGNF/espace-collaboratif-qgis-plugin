@@ -10,7 +10,7 @@ version 3.0.0 , 26/11/2018
 
 class Point(object):
     """
-    Classe représentant un Point Ripart, donné en longitude/latitude
+    Classe représentant un Point (Signalement), donné en longitude/latitude
     """
     
     # La longitude (WGS84 en degrés décimaux) du point

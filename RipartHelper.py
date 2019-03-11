@@ -35,7 +35,7 @@ class RipartHelper:
     ripart_db = "ripart.sqlite"
     
     #fichier de configuration
-    nom_Fichier_Parametres_Ripart = "Ripart.xml"
+    nom_Fichier_Parametres_Ripart = "espaceco.xml"
     
     #dossier des fichiers de style .qml
     qmlStylesDir="ripartStyles"          
@@ -757,7 +757,7 @@ class RipartHelper:
         :type message: string
         """
         msgBox = QMessageBox()
-        msgBox.setWindowTitle("IGN RIPart")
+        msgBox.setWindowTitle("IGN Espace Collaboratif")
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setText(message)
         ret = msgBox.exec_()

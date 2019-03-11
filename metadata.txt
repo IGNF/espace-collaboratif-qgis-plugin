@@ -9,12 +9,12 @@
 [general]
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
-description=ripart QGIS3
+description=Service de signalement de l'IGN, plugin QGIS3
 version=3.0.1
 author=IGN
 email=service-client@ign.fr
 
-about=Provide a brief description of the plugin and its purpose.
+about=
 
 tracker=http://bugs
 repository=http://repo
@@ -23,7 +23,7 @@ repository=http://repo
 # Recommended items:
 
 # Optional items:
-date=26/11/2018
+date=12/03/2019
 
 # Uncomment the following line and add your changelog:
 # changelog=

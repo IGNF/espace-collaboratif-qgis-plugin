@@ -95,7 +95,7 @@ class ImporterRipart(object):
                 return
             
         else:
-            message="Impossible de déterminer dans le fichier de paramétrage Ripart, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
+            message="Impossible de déterminer dans le fichier de paramétrage de l'Espace Collaboratif, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
                     "Souhaitez-vous poursuivre l'importation des signalements sur la France entière ? "+\
                     "(Cela risque de prendre un certain temps)."
             if self.noFilterWarningDialog(message):
@@ -216,7 +216,7 @@ class ImporterRipart(object):
                         "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? "+\
                         "(Cela risque de prendre un certain temps)."
         
-                reply= QMessageBox.question(None,'IGN RIPart',message,QMessageBox.Yes, QMessageBox.No)
+                reply= QMessageBox.question(None,'IGN Espace Collaboratif',message,QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     bbox=None
                 else : 
@@ -234,7 +234,7 @@ class ImporterRipart(object):
         """Avertissement si pas de filtre spatial
         """       
         message=ClientHelper.notNoneValue(message)
-        reply= QMessageBox.question(None,'IGN RIPart',message,QMessageBox.Yes, QMessageBox.No)
+        reply= QMessageBox.question(None,'IGN Espace Collaboratif',message,QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
             return True
         else : 

@@ -87,6 +87,6 @@ class Ui_InfoDialog(object):
 
     def retranslateUi(self, InfoDialog):
         _translate = QtCore.QCoreApplication.translate
-        InfoDialog.setWindowTitle(_translate("InfoDialog", "IGN RIPart"))
+        InfoDialog.setWindowTitle(_translate("InfoDialog", "IGN Espace Collaboratif"))
         self.btnOK.setText(_translate("InfoDialog", "Ok"))
 

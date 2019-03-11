@@ -97,7 +97,7 @@ class Ui_addResponse(object):
 
     def retranslateUi(self, addResponse):
         _translate = QtCore.QCoreApplication.translate
-        addResponse.setWindowTitle(_translate("addResponse", "IGN RIPart : Ajout d\'une nouvelle réponse"))
+        addResponse.setWindowTitle(_translate("addResponse", "IGN Espace Collaboratif : Ajout d\'une nouvelle réponse"))
         self.btnSend.setText(_translate("addResponse", "Envoyer la réponse"))
         self.lblStatut.setText(_translate("addResponse", "Statut"))
         self.lblMessage.setText(_translate("addResponse", "Message de la remarque"))

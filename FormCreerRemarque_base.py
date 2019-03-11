@@ -152,7 +152,7 @@ class Ui_dlgCreateRem(object):
 
     def retranslateUi(self, dlgCreateRem):
         _translate = QtCore.QCoreApplication.translate
-        dlgCreateRem.setWindowTitle(_translate("dlgCreateRem", "IGN RIPart : Créer un nouveau signalement"))
+        dlgCreateRem.setWindowTitle(_translate("dlgCreateRem", "IGN Espace Collaboratif : Créer un nouveau signalement"))
         self.groupBoxProfil.setTitle(_translate("dlgCreateRem", "Profil"))
         self.treeWidget.headerItem().setText(0, _translate("dlgCreateRem", "thème"))
         self.treeWidget.headerItem().setText(1, _translate("dlgCreateRem", "attribut"))

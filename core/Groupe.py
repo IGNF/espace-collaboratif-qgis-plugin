@@ -9,7 +9,7 @@ version 3.0.0 , 26/11/2018
 
 class Groupe(object):
     """
-    Classe représentant un groupe Ripart
+    Classe représentant un groupe de l'espace collaboratif
     """
     
     # identifiant du groupe

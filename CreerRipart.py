@@ -46,7 +46,7 @@ class CreerRipart(object):
                 if not connResult:
                     return 0
                 if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
-                    self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)            
+                    self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service est survenu.Veuillez rééssayer", level=2, duration=5)            
                     return
             
             

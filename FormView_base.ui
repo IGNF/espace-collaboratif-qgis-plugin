@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>IGN RIPart : Historique du signalement</string>
+   <string>IGN Espace Collaboratif : Historique du signalement</string>
   </property>
   <property name="windowIcon">
    <iconset theme="IGN">

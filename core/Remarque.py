@@ -24,22 +24,22 @@ class Remarque(object):
     #Identifiant de la remarque
     id = None  
     
-    # Url vers la remarque sur le site  web  publicde Ripart
+    # Url vers la remarque sur le site  web  public de l'Espace collaboratif
     lien =""
     
-    #Url vers la partie privée du site web de Ripart
+    #Url vers la partie privée du site web de l'Espace collaboratif
     lienPrive=""
     
-    # date de création de la remarque Ripart
+    # date de création de la remarque 
     dateCreation = datetime.now()
     
-    # date de mise-à-jour de la remarque Ripart
+    # date de mise-à-jour de la remarque 
     dateMiseAJour = datetime.now()
     
-    #date de validation de la remarque Ripart
+    #date de validation de la remarque 
     dateValidation = None
     
-    #position de la remarque ripart (lon/lat)
+    #position de la remarque (lon/lat)
     position = Point()
     
     #statut de la remarque
@@ -58,13 +58,13 @@ class Remarque(object):
     auteur = Auteur()
     
     
-    #Définit les droits d'action de l'utilisateur en cours sur la remarque Ripart
+    #Définit les droits d'action de l'utilisateur en cours sur la remarque 
     autorisation=""
  
     #
     id_partition=""
     
-    # groupe sous lequel l'auteur a crée la remarque Ripart 
+    # groupe sous lequel l'auteur a crée la remarque 
     groupe= Groupe()
     
     # réponses de la remarque Ripart (liste d'objet GeoReponse)

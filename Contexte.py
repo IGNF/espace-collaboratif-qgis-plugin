@@ -185,7 +185,7 @@ class Contexte(object):
         self.projectDir=QgsProject.instance().homePath()
         
         if self.projectDir =="":    
-            RipartHelper.showMessageBox(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser l'extension RIPart")
+            RipartHelper.showMessageBox(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser le plugin de l'espace collaboratif")
             raise Exception(u"Projet QGIS non enregistré") 
     
         #nom du fichier du projet enregistré
@@ -203,9 +203,9 @@ class Contexte(object):
             try:
                 shutil.copy(self.plugin_path+os.path.sep+RipartHelper.ripart_files_dir+os.path.sep+ RipartHelper.nom_Fichier_Parametres_Ripart,
                              ripartxml)
-                self.logger.debug("copy ripart.xml" )
+                self.logger.debug("copy espaceco.xml" )
             except Exception as e:
-                self.logger.error("no ripart.xml found in plugin directory" + format(e))
+                self.logger.error("no espaceco.xml found in plugin directory" + format(e))
                 raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pas été trouvé.")
            
        
@@ -282,7 +282,7 @@ class Contexte(object):
                             self.saveLogin(self.login)
                           
                             dlgInfo=FormInfo()
-                            dlgInfo.textInfo.setText(u"<b>Connexion réussie au service RIPart.</b>")
+                            dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace Collaboratif.</b>")
                             dlgInfo.textInfo.append("<br/>Serveur : "+ self.urlHostRipart)
                             dlgInfo.textInfo.append("Login : "+  self.login)
                             dlgInfo.textInfo.append("Profil: "+ profil.titre)
@@ -349,9 +349,9 @@ class Contexte(object):
             try:
                 shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep + RipartHelper.ripart_db,
                              self.dbPath)
-                self.logger.debug("copy ripart.sqlite" )
+                self.logger.debug("copy espaceco.sqlite" )
             except Exception as e:
-                self.logger.error("no ripart.sqlite found in plugin directory" + format(e))
+                self.logger.error("no espaceco.sqlite found in plugin directory" + format(e))
                 raise e
         try:    
             self.conn = spatialite_connect(self.dbPath)
