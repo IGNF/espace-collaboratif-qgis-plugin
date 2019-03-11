@@ -23,7 +23,7 @@
 """
 
 import sys 
-sys.path.append(r'D:\eclipse\plugins\org.python.pydev_3.9.1.201501081637\pysrc') 
+#sys.path.append(r'D:\eclipse\plugins\org.python.pydev_3.9.1.201501081637\pysrc') 
 #import pydevd   
 
 # noinspection PyPep8Naming

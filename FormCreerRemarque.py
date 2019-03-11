@@ -113,7 +113,11 @@ class FormCreerRemarque(QtGui.QDialog, FORM_CLASS):
                 for att in th.attributs:
                     attLabel = att.nom
                     attType = att.type
-                    attVal = att.valeurs[0]
+                    
+                    if len(att.valeurs)>0 :
+                        attVal = att.valeurs[0]
+                    else:
+                        attVal = ""
             
                     if attType == "text": 
                         label = QtGui.QLabel(att.nom,self.treeWidget)
