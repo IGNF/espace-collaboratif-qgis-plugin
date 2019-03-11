@@ -143,10 +143,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         
         ripartLayers=[RipartHelper.nom_Calque_Signalement,
                      RipartHelper.nom_Calque_Croquis_Ligne,
-                     RipartHelper.nom_Calque_Croquis_Fleche,
                      RipartHelper.nom_Calque_Croquis_Point,
-                     RipartHelper.nom_Calque_Croquis_Polygone,
-                     RipartHelper.nom_Calque_Croquis_Texte]
+                     RipartHelper.nom_Calque_Croquis_Polygone]
         
         topItems=[]
         

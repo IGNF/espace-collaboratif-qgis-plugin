@@ -312,6 +312,7 @@ class Contexte(object):
             try: 
                 client = Client(self.urlHostRipart, self.login, self.pwd, self.pwd,self.proxy)   
                 result=1
+                self.logger.debug("result ="+ str(result) )
                 self.client=client
             except RipartException as e:
                 # fix_print_with_import
@@ -319,7 +320,7 @@ class Contexte(object):
                 result=-1
         
         if result ==1:
-            self.logger.debug("result 1 b")
+            self.logger.debug("result 1 b, client :"+ client.getProfil().auteur.nom.__str__())
             self.ripClient = client
             self.logger.debug("ripclient")
         
@@ -339,7 +340,7 @@ class Contexte(object):
         Si la BD n'existe pas, elle est créée
         
         """
-        dbName = self.projectFileName +"_RIPART"
+        dbName = self.projectFileName +"_espaceco"
         self.dbPath = self.projectDir+"/"+dbName+".sqlite"
         
         createDb=False
@@ -388,7 +389,7 @@ class Contexte(object):
         
         uri =QgsDataSourceUri()
  
-        dbName = self.projectFileName +"_RIPART"
+        dbName = self.projectFileName +"_espaceco"
         self.dbPath = self.projectDir+"/"+dbName+".sqlite"
         uri.setDatabase(self.dbPath)
         self.logger.debug(uri.uri())
@@ -410,7 +411,7 @@ class Contexte(object):
                 self.logger.debug("Layer "+vlayer.name() + " added to map")          
                 
                 #ajoute les styles aux couches
-                style= os.path.join(self.projectDir, "ripartStyles",table+".qml")
+                style= os.path.join(self.projectDir, "espacecoStyles",table+".qml")
                 vlayer.loadNamedStyle(style)
         
         self.mapCan.refresh()
@@ -714,7 +715,7 @@ class Contexte(object):
         :rtype: list de Point
         """
         
-        dbName = self.projectFileName +"_RIPART"
+        dbName = self.projectFileName +"_espaceco"
         self.dbPath = self.projectDir+"/"+dbName+".sqlite"
         
         tmpTable ="tmpTable"
@@ -786,7 +787,7 @@ class Contexte(object):
         tmpTable ="tmpTable" 
         point=None
         try:
-            dbName = self.projectFileName +"_RIPART"
+            dbName = self.projectFileName +"_espaceco"
             self.dbPath = self.projectDir+"/"+dbName+".sqlite"
             #self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)

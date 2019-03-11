@@ -32,29 +32,27 @@ class RipartHelper:
     """
     
     ripart_files_dir="files"
-    ripart_db = "ripart.sqlite"
+    ripart_db = "espaceco.sqlite"
     
     #fichier de configuration
     nom_Fichier_Parametres_Ripart = "espaceco.xml"
     
     #dossier des fichiers de style .qml
-    qmlStylesDir="ripartStyles"          
+    qmlStylesDir="espacecoStyles"          
 
     nom_Calque_Signalement = "Signalement"
-    nom_Calque_Croquis_Fleche = "Croquis_Ripart_Fleche"
-    nom_Calque_Croquis_Texte = "Croquis_Ripart_Texte"
-    nom_Calque_Croquis_Polygone = "Croquis_Ripart_Polygone"
-    nom_Calque_Croquis_Ligne = "Croquis_Ripart_Ligne"
-    nom_Calque_Croquis_Point = "Croquis_Ripart_Point"
+    #nom_Calque_Croquis_Fleche = "Croquis_EC_Fleche"
+    #nom_Calque_Croquis_Texte = "Croquis_EC_Texte"
+    nom_Calque_Croquis_Polygone = "Croquis_EC_Polygone"
+    nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
+    nom_Calque_Croquis_Point = "Croquis_EC_Point"
    
     croquis_layers ={nom_Calque_Croquis_Polygone:'POLYGON',nom_Calque_Croquis_Ligne:'LINESTRING',
-                    nom_Calque_Croquis_Fleche:'LINESTRING',nom_Calque_Croquis_Texte:'POINT',
                     nom_Calque_Croquis_Point:'POINT'}
      
-    #liste des nom, car le dictionnaire ne préserve pas l'ordre des éléments
-    croquis_layers_name=[nom_Calque_Croquis_Polygone,nom_Calque_Croquis_Ligne,
-                    nom_Calque_Croquis_Fleche,nom_Calque_Croquis_Texte,
-                    nom_Calque_Croquis_Point,nom_Calque_Signalement]
+    #liste des noms, car le dictionnaire ne préserve pas l'ordre des éléments
+    croquis_layers_name=[nom_Calque_Croquis_Polygone,nom_Calque_Croquis_Ligne,         
+                         nom_Calque_Croquis_Point,nom_Calque_Signalement]
 
     calque_Signalement_Lyr = "Signalement.lyr"
 
@@ -496,9 +494,9 @@ class RipartHelper:
         cur = conn.cursor()
         cur.execute(sql)
         
-        cur.commit()
+        conn.commit()
         
-        cur.close()
+        #conn.close()
         
     
         
