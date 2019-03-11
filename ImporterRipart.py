@@ -86,7 +86,7 @@ class ImporterRipart(object):
         #filtre spatial
         filtre=  RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
               
-        if (filtre!=None):    
+        if (filtre!=None and len(filtre.strip())>0):    
             self.logger.debug("Spatial filter :"+filtre)
             
             filtreLay=self.context.getLayerByName(filtre)

@@ -157,7 +157,7 @@ class Contexte(object):
             Contexte.instance=Contexte._createInstance(QObject,QgsProject)
           
         elif  (Contexte.instance.projectDir!= QgsProject.instance().homePath() or
-              ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName+".qgs",Contexte.instance.projectFileName+".qgs.qgz"]) :       
+              ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName+".qgs",Contexte.instance.projectFileName+".qgz"]) :       
             Contexte.instance=Contexte._createInstance(QObject,QgsProject)
 
         return Contexte.instance

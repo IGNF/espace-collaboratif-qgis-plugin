@@ -316,7 +316,7 @@ class RipartPlugin:
                     try:        
                         os.remove(os.path.join(logdir,f))
                     except Exception as e:
-                        e=e.message
+                        self.logger.error(format(e))
             
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
