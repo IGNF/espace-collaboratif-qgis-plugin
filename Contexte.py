@@ -239,7 +239,7 @@ class Contexte(object):
             self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
         except Exception as e:
             self.logger.error("URLHOST inexistant dans fichier configuration")
-            RipartHelper.showMessageBox( u"L'url du serveur doit être renseignée dans la configuration avant de pouvoir se connecter.\n(Aide>Configurer le plugin RIPart>Adresse de connexion ...)" )
+            RipartHelper.showMessageBox( u"L'url du serveur doit être renseignée dans la configuration avant de pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion ...)" )
             return
  
         

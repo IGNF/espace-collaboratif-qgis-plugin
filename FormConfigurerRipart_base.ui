@@ -16,7 +16,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>Configuration du plugin RIPart</string>
+   <string>Configuration du plugin Espace Collaboratif</string>
   </property>
   <property name="windowIcon">
    <iconset>
@@ -64,7 +64,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Adresse de connexion au service RIPart</string>
+       <string>Adresse de connexion à l'Espace Collaboratif</string>
       </property>
      </widget>
     </item>

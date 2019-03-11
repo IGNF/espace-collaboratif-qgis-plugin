@@ -78,7 +78,7 @@
    </palette>
   </property>
   <property name="windowTitle">
-   <string>IGN RIPart</string>
+   <string>Espace Collaboratif IGN</string>
   </property>
   <property name="autoFillBackground">
    <bool>false</bool>
@@ -228,6 +228,5 @@
    </property>
   </widget>
  </widget>
-
  <connections/>
 </ui>

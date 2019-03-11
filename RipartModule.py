@@ -103,7 +103,7 @@ class RipartPlugin:
   
         # La toolbar du plugin
         self.actions = []
-        self.menu = self.tr(u'&IGN_Ripart')
+        self.menu = self.tr(u'&IGN_Espace_Collaboratif')
 
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
@@ -207,9 +207,9 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/connect.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Se connecter au service RIPart'),
+            text=self.tr(u'Se connecter a l\'Espace Collaboratif'),
             callback=self.run,
-            status_tip=self.tr(u'Se connecter au service RIPart'),
+            status_tip=self.tr(u'Se connecter a l\'Espace Collaboratif'),
             parent=self.iface.mainWindow())
               
         icon_path = ':/plugins/RipartPlugin/images/update.png'
@@ -260,13 +260,13 @@ class RipartPlugin:
             status_tip=self.tr(u'Voir les objets associés'),
             parent=self.iface.mainWindow())
            
-        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin RIPart", self.iface.mainWindow())
-        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin RIPart", self.iface.mainWindow())
-        self.log= QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin RIPart", self.iface.mainWindow())
-        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin RIPart", self.iface.mainWindow())
+        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin", self.iface.mainWindow())
+        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin", self.iface.mainWindow())
+        self.log= QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin", self.iface.mainWindow())
+        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin", self.iface.mainWindow())
              
         self.config.triggered.connect( self.configurePref )
-        self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration de l'add-in RIPart."))
+        self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration du plugin."))
         
         self.about.triggered.connect( self.ripAbout)
         self.help.triggered.connect(self.showHelp)
@@ -302,13 +302,13 @@ class RipartPlugin:
                 cntHandlers = len(logger.handlers)
                 for i in range(cntHandlers-1,-1,-1):
                    try:
-                       if  os.path.basename(handlers[i].baseFilename)[-10:] == u"ripart.log" :
+                       if  os.path.basename(handlers[i].baseFilename)[-10:] == u"plugin_espaceco.log" :
                            handlers[i].close()
                            logger.removeHandler(handlers[i])
                    except AttributeError as e:
                        continue        
         
-        logdir =os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs') #'C:/Users/AChang-Wailing/AppData/Roaming/.../logs'
+        logdir =os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs') 
         if os.path.exists(logdir):
             for f in os.listdir(logdir):  
                     file = open(os.path.join(logdir,f),'r+')
@@ -321,7 +321,7 @@ class RipartPlugin:
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
-                self.tr(u'&IGN_Ripart'),
+                self.tr(u'&IGN_Espace_Collaboratif'),
                 action)
             self.iface.removeToolBarIcon(action)
             #action.setVisible(False)

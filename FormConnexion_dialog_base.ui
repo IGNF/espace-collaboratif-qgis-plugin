@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Connexion au service RIPart</string>
+   <string>Connexion à l'Espace Collaboratif</string>
   </property>
   <property name="windowIcon">
    <iconset resource="resources.qrc">
@@ -277,9 +277,7 @@ p, li { white-space: pre-wrap; }
    </property>
   </widget>
  </widget>
- <!--resources>
-  <include location="resources.qrc"/>
- </resources-->
+
  <connections>
   <connection>
    <sender>RipartPlugin</sender>
