@@ -13,7 +13,7 @@ from datetime import datetime
 import dateutil.relativedelta
 import string
 import importlib
-
+from os.path import expanduser
 
 class RipartLogger(object):
     """Paramètres du log
@@ -28,10 +28,9 @@ class RipartLogger(object):
         '''
            
         #trouve le dossier d'installation du plugin et le nom du fichier de log (yyyymmdd_espaceco.log)
-        p = os.path.dirname(__file__)
-        lastSlashIdx=p.rfind("\\")
-        #lastSlashIdx=string.rfind(os.path.dirname(__file__),"\\")
-        logdir= os.path.join(os.path.dirname(__file__)[:lastSlashIdx],"logs")   
+        home = expanduser("~")
+        
+        logdir= os.path.join(home,".IGN_plugin_logs")     
             
         today= datetime.now().date().strftime('%Y%m%d')
         logFilename= today+"_espaceco.log"   
