@@ -144,7 +144,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="btnDoc">
+  <widget class="QPushButton" name="btnDoc_0">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -224,7 +224,7 @@
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QPushButton" name="btnDoc_2">
+  <widget class="QPushButton" name="btnDoc_1">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -240,7 +240,7 @@
     <string>Document 2</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="btnDoc_3">
+  <widget class="QPushButton" name="btnDoc_2">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -256,7 +256,7 @@
     <string>Document3</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="btnDoc_4">
+  <widget class="QPushButton" name="btnDoc_3">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -272,15 +272,15 @@
     <string>Document 4</string>
    </property>
   </widget>
-  <zorder>btnDoc</zorder>
+  <zorder>btnDoc_0</zorder>
   <zorder>lblCntCroquis</zorder>
   <zorder>btnCroquis</zorder>
   <zorder>textEditCntCroquisDetail</zorder>
   <zorder>btnCancel</zorder>
   <zorder>verticalLayoutWidget</zorder>
+  <zorder>btnDoc_1</zorder>
   <zorder>btnDoc_2</zorder>
   <zorder>btnDoc_3</zorder>
-  <zorder>btnDoc_4</zorder>
  </widget>
  <resources/>
  <connections>

@@ -44,10 +44,10 @@ class FormView(QtWidgets.QDialog, FORM_CLASS):
         #self.textEditCntCroquisDetail.setFrameStyle(QtGui.QFrame.NoFrame)
         self.textEditCntCroquisDetail.viewport().setAutoFillBackground(False)
         
-        self.btnDoc.clicked.connect(lambda:self.openDoc(0))
-        self.btnDoc_2.clicked.connect(lambda:self.openDoc(1))
-        self.btnDoc_3.clicked.connect(lambda:self.openDoc(2))
-        self.btnDoc_4.clicked.connect(lambda:self.openDoc(3))
+        self.btnDoc_0.clicked.connect(lambda:self.openDoc(0))
+        self.btnDoc_1.clicked.connect(lambda:self.openDoc(1))
+        self.btnDoc_2.clicked.connect(lambda:self.openDoc(2))
+        self.btnDoc_3.clicked.connect(lambda:self.openDoc(3))
      
        
         
@@ -63,16 +63,12 @@ class FormView(QtWidgets.QDialog, FORM_CLASS):
             self.doc=remarque.getAllDocuments()
             
             if self.doc !="":
-                self.btnDoc.setEnabled(True)
                 self.docs = self.doc.split()
-
-                for i in range(2,len(self.docs)+1):
-                    btn= self.findChild(QtGui.QPushButton, "btnDoc_"+ str(i))
-                    #btn.setText("Document 1")
-                    btn.setEnabled(True)
-                   
-                
             
+                for i in range(0,len(self.docs)):                  
+                    btn= self.findChild(QtWidgets.QPushButton, "btnDoc_"+ str(i))       
+                    btn.setEnabled(True)
+
         except Exception as e:
             self.logger.error("setRemarque")
             raise e  
