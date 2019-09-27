@@ -191,7 +191,8 @@ class XMLResponse(object):
             profil.titre = node.text
             
             node =self.root.find('./PROFIL/ZONE')
-            profil.zone = cst.ZoneGeographique.__getitemFromString__(node.text)
+            if node != None:
+                profil.zone = cst.ZoneGeographique.__getitemFromString__(node.text)
             
             gr = Groupe()
             node =self.root.find('./PROFIL/ID_GEOGROUPE')
@@ -204,7 +205,9 @@ class XMLResponse(object):
             profil.geogroupe.id= node.text
                
             node =self.root.find('./PROFIL/LOGO')
-            profil.logo= node.text
+            if node!= None and node.text :
+                profil.logo= node.text
+
             
             node =self.root.find('./PROFIL/FILTRE')
             profil.filtre = node.text

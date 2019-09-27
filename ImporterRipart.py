@@ -125,8 +125,6 @@ class ImporterRipart(object):
            
         self.context.client.setIface(self.context.iface)
             
-            
-        params['territory'] = self.context.profil.zone
         if bbox !=None:
             params['box'] = bbox.boxToString()
             
