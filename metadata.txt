@@ -35,7 +35,7 @@ homepage=http://logiciels.ign.fr/?-RIPart-QGIS-
 category=Plugins
 icon=images/ign.png
 # experimental flag
-experimental=False
+#experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
