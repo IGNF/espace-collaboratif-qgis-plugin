@@ -320,7 +320,7 @@ class Contexte(object):
                 result=-1
         
         if result ==1:
-            self.logger.debug("result 1 b, client :"+ client.getProfil().auteur.nom.__str__())
+            
             self.ripClient = client
             self.logger.debug("ripclient")
         

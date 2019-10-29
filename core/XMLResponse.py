@@ -49,7 +49,7 @@ class XMLResponse(object):
         self.response =ClientHelper.notNoneValue(response)
         
         self.logger.debug("xmlreponse 2 :" )
-        #self.logger.debug("self.response :" +self.response)
+
         
         try:
             self.root =ET.fromstring(self.response)

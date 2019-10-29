@@ -337,7 +337,7 @@ class RipartPlugin:
       
         if self.context:    
             res=self.context.getConnexionRipart(newLogin=True)  
-            self.logger.debug(res)
+            
         if not res:
             self.logger.debug("cancel")
        

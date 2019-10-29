@@ -116,13 +116,13 @@ class Client(object):
         profil= None
 
         self.logger.debug("getProfilFromService " + self.__url +"/api/georem/geoaut_get.xml")
-        self.logger.debug("login is:" + self.__login + "," +  self.__password)
+
 
         data =  requests.get(self.__url +"/api/georem/geoaut_get.xml", 
                              auth=HTTPBasicAuth(self.__login, self.__password),
                              proxies= self.__proxies)   
 
-        #self.logger.debug("data auth :"+data.text)
+    
         self.logger.debug("data auth ")
         xml = XMLResponse(data.text)
   

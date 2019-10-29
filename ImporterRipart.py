@@ -67,8 +67,6 @@ class ImporterRipart(object):
         
         filtreLay=None
         
-        self.logger.debug(self.context.ripClient)
-        
         if  self.context.ripClient == None :
             connResult =self.context.getConnexionRipart()
             if not connResult:
