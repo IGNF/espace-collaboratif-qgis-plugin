@@ -2,16 +2,18 @@
 
 # Form implementation generated from reading ui file 'FormConfigurerRipart_base.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(684, 582)
+        Dialog.resize(844, 591)
         font = QtGui.QFont()
         font.setPointSize(10)
         Dialog.setFont(font)
@@ -20,12 +22,12 @@ class Ui_Dialog(object):
         Dialog.setWindowIcon(icon)
         Dialog.setModal(True)
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-        self.buttonBox.setGeometry(QtCore.QRect(330, 530, 341, 32))
+        self.buttonBox.setGeometry(QtCore.QRect(380, 550, 201, 32))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.formLayoutWidget = QtWidgets.QWidget(Dialog)
-        self.formLayoutWidget.setGeometry(QtCore.QRect(0, 10, 671, 471))
+        self.formLayoutWidget.setGeometry(QtCore.QRect(0, 10, 831, 471))
         self.formLayoutWidget.setObjectName("formLayoutWidget")
         self.formLayout_2 = QtWidgets.QFormLayout(self.formLayoutWidget)
         self.formLayout_2.setFieldGrowthPolicy(QtWidgets.QFormLayout.AllNonFixedFieldsGrow)
@@ -185,7 +187,7 @@ class Ui_Dialog(object):
         self.treeWidget.header().setVisible(False)
         self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.FieldRole, self.treeWidget)
         self.lblProxy = QtWidgets.QLabel(Dialog)
-        self.lblProxy.setGeometry(QtCore.QRect(10, 480, 251, 16))
+        self.lblProxy.setGeometry(QtCore.QRect(320, 490, 61, 20))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
@@ -194,13 +196,30 @@ class Ui_Dialog(object):
         self.lblProxy.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lblProxy.setObjectName("lblProxy")
         self.lineEditProxy = QtWidgets.QLineEdit(Dialog)
-        self.lineEditProxy.setGeometry(QtCore.QRect(275, 480, 395, 22))
+        self.lineEditProxy.setGeometry(QtCore.QRect(390, 490, 441, 22))
         self.lineEditProxy.setMinimumSize(QtCore.QSize(2, 0))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEditProxy.setFont(font)
         self.lineEditProxy.setFrame(True)
         self.lineEditProxy.setObjectName("lineEditProxy")
+        self.lblCleGeoportail = QtWidgets.QLabel(Dialog)
+        self.lblCleGeoportail.setGeometry(QtCore.QRect(250, 520, 131, 20))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lblCleGeoportail.setFont(font)
+        self.lblCleGeoportail.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.lblCleGeoportail.setObjectName("lblCleGeoportail")
+        self.lineEditCleGeoportail = QtWidgets.QLineEdit(Dialog)
+        self.lineEditCleGeoportail.setGeometry(QtCore.QRect(390, 520, 441, 22))
+        self.lineEditCleGeoportail.setMinimumSize(QtCore.QSize(2, 0))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.lineEditCleGeoportail.setFont(font)
+        self.lineEditCleGeoportail.setFrame(True)
+        self.lineEditCleGeoportail.setObjectName("lineEditCleGeoportail")
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept)
@@ -218,12 +237,13 @@ class Ui_Dialog(object):
         Dialog.setTabOrder(self.comboBoxFiltre, self.checkBoxGroup)
         Dialog.setTabOrder(self.checkBoxGroup, self.checkBoxAttributs)
         Dialog.setTabOrder(self.checkBoxAttributs, self.treeWidget)
-        Dialog.setTabOrder(self.treeWidget, self.buttonBox)
+        Dialog.setTabOrder(self.treeWidget, self.lineEditProxy)
+        Dialog.setTabOrder(self.lineEditProxy, self.lineEditCleGeoportail)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Configuration du plugin"))
-        self.lblUrl.setText(_translate("Dialog", "Adresse de connexion au service"))
+        Dialog.setWindowTitle(_translate("Dialog", "Configuration du plugin Espace Collaboratif"))
+        self.lblUrl.setText(_translate("Dialog", "Adresse de connexion à l\'Espace Collaboratif"))
         self.checkBoxLogin.setText(_translate("Dialog", "Login par défaut"))
         self.checkBoxPagination.setText(_translate("Dialog", "Pagination"))
         self.checkBoxDate.setText(_translate("Dialog", "Date d\'extraction"))
@@ -233,4 +253,4 @@ class Ui_Dialog(object):
         self.checkBoxAttributs.setText(_translate("Dialog", "Calques sources et champs à mettre \n"
 "en attribut pour les nouveaux croquis"))
         self.lblProxy.setText(_translate("Dialog", "Proxy"))
-
+        self.lblCleGeoportail.setText(_translate("Dialog", "Clé Géoportail"))

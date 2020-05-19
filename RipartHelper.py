@@ -99,6 +99,7 @@ class RipartHelper:
     xml_Map="./Map"
     
     xml_proxy="Proxy"
+    xml_CleGeoportail="cle_geoportail"
 
     defaultDate = "1900-01-01 00:00:00"
     defaultPagination=100
@@ -225,7 +226,48 @@ class RipartHelper:
         except Exception as e:
             RipartHelper.logger.error(format(e))
         
-     
+    @staticmethod
+    def load_clegeoportail(projectDir):
+        """Retourne la clé Géoportail sauvegardée dans le fichier de configuration xml
+
+                :param projectDir: le chemin vers le répertoire du projet
+                :type projectDir: string
+                """
+        clegeoportail = ""
+        try:
+            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            clegeoportail = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_CleGeoportail, "Serveur"))
+            if clegeoportail == None:
+                clegeoportail = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_CleGeoportail, "Serveur")
+
+        except Exception as e:
+            RipartHelper.logger.error(str(e))
+
+        return clegeoportail
+
+
+    @staticmethod
+    def save_clegeoportail(projectDir, clegeoportail):
+        """Enregistre la clé Géoportail dans le fichier de configuration
+
+                :param projectDir: le chemin vers le répertoire du projet
+                :type projectDir: string
+
+                :param clegeoportail: la clé Géoportail de l'utilisateur
+                :type clegeoportail: string
+                """
+        try:
+            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            xclegeoportail = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_CleGeoportail, "Serveur"))
+            xclegeoportail.text = clegeoportail
+
+            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+
+        except Exception as e:
+            RipartHelper.logger.error(format(e))
+
     @staticmethod
     def load_CalqueFiltrage(projectDir):
         """Retourne le nom du calque de filtrage sauvegardé dans le fichier de configuration xml

@@ -105,10 +105,10 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.setAttributCroquis()
         
         proxy=RipartHelper.load_proxy(context.projectDir).text
-        
         self.lineEditProxy.setText(proxy)
         
-        
+        clegeoportail=RipartHelper.load_clegeoportail(context.projectDir).text
+        self.lineEditCleGeoportail.setText(clegeoportail)
     
     def setComboBoxFilter(self):
         """
@@ -332,6 +332,9 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                 
         #proxy         
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_proxy,self.lineEditProxy.text(),"Serveur")
+
+        #Clé Geoportail
+        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_CleGeoportail, self.lineEditCleGeoportail.text(),"Serveur")
        
     
     def keyPressEvent(self, event):

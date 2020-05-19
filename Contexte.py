@@ -87,6 +87,9 @@ class Contexte(object):
     
     #proxy
     proxy = None
+
+    #clegeoportail
+    clegeoportail=None
     
     #le logger
     logger=None
@@ -256,7 +259,13 @@ class Contexte(object):
             self.proxy ={'https': str(xmlproxy).strip()}
         else :
             self.proxy = None
-        
+
+        xmlclegeoportail=RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur")
+        if xmlclegeoportail==None:
+            self.clegeoportail=''
+        else:
+            self.clegeopportail = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur").text
+
         if (self.login =="" or self.pwd=="" or newLogin):
             self.loginWindow.setLogin(self.login)
             self.loginWindow.exec_()
