@@ -287,8 +287,37 @@ class Client(object):
                 rem=list(remarques.values())[0]    
                 
         return rem
-        
-    
+
+
+    def setChangeUserProfil(self, idProfil):
+        profil = None
+
+        try:
+            uri = self.__url + "/api/georem/geoaut_switch_profile/" + idProfil
+            data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
+            xmlResponse = XMLResponse(data)
+            errMessage = xmlResponse.checkResponseValidity()
+
+            if errMessage['code'] == 'OK':
+                profil = xmlResponse.extractProfil()
+            else:
+                if errMessage['message'] != "":
+                    result = errMessage['message']
+                elif errMessage['code'] != "":
+                    result = ClientHelper.getErrorMessage(errMessage['code'])
+                else:
+                    result = ClientHelper.getErrorMessage(data.status_code)
+
+                raise Exception(ClientHelper.notNoneValue(result))
+
+        except Exception as e:
+            self.logger.error(str(e))
+            raise Exception(e)
+
+        return profil
+
+
+
     def addReponse(self,remarque,reponse,titreReponse):
         """Ajoute une réponse à une remarque
 
@@ -329,10 +358,9 @@ class Client(object):
         except Exception as e:
             raise Exception(errMessage["message"],e)
                 
-        return  remModif
-    
-   
-   
+        return remModif
+
+
     def createRemarque(self,remarque):
         """Ajout d'une nouvelle remarque
         :param remarque : la remarque à créer
@@ -439,8 +467,3 @@ class Client(object):
     @staticmethod
     def get_MAX_TAILLE_UPLOAD_FILE():
         return ConstanteRipart.MAX_TAILLE_UPLOAD_FILE
-    
-     
-     
-
-    

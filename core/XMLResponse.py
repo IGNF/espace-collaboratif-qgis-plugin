@@ -16,12 +16,15 @@ from .ThemeAttribut import ThemeAttribut
 from .Point import Point
 from .Auteur import Auteur
 from .Croquis import Croquis
-from .Groupe import  Groupe
+from .Groupe import Groupe
+from .InfosGeogroupe import InfosGeogroupe
 from .Attribut import Attribut
 from .GeoReponse import GeoReponse
 from datetime import datetime
 from .ClientHelper import ClientHelper
 from .RipartLoggerCl import RipartLogger
+from .Layer import Layer
+
 
 class XMLResponse(object):
     """
@@ -218,15 +221,61 @@ class XMLResponse(object):
             #va chercher les thèmes associés au profil      
             themes= self.getThemes()
             profil.themes = themes
+
+            #va chercher les infos de tous les geogroupes de l'utilisateur
+            infosgeogroupes = self.getInfosGeogroupe()
+            profil.infosGeogroupes = infosgeogroupes
+
             
         except Exception as e:            
             self.logger.error('extractProfil:' + str(e) )
             raise
             
         return profil
-        
-        
-    
+
+
+
+    def getInfosGeogroupe(self):
+        """Extraction des infos utilisateur sur ses geogroupes
+        :return les infos
+        """
+        infosgeogroupes = []
+
+        try:
+            #informations sur le geogroupe
+            nodesGr = self.root.findall('GEOGROUPE')
+            for nodegr in nodesGr:
+                infosgeogroupe = InfosGeogroupe()
+                infosgeogroupe.groupe = Groupe()
+                infosgeogroupe.groupe.nom = (nodegr.find('NOM')).text
+                infosgeogroupe.groupe.id = (nodegr.find('ID_GEOGROUPE')).text
+                for nodelayer in nodegr.findall('LAYERS/LAYER'):
+                    layer = Layer()
+                    layer.type = nodelayer.find('TYPE').text
+                    layer.nom = nodelayer.find('NOM').text
+                    layer.description = nodelayer.find('DESCRIPTION').text
+                    layer.minzoom = nodelayer.find('MINZOOM').text
+                    layer.maxzoom = nodelayer.find('MAXZOOM').text
+                    layer.extent = nodelayer.find('EXTENT').text
+                    # cas particulier de la balise <ROLE> qui n'existe
+                    # que dans la base de qualification
+                    role = None
+                    role = nodelayer.find('ROLE')
+                    if role != None:
+                        layer.role = role.text
+                    layer.visibility = nodelayer.find('VISIBILITY').text
+                    layer.opacity = nodelayer.find('OPACITY').text
+                    infosgeogroupe.layers.append(layer)
+                infosgeogroupes.append(infosgeogroupe)
+
+        except Exception as e:
+            self.logger.error(str(e))
+            raise Exception("Erreur dans la récupération des informations sur le GEOGROUPE")
+
+        return infosgeogroupes
+
+
+
     def getThemes(self):
         """Extraction des thèmes associés au profil     
         :return les thèmes 

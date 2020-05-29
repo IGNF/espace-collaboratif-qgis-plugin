@@ -34,6 +34,7 @@ from .core.Point import Point
 from .core.Croquis import Croquis
 from .FormConnexion_dialog import FormConnexionDialog
 from .FormInfo import FormInfo
+from .FormChoixGroupe import FormChoixGroupe
 from .core import ConstanteRipart as cst
 
 
@@ -287,15 +288,36 @@ class Contexte(object):
                         profil = client.getProfil()
                         
                         if profil != None :
-                            self.profil= profil
                             self.saveLogin(self.login)
-                          
+
+                            # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
+                            if len(profil.infosGeogroupes) == 1:
+                                # le profil de l'utilisateur est déjà récupéré et reste actif
+                                self.profil = profil
+
+                            # si l'utilisateur n'appartient à aucun groupe
+                            # apparemment un groupe par défaut est attribué
+                            # donc ce cas ne devrait jamais arrivé
+                            elif len(profil.infosGeogroupes) == 0:
+                                self.loginWindow.setErreur("Vous n'appartenez à aucun groupe, vous devez définir un profil")
+
+                            # sinon le choix d'un autre groupe est présenté à l'utilisateur
+                            else:
+                                dlgChoixGroupe = FormChoixGroupe(profil)
+                                dlgChoixGroupe.exec()
+                                if dlgChoixGroupe.Accepted:
+                                    #le choix du nouveau profil devient actif
+                                    result = 1
+                                    idGroupe = dlgChoixGroupe.save()
+                                    profil = client.setChangeUserProfil(idGroupe)
+
+                            #les infos de connexion présentée à l'utilisateur
                             dlgInfo=FormInfo()
                             dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace Collaboratif.</b>")
-                            dlgInfo.textInfo.append("<br/>Serveur : "+ self.urlHostRipart)
-                            dlgInfo.textInfo.append("Login : "+  self.login)
-                            dlgInfo.textInfo.append("Profil: "+ profil.titre)
-                            dlgInfo.textInfo.append("Zone : "+ profil.zone.__str__())
+                            dlgInfo.textInfo.append("<br/>Serveur : " + self.urlHostRipart)
+                            dlgInfo.textInfo.append("Login : " + self.login)
+                            dlgInfo.textInfo.append("Profil : " + profil.titre)
+                            dlgInfo.textInfo.append("Zone : " + profil.zone.__str__())
     
                             dlgInfo.exec_()
                             
@@ -319,7 +341,8 @@ class Contexte(object):
                         
         else: 
             try: 
-                client = Client(self.urlHostRipart, self.login, self.pwd, self.pwd,self.proxy)   
+                #client = Client(self.urlHostRipart, self.login, self.pwd, self.pwd,self.proxy)
+                client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
                 result=1
                 self.logger.debug("result ="+ str(result) )
                 self.client=client

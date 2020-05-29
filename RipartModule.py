@@ -542,7 +542,3 @@ class RipartPlugin:
         logpath=self.ripartLogger.getLogpath()
         if logpath!=None:
             RipartHelper.open_file(logpath)
-          
-  
-  
-    
