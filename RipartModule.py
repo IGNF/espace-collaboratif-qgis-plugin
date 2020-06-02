@@ -259,6 +259,30 @@ class RipartPlugin:
             callback=self.magicwand,
             status_tip=self.tr(u'Voir les objets associés'),
             parent=self.iface.mainWindow())
+
+        icon_path = ':/plugins/RipartPlugin/images/charger.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Charger le guichet'),
+            callback=self.chargerGuichet,
+            status_tip=self.tr(u'Charger le guichet'),
+            parent=self.iface.mainWindow())
+
+        icon_path = ':/plugins/RipartPlugin/images/compter.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Compter les modifications'),
+            callback=self.compterModifications,
+            status_tip=self.tr(u'Compter les modifications'),
+            parent=self.iface.mainWindow())
+
+        icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Synchroniser les données'),
+            callback=self.synchroniserDonnees,
+            status_tip=self.tr(u'Synchroniser les données'),
+            parent=self.iface.mainWindow())
            
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin", self.iface.mainWindow())
         self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin", self.iface.mainWindow())
@@ -285,9 +309,20 @@ class RipartPlugin:
         
 
         self.toolbar.addWidget(self.toolButton2)
-        
-       
-        
+
+
+    def chargerGuichet(self):
+        print("Charger le guichet")
+
+
+    def compterModifications(self):
+        print("Compter les modifications")
+
+
+    def synchroniserDonnees(self):
+        print("Synchroniser les données")
+
+
     def unload(self):
         
         log = logging.getLogger()
