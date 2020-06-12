@@ -48,9 +48,12 @@ class Contexte(object):
     #identifiants de connexion
     login=""
     pwd=""
-    urlHostRipart=""    
+    urlHostRipart=""
     profil=None
-    
+
+    # clegeoportail
+    clegeoportail = ""
+
     #client pour le service RIPart
     client=None
     
@@ -88,9 +91,6 @@ class Contexte(object):
     
     #proxy
     proxy = None
-
-    #clegeoportail
-    clegeoportail=None
     
     #le logger
     logger=None
@@ -111,6 +111,7 @@ class Contexte(object):
         self.login=""
         self.pwd=""
         self.urlHostRipart=""
+        self.clegeoportail=""
         
         self.profil = None
         self.ripClient = None
@@ -262,10 +263,9 @@ class Contexte(object):
             self.proxy = None
 
         xmlclegeoportail=RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur")
-        if xmlclegeoportail==None:
-            self.clegeoportail=''
-        else:
-            self.clegeopportail = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur").text
+        if xmlclegeoportail!=None:
+            self.clegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur").text
+            self.logger.debug("this.clegeoportail " + self.clegeoportail)
 
         if (self.login =="" or self.pwd=="" or newLogin):
             self.loginWindow.setLogin(self.login)
@@ -284,7 +284,7 @@ class Contexte(object):
                     self.pwd=self.loginWindow.getPwd()
                     print("login " + self.login)
                     try: 
-                        client = Client(self.urlHostRipart, self.login, self.pwd,self.proxy)
+                        client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
                         profil = client.getProfil()
                         
                         if profil != None :
@@ -309,16 +309,22 @@ class Contexte(object):
                                     #le choix du nouveau profil devient actif
                                     result = 1
                                     idGroupe = dlgChoixGroupe.save()
-                                    profil = client.setChangeUserProfil(idGroupe)
+                                    self.profil = client.setChangeUserProfil(idGroupe)
+
+                            # Récupération des layers GéoPortail valides en fonction
+                            # de la clé Geoportail utilisateur
+                            layersCleGeoportail = client.getLayersFromCleGeoportailUser()
+                            self.profil.layersCleGeoportail = layersCleGeoportail
 
                             #les infos de connexion présentée à l'utilisateur
                             dlgInfo=FormInfo()
                             dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace Collaboratif.</b>")
                             dlgInfo.textInfo.append("<br/>Serveur : " + self.urlHostRipart)
                             dlgInfo.textInfo.append("Login : " + self.login)
-                            dlgInfo.textInfo.append("Profil : " + profil.titre)
-                            dlgInfo.textInfo.append("Zone : " + profil.zone.__str__())
-    
+                            dlgInfo.textInfo.append("Profil : " + self.profil.titre)
+                            dlgInfo.textInfo.append("Zone : " + self.profil.zone.__str__())
+                            dlgInfo.textInfo.append("Clé Géoportail : " + self.clegeoportail)
+
                             dlgInfo.exec_()
                             
                             if dlgInfo.Accepted:
@@ -342,7 +348,7 @@ class Contexte(object):
         else: 
             try: 
                 #client = Client(self.urlHostRipart, self.login, self.pwd, self.pwd,self.proxy)
-                client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
+                client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
                 result=1
                 self.logger.debug("result ="+ str(result) )
                 self.client=client

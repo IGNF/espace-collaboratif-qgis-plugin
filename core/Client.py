@@ -44,8 +44,8 @@ class Client(object):
     __version = None
     __profil = None
     __auth = None
-
-    __proxies = None 
+    __proxies = None
+    __clegeoportail = ""
     
     
     # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
@@ -54,7 +54,7 @@ class Client(object):
     logger=RipartLogger("ripart.client").getRipartLogger()
 
 
-    def __init__(self, url, login, pwd, proxies):
+    def __init__(self, url, login, pwd, proxies, cle):
         """Constructeur
         Initialisation du client et connexion au service ripart
         """       
@@ -66,7 +66,7 @@ class Client(object):
         self.__auth['login']=self.__login
         self.__auth['password']=self.__password
         self.__proxies = proxies
-        
+        self.__clegeoportail = cle
              
     def setIface(self,iface):
         """sets the QgsInterface instance, to be able to access the QGIS application objects (map canvas, menus, ...)
@@ -107,8 +107,36 @@ class Client(object):
             self.__profil = self.getProfilFromService()
         
         return self.__profil
-    
-    
+
+
+
+    def getLayersFromCleGeoportailUser(self):
+        layers = []
+
+        # Exemple d'url
+        # https://wxs.ign.fr/lq4dgs7ymrje7x3nu0al9ajl/autoconf?gp-access-lib=2.1.2&output=xml
+        if self.__clegeoportail == "":
+            return layers
+
+        #url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format("lq4dgs7ymrje7x3nu0al9ajl")
+        url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(self.__clegeoportail)
+        self.logger.debug("{0} {1}".format("getLayersFromCleGeoportailUser", url))
+        reponse = requests.get(url)
+
+        if reponse.status_code == 200:
+            root = ET.fromstring(reponse.text)
+            node = root.find('.{http://www.opengis.net/context}LayerList')
+            # print(node.tag, node.attrib){http://www.opengis.net/context}Layer {'hidden': '1', 'queryable': '1'}
+            print("Liste des couches correspondant à la clé Géoportail")
+            for elem in node.iter():
+                if elem.tag == '{http://www.opengis.net/context}Name':
+                    print(elem.text)
+                    layers.append(elem.text)
+
+        return layers
+
+
+
     def getProfilFromService(self):
         """Requête au service pour le profil utilisateur      
         :return: le profil de l'utilisateur

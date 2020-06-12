@@ -31,6 +31,10 @@ class Layer(object):
     visibility = 1
     # <OPACITY> 1 </OPACITY>
     opacity = 1
+    # <TILEZOOM>
+    tilezoom = ""
+    # <URL>
+    url = ""
 
     def __init__(self):
         """
@@ -45,3 +49,20 @@ class Layer(object):
         self.role = ""
         self.visibility = 1
         self.opacity = 1
+        self.tilezoom = ""
+        self.url = ""
+
+    def GetAllInfo(self):
+        infos = []
+        infos.append(self.type)
+        infos.append(self.nom)
+        infos.append(self.description)
+        infos.append(self.minzoom)
+        infos.append(self.maxzoom)
+        infos.append(self.extent)
+        infos.append(self.role)
+        infos.append(self.visibility)
+        infos.append(self.opacity)
+        infos.append(self.tilezoom)
+        infos.append(self.url)
+        return infos

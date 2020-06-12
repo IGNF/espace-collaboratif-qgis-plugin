@@ -43,6 +43,7 @@ import configparser
 from . import resources
 
 # modules ripart
+from .FormChargerGuichet import FormChargerGuichet
 from .FormConnexion_dialog import FormConnexionDialog
 from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
@@ -312,7 +313,33 @@ class RipartPlugin:
 
 
     def chargerGuichet(self):
-        print("Charger le guichet")
+        print("Chargement du guichet")
+        try:
+            self.context= Contexte.getInstance(self,QgsProject)
+            if self.context ==None :
+                return
+
+            '''if self.context.profil == None :
+                self.context.iface.messageBar().pushMessage(
+                    "Attention", "Pas de profil sélectionné, veuillez d'abord vous connecter à l'espace collaboratif",
+                    level=1,
+                    duration=10)
+                return'''
+
+            dlgChargerGuichet = FormChargerGuichet(self.context)
+            dlgChargerGuichet.exec()
+            if dlgChargerGuichet.Accepted:
+                print("Enregistrement des couches à afficher dans QGIS")
+                #dlgChargerGuichet.save()
+
+        except Exception as e:
+            self.logger.error(format(e))
+            self.context.iface.messageBar(). \
+            pushMessage("Erreur",
+                         u"Un problème est survenu dans le chargement du guichet", \
+                         level=2, duration=10)
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+
 
 
     def compterModifications(self):
@@ -410,7 +437,7 @@ class RipartPlugin:
     def connectToRipart(self,context):
         """Connection to the ripart service 
         """
-        client = Client(context.urlHostRipart, context.login, context.pwd, context.proxy)
+        client = Client(context.urlHostRipart, context.login, context.pwd, context.proxy, context.clegeoportail)
         return client       
        
         
@@ -438,7 +465,7 @@ class RipartPlugin:
         try:
             self.context= Contexte.getInstance(self,QgsProject)  
             if self.context ==None :
-                return 
+                return
             create = CreerRipart(self.context)
             create.do()
         except Exception as e:

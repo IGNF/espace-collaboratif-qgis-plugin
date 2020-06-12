@@ -172,7 +172,22 @@ class XMLResponse(object):
             
         return jeton
                 
-                
+
+    '''def extractLayers(self):
+        layers = []
+
+        try:
+            nodesName = self.root.findall('Name')
+            for name in nodesName:
+                layers.append(nodesName.text)
+
+        except Exception as e:
+            self.logger.error('extractLayers:' + str(e))
+        raise
+
+        return layers'''
+
+
      
     def extractProfil(self):
         """Extraction du profil à partir de la réponse xml
@@ -265,6 +280,15 @@ class XMLResponse(object):
                         layer.role = role.text
                     layer.visibility = nodelayer.find('VISIBILITY').text
                     layer.opacity = nodelayer.find('OPACITY').text
+                    tilezoom = None
+                    tilezoom = nodelayer.find('TILEZOOM')
+                    if tilezoom != None:
+                        layer.tilezoom = tilezoom.text
+                    url = None
+                    url = nodelayer.find('URL')
+                    if url != None:
+                        layer.url = url.text
+
                     infosgeogroupe.layers.append(layer)
                 infosgeogroupes.append(infosgeogroupe)
 
