@@ -109,7 +109,8 @@ class RipartHelper:
     epsgCrs = 4326
     
     logger=RipartLogger("RipartHelper").getRipartLogger()
-    
+
+
     
     @staticmethod
     def getXPath(tagName,parentName):

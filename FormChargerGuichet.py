@@ -81,13 +81,14 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     def setColonneCharger(self, tableWidget, row, column):
         itemCheckBox = QtWidgets.QTableWidgetItem()
         itemCheckBox.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-        itemCheckBox.setCheckState(QtCore.Qt.Checked)
+        #itemCheckBox.setCheckState(QtCore.Qt.Checked)
+        itemCheckBox.setCheckState(QtCore.Qt.Unchecked)
         tableWidget.setItem(row, column, itemCheckBox)
 
 
 
     def setTableWidgetMonGuichet(self):
-
+        #lgCol = 60
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetMonGuichet.setHorizontalHeaderLabels(entete)
@@ -105,6 +106,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             # Colonne "Nom de la couche"
             item = QtWidgets.QTableWidgetItem(layer.nom)
+            '''lgNomCouche = len(layer.nom)
+            if lgCol < lgNomCouche:
+                lgCol = lgNomCouche
+                self.tableWidgetMonGuichet.setColumnWidth(0, lgCol)'''
             self.tableWidgetMonGuichet.setItem(rowPosition, 0, item)
 
             # Colonne "Rôle"
@@ -118,9 +123,11 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # Colonne "Charger"
             self.setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
 
+        self.tableWidgetMonGuichet.resizeColumnsToContents()
 
 
     def setTableWidgetFondsGeoportail(self):
+        #lgCol = 37
 
         # Entête
         entete = ["Nom de la couche", "Charger"]
@@ -138,14 +145,20 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
                 # Colonne "Nom de la couche"
                 item = QtWidgets.QTableWidgetItem(layer.nom)
+                '''lgNomCouche = len(layer.nom)
+                if lgNomCouche > lgCol:
+                    lgCol = lgNomCouche
+                    self.tableWidgetMonGuichet.setColumnWidth(0, lgCol)'''
                 self.tableWidgetFondsGeoportail.setItem(rowPosition, 0, item)
 
                 # Colonne "Charger"
                 self.setColonneCharger(self.tableWidgetFondsGeoportail, rowPosition, 1)
 
+        self.tableWidgetFondsGeoportail.resizeColumnsToContents()
 
 
     def setTableWidgetFondsGeoportailBis(self):
+        #lgCol = 37
 
         # Entête
         entete = ["Nom de la couche", "Charger"]
@@ -163,14 +176,20 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
                 # Colonne "Nom de la couche"
                 item = QtWidgets.QTableWidgetItem(layer.nom)
+                '''lgNomCouche = len(layer.nom)
+                if lgNomCouche > lgCol:
+                    lgCol = lgNomCouche
+                    self.tableWidgetMonGuichet.setColumnWidth(0, lgCol)'''
                 self.tableWidgetFondsGeoportailBis.setItem(rowPosition, 0, item)
 
                 # Colonne "Charger"
                 self.setColonneCharger(self.tableWidgetFondsGeoportailBis, rowPosition, 1)
 
+        self.tableWidgetFondsGeoportailBis.resizeColumnsToContents()
 
 
     def setTableWidgetAutresGeoservices(self):
+        #lgCol = 37
 
         # Entête
         entete = ["Nom de la couche", "Type", "Charger"]
@@ -189,6 +208,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             # Colonne "Nom de la couche"
             item = QtWidgets.QTableWidgetItem(layer.nom)
+            '''lgNomCouche = len(layer.nom)
+            if lgNomCouche > lgCol:
+                lgCol = lgNomCouche
+                self.tableWidgetMonGuichet.setColumnWidth(0, lgCol)'''
             self.tableWidgetAutresGeoservices.setItem(rowPosition, 0, item)
 
             # Colonne "Type"
@@ -198,10 +221,40 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # Colonne "Charger"
             self.setColonneCharger(self.tableWidgetAutresGeoservices, rowPosition, 2)
 
+        self.tableWidgetAutresGeoservices.resizeColumnsToContents()
+
+
+
+    def getLayersSelected(self, tableWidget, numCol):
+        checked_list = []
+        for i in range(tableWidget.rowCount()):
+            item = tableWidget.item(i, numCol)
+            if item.checkState() == QtCore.Qt.Checked:
+                itemCouche = tableWidget.item(i, 0)
+                checked_list.append(itemCouche.text())
+            else:
+                pass
+        return checked_list
+
 
 
     def save(self):
-        print("Affichage des couches dans QGIS : sauvegarde du choix utilisateur.")
+        layersQGIS = []
+        print("Liste des couches à afficher après sélection utilisateur")
+        layersChecked = []
+        layersChecked.append(self.getLayersSelected(self.tableWidgetMonGuichet, 2))
+        layersChecked.append(self.getLayersSelected(self.tableWidgetFondsGeoportail, 1))
+        layersChecked.append(self.getLayersSelected(self.tableWidgetFondsGeoportailBis, 1))
+        layersChecked.append(self.getLayersSelected(self.tableWidgetAutresGeoservices, 2))
+        print (layersChecked)
+        #[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
+        for layerChecked in layersChecked:
+            for tmp in layerChecked:
+                for layer in self.listLayers:
+                    if tmp == layer.nom:
+                        layersQGIS.append(layer)
+
+        self.context.addGuichetLayersToMap(layersQGIS)
         self.cancel = False
         self.close()
 

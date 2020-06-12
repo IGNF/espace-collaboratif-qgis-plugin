@@ -417,9 +417,42 @@ class Contexte(object):
         finally:
             cur.close()
             self.conn.close()
-        
-      
-      
+
+
+
+    def addGuichetLayersToMap(self, guichet_layers):
+        """Add guichet layers to the current map
+        """
+
+        # Quelles sont les cartes chargées dans le projet QGIS courant
+        maplayers = self.getAllMapLayers()
+        root = self.QgsProject.instance().layerTreeRoot()
+
+        for layer in guichet_layers:
+
+            if layer.nom in maplayers:
+                continue
+            # QgsVectorLayer(data_source, layer_name, provider_name
+            print("data_source : {}\nlayer_name : {}\nprovider_name : {}".format(layer.url, layer.nom, layer.type))
+            vlayer = QgsVectorLayer(layer.url, layer.nom, layer.type)
+
+            if not vlayer.isValid():
+                print ("Layer {} failed to load!".format(layer.nom))
+                continue
+
+            vlayer.setCrs(QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId))
+            QgsProject.instance().addMapLayer(vlayer, False)
+            root.insertLayer(0, vlayer)
+            self.logger.debug("Layer " + vlayer.name() + " added to map")
+            print("Layer {} added to map".format(vlayer.name()))
+
+            # ajoute les styles aux couches ??
+            '''style = os.path.join(self.projectDir, "espacecoStyles", table + ".qml")
+            vlayer.loadNamedStyle(style)'''
+
+        self.mapCan.refresh()
+
+
       
     def addRipartLayersToMap(self):
         """Add ripart layers to the current map 

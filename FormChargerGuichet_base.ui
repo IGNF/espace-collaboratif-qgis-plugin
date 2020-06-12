@@ -122,6 +122,9 @@
    <attribute name="horizontalHeaderHighlightSections">
     <bool>false</bool>
    </attribute>
+   <attribute name="horizontalHeaderStretchLastSection">
+    <bool>false</bool>
+   </attribute>
    <attribute name="verticalHeaderVisible">
     <bool>false</bool>
    </attribute>
@@ -136,6 +139,9 @@
    </attribute>
    <attribute name="verticalHeaderMinimumSectionSize">
     <number>37</number>
+   </attribute>
+   <attribute name="verticalHeaderStretchLastSection">
+    <bool>false</bool>
    </attribute>
    <column/>
    <column/>
@@ -168,6 +174,9 @@
    <attribute name="horizontalHeaderHighlightSections">
     <bool>false</bool>
    </attribute>
+   <attribute name="horizontalHeaderStretchLastSection">
+    <bool>false</bool>
+   </attribute>
    <attribute name="verticalHeaderVisible">
     <bool>false</bool>
    </attribute>
@@ -175,6 +184,9 @@
     <bool>true</bool>
    </attribute>
    <attribute name="verticalHeaderHighlightSections">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderStretchLastSection">
     <bool>false</bool>
    </attribute>
    <column/>
@@ -204,6 +216,9 @@
    <attribute name="horizontalHeaderHighlightSections">
     <bool>false</bool>
    </attribute>
+   <attribute name="horizontalHeaderStretchLastSection">
+    <bool>false</bool>
+   </attribute>
    <attribute name="verticalHeaderVisible">
     <bool>false</bool>
    </attribute>
@@ -211,6 +226,9 @@
     <bool>true</bool>
    </attribute>
    <attribute name="verticalHeaderHighlightSections">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderStretchLastSection">
     <bool>false</bool>
    </attribute>
    <column/>
@@ -241,6 +259,9 @@
    <attribute name="horizontalHeaderHighlightSections">
     <bool>false</bool>
    </attribute>
+   <attribute name="horizontalHeaderStretchLastSection">
+    <bool>false</bool>
+   </attribute>
    <attribute name="verticalHeaderVisible">
     <bool>false</bool>
    </attribute>
@@ -248,6 +269,9 @@
     <bool>true</bool>
    </attribute>
    <attribute name="verticalHeaderHighlightSections">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderStretchLastSection">
     <bool>false</bool>
    </attribute>
    <column/>

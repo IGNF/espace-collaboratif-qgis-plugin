@@ -319,18 +319,10 @@ class RipartPlugin:
             if self.context ==None :
                 return
 
-            '''if self.context.profil == None :
-                self.context.iface.messageBar().pushMessage(
-                    "Attention", "Pas de profil sélectionné, veuillez d'abord vous connecter à l'espace collaboratif",
-                    level=1,
-                    duration=10)
-                return'''
-
             dlgChargerGuichet = FormChargerGuichet(self.context)
             dlgChargerGuichet.exec()
             if dlgChargerGuichet.Accepted:
-                print("Enregistrement des couches à afficher dans QGIS")
-                #dlgChargerGuichet.save()
+                dlgChargerGuichet.save()
 
         except Exception as e:
             self.logger.error(format(e))

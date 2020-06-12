@@ -36,6 +36,7 @@ class Layer(object):
     # <URL>
     url = ""
 
+
     def __init__(self):
         """
         Constructor
@@ -51,6 +52,7 @@ class Layer(object):
         self.opacity = 1
         self.tilezoom = ""
         self.url = ""
+
 
     def GetAllInfo(self):
         infos = []
