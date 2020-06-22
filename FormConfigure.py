@@ -106,7 +106,10 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         
         proxy=RipartHelper.load_proxy(context.projectDir).text
         self.lineEditProxy.setText(proxy)
-        
+
+        groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
+        self.lineEditGroupeActif.setText(groupeactif)
+
         clegeoportail=RipartHelper.load_clegeoportail(context.projectDir).text
         self.lineEditCleGeoportail.setText(clegeoportail)
     
@@ -333,6 +336,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         #proxy         
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_proxy,self.lineEditProxy.text(),"Serveur")
 
+        #Groupe actif
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_GroupeActif,self.lineEditGroupeActif.text(), "Serveur")
         #Clé Geoportail
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_CleGeoportail, self.lineEditCleGeoportail.text(),"Serveur")
        

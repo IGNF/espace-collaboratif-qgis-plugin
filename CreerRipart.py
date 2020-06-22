@@ -173,4 +173,3 @@ class CreerRipart(object):
         self.context.conn.commit()
             
         return remarqueNouvelle
-                    

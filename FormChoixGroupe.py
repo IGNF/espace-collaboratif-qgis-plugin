@@ -4,6 +4,7 @@
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox
+
 from qgis.PyQt import QtGui, uic, QtWidgets
 from qgis.core import *
 
@@ -22,19 +23,26 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     cancel = True
 
 
-    def __init__(self, profil, parent=None):
+    def __init__(self, profil, cleGeoportail, groupeActif, parent=None):
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
 
         #Ajout des noms de groupes trouvés pour l'utilisateur
         self.infosgeogroupes = profil.infosGeogroupes
         for igg in self.infosgeogroupes:
             self.comboBoxGroupe.addItem(igg.groupe.nom)
 
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
+        if groupeActif != None and groupeActif != "":
+            self.comboBoxGroupe.setCurrentText(groupeActif)
+
+        if cleGeoportail == "Démonstration":
+            self.radioButtonNon.setChecked(True)
+        if cleGeoportail != "Démonstration" and cleGeoportail != "":
+            self.radioButtonOui.setChecked(True)
+            self.lineEditCleGeoportailUser.setText(cleGeoportail)
+
+        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
 
@@ -47,9 +55,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         idGroup = None
         index = self.comboBoxGroupe.currentIndex()
         idGroup = self.infosgeogroupes[index].groupe.id
+        nomGroup = self.infosgeogroupes[index].groupe.nom
+        cleGeoportail = ""
+        if self.radioButtonOui.isChecked() == True:
+            cleGeoportail = self.lineEditCleGeoportailUser.text()
+        if self.radioButtonNon.isChecked() == True:
+            cleGeoportail = "Démonstration"
         self.cancel = False
         self.close()
-        return idGroup
+        return (idGroup, nomGroup, cleGeoportail)
 
 
     def cancel(self):

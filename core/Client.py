@@ -110,16 +110,21 @@ class Client(object):
 
 
 
-    def getLayersFromCleGeoportailUser(self):
+    def getLayersFromCleGeoportailUser(self, cle):
         layers = []
 
-        # Exemple d'url
-        # https://wxs.ign.fr/lq4dgs7ymrje7x3nu0al9ajl/autoconf?gp-access-lib=2.1.2&output=xml
-        if self.__clegeoportail == "":
-            return layers
+        #TO DO voir pourquoi la clé est None dans certains cas
+        if cle == None:
+            cleGeoportail = "choisirgeoportail"
 
-        #url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format("lq4dgs7ymrje7x3nu0al9ajl")
-        url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(self.__clegeoportail)
+        if cle == "Démonstration":
+            cleGeoportail = "choisirgeoportail"
+        elif cle != "":
+            cleGeoportail = cle
+
+        # https://wxs.ign.fr/clegeoportail/autoconf?gp-access-lib=2.1.2&output=xml
+        #url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(clegeoportail)
+        url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(cleGeoportail)
         self.logger.debug("{0} {1}".format("getLayersFromCleGeoportailUser", url))
         reponse = requests.get(url)
 
@@ -319,30 +324,19 @@ class Client(object):
 
     def setChangeUserProfil(self, idProfil):
         profil = None
+        message = ""
+        uri = self.__url + "/api/georem/geoaut_switch_profile/" + idProfil
+        data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
+        xmlResponse = XMLResponse(data)
+        errMessage = xmlResponse.checkResponseValidity()
 
-        try:
-            uri = self.__url + "/api/georem/geoaut_switch_profile/" + idProfil
-            data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
-            xmlResponse = XMLResponse(data)
-            errMessage = xmlResponse.checkResponseValidity()
+        if errMessage['code'] == 'OK':
+            profil = xmlResponse.extractProfil()
+            self.__profil = profil
+        elif errMessage['message'] != "":
+            message = errMessage['message']
 
-            if errMessage['code'] == 'OK':
-                profil = xmlResponse.extractProfil()
-            else:
-                if errMessage['message'] != "":
-                    result = errMessage['message']
-                elif errMessage['code'] != "":
-                    result = ClientHelper.getErrorMessage(errMessage['code'])
-                else:
-                    result = ClientHelper.getErrorMessage(data.status_code)
-
-                raise Exception(ClientHelper.notNoneValue(result))
-
-        except Exception as e:
-            self.logger.error(str(e))
-            raise Exception(e)
-
-        return profil
+        return (profil, message)
 
 
 

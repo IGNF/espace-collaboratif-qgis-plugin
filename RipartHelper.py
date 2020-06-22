@@ -90,8 +90,7 @@ class RipartHelper:
     xml_Zone_extraction = "Zone_extraction"
     xml_AfficherCroquis = "Afficher_Croquis"
     xml_AttributsCroquis = "Attributs_croquis"
-    
-    
+
     xml_BaliseNomCalque = "Calque_Nom"
     xml_BaliseChampCalque = "Calque_Champ"
     #xml_Group = "./Map/Import_pour_groupe"
@@ -99,6 +98,7 @@ class RipartHelper:
     xml_Map="./Map"
     
     xml_proxy="Proxy"
+    xml_GroupeActif = "groupe_actif"
     xml_CleGeoportail="cle_geoportail"
 
     defaultDate = "1900-01-01 00:00:00"
@@ -226,7 +226,49 @@ class RipartHelper:
            
         except Exception as e:
             RipartHelper.logger.error(format(e))
-        
+
+    @staticmethod
+    def load_groupeactif(projectDir):
+        """Retourne le groupe actif sauvegardé dans le fichier de configuration xml
+
+                :param projectDir: le chemin vers le répertoire du projet
+                :type projectDir: string
+                """
+        groupeactif = ""
+        try:
+            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            groupeactif = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupeActif, "Serveur"))
+            if groupeactif == None:
+                groupeactif = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_GroupeActif, "Serveur")
+
+        except Exception as e:
+            RipartHelper.logger.error(str(e))
+
+        return groupeactif
+
+    @staticmethod
+    def save_groupeactif(projectDir, groupeactif):
+        """Enregistre le groupe actif dans le fichier de configuration
+
+                :param projectDir: le chemin vers le répertoire du projet
+                :type projectDir: string
+
+                :param groupeactif: le groupe actif de l'utilisateur
+                :type groupeactif: string
+                """
+        try:
+            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            xgroupeactif = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupeActif, "Serveur"))
+            xgroupeactif.text = groupeactif
+
+            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+
+        except Exception as e:
+            RipartHelper.logger.error(format(e))
+
+
     @staticmethod
     def load_clegeoportail(projectDir):
         """Retourne la clé Géoportail sauvegardée dans le fichier de configuration xml

@@ -34,18 +34,22 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     # Balises <ROLE>
     # clé xml:valeur affichage boite
-    roleCleVal = {"edit":"Edition", "ref-edit":"Référence-Edition", "visu":"Visualisation"}
+    roleCleVal = {"edit":"Edition", "ref-edit":"Edition", "visu":"Visualisation"}
 
 
     def __init__(self, context, parent=None):
         super(FormChargerGuichet, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Valider")
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
 
         self.context = context
-        self.listLayers = self.getInfosLayers()
+        self.listLayers.clear()
+        # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
+        connexionLayers = self.getInfosLayers()
+        if connexionLayers[0] == "Rejected":
+            self.cancel()
+        if connexionLayers[0] == "Accepted":
+            self.listLayers = connexionLayers[1]
 
         # Remplissage des différentes tables de couches
         self.setTableWidgetMonGuichet()
@@ -53,8 +57,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.setTableWidgetFondsGeoportailBis()
         self.setTableWidgetAutresGeoservices()
 
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
+        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
+
 
 
     def getInfosLayers(self):
@@ -63,18 +68,23 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         if self.context.ripClient == None:
             connResult =self.context.getConnexionRipart()
             if not connResult:
-                #la connexion a échoué, on ne fait rien
-                self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service est survenu. Veuillez rééssayer", level=2, duration=5)
-                return infosLayers
+                #la connexion a échoué ou l'utilisateur a cliqué sur Annuler
+                return ("Rejected", infosLayers)
 
         self.profilUser = self.context.client.getProfil()
+        print("Profil : {0}, {1}".format(self.profilUser.geogroupe.id,
+                                         self.profilUser.geogroupe.nom))
 
-        print("Liste des couches du profil utilisateur")
-        for layersAll in self.profilUser.infosGeogroupes[0].layers:
-            print(layersAll.nom)
-            infosLayers.append(layersAll)
+        for infoGeogroupe in self.profilUser.infosGeogroupes:
+            if infoGeogroupe.groupe.id != self.profilUser.geogroupe.id:
+                continue
 
-        return infosLayers
+            print("Liste des couches du profil utilisateur")
+            for layersAll in infoGeogroupe.layers:
+                print(layersAll.nom)
+                infosLayers.append(layersAll)
+
+        return ("Accepted", infosLayers)
 
 
 
@@ -88,7 +98,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
 
     def setTableWidgetMonGuichet(self):
-        #lgCol = 60
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetMonGuichet.setHorizontalHeaderLabels(entete)
@@ -106,10 +115,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             # Colonne "Nom de la couche"
             item = QtWidgets.QTableWidgetItem(layer.nom)
-            '''lgNomCouche = len(layer.nom)
-            if lgCol < lgNomCouche:
-                lgCol = lgNomCouche
-                self.tableWidgetMonGuichet.setColumnWidth(0, lgCol)'''
             self.tableWidgetMonGuichet.setItem(rowPosition, 0, item)
 
             # Colonne "Rôle"
@@ -127,8 +132,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
 
     def setTableWidgetFondsGeoportail(self):
-        #lgCol = 37
-
         # Entête
         entete = ["Nom de la couche", "Charger"]
         self.tableWidgetFondsGeoportail.setHorizontalHeaderLabels(entete)
@@ -145,10 +148,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
                 # Colonne "Nom de la couche"
                 item = QtWidgets.QTableWidgetItem(layer.nom)
-                '''lgNomCouche = len(layer.nom)
-                if lgNomCouche > lgCol:
-                    lgCol = lgNomCouche
-                    self.tableWidgetMonGuichet.setColumnWidth(0, lgCol)'''
                 self.tableWidgetFondsGeoportail.setItem(rowPosition, 0, item)
 
                 # Colonne "Charger"
@@ -158,8 +157,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
 
     def setTableWidgetFondsGeoportailBis(self):
-        #lgCol = 37
-
         # Entête
         entete = ["Nom de la couche", "Charger"]
         self.tableWidgetFondsGeoportailBis.setHorizontalHeaderLabels(entete)
@@ -176,10 +173,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
                 # Colonne "Nom de la couche"
                 item = QtWidgets.QTableWidgetItem(layer.nom)
-                '''lgNomCouche = len(layer.nom)
-                if lgNomCouche > lgCol:
-                    lgCol = lgNomCouche
-                    self.tableWidgetMonGuichet.setColumnWidth(0, lgCol)'''
                 self.tableWidgetFondsGeoportailBis.setItem(rowPosition, 0, item)
 
                 # Colonne "Charger"
@@ -188,9 +181,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.tableWidgetFondsGeoportailBis.resizeColumnsToContents()
 
 
-    def setTableWidgetAutresGeoservices(self):
-        #lgCol = 37
 
+    def setTableWidgetAutresGeoservices(self):
         # Entête
         entete = ["Nom de la couche", "Type", "Charger"]
         self.tableWidgetAutresGeoservices.setHorizontalHeaderLabels(entete)
@@ -200,7 +192,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             if layer.type != self.wfs and layer.type != self.wms:
                 continue
 
-            if layer.url.find("collaboratif.ign.fr"):
+            if layer.url.find("collaboratif.ign.fr") != -1:
+                continue
+            if layer.url.find("wxs.ign.fr") != -1 :
                 continue
 
             rowPosition = self.tableWidgetAutresGeoservices.rowCount()
@@ -208,10 +202,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             # Colonne "Nom de la couche"
             item = QtWidgets.QTableWidgetItem(layer.nom)
-            '''lgNomCouche = len(layer.nom)
-            if lgNomCouche > lgCol:
-                lgCol = lgNomCouche
-                self.tableWidgetMonGuichet.setColumnWidth(0, lgCol)'''
             self.tableWidgetAutresGeoservices.setItem(rowPosition, 0, item)
 
             # Colonne "Type"

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>844</width>
-    <height>591</height>
+    <width>841</width>
+    <height>659</height>
    </rect>
   </property>
   <property name="font">
@@ -29,7 +29,7 @@
    <property name="geometry">
     <rect>
      <x>380</x>
-     <y>550</y>
+     <y>620</y>
      <width>201</width>
      <height>32</height>
     </rect>
@@ -44,10 +44,10 @@
   <widget class="QWidget" name="formLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>0</x>
+     <x>10</x>
      <y>10</y>
-     <width>831</width>
-     <height>471</height>
+     <width>821</width>
+     <height>541</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout_2">
@@ -372,60 +372,62 @@ en attribut pour les nouveaux croquis</string>
       </column>
      </widget>
     </item>
+    <item row="9" column="1">
+     <widget class="QLineEdit" name="lineEditProxy">
+      <property name="minimumSize">
+       <size>
+        <width>2</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="frame">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="0">
+     <widget class="QCheckBox" name="checkBoxProxy">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Proxy</string>
+      </property>
+     </widget>
+    </item>
    </layout>
-  </widget>
-  <widget class="QLabel" name="lblProxy">
-   <property name="geometry">
-    <rect>
-     <x>320</x>
-     <y>490</y>
-     <width>61</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="text">
-    <string>Proxy</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEditProxy">
-   <property name="geometry">
-    <rect>
-     <x>390</x>
-     <y>490</y>
-     <width>441</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>2</width>
-     <height>0</height>
-    </size>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
-   </property>
-   <property name="frame">
-    <bool>true</bool>
-   </property>
   </widget>
   <widget class="QLabel" name="lblCleGeoportail">
    <property name="geometry">
     <rect>
      <x>250</x>
-     <y>520</y>
+     <y>590</y>
      <width>131</width>
      <height>20</height>
     </rect>
@@ -448,7 +450,7 @@ en attribut pour les nouveaux croquis</string>
    <property name="geometry">
     <rect>
      <x>390</x>
-     <y>520</y>
+     <y>590</y>
      <width>441</width>
      <height>22</height>
     </rect>
@@ -467,6 +469,59 @@ en attribut pour les nouveaux croquis</string>
    <property name="frame">
     <bool>true</bool>
    </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblGroupeActif">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>560</y>
+     <width>121</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Groupe actif</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEditGroupeActif">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>560</y>
+     <width>441</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>2</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="frame">
+    <bool>true</bool>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
   </widget>
  </widget>
  <tabstops>
@@ -483,7 +538,9 @@ en attribut pour les nouveaux croquis</string>
   <tabstop>checkBoxGroup</tabstop>
   <tabstop>checkBoxAttributs</tabstop>
   <tabstop>treeWidget</tabstop>
+  <tabstop>checkBoxProxy</tabstop>
   <tabstop>lineEditProxy</tabstop>
+  <tabstop>lineEditGroupeActif</tabstop>
   <tabstop>lineEditCleGeoportail</tabstop>
  </tabstops>
  <resources/>

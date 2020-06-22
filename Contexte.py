@@ -51,7 +51,10 @@ class Contexte(object):
     urlHostRipart=""
     profil=None
 
-    # clegeoportail
+    # groupe actif
+    groupeactif = ""
+
+    # cle geoportail
     clegeoportail = ""
 
     #client pour le service RIPart
@@ -112,7 +115,7 @@ class Contexte(object):
         self.pwd=""
         self.urlHostRipart=""
         self.clegeoportail=""
-        
+        self.groupeactif=""
         self.profil = None
         self.ripClient = None
         
@@ -262,10 +265,17 @@ class Contexte(object):
         else :
             self.proxy = None
 
+        xmlgroupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif, "Serveur")
+        if xmlgroupeactif != None:
+            self.groupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif,"Serveur").text
+            if self.groupeactif != None:
+                self.logger.debug("this.groupeactif " + self.groupeactif)
+
         xmlclegeoportail=RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur")
         if xmlclegeoportail!=None:
             self.clegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur").text
-            self.logger.debug("this.clegeoportail " + self.clegeoportail)
+            if self.clegeoportail != None:
+                self.logger.debug("this.clegeoportail " + self.clegeoportail)
 
         if (self.login =="" or self.pwd=="" or newLogin):
             self.loginWindow.setLogin(self.login)
@@ -303,17 +313,48 @@ class Contexte(object):
 
                             # sinon le choix d'un autre groupe est présenté à l'utilisateur
                             else:
-                                dlgChoixGroupe = FormChoixGroupe(profil)
-                                dlgChoixGroupe.exec()
-                                if dlgChoixGroupe.Accepted:
-                                    #le choix du nouveau profil devient actif
+                                dlgChoixGroupe = FormChoixGroupe(profil,self.clegeoportail,self.groupeactif)
+                                dlgChoixGroupe.exec_()
+                                # bouton Valider
+                                if dlgChoixGroupe.cancel == False:
                                     result = 1
-                                    idGroupe = dlgChoixGroupe.save()
-                                    self.profil = client.setChangeUserProfil(idGroupe)
+
+                                    # le choix du nouveau profil est validé
+                                    # le nouvel id et nom du groupe, la clé Geoportail sont retournés dans un tuple
+                                    idNomGroupeCleGeoPortail = dlgChoixGroupe.save()
+
+                                    # récupère le profil et un message dans un tuple
+                                    profilMessage = client.setChangeUserProfil(idNomGroupeCleGeoPortail[0])
+                                    messTmp = profilMessage[1]
+
+                                    # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
+                                    if messTmp.find('actif') != -1:
+                                        # le profil chargé reste actif
+                                        self.profil = profil
+                                        # mais il faut enregistrer le choix utilisateur sur la clé Géoportail
+                                        self.clegeoportail = idNomGroupeCleGeoPortail[2]
+                                        RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
+                                    else:
+                                        # setChangeUserProfil retourne un message vide
+                                        # le nouveau profil devient actif
+                                        self.profil = profilMessage[0]
+                                        # Sauvegarde de la clé Géoportail et du groupe actif
+                                        # dans le xml du projet utilisateur
+                                        self.clegeoportail = idNomGroupeCleGeoPortail[2]
+                                        RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
+                                        RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
+
+                                # Bouton Annuler
+                                elif dlgChoixGroupe.cancel == True:
+                                    result = -1
+                                    print("rejected")
+                                    self.loginWindow.close()
+                                    self.loginWindow = None
+                                    return
 
                             # Récupération des layers GéoPortail valides en fonction
                             # de la clé Geoportail utilisateur
-                            layersCleGeoportail = client.getLayersFromCleGeoportailUser()
+                            layersCleGeoportail = client.getLayersFromCleGeoportailUser(self.clegeoportail)
                             self.profil.layersCleGeoportail = layersCleGeoportail
 
                             #les infos de connexion présentée à l'utilisateur
@@ -346,8 +387,7 @@ class Contexte(object):
                         self.loginWindow.exec_()
                         
         else: 
-            try: 
-                #client = Client(self.urlHostRipart, self.login, self.pwd, self.pwd,self.proxy)
+            try:
                 client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
                 result=1
                 self.logger.debug("result ="+ str(result) )

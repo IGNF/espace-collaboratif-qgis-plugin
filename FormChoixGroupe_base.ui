@@ -1,24 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DialogChoixGroupe</class>
- <widget class="QDialog" name="DialogChoixGroupe">
+ <class>DialogParametrage</class>
+ <widget class="QDialog" name="DialogParametrage">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>269</width>
-    <height>96</height>
+    <width>399</width>
+    <height>237</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Choix du groupe</string>
+   <string>Paramétrage</string>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>60</y>
-     <width>251</width>
+     <x>190</x>
+     <y>200</y>
+     <width>201</width>
      <height>31</height>
     </rect>
    </property>
@@ -26,7 +29,10 @@
     <enum>Qt::Horizontal</enum>
    </property>
    <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+   </property>
+   <property name="centerButtons">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QLabel" name="lblGroupe">
@@ -52,13 +58,83 @@
     </rect>
    </property>
   </widget>
+  <widget class="QRadioButton" name="radioButtonOui">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>140</y>
+     <width>51</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Oui</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="radioButtonNon">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>170</y>
+     <width>301</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Non - Utiliser la clé Géoportail de démonstration</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEditCleGeoportailUser">
+   <property name="geometry">
+    <rect>
+     <x>70</x>
+     <y>140</y>
+     <width>321</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="whatsThis">
+    <string/>
+   </property>
+   <property name="accessibleDescription">
+    <string/>
+   </property>
+   <property name="inputMask">
+    <string/>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="placeholderText">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblCleGeoportailUser">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>70</y>
+     <width>391</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Vous pouvez utiliser une clé Géoportail pour afficher les fonds IGN de votre groupe directement dans QGIS.&lt;/p&gt;&lt;p&gt;Disposez-vous de votre propre clé Géoportail ?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::AutoText</enum>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>DialogChoixGroupe</receiver>
+   <receiver>DialogParametrage</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -74,7 +150,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>DialogChoixGroupe</receiver>
+   <receiver>DialogParametrage</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

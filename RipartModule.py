@@ -320,16 +320,16 @@ class RipartPlugin:
                 return
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
-            dlgChargerGuichet.exec()
+            dlgChargerGuichet.exec_()
             if dlgChargerGuichet.Accepted:
                 dlgChargerGuichet.save()
 
         except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
-            pushMessage("Erreur",
-                         u"Un problème est survenu dans le chargement du guichet", \
-                         level=2, duration=10)
+            pushMessage("",
+                         u"Pas de chargement de guichet", \
+                         level=2, duration=2)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 

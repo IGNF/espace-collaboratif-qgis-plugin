@@ -17,7 +17,7 @@ class Ui_DialogChargerGuichet(object):
         self.buttonBox = QtWidgets.QDialogButtonBox(DialogChargerGuichet)
         self.buttonBox.setGeometry(QtCore.QRect(540, 810, 201, 32))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Save)
         self.buttonBox.setObjectName("buttonBox")
         self.labelMonGuichet = QtWidgets.QLabel(DialogChargerGuichet)
         self.labelMonGuichet.setGeometry(QtCore.QRect(10, 0, 101, 21))
