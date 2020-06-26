@@ -316,8 +316,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             filtre =""
         
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Zone_extraction,filtre,"Map")
-        
-        
+
         #filtre groupe
         if self.checkBoxGroup.isChecked():
             groupFilter="true"
@@ -338,6 +337,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         #Groupe actif
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_GroupeActif,self.lineEditGroupeActif.text(), "Serveur")
+
         #Clé Geoportail
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_CleGeoportail, self.lineEditCleGeoportail.text(),"Serveur")
        

@@ -47,7 +47,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
         connexionLayers = self.getInfosLayers()
         if connexionLayers[0] == "Rejected":
-            self.cancel()
+            self.context.iface.messageBar(). \
+                pushMessage("Remarque",
+                            u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.", \
+                            level=2, duration=5)
         if connexionLayers[0] == "Accepted":
             self.listLayers = connexionLayers[1]
 
@@ -71,9 +74,15 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 #la connexion a échoué ou l'utilisateur a cliqué sur Annuler
                 return ("Rejected", infosLayers)
 
+        if self.context.client == None:
+            return ("Rejected", infosLayers)
+
         self.profilUser = self.context.client.getProfil()
         print("Profil : {0}, {1}".format(self.profilUser.geogroupe.id,
                                          self.profilUser.geogroupe.nom))
+
+        if len(self.profilUser.infosGeogroupes) == 0:
+           return ("Rejected", infosLayers)
 
         for infoGeogroupe in self.profilUser.infosGeogroupes:
             if infoGeogroupe.groupe.id != self.profilUser.geogroupe.id:
@@ -91,8 +100,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     def setColonneCharger(self, tableWidget, row, column):
         itemCheckBox = QtWidgets.QTableWidgetItem()
         itemCheckBox.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-        #itemCheckBox.setCheckState(QtCore.Qt.Checked)
-        itemCheckBox.setCheckState(QtCore.Qt.Unchecked)
+        itemCheckBox.setCheckState(QtCore.Qt.Checked)
+        #itemCheckBox.setCheckState(QtCore.Qt.Unchecked)
         tableWidget.setItem(row, column, itemCheckBox)
 
 
@@ -158,7 +167,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     def setTableWidgetFondsGeoportailBis(self):
         # Entête
-        entete = ["Nom de la couche", "Charger"]
+        entete = ["Nom de la couche"]
         self.tableWidgetFondsGeoportailBis.setHorizontalHeaderLabels(entete)
 
         # Autres lignes de la table
@@ -174,9 +183,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 # Colonne "Nom de la couche"
                 item = QtWidgets.QTableWidgetItem(layer.nom)
                 self.tableWidgetFondsGeoportailBis.setItem(rowPosition, 0, item)
-
-                # Colonne "Charger"
-                self.setColonneCharger(self.tableWidgetFondsGeoportailBis, rowPosition, 1)
 
         self.tableWidgetFondsGeoportailBis.resizeColumnsToContents()
 
@@ -234,7 +240,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         layersChecked = []
         layersChecked.append(self.getLayersSelected(self.tableWidgetMonGuichet, 2))
         layersChecked.append(self.getLayersSelected(self.tableWidgetFondsGeoportail, 1))
-        layersChecked.append(self.getLayersSelected(self.tableWidgetFondsGeoportailBis, 1))
         layersChecked.append(self.getLayersSelected(self.tableWidgetAutresGeoservices, 2))
         print (layersChecked)
         #[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]

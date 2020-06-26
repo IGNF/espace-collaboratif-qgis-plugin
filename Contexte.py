@@ -23,6 +23,7 @@ import ntpath
 from qgis.utils import spatialite_connect
 import sqlite3 as sqlite
 import configparser
+import urllib
 
 from  .RipartHelper import  RipartHelper
 from .core.RipartLoggerCl import RipartLogger
@@ -148,7 +149,9 @@ class Contexte(object):
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
             raise
-    
+
+
+
     def getMetadata(self,category, param):
        
         config = configparser.RawConfigParser()
@@ -227,8 +230,28 @@ class Contexte(object):
                           styleFilesDir)
         
   
-  
-     
+
+    def getVisibilityLayersFromGroupeActif(self):
+        '''Retourne True si au moins une couche est éditable
+        False sinon'''
+        if self.groupeactif == None or self.groupeactif == "":
+            return False
+
+        if self.profil == None:
+            return False
+
+        for infoGeogroupe in self.profil.infosGeogroupes:
+            if infoGeogroupe.groupe.nom != self.groupeactif:
+                continue
+
+            for layer in infoGeogroupe.layers:
+                if layer.role == "edit" or layer.role == "ref-edit":
+                    return True
+
+        return False
+
+
+
     def getConnexionRipart(self,newLogin=False):
         """Connexion au service ripart 
         
@@ -298,19 +321,22 @@ class Contexte(object):
                         profil = client.getProfil()
                         
                         if profil != None :
+                            dlgInfoToScreen = True
                             self.saveLogin(self.login)
 
                             # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
                             if len(profil.infosGeogroupes) == 1:
                                 # le profil de l'utilisateur est déjà récupéré et reste actif
+                                result = 1
                                 self.profil = profil
 
                             # si l'utilisateur n'appartient à aucun groupe
-                            # apparemment un groupe par défaut est attribué
-                            # donc ce cas ne devrait jamais arrivé
+                            # un profil par défaut est attribué mais il ne contient
+                            # pas d'infosgeogroupesgroupe
                             elif len(profil.infosGeogroupes) == 0:
-                                self.loginWindow.setErreur("Vous n'appartenez à aucun groupe, vous devez définir un profil")
-
+                                #dlgInfoToScreen = False
+                                #self.loginWindow.setErreur("Vous n'appartenez à aucun groupe, vous devez définir un profil")
+                                raise Exception("Vous n'appartenez à aucun groupe, vous devez définir un profil")
                             # sinon le choix d'un autre groupe est présenté à l'utilisateur
                             else:
                                 dlgChoixGroupe = FormChoixGroupe(profil,self.clegeoportail,self.groupeactif)
@@ -367,7 +393,7 @@ class Contexte(object):
                             dlgInfo.textInfo.append("Clé Géoportail : " + self.clegeoportail)
 
                             dlgInfo.exec_()
-                            
+
                             if dlgInfo.Accepted:
                                 self.client=client
                                 result= 1
@@ -459,9 +485,54 @@ class Contexte(object):
             self.conn.close()
 
 
+    def appendUrl(self, url, nomCouche):
+        """
+        Exemple de requete
+        https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?service=WFS
+        &request=GetFeature
+        &outputFormat=JSON
+        &typeName=bdtopo_metropole:adresse
+        &bbox=657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551
+        &filter={%22detruit%22%3Afalse}
+        &maxFeatures=5000
+        &version=1.1.0
+        """
+
+        # Construction de l'URL
+        tmp = url.split('&')
+        database = tmp[1].split('=')
+        typeName = "{}:{}".format(database[1],nomCouche)
+        params = {
+            'service': 'WFS',
+            'version': '1.0.0',
+            'request': 'GetFeature',
+            'typename': typeName,
+            # 'outputFormat': 'JSON',
+            # 'bbox': '657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551',
+            # 'bbox': '1.411%2C49.250%2C3.414%2C48.098',
+            # 'bbox': '49.250%2C1.411%2C48.098%2C3.414',
+            'filter': '{%22detruit%22%3Afalse}',
+            'username': self.login,
+            'password': self.pwd,
+            'srsname': 'EPSG:4326'
+        }
+
+        #uri = "{}&{}".format(tmp[0], urllib.parse.unquote(urllib.parse.urlencode(params)))
+        uri = "https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?{}".format(urllib.parse.unquote(urllib.parse.urlencode(params)))
+        print(uri)
+
+
 
     def addGuichetLayersToMap(self, guichet_layers):
         """Add guichet layers to the current map
+        https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?service=WFS
+        &request=GetFeature
+        &outputFormat=JSON
+        &typeName=bdtopo_metropole:adresse
+        &bbox=657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551
+        &filter={%22detruit%22%3Afalse}
+        &maxFeatures=5000
+        &version=1.1.0
         """
 
         # Quelles sont les cartes chargées dans le projet QGIS courant
@@ -472,9 +543,13 @@ class Contexte(object):
 
             if layer.nom in maplayers:
                 continue
-            # QgsVectorLayer(data_source, layer_name, provider_name
-            print("data_source : {}\nlayer_name : {}\nprovider_name : {}".format(layer.url, layer.nom, layer.type))
-            vlayer = QgsVectorLayer(layer.url, layer.nom, layer.type)
+
+            # Construction de l'URL
+            url = self.appendUrl(layer.url, layer.nom)
+
+            # QgsVectorLayer(data_source, layer_name, provider_name)
+            #print("data_source : {}\nlayer_name : {}\nprovider_name : {}".format(url, layer.nom, layer.type))
+            vlayer = QgsVectorLayer(url, layer.nom, layer.type)
 
             if not vlayer.isValid():
                 print ("Layer {} failed to load!".format(layer.nom))
@@ -992,4 +1067,4 @@ class Contexte(object):
                     croquisSelFeats[table]=[]
                 croquisSelFeats[table].append(row[0])
             
-        return croquisSelFeats   
+        return croquisSelFeats

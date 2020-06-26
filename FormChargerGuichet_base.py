@@ -94,7 +94,7 @@ class Ui_DialogChargerGuichet(object):
         self.tableWidgetFondsGeoportailBis.setGeometry(QtCore.QRect(10, 480, 731, 151))
         self.tableWidgetFondsGeoportailBis.setShowGrid(False)
         self.tableWidgetFondsGeoportailBis.setGridStyle(QtCore.Qt.NoPen)
-        self.tableWidgetFondsGeoportailBis.setColumnCount(2)
+        self.tableWidgetFondsGeoportailBis.setColumnCount(1)
         self.tableWidgetFondsGeoportailBis.setObjectName("tableWidgetFondsGeoportailBis")
         self.tableWidgetFondsGeoportailBis.setRowCount(0)
         self.tableWidgetFondsGeoportailBis.horizontalHeader().setCascadingSectionResizes(True)

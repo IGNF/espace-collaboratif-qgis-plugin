@@ -39,6 +39,10 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsProject,  QgsMessageLog, QgsWkbTypes
 import configparser
 
+# a virer
+from qgis.core import QgsCoordinateReferenceSystem,QgsVectorLayer,QgsProject, QgsDataSourceUri
+import urllib
+
 # Initialize Qt resources from file resources.py
 from . import resources
 
@@ -264,9 +268,9 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/charger.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Charger le guichet'),
+            text=self.tr(u'Charger les couches de mon groupe'),
             callback=self.chargerGuichet,
-            status_tip=self.tr(u'Charger le guichet'),
+            status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
         icon_path = ':/plugins/RipartPlugin/images/compter.png'
@@ -280,9 +284,9 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Synchroniser les données'),
+            text=self.tr(u'Synchroniser'),
             callback=self.synchroniserDonnees,
-            status_tip=self.tr(u'Synchroniser les données'),
+            status_tip=self.tr(u'Synchroniser'),
             parent=self.iface.mainWindow())
            
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin", self.iface.mainWindow())
@@ -313,33 +317,109 @@ class RipartPlugin:
 
 
     def chargerGuichet(self):
-        print("Chargement du guichet")
-        try:
-            self.context= Contexte.getInstance(self,QgsProject)
-            if self.context ==None :
-                return
 
-            dlgChargerGuichet = FormChargerGuichet(self.context)
-            dlgChargerGuichet.exec_()
-            if dlgChargerGuichet.Accepted:
-                dlgChargerGuichet.save()
-
-        except Exception as e:
-            self.logger.error(format(e))
+        print("Chargement des couches du groupe utilisateur")
+        self.context= Contexte.getInstance(self,QgsProject)
+        if self.context ==None :
             self.context.iface.messageBar(). \
-            pushMessage("",
-                         u"Pas de chargement de guichet", \
-                         level=2, duration=2)
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+                pushMessage("Remarque",
+                            u"Pas de chargement des couches du groupe utilisateur", \
+                            level=2, duration=5)
+            return
+
+        dlgChargerGuichet = FormChargerGuichet(self.context)
+        if dlgChargerGuichet.context.profil == None:
+            dlgChargerGuichet.context.iface.messageBar(). \
+                pushMessage("Remarque",
+                            u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.", \
+                            level=2, duration=5)
+            return
+
+        dlgChargerGuichet.exec_()
+        if dlgChargerGuichet.Accepted:
+            dlgChargerGuichet.save()
 
 
 
     def compterModifications(self):
         print("Compter les modifications")
+        self.context = Contexte.getInstance(self, QgsProject)
+        if self.context != None:
+            if not self.context.getVisibilityLayersFromGroupeActif():
+                self.context.iface.messageBar(). \
+                    pushMessage("Remarque",
+                                "Pas de couche(s) éditable(s)", \
+                                level=2, duration=5)
+                return
+
 
 
     def synchroniserDonnees(self):
         print("Synchroniser les données")
+        self.context = Contexte.getInstance(self, QgsProject)
+        if self.context != None:
+            if not self.context.getVisibilityLayersFromGroupeActif():
+                self.context.iface.messageBar(). \
+                    pushMessage("Remarque",
+                                "Pas de couche(s) éditable(s)", \
+                                level=2, duration=5)
+                return
+
+
+        # enabled_flag=self.context.getVisibilityLayersFromGroupeActif())
+        """Add guichet layers to the current map
+                https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?service=WFS
+                &request=GetFeature
+                &outputFormat=JSON
+                &typeName=bdtopo_metropole:adresse
+                &bbox=657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551
+                &filter={%22detruit%22%3Afalse}
+                &maxFeatures=5000
+                &version=1.1.0
+                """
+        root = QgsProject.instance().layerTreeRoot()
+        #mapCan = QObject.iface.mapCanvas()
+        # Construction de l'URL
+        params = {
+            'service': 'WFS',
+            'version': '1.0.0',
+            'request': 'GetFeature',
+            'typename': 'demo_guichet:piste_cyclable',
+            #'outputFormat': 'JSON',
+            #'bbox': '657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551',
+            #'bbox': '1.411%2C49.250%2C3.414%2C48.098',
+            #'bbox': '49.250%2C1.411%2C48.098%2C3.414',
+            'filter': '{%22detruit%22%3Afalse}',
+            'username':'epeyrouse',
+            'password':'Tempo2019*',
+            'srsname': 'EPSG:4326'
+        }
+        uri = 'https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?' + urllib.parse.unquote(urllib.parse.urlencode(params))
+        print(uri)
+        '''url = "https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?service=WFS\
+                &request=GetFeature\
+                &outputFormat=JSON\
+                &typeName=bdtopo_metropole:adresse\
+                &bbox=657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551\
+                &filter={%22detruit%22%3Afalse}\
+                &maxFeatures=5000\
+                &version=1.1.0"'''
+        vlayer = QgsVectorLayer(uri, "piste_cyclable", "WFS")
+        if not vlayer.isValid():
+            print("Layer adresse failed to load!")
+            return
+
+        vlayer.setCrs(QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId))
+        QgsProject.instance().addMapLayer(vlayer, False)
+        root.insertLayer(0, vlayer)
+        self.logger.debug("Layer " + vlayer.name() + " added to map")
+        print("Layer {} added to map".format(vlayer.name()))
+
+        # ajoute les styles aux couches ??
+        '''style = os.path.join(self.projectDir, "espacecoStyles", table + ".qml")
+        vlayer.loadNamedStyle(style)'''
+
+        #mapCan.refresh()
 
 
     def unload(self):
@@ -447,10 +527,9 @@ class RipartPlugin:
                 pushMessage("Erreur",
                             u"Un problème est survenu lors de l'ajout de la réponse ou lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.", \
                              level=2, duration=10)
-        
-        
-        
-        
+
+
+
     def createRemark(self):
         """Create a new remark
         """

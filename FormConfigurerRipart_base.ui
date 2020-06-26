@@ -46,7 +46,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>821</width>
+     <width>831</width>
      <height>541</height>
     </rect>
    </property>
@@ -470,7 +470,7 @@ en attribut pour les nouveaux croquis</string>
     <bool>true</bool>
    </property>
    <property name="readOnly">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
   </widget>
   <widget class="QLabel" name="lblGroupeActif">
