@@ -327,7 +327,7 @@ class RipartHelper:
         except Exception as e:
             RipartHelper.logger.error(str(e))
         
-        return  calque
+        return calque
 
  
 

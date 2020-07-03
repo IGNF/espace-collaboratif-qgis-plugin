@@ -9,6 +9,7 @@ version 3.0.0 , 26/11/2018
 
 import os
 
+
 from PyQt5 import uic
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -43,9 +44,10 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         
         self.textInfo.setText("")
         self.btnOK.clicked.connect(self.close)
-      
-        
-    def addMessage(self, mess):
-        self.textInfo.append(mess)
-        
+
+
+    '''def addMessage(self, mess):
+        self.textInfo.append(mess)'''
+
+
         

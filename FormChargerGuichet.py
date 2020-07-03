@@ -11,6 +11,7 @@ from qgis.core import *
 
 from .core.Layer import Layer
 from .Contexte import Contexte
+from .ImporterGuichet import ImporterGuichet
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChargerGuichet_base.ui'))
 
@@ -20,7 +21,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     Dialogue pour afficher la liste des couches disponibles pour le profil utilisateur
     et récupération du choix de l'utilisateur
     """
-    cancel = True
     context = None
     profilUser = None
 
@@ -33,8 +33,12 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     geoportail = "GeoPortail"
 
     # Balises <ROLE>
-    # clé xml:valeur affichage boite
-    roleCleVal = {"edit":"Edition", "ref-edit":"Edition", "visu":"Visualisation"}
+    # Role de la couche dans le cadre d'un guichet
+    # - visu = couche servant de fond uniquement
+    # - ref = couche servant de référence pour la saisie (snapping ou routing)
+    # - edit, ref-edit = couche éditable sur le guichet
+    # "clé xml":"valeur affichage boite"
+    roleCleVal = {"edit":"Edition", "ref-edit":"Edition", "visu":"Visualisation", "ref":"Visualisation"}
 
 
     def __init__(self, context, parent=None):
@@ -46,11 +50,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.listLayers.clear()
         # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
         connexionLayers = self.getInfosLayers()
+
         if connexionLayers[0] == "Rejected":
-            self.context.iface.messageBar(). \
-                pushMessage("Remarque",
-                            u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.", \
-                            level=2, duration=5)
+            raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
+
         if connexionLayers[0] == "Accepted":
             self.listLayers = connexionLayers[1]
 
@@ -63,7 +66,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
-
+        self.labelGroupeActif.setText("Groupe actif : {}".format(self.profilUser.geogroupe.nom))
+        self.labelGroupeActif.setStyleSheet("QLabel {color : red}")##ff0000
 
     def getInfosLayers(self):
         infosLayers = []
@@ -100,8 +104,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     def setColonneCharger(self, tableWidget, row, column):
         itemCheckBox = QtWidgets.QTableWidgetItem()
         itemCheckBox.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-        itemCheckBox.setCheckState(QtCore.Qt.Checked)
-        #itemCheckBox.setCheckState(QtCore.Qt.Unchecked)
+        #itemCheckBox.setCheckState(QtCore.Qt.Checked)
+        itemCheckBox.setCheckState(QtCore.Qt.Unchecked)
         tableWidget.setItem(row, column, itemCheckBox)
 
 
@@ -249,12 +253,15 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                     if tmp == layer.nom:
                         layersQGIS.append(layer)
 
-        self.context.addGuichetLayersToMap(layersQGIS)
-        self.cancel = False
+
+        #self.context.addGuichetLayersToMap(layersQGIS)
+        importGuichet = ImporterGuichet(self.context)
+        importGuichet.doImport(layersQGIS)
         self.close()
+        return
 
 
     def cancel(self):
         print ("L'utilisateur est sorti de la boite Charger le guichet")
-        self.cancel=True
         self.close()
+        return

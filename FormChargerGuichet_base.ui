@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>757</width>
-    <height>849</height>
+    <width>751</width>
+    <height>875</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>810</y>
+     <y>840</y>
      <width>201</width>
      <height>32</height>
     </rect>
@@ -33,7 +33,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>0</y>
+     <y>40</y>
      <width>101</width>
      <height>21</height>
     </rect>
@@ -53,7 +53,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>200</y>
+     <y>270</y>
      <width>131</width>
      <height>21</height>
     </rect>
@@ -73,7 +73,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>640</y>
+     <y>670</y>
      <width>151</width>
      <height>21</height>
     </rect>
@@ -96,9 +96,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>30</y>
+     <y>70</y>
      <width>731</width>
-     <height>161</height>
+     <height>191</height>
     </rect>
    </property>
    <property name="showGrid">
@@ -151,9 +151,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>230</y>
+     <y>300</y>
      <width>731</width>
-     <height>191</height>
+     <height>181</height>
     </rect>
    </property>
    <property name="showGrid">
@@ -196,7 +196,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>670</y>
+     <y>700</y>
      <width>731</width>
      <height>131</height>
     </rect>
@@ -239,9 +239,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>480</y>
+     <y>540</y>
      <width>731</width>
-     <height>151</height>
+     <height>121</height>
     </rect>
    </property>
    <property name="showGrid">
@@ -280,7 +280,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>420</y>
+     <y>480</y>
      <width>731</width>
      <height>61</height>
     </rect>
@@ -299,6 +299,27 @@
    </property>
    <property name="wordWrap">
     <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="labelGroupeActif">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>301</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <italic>true</italic>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string/>
    </property>
   </widget>
  </widget>

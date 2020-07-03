@@ -317,28 +317,35 @@ class RipartPlugin:
 
 
     def chargerGuichet(self):
+        try:
+            print("Chargement des couches du groupe utilisateur")
+            self.context= Contexte.getInstance(self,QgsProject)
+            if self.context == None :
+                #raise Exception(u"Pas de chargement des couches du groupe utilisateur")
+                return
 
-        print("Chargement des couches du groupe utilisateur")
-        self.context= Contexte.getInstance(self,QgsProject)
-        if self.context ==None :
+            dlgChargerGuichet = FormChargerGuichet(self.context)
+            if dlgChargerGuichet.context.profil != None:
+                #raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
+                if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1:
+                    if len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0:
+                        raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
+
+            dlgChargerGuichet.exec_()
+            # bouton Valider
+            if dlgChargerGuichet.Accepted:
+                dlgChargerGuichet.save()
+            # bouton Annuler
+            elif dlgChargerGuichet.Rejected:
+                dlgChargerGuichet.cancel()
+
+        except Exception as e:
+            self.logger.error(format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Remarque",
-                            u"Pas de chargement des couches du groupe utilisateur", \
-                            level=2, duration=5)
-            return
-
-        dlgChargerGuichet = FormChargerGuichet(self.context)
-        if dlgChargerGuichet.context.profil == None:
-            dlgChargerGuichet.context.iface.messageBar(). \
-                pushMessage("Remarque",
-                            u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.", \
-                            level=2, duration=5)
-            return
-
-        dlgChargerGuichet.exec_()
-        if dlgChargerGuichet.Accepted:
-            dlgChargerGuichet.save()
-
+                            str(e), \
+                            level=1, duration=5)
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 
     def compterModifications(self):

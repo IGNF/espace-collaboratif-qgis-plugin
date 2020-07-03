@@ -14,7 +14,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,\
                       QgsGeometry,QgsDataSourceUri,QgsVectorLayer,QgsProject, QgsPolygon,QgsWkbTypes
-                      
+
 from .RipartException import RipartException
 
 import os.path
@@ -25,7 +25,7 @@ import sqlite3 as sqlite
 import configparser
 import urllib
 
-from  .RipartHelper import  RipartHelper
+from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.Profil import Profil
 from .core.Client import Client
@@ -37,6 +37,7 @@ from .FormConnexion_dialog import FormConnexionDialog
 from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
 from .core import ConstanteRipart as cst
+from .core import ConstanteRipart
 
 
 class Contexte(object):
@@ -297,7 +298,9 @@ class Contexte(object):
         xmlclegeoportail=RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur")
         if xmlclegeoportail!=None:
             self.clegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur").text
-            if self.clegeoportail != None:
+            if self.clegeoportail == None:
+                self.clegeoportail = ""
+            else:
                 self.logger.debug("this.clegeoportail " + self.clegeoportail)
 
         if (self.login =="" or self.pwd=="" or newLogin):
@@ -325,18 +328,20 @@ class Contexte(object):
                             self.saveLogin(self.login)
 
                             # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
-                            if len(profil.infosGeogroupes) == 1:
+                            # si l'utilisateur n'appartient à aucun groupe, un profil par défaut
+                            # est attribué mais il ne contient pas d'infosgeogroupes
+                            if len(profil.infosGeogroupes) <= 1:
                                 # le profil de l'utilisateur est déjà récupéré et reste actif
                                 result = 1
                                 self.profil = profil
+                                RipartHelper.save_groupeactif(self.projectDir, profil.geogroupe.nom)
 
-                            # si l'utilisateur n'appartient à aucun groupe
-                            # un profil par défaut est attribué mais il ne contient
-                            # pas d'infosgeogroupesgroupe
-                            elif len(profil.infosGeogroupes) == 0:
-                                #dlgInfoToScreen = False
-                                #self.loginWindow.setErreur("Vous n'appartenez à aucun groupe, vous devez définir un profil")
-                                raise Exception("Vous n'appartenez à aucun groupe, vous devez définir un profil")
+                                # si l'utilisateur n'a pas de profil, il faut indiquer que le groupe actif est vide
+                                # et vider la clé Géoportail puisque si une clé est vide c'est celle par défaut qui est prise
+                                if "défaut" in profil.titre:
+                                    RipartHelper.save_groupeactif(self.projectDir, "Aucun")
+                                    RipartHelper.save_clegeoportail(self.projectDir, "")
+
                             # sinon le choix d'un autre groupe est présenté à l'utilisateur
                             else:
                                 dlgChoixGroupe = FormChoixGroupe(profil,self.clegeoportail,self.groupeactif)
@@ -360,6 +365,7 @@ class Contexte(object):
                                         # mais il faut enregistrer le choix utilisateur sur la clé Géoportail
                                         self.clegeoportail = idNomGroupeCleGeoPortail[2]
                                         RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
+                                        RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
                                     else:
                                         # setChangeUserProfil retourne un message vide
                                         # le nouveau profil devient actif
@@ -370,6 +376,11 @@ class Contexte(object):
                                         RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
                                         RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
 
+                                    # Récupération des layers GéoPortail valides en fonction
+                                    # de la clé Geoportail utilisateur
+                                    layersCleGeoportail = client.getLayersFromCleGeoportailUser(self.clegeoportail)
+                                    self.profil.layersCleGeoportail = layersCleGeoportail
+
                                 # Bouton Annuler
                                 elif dlgChoixGroupe.cancel == True:
                                     result = -1
@@ -378,19 +389,22 @@ class Contexte(object):
                                     self.loginWindow = None
                                     return
 
-                            # Récupération des layers GéoPortail valides en fonction
-                            # de la clé Geoportail utilisateur
-                            layersCleGeoportail = client.getLayersFromCleGeoportailUser(self.clegeoportail)
-                            self.profil.layersCleGeoportail = layersCleGeoportail
-
                             #les infos de connexion présentée à l'utilisateur
                             dlgInfo=FormInfo()
                             dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace Collaboratif.</b>")
-                            dlgInfo.textInfo.append("<br/>Serveur : " + self.urlHostRipart)
-                            dlgInfo.textInfo.append("Login : " + self.login)
-                            dlgInfo.textInfo.append("Profil : " + self.profil.titre)
-                            dlgInfo.textInfo.append("Zone : " + self.profil.zone.__str__())
-                            dlgInfo.textInfo.append("Clé Géoportail : " + self.clegeoportail)
+                            dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
+                            dlgInfo.textInfo.append("Login : {}".format(self.login))
+                            dlgInfo.textInfo.append("Profil : {}".format(self.profil.titre))
+                            if self.profil.zone == ConstanteRipart.ZoneGeographique.UNDEFINED:
+                                zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
+                                if zoneExtraction == "" or zoneExtraction == None:
+                                    dlgInfo.textInfo.append("Zone : pas de zone définie")
+                                else:
+                                    dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
+                                self.profil.zone = zoneExtraction
+                            else:
+                                dlgInfo.textInfo.append("Zone : {}".format(self.profil.zone.__str__()))
+                            dlgInfo.textInfo.append("Clé Géoportail : {}".format(self.clegeoportail))
 
                             dlgInfo.exec_()
 
@@ -485,54 +499,28 @@ class Contexte(object):
             self.conn.close()
 
 
-    def appendUrl(self, url, nomCouche):
-        """
-        Exemple de requete
-        https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?service=WFS
-        &request=GetFeature
-        &outputFormat=JSON
-        &typeName=bdtopo_metropole:adresse
-        &bbox=657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551
-        &filter={%22detruit%22%3Afalse}
-        &maxFeatures=5000
-        &version=1.1.0
-        """
+    def appendUri(self, url, nomCouche, type, bbox):
+        uri = QgsDataSourceUri()
+        if '&' in url:
+            tmp = url.split('&')
+            database = tmp[1].split('=')
+            typeName = "{}:{}".format(database[1],nomCouche)
+            params = {
+                'service': type,
+                'version': '1.0.0',
+                'request': 'GetFeature',
+                'typename': typeName,
+                'bbox': bbox.boxToString(),
+                'filter': '{detruit:false}',
+                'username': self.login,
+                'password': self.pwd,
+                'srsname': 'EPSG:4326'
+            }
+            uri = "{0}&{1}".format(tmp[0], urllib.parse.unquote(urllib.parse.urlencode(params)))
+        return uri
 
-        # Construction de l'URL
-        tmp = url.split('&')
-        database = tmp[1].split('=')
-        typeName = "{}:{}".format(database[1],nomCouche)
-        params = {
-            'service': 'WFS',
-            'version': '1.0.0',
-            'request': 'GetFeature',
-            'typename': typeName,
-            # 'outputFormat': 'JSON',
-            # 'bbox': '657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551',
-            # 'bbox': '1.411%2C49.250%2C3.414%2C48.098',
-            # 'bbox': '49.250%2C1.411%2C48.098%2C3.414',
-            'filter': '{%22detruit%22%3Afalse}',
-            'username': self.login,
-            'password': self.pwd,
-            'srsname': 'EPSG:4326'
-        }
-
-        #uri = "{}&{}".format(tmp[0], urllib.parse.unquote(urllib.parse.urlencode(params)))
-        uri = "https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?{}".format(urllib.parse.unquote(urllib.parse.urlencode(params)))
-        print(uri)
-
-
-
-    def addGuichetLayersToMap(self, guichet_layers):
+    def addGuichetLayersToMap(self, guichet_layers, bbox):
         """Add guichet layers to the current map
-        https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?service=WFS
-        &request=GetFeature
-        &outputFormat=JSON
-        &typeName=bdtopo_metropole:adresse
-        &bbox=657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551
-        &filter={%22detruit%22%3Afalse}
-        &maxFeatures=5000
-        &version=1.1.0
         """
 
         # Quelles sont les cartes chargées dans le projet QGIS courant
@@ -544,12 +532,9 @@ class Contexte(object):
             if layer.nom in maplayers:
                 continue
 
-            # Construction de l'URL
-            url = self.appendUrl(layer.url, layer.nom)
-
-            # QgsVectorLayer(data_source, layer_name, provider_name)
-            #print("data_source : {}\nlayer_name : {}\nprovider_name : {}".format(url, layer.nom, layer.type))
-            vlayer = QgsVectorLayer(url, layer.nom, layer.type)
+            # Contruction de la couche
+            uri = self.appendUri(layer.url, layer.nom, layer.type, bbox)
+            vlayer = QgsVectorLayer(uri, layer.nom, layer.type)
 
             if not vlayer.isValid():
                 print ("Layer {} failed to load!".format(layer.nom))
