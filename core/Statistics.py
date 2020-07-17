@@ -28,6 +28,7 @@ class Statistics(object):
         self.layer = layer
         self.lFeaturesAdded = []
         self.lFeaturesDeleted = []
+		self.lFeaturesChanged = []
 
 
     def countFeaturesAdded(self):
@@ -66,7 +67,9 @@ class Statistics(object):
 
         self.nfc = len(self.lFeaturesChanged)
 
-
+	# il manque les ajouts/suppressions de champs dans une couche me semble-t'il ?
+	# est-ce toléré ?
+	
     def run(self):
         print("Fin du comptage")
         #self.countFeaturesAdded()
