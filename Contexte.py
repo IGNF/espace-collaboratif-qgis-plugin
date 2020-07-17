@@ -13,7 +13,8 @@ from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,\
-                      QgsGeometry,QgsDataSourceUri,QgsVectorLayer,QgsProject, QgsPolygon,QgsWkbTypes
+                      QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsPolygon,\
+                      QgsWkbTypes, QgsLayerTreeGroup
 
 from .RipartException import RipartException
 
@@ -37,8 +38,7 @@ from .FormConnexion_dialog import FormConnexionDialog
 from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
 from .core import ConstanteRipart as cst
-from .core import ConstanteRipart
-
+from .Import_WMTS import importWMTS
 
 class Contexte(object):
     """
@@ -395,7 +395,7 @@ class Contexte(object):
                             dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
                             dlgInfo.textInfo.append("Login : {}".format(self.login))
                             dlgInfo.textInfo.append("Profil : {}".format(self.profil.titre))
-                            if self.profil.zone == ConstanteRipart.ZoneGeographique.UNDEFINED:
+                            if self.profil.zone == cst.ZoneGeographique.UNDEFINED:
                                 zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
                                 if zoneExtraction == "" or zoneExtraction == None:
                                     dlgInfo.textInfo.append("Zone : pas de zone définie")
@@ -451,8 +451,9 @@ class Contexte(object):
         """
         self.login=login
         RipartHelper.save_login( self.projectDir, login)
-    
-   
+
+
+
     def getOrCreateDatabase(self):
         """Retourne la base de données spatialite contenant les tables des remarques et croquis
         Si la BD n'existe pas, elle est créée
@@ -499,27 +500,73 @@ class Contexte(object):
             self.conn.close()
 
 
-    def appendUri(self, url, nomCouche, type, bbox):
+
+    def appendUri(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
+        #uri.setConnection("", "", self.login, self.pwd)
         if '&' in url:
             tmp = url.split('&')
             database = tmp[1].split('=')
-            typeName = "{}:{}".format(database[1],nomCouche)
+            typeName = "{}:{}".format(database[1], nomCouche)
             params = {
-                'service': type,
                 'version': '1.0.0',
                 'request': 'GetFeature',
                 'typename': typeName,
                 'bbox': bbox.boxToString(),
-                'filter': '{detruit:false}',
+                'filter': 'detruit:false',
                 'username': self.login,
-                'password': self.pwd,
-                'srsname': 'EPSG:4326'
+                'password': self.pwd
+                #'srsname': 'EPSG:4326'
             }
             uri = "{0}&{1}".format(tmp[0], urllib.parse.unquote(urllib.parse.urlencode(params)))
         return uri
 
-    def addGuichetLayersToMap(self, guichet_layers, bbox):
+
+    def appendUri_WFS(self, url, nomCouche, bbox):
+        uri = QgsDataSourceUri()
+        uri.setConnection("", "", self.login, self.pwd)
+        uri.setParam('version', '1.1.0')
+        uri.setParam('request', 'GetFeature')
+        uri.setParam('bbox', bbox.boxToString())
+        # Mon guichet
+        if '&' in url:
+            tmp = url.split('&')
+            database = tmp[1].split('=')
+            typeName = "{}:{}".format(database[1], nomCouche)
+            uri.setParam('url', tmp[0])
+            uri.setParam('typename', typeName)
+            uri.setParam('filter', 'detruit:false')
+            #uri.setParam('srsname', 'EPSG:4326')
+        # Autres Geoservices
+        else:
+            uri.setParam('url', url)
+            uri.setParam('service', cst.WFS)
+        return uri
+
+
+
+    def appendUrl_WMTS(self, url, nomCouche):
+        wmts_url_params = {
+            'service' : cst.WMTS,
+            'version' : '1.0.0',
+            'request' : 'GetCapabilities',
+            'styles' : 'normal',
+            'tilematrixset' : 'PM',
+            'format' : 'image/jpeg',
+            'layers' : nomCouche
+        }
+
+        clegeoportail = self.clegeoportail
+        if clegeoportail == None or clegeoportail == cst.DEMO:
+            clegeoportail = cst.CLEGEOPORTAILSTANDARD
+
+        wmts_url_final = "https://wxs.ign.fr/{}/geoportail/wmts?{}"\
+            .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params)))
+        return wmts_url_final
+
+
+
+    def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
         """
 
@@ -527,28 +574,58 @@ class Contexte(object):
         maplayers = self.getAllMapLayers()
         root = self.QgsProject.instance().layerTreeRoot()
 
+        # Création du nom du groupe s'il n'existe pas
+        nodeGroup = root.findGroup(nomGroupe)
+        if nodeGroup == None and len(guichet_layers) != 0:
+            newNode = QgsLayerTreeGroup(nomGroupe)
+            root.addChildNode(newNode)
+            nodeGroup = root.findGroup(nomGroupe)
+
         for layer in guichet_layers:
 
             if layer.nom in maplayers:
+                print ("Layer {} already exist !".format(layer.nom))
                 continue
 
-            # Contruction de la couche
-            uri = self.appendUri(layer.url, layer.nom, layer.type, bbox)
-            vlayer = QgsVectorLayer(uri, layer.nom, layer.type)
+            # Ajout des couches selectionnées dans "Mon guichet"
+            if layer.type == cst.WFS:
+                uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
+                #print (uri.uri())
+                vlayer = QgsVectorLayer(uri.uri(), layer.nom, layer.type)
 
-            if not vlayer.isValid():
-                print ("Layer {} failed to load!".format(layer.nom))
-                continue
+                '''uri = self.appendUri(layer.url, layer.nom, bbox)
+                print(uri)
+                vlayer = QgsVectorLayer(uri, layer.nom, layer.type)'''
+                if not vlayer.isValid():
+                    print ("Layer {} failed to load !".format(layer.nom))
+                    continue
 
-            vlayer.setCrs(QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId))
-            QgsProject.instance().addMapLayer(vlayer, False)
-            root.insertLayer(0, vlayer)
-            self.logger.debug("Layer " + vlayer.name() + " added to map")
-            print("Layer {} added to map".format(vlayer.name()))
+                QgsProject.instance().addMapLayer(vlayer, False)
+                #root.insertLayer(indexGroup, vlayer)
+                nodeGroup.addLayer(vlayer)
+                self.logger.debug("Layer {} added to map".format(vlayer.name()))
+                print("Layer {} added to map".format(vlayer.name()))
+                print("Layer {} contains {} objects".format(vlayer.name(), len(list(vlayer.getFeatures()))))
 
-            # ajoute les styles aux couches ??
-            '''style = os.path.join(self.projectDir, "espacecoStyles", table + ".qml")
-            vlayer.loadNamedStyle(style)'''
+            if layer.type == cst.GEOPORTAIL:
+                importWmts = importWMTS(self)
+                importWmts.checkOpenService()
+                importWmts.checkGetTile()
+                url = importWmts.getTileUrl()
+                uri = self.appendUrl_WMTS(url, layer.nom)
+                print(uri)
+                tmp = layer.nom.split('.')
+                rlayer = QgsRasterLayer(uri, tmp[1], cst.WMS)
+
+                if not rlayer.isValid():
+                    print ("Layer {} failed to load !".format(rlayer.name()))
+                    continue
+
+                QgsProject.instance().addRasterLayer(rlayer, False)
+                root.insertLayer(0, rlayer)
+                #nodeGroup.addLayer(vlayer)
+                self.logger.debug("Layer {} added to map".format(rlayer.name()))
+                print("Layer {} added to map".format(rlayer.name()))
 
         self.mapCan.refresh()
 

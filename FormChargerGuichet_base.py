@@ -125,8 +125,6 @@ class Ui_DialogChargerGuichet(object):
         self.labelGroupeActif.setObjectName("labelGroupeActif")
 
         self.retranslateUi(DialogChargerGuichet)
-        self.buttonBox.accepted.connect(DialogChargerGuichet.accept)
-        self.buttonBox.rejected.connect(DialogChargerGuichet.reject)
         QtCore.QMetaObject.connectSlotsByName(DialogChargerGuichet)
 
     def retranslateUi(self, DialogChargerGuichet):

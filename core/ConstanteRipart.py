@@ -97,4 +97,16 @@ def statuts():
              STATUT.pending2.__str__()
              ]
     return statuts
-    
+
+# Constantes pour le chargement des couches du guichet
+# Types de couches, balise <TYPE>
+WMS = "WMS"
+WFS = "WFS"
+WMTS = "WMTS"
+WCS = "WCS"
+GEOPORTAIL = "GeoPortail"
+COLLABORATIF = "collaboratif.ign.fr"
+WXSIGN = "wxs.ign.fr"
+DEMO = "Démonstration"
+CLEGEOPORTAILSTANDARD = "choisirgeoportail"
+

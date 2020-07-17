@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QDialogButtonBox
 
 from qgis.PyQt import QtGui, uic, QtWidgets
 from qgis.core import *
-
+from .core import ConstanteRipart as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 
@@ -36,9 +36,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if groupeActif != None and groupeActif != "":
             self.comboBoxGroupe.setCurrentText(groupeActif)
 
-        if cleGeoportail == "Démonstration":
+        if cleGeoportail == cst.DEMO:
             self.radioButtonNon.setChecked(True)
-        if cleGeoportail != "Démonstration" and cleGeoportail != "":
+        if cleGeoportail != cst.DEMO and cleGeoportail != "":
             self.radioButtonOui.setChecked(True)
             self.lineEditCleGeoportailUser.setText(cleGeoportail)
 
@@ -60,7 +60,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if self.radioButtonOui.isChecked() == True:
             cleGeoportail = self.lineEditCleGeoportailUser.text()
         if self.radioButtonNon.isChecked() == True:
-            cleGeoportail = "Démonstration"
+            cleGeoportail = cst.DEMO
         self.cancel = False
         self.close()
         return (idGroup, nomGroup, cleGeoportail)

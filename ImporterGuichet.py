@@ -87,7 +87,7 @@ class ImporterGuichet(object):
 
             else:
                 message = "Impossible de déterminer dans le fichier de paramétrage de l'Espace Collaboratif, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
-                          "Souhaitez-vous poursuivre l'importation des signalements sur la France entière ? " + \
+                          "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
                           "(Cela risque de prendre un certain temps)."
                 if self.noFilterWarningDialog(message):
                     bbox = None
@@ -95,7 +95,9 @@ class ImporterGuichet(object):
                     return
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             QApplication.setOverrideCursor(Qt.BusyCursor)
-            self.context.addGuichetLayersToMap(guichet_layers, bbox)
+
+            # Import des couches du guichet sélectionnées par l'utilisateur
+            self.context.addGuichetLayersToMap(guichet_layers, bbox, self.context.profil.geogroupe.nom)
 
         finally:
             self.context.iface.messageBar().clearWidgets()
@@ -117,7 +119,7 @@ class ImporterGuichet(object):
             message = "La carte en cours ne contient pas le calque '" + \
                       filtre + \
                       "' définit pour être le filtrage spatial (ou le calque n'est pas activé).\n\n" + \
-                      "Souhaitez-vous poursuivre l'importation des remarques Ripart sur la France entière ? " + \
+                      "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
                       "(Cela risque de prendre un certain temps)."
 
             reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)

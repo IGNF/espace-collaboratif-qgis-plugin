@@ -16,7 +16,7 @@ import os.path
 from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
 from PyQt5.QtCore import *
 
-from . import ConstanteRipart
+#from . import ConstanteRipart
 from .Enum import Enum
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
@@ -29,6 +29,7 @@ from .RipartLoggerCl import RipartLogger
 from . import requests
 from .requests.auth import HTTPBasicAuth
 import os
+
 
 
 
@@ -265,7 +266,7 @@ class Client(object):
             self.progress.setMaximum(progressMax)
             self.progress.setValue(count)
          
-            while (total - count)  > 0:
+            while (total - count) > 0:
                     
                 parameters["offset"]= count.__str__()
                  

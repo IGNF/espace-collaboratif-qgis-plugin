@@ -12,6 +12,7 @@ from qgis.core import *
 from .core.Layer import Layer
 from .Contexte import Contexte
 from .ImporterGuichet import ImporterGuichet
+from .core import ConstanteRipart as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChargerGuichet_base.ui'))
 
@@ -26,11 +27,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     # La liste des couches du profil utilisateur
     listLayers = []
-
-    # Types de couches, balise <TYPE>
-    wms = "WMS"
-    wfs = "WFS"
-    geoportail = "GeoPortail"
 
     # Balises <ROLE>
     # Role de la couche dans le cadre d'un guichet
@@ -117,10 +113,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.listLayers:
-            if layer.type != self.wfs:
+            if layer.type != cst.WFS:
                 continue
 
-            if layer.url.find("collaboratif.ign.fr") == -1:
+            if layer.url.find(cst.COLLABORATIF) == -1:
                 continue
 
             rowPosition = self.tableWidgetMonGuichet.rowCount()
@@ -151,7 +147,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.listLayers:
-            if layer.type != self.geoportail:
+            if layer.type != cst.GEOPORTAIL:
                 continue
 
             if layer.nom in self.profilUser.layersCleGeoportail:
@@ -176,7 +172,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.listLayers:
-            if layer.type != self.geoportail:
+            if layer.type != cst.GEOPORTAIL:
                 continue
 
             if layer.nom not in self.profilUser.layersCleGeoportail:
@@ -187,6 +183,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 # Colonne "Nom de la couche"
                 item = QtWidgets.QTableWidgetItem(layer.nom)
                 self.tableWidgetFondsGeoportailBis.setItem(rowPosition, 0, item)
+                item.setForeground(QtGui.QColor(190, 190, 190))
 
         self.tableWidgetFondsGeoportailBis.resizeColumnsToContents()
 
@@ -199,12 +196,12 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.listLayers:
-            if layer.type != self.wfs and layer.type != self.wms:
+            if layer.type != cst.WFS and layer.type != cst.WMS:
                 continue
 
-            if layer.url.find("collaboratif.ign.fr") != -1:
+            if layer.url.find(cst.COLLABORATIF) != -1:
                 continue
-            if layer.url.find("wxs.ign.fr") != -1 :
+            if layer.url.find(cst.WXSIGN) != -1 :
                 continue
 
             rowPosition = self.tableWidgetAutresGeoservices.rowCount()
@@ -246,22 +243,19 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         layersChecked.append(self.getLayersSelected(self.tableWidgetFondsGeoportail, 1))
         layersChecked.append(self.getLayersSelected(self.tableWidgetAutresGeoservices, 2))
         print (layersChecked)
-        #[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
+        # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
         for layerChecked in layersChecked:
             for tmp in layerChecked:
                 for layer in self.listLayers:
                     if tmp == layer.nom:
                         layersQGIS.append(layer)
 
-
-        #self.context.addGuichetLayersToMap(layersQGIS)
         importGuichet = ImporterGuichet(self.context)
         importGuichet.doImport(layersQGIS)
-        self.close()
-        return
+        self.accept()
+
 
 
     def cancel(self):
         print ("L'utilisateur est sorti de la boite Charger le guichet")
-        self.close()
-        return
+        self.reject()

@@ -54,13 +54,12 @@ from .FormConfigure import FormConfigure
 from .Contexte import Contexte
 from .core.Client import Client
 from .ImporterRipart import ImporterRipart
-from .FormRepondre import FormRepondreDialog
 from .RepondreRipart import RepondreRipart
 from .CreerRipart import CreerRipart
-from .core import ConstanteRipart as cst
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
 from .core.NoProfileException import NoProfileException
+from .CompterGuichet import CompterGuichet
 
 import logging
 
@@ -332,12 +331,6 @@ class RipartPlugin:
                         raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
 
             dlgChargerGuichet.exec_()
-            # bouton Valider
-            if dlgChargerGuichet.Accepted:
-                dlgChargerGuichet.save()
-            # bouton Annuler
-            elif dlgChargerGuichet.Rejected:
-                dlgChargerGuichet.cancel()
 
         except Exception as e:
             self.logger.error(format(e))
@@ -358,6 +351,10 @@ class RipartPlugin:
                                 "Pas de couche(s) éditable(s)", \
                                 level=2, duration=5)
                 return
+
+        cptg = CompterGuichet(self.context)
+        cptg.doCount()
+
 
 
 
