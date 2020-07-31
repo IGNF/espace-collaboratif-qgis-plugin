@@ -1,5 +1,3 @@
-from qgis.core import QgsVectorLayer
-
 class Statistics(object):
     # Number total of features
     nft = None
@@ -10,69 +8,25 @@ class Statistics(object):
     # Number of features changed
     nfc = None
     # list of id features added
-    lFeaturesAdded = None
+    #lFeaturesAdded = None
     # list of id features deleted
-    lFeaturesDeleted = None
+    #lFeaturesDeleted = None
     # list of id features changed
-    lFeaturesChanged = None
-
-    # Layer to be count
-    layer = None
+    #lFeaturesChanged = None
 
 
-    def __init__(self, layer):
-        self.nft = layer.featureCount()
+    def __init__(self, nbObjectsInLayer):
+        self.nft = nbObjectsInLayer
         self.nfa = 0
         self.nfd = 0
         self.nfc = 0
-        self.layer = layer
-        self.lFeaturesAdded = []
-        self.lFeaturesDeleted = []
-		self.lFeaturesChanged = []
+        #self.lFeaturesAdded = []
+        #self.lFeaturesDeleted = []
+        #self.lFeaturesChanged = []
 
 
-    def countFeaturesAdded(self):
-        fid = None
-        self.layer.featureAdded(fid)
-        if fid != None:
-            self.lFeaturesAdded.append(fid)
-
-
-    def countFeaturesDeleted(self):
-        fid = None
-        self.layer.featureDeleted (fid)
-        if fid != None:
-            self.lFeaturesDeleted.append(fid)
-
-        self.nfd = len(self.lFeaturesDeleted)
-
-
-    def countFeaturesGeometryChanged(self):
-        fid = None
-        geom = None
-        self.layer.geometryChanged(fid, geom)
-        if fid != None:
-            self.lFeaturesChanged.append(fid)
-
-        self.nfc = len(self.lFeaturesChanged)
-
-
-    def countFeaturesAttributeValueChanged(self):
-        fid = None
-        idx = None
-        value = None
-        self.layer.attributeValueChanged(fid, idx, value)
-        if fid != None:
-            self.lFeaturesChanged.append(fid)
-
-        self.nfc = len(self.lFeaturesChanged)
-
-	# il manque les ajouts/suppressions de champs dans une couche me semble-t'il ?
-	# est-ce toléré ?
-	
-    def run(self):
-        print("Fin du comptage")
-        #self.countFeaturesAdded()
-        #self.countFeaturesDeleted()
-        #self.countFeaturesGeometryChanged()
-        #self.countFeaturesAttributeValueChanged()
+    def count(self):
+        print("Objets au total : {}".format(self.nft + self.nfa - self.nfd))
+        print("Objets ajoutés : {}".format(self.nfa))
+        print("Objets détruits : {}".format(self.nfd))
+        print("Objets modifiés : {}".format(self.nfc))

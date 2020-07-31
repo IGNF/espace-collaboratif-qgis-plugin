@@ -39,6 +39,8 @@ from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
 from .core import ConstanteRipart as cst
 from .Import_WMTS import importWMTS
+from .core.GuichetVectorLayer import GuichetVectorLayer
+from .core.Statistics import Statistics
 
 class Contexte(object):
     """
@@ -99,8 +101,10 @@ class Contexte(object):
     
     #le logger
     logger=None
-    
-    
+
+    # les statistiques
+    guichetLayers=[]
+
     def __init__(self, QObject,QgsProject):
         '''
         Constructor
@@ -587,26 +591,30 @@ class Contexte(object):
                 print ("Layer {} already exist !".format(layer.nom))
                 continue
 
-            # Ajout des couches selectionnées dans "Mon guichet"
+            # Ajout des couches WFS selectionnées dans "Mon guichet"
             if layer.type == cst.WFS:
                 uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
-                #print (uri.uri())
-                vlayer = QgsVectorLayer(uri.uri(), layer.nom, layer.type)
+                #vlayer = QgsVectorLayer(uri.uri(), layer.nom, layer.type)
+                vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type)
 
-                '''uri = self.appendUri(layer.url, layer.nom, bbox)
-                print(uri)
-                vlayer = QgsVectorLayer(uri, layer.nom, layer.type)'''
                 if not vlayer.isValid():
                     print ("Layer {} failed to load !".format(layer.nom))
                     continue
 
                 QgsProject.instance().addMapLayer(vlayer, False)
-                #root.insertLayer(indexGroup, vlayer)
                 nodeGroup.addLayer(vlayer)
+                self.guichetLayers.append(vlayer)
                 self.logger.debug("Layer {} added to map".format(vlayer.name()))
                 print("Layer {} added to map".format(vlayer.name()))
                 print("Layer {} contains {} objects".format(vlayer.name(), len(list(vlayer.getFeatures()))))
 
+                # Initialisation des données pour le comptage
+                # Connection des évènements qui auront lieu sur la couche
+                vlayer.init(self.projectDir)
+                vlayer.setMD5md5BeforeWorks()
+
+
+            # Ajout des couches WMTS selectionnées dans "Mon guichet"
             if layer.type == cst.GEOPORTAIL:
                 importWmts = importWMTS(self)
                 importWmts.checkOpenService()

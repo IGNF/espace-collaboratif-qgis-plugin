@@ -310,7 +310,6 @@ class RipartPlugin:
         self.toolButton2.setPopupMode( QToolButton.InstantPopup)
         self.toolButton2.setToolButtonStyle (Qt.ToolButtonTextOnly)
         self.toolButton2.setText("Aide")
-        
 
         self.toolbar.addWidget(self.toolButton2)
 
