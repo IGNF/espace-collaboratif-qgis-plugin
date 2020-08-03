@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-
-
 import os
-
 from PyQt5.QtWidgets import QDialogButtonBox
 
 from qgis.PyQt import QtGui, uic, QtWidgets
@@ -18,10 +15,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     et récupération du profil utilisateur
     """
 
-    # les groupes auxquels l'utilisateur appartient
     infosgeogroupes = None
     cancel = True
-
 
     def __init__(self, profil, cleGeoportail, groupeActif, parent=None):
         super(FormChoixGroupe, self).__init__(parent)
@@ -51,8 +46,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         Retourne l'identifiant du groupe de l'utilisateur
         en fonction de son choix
         """
-        index = None
-        idGroup = None
+        self.accept()
         index = self.comboBoxGroupe.currentIndex()
         idGroup = self.infosgeogroupes[index].groupe.id
         nomGroup = self.infosgeogroupes[index].groupe.nom
@@ -62,10 +56,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if self.radioButtonNon.isChecked() == True:
             cleGeoportail = cst.DEMO
         self.cancel = False
-        self.close()
+
         return (idGroup, nomGroup, cleGeoportail)
 
 
     def cancel(self):
-        self.cancel=True
-        self.close()
+        self.cancel = True
+        self.reject()

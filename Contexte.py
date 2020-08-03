@@ -505,27 +505,6 @@ class Contexte(object):
 
 
 
-    def appendUri(self, url, nomCouche, bbox):
-        uri = QgsDataSourceUri()
-        #uri.setConnection("", "", self.login, self.pwd)
-        if '&' in url:
-            tmp = url.split('&')
-            database = tmp[1].split('=')
-            typeName = "{}:{}".format(database[1], nomCouche)
-            params = {
-                'version': '1.0.0',
-                'request': 'GetFeature',
-                'typename': typeName,
-                'bbox': bbox.boxToString(),
-                'filter': 'detruit:false',
-                'username': self.login,
-                'password': self.pwd
-                #'srsname': 'EPSG:4326'
-            }
-            uri = "{0}&{1}".format(tmp[0], urllib.parse.unquote(urllib.parse.urlencode(params)))
-        return uri
-
-
     def appendUri_WFS(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
         uri.setConnection("", "", self.login, self.pwd)
@@ -540,7 +519,6 @@ class Contexte(object):
             uri.setParam('url', tmp[0])
             uri.setParam('typename', typeName)
             uri.setParam('filter', 'detruit:false')
-            #uri.setParam('srsname', 'EPSG:4326')
         # Autres Geoservices
         else:
             uri.setParam('url', url)
@@ -553,11 +531,14 @@ class Contexte(object):
         wmts_url_params = {
             'service' : cst.WMTS,
             'version' : '1.0.0',
-            'request' : 'GetCapabilities',
-            'styles' : 'normal',
+            'request' : 'GetTile',
+            'style' : 'normal',
             'tilematrixset' : 'PM',
+            'TILECOL' : '',
+            'TILEMATRIX' : '',
+            'TILEROW' : '',
             'format' : 'image/jpeg',
-            'layers' : nomCouche
+            'layer' : nomCouche
         }
 
         clegeoportail = self.clegeoportail
@@ -566,6 +547,7 @@ class Contexte(object):
 
         wmts_url_final = "https://wxs.ign.fr/{}/geoportail/wmts?{}"\
             .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params)))
+
         return wmts_url_final
 
 
@@ -573,72 +555,94 @@ class Contexte(object):
     def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
         """
+        try:
+            # Quelles sont les cartes chargées dans le projet QGIS courant
+            maplayers = self.getAllMapLayers()
+            root = self.QgsProject.instance().layerTreeRoot()
 
-        # Quelles sont les cartes chargées dans le projet QGIS courant
-        maplayers = self.getAllMapLayers()
-        root = self.QgsProject.instance().layerTreeRoot()
+            # Le groupe existe t-il dans le projet
+            nodeGroup = None
+            nodesGroup = root.findGroups()
+            for nodeGroup in nodesGroup:
+                # Si le groupe existe déjà, on sort
+                if nodeGroup.name() == nomGroupe:
+                    break;
 
-        # Création du nom du groupe s'il n'existe pas
-        nodeGroup = root.findGroup(nomGroupe)
-        if nodeGroup == None and len(guichet_layers) != 0:
-            newNode = QgsLayerTreeGroup(nomGroupe)
-            root.addChildNode(newNode)
-            nodeGroup = root.findGroup(nomGroupe)
+            # Si le groupe n'existe pas, création du groupe dans le projet
+            if nodeGroup == None and (len(nodesGroup) == 0):
+                newNode = QgsLayerTreeGroup(nomGroupe)
+                root.addChildNode(newNode)
+                nodeGroup = root.findGroup(nomGroupe)
 
-        for layer in guichet_layers:
+            # Il y a déjà un groupe dans le projet
+            # Il faut indiquer à l'utilisateur que c'est impossible
+            # d'ajouter un nouveau groupe dans le projet
+            if nodeGroup.name() != nomGroupe and (len(nodesGroup) == 1):
+                raise Exception(u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
 
-            if layer.nom in maplayers:
-                print ("Layer {} already exist !".format(layer.nom))
-                continue
-
-            # Ajout des couches WFS selectionnées dans "Mon guichet"
-            if layer.type == cst.WFS:
-                uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
-                #vlayer = QgsVectorLayer(uri.uri(), layer.nom, layer.type)
-                vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type)
-
-                if not vlayer.isValid():
-                    print ("Layer {} failed to load !".format(layer.nom))
+            for layer in guichet_layers:
+                if layer.nom in maplayers:
+                    print ("Layer {} already exist !".format(layer.nom))
                     continue
 
-                QgsProject.instance().addMapLayer(vlayer, False)
-                nodeGroup.addLayer(vlayer)
-                self.guichetLayers.append(vlayer)
-                self.logger.debug("Layer {} added to map".format(vlayer.name()))
-                print("Layer {} added to map".format(vlayer.name()))
-                print("Layer {} contains {} objects".format(vlayer.name(), len(list(vlayer.getFeatures()))))
+                '''
+                Ajout des couches WFS selectionnées dans "Mon guichet"
+                '''
+                if layer.type == cst.WFS:
+                    uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
+                    vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type)
 
-                # Initialisation des données pour le comptage
-                # Connection des évènements qui auront lieu sur la couche
-                vlayer.init(self.projectDir)
-                vlayer.setMD5md5BeforeWorks()
+                    if not vlayer.isValid():
+                        print ("Layer {} failed to load !".format(layer.nom))
+                        continue
+
+                    QgsProject.instance().addMapLayer(vlayer, False)
+                    nodeGroup.addLayer(vlayer)
+                    self.guichetLayers.append(vlayer)
+                    self.logger.debug("Layer {} added to map".format(vlayer.name()))
+                    print("Layer {} added to map".format(vlayer.name()))
+                    print("Layer {} contains {} objects".format(vlayer.name(), len(list(vlayer.getFeatures()))))
+
+                    # Initialisation des données pour le comptage
+                    # Connection des évènements qui auront lieu sur la couche
+                    vlayer.init(self.projectDir, layer.nom)
+                    vlayer.setMd5BeforeWorks()
+
+                '''
+                Ajout des couches WMTS selectionnées dans "Mon guichet"
+                '''
+                if layer.type == cst.GEOPORTAIL:
+                    importWmts = importWMTS(self)
+                    importWmts.checkOpenService()
+                    importWmts.checkGetTile()
+                    url = importWmts.getTileUrl()
+                    uri = self.appendUrl_WMTS(url, layer.nom)
+                    print(uri)
+                    tmp = layer.nom.split('.')
+                    rlayer = QgsRasterLayer(uri, tmp[1], cst.WMS)
+
+                    if not rlayer.isValid():
+                        print ("Layer {} failed to load !".format(rlayer.name()))
+                        continue
+
+                    QgsProject.instance().addRasterLayer(rlayer, False)
+                    root.insertLayer(0, rlayer)
+                    #nodeGroup.addLayer(vlayer)
+                    self.logger.debug("Layer {} added to map".format(rlayer.name()))
+                    print("Layer {} added to map".format(rlayer.name()))
+
+            self.mapCan.refresh()
+
+        except Exception as e:
+            self.logger.error(format(e))
+            self.iface.messageBar(). \
+                pushMessage("Remarque",
+                            str(e), \
+                            level=1, duration=20)
+            print(str(e))
 
 
-            # Ajout des couches WMTS selectionnées dans "Mon guichet"
-            if layer.type == cst.GEOPORTAIL:
-                importWmts = importWMTS(self)
-                importWmts.checkOpenService()
-                importWmts.checkGetTile()
-                url = importWmts.getTileUrl()
-                uri = self.appendUrl_WMTS(url, layer.nom)
-                print(uri)
-                tmp = layer.nom.split('.')
-                rlayer = QgsRasterLayer(uri, tmp[1], cst.WMS)
 
-                if not rlayer.isValid():
-                    print ("Layer {} failed to load !".format(rlayer.name()))
-                    continue
-
-                QgsProject.instance().addRasterLayer(rlayer, False)
-                root.insertLayer(0, rlayer)
-                #nodeGroup.addLayer(vlayer)
-                self.logger.debug("Layer {} added to map".format(rlayer.name()))
-                print("Layer {} added to map".format(rlayer.name()))
-
-        self.mapCan.refresh()
-
-
-      
     def addRipartLayersToMap(self):
         """Add ripart layers to the current map 
         """
@@ -680,7 +684,6 @@ class Contexte(object):
         :return dictionnaire des couches chargées sur la carte (key: layer name, value: layer id)
         :rtype dictionary
         """
-        
         layers = QgsProject.instance().mapLayers()
 
         layerNames=[]

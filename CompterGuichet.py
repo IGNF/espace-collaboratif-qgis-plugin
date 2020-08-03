@@ -1,30 +1,27 @@
 from .core.RipartLoggerCl import RipartLogger
 from qgis.core import QgsProject
+from.FormCompterGuichet import FormCompterGuichet
+
 
 class CompterGuichet(object):
 
-    logger = RipartLogger("ImporterGuichet").getRipartLogger()
-
-    # le contexte de la carte
-    context = None
-    nomGroupe = None
-
-    def __init__(self, context):
-        self.context = context
-        self.nomGroupe = ""
-        #Quel groupe actif est sélectionné
+    def __init__(self):
+        self.nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
+        self.message = "Groupe {}\n".format(self.nodeGroups[0].name())
 
 
     def doCount(self):
-        layers = QgsProject.instance().mapLayers().values()
-        for layer in layers:
-            if layer in self.context.guichetLayers:
-                stat = layer.getStat()
-                print("Différentiel")
-                layer.doDifferentielAfterBeforeWorks()
-                print("Comptage")
-                stat.count()
+        layersId = self.nodeGroups[0].findLayerIds()
+        for layerId in layersId:
+            qgsmaplayer = QgsProject.instance().mapLayer(layerId)
+            print("Différentiel")
+            qgsmaplayer.doDifferentielAfterBeforeWorks()
+            print("Comptage : {}".format(qgsmaplayer.name()))
+            stat = qgsmaplayer.getStat()
+            stat.count()
+            self.message += stat.countToDialog(qgsmaplayer.name())
 
-        # Boucler sur les couches de ce groupe
-
-        # Faire le comptage des couches de ce groupe
+        # Affichage du résultat
+        # TODO QLabel à remplacer dans la boite mais par quoi ?
+        dlgCompterGuichet = FormCompterGuichet(self.message)
+        dlgCompterGuichet.exec_()

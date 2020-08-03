@@ -48,8 +48,6 @@ class Ui_DialogParametrage(object):
         self.lblCleGeoportailUser.setObjectName("lblCleGeoportailUser")
 
         self.retranslateUi(DialogParametrage)
-        self.buttonBox.accepted.connect(DialogParametrage.accept)
-        self.buttonBox.rejected.connect(DialogParametrage.reject)
         QtCore.QMetaObject.connectSlotsByName(DialogParametrage)
 
     def retranslateUi(self, DialogParametrage):

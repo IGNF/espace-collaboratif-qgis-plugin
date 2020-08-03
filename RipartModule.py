@@ -342,7 +342,7 @@ class RipartPlugin:
 
     def compterModifications(self):
         print("Compter les modifications")
-        self.context = Contexte.getInstance(self, QgsProject)
+        '''self.context = Contexte.getInstance(self, QgsProject)
         if self.context != None:
             if not self.context.getVisibilityLayersFromGroupeActif():
                 self.context.iface.messageBar(). \
@@ -351,10 +351,9 @@ class RipartPlugin:
                                 level=2, duration=5)
                 return
 
-        cptg = CompterGuichet(self.context)
+        cptg = CompterGuichet(self.context)'''
+        cptg = CompterGuichet()
         cptg.doCount()
-
-
 
 
     def synchroniserDonnees(self):

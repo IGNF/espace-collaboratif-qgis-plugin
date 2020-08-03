@@ -30,3 +30,13 @@ class Statistics(object):
         print("Objets ajoutés : {}".format(self.nfa))
         print("Objets détruits : {}".format(self.nfd))
         print("Objets modifiés : {}".format(self.nfc))
+
+
+    def countToDialog(self, layerName):
+        message = ""
+        message += "{}\n".format(layerName)
+        message += "{} objets au total\n".format(self.nft + self.nfa - self.nfd)
+        message += "{} objets créés\n".format(self.nfa)
+        message += "{} objets modifiés\n".format(self.nfc)
+        message += "{} objets supprimés\n\n".format(self.nfd)
+        return message

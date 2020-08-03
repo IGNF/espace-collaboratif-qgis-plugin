@@ -236,6 +236,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
 
     def save(self):
+        self.accept()
         layersQGIS = []
         print("Liste des couches à afficher après sélection utilisateur")
         layersChecked = []
@@ -252,10 +253,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         importGuichet = ImporterGuichet(self.context)
         importGuichet.doImport(layersQGIS)
-        self.accept()
 
 
 
     def cancel(self):
-        print ("L'utilisateur est sorti de la boite Charger le guichet")
         self.reject()
+        print ("L'utilisateur est sorti de la boite Charger le guichet")
