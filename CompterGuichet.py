@@ -1,27 +1,34 @@
-from .core.RipartLoggerCl import RipartLogger
 from qgis.core import QgsProject
-from.FormCompterGuichet import FormCompterGuichet
-
+from PyQt5.QtWidgets import QMessageBox
 
 class CompterGuichet(object):
 
     def __init__(self):
         self.nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
-        self.message = "Groupe {}\n".format(self.nodeGroups[0].name())
+        if len(self.nodeGroups) != 0:
+            self.message = "Groupe {}\n\n".format(self.nodeGroups[0].name())
+
+        self.titre = "Comptage"
+
 
 
     def doCount(self):
-        layersId = self.nodeGroups[0].findLayerIds()
-        for layerId in layersId:
-            qgsmaplayer = QgsProject.instance().mapLayer(layerId)
-            print("Différentiel")
-            qgsmaplayer.doDifferentielAfterBeforeWorks()
-            print("Comptage : {}".format(qgsmaplayer.name()))
-            stat = qgsmaplayer.getStat()
-            stat.count()
-            self.message += stat.countToDialog(qgsmaplayer.name())
+        # si pas de groupe : warning
+        if len(self.nodeGroups) == 0:
+            QMessageBox.warning(None, self.titre, u"Pas de groupe actif")
+        else:
+            # indice 0 parce que le projet ne comporte qu'un seul groupe
+            layersId = self.nodeGroups[0].findLayerIds()
+            for layerId in layersId:
+                qgsmaplayer = QgsProject.instance().mapLayer(layerId)
+                print("Différentiel")
+                qgsmaplayer.doDifferentielAfterBeforeWorks()
+                layerName = qgsmaplayer.name()
+                print("Comptage : {}".format(layerName))
+                stat = qgsmaplayer.getStat()
+                stat.count()
+                self.message += "{}\n".format(layerName)
+                self.message += stat.countToDialog(layerName)
 
-        # Affichage du résultat
-        # TODO QLabel à remplacer dans la boite mais par quoi ?
-        dlgCompterGuichet = FormCompterGuichet(self.message)
-        dlgCompterGuichet.exec_()
+            # Affichage du résultat
+            QMessageBox.information(None, self.titre, self.message)

@@ -578,7 +578,8 @@ class Contexte(object):
             # Il faut indiquer à l'utilisateur que c'est impossible
             # d'ajouter un nouveau groupe dans le projet
             if nodeGroup.name() != nomGroupe and (len(nodesGroup) == 1):
-                raise Exception(u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
+                QMessageBox.warning(None, "Charger les couches de mon groupe", u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
+                return
 
             for layer in guichet_layers:
                 if layer.nom in maplayers:

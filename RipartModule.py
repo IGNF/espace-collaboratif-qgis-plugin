@@ -319,12 +319,10 @@ class RipartPlugin:
             print("Chargement des couches du groupe utilisateur")
             self.context= Contexte.getInstance(self,QgsProject)
             if self.context == None :
-                #raise Exception(u"Pas de chargement des couches du groupe utilisateur")
                 return
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
             if dlgChargerGuichet.context.profil != None:
-                #raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
                 if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1:
                     if len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0:
                         raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
@@ -342,16 +340,6 @@ class RipartPlugin:
 
     def compterModifications(self):
         print("Compter les modifications")
-        '''self.context = Contexte.getInstance(self, QgsProject)
-        if self.context != None:
-            if not self.context.getVisibilityLayersFromGroupeActif():
-                self.context.iface.messageBar(). \
-                    pushMessage("Remarque",
-                                "Pas de couche(s) éditable(s)", \
-                                level=2, duration=5)
-                return
-
-        cptg = CompterGuichet(self.context)'''
         cptg = CompterGuichet()
         cptg.doCount()
 
@@ -367,61 +355,6 @@ class RipartPlugin:
                                 level=2, duration=5)
                 return
 
-
-        # enabled_flag=self.context.getVisibilityLayersFromGroupeActif())
-        """Add guichet layers to the current map
-                https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?service=WFS
-                &request=GetFeature
-                &outputFormat=JSON
-                &typeName=bdtopo_metropole:adresse
-                &bbox=657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551
-                &filter={%22detruit%22%3Afalse}
-                &maxFeatures=5000
-                &version=1.1.0
-                """
-        root = QgsProject.instance().layerTreeRoot()
-        #mapCan = QObject.iface.mapCanvas()
-        # Construction de l'URL
-        params = {
-            'service': 'WFS',
-            'version': '1.0.0',
-            'request': 'GetFeature',
-            'typename': 'demo_guichet:piste_cyclable',
-            #'outputFormat': 'JSON',
-            #'bbox': '657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551',
-            #'bbox': '1.411%2C49.250%2C3.414%2C48.098',
-            #'bbox': '49.250%2C1.411%2C48.098%2C3.414',
-            'filter': '{%22detruit%22%3Afalse}',
-            'username':'epeyrouse',
-            'password':'Tempo2019*',
-            'srsname': 'EPSG:4326'
-        }
-        uri = 'https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?' + urllib.parse.unquote(urllib.parse.urlencode(params))
-        print(uri)
-        '''url = "https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/wfs?service=WFS\
-                &request=GetFeature\
-                &outputFormat=JSON\
-                &typeName=bdtopo_metropole:adresse\
-                &bbox=657289.7150886862%2C6860614.722602688%2C657956.626368397%2C6860890.827194551\
-                &filter={%22detruit%22%3Afalse}\
-                &maxFeatures=5000\
-                &version=1.1.0"'''
-        vlayer = QgsVectorLayer(uri, "piste_cyclable", "WFS")
-        if not vlayer.isValid():
-            print("Layer adresse failed to load!")
-            return
-
-        vlayer.setCrs(QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId))
-        QgsProject.instance().addMapLayer(vlayer, False)
-        root.insertLayer(0, vlayer)
-        self.logger.debug("Layer " + vlayer.name() + " added to map")
-        print("Layer {} added to map".format(vlayer.name()))
-
-        # ajoute les styles aux couches ??
-        '''style = os.path.join(self.projectDir, "espacecoStyles", table + ".qml")
-        vlayer.loadNamedStyle(style)'''
-
-        #mapCan.refresh()
 
 
     def unload(self):

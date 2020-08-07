@@ -58,7 +58,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         #self.featuresDeleted.connect(self.features_deleted)
         self.attributeAdded.connect(self.attribute_added)
         self.attributeDeleted.connect(self.attribute_deleted)
-        self.afterRollBack.connect(self.after_rollback)
         self.editingStopped.connect(self.editing_stopped)
 
 
@@ -131,13 +130,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.setMd5AfterWorks()
 
 
-    '''
-    L'utilisateur a annulé ses modifs
-    '''
-    def after_rollback(self):
-        print("L'utilisateur a annulé son travail")
-        # Il y a quelque chose à faire
-
 
     # Je pense qu'il faut interdire cette action ?
     def attribute_deleted(self, idx):
@@ -175,7 +167,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         # oublie de sauvegarder le projet : pas de fichier after
         if not os.path.exists(self.fileAfterWorks):
             return
-            #raise ("Le fichier {} est impossible à ouvrir, existe t'il ? Il faut sauvegarder l'édition des couches.".format(self.fileAfterWorks))
 
         # Dictionnaire cle/valeur carte après intervention utilisateur
         after = self.openFile(self.fileAfterWorks, "r")
