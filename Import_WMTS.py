@@ -28,25 +28,42 @@ except ImportError as e:
         " We are in the pâté."
     )
 
-class importWMTS:
-    # Variables
-    #current_crs = str(QgsProject.instance().mapCanvas().mapRenderer().destinationCrs().authid())
 
-    qgis_wms_formats = (
-        "image/png",
-        "image/png8",
-        "image/jpeg",
-        "image/svg",
-        "image/gif",
-        "image/geotiff",
-        "image/tiff",
-    )
+class importWMTS:
+
+    # Variables
     wmts = None
     uri = QgsDataSourceUri()
     context = None
+    wmts_lyr = None
+    srs = None
+    tile_matrix_set = None
+    current_crs = None
+    layer_id = None
+
 
     def __init__(self, context):
         self.context = context
+        self.checkOpenService()
+        self.checkGetTile()
+        self.checkTileMatrixSet()
+        self.current_crs = str(self.context.iface.mapCanvas().mapSettings().destinationCrs().authid())
+
+
+    # Construction url GetCapabilities sur le geoportail
+    # exemple : https://wxs.ign.fr/[cle]/wmts?service=WMTS&request=GetCapabilities
+    def appendUriCapabilities(self):
+        params = {
+            'service': cst.WMTS,
+            'request': 'GetCapabilities'
+        }
+        clegeoportail = self.context.clegeoportail
+        if clegeoportail == None or clegeoportail == cst.DEMO:
+            clegeoportail = cst.CLEGEOPORTAILSTANDARD
+
+        self.uri = "https://wxs.ign.fr/{}/geoportail/wmts?{}" \
+            .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(params)))
+        print(self.uri)
 
 
     # opening WMTS
@@ -65,23 +82,6 @@ class importWMTS:
         return True
 
 
-    # Construction url GetCapabilities
-    # exemple : https://wxs.ign.fr/[cle]/geoportail/wmts?service=WMTS&request=GetCapabilities
-    def appendUriCapabilities(self):
-
-        params = {
-            'service': cst.WMTS,
-            'request': 'GetCapabilities'
-        }
-        clegeoportail = self.context.clegeoportail
-        if clegeoportail == None or clegeoportail == cst.DEMO:
-            clegeoportail = cst.CLEGEOPORTAILSTANDARD
-
-        self.uri = "https://wxs.ign.fr/{}/geoportail/wmts?{}" \
-            .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(params)))
-        print(self.uri)
-
-
     # check if GetTile operation is available
     def checkGetTile(self):
         if not hasattr(self.wmts, "gettile") or "GetTile" not in [op.name for op in self.wmts.operations]:
@@ -92,13 +92,78 @@ class importWMTS:
         return True
 
 
+    # check if tilematrixsets is available
+    def checkTileMatrixSet(self):
+        if not hasattr(self.wmts, "tilematrixsets"):
+            print("Required tilematrixsets not available in: " + self.uri)
+            return False
+        else:
+            print("tilematrixsets available")
+        return True
+
+
     # GetTile URL
     def getTileUrl(self):
-        wmts_lyr_url = None
         wmts_lyr_url = self.wmts.getOperationByName("GetTile").methods
         print(wmts_lyr_url)
         wmts_lyr_url = wmts_lyr_url[0].get("url")
-        print(wmts_lyr_url)
-        if wmts_lyr_url[-1] == "&":
-            wmts_lyr_url = wmts_lyr_url[:-1]
         return wmts_lyr_url
+
+    # Style definition
+    def getStyles(self):
+        #lyr_style = self.wmts_lyr.styles["IsDefault"]
+        lyr_style = "normal"
+        print("Available styles : ", lyr_style)
+        return lyr_style
+
+
+    # Get a layer
+    def getLayer(self, idGuichetLayerWmts):
+        layers = list(self.wmts.contents)
+        print("Available layers : ", layers)
+        for layer in layers:
+            self.wmts_lyr = self.wmts[layer]
+            if self.wmts_lyr.id != idGuichetLayerWmts:
+                continue
+            self.layer_id = self.wmts_lyr.id
+            print("Layer picked : ", self.wmts_lyr.title, self.layer_id)
+            return self.layer_id
+
+
+    # Tile Matrix Set
+    def getTileMatrixSet(self):
+        self.tile_matrix_set = self.wmts_lyr._tilematrixsets[0]
+        print(self.tile_matrix_set)
+
+
+    # Format
+    def getFormat(self):
+        layer_format = self.wmts_lyr.formats[0]
+        print ("Layer format : ", layer_format)
+        return layer_format
+
+
+    # La requete doit être de la forme :
+    # crs=EPSG:3857&
+    # dpiMode=7&
+    # format=image/jpeg&
+    # layers=GEOGRAPHICALGRIDSYSTEMS.MAPS&
+    # styles=normal&
+    # tileMatrixSet=PM&
+    # url=https://wxs.ign.fr/choisirgeoportail/geoportail/wmts?
+    # SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities
+    def getWtmsUrlParams(self, idGuichetLayerWmts):
+        self.getLayer(idGuichetLayerWmts)
+        self.getTileMatrixSet()
+        wmts_url_params = {
+            "crs": "EPSG:3857",
+            "dpiMode": "7",
+            "format": self.getFormat(),
+            "layers": self.layer_id,
+            "styles": self.getStyles(),
+            "tileMatrixSet": self.tile_matrix_set,
+            "url": "{}{}".format(self.getTileUrl(),"SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
+        }
+        wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
+        print(wmts_url_final)
+        return wmts_url_final

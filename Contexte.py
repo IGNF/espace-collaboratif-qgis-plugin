@@ -563,14 +563,14 @@ class Contexte(object):
             'crs' : 'EPSG:3857',
             'dpiMode' : '7',
             'format' : 'image/jpeg',
-            'layers' : nomCouche,
-            'styles' : 'normal',
+            'layer' : nomCouche,
+            'style' : 'normal',
             'tilematrixset' : 'PM',
             'url': url
         }
 
-        wmts_url_final = "crs={}&dpiMode={}&format={}&layers={}&styles={}&tileMatrixSet={}&url={}"\
-            .format(wmts_url_params['crs'], wmts_url_params['dpiMode'], wmts_url_params['format'], wmts_url_params['layers'], wmts_url_params['styles'], wmts_url_params['tilematrixset'],  wmts_url_params['url'])
+        wmts_url_final = "crs={}&dpiMode={}&format={}&layer={}&style={}&tileMatrixSet={}&url={}"\
+            .format(wmts_url_params['crs'], wmts_url_params['dpiMode'], wmts_url_params['format'], wmts_url_params['layer'], wmts_url_params['style'], wmts_url_params['tilematrixset'],  wmts_url_params['url'])
 
         print(wmts_url_final)
 
@@ -639,28 +639,26 @@ class Contexte(object):
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.GEOPORTAIL:
-                    # importWmts = importWMTS(self)
-                    # importWmts.checkOpenService()
-                    # importWmts.checkGetTile()
-                    # url = importWmts.getTileUrl()
+                    importWmts = importWMTS(self)
+                    uri = importWmts.getWtmsUrlParams(layer.nom)
 
-                    clegeoportail = self.clegeoportail
+                    '''clegeoportail = self.clegeoportail
                     if clegeoportail == None or clegeoportail == cst.DEMO:
                         clegeoportail = cst.CLEGEOPORTAILSTANDARD
 
                     url = "http://wxs.ign.fr/{}/wmts?SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities".format(clegeoportail)
                     uri = self.appendUrl_WMTS_v2(url, layer.nom)
-
+                    #uri = "crs=EPSG:3857&dpiMode=7&format=image/jpeg&layers=GEOGRAPHICALGRIDSYSTEMS.PLANIGN&styles=normal&tileMatrixSet=PM&url=http://wxs.ign.fr/choisirgeoportail/wmts?SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"'''
                     tmp = layer.nom.split('.')
                     rlayer = QgsRasterLayer(uri, tmp[1], 'wms')
 
                     if not rlayer.isValid():
                         print ("Layer {} failed to load !".format(rlayer.name()))
+                        print(rlayer.error().message())
                         continue
 
                     QgsProject.instance().addMapLayer(rlayer, False)
                     root.insertLayer(0, rlayer)
-                    #nodeGroup.addLayer(vlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
                     print("Layer {} added to map".format(rlayer.name()))
 
