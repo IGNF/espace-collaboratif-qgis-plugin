@@ -528,56 +528,6 @@ class Contexte(object):
         return uri
 
 
-
-    # def appendUrl_WMTS(self, url, nomCouche):
-    #     wmts_url_params = {
-    #         'service' : 'wmts',
-    #         'version' : '1.0.0',
-    #         'request' : 'GetTile',
-    #         'style' : 'normal',
-    #         'tilematrixset' : 'PM',
-    #         'TILEMATRIX' : '4',
-    #         'TILEROW' : '5',
-    #         'TILECOL' : '8',
-    #         'format' : 'image/jpeg',
-    #         'layer' : nomCouche
-    #     }
-    #
-    #
-    #     clegeoportail = self.clegeoportail
-    #     if clegeoportail == None or clegeoportail == cst.DEMO:
-    #         clegeoportail = cst.CLEGEOPORTAILSTANDARD
-    #
-    #     wmts_url_final = "https://wxs.ign.fr/{}/geoportail/wmts?{}"\
-    #         .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params)))
-    #
-    #     print(wmts_url_final)
-    #
-    #     return wmts_url_final
-
-
-    def appendUrl_WMTS_v2(self, url, nomCouche):
-        wmts_url_final = ""
-
-        wmts_url_params = {
-            'crs' : 'EPSG:3857',
-            'dpiMode' : '7',
-            'format' : 'image/jpeg',
-            'layer' : nomCouche,
-            'style' : 'normal',
-            'tilematrixset' : 'PM',
-            'url': url
-        }
-
-        wmts_url_final = "crs={}&dpiMode={}&format={}&layer={}&style={}&tileMatrixSet={}&url={}"\
-            .format(wmts_url_params['crs'], wmts_url_params['dpiMode'], wmts_url_params['format'], wmts_url_params['layer'], wmts_url_params['style'], wmts_url_params['tilematrixset'],  wmts_url_params['url'])
-
-        print(wmts_url_final)
-
-        return wmts_url_final
-
-
-
     def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
         """
@@ -641,14 +591,6 @@ class Contexte(object):
                 if layer.type == cst.GEOPORTAIL:
                     importWmts = importWMTS(self)
                     uri = importWmts.getWtmsUrlParams(layer.nom)
-
-                    '''clegeoportail = self.clegeoportail
-                    if clegeoportail == None or clegeoportail == cst.DEMO:
-                        clegeoportail = cst.CLEGEOPORTAILSTANDARD
-
-                    url = "http://wxs.ign.fr/{}/wmts?SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities".format(clegeoportail)
-                    uri = self.appendUrl_WMTS_v2(url, layer.nom)
-                    #uri = "crs=EPSG:3857&dpiMode=7&format=image/jpeg&layers=GEOGRAPHICALGRIDSYSTEMS.PLANIGN&styles=normal&tileMatrixSet=PM&url=http://wxs.ign.fr/choisirgeoportail/wmts?SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"'''
                     tmp = layer.nom.split('.')
                     rlayer = QgsRasterLayer(uri, tmp[1], 'wms')
 
@@ -669,7 +611,7 @@ class Contexte(object):
             self.iface.messageBar(). \
                 pushMessage("Remarque",
                             str(e), \
-                            level=1, duration=20)
+                            level=1, duration=10)
             print(str(e))
 
 

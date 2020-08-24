@@ -25,7 +25,6 @@ try:
 except ImportError as e:
     print(
         "Depencencies - HTTPError not within urllib."
-        " We are in the pâté."
     )
 
 
@@ -36,10 +35,9 @@ class importWMTS:
     uri = QgsDataSourceUri()
     context = None
     wmts_lyr = None
-    srs = None
     tile_matrix_set = None
-    current_crs = None
     layer_id = None
+    crs = None
 
 
     def __init__(self, context):
@@ -47,7 +45,6 @@ class importWMTS:
         self.checkOpenService()
         self.checkGetTile()
         self.checkTileMatrixSet()
-        self.current_crs = str(self.context.iface.mapCanvas().mapSettings().destinationCrs().authid())
 
 
     # Construction url GetCapabilities sur le geoportail
@@ -61,6 +58,11 @@ class importWMTS:
         if clegeoportail == None or clegeoportail == cst.DEMO:
             clegeoportail = cst.CLEGEOPORTAILSTANDARD
 
+        '''
+        Avec l'url http://wxs.ign.fr/VOTRE_CLE/geoportail/wmts, la projection proposée est
+        web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
+        '''
+        self.crs = "EPSG:3857"
         self.uri = "https://wxs.ign.fr/{}/geoportail/wmts?{}" \
             .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(params)))
         print(self.uri)
@@ -109,9 +111,12 @@ class importWMTS:
         wmts_lyr_url = wmts_lyr_url[0].get("url")
         return wmts_lyr_url
 
+
     # Style definition
     def getStyles(self):
-        #lyr_style = self.wmts_lyr.styles["IsDefault"]
+        #styles = self.wmts_lyr.styles
+        # TODO Je peux récupérer dans styles un Style isDefault="true" à transformer en normal ?
+        # TODO voir la doc DT_APIGeoportail.pdf
         lyr_style = "normal"
         print("Available styles : ", lyr_style)
         return lyr_style
@@ -156,7 +161,7 @@ class importWMTS:
         self.getLayer(idGuichetLayerWmts)
         self.getTileMatrixSet()
         wmts_url_params = {
-            "crs": "EPSG:3857",
+            "crs": self.crs,
             "dpiMode": "7",
             "format": self.getFormat(),
             "layers": self.layer_id,
