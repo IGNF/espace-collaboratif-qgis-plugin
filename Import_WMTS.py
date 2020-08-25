@@ -65,7 +65,6 @@ class importWMTS:
         self.crs = "EPSG:3857"
         self.uri = "https://wxs.ign.fr/{}/geoportail/wmts?{}" \
             .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(params)))
-        print(self.uri)
 
 
     # opening WMTS
@@ -80,7 +79,6 @@ class importWMTS:
         except Exception as e:
             print(str(e))
 
-        print(dir(self.wmts))
         return True
 
 
@@ -107,18 +105,24 @@ class importWMTS:
     # GetTile URL
     def getTileUrl(self):
         wmts_lyr_url = self.wmts.getOperationByName("GetTile").methods
-        print(wmts_lyr_url)
         wmts_lyr_url = wmts_lyr_url[0].get("url")
+        print("Available url : {}".format(wmts_lyr_url))
         return wmts_lyr_url
 
 
     # Style definition
     def getStyles(self):
-        #styles = self.wmts_lyr.styles
-        # TODO Je peux récupérer dans styles un Style isDefault="true" à transformer en normal ?
-        # TODO voir la doc DT_APIGeoportail.pdf
-        lyr_style = "normal"
-        print("Available styles : ", lyr_style)
+        styles = self.wmts_lyr.styles
+        '''
+            La variable styles est de type dict cle:valeur, exemple :
+            normal:{'isDefault': True, 'title': 'Légende générique', 'abstract': 'Fichier de légende générique – pour la compatibilité avec certains systèmes', 'legend': 'https://wxs.ign.fr/static/legends/LEGEND.jpg', 'width': '200', 'height': '200', 'format': 'image/jpeg', 'keywords': ['Défaut']}
+            ou cle = normal
+            et valeur = {'isDefault': True, 'title': 'Légende générique', 'abstract': 'Fichier de légende générique...}
+        '''
+        for cle, valeur in styles.items():
+            print ("Available styles : {}".format(cle))
+        # Le style est donc la cle du dictionnaire
+        lyr_style = cle
         return lyr_style
 
 
@@ -131,20 +135,20 @@ class importWMTS:
             if self.wmts_lyr.id != idGuichetLayerWmts:
                 continue
             self.layer_id = self.wmts_lyr.id
-            print("Layer picked : ", self.wmts_lyr.title, self.layer_id)
+            print("Layer picked : {}:{}".format(self.wmts_lyr.title, self.layer_id))
             return self.layer_id
 
 
     # Tile Matrix Set
     def getTileMatrixSet(self):
         self.tile_matrix_set = self.wmts_lyr._tilematrixsets[0]
-        print(self.tile_matrix_set)
+        print("Available tileMatrixSet : {}".format(self.tile_matrix_set))
 
 
     # Format
     def getFormat(self):
         layer_format = self.wmts_lyr.formats[0]
-        print ("Layer format : ", layer_format)
+        print ("Available layer format : {}".format(layer_format))
         return layer_format
 
 
@@ -170,5 +174,4 @@ class importWMTS:
             "url": "{}{}".format(self.getTileUrl(),"SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
         }
         wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
-        print(wmts_url_final)
         return wmts_url_final

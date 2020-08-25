@@ -520,6 +520,7 @@ class Contexte(object):
             uri.setParam('url', tmp[0])
             uri.setParam('typename', typeName)
             uri.setParam('filter', 'detruit:false')
+
         # Autres Geoservices
         else:
             uri.setParam('url', url)
@@ -591,8 +592,7 @@ class Contexte(object):
                 if layer.type == cst.GEOPORTAIL:
                     importWmts = importWMTS(self)
                     uri = importWmts.getWtmsUrlParams(layer.nom)
-                    tmp = layer.nom.split('.')
-                    rlayer = QgsRasterLayer(uri, tmp[1], 'wms')
+                    rlayer = QgsRasterLayer(uri, layer.nom, 'wms')
 
                     if not rlayer.isValid():
                         print ("Layer {} failed to load !".format(rlayer.name()))
