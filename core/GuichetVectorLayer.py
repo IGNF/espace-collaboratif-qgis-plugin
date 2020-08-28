@@ -1,4 +1,5 @@
-from qgis.core import QgsVectorLayer, QgsProject
+from PyQt5.QtCore import QVariant
+from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup
 from.Statistics import Statistics
 import hashlib
 import os
@@ -195,6 +196,25 @@ class GuichetVectorLayer(QgsVectorLayer):
             if cle not in dictAfter:
                 print ("feature {} : supprimé".format(cle))
                 self.stat.nfd += 1
+
+
+    '''
+    Liste des champs de la couche
+    '''
+    def getFields(self):
+        fields = self.fields()
+        for field in fields:
+            name = field.name()
+            if name != 'zone':
+                continue
+
+            index = fields.indexOf(name)
+            type = 'ValueMap'
+            config = {'map': [{'Zone1': 'Zone1'},{' Zone2': ' Zone2'}, {'Zone3': 'Zone3'}]}
+            setup = QgsEditorWidgetSetup(type, config)
+            self.setEditorWidgetSetup(index, setup)
+
+
 
 
 

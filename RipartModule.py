@@ -355,6 +355,20 @@ class RipartPlugin:
                                 level=2, duration=5)
                 return
 
+        '''layer = self.context.iface.activeLayer()
+        fields = layer.fields()
+        for field in fields:
+            name = field.name()
+            if name != 'zone':
+                continue
+
+            index = fields.indexOf(name)
+            ews = layer.editorWidgetSetup(index)
+            print("Type:", ews.type())
+            print("Config:", ews.config())'''
+
+
+
 
 
     def unload(self):
