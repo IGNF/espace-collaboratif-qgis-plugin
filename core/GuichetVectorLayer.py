@@ -4,7 +4,6 @@ from .Statistics import Statistics
 import hashlib
 import os
 
-
 class GuichetVectorLayer(QgsVectorLayer):
     # Les statistiques de comptage pour la couche
     stat = None
@@ -20,21 +19,28 @@ class GuichetVectorLayer(QgsVectorLayer):
     fileBeforeWorks = None
     fileAfterWorks = None
 
+
+
     def getStat(self):
         return self.stat
+
+
 
     def openFile(self, nameFile, mode):
         file = open(nameFile, mode)
         return file
 
+
+
     def closeFile(self, fileToClose):
         fileToClose.close()
 
+
+
     '''
-    Connection des signaux
+    Connexion des signaux
     Initialisation des comptages
     '''
-
     def init(self, projectDirectory, layerName):
         self.connectSignals()
         self.stat = Statistics(self.featureCount())
@@ -45,10 +51,11 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
         self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
 
-    '''
-    Connection des signaux pour les évènements survenus sur la carte
-    '''
 
+
+    '''
+    Connexion des signaux pour les évènements survenus sur la carte
+    '''
     def connectSignals(self):
         # self.geometryChanged.connect(self.geometry_changed)
         # self.attributeValueChanged.connect(self.attribute_value_changed)
@@ -58,11 +65,12 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.attributeDeleted.connect(self.attribute_deleted)
         self.editingStopped.connect(self.editing_stopped)
 
+
+
     '''
     Calcul d'une clé de hachage à partir des caractéristiques d'un objet
     # géométrie et valeurs de ses attributs
     '''
-
     def setMD5(self, feature):
         allAttributes = []
 
@@ -81,14 +89,38 @@ class GuichetVectorLayer(QgsVectorLayer):
         cle = hashlib.sha224(tmp).hexdigest()
 
         # Retourne la référence par objet (idQGIS:MD5)
-        return (feature.id(), cle)
+        fields = self.fields()
+        id = None
+        for field in fields:
+            name = field.name()
+            if name != 'id':
+                continue
+
+            index = fields.indexOf(name)
+            if index == -1:
+                id = feature.id()
+            else:
+                value = feature.attribute(index)
+                # l'id est rempli
+                if value > 0:
+                    id = value
+                # l'id existe mais n'est pas remplie, valeur = NULL
+                else:
+                    id = feature.id()
+
+        # si l'objet n'a pas d'attribut id
+        if id is None:
+            id = feature.id()
+
+        return (id, cle)
+
+
 
     '''
     Au chargement de la couche dans QGIS, les caractéristiques des objets initiaux
     sont stockées dans un fichier sous la forme d'une clé de hachage :
     id QGIS/clé de hachage
     '''
-
     def setMd5BeforeWorks(self):
         # il faut détruire le fichier afterWorks
         if os.path.exists(self.fileAfterWorks):
@@ -102,13 +134,14 @@ class GuichetVectorLayer(QgsVectorLayer):
             fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
         self.closeFile(fichier)
 
+
+
     '''
     Dès la fin de l'édition d'une couche, les caractéristiques des objets
     sont stockées dans un fichier sous la forme d'une clé de hachage :
     id QGIS/clé de hachage
     Il doit y avoir des objets créés, modifiés, supprimés
     '''
-
     def setMd5AfterWorks(self):
         fichier = self.openFile(self.fileAfterWorks, "wt")
         features = self.getFeatures()
@@ -118,29 +151,39 @@ class GuichetVectorLayer(QgsVectorLayer):
             fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
         self.closeFile(fichier)
 
+
+
     '''
     L'utilisateur a mis fin à l'édition de la couche,
     les objets sont stockés dans un fichier
     '''
-
     def editing_stopped(self):
         self.setMd5AfterWorks()
 
-    # Je pense qu'il faut interdire cette action ?
-    def attribute_deleted(self, idx):
-        print("Action impossible, voir Noémie")
-        return
 
-    # Je pense qu'il faut interdire cette action ?
+
+    '''
+    Interdiction de supprimer un attribut sinon la synchronisation au serveur est perdue
+    '''
+    def attribute_deleted(self, idx):
+        fields = self.fields()
+        raise Exception("Impossible de supprimer l'attribut {} car la synchronisation au serveur sera perdue.".format(fields[idx].name()))
+
+
+
+    '''
+    Interdiction d'ajouter un attribut sinon la synchronisation au serveur est perdue
+    '''
     def attribute_added(self, idx):
-        print("Action impossible, voir Noémie")
-        return
+        fields = self.fields()
+        raise Exception("Impossible d'ajouter l'attribut {} car la synchronisation au serveur sera perdue.".format(fields[idx].name()))
+
+
 
     '''
     Comptage par différentiel des objets
     ajoutés, supprimés ou modifiés de la couche
     '''
-
     def doDifferentielAfterBeforeWorks(self):
         # Ajout
         self.stat.nfa = 0

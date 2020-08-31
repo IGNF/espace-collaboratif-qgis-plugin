@@ -355,6 +355,24 @@ class RipartPlugin:
                                 level=2, duration=5)
                 return
 
+        layer = self.context.iface.activeLayer()
+        #QgsConditionalLayerStyles
+        '''qcls = layer.conditionalStyles()
+        fields = layer.fields()
+        for field in fields:
+            name = field.name()
+            # QgsConditionalStyle
+            qcss = qcls.fieldStyles(name)
+            for qcs in qcss:
+                print(qcs.backgroundColor())
+                print(qcs.font())
+                print(qcs.icon())
+                print(qcs.rule())
+                print(qcs.symbol())
+                print(qcs.textColor())'''
+
+
+
 
     def unload(self):
         

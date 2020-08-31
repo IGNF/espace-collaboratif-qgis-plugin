@@ -179,7 +179,7 @@ class Client(object):
         pour une base de données/couche donnée en cherchant l'item 'listOfValues'
         La requête est :
         https://espacecollaboratif.ign.fr/gcms/database/test/feature-type/Surfaces.json
-        La réponse sous forme de dictionnaire est par exemple :
+        La réponse transformée en json est sous forme de dictionnaire  par exemple :
         'attributes': 'zone': {...,'listOfValues': [None, 'Zone1', ' Zone2', 'Zone3'],...}
     '''
     def getListOfValuesAttributeFromLayerInDatabase(self, layerUrl, layerName):

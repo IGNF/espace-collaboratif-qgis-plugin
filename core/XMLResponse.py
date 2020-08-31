@@ -108,7 +108,7 @@ class XMLResponse(object):
             
         except Exception as e:            
             self.logger.error(str(e))
-            raise Exception('Probl�me de connexion')
+            raise Exception('Probleme de connexion')
  
         return aleas
  
@@ -127,7 +127,7 @@ class XMLResponse(object):
             if id_auteur is not None:           
                 connectValues['ID_AUTEUR'] =id_auteur.text
             else:
-                raise Exception("ID_AUTEUR inexistant dans la r�ponse xml")
+                raise Exception("ID_AUTEUR inexistant dans la réponse xml")
                          
             jeton=connectValues['JETON'] =self.root.find('./REPONSE/JETON')          
             if jeton is not None:
