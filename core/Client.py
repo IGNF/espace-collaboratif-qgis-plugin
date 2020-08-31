@@ -12,6 +12,7 @@ from collections import OrderedDict
 import re
 import time
 import os.path
+import json
 
 from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
 from PyQt5.QtCore import *
@@ -99,7 +100,8 @@ class Client(object):
         """
         return self.__version
     
-    
+
+
     def getProfil(self):
         """Retourne le profil de l'utilisateur
         :return: le profil
@@ -124,7 +126,6 @@ class Client(object):
             cleGeoportail = cle
 
         # https://wxs.ign.fr/clegeoportail/autoconf?gp-access-lib=2.1.2&output=xml
-        #url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(clegeoportail)
         url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(cleGeoportail)
         self.logger.debug("{0} {1}".format("getLayersFromCleGeoportailUser", url))
         reponse = requests.get(url)
@@ -138,6 +139,8 @@ class Client(object):
                 if elem.tag == '{http://www.opengis.net/context}Name':
                     print(elem.text)
                     layers.append(elem.text)
+        else:
+            raise Exception(ClientHelper.notNoneValue("{} : {}".format(reponse.status_code, reponse.reason)))
 
         return layers
 
@@ -149,23 +152,15 @@ class Client(object):
         """
         profil= None
 
-        self.logger.debug("getProfilFromService " + self.__url +"/api/georem/geoaut_get.xml")
-
-
-        data =  requests.get(self.__url +"/api/georem/geoaut_get.xml", 
-                             auth=HTTPBasicAuth(self.__login, self.__password),
-                             proxies= self.__proxies)   
-
-    
+        url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
+        self.logger.debug(url)
+        data =  requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies= self.__proxies)
         self.logger.debug("data auth ")
         xml = XMLResponse(data.text)
-  
-        
+
         errMessage = xml.checkResponseValidity()
-        
         if errMessage['code'] =='OK':
             profil = xml.extractProfil()
-          
         else:
             if errMessage['message']!="":
                 result =errMessage['message']
@@ -177,8 +172,51 @@ class Client(object):
             raise Exception(ClientHelper.notNoneValue(result))
             
         return profil
-        
-   
+
+
+    '''
+        Récupération des listes de valeurs pour un attribut de type "Liste"
+        pour une base de données/couche donnée en cherchant l'item 'listOfValues'
+        La requête est :
+        https://espacecollaboratif.ign.fr/gcms/database/test/feature-type/Surfaces.json
+        La réponse sous forme de dictionnaire est par exemple :
+        'attributes': 'zone': {...,'listOfValues': [None, 'Zone1', ' Zone2', 'Zone3'],...}
+    '''
+    def getListOfValuesAttributeFromLayerInDatabase(self, layerUrl, layerName):
+        # La liste des valeurs sous forme de dictionnaire
+        # ex : {'zone':['', 'Zone1', ' Zone2', 'Zone3']}
+        listOfValues = {}
+
+        if '&' not in layerUrl:
+            raise Exception(ClientHelper.notNoneValue(
+                "{} : l'url fournie ({}) ne permet pas de déterminer le nom de la base données"
+                .format("getListOfValuesAttributeFromLayerInDatabase", layerUrl)))
+
+        tmp = layerUrl.split('&')
+        dbName = tmp[1].split('=')
+        url = "{}/{}/{}/feature-type/{}.json".format(self.__url, "gcms/database", dbName[1], layerName)
+        self.logger.debug("{0} {1}".format("getListOfValuesAttributeFromLayerInDatabase", url))
+        reponse = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
+        if reponse.status_code == 200:
+            data = json.loads(reponse._content)
+            for cle, valeurs in data.items():
+                if cle != 'attributes':
+                    continue
+                for c, v in valeurs.items():
+                    tmp = v['listOfValues']
+                    if tmp == "" or tmp is None:
+                        continue
+                    # Il faut remplacer la valeur None par vide
+                    if tmp[0] is None:
+                        tmp[0] = ""
+
+                    listOfValues[c] = tmp
+        else:
+           raise Exception(ClientHelper.notNoneValue("{} : {}".format(reponse.status_code, reponse.reason)))
+
+        return listOfValues
+
+
 
     def getGeoRems(self,parameters):
         """Recherche les remarques.

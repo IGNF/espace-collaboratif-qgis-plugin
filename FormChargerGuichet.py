@@ -65,6 +65,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.labelGroupeActif.setText("Groupe actif : {}".format(self.profilUser.geogroupe.nom))
         self.labelGroupeActif.setStyleSheet("QLabel {color : red}")##ff0000
 
+
+
     def getInfosLayers(self):
         infosLayers = []
 
@@ -140,6 +142,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.tableWidgetMonGuichet.resizeColumnsToContents()
 
 
+
     def setTableWidgetFondsGeoportail(self):
         # Entête
         entete = ["Nom de la couche", "Charger"]
@@ -163,6 +166,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 self.setColonneCharger(self.tableWidgetFondsGeoportail, rowPosition, 1)
 
         self.tableWidgetFondsGeoportail.resizeColumnsToContents()
+
 
 
     def setTableWidgetFondsGeoportailBis(self):

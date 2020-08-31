@@ -1,11 +1,11 @@
 from PyQt5.QtCore import QVariant
 from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup
-from.Statistics import Statistics
+from .Statistics import Statistics
 import hashlib
 import os
 
-class GuichetVectorLayer(QgsVectorLayer):
 
+class GuichetVectorLayer(QgsVectorLayer):
     # Les statistiques de comptage pour la couche
     stat = None
 
@@ -20,24 +20,21 @@ class GuichetVectorLayer(QgsVectorLayer):
     fileBeforeWorks = None
     fileAfterWorks = None
 
-
     def getStat(self):
         return self.stat
-
 
     def openFile(self, nameFile, mode):
         file = open(nameFile, mode)
         return file
 
-
     def closeFile(self, fileToClose):
         fileToClose.close()
-
 
     '''
     Connection des signaux
     Initialisation des comptages
     '''
+
     def init(self, projectDirectory, layerName):
         self.connectSignals()
         self.stat = Statistics(self.featureCount())
@@ -48,24 +45,24 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
         self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
 
-
     '''
     Connection des signaux pour les évènements survenus sur la carte
     '''
+
     def connectSignals(self):
-        #self.geometryChanged.connect(self.geometry_changed)
-        #self.attributeValueChanged.connect(self.attribute_value_changed)
-        #self.featureAdded.connect(self.feature_added)
-        #self.featuresDeleted.connect(self.features_deleted)
+        # self.geometryChanged.connect(self.geometry_changed)
+        # self.attributeValueChanged.connect(self.attribute_value_changed)
+        # self.featureAdded.connect(self.feature_added)
+        # self.featuresDeleted.connect(self.features_deleted)
         self.attributeAdded.connect(self.attribute_added)
         self.attributeDeleted.connect(self.attribute_deleted)
         self.editingStopped.connect(self.editing_stopped)
-
 
     '''
     Calcul d'une clé de hachage à partir des caractéristiques d'un objet
     # géométrie et valeurs de ses attributs
     '''
+
     def setMD5(self, feature):
         allAttributes = []
 
@@ -82,17 +79,16 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         # Calcul de la clé
         cle = hashlib.sha224(tmp).hexdigest()
-        print("{}:{}".format(feature.id(),cle))
 
         # Retourne la référence par objet (idQGIS:MD5)
         return (feature.id(), cle)
-
 
     '''
     Au chargement de la couche dans QGIS, les caractéristiques des objets initiaux
     sont stockées dans un fichier sous la forme d'une clé de hachage :
     id QGIS/clé de hachage
     '''
+
     def setMd5BeforeWorks(self):
         # il faut détruire le fichier afterWorks
         if os.path.exists(self.fileAfterWorks):
@@ -106,13 +102,13 @@ class GuichetVectorLayer(QgsVectorLayer):
             fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
         self.closeFile(fichier)
 
-
     '''
     Dès la fin de l'édition d'une couche, les caractéristiques des objets
     sont stockées dans un fichier sous la forme d'une clé de hachage :
     id QGIS/clé de hachage
     Il doit y avoir des objets créés, modifiés, supprimés
     '''
+
     def setMd5AfterWorks(self):
         fichier = self.openFile(self.fileAfterWorks, "wt")
         features = self.getFeatures()
@@ -122,32 +118,29 @@ class GuichetVectorLayer(QgsVectorLayer):
             fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
         self.closeFile(fichier)
 
-
     '''
     L'utilisateur a mis fin à l'édition de la couche,
     les objets sont stockés dans un fichier
     '''
+
     def editing_stopped(self):
         self.setMd5AfterWorks()
-
-
 
     # Je pense qu'il faut interdire cette action ?
     def attribute_deleted(self, idx):
         print("Action impossible, voir Noémie")
         return
 
-
     # Je pense qu'il faut interdire cette action ?
     def attribute_added(self, idx):
         print("Action impossible, voir Noémie")
         return
 
-
     '''
     Comptage par différentiel des objets
     ajoutés, supprimés ou modifiés de la couche
     '''
+
     def doDifferentielAfterBeforeWorks(self):
         # Ajout
         self.stat.nfa = 0
@@ -184,66 +177,37 @@ class GuichetVectorLayer(QgsVectorLayer):
         # Ajout/modification d'éléments
         for cle, md5 in dictAfter.items():
             if cle not in dictBefore:
-                print ("feature {} ajouté".format(cle))
+                print("feature {} ajouté".format(cle))
                 self.stat.nfa += 1
             else:
-               if md5 != dictBefore[cle]:
-                   print ("feature {} : modifié".format(cle))
-                   self.stat.nfc += 1
+                if md5 != dictBefore[cle]:
+                    print("feature {} : modifié".format(cle))
+                    self.stat.nfc += 1
 
         # Suppression d'éléments
         for cle, md5 in dictBefore.items():
             if cle not in dictAfter:
-                print ("feature {} : supprimé".format(cle))
+                print("feature {} : supprimé".format(cle))
                 self.stat.nfd += 1
 
 
-    '''
-    Liste des champs de la couche
-    '''
-    def getFields(self):
-        fields = self.fields()
-        for field in fields:
-            name = field.name()
-            if name != 'zone':
-                continue
 
-            index = fields.indexOf(name)
+    '''
+    Modification du formulaire de saisie pour afficher la liste de valeurs de certains attributs "liste"
+    [Layer:Propriétés][Bouton:Formulaire d'attributs][Fenêtre:Contrôles disponibles][Onglet:Fields]
+    '''
+    def setModifyFormAttributes(self, listOfValues):
+        fields = self.fields()
+
+        for attribute, values in listOfValues.items():
+            index = fields.indexOf(attribute)
+            attribute_values = {}
+            for value in values:
+                attribute_values[value] = value
+
             type = 'ValueMap'
-            config = {'map': [{'Zone1': 'Zone1'},{' Zone2': ' Zone2'}, {'Zone3': 'Zone3'}]}
+            # exemple
+            # config = {'map': [{'':'', 'Zone1': 'Zone1'},{' Zone2': ' Zone2'}, {'Zone3': 'Zone3'}]}
+            config = {'map': attribute_values}
             setup = QgsEditorWidgetSetup(type, config)
             self.setEditorWidgetSetup(index, setup)
-
-
-
-
-
-    # Les objets détruits sont comptés et stockés dans une liste
-    '''def features_deleted(self, fids):
-        for fid in fids:
-            print('Features {} deleted'.format(fid))
-            self.stat.lFeaturesDeleted.append(fid)
-        self.stat.nfd = len(self.stat.lFeaturesDeleted)
-
-
-    # Les objets ajoutés sont comptés et stockés dans une liste
-    def feature_added(self, fid):
-        print('Feature {} added'.format(fid))
-        self.stat.lFeaturesAdded.append(fid)
-        self.stat.nfa = len(self.stat.lFeaturesAdded)
-
-
-    # Les objets dont la valeur d'un attribut a changé
-    # sont comptés et stockés dans une liste
-    def attribute_value_changed(self, fid, idx, value):
-        print('Attribute value of feature {} changed'.format(fid))
-        self.stat.lFeaturesChanged.append(fid)
-        self.stat.nfc = len(self.stat.lFeaturesChanged)
-
-
-    # Les objets dont la géométrie a changé
-    # sont comptés et stockés dans une liste
-    def geometry_changed(self, fid, geometry):
-        print('Geometry of feature {} changed'.format(fid))
-        self.stat.lFeaturesChanged.append(fid)
-        self.stat.nfc = len(self.stat.lFeaturesChanged)'''

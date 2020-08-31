@@ -587,7 +587,8 @@ class Contexte(object):
                     vlayer.setMd5BeforeWorks()
 
                     # Récupération des champs de la couche
-                    vlayer.getFields()
+                    listOfValues = self.client.getListOfValuesAttributeFromLayerInDatabase(layer.url, layer.nom)
+                    vlayer.setModifyFormAttributes(listOfValues)
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
