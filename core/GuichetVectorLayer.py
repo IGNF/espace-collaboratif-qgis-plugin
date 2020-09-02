@@ -89,7 +89,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         cle = hashlib.sha224(tmp).hexdigest()
 
         # Retourne la référence par objet (idQGIS:MD5)
-        fields = self.fields()
+        '''fields = self.fields()
         id = None
         for field in fields:
             name = field.name()
@@ -110,9 +110,9 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         # si l'objet n'a pas d'attribut id
         if id is None:
-            id = feature.id()
+            id = feature.id()'''
 
-        return (id, cle)
+        return (feature.id(), cle)
 
 
 
@@ -238,19 +238,25 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     Modification du formulaire de saisie pour afficher la liste de valeurs de certains attributs "liste"
     [Layer:Propriétés][Bouton:Formulaire d'attributs][Fenêtre:Contrôles disponibles][Onglet:Fields]
+    Exemple : config = {'map': [{'':'', 'Zone1': 'Zone1'},{' Zone2': ' Zone2'}, {'Zone3': 'Zone3'}]}
     '''
     def setModifyFormAttributes(self, listOfValues):
         fields = self.fields()
-
+        attribute_values = {}
         for attribute, values in listOfValues.items():
+            QgsEWS_type = 'ValueMap'
             index = fields.indexOf(attribute)
-            attribute_values = {}
-            for value in values:
-                attribute_values[value] = value
 
-            type = 'ValueMap'
-            # exemple
-            # config = {'map': [{'':'', 'Zone1': 'Zone1'},{' Zone2': ' Zone2'}, {'Zone3': 'Zone3'}]}
-            config = {'map': attribute_values}
-            setup = QgsEditorWidgetSetup(type, config)
+            if type(values) is list:
+                attribute_values.clear()
+                for value in values:
+                    attribute_values[value] = value
+
+            if type(values) is dict:
+                attribute_values.clear()
+                for cle, value in values.items():
+                    attribute_values[cle] = value
+
+            QgsEWS_config = {'map': attribute_values}
+            setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
             self.setEditorWidgetSetup(index, setup)

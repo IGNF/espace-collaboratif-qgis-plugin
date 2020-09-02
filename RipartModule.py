@@ -29,6 +29,9 @@ from builtins import str
 from builtins import range
 #from builtins import object
 import os.path
+
+from PyQt5.QtGui import QColor
+
 from .core.RipartLoggerCl import RipartLogger
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
@@ -40,7 +43,7 @@ from qgis.core import QgsProject,  QgsMessageLog, QgsWkbTypes
 import configparser
 
 # a virer
-from qgis.core import QgsCoordinateReferenceSystem,QgsVectorLayer,QgsProject, QgsDataSourceUri
+from qgis.core import QgsCoordinateReferenceSystem,QgsVectorLayer,QgsProject, QgsDataSourceUri, QgsSymbol, QgsRendererRange
 import urllib
 
 # Initialize Qt resources from file resources.py
@@ -347,29 +350,29 @@ class RipartPlugin:
     def synchroniserDonnees(self):
         print("Synchroniser les données")
         self.context = Contexte.getInstance(self, QgsProject)
-        if self.context != None:
+        '''if self.context != None:
             if not self.context.getVisibilityLayersFromGroupeActif():
                 self.context.iface.messageBar(). \
                     pushMessage("Remarque",
                                 "Pas de couche(s) éditable(s)", \
                                 level=2, duration=5)
-                return
+                return'''
 
         layer = self.context.iface.activeLayer()
-        #QgsConditionalLayerStyles
-        '''qcls = layer.conditionalStyles()
-        fields = layer.fields()
-        for field in fields:
-            name = field.name()
-            # QgsConditionalStyle
-            qcss = qcls.fieldStyles(name)
-            for qcs in qcss:
-                print(qcs.backgroundColor())
-                print(qcs.font())
-                print(qcs.icon())
-                print(qcs.rule())
-                print(qcs.symbol())
-                print(qcs.textColor())'''
+        #print(layer.renderer().symbol().symbolLayers()[0].properties())
+        '''QFeatureRenderer = layer.renderer()
+        print (QFeatureRenderer.capabilities())
+        print(QFeatureRenderer.legendSymbolItems())
+        print(layer.capabilitiesString())
+        print(layer.editFormConfig())
+        print(layer.loadDefaultStyle())'''
+
+        QFeatureRenderer = layer.renderer()
+        symbolItems = QFeatureRenderer.legendSymbolItems()
+        for symbolItem in symbolItems:
+            symbolLayers = symbolItem.symbol().symbolLayers()
+            for symbol in symbolLayers:
+                print(symbol.properties())
 
 
 

@@ -562,7 +562,6 @@ class Contexte(object):
                 if layer.nom in maplayers:
                     print ("Layer {} already exists !".format(layer.nom))
                     continue
-
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
@@ -588,7 +587,8 @@ class Contexte(object):
 
                     # Récupération des champs de la couche
                     listOfValues = self.client.getListOfValuesAttributeFromLayerInDatabase(layer.url, layer.nom)
-                    vlayer.setModifyFormAttributes(listOfValues)
+                    if len(listOfValues):
+                        vlayer.setModifyFormAttributes(listOfValues)
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"

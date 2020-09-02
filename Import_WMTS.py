@@ -152,6 +152,7 @@ class importWMTS:
         return layer_format
 
 
+
     # La requete doit être de la forme :
     # crs=EPSG:3857&
     # dpiMode=7&

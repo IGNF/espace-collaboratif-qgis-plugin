@@ -204,11 +204,15 @@ class Client(object):
                     continue
                 for c, v in valeurs.items():
                     tmp = v['listOfValues']
-                    if tmp == "" or tmp is None:
+
+                    if tmp == '' or tmp is None:
                         continue
-                    # Il faut remplacer la valeur None par vide
-                    if tmp[0] is None:
-                        tmp[0] = ""
+
+                    if type(tmp) is list:
+                        # Il faut remplacer la valeur None par vide
+                        # 'listOfValues': [None, 'Zone1', ' Zone2', 'Zone3']
+                        if tmp[0] is None:
+                            tmp[0] = ""
 
                     listOfValues[c] = tmp
         else:
