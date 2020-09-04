@@ -1,5 +1,6 @@
-from PyQt5.QtCore import QVariant
-from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup
+from PyQt5.QtGui import QColor
+from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer,\
+    QgsRuleBasedRenderer
 from .Statistics import Statistics
 import hashlib
 import os
@@ -260,3 +261,105 @@ class GuichetVectorLayer(QgsVectorLayer):
             QgsEWS_config = {'map': attribute_values}
             setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
             self.setEditorWidgetSetup(index, setup)
+
+
+    '''
+        Transformation de la condition en expression QGIS
+        La condition '{"$and" : [{"zone" : "Zone1"}]}' doit devenir '"zone" LIKE \"Zone1\"'
+        et doit se traduire dans QGIS par "zone" LIKE 'Zone1'
+        TODO : manque le traitement du AND, OR, etc...
+    '''
+    def changeConditionToExpression(self, condition):
+
+        if condition is None:
+            return ''
+
+        if type(condition) is str:
+            c = condition.replace(' ','')
+            c1 = c.replace('"', '')
+            tmp = c1.split(':')
+            v1 = tmp[1].replace('[{', '')
+            v2 = tmp[2].replace('}]}', '')
+            return "\"{}\" LIKE \'{}\'".format(v1, v2)
+
+
+    '''
+        Récupère la couleur en fonction du type de géométrie
+    '''
+    def getColorFromType(self, data):
+        if type is None:
+            return ''
+
+        if data['type'] == 'line':
+            return data['strokeColor']
+
+        if data['type'] == 'polygon':
+            return data['fillColor']
+
+        if data['type'] == 'point':
+            # pas de couleur ?
+            # il faudrait retourner data['externalGraphic']
+            # et puis peut-être
+            # "graphicWidth": 25,
+            # "graphicHeight": 25,
+            # "graphicOpacity": 1,']
+            return ''
+
+
+    '''
+        Récupère l'opacité de la couche
+    '''
+    def getOpacity(self, data):
+        if data['fillOpacity'] is None:
+            # fully opaque
+            return 1
+
+        return data['fillOpacity']
+
+
+
+    '''
+        Modification de la symbologie
+    '''
+    def setModifySymbols(self, listOfValues):
+        # class_rules = ('label=name', 'expression=condition', 'color=fillColor', 'opacity=fillOpacity' )
+        class_rules = []
+
+
+        for c, v in listOfValues.items():
+            tmp = []
+            tmp.append(v['name'])
+            expression = self.changeConditionToExpression(v['condition'])
+            tmp.append(expression)
+            col = self.getColorFromType(v)
+            tmp.append(col)
+            opac = self.getOpacity(v)
+            tmp.append(opac)
+            class_rules.append(tmp)
+
+        # create a new rule-based renderer
+        symbol = QgsSymbol.defaultSymbol(self.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+
+        # get the "root" rule
+        root_rule = renderer.rootRule()
+
+        for label, expression, color, opacity in class_rules:
+            # create a clone (i.e. a copy) of the default rule
+            rule = root_rule.children()[0].clone()
+            # set the label, opacity, expression and color
+            rule.setLabel(label)
+            rule.setFilterExpression(expression)
+            rule.symbol().setColor(QColor(color))
+            rule.symbol().setOpacity(opacity)
+
+            # append the rule to the list of rules
+            root_rule.appendChild(rule)
+
+        # delete the default rule
+        root_rule.removeChildAt(0)
+
+        # apply the renderer to the layer
+        self.setRenderer(renderer)
+        # Refresh layer
+        self.triggerRepaint()

@@ -562,6 +562,7 @@ class Contexte(object):
                 if layer.nom in maplayers:
                     print ("Layer {} already exists !".format(layer.nom))
                     continue
+
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
@@ -585,10 +586,17 @@ class Contexte(object):
                     vlayer.init(self.projectDir, layer.nom)
                     vlayer.setMd5BeforeWorks()
 
-                    # Récupération des champs de la couche
-                    listOfValues = self.client.getListOfValuesAttributeFromLayerInDatabase(layer.url, layer.nom)
-                    if len(listOfValues):
-                        vlayer.setModifyFormAttributes(listOfValues)
+                    # Si les champs de la couche sont de type "Liste" alors modification du formulaire d'attributs
+                    data = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
+                    listOfValuesFromItemAttribute = self.client.getListOfValuesFromItemAttribute(data)
+                    if len(listOfValuesFromItemAttribute):
+                        vlayer.setModifyFormAttributes(listOfValuesFromItemAttribute)
+
+                    # Modification de la symbologie de la couche
+                    listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(data)
+                    # Si la liste est vide alors il n'y a pas de style pré-défini
+                    if len(listOfValuesFromItemStyle):
+                        vlayer.setModifySymbols(listOfValuesFromItemStyle)
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"

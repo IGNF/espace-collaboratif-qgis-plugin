@@ -39,11 +39,10 @@ from qgis.PyQt import QtGui, uic
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
 #from qgis.core import *
-from qgis.core import QgsProject,  QgsMessageLog, QgsWkbTypes
+from qgis.core import QgsProject,  QgsMessageLog, QgsWkbTypes, QgsCoordinateReferenceSystem,\
+    QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer
 import configparser
 
-# a virer
-from qgis.core import QgsCoordinateReferenceSystem,QgsVectorLayer,QgsProject, QgsDataSourceUri, QgsSymbol, QgsRendererRange
 import urllib
 
 # Initialize Qt resources from file resources.py
@@ -359,20 +358,41 @@ class RipartPlugin:
                 return'''
 
         layer = self.context.iface.activeLayer()
-        #print(layer.renderer().symbol().symbolLayers()[0].properties())
-        '''QFeatureRenderer = layer.renderer()
-        print (QFeatureRenderer.capabilities())
-        print(QFeatureRenderer.legendSymbolItems())
-        print(layer.capabilitiesString())
-        print(layer.editFormConfig())
-        print(layer.loadDefaultStyle())'''
+        #class_rules = ('label=name', 'expression=condition', 'color=fillColor', 'opacity=fillOpacity' )
+        class_rules = (
+            ('Zone_0', '"zone" LIKE \'Zone1\'', '#ff0000', 0.4),
+            ('Zone_1', '"zone" LIKE \'Zone2\'', '#00ff00', 0.4),
+            ('Zone_2', '"zone" LIKE \'Zone3\'', '#0000ff', 0.4),
+            ('Zone', '', '#ee9900', 0.4)
+        )
 
-        QFeatureRenderer = layer.renderer()
-        symbolItems = QFeatureRenderer.legendSymbolItems()
-        for symbolItem in symbolItems:
-            symbolLayers = symbolItem.symbol().symbolLayers()
-            for symbol in symbolLayers:
-                print(symbol.properties())
+        # create a new rule-based renderer
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+
+        # get the "root" rule
+        root_rule = renderer.rootRule()
+
+        for label, expression, color, opacity in class_rules:
+            # create a clone (i.e. a copy) of the default rule
+            rule = root_rule.children()[0].clone()
+            # set the label, opacity, expression and color
+            rule.setLabel(label)
+            rule.setFilterExpression(expression)
+            rule.symbol().setColor(QColor(color))
+            # 0(fully transparent) and 1(fully opaque)
+            rule.symbol().setOpacity(opacity)
+
+            # append the rule to the list of rules
+            root_rule.appendChild(rule)
+
+        # delete the default rule
+        root_rule.removeChildAt(0)
+
+        # apply the renderer to the layer
+        layer.setRenderer(renderer)
+        # Refresh layer
+        layer.triggerRepaint()
 
 
 
@@ -391,7 +411,7 @@ class RipartPlugin:
                 cntHandlers = len(logger.handlers)
                 for i in range(cntHandlers-1,-1,-1):
                    try:
-                       if  os.path.basename(handlers[i].baseFilename)[-10:] == u"plugin_espaceco.log" :
+                       if os.path.basename(handlers[i].baseFilename)[-10:] == u"plugin_espaceco.log" :
                            handlers[i].close()
                            logger.removeHandler(handlers[i])
                    except AttributeError as e:
