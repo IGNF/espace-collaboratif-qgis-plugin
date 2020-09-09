@@ -114,7 +114,7 @@ class Client(object):
 
 
     def getLayersFromCleGeoportailUser(self, cle):
-        layers = []
+        layers = {}
 
         #TO DO voir pourquoi la clé est None dans certains cas
         if cle == None:
@@ -129,16 +129,22 @@ class Client(object):
         url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(cleGeoportail)
         self.logger.debug("{0} {1}".format("getLayersFromCleGeoportailUser", url))
         reponse = requests.get(url)
-
         if reponse.status_code == 200:
-            root = ET.fromstring(reponse.text)
-            node = root.find('.{http://www.opengis.net/context}LayerList')
-            # print(node.tag, node.attrib){http://www.opengis.net/context}Layer {'hidden': '1', 'queryable': '1'}
             print("Liste des couches correspondant à la clé Géoportail")
-            for elem in node.iter():
-                if elem.tag == '{http://www.opengis.net/context}Name':
-                    print(elem.text)
-                    layers.append(elem.text)
+            root = ET.fromstring(reponse.text)
+            nodeLayerList = root.find('.{http://www.opengis.net/context}LayerList')
+            for elementNodeLayerList in nodeLayerList.iter():
+                nodeLayer = elementNodeLayerList.findall('.{http://www.opengis.net/context}Layer')
+                for elementNodelayer in nodeLayer:
+                    name = elementNodelayer.find('{http://www.opengis.net/context}Name').text
+                    title = elementNodelayer.find('{http://www.opengis.net/context}Title').text
+                    if name is not "" and title is not "":
+                        layers[name] = title
+                        mess = "{} ({})".format(title, name)
+                        title = ""
+                        name = ""
+                        print(mess)
+
         else:
             raise Exception(ClientHelper.notNoneValue("{} : {}".format(reponse.status_code, reponse.reason)))
 
@@ -172,6 +178,8 @@ class Client(object):
             raise Exception(ClientHelper.notNoneValue(result))
             
         return profil
+
+
 
     '''
         Connexion à une base de données et une couche donnée
@@ -241,6 +249,11 @@ class Client(object):
         for dftKey, dftValue in dataFeaturetype.items():
             if dftKey != 'style':
                 continue
+
+            # La couche n'a pas de style défini, QGIS applique une symbologie par défaut
+            if dftValue is None:
+                return listOfValues
+
             for dftvKey, dftvValues in dftValue.items():
                 if dftvKey == 'children':
                     if type(dftvValues) is list and len(dftvValues) == 0:

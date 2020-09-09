@@ -1,3 +1,5 @@
+import random
+
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer,\
     QgsRuleBasedRenderer
@@ -42,7 +44,9 @@ class GuichetVectorLayer(QgsVectorLayer):
     Connexion des signaux
     Initialisation des comptages
     '''
-    def init(self, projectDirectory, layerName):
+    def __init__(self, projectDirectory, layerName, layerType):
+
+        super(GuichetVectorLayer, self).__init__(projectDirectory, layerName, layerType)
         self.connectSignals()
         self.stat = Statistics(self.featureCount())
         self.repertoire = projectDirectory
@@ -263,32 +267,38 @@ class GuichetVectorLayer(QgsVectorLayer):
             self.setEditorWidgetSetup(index, setup)
 
 
+
     '''
         Transformation de la condition en expression QGIS
         La condition '{"$and" : [{"zone" : "Zone1"}]}' doit devenir '"zone" LIKE \"Zone1\"'
         et doit se traduire dans QGIS par "zone" LIKE 'Zone1'
         TODO : manque le traitement du AND, OR, etc...
     '''
-    def changeConditionToExpression(self, condition):
-
-        if condition is None:
+    def changeConditionToExpression(self, condition, bExpression):
+        # Pas de style pour la couche, style QGIS par défaut
+        if bExpression is False and condition is None:
             return ''
+
+        #Pas de rule style, capture de toutes les autres entités
+        if bExpression is True and condition is None:
+            return "ELSE"
 
         if type(condition) is str:
             c = condition.replace(' ','')
             c1 = c.replace('"', '')
             tmp = c1.split(':')
-            v1 = tmp[1].replace('[{', '')
-            v2 = tmp[2].replace('}]}', '')
-            return "\"{}\" LIKE \'{}\'".format(v1, v2)
+            attribute = tmp[1].replace('[{', '')
+            value = tmp[2].replace('}]}', '')
+            return "\"{}\" LIKE \'{}\'".format(attribute, value)
+
+        return ''
+
 
 
     '''
         Récupère la couleur en fonction du type de géométrie
     '''
     def getColorFromType(self, data):
-        if type is None:
-            return ''
 
         if data['type'] == 'line':
             return data['strokeColor']
@@ -296,25 +306,38 @@ class GuichetVectorLayer(QgsVectorLayer):
         if data['type'] == 'polygon':
             return data['fillColor']
 
+        # La symbologie d'un point dans l'espace collaboratif est un symbole.
+        # Pour l'instant, un point se voit attribuer une couleur aléatoire
         if data['type'] == 'point':
-            # pas de couleur ?
             # il faudrait retourner data['externalGraphic']
             # et puis peut-être
             # "graphicWidth": 25,
             # "graphicHeight": 25,
             # "graphicOpacity": 1,']
-            return ''
+            # random color
+            random_color_point = f"#{random.randrange(0x1000000):06x}"
+            return random_color_point
+
+        return ''
+
 
 
     '''
         Récupère l'opacité de la couche
     '''
     def getOpacity(self, data):
-        if data['fillOpacity'] is None:
+
+        if data['type'] == 'line':
+            return data['strokeOpacity']
+
+        if data['type'] == 'polygon':
+            return data['fillOpacity']
+
+        if data['type'] == 'point':
             # fully opaque
             return 1
 
-        return data['fillOpacity']
+        return 1
 
 
 
@@ -322,14 +345,14 @@ class GuichetVectorLayer(QgsVectorLayer):
         Modification de la symbologie
     '''
     def setModifySymbols(self, listOfValues):
-        # class_rules = ('label=name', 'expression=condition', 'color=fillColor', 'opacity=fillOpacity' )
+        # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
         class_rules = []
-
-
+        bExpression = False
+        if len(listOfValues) > 1:
+            bExpression = True
         for c, v in listOfValues.items():
-            tmp = []
-            tmp.append(v['name'])
-            expression = self.changeConditionToExpression(v['condition'])
+            tmp = [v['name']]
+            expression = self.changeConditionToExpression(v['condition'], bExpression)
             tmp.append(expression)
             col = self.getColorFromType(v)
             tmp.append(col)

@@ -44,10 +44,3 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         
         self.textInfo.setText("")
         self.btnOK.clicked.connect(self.close)
-
-
-    '''def addMessage(self, mess):
-        self.textInfo.append(mess)'''
-
-
-        

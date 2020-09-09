@@ -316,6 +316,7 @@ class RipartPlugin:
         self.toolbar.addWidget(self.toolButton2)
 
 
+
     def chargerGuichet(self):
         try:
             print("Chargement des couches du groupe utilisateur")
@@ -340,61 +341,24 @@ class RipartPlugin:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 
+
     def compterModifications(self):
         print("Compter les modifications")
         cptg = CompterGuichet()
         cptg.doCount()
 
 
+
     def synchroniserDonnees(self):
         print("Synchroniser les données")
         self.context = Contexte.getInstance(self, QgsProject)
-        '''if self.context != None:
+        if self.context != None:
             if not self.context.getVisibilityLayersFromGroupeActif():
                 self.context.iface.messageBar(). \
                     pushMessage("Remarque",
                                 "Pas de couche(s) éditable(s)", \
                                 level=2, duration=5)
-                return'''
-
-        layer = self.context.iface.activeLayer()
-        #class_rules = ('label=name', 'expression=condition', 'color=fillColor', 'opacity=fillOpacity' )
-        class_rules = (
-            ('Zone_0', '"zone" LIKE \'Zone1\'', '#ff0000', 0.4),
-            ('Zone_1', '"zone" LIKE \'Zone2\'', '#00ff00', 0.4),
-            ('Zone_2', '"zone" LIKE \'Zone3\'', '#0000ff', 0.4),
-            ('Zone', '', '#ee9900', 0.4)
-        )
-
-        # create a new rule-based renderer
-        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-        renderer = QgsRuleBasedRenderer(symbol)
-
-        # get the "root" rule
-        root_rule = renderer.rootRule()
-
-        for label, expression, color, opacity in class_rules:
-            # create a clone (i.e. a copy) of the default rule
-            rule = root_rule.children()[0].clone()
-            # set the label, opacity, expression and color
-            rule.setLabel(label)
-            rule.setFilterExpression(expression)
-            rule.symbol().setColor(QColor(color))
-            # 0(fully transparent) and 1(fully opaque)
-            rule.symbol().setOpacity(opacity)
-
-            # append the rule to the list of rules
-            root_rule.appendChild(rule)
-
-        # delete the default rule
-        root_rule.removeChildAt(0)
-
-        # apply the renderer to the layer
-        layer.setRenderer(renderer)
-        # Refresh layer
-        layer.triggerRepaint()
-
-
+                return
 
 
     def unload(self):

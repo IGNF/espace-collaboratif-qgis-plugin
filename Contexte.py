@@ -559,7 +559,8 @@ class Contexte(object):
                 return
 
             for layer in guichet_layers:
-                if layer.nom in maplayers:
+
+                if layer.nom in maplayers or layer.description in maplayers:
                     print ("Layer {} already exists !".format(layer.nom))
                     continue
 
@@ -582,8 +583,6 @@ class Contexte(object):
                     print("Layer {} contains {} objects".format(vlayer.name(), len(list(vlayer.getFeatures()))))
 
                     # Initialisation des données pour le comptage
-                    # Connection des évènements qui auront lieu sur la couche
-                    vlayer.init(self.projectDir, layer.nom)
                     vlayer.setMd5BeforeWorks()
 
                     # Si les champs de la couche sont de type "Liste" alors modification du formulaire d'attributs
@@ -603,8 +602,8 @@ class Contexte(object):
                 '''
                 if layer.type == cst.GEOPORTAIL:
                     importWmts = importWMTS(self)
-                    uri = importWmts.getWtmsUrlParams(layer.nom)
-                    rlayer = QgsRasterLayer(uri, layer.nom, 'wms')
+                    titleLayer_uri = importWmts.getWtmsUrlParams(layer.nom)
+                    rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
 
                     if not rlayer.isValid():
                         print ("Layer {} failed to load !".format(rlayer.name()))

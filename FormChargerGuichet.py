@@ -153,17 +153,23 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             if layer.type != cst.GEOPORTAIL:
                 continue
 
-            if layer.nom in self.profilUser.layersCleGeoportail:
+            if layer.nom not in self.profilUser.layersCleGeoportail:
+                continue
 
-                rowPosition = self.tableWidgetFondsGeoportail.rowCount()
-                self.tableWidgetFondsGeoportail.insertRow(rowPosition)
+            title = self.profilUser.layersCleGeoportail[layer.nom]
+            if title is None:
+                continue
 
-                # Colonne "Nom de la couche"
-                item = QtWidgets.QTableWidgetItem(layer.nom)
-                self.tableWidgetFondsGeoportail.setItem(rowPosition, 0, item)
+            rowPosition = self.tableWidgetFondsGeoportail.rowCount()
+            self.tableWidgetFondsGeoportail.insertRow(rowPosition)
 
-                # Colonne "Charger"
-                self.setColonneCharger(self.tableWidgetFondsGeoportail, rowPosition, 1)
+            # Colonne "Nom de la couche"
+            layerComposed = "{} ({})".format(title, layer.nom)
+            item = QtWidgets.QTableWidgetItem(layerComposed)
+            self.tableWidgetFondsGeoportail.setItem(rowPosition, 0, item)
+
+            # Colonne "Charger"
+            self.setColonneCharger(self.tableWidgetFondsGeoportail, rowPosition, 1)
 
         self.tableWidgetFondsGeoportail.resizeColumnsToContents()
 
@@ -180,12 +186,12 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 continue
 
             if layer.nom not in self.profilUser.layersCleGeoportail:
-
                 rowPosition = self.tableWidgetFondsGeoportailBis.rowCount()
                 self.tableWidgetFondsGeoportailBis.insertRow(rowPosition)
 
                 # Colonne "Nom de la couche"
-                item = QtWidgets.QTableWidgetItem(layer.nom)
+                layerComposed = "{} ({})".format(layer.description, layer.nom)
+                item = QtWidgets.QTableWidgetItem(layerComposed)
                 self.tableWidgetFondsGeoportailBis.setItem(rowPosition, 0, item)
                 item.setForeground(QtGui.QColor(190, 190, 190))
 
@@ -252,7 +258,13 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         for layerChecked in layersChecked:
             for tmp in layerChecked:
                 for layer in self.listLayers:
-                    if tmp == layer.nom:
+                    # tmp est sous la forme 'troncon_de_voie_ferree' ou 'Cartes IGN (GEOGRAPHICALGRIDSYSTEMS.MAPS)'
+                    if '(' in tmp:
+                        tmpName = tmp.split('(')
+                        name = tmpName[1].replace(')','')
+                    else:
+                        name = tmp
+                    if name == layer.nom:
                         layersQGIS.append(layer)
 
         importGuichet = ImporterGuichet(self.context)

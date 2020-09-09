@@ -38,6 +38,7 @@ class importWMTS:
     tile_matrix_set = None
     layer_id = None
     crs = None
+    title_layer = None
 
 
     def __init__(self, context):
@@ -135,7 +136,8 @@ class importWMTS:
             if self.wmts_lyr.id != idGuichetLayerWmts:
                 continue
             self.layer_id = self.wmts_lyr.id
-            print("Layer picked : {}:{}".format(self.wmts_lyr.title, self.layer_id))
+            self.title_layer = self.wmts_lyr.title
+            print("Layer picked : {}:{}".format(self.title_layer, self.layer_id))
             return self.layer_id
 
 
@@ -175,4 +177,4 @@ class importWMTS:
             "url": "{}{}".format(self.getTileUrl(),"SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
         }
         wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
-        return wmts_url_final
+        return (self.title_layer, wmts_url_final)
