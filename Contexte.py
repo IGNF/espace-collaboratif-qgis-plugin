@@ -593,9 +593,7 @@ class Contexte(object):
 
                     # Modification de la symbologie de la couche
                     listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(data)
-                    # Si la liste est vide alors il n'y a pas de style pré-défini
-                    if len(listOfValuesFromItemStyle):
-                        vlayer.setModifySymbols(listOfValuesFromItemStyle)
+                    vlayer.setModifySymbols(listOfValuesFromItemStyle)
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
@@ -616,6 +614,10 @@ class Contexte(object):
                     print("Layer {} added to map".format(rlayer.name()))
 
             self.mapCan.refresh()
+            '''fileName = self.QgsProject.instance().fileName()
+            print(fileName)
+            res = self.QgsProject.instance().write(fileName)
+            print (res)'''
 
         except Exception as e:
             self.logger.error(format(e))

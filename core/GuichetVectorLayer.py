@@ -2,7 +2,7 @@ import random
 
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer,\
-    QgsRuleBasedRenderer
+    QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes
 from .Statistics import Statistics
 import hashlib
 import os
@@ -318,7 +318,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             random_color_point = f"#{random.randrange(0x1000000):06x}"
             return random_color_point
 
-        return ''
+        return ""
 
 
 
@@ -342,15 +342,148 @@ class GuichetVectorLayer(QgsVectorLayer):
 
 
     '''
-        Modification de la symbologie
+        Récupère la taille du symbole
     '''
-    def setModifySymbols(self, listOfValues):
+    def getWidth(self, data):
+
+        if data['type'] == 'line':
+            return str(data['strokeWidth'])
+
+        if data['type'] == 'point':
+            return 10
+
+        return ''
+
+
+
+    def setSymbolLine(self, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity):
+        lineSymbol = {'capstyle': strokeLinecap, 'line_style': strokeDashstyle,
+                      'line_color': strokeColor, 'line_width': strokeWidth,
+                      'line_width_unit': 'Pixel'}
+        symbol = QgsLineSymbol().createSimple(lineSymbol)
+        symbol.setOpacity(strokeOpacity)
+        return symbol
+
+
+
+    def setSymbolPoint(self, fillColor, strokeColor):
+        pointSymbol = {'angle': '0', 'color': fillColor, 'horizontal_anchor_point': '1',
+                       'joinstyle': 'round', 'name': 'circle', 'offset': '0,0',
+                       'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'Pixel',
+                       'outline_color': strokeColor, 'outline_style': 'solid',
+                       'outline_width': '2', 'outline_width_map_unit_scale': '3x:0,0,0,0,0,0',
+                       'outline_width_unit': 'Pixel', 'scale_method': 'diameter', 'size': '10',
+                       'size_map_unit_scale': '3x:0,0,0,0,0,0', 'size_unit': 'Pixel',
+                       'vertical_anchor_point': '1'}
+        symbol = QgsMarkerSymbol().createSimple(pointSymbol)
+        symbol.setOpacity(1)
+        return symbol
+
+
+
+    def setSymbolPolygon(self, fillColor, strokeColor, strokeDashstyle, strokeWidth, fillOpacity):
+        polygonSymbol = {'color': fillColor, 'outline_color': strokeColor,
+                         'outline_style': strokeDashstyle, 'outline_width': strokeWidth,
+                         'outline_width_unit': 'Pixel'}
+        symbol = QgsFillSymbol().createSimple(polygonSymbol)
+        symbol.setOpacity(fillOpacity)
+        return symbol
+
+
+
+    '''
+        Symbologie extraite du style Collaboratif par défaut
+    '''
+    def setModifyWithQgsSingleDefaultSymbolRenderer(self):
+        geomType = self.geometryType()
+        symbol = None
+
+        # 'Point'
+        if geomType == 0:
+            pointSymbol = {'angle': '0', 'color': '238,153,0,255', 'horizontal_anchor_point': '1', 'joinstyle': 'round',
+                           'name': 'circle', 'offset': '0,0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0',
+                           'offset_unit': 'Pixel', 'outline_color': '238,153,0,255', 'outline_style': 'solid',
+                           'outline_width': '2', 'outline_width_map_unit_scale': '3x:0,0,0,0,0,0',
+                           'outline_width_unit': 'Pixel', 'scale_method': 'diameter', 'size': '10',
+                           'size_map_unit_scale': '3x:0,0,0,0,0,0', 'size_unit': 'Pixel', 'vertical_anchor_point': '1'}
+            symbol = QgsMarkerSymbol().createSimple(pointSymbol)
+            symbol.setOpacity(0.5)
+
+        # 'Polygon'
+        if geomType == 2:
+            polygonSymbol = {'border_width_map_unit_scale': '3x:0,0,0,0,0,0', 'color': '238,153,0,255',
+                             'joinstyle': 'miter', 'offset': '0,0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0',
+                             'offset_unit': 'Pixel', 'outline_color': '255,255,255,0', 'outline_style': 'no',
+                             'outline_width': '0', 'outline_width_unit': 'Pixel', 'style': 'solid'}
+            symbol = QgsFillSymbol().createSimple(polygonSymbol)
+            symbol.setOpacity(0.5)
+
+        # 'LineString'
+        if geomType == 1:
+            lineSymbol = {'capstyle': 'square', 'customdash': '5;2', 'customdash_map_unit_scale': '3x:0,0,0,0,0,0',
+                          'customdash_unit': 'Pixel', 'draw_inside_polygon': '0', 'joinstyle': 'bevel',
+                          'line_color': '238,153,0,255', 'line_style': 'solid', 'line_width': '2',
+                          'line_width_unit': 'Pixel', 'offset': '0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0',
+                          'offset_unit': 'Pixel', 'ring_filter': '0', 'use_custom_dash': '0',
+                          'width_map_unit_scale': '3x:0,0,0,0,0,0'}
+            symbol = QgsLineSymbol().createSimple(lineSymbol)
+            symbol.setOpacity(1)
+
+        if symbol is None:
+            symbol = QgsSymbol.defaultSymbol(geomType)
+            symbol.setColor(QColor('238,153,0,255'))
+            symbol.setOpacity(1)
+
+        symbol.setOutputUnit(QgsUnitTypes.RenderPixels)
+        renderer = QgsSingleSymbolRenderer(symbol)
+        # apply the renderer to the layer
+        self.setRenderer(renderer)
+        # Refresh layer
+        self.triggerRepaint()
+
+
+
+    def setModifyWithQgsSingleSymbolRenderer(self, data):
+        symbol = None
+        for c, v in data.items():
+
+            if v['type'] == 'line':
+                symbol = self.setSymbolLine(v["strokeLinecap"], v["strokeDashstyle"], v["strokeColor"],
+                                            str(v["strokeWidth"]), v['strokeOpacity'])
+
+            if v['type'] == 'polygon':
+                symbol = self.setSymbolPolygon(v["fillColor"], v['strokeColor'], v['strokeDashstyle'], str(v['strokeWidth']),
+                                               v['fillOpacity'])
+
+            if v['type'] == 'point':
+                fillcolor = v["fillColor"]
+                if fillcolor is None:
+                    fillcolor = QColor(f"#{random.randrange(0x1000000):06x}")
+
+                strokecolor = v['strokeColor']
+                if strokecolor is None:
+                    strokecolor = QColor(f"#{random.randrange(0x1000000):06x}")
+
+                symbol = self.setSymbolPoint(fillcolor, strokecolor)
+
+        if symbol is None:
+            symbol = QgsSymbol.defaultSymbol(self.geometryType())
+            symbol.setColor(QColor('238,153,0,255'))
+            symbol.setOpacity(1)
+
+        symbol.setOutputUnit(QgsUnitTypes.RenderPixels)
+        renderer = QgsSingleSymbolRenderer(symbol)
+        # apply the renderer to the layer
+        self.setRenderer(renderer)
+        # Refresh layer
+        self.triggerRepaint()
+
+
+
+    def setModifyWithQgsRuleBasedSymbolRendererTer(self, data, bExpression):
         # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
         class_rules = []
-        bExpression = False
-        if len(listOfValues) > 1:
-            bExpression = True
-        for c, v in listOfValues.items():
+        for c, v in data.items():
             tmp = [v['name']]
             expression = self.changeConditionToExpression(v['condition'], bExpression)
             tmp.append(expression)
@@ -358,6 +491,8 @@ class GuichetVectorLayer(QgsVectorLayer):
             tmp.append(col)
             opac = self.getOpacity(v)
             tmp.append(opac)
+            width = self.getWidth(v)
+            tmp.append(width)
             class_rules.append(tmp)
 
         # create a new rule-based renderer
@@ -367,7 +502,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         # get the "root" rule
         root_rule = renderer.rootRule()
 
-        for label, expression, color, opacity in class_rules:
+        for label, expression, color, opacity, width in class_rules:
             # create a clone (i.e. a copy) of the default rule
             rule = root_rule.children()[0].clone()
             # set the label, opacity, expression and color
@@ -375,7 +510,9 @@ class GuichetVectorLayer(QgsVectorLayer):
             rule.setFilterExpression(expression)
             rule.symbol().setColor(QColor(color))
             rule.symbol().setOpacity(opacity)
-
+            rule.symbol().setOutputUnit(QgsUnitTypes.RenderPixels)
+            if width != '':
+                rule.symbol().setWidth(width)
             # append the rule to the list of rules
             root_rule.appendChild(rule)
 
@@ -386,3 +523,207 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.setRenderer(renderer)
         # Refresh layer
         self.triggerRepaint()
+
+
+
+    def setModifyWithQgsRuleBasedSymbolRendererBis(self, data, bExpression):
+        isTypePoint = False
+        class_rules = []
+        #symbol = None
+        for c, v in data.items():
+            tmp = [v['name']]
+            tmp.append(v['type'])
+            if v['type'] == 'line':
+                symbol = self.setSymbolLine(v["strokeLinecap"], v["strokeDashstyle"], v["strokeColor"],
+                                            str(v["strokeWidth"]), v['strokeOpacity'])
+                tmp.append(symbol)
+
+            if v['type'] == 'polygon':
+                symbol = self.setSymbolPolygon(v["fillColor"], v['strokeColor'], v['strokeDashstyle'],
+                                               str(v['strokeWidth']), v['fillOpacity'])
+                tmp.append(symbol)
+
+            if v['type'] == 'point':
+                fillcolor = v["fillColor"]
+                if fillcolor is None:
+                    fillcolor = QColor("0,0,0,255")
+                    isTypePoint = True
+                strokecolor = v['strokeColor']
+                if strokecolor is None:
+                    strokecolor = QColor("0,0,0,255")
+                    isTypePoint = True
+                symbol = self.setSymbolPoint(fillcolor, strokecolor)
+                tmp.append(symbol)
+
+            expression = self.changeConditionToExpression(v['condition'], bExpression)
+            tmp.append(expression)
+            class_rules.append(tmp)
+        # create a new rule-based renderer
+        renderer = QgsRuleBasedRenderer()
+        for label, symbol, expression in class_rules:
+            renderer.setSymbol (symbol)
+            # get the "root" rule
+            root_rule = renderer.rootRule()
+            # create a clone (i.e. a copy) of the default rule
+            rule = root_rule.children()[0].clone()
+            # set the label, opacity, expression and color
+            rule.setLabel(label)
+            rule.setFilterExpression(expression)
+            rule.symbol().setOutputUnit(QgsUnitTypes.RenderPixels)
+            # Remplacement des symboles
+            if isTypePoint:
+                rule.symbol().setColor(QColor(f"#{random.randrange(0x1000000):06x}"))
+            # append the rule to the list of rules
+            root_rule.appendChild(rule)
+            # delete the default rule
+            root_rule.removeChildAt(0)
+
+        # apply the renderer to the layer
+        self.setRenderer(renderer)
+
+        # Refresh layer
+        self.triggerRepaint()
+
+
+
+    def setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression):
+        # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
+        class_rules = []
+        for c, v in data.items():
+            tmp = [v['name']]
+            expression = self.changeConditionToExpression(v['condition'], bExpression)
+            tmp.append(expression)
+            col = self.getColorFromType(v)
+            tmp.append(col)
+            opac = self.getOpacity(v)
+            tmp.append(opac)
+            width = self.getWidth(v)
+            tmp.append(width)
+            class_rules.append(tmp)
+
+        # create a new rule-based renderer
+        symbol = QgsSymbol.defaultSymbol(self.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+
+        # get the "root" rule
+        root_rule = renderer.rootRule()
+
+        for label, expression, color, opacity, width in class_rules:
+            # create a clone (i.e. a copy) of the default rule
+            rule = root_rule.children()[0].clone()
+            # set the label, opacity, expression and color
+            rule.setLabel(label)
+            rule.setFilterExpression(expression)
+            rule.symbol().setColor(QColor(color))
+            rule.symbol().setOpacity(opacity)
+            rule.symbol().setOutputUnit(QgsUnitTypes.RenderPixels)
+            if width != '':
+                if type(width) is str:
+                    rule.symbol().setWidth(int(width))
+                else:
+                    rule.symbol().setSize(width)
+            # append the rule to the list of rules
+            root_rule.appendChild(rule)
+
+        # delete the default rule
+        root_rule.removeChildAt(0)
+
+        # apply the renderer to the layer
+        self.setRenderer(renderer)
+        # Refresh layer
+        self.triggerRepaint()
+
+
+
+
+    def appendClassRules(self, data, bExpression):
+        # class_rules = (
+        # 'label=name',
+        # 'expression=condition',
+        # 'color=fillColor/strokeColor',
+        # 'opacity=fillOpacity/strokeOpacity' )
+        class_rules = []
+        for c, v in data.items():
+            tmp = [v['name']]
+            expression = self.changeConditionToExpression(v['condition'], bExpression)
+            tmp.append(expression)
+            col = self.getColorFromType(v)
+            tmp.append(col)
+            opac = self.getOpacity(v)
+            tmp.append(opac)
+            width = self.getWidth(v)
+            tmp.append(width)
+            # Ajout de la symbologie 'Ensemble de règles' pour une couche
+            class_rules.append(tmp)
+
+        return class_rules
+
+
+
+    def setModifyWithQgsRuleBasedSymbolRendererQuater(self, data, bExpression):
+        # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
+        class_rules = []
+        for c, v in data.items():
+            tmp = [v['name']]
+            expression = self.changeConditionToExpression(v['condition'], bExpression)
+            tmp.append(expression)
+            col = self.getColorFromType(v)
+            tmp.append(col)
+            opac = self.getOpacity(v)
+            tmp.append(opac)
+            width = self.getWidth(v)
+            tmp.append(width)
+            class_rules.append(tmp)
+
+        # create a new rule-based renderer
+        symbol = QgsSymbol.defaultSymbol(self.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+
+        # get the "root" rule
+        root_rule = renderer.rootRule()
+
+        for label, expression, color, opacity, width in class_rules:
+            # create a clone (i.e. a copy) of the default rule
+            rule = root_rule.children()[0].clone()
+            # set the label, opacity, expression and color
+            rule.setLabel(label)
+            rule.setFilterExpression(expression)
+            rule.symbol().setColor(QColor(color))
+            #rule.symbol().setFillColor(fillColor)
+            #rule.symbol().setStrokeColor(strokeColor)
+            #rule.symbol().setPenCapStyle(capStyle)
+            rule.symbol().setOpacity(opacity)
+            rule.symbol().setOutputUnit(QgsUnitTypes.RenderPixels)
+            if width != '':
+                rule.symbol().setWidth(width)
+            # append the rule to the list of rules
+            root_rule.appendChild(rule)
+
+        # delete the default rule
+        root_rule.removeChildAt(0)
+
+        # apply the renderer to the layer
+        self.setRenderer(renderer)
+        # Refresh layer
+        self.triggerRepaint()
+
+
+
+    '''
+        Modification de la symbologie
+    '''
+    def setModifySymbols(self, listOfValues):
+
+        # Pas de balise Style, Symbologie = Symbole QGIS par défaut
+        if len(listOfValues) == 0:
+            self.setModifyWithQgsSingleDefaultSymbolRenderer()
+
+        # Une balise Style, Symbologie = Symbole unique
+        if len(listOfValues) == 1:
+            self.setModifyWithQgsSingleSymbolRenderer(listOfValues)
+
+        # Balise Style avec balise(s) Children, Symbologie = Ensemble de règles
+        bExpression = False
+        if len(listOfValues) > 1:
+            bExpression = True
+            self.setModifyWithQgsRuleBasedSymbolRenderer(listOfValues, bExpression)
