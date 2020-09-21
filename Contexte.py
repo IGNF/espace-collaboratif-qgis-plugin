@@ -398,7 +398,7 @@ class Contexte(object):
                             dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace Collaboratif.</b>")
                             dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
                             dlgInfo.textInfo.append("Login : {}".format(self.login))
-                            dlgInfo.textInfo.append("Profil : {}".format(self.profil.titre))
+                            dlgInfo.textInfo.append("Groupe : {}".format(self.profil.titre))
                             if self.profil.zone == cst.ZoneGeographique.UNDEFINED:
                                 zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
                                 if zoneExtraction == "" or zoneExtraction == None:
@@ -558,6 +558,9 @@ class Contexte(object):
                 QMessageBox.warning(None, "Charger les couches de mon groupe", u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
                 return
 
+            print(guichet_layers)
+            guichet_layers.reverse()
+            print(guichet_layers)
             for layer in guichet_layers:
 
                 if layer.nom in maplayers or layer.description in maplayers:
@@ -609,7 +612,8 @@ class Contexte(object):
                         continue
 
                     QgsProject.instance().addMapLayer(rlayer, False)
-                    root.insertLayer(0, rlayer)
+                    #root.insertLayer(0, rlayer)
+                    nodeGroup.insertLayer(0, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
                     print("Layer {} added to map".format(rlayer.name()))
 
