@@ -510,7 +510,8 @@ class Contexte(object):
         uri.setConnection("", "", self.login, self.pwd)
         uri.setParam('version', '1.1.0')
         uri.setParam('request', 'GetFeature')
-        uri.setParam('bbox', bbox.boxToString())
+        if str(bbox) != "None":
+            uri.setParam('bbox', bbox.boxToString())
 
         # Mon guichet
         if '&' in url:
@@ -568,6 +569,7 @@ class Contexte(object):
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WFS:
+                    print ("bbox = " + str(bbox))
                     uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
                     vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type)
 
