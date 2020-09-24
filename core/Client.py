@@ -17,7 +17,7 @@ import json
 from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
 from PyQt5.QtCore import *
 
-#from . import ConstanteRipart
+from . import ConstanteRipart
 from .Enum import Enum
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
