@@ -250,10 +250,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         layersQGIS = []
         print("Liste des couches à afficher après sélection utilisateur")
         layersChecked = []
-        layersChecked.append(self.getLayersSelected(self.tableWidgetMonGuichet, 2))
-        layersChecked.append(self.getLayersSelected(self.tableWidgetFondsGeoportail, 1))
         layersChecked.append(self.getLayersSelected(self.tableWidgetAutresGeoservices, 2))
-        print (layersChecked)
+        layersChecked.append(self.getLayersSelected(self.tableWidgetFondsGeoportail, 1))
+        layersChecked.append(self.getLayersSelected(self.tableWidgetMonGuichet, 2))
+
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
         for layerChecked in layersChecked:
             for tmp in layerChecked:
@@ -274,4 +274,4 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     def cancel(self):
         self.reject()
-        print ("L'utilisateur est sorti de la boite Charger le guichet")
+        print("L'utilisateur est sorti de la boite Charger le guichet")

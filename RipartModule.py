@@ -350,7 +350,7 @@ class RipartPlugin:
 
 
     def synchroniserDonnees(self):
-        print("Synchroniser les données")
+        '''print("Synchroniser les données")
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context != None:
             if not self.context.getVisibilityLayersFromGroupeActif():
@@ -358,8 +358,20 @@ class RipartPlugin:
                     pushMessage("Remarque",
                                 "Pas de couche(s) éditable(s)", \
                                 level=2, duration=5)
-                return
-
+                return'''
+        self.context = Contexte.getInstance(self, QgsProject)
+        layer = self.context.iface.activeLayer()
+        fields = layer.fields()
+        for field in fields:
+            name = field.name()
+            print(name)
+            index = fields.indexOf(name)
+            ews = layer.editorWidgetSetup(index)
+            field.constraints().constraintExpression()
+            print("Type:", ews.type())
+            print("Config:", ews.config())
+            print(field.constraints().constraintExpression())
+            print(layer.expressionField(index))
 
     def unload(self):
         

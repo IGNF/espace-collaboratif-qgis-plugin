@@ -2,7 +2,8 @@ import random
 
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer,\
-    QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes
+    QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes,\
+    QgsDefaultValue
 from .Statistics import Statistics
 import hashlib
 import os
@@ -268,6 +269,13 @@ class GuichetVectorLayer(QgsVectorLayer):
 
 
 
+    def setModifyDefaultValue(self, listOfDefaultValues):
+        fields = self.fields()
+        for attribute, value in listOfDefaultValues.items():
+            index = fields.indexOf(attribute)
+            self.setDefaultValueDefinition(index, QgsDefaultValue(value))
+
+
     '''
         Transformation de la condition en expression QGIS
         La condition '{"$and" : [{"zone" : "Zone1"}]}' doit devenir '"zone" LIKE \"Zone1\"'
@@ -480,6 +488,111 @@ class GuichetVectorLayer(QgsVectorLayer):
 
 
 
+    def setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression):
+        # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
+        class_rules = []
+        for c, v in data.items():
+            tmp = [v['name']]
+            expression = self.changeConditionToExpression(v['condition'], bExpression)
+            tmp.append(expression)
+            col = self.getColorFromType(v)
+            tmp.append(col)
+            opac = self.getOpacity(v)
+            tmp.append(opac)
+            width = self.getWidth(v)
+            tmp.append(width)
+            class_rules.append(tmp)
+
+        # create a new rule-based renderer
+        symbol = QgsSymbol.defaultSymbol(self.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+
+        # get the "root" rule
+        root_rule = renderer.rootRule()
+
+        for label, expression, color, opacity, width in class_rules:
+            # create a clone (i.e. a copy) of the default rule
+            rule = root_rule.children()[0].clone()
+            # set the label, opacity, expression and color
+            rule.setLabel(label)
+            rule.setFilterExpression(expression)
+            rule.symbol().setColor(QColor(color))
+            rule.symbol().setOpacity(opacity)
+            rule.symbol().setOutputUnit(QgsUnitTypes.RenderPixels)
+            if width != '':
+                if type(width) is str:
+                    rule.symbol().setWidth(int(width))
+                else:
+                    rule.symbol().setSize(width)
+            # append the rule to the list of rules
+            root_rule.appendChild(rule)
+
+        # delete the default rule
+        root_rule.removeChildAt(0)
+
+        # apply the renderer to the layer
+        self.setRenderer(renderer)
+        # Refresh layer
+        self.triggerRepaint()
+
+
+
+    def appendClassRules(self, data, bExpression):
+        # class_rules = (
+        # 'label=name',
+        # 'expression=condition',
+        # 'color=fillColor/strokeColor',
+        # 'opacity=fillOpacity/strokeOpacity' )
+        class_rules = []
+        for c, v in data.items():
+            tmp = [v['name']]
+            expression = self.changeConditionToExpression(v['condition'], bExpression)
+            tmp.append(expression)
+            col = self.getColorFromType(v)
+            tmp.append(col)
+            opac = self.getOpacity(v)
+            tmp.append(opac)
+            width = self.getWidth(v)
+            tmp.append(width)
+            # Ajout de la symbologie 'Ensemble de règles' pour une couche
+            class_rules.append(tmp)
+
+        return class_rules
+
+
+
+    '''
+        Modification de la symbologie
+    '''
+    def setModifySymbols(self, listOfValues):
+
+        # Pas de balise Style, Symbologie = Symbole QGIS par défaut
+        if len(listOfValues) == 0:
+            self.setModifyWithQgsSingleDefaultSymbolRenderer()
+
+        # Une balise Style, Symbologie = Symbole unique
+        if len(listOfValues) == 1:
+            self.setModifyWithQgsSingleSymbolRenderer(listOfValues)
+
+        # Balise Style avec balise(s) Children, Symbologie = Ensemble de règles
+        bExpression = False
+        if len(listOfValues) > 1:
+            bExpression = True
+            self.setModifyWithQgsRuleBasedSymbolRenderer(listOfValues, bExpression)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def setModifyWithQgsRuleBasedSymbolRendererTer(self, data, bExpression):
         # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
         class_rules = []
@@ -585,81 +698,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.triggerRepaint()
 
 
-
-    def setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression):
-        # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
-        class_rules = []
-        for c, v in data.items():
-            tmp = [v['name']]
-            expression = self.changeConditionToExpression(v['condition'], bExpression)
-            tmp.append(expression)
-            col = self.getColorFromType(v)
-            tmp.append(col)
-            opac = self.getOpacity(v)
-            tmp.append(opac)
-            width = self.getWidth(v)
-            tmp.append(width)
-            class_rules.append(tmp)
-
-        # create a new rule-based renderer
-        symbol = QgsSymbol.defaultSymbol(self.geometryType())
-        renderer = QgsRuleBasedRenderer(symbol)
-
-        # get the "root" rule
-        root_rule = renderer.rootRule()
-
-        for label, expression, color, opacity, width in class_rules:
-            # create a clone (i.e. a copy) of the default rule
-            rule = root_rule.children()[0].clone()
-            # set the label, opacity, expression and color
-            rule.setLabel(label)
-            rule.setFilterExpression(expression)
-            rule.symbol().setColor(QColor(color))
-            rule.symbol().setOpacity(opacity)
-            rule.symbol().setOutputUnit(QgsUnitTypes.RenderPixels)
-            if width != '':
-                if type(width) is str:
-                    rule.symbol().setWidth(int(width))
-                else:
-                    rule.symbol().setSize(width)
-            # append the rule to the list of rules
-            root_rule.appendChild(rule)
-
-        # delete the default rule
-        root_rule.removeChildAt(0)
-
-        # apply the renderer to the layer
-        self.setRenderer(renderer)
-        # Refresh layer
-        self.triggerRepaint()
-
-
-
-
-    def appendClassRules(self, data, bExpression):
-        # class_rules = (
-        # 'label=name',
-        # 'expression=condition',
-        # 'color=fillColor/strokeColor',
-        # 'opacity=fillOpacity/strokeOpacity' )
-        class_rules = []
-        for c, v in data.items():
-            tmp = [v['name']]
-            expression = self.changeConditionToExpression(v['condition'], bExpression)
-            tmp.append(expression)
-            col = self.getColorFromType(v)
-            tmp.append(col)
-            opac = self.getOpacity(v)
-            tmp.append(opac)
-            width = self.getWidth(v)
-            tmp.append(width)
-            # Ajout de la symbologie 'Ensemble de règles' pour une couche
-            class_rules.append(tmp)
-
-        return class_rules
-
-
-
     def setModifyWithQgsRuleBasedSymbolRendererQuater(self, data, bExpression):
         # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
         class_rules = []
@@ -706,24 +744,3 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.setRenderer(renderer)
         # Refresh layer
         self.triggerRepaint()
-
-
-
-    '''
-        Modification de la symbologie
-    '''
-    def setModifySymbols(self, listOfValues):
-
-        # Pas de balise Style, Symbologie = Symbole QGIS par défaut
-        if len(listOfValues) == 0:
-            self.setModifyWithQgsSingleDefaultSymbolRenderer()
-
-        # Une balise Style, Symbologie = Symbole unique
-        if len(listOfValues) == 1:
-            self.setModifyWithQgsSingleSymbolRenderer(listOfValues)
-
-        # Balise Style avec balise(s) Children, Symbologie = Ensemble de règles
-        bExpression = False
-        if len(listOfValues) > 1:
-            bExpression = True
-            self.setModifyWithQgsRuleBasedSymbolRenderer(listOfValues, bExpression)

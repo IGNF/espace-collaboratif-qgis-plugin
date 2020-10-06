@@ -40,6 +40,8 @@ from .FormChoixGroupe import FormChoixGroupe
 from .core import ConstanteRipart as cst
 from .Import_WMTS import importWMTS
 from .core.GuichetVectorLayer import GuichetVectorLayer
+from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
+
 from .core.Statistics import Statistics
 
 class Contexte(object):
@@ -544,7 +546,7 @@ class Contexte(object):
             for nodeGroup in nodesGroup:
                 # Si le groupe existe déjà, on sort
                 if nodeGroup.name() == nomGroupe:
-                    break;
+                    break
 
             # Si le groupe n'existe pas, création du groupe dans le projet
             if nodeGroup == None and (len(nodesGroup) == 0):
@@ -558,10 +560,7 @@ class Contexte(object):
             if nodeGroup.name() != nomGroupe and (len(nodesGroup) == 1):
                 QMessageBox.warning(None, "Charger les couches de mon groupe", u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
                 return
-
-            print(guichet_layers)
             guichet_layers.reverse()
-            print(guichet_layers)
             for layer in guichet_layers:
 
                 if layer.nom in maplayers or layer.description in maplayers:
@@ -592,13 +591,27 @@ class Contexte(object):
 
                     # Si les champs de la couche sont de type "Liste" alors modification du formulaire d'attributs
                     data = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
-                    listOfValuesFromItemAttribute = self.client.getListOfValuesFromItemAttribute(data)
+                    efa = EditFormFieldFromAttributes(vlayer, data)
+                    efa.readData()
+
+                    '''listOfValuesFromItemAttribute = self.client.getListOfValuesFromItemAttribute(data)
                     if len(listOfValuesFromItemAttribute):
-                        vlayer.setModifyFormAttributes(listOfValuesFromItemAttribute)
+                        vlayer.setModifyFormAttributes(listOfValuesFromItemAttribute)'''
+
+                    # Si un champ du collaboratif contient une valeur par défaut alors il faut mettre à jour ce champ
+                    '''listOfDefaultValuesFromItemAttribute = self.client.getListOfDefaultValuesFromItemAttribute(data)
+                    if len(listOfDefaultValuesFromItemAttribute):
+                        vlayer.setModifyDefaultValue(listOfDefaultValuesFromItemAttribute)'''
 
                     # Modification de la symbologie de la couche
                     listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(data)
                     vlayer.setModifySymbols(listOfValuesFromItemStyle)
+
+            for layer in guichet_layers:
+
+                if layer.nom in maplayers or layer.description in maplayers:
+                    print ("Layer {} already exists !".format(layer.nom))
+                    continue
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
@@ -614,16 +627,12 @@ class Contexte(object):
                         continue
 
                     QgsProject.instance().addMapLayer(rlayer, False)
-                    #root.insertLayer(0, rlayer)
-                    nodeGroup.insertLayer(0, rlayer)
+                    root.insertLayer(0, rlayer)
+                    #nodeGroup.insertLayer(0, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
                     print("Layer {} added to map".format(rlayer.name()))
 
             self.mapCan.refresh()
-            '''fileName = self.QgsProject.instance().fileName()
-            print(fileName)
-            res = self.QgsProject.instance().write(fileName)
-            print (res)'''
 
         except Exception as e:
             self.logger.error(format(e))

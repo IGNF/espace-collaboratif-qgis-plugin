@@ -17,7 +17,7 @@ import json
 from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
 from PyQt5.QtCore import *
 
-#from . import ConstanteRipart
+from . import ConstanteRipart
 from .Enum import Enum
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
@@ -209,6 +209,23 @@ class Client(object):
         return data
 
 
+    def getListOfDefaultValuesFromItemAttribute(self, dataFeaturetype):
+        listOfDefaultValues = {}
+        for cle, valeurs in dataFeaturetype.items():
+            if cle != 'attributes':
+                continue
+            for c, v in valeurs.items():
+                tmp = v['default_value']
+
+                if tmp == '' or tmp is None:
+                    continue
+
+                listOfDefaultValues[c] = tmp
+
+        return listOfDefaultValues
+
+
+
 
     '''
         Pour l'item 'attributes', récupération des listes de valeurs pour un attribut de type "Liste"
@@ -243,9 +260,7 @@ class Client(object):
     '''
     def getListOfValuesFromItemStyle(self, dataFeaturetype):
         listOfValues = {}
-        tmp = {}
-        tmp_1 = {}
-        tmp_1['children'] = []
+        tmp = {'children': []}
         for dftKey, dftValue in dataFeaturetype.items():
             if dftKey != 'style':
                 continue
@@ -262,9 +277,9 @@ class Client(object):
                         for dftvValue in dftvValues:
                             listOfValues[dftvValue['name']] = dftvValue
                 else:
-                    tmp_1[dftvKey] = dftvValues
+                    tmp[dftvKey] = dftvValues
 
-            listOfValues['default'] = tmp_1
+            listOfValues['default'] = tmp
 
         return listOfValues
 
