@@ -2,10 +2,6 @@ from qgis.core import QgsVectorLayer, QgsEditorWidgetSetup, QgsFieldConstraints,
 
 
 class EditFormFieldFromAttributes(object):
-    # Les items recherchés
-    attributes = 'attributes'
-    style = 'style'
-    styles = 'styles'
 
     # les données
     data = None
@@ -90,24 +86,24 @@ class EditFormFieldFromAttributes(object):
     '''
     Contraintes > Non nul
     Attention, c'est inversé entre les valeurs true/false de l'API et celles de la case à cocher QGIS :
-    Nullable true --> case décochée
-    Nullable false --> case cochée (ConstraintNotNull = 1)
+    Nullable True --> case décochée
+    Nullable False --> case cochée (ConstraintNotNull = 1)
     '''
     def setFieldConstraintNotNull(self, bNullable):
-        if bNullable is None or bNullable == 'True':
+        if bNullable is None or bNullable == True:
             return
 
-        if bNullable == 'False':
+        if bNullable == False:
             self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintNotNull)
 
 
     '''
     '''
     def setFieldConstraintUnique(self, bUnique):
-        if bUnique is None or bUnique == 'False':
+        if bUnique is None or bUnique == False:
             return
 
-        if bUnique == 'True':
+        if bUnique == True:
             self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
 
 
@@ -115,11 +111,11 @@ class EditFormFieldFromAttributes(object):
     If readOnly = False, the widget at the given index will be read-only. 
     '''
     def setFieldReadOnly(self, readOnly):
-        if readOnly is None or readOnly == 'True':
+        if readOnly is None or readOnly == True:
             return
 
         Qgs_editFormConfig = QgsEditFormConfig ()
-        if readOnly == 'False':
+        if readOnly == False:
             Qgs_editFormConfig.setReadOnly(self.index, False)
             self.layer.setEditFormConfig(Qgs_editFormConfig)
 
