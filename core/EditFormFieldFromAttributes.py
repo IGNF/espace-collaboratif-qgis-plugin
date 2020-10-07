@@ -1,6 +1,8 @@
 from qgis.core import QgsVectorLayer, QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue, QgsEditFormConfig
 
-
+'''
+Mise en forme des champs dans le formulaire d'attributs QGIS
+'''
 class EditFormFieldFromAttributes(object):
 
     # les données
@@ -14,6 +16,8 @@ class EditFormFieldFromAttributes(object):
 
 
     '''
+    Intialisation de la classe avec la couche active (layer) et les données récupérées (data)
+    au format json par la fonction core.client.py/connexionFeatureTypeJson
     '''
     def __init__(self, layer, data):
         self.data = data
@@ -21,50 +25,56 @@ class EditFormFieldFromAttributes(object):
 
 
     '''
+    Lecture des clé/valeurs de l'item 'attributes', par exemple
+    "commentaire_nom": {"crs": null, "default_value": null, "id": 30180, "target_type": null, "name": "commentaire_nom",
+    "short_name": "commentair", "title": "commentaire_nom", "description": "Ceci est un commentaire à remplir par l'utilisateur.",
+    "min_length": null, "max_length": 255, "nullable": true, "unique": false, "srid": null, "position": 3, "listOfValues": "",
+    "min_value": null, "max_value": null, "pattern": null, "is3d": false, "readOnly": false, "condition": null,
+    "condition_field": null, "computed": false, "automatic": false, "formula": null, "queryable": false,
+    "required": false, "mime_types": null, "type": "String"}
     '''
     def readData(self):
-        for cle, valeurs in self.data.items():
-            if cle != 'attributes':
-                continue
-            for c, v in valeurs.items():
-                self.name = v['name']
-                self.index = self.layer.fields().indexOf(self.name)
-                self.setFieldSwitchType(v['type'], v['default_value'])
-                self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'])
-                self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'])
-                self.setFieldExpressionConstraintPattern(v['pattern'])
-                self.setFieldConstraintNotNull(v['nullable'])
-                self.setFieldConstraintUnique(v['unique'])
-                self.setFieldListOfValues(v['listOfValues'], v['default_value'])
-                self.setFieldReadOnly(v['readOnly'])
+        valeurs = self.data['attributes']
+        for c, v in valeurs.items():
+            self.name = v['name']
+            self.index = self.layer.fields().indexOf(self.name)
+            self.setFieldSwitchType(v['type'], v['default_value'])
+            self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'])
+            self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'])
+            self.setFieldExpressionConstraintPattern(v['pattern'])
+            self.setFieldConstraintNotNull(v['nullable'])
+            self.setFieldConstraintUnique(v['unique'])
+            self.setFieldListOfValues(v['listOfValues'], v['default_value'])
+            self.setFieldReadOnly(v['readOnly'])
 
 
     '''
+    Formatage du champ en fonction du type collaboratif
     '''
     def setFieldSwitchType(self, vType, default_value):
 
         if vType == 'Boolean':
-            self.setFieldFormBoolean(default_value)
+            self.setFieldBoolean(default_value)
             return
 
         if vType == 'DateTime':
-            self.setFieldFormDateTime(default_value)
+            self.setFieldDateTime(default_value)
             return
 
         if vType == 'Date':
-            self.setFieldFormDate(default_value)
+            self.setFieldDate(default_value)
             return
 
         if vType == 'Double':
-            self.setFieldFormDouble(default_value)
+            self.setFieldDouble(default_value)
             return
 
         if vType == 'Integer':
-            self.setFieldFormInteger(default_value)
+            self.setFieldInteger(default_value)
             return
 
         if vType == 'String':
-            self.setFieldFormString(default_value)
+            self.setFieldString(default_value)
             return
 
         if vType == 'YearMonth':
@@ -72,11 +82,12 @@ class EditFormFieldFromAttributes(object):
             return
 
         if vType == 'Year':
-            self.setFieldFormYear(default_value)
+            self.setFieldYear(default_value)
             return
 
 
     '''
+    Mise en forme du champ dans le formulaire d'attributs QGIS
     '''
     def setFormEditor(self, QgsEWS_type, QgsEWS_config):
         setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
@@ -90,46 +101,51 @@ class EditFormFieldFromAttributes(object):
     Nullable False --> case cochée (ConstraintNotNull = 1)
     '''
     def setFieldConstraintNotNull(self, bNullable):
-        if bNullable is None or bNullable == True:
+        if bNullable is None or bNullable is True:
             return
 
-        if bNullable == False:
+        if bNullable is False:
             self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintNotNull)
 
 
     '''
+    Contraintes > Unique
     '''
     def setFieldConstraintUnique(self, bUnique):
-        if bUnique is None or bUnique == False:
+        if bUnique is None or bUnique is False:
             return
 
-        if bUnique == True:
+        if bUnique is True:
             self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
 
 
     '''
+    Général > Editable
     If readOnly = False, the widget at the given index will be read-only. 
     '''
     def setFieldReadOnly(self, readOnly):
-        if readOnly is None or readOnly == True:
+        if readOnly is None or readOnly is True:
             return
 
-        Qgs_editFormConfig = QgsEditFormConfig ()
-        if readOnly == False:
+        Qgs_editFormConfig = QgsEditFormConfig()
+        if readOnly is False:
             Qgs_editFormConfig.setReadOnly(self.index, False)
             self.layer.setEditFormConfig(Qgs_editFormConfig)
 
 
     '''
+    Contraintes > Expression
     '''
     def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue):
         if minValue is None and maxValue is None:
             return
+        if minValue is '' and maxValue is '':
+            return
 
         expression = None
-        if minValue is not None and maxValue is None:
+        if minValue is not None and maxValue is None or maxValue is '':
             expression = "{} >= {}".format(self.name, minValue)
-        if minValue is None and maxValue is not None:
+        if minValue is None or minValue is '' and maxValue is not None:
             expression = "{} <= {}".format(self.name, maxValue)
         if minValue is not None and maxValue is not None:
             expression = "{} >= {} and {} <= {}".format(self.name, minValue, maxValue, self.name)
@@ -139,16 +155,17 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Contraintes > Expression
-    length(  "texte_nom" )  >= 2 and  length(  "texte_nom" )  <= 10
     '''
     def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength):
         if minLength is None and maxLength is None:
             return
+        if minLength is '' and maxLength is '':
+            return
 
         expression = None
-        if minLength is not None and maxLength is None:
+        if minLength is not None and maxLength is None or maxLength is '':
             expression = "length({}) >= {}".format(self.name, minLength)
-        if minLength is None and maxLength is not None:
+        if minLength is None or minLength is '' and maxLength is not None:
             expression = "length({}) <= {}".format(self.name, maxLength)
         if minLength is not None and maxLength is not None:
             expression = "length({}) >= {} AND {} <= length({})".format(self.name, minLength, maxLength, self.name)
@@ -158,95 +175,94 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Contraintes > Expression
-    regexp_match( "email", '^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$') != 0
     '''
     def setFieldExpressionConstraintPattern(self, pattern):
-        if pattern is None:
+        if pattern is None or pattern is '':
             return
+
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, pattern)
         self.layer.setConstraintExpression(self.index, expression)
 
 
     '''
     Représentation du type d'outils : Edition de texte
-    ex defaultString : "titi"
     '''
-    def setFieldFormString(self, defaultString):
+    def setFieldString(self, defaultString):
         # Type: TextEdit
         QgsEWS_type = 'TextEdit'
         # Config: {'IsMultiline': False, 'UseHtml': False}
         QgsEWS_config = {'IsMultiline': False, 'UseHtml': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultString is None:
+        if defaultString is None or defaultString is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultString))
 
 
     '''
     Représentation du type d'outils : Case à cocher
-    defaultState : 'true' ou 'false'
     '''
-    def setFieldFormBoolean(self, defaultState):
+    def setFieldBoolean(self, defaultState):
         # Type: CheckBox
         QgsEWS_type = 'CheckBox'
         # Config: {'CheckedState': '1', 'UncheckedState': '0'}
         QgsEWS_config = {'CheckedState': '1', 'UncheckedState': '0'}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultState is None:
+        if defaultState is None or defaultState is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultState))
 
 
     '''
     Représentation du type d'outils : Plage
-    ex defaultInteger : "12"
     '''
-    def setFieldFormInteger(self, defaultInteger):
+    def setFieldInteger(self, defaultInteger):
         # Type: Range
         QgsEWS_type = 'Range'
-        # Config: {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0, 'Step': 1, 'Style': 'SpinBox'}
+        # Config: {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0, 'Step': 1,
+        # 'Style': 'SpinBox'}
         QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
                          'Step': 1, 'Style': 'SpinBox'}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultInteger is None:
+        if defaultInteger is None or defaultInteger is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultInteger))
 
 
     '''
     Représentation du type d'outils : Plage
-    ex defaultDouble : "18.4"
     '''
-    def setFieldFormDouble(self, defaultDouble):
+    def setFieldDouble(self, defaultDouble):
         # Type: Range
         QgsEWS_type = 'Range'
-        # Config: {'AllowNull': True, 'Max': 1.7976931348623157e+308, 'Min': -1.7976931348623157e+308, 'Precision': 6, 'Step': 1.0, 'Style': 'SpinBox'}
+        # Config: {'AllowNull': True, 'Max': 1.7976931348623157e+308, 'Min': -1.7976931348623157e+308,
+        # 'Precision': 6, 'Step': 1.0, 'Style': 'SpinBox'}
         QgsEWS_config = {'AllowNull': True, 'Max': 1.7976931348623157e+308,
                          'Min': -1.7976931348623157e+308, 'Precision': 6, 'Step': 1.0,
                          'Style': 'SpinBox'}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultDouble is None:
+        if defaultDouble is None or defaultDouble is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDouble))
 
 
     '''
     Représentation du type d'outils : Date/Heure
-    defaultDate peut prendre les valeurs : NULL, '2020-10-01' ou 'CURRENT_DATE'
+    defaultDate peut prendre les valeurs : NULL, '2020-10-01', 'CURRENT_DATE' ou ''
     '''
-    def setFieldFormDate(self, defaultDate):
+    def setFieldDate(self, defaultDate):
         # Type: DateTime
         QgsEWS_type = 'DateTime'
-        # Config: {'allow_null': True, 'calendar_popup': True, 'display_format': 'yyyy-MM-dd', 'field_format': 'yyyy-MM-dd', 'field_iso_format': False}
+        # Config: {'allow_null': True, 'calendar_popup': True, 'display_format': 'yyyy-MM-dd',
+        # 'field_format': 'yyyy-MM-dd', 'field_iso_format': False}
         QgsEWS_config = {'allow_null': True, 'calendar_popup': True, 'display_format': 'yyyy-MM-dd',
                          'field_format': 'yyyy-MM-dd', 'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultDate is None:
+        if defaultDate is None or defaultDate is '':
             return
         if defaultDate is 'CURRENT_DATE':
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('to_date(now())'))
@@ -256,18 +272,19 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Représentation du type d'outils : Date/Heure
-    defaultDateTime peut prendre les valeurs : NULL, '2020-10-01 00:00:00' ou 'CURRENT_DATE'
+    defaultDateTime peut prendre les valeurs : NULL, '2020-10-01 00:00:00', 'CURRENT_DATE' ou ''
     '''
-    def setFieldFormDateTime(self, defaultDateTime):
+    def setFieldDateTime(self, defaultDateTime):
         # Type: DateTime
         QgsEWS_type = 'DateTime'
-        # Config: {'allow_null': True, 'calendar_popup': True, 'display_format': 'yyyy-MM-dd HH:mm:ss', 'field_format': 'yyyy-MM-dd HH:mm:ss', 'field_iso_format': False}
+        # Config: {'allow_null': True, 'calendar_popup': True, 'display_format': 'yyyy-MM-dd HH:mm:ss',
+        # 'field_format': 'yyyy-MM-dd HH:mm:ss', 'field_iso_format': False}
         QgsEWS_config = {'allow_null': True, 'calendar_popup': True,
                          'display_format': 'yyyy-MM-dd HH:mm:ss', 'field_format': 'yyyy-MM-dd HH:mm:ss',
                          'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultDateTime is None:
+        if defaultDateTime is None or defaultDateTime is '':
             return
         if defaultDateTime is 'CURRENT_DATE':
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('now()'))
@@ -277,17 +294,17 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Représentation du type d'outils : Date/Heure
-    ex defaultYear : "2000"
     '''
-    def setFieldFormYear(self, defaultYear):
+    def setFieldYear(self, defaultYear):
         # Type: DateTime
         QgsEWS_type = 'DateTime'
-        # Config: {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy', 'field_format': 'yyyy', 'field_iso_format': False}
+        # Config: {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy', 'field_format': 'yyyy',
+        # 'field_iso_format': False}
         QgsEWS_config = {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy',
                          'field_format': 'yyyy', 'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultYear is None:
+        if defaultYear is None or defaultYear is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultYear))
 
@@ -299,12 +316,13 @@ class EditFormFieldFromAttributes(object):
     def setFieldYearMonth(self, defaultYearMonth):
         # Type: DateTime
         QgsEWS_type = 'DateTime'
-        # Config: {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy-MM', 'field_format': 'yyyy-MM', 'field_iso_format': False}
+        # Config: {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy-MM',
+        # 'field_format': 'yyyy-MM', 'field_iso_format': False}
         QgsEWS_config = {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy-MM',
                          'field_format': 'yyyy-MM', 'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultYearMonth is None:
+        if defaultYearMonth is None or defaultYearMonth is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultYearMonth))
 
@@ -318,7 +336,7 @@ class EditFormFieldFromAttributes(object):
     defaultListValue : une des valeurs de liste
     '''
     def setFieldListOfValues(self, listOfValues, defaultListValue):
-        if listOfValues is None or listOfValues == '':
+        if listOfValues is None or listOfValues is '':
             return
 
         # Type: ValueMap
@@ -337,6 +355,6 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_config = {'map': attribute_values}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultListValue is None:
+        if defaultListValue is None or defaultListValue is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultListValue))
