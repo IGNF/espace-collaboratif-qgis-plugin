@@ -38,11 +38,12 @@ class EditFormFieldFromAttributes(object):
         for c, v in valeurs.items():
             self.name = v['name']
             self.index = self.layer.fields().indexOf(self.name)
+            self.setFieldTitle(v['title'])
             self.setFieldSwitchType(v['type'], v['default_value'])
-            self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'])
-            self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'])
-            self.setFieldExpressionConstraintPattern(v['pattern'])
             self.setFieldConstraintNotNull(v['nullable'])
+            self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'], v['type'], v['nullable'])
+            self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type'], v['nullable'])
+            self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
             self.setFieldListOfValues(v['listOfValues'], v['default_value'])
             self.setFieldReadOnly(v['readOnly'])
@@ -53,35 +54,35 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldSwitchType(self, vType, default_value):
 
-        if vType == 'Boolean':
+        if vType is 'Boolean':
             self.setFieldBoolean(default_value)
             return
 
-        if vType == 'DateTime':
+        if vType is 'DateTime':
             self.setFieldDateTime(default_value)
             return
 
-        if vType == 'Date':
+        if vType is 'Date':
             self.setFieldDate(default_value)
             return
 
-        if vType == 'Double':
+        if vType is 'Double':
             self.setFieldDouble(default_value)
             return
 
-        if vType == 'Integer':
+        if vType is 'Integer':
             self.setFieldInteger(default_value)
             return
 
-        if vType == 'String':
+        if vType is 'String':
             self.setFieldString(default_value)
             return
 
-        if vType == 'YearMonth':
+        if vType is 'YearMonth':
             self.setFieldYearMonth(default_value)
             return
 
-        if vType == 'Year':
+        if vType is 'Year':
             self.setFieldYear(default_value)
             return
 
@@ -92,6 +93,16 @@ class EditFormFieldFromAttributes(object):
     def setFormEditor(self, QgsEWS_type, QgsEWS_config):
         setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
         self.layer.setEditorWidgetSetup(self.index, setup)
+
+
+    '''
+    Général > Alias
+    L'item "title" du collaboratif devient dans le formulaire d'attributs QGIS l'Alias
+    '''
+    def setFieldTitle(self, title):
+        if title is None or title is '':
+            return
+        self.layer.setFieldAlias(self.index, title)
 
 
     '''
@@ -135,52 +146,73 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Contraintes > Expression
+    Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
+    de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
+    Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
     '''
-    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue):
-        if minValue is None and maxValue is None:
-            return
-        if minValue is '' and maxValue is '':
+    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, bNullable):
+        if minValue is None and maxValue is None or minValue is '' and maxValue is '':
             return
 
         expression = None
         if minValue is not None and maxValue is None or maxValue is '':
-            expression = "{} >= {}".format(self.name, minValue)
+            expression = "\"{}\" >= {}".format(self.name, minValue)
         if minValue is None or minValue is '' and maxValue is not None:
-            expression = "{} <= {}".format(self.name, maxValue)
+            expression = "\"{}\" <= {}".format(self.name, maxValue)
         if minValue is not None and maxValue is not None:
-            expression = "{} >= {} and {} <= {}".format(self.name, minValue, maxValue, self.name)
+            expression = "\"{}\" >= {} and \"{}\" <= {}".format(self.name, minValue, self.name, maxValue)
+        '''print(vType)
+        print(bNullable)
+        if vType is 'String' and bNullable is True:
+            expressionFinale = "\"{}\" is null or {}".format(self.name, expression)
+            print(expressionFinale)'''
 
         self.layer.setConstraintExpression(self.index, expression)
 
 
     '''
     Contraintes > Expression
+    Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
+    de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
+    Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
     '''
-    def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength):
-        if minLength is None and maxLength is None:
-            return
-        if minLength is '' and maxLength is '':
+    def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, vType, bNullable):
+        if minLength is None and maxLength is None or minLength is '' and maxLength is '':
             return
 
         expression = None
         if minLength is not None and maxLength is None or maxLength is '':
-            expression = "length({}) >= {}".format(self.name, minLength)
+            expression = "length(\"{}\") >= {}".format(self.name, minLength)
         if minLength is None or minLength is '' and maxLength is not None:
-            expression = "length({}) <= {}".format(self.name, maxLength)
+            expression = "length(\"{}\") <= {}".format(self.name, maxLength)
         if minLength is not None and maxLength is not None:
-            expression = "length({}) >= {} AND {} <= length({})".format(self.name, minLength, maxLength, self.name)
+            expression = "length(\"{}\") >= {} AND \"{}\" <= length({})".format(self.name, minLength, self.name, maxLength)
+        '''print(vType)
+        print(bNullable)
+        if vType is 'String' and bNullable is True:
+            expressionFinale = "\"{}\" is null or {}".format(self.name, expression)
+            print(expressionFinale)'''
 
         self.layer.setConstraintExpression(self.index, expression)
 
 
     '''
     Contraintes > Expression
+    Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
+    de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
+    Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
     '''
-    def setFieldExpressionConstraintPattern(self, pattern):
+    def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
         if pattern is None or pattern is '':
             return
+        newPattern = pattern.replace('\\','\\\\')
+        expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
+        '''print(vType)
+        print(bNullable)
+        if vType is 'String' and bNullable is True:
+            expressionFinale = "\"{}\" is null or {}".format(self.name, expression)
+            print(expressionFinale)'''
 
-        expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, pattern)
         self.layer.setConstraintExpression(self.index, expression)
 
 
@@ -196,7 +228,7 @@ class EditFormFieldFromAttributes(object):
 
         if defaultString is None or defaultString is '':
             return
-        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultString))
+        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultString)))
 
 
     '''
@@ -267,7 +299,7 @@ class EditFormFieldFromAttributes(object):
         if defaultDate is 'CURRENT_DATE':
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('to_date(now())'))
         else:
-            self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDate))
+            self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDate)))
 
 
     '''
@@ -289,7 +321,7 @@ class EditFormFieldFromAttributes(object):
         if defaultDateTime is 'CURRENT_DATE':
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('now()'))
         else:
-            self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDateTime))
+            self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDateTime)))
 
 
     '''
@@ -306,7 +338,7 @@ class EditFormFieldFromAttributes(object):
 
         if defaultYear is None or defaultYear is '':
             return
-        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultYear))
+        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultYear)))
 
 
     '''
@@ -324,7 +356,7 @@ class EditFormFieldFromAttributes(object):
 
         if defaultYearMonth is None or defaultYearMonth is '':
             return
-        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultYearMonth))
+        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultYearMonth)))
 
 
     '''
@@ -357,4 +389,4 @@ class EditFormFieldFromAttributes(object):
 
         if defaultListValue is None or defaultListValue is '':
             return
-        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultListValue))
+        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultListValue)))

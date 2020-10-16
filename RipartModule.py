@@ -359,7 +359,7 @@ class RipartPlugin:
                                 "Pas de couche(s) éditable(s)", \
                                 level=2, duration=5)
                 return'''
-        self.context = Contexte.getInstance(self, QgsProject)
+        '''self.context = Contexte.getInstance(self, QgsProject)
         layer = self.context.iface.activeLayer()
         fields = layer.fields()
         for field in fields:
@@ -371,7 +371,46 @@ class RipartPlugin:
             print("Type:", ews.type())
             print("Config:", ews.config())
             print(field.constraints().constraintExpression())
-            print(layer.expressionField(index))
+            print(layer.expressionField(index))'''
+
+        context = Contexte.getInstance(self, QgsProject)
+        root = context.QgsProject.instance().layerTreeRoot()
+        listLayerOrder = root.layerOrder() #QgsMapLayer
+        for layer in listLayerOrder:
+            print(layer.name())
+        print('-----------------')
+
+        nodesGroup = root.findGroups()
+        for nodeGroup in nodesGroup:
+            listFindLayers = nodeGroup.findLayers()
+            for findLayer in listFindLayers:
+                fl = findLayer.layer()
+                print(fl.name())
+        print('-----------------')
+
+        listGeoportail = []
+        #QgsMapLayer
+        listCustomLayerOrder = []
+        for layer in listLayerOrder:
+            trouve = False
+            lName = layer.name()
+            for qgsLayerTreeLayer in listFindLayers:
+                ltl = qgsLayerTreeLayer.layer()
+                if lName == ltl.name():
+                    listCustomLayerOrder.append(layer)
+                    trouve = True
+                    break;
+            if trouve is False:
+                listGeoportail.append(layer)
+
+        listCustomLayerOrder.extend(listGeoportail)
+        for c in listCustomLayerOrder:
+            print(c.name())
+
+        root.setCustomLayerOrder(listCustomLayerOrder)
+        context.mapCan.refresh()
+
+
 
     def unload(self):
         

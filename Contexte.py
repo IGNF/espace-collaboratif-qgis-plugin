@@ -549,7 +549,7 @@ class Contexte(object):
                     break
 
             # Si le groupe n'existe pas, création du groupe dans le projet
-            if nodeGroup == None and (len(nodesGroup) == 0):
+            if nodeGroup is None and (len(nodesGroup) == 0):
                 newNode = QgsLayerTreeGroup(nomGroupe)
                 root.addChildNode(newNode)
                 nodeGroup = root.findGroup(nomGroupe)
@@ -564,19 +564,18 @@ class Contexte(object):
             for layer in guichet_layers:
 
                 if layer.nom in maplayers or layer.description in maplayers:
-                    print ("Layer {} already exists !".format(layer.nom))
+                    print("Layer {} already exists !".format(layer.nom))
                     continue
 
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WFS:
-                    print ("bbox = " + str(bbox))
                     uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
                     vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type)
 
                     if not vlayer.isValid():
-                        print ("Layer {} failed to load !".format(layer.nom))
+                        print("Layer {} failed to load !".format(layer.nom))
                         continue
 
                     QgsProject.instance().addMapLayer(vlayer, False)
@@ -610,7 +609,7 @@ class Contexte(object):
             for layer in guichet_layers:
 
                 if layer.nom in maplayers or layer.description in maplayers:
-                    print ("Layer {} already exists !".format(layer.nom))
+                    print("Layer {} already exists !".format(layer.nom))
                     continue
 
                 '''
@@ -622,7 +621,7 @@ class Contexte(object):
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
 
                     if not rlayer.isValid():
-                        print ("Layer {} failed to load !".format(rlayer.name()))
+                        print("Layer {} failed to load !".format(rlayer.name()))
                         print(rlayer.error().message())
                         continue
 
@@ -631,6 +630,12 @@ class Contexte(object):
                     #nodeGroup.insertLayer(0, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
                     print("Layer {} added to map".format(rlayer.name()))
+
+            # a virer
+            maplayers1 = self.getAllMapLayers()
+            for layer in maplayers1:
+                print(layer)
+            # a virer
 
             self.mapCan.refresh()
 
