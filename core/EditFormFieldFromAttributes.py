@@ -54,35 +54,35 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldSwitchType(self, vType, default_value):
 
-        if vType is 'Boolean':
+        if vType == 'Boolean':
             self.setFieldBoolean(default_value)
             return
 
-        if vType is 'DateTime':
+        if vType == 'DateTime':
             self.setFieldDateTime(default_value)
             return
 
-        if vType is 'Date':
+        if vType == 'Date':
             self.setFieldDate(default_value)
             return
 
-        if vType is 'Double':
+        if vType == 'Double':
             self.setFieldDouble(default_value)
             return
 
-        if vType is 'Integer':
+        if vType == 'Integer':
             self.setFieldInteger(default_value)
             return
 
-        if vType is 'String':
+        if vType == 'String':
             self.setFieldString(default_value)
             return
 
-        if vType is 'YearMonth':
+        if vType == 'YearMonth':
             self.setFieldYearMonth(default_value)
             return
 
-        if vType is 'Year':
+        if vType == 'Year':
             self.setFieldYear(default_value)
             return
 
@@ -161,11 +161,9 @@ class EditFormFieldFromAttributes(object):
             expression = "\"{}\" <= {}".format(self.name, maxValue)
         if minValue is not None and maxValue is not None:
             expression = "\"{}\" >= {} and \"{}\" <= {}".format(self.name, minValue, self.name, maxValue)
-        '''print(vType)
-        print(bNullable)
-        if vType is 'String' and bNullable is True:
-            expressionFinale = "\"{}\" is null or {}".format(self.name, expression)
-            print(expressionFinale)'''
+
+        if vType == 'String' and bNullable is True:
+            expression = "\"{}\" is null or {}".format(self.name, expression)
 
         self.layer.setConstraintExpression(self.index, expression)
 
@@ -187,11 +185,9 @@ class EditFormFieldFromAttributes(object):
             expression = "length(\"{}\") <= {}".format(self.name, maxLength)
         if minLength is not None and maxLength is not None:
             expression = "length(\"{}\") >= {} AND \"{}\" <= length({})".format(self.name, minLength, self.name, maxLength)
-        '''print(vType)
-        print(bNullable)
-        if vType is 'String' and bNullable is True:
-            expressionFinale = "\"{}\" is null or {}".format(self.name, expression)
-            print(expressionFinale)'''
+
+        if vType == 'String' and bNullable is True:
+            expression = "\"{}\" is null or {}".format(self.name, expression)
 
         self.layer.setConstraintExpression(self.index, expression)
 
@@ -205,13 +201,12 @@ class EditFormFieldFromAttributes(object):
     def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
         if pattern is None or pattern is '':
             return
+        
         newPattern = pattern.replace('\\','\\\\')
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
-        '''print(vType)
-        print(bNullable)
-        if vType is 'String' and bNullable is True:
-            expressionFinale = "\"{}\" is null or {}".format(self.name, expression)
-            print(expressionFinale)'''
+
+        if vType == 'String' and bNullable is True:
+            expression = "\"{}\" is null or {}".format(self.name, expression)
 
         self.layer.setConstraintExpression(self.index, expression)
 
