@@ -373,9 +373,18 @@ class RipartPlugin:
             print(field.constraints().constraintExpression())
             print(layer.expressionField(index))'''
 
-        context = Contexte.getInstance(self, QgsProject)
+        '''context = Contexte.getInstance(self, QgsProject)
         root = context.QgsProject.instance().layerTreeRoot()
-        listLayerOrder = root.layerOrder() #QgsMapLayer
+        order = root.customLayerOrder()
+        print("order : {}".format(order))
+        print("---------------------")
+        layers = QgsProject.instance().mapLayers()
+        for key in layers:
+            order.insert(0, order.pop())  # Last layer to first position
+        print("order : {}".format(order))
+        root.setCustomLayerOrder(order)'''
+
+        '''listLayerOrder = root.layerOrder() #QgsMapLayer
         for layer in listLayerOrder:
             print(layer.name())
         print('-----------------')
@@ -392,8 +401,12 @@ class RipartPlugin:
         #QgsMapLayer
         listCustomLayerOrder = []
         for layer in listLayerOrder:
-            trouve = False
+            #trouve = False
             lName = layer.name()
+            if lName.find('IGN') != -1:
+                listGeoportail.append(layer.id())
+            else:
+                listCustomLayerOrder.append(layer.id())
             for qgsLayerTreeLayer in listFindLayers:
                 ltl = qgsLayerTreeLayer.layer()
                 if lName == ltl.name():
@@ -408,7 +421,7 @@ class RipartPlugin:
             print(c.name())
 
         root.setCustomLayerOrder(listCustomLayerOrder)
-        context.mapCan.refresh()
+        context.mapCan.refresh()'''
 
 
 

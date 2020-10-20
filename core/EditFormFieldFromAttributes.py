@@ -16,7 +16,7 @@ class EditFormFieldFromAttributes(object):
 
 
     '''
-    Intialisation de la classe avec la couche active (layer) et les données récupérées (data)
+    Initialisation de la classe avec la couche active (layer) et les données récupérées (data)
     au format json par la fonction core.client.py/connexionFeatureTypeJson
     '''
     def __init__(self, layer, data):
@@ -157,10 +157,18 @@ class EditFormFieldFromAttributes(object):
         expression = None
         if minValue is not None and maxValue is None or maxValue is '':
             expression = "\"{}\" >= {}".format(self.name, minValue)
+        elif vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
+            expression = "\"{}\" >= '{}'".format(self.name, minValue)
+
         if minValue is None or minValue is '' and maxValue is not None:
             expression = "\"{}\" <= {}".format(self.name, maxValue)
+        elif vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
+            expression = "\"{}\" <= '{}'".format(self.name, maxValue)
+
         if minValue is not None and maxValue is not None:
             expression = "\"{}\" >= {} and \"{}\" <= {}".format(self.name, minValue, self.name, maxValue)
+        elif vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
+            expression = "\"{}\" >= '{}' and \"{}\" <= '{}'".format(self.name, minValue, self.name, maxValue)
 
         if vType == 'String' and bNullable is True:
             expression = "\"{}\" is null or {}".format(self.name, expression)
@@ -184,7 +192,7 @@ class EditFormFieldFromAttributes(object):
         if minLength is None or minLength is '' and maxLength is not None:
             expression = "length(\"{}\") <= {}".format(self.name, maxLength)
         if minLength is not None and maxLength is not None:
-            expression = "length(\"{}\") >= {} AND \"{}\" <= length({})".format(self.name, minLength, self.name, maxLength)
+            expression = "length(\"{}\") >= {} AND length(\"{}\") <= {}".format(self.name, minLength, self.name, maxLength)
 
         if vType == 'String' and bNullable is True:
             expression = "\"{}\" is null or {}".format(self.name, expression)
@@ -201,7 +209,7 @@ class EditFormFieldFromAttributes(object):
     def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
         if pattern is None or pattern is '':
             return
-        
+
         newPattern = pattern.replace('\\','\\\\')
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
 

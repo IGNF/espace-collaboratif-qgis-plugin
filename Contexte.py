@@ -588,23 +588,18 @@ class Contexte(object):
                     # Initialisation des données pour le comptage
                     vlayer.setMd5BeforeWorks()
 
-                    # Si les champs de la couche sont de type "Liste" alors modification du formulaire d'attributs
+                    # Modification du formulaire d'attributs
                     data = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
                     efa = EditFormFieldFromAttributes(vlayer, data)
                     efa.readData()
 
-                    '''listOfValuesFromItemAttribute = self.client.getListOfValuesFromItemAttribute(data)
-                    if len(listOfValuesFromItemAttribute):
-                        vlayer.setModifyFormAttributes(listOfValuesFromItemAttribute)'''
-
-                    # Si un champ du collaboratif contient une valeur par défaut alors il faut mettre à jour ce champ
-                    '''listOfDefaultValuesFromItemAttribute = self.client.getListOfDefaultValuesFromItemAttribute(data)
-                    if len(listOfDefaultValuesFromItemAttribute):
-                        vlayer.setModifyDefaultValue(listOfDefaultValuesFromItemAttribute)'''
-
                     # Modification de la symbologie de la couche
                     listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(data)
                     vlayer.setModifySymbols(listOfValuesFromItemStyle)
+
+                # Une couche en visualisation est non modifiable
+                if layer.role == 'visu' or layer.role == 'ref':
+                    vlayer.setReadOnly()
 
             for layer in guichet_layers:
 
@@ -626,17 +621,12 @@ class Contexte(object):
                         continue
 
                     QgsProject.instance().addMapLayer(rlayer, False)
-                    root.insertLayer(0, rlayer)
-                    #nodeGroup.insertLayer(0, rlayer)
+                    # Insertion à la fin avec -1
+                    root.insertLayer(-1, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
                     print("Layer {} added to map".format(rlayer.name()))
 
-            # a virer
-            maplayers1 = self.getAllMapLayers()
-            for layer in maplayers1:
-                print(layer)
-            # a virer
-
+            # Refraichissement de la carte
             self.mapCan.refresh()
 
         except Exception as e:
