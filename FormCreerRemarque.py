@@ -79,7 +79,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             self.radioBtnUnique.setProperty("visible",False)
             self.radioBtnMultiple.setProperty("visible",False)
         else:
-            self.radioBtnMultiple.setText(u"Créer "+ str(croquisCnt) + u" remarques distinctes")
+            self.radioBtnMultiple.setText(u"Créer "+ str(croquisCnt) + u" signalements distincts")
 
         profil= self.context.client.getProfil()
         

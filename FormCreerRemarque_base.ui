@@ -202,7 +202,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Créer une remarque unique</string>
+            <string>Créer un signalement unique</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -219,7 +219,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Créer remarques distinctes</string>
+            <string>Créer signalements distincts</string>
            </property>
           </widget>
          </item>
