@@ -91,27 +91,33 @@ class EditFormFieldFromAttributes(object):
     Mise en forme du champ dans le formulaire d'attributs QGIS
     '''
     def setFormEditor(self, QgsEWS_type, QgsEWS_config):
+
         setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
         self.layer.setEditorWidgetSetup(self.index, setup)
 
 
     '''
     Général > Alias
+    
     L'item "title" du collaboratif devient dans le formulaire d'attributs QGIS l'Alias
     '''
     def setFieldTitle(self, title):
+
         if title is None or title is '':
             return
+
         self.layer.setFieldAlias(self.index, title)
 
 
     '''
     Contraintes > Non nul
+    
     Attention, c'est inversé entre les valeurs true/false de l'API et celles de la case à cocher QGIS :
     Nullable True --> case décochée
     Nullable False --> case cochée (ConstraintNotNull = 1)
     '''
     def setFieldConstraintNotNull(self, bNullable):
+
         if bNullable is None or bNullable is True:
             return
 
@@ -123,6 +129,7 @@ class EditFormFieldFromAttributes(object):
     Contraintes > Unique
     '''
     def setFieldConstraintUnique(self, bUnique):
+
         if bUnique is None or bUnique is False:
             return
 
@@ -132,9 +139,11 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Général > Editable
+    
     If readOnly = False, the widget at the given index will be read-only. 
     '''
     def setFieldReadOnly(self, readOnly):
+
         if readOnly is None or readOnly is True:
             return
 
@@ -145,16 +154,30 @@ class EditFormFieldFromAttributes(object):
 
 
     '''
-    Contraintes > Expression
-    Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
+    Contraintes > Expression (min_value/max_value)
+    
+    - Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
     de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
     Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
+    
+    - Pour que les contraintes sur les DateTime soient prises en compte, il faut remplacer l'espace
+    entre la date et l'heure par un T majuscule : '2020-07-31 12:15:00' => '2020-07-31T12:15:00'
+    
+    - Si les les valeurs d'attributs de type : Date, DateTime et YearMonth ne sont pas entre quotes,
+    la contrainte ne fonctionne pas.
+    Il faut avoir : "date_nom" >= '2020-06-01' and "date_nom" <= '2021-06-30' 
     '''
     def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, bNullable):
+
         if minValue is None and maxValue is None or minValue is '' and maxValue is '':
             return
 
+        if vType == 'DateTime':
+            minValue = minValue.replace(' ', 'T')
+            maxValue = maxValue.replace(' ', 'T')
+
         expression = None
+
         if minValue is not None and maxValue is None or maxValue is '':
             expression = "\"{}\" >= {}".format(self.name, minValue)
         elif vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
@@ -177,20 +200,25 @@ class EditFormFieldFromAttributes(object):
 
 
     '''
-    Contraintes > Expression
+    Contraintes > Expression (minLength/maxLength)
+    
     Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
     de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
     Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
     '''
     def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, vType, bNullable):
+
         if minLength is None and maxLength is None or minLength is '' and maxLength is '':
             return
 
         expression = None
+
         if minLength is not None and maxLength is None or maxLength is '':
             expression = "length(\"{}\") >= {}".format(self.name, minLength)
+
         if minLength is None or minLength is '' and maxLength is not None:
             expression = "length(\"{}\") <= {}".format(self.name, maxLength)
+
         if minLength is not None and maxLength is not None:
             expression = "length(\"{}\") >= {} AND length(\"{}\") <= {}".format(self.name, minLength, self.name, maxLength)
 
@@ -202,11 +230,13 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Contraintes > Expression
+    
     Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
     de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
     Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
     '''
     def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
+
         if pattern is None or pattern is '':
             return
 
@@ -286,6 +316,7 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Représentation du type d'outils : Date/Heure
+    
     defaultDate peut prendre les valeurs : NULL, '2020-10-01', 'CURRENT_DATE' ou ''
     '''
     def setFieldDate(self, defaultDate):
@@ -307,6 +338,7 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Représentation du type d'outils : Date/Heure
+    
     defaultDateTime peut prendre les valeurs : NULL, '2020-10-01 00:00:00', 'CURRENT_DATE' ou ''
     '''
     def setFieldDateTime(self, defaultDateTime):
@@ -346,6 +378,7 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Représentation du type d'outils : Date/Heure
+    
     ex defaultYearMonth : "2020-10"
     '''
     def setFieldYearMonth(self, defaultYearMonth):
@@ -364,11 +397,13 @@ class EditFormFieldFromAttributes(object):
 
     '''
     Représentation du type d'outils : Liste de valeurs
-    listOfValues : peut être de type
+    
+    - listOfValues : peut être de type
      - list ["LGV","Métro","Sans objet",null]
      - dict	{'A compléter': 'NR', 'Coupe rase': 'C', 'Peuplement sain': 'S'}
      - str "", chaine vide : on sort de la fonction
-    defaultListValue : une des valeurs de liste
+    
+    - defaultListValue : une des valeurs de liste
     '''
     def setFieldListOfValues(self, listOfValues, defaultListValue):
         if listOfValues is None or listOfValues is '':
