@@ -21,7 +21,7 @@ class ThemeAttribut(object):
     defaultval = None
     valeurs = []
     type = None
-    obligatoire = False
+    obligatoire = None
 
     def __init__(self, theme="", nom="", valeur=""):
         """
@@ -38,6 +38,7 @@ class ThemeAttribut(object):
         self.valeur = valeur
 
         self.valeurs = []
+        self.obligatoire = False
 
     def addValeur(self, val):
         self.valeurs.append(val)

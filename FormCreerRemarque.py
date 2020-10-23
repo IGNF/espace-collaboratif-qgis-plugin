@@ -105,7 +105,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 self.treeWidget.addTopLevelItem(thItem)
                 
                 #Pour masquer la 2ème colonne (qui contient le groupe id)
-                #thItem.setTextColor(1,QtWidgets.QColor(255,255,255,0))
                 thItem.setForeground(1, QtGui.QBrush(Qt.white))
                 
                 if ClientHelper.notNoneValue(th.groupe.nom) in preferredThemes:
@@ -118,21 +117,26 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 for att in th.attributs:
                     attLabel = att.nom
                     attType = att.type
-                    '''if (len(att.valeurs)>0):
-                        attVal = att.valeurs[0]'''
                     attDefaultval = att.defaultval
-            
-                    if attType == "text": 
-                        label = QtWidgets.QLabel(att.nom,self.treeWidget)
+
+                    label = QtWidgets.QLabel(attLabel, self.treeWidget)
+                    # Les attributs obligatoires sont en gras
+                    if att.obligatoire is True:
+                        myFont = QtGui.QFont()
+                        myFont.setBold(True)
+                        label.setFont(myFont)
+
+                    if attType == "text":
                         valeur = QtWidgets.QLineEdit(self.treeWidget)
                         valeur.setText(attDefaultval)
-                        txtItem = QTreeWidgetItem()
-                        thItem.addChild(txtItem)
-                        self.treeWidget.setItemWidget(txtItem, 0, label)
-                        self.treeWidget.setItemWidget(txtItem, 1, valeur)    
+                        attItem = QtWidgets.QTreeWidgetItem()
+                        thItem.addChild(attItem)
+                        self.treeWidget.setItemWidget(attItem, 0, label)
+                        self.treeWidget.setItemWidget(attItem, 1, valeur)
+
                     elif attType == "checkbox":
-                        label = QtWidgets.QLabel(att.nom,self.treeWidget)
                         valeur = QtWidgets.QCheckBox(self.treeWidget)
+                        valeur.setChecked(False)
                         if attDefaultval == '1' \
                                 or attDefaultval == 'True' \
                                 or attDefaultval == 'TRUE' \
@@ -141,23 +145,19 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                                 or attDefaultval == 'VRAI' \
                                 or attDefaultval == 'vrai':
                             valeur.setChecked(True)
-                        else:
-                            valeur.setChecked(False)     
-                        attItem = QTreeWidgetItem()
+
+                        attItem = QtWidgets.QTreeWidgetItem()
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
-                        self.treeWidget.setItemWidget(attItem, 1, valeur)  
+                        self.treeWidget.setItemWidget(attItem, 1, valeur)
                     
                     else:
-                        label = QtWidgets.QLabel(att.nom,self.treeWidget)
                         listAtt = QtWidgets.QComboBox(self.treeWidget)
+                        listAtt.insertItems(0, att.valeurs)
                         attItem = QtWidgets.QTreeWidgetItem()
-                        
-                        listAtt.insertItems(0,att.valeurs)
-                        
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
-                        self.treeWidget.setItemWidget(attItem, 1, listAtt)  
+                        self.treeWidget.setItemWidget(attItem, 1, listAtt)
 
         self.profilThemesList = profil.themes
 
