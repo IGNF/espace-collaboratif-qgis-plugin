@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 25 mai 2020
 
 version 4.0.0
 
 @author: EPeyrouse
-'''
+"""
 
 
 class Layer(object):
@@ -36,7 +36,6 @@ class Layer(object):
     # <URL>
     url = ""
 
-
     def __init__(self):
         """
         Constructor
@@ -53,18 +52,7 @@ class Layer(object):
         self.tilezoom = ""
         self.url = ""
 
-
     def GetAllInfo(self):
-        infos = []
-        infos.append(self.type)
-        infos.append(self.nom)
-        infos.append(self.description)
-        infos.append(self.minzoom)
-        infos.append(self.maxzoom)
-        infos.append(self.extent)
-        infos.append(self.role)
-        infos.append(self.visibility)
-        infos.append(self.opacity)
-        infos.append(self.tilezoom)
-        infos.append(self.url)
+        infos = [self.type, self.nom, self.description, self.minzoom, self.maxzoom, self.extent, self.role,
+                 self.visibility, self.opacity, self.tilezoom, self.url]
         return infos

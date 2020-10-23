@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 29 sept. 2015
 
 version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 
 from qgis.utils import *
 
 from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest,QgsCoordinateTransform,\
-                      QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsPolygon,\
-                      QgsWkbTypes, QgsLayerTreeGroup
+from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest, QgsCoordinateTransform, \
+    QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsPolygon, \
+    QgsWkbTypes, QgsLayerTreeGroup
 
 from .RipartException import RipartException
 
@@ -44,18 +44,19 @@ from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 
 from .core.Statistics import Statistics
 
+
 class Contexte(object):
     """
     Contexte et initialisation de la "session"
     """
-    #instance du Contexte
-    instance =None
+    # instance du Contexte
+    instance = None
 
-    #identifiants de connexion
-    login=""
-    pwd=""
-    urlHostRipart=""
-    profil=None
+    # identifiants de connexion
+    login = ""
+    pwd = ""
+    urlHostRipart = ""
+    profil = None
 
     # groupe actif
     groupeactif = ""
@@ -63,188 +64,176 @@ class Contexte(object):
     # cle geoportail
     clegeoportail = ""
 
-    #client pour le service RIPart
-    client=None
+    # client pour le service RIPart
+    client = None
 
-    #fenêtre de connexion
-    loginWindow=None
+    # fenêtre de connexion
+    loginWindow = None
 
-    #le répertoire du projet qgis
-    projectDir= ""
+    # le répertoire du projet qgis
+    projectDir = ""
 
-    #le nom du fichier (projet qgis)
-    projectFileName=""
+    # le nom du fichier (projet qgis)
+    projectFileName = ""
 
-    #chemin vers la base de donnée sqlite
-    dbPath=""
+    # chemin vers la base de donnée sqlite
+    dbPath = ""
 
-    #répertoire du plugin
+    # répertoire du plugin
     plugin_path = os.path.dirname(os.path.realpath(__file__))
 
-    #fichier xml de configuration
-    ripartXmlFile=""
+    # fichier xml de configuration
+    ripartXmlFile = ""
 
-    #objets QGis
-    QObject= None
-    QgsProject=None
-    iface=None
+    # objets QGis
+    QObject = None
+    QgsProject = None
+    iface = None
 
-    #map canvas,la carte courante
+    # map canvas,la carte courante
     mapCan = None
 
-    #Le système géodésique employé par le service Ripart (WGS84; EPSG:2154)
-    spatialRef= None
+    # Le système géodésique employé par le service Ripart (WGS84; EPSG:2154)
+    spatialRef = None
 
-    #connexion à la base de données
-    conn=None
+    # connexion à la base de données
+    conn = None
 
-    #proxy
+    # proxy
     proxy = None
 
-    #le logger
-    logger=None
+    # le logger
+    logger = None
 
     # les statistiques
-    guichetLayers=[]
+    guichetLayers = []
 
-    def __init__(self, QObject,QgsProject):
-        '''
+    def __init__(self, QObject, QgsProject):
+        """
         Constructor
 
         Initialisation du contexte
-        '''
-        self.QObject=QObject
-        self.QgsProject= QgsProject
+        """
+        self.QObject = QObject
+        self.QgsProject = QgsProject
         self.mapCan = QObject.iface.mapCanvas()
 
-        self.iface= QObject.iface
+        self.iface = QObject.iface
 
-        self.login=""
-        self.pwd=""
-        self.urlHostRipart=""
-        self.clegeoportail=""
-        self.groupeactif=""
+        self.login = ""
+        self.pwd = ""
+        self.urlHostRipart = ""
+        self.clegeoportail = ""
+        self.groupeactif = ""
         self.profil = None
         self.ripClient = None
 
-        self.logger=RipartLogger("Contexte").getRipartLogger()
+        self.logger = RipartLogger("Contexte").getRipartLogger()
 
-        self.spatialRef = QgsCoordinateReferenceSystem( RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
+        self.spatialRef = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
 
-        #version in metadata
-        cst.RIPART_CLIENT_VERSION = self.getMetadata('general','version')
+        # version in metadata
+        cst.RIPART_CLIENT_VERSION = self.getMetadata('general', 'version')
 
         try:
-            #set du répertoire et fichier du projet qgis
+            # set du répertoire et fichier du projet qgis
             self.setProjectParams(QgsProject)
 
-            #contrôle l'existence du fichier de configuration
+            # contrôle l'existence du fichier de configuration
             self.checkConfigFile()
 
-            #set de la base de données
+            # set de la base de données
             self.getOrCreateDatabase()
 
-            #set des fichiers de style
+            # set des fichiers de style
             self.copyRipartStyleFiles()
 
-            #retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
-            formatFile =open( os.path.join(self.plugin_path,'files','formats.txt'), 'r')
-            lines=formatFile.readlines()
-            self.formats=[x.split("\n")[0] for x in lines]
+            # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
+            formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
+            lines = formatFile.readlines()
+            self.formats = [x.split("\n")[0] for x in lines]
 
 
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
             raise
 
-
-
-    def getMetadata(self,category, param):
-
+    def getMetadata(self, category, param):
         config = configparser.RawConfigParser()
         config.read(self.plugin_path + '\\metadata.txt')
         return config.get('general', 'version')
 
-
-
     @staticmethod
-    def getInstance(QObject=None,QgsProject=None):
+    def getInstance(QObject=None, QgsProject=None):
         """Retourne l'instance du Contexte
         """
         if not Contexte.instance:
-            Contexte.instance=Contexte._createInstance(QObject,QgsProject)
+            Contexte.instance = Contexte._createInstance(QObject, QgsProject)
 
-        elif  (Contexte.instance.projectDir!= QgsProject.instance().homePath() or
-              ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName+".qgs",Contexte.instance.projectFileName+".qgz"]) :
-            Contexte.instance=Contexte._createInstance(QObject,QgsProject)
+        elif (Contexte.instance.projectDir != QgsProject.instance().homePath() or
+              ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName + ".qgs",
+                                                                        Contexte.instance.projectFileName + ".qgz"]):
+            Contexte.instance = Contexte._createInstance(QObject, QgsProject)
 
         return Contexte.instance
 
-
-
     @staticmethod
-    def _createInstance(QObject,QgsProject):
+    def _createInstance(QObject, QgsProject):
         """Création de l'instance du contexte
         """
         try:
-            Contexte.instance = Contexte(QObject,QgsProject)
-            Contexte.instance.logger.debug("nouvelle instance de contexte créée" )
+            Contexte.instance = Contexte(QObject, QgsProject)
+            Contexte.instance.logger.debug("nouvelle instance de contexte créée")
         except Exception as e:
-            Contexte.instance=None
+            Contexte.instance = None
             return None
 
         return Contexte.instance
 
-
-
-    def setProjectParams(self,QgsProject):
+    def setProjectParams(self, QgsProject):
         """set des paramètres du projet
         """
-        self.projectDir=QgsProject.instance().homePath()
+        self.projectDir = QgsProject.instance().homePath()
 
-        if self.projectDir =="":
-            RipartHelper.showMessageBox(u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser le plugin de l'espace collaboratif")
+        if self.projectDir == "":
+            RipartHelper.showMessageBox(
+                u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser le plugin de l'espace collaboratif")
             raise Exception(u"Projet QGIS non enregistré")
 
-        #nom du fichier du projet enregistré
-        fname=ntpath.basename(QgsProject.instance().fileName())
+        # nom du fichier du projet enregistré
+        fname = ntpath.basename(QgsProject.instance().fileName())
 
-        self.projectFileName= fname[:fname.find(".")]
-
-
+        self.projectFileName = fname[:fname.find(".")]
 
     def checkConfigFile(self):
         """Contrôle de l'existence du fichier de configuration
         """
-        ripartxml=self.projectDir+os.path.sep+ RipartHelper.nom_Fichier_Parametres_Ripart
-        if not os.path.isfile(ripartxml) :
+        ripartxml = self.projectDir + os.path.sep + RipartHelper.nom_Fichier_Parametres_Ripart
+        if not os.path.isfile(ripartxml):
             try:
-                shutil.copy(self.plugin_path+os.path.sep+RipartHelper.ripart_files_dir+os.path.sep+ RipartHelper.nom_Fichier_Parametres_Ripart,
-                             ripartxml)
-                self.logger.debug("copy espaceco.xml" )
+                shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
+                            RipartHelper.nom_Fichier_Parametres_Ripart, ripartxml)
+                self.logger.debug("copy espaceco.xml")
             except Exception as e:
                 self.logger.error("no espaceco.xml found in plugin directory" + format(e))
-                raise Exception("Le fichier de configuration "+ RipartHelper.nom_Fichier_Parametres_Ripart + " n'a pas été trouvé.")
-
-
+                raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
+                                " n'a pas été trouvé.")
 
     def copyRipartStyleFiles(self):
         """Copie les fichiers de styles (pour les remarques et croquis ripart)
         """
-        styleFilesDir=self.projectDir + os.path.sep + RipartHelper.qmlStylesDir
+        styleFilesDir = self.projectDir + os.path.sep + RipartHelper.qmlStylesDir
 
-        RipartHelper.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep + RipartHelper.qmlStylesDir,
-                          styleFilesDir)
-
-
+        RipartHelper.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
+                          RipartHelper.qmlStylesDir, styleFilesDir)
 
     def getVisibilityLayersFromGroupeActif(self):
         '''Retourne True si au moins une couche est éditable
         False sinon'''
-        if self.groupeactif == None or self.groupeactif == "":
+        if self.groupeactif is None or self.groupeactif == "":
             return False
 
-        if self.profil == None:
+        if self.profil is None:
             return False
 
         for infoGeogroupe in self.profil.infosGeogroupes:
@@ -257,9 +246,7 @@ class Contexte(object):
 
         return False
 
-
-
-    def getConnexionRipart(self,newLogin=False):
+    def getConnexionRipart(self, newLogin=False):
         """Connexion au service ripart
 
         :param newLogin: booléen indiquant si on fait un nouveau login (fonctionalité "Connexion au service Ripart")
@@ -270,66 +257,70 @@ class Contexte(object):
         """
         self.logger.debug("GetConnexionRipart ")
 
-        result= -1;
+        result = -1;
 
         try:
-            self.urlHostRipart=RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,"Serveur").text
+            self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
+                                                                "Serveur").text
             self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
         except Exception as e:
             self.logger.error("URLHOST inexistant dans fichier configuration")
-            RipartHelper.showMessageBox( u"L'url du serveur doit être renseignée dans la configuration avant de pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion ...)" )
+            RipartHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
+                                        u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion "
+                                        u"...)")
             return
-
 
         self.loginWindow = FormConnexionDialog()
 
-        loginXmlNode=RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_Login,"Serveur")
-        if loginXmlNode==None:
-            self.login=""
+        loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")
+        if loginXmlNode is None:
+            self.login = ""
         else:
-            self.login = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_Login,"Serveur").text
+            self.login = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur").text
 
-        xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_proxy,"Serveur").text
-        if (xmlproxy!= None and str(xmlproxy).strip()!='' ):
-            self.proxy ={'https': str(xmlproxy).strip()}
-        else :
+        xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
+        if xmlproxy is not None and str(xmlproxy).strip() != '':
+            self.proxy = {'https': str(xmlproxy).strip()}
+        else:
             self.proxy = None
 
         xmlgroupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif, "Serveur")
-        if xmlgroupeactif != None:
-            self.groupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif,"Serveur").text
-            if self.groupeactif != None:
+        if xmlgroupeactif is not None:
+            self.groupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif,
+                                                              "Serveur").text
+            if self.groupeactif is not None:
                 self.logger.debug("this.groupeactif " + self.groupeactif)
 
-        xmlclegeoportail=RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur")
-        if xmlclegeoportail!=None:
-            self.clegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir,RipartHelper.xml_CleGeoportail,"Serveur").text
-            if self.clegeoportail == None:
+        xmlclegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_CleGeoportail, "Serveur")
+        if xmlclegeoportail is not None:
+            self.clegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_CleGeoportail,
+                                                                "Serveur").text
+            if self.clegeoportail is None:
                 self.clegeoportail = ""
             else:
                 self.logger.debug("this.clegeoportail " + self.clegeoportail)
 
-        if (self.login =="" or self.pwd=="" or newLogin):
+        if self.login == "" or self.pwd == "" or newLogin:
             self.loginWindow.setLogin(self.login)
             self.loginWindow.exec_()
 
-            while (result<0):
+            while result < 0:
                 if self.loginWindow.cancel:
                     # fix_print_with_import
                     print("rejected")
                     self.loginWindow = None
-                    result=0
-                elif self.loginWindow.connect :
+                    result = 0
+                elif self.loginWindow.connect:
                     # fix_print_with_import
                     print("connect")
                     self.login = self.loginWindow.getLogin()
-                    self.pwd=self.loginWindow.getPwd()
+                    self.pwd = self.loginWindow.getPwd()
                     print("login " + self.login)
                     try:
                         client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
                         profil = client.getProfil()
 
-                        if profil != None :
+                        if profil is not None:
                             dlgInfoToScreen = True
                             self.saveLogin(self.login)
 
@@ -350,10 +341,10 @@ class Contexte(object):
 
                             # sinon le choix d'un autre groupe est présenté à l'utilisateur
                             else:
-                                dlgChoixGroupe = FormChoixGroupe(profil,self.clegeoportail,self.groupeactif)
+                                dlgChoixGroupe = FormChoixGroupe(profil, self.clegeoportail, self.groupeactif)
                                 dlgChoixGroupe.exec_()
                                 # bouton Valider
-                                if dlgChoixGroupe.cancel == False:
+                                if not dlgChoixGroupe.cancel:
                                     result = 1
 
                                     # le choix du nouveau profil est validé
@@ -388,22 +379,22 @@ class Contexte(object):
                                     self.profil.layersCleGeoportail = layersCleGeoportail
 
                                 # Bouton Annuler
-                                elif dlgChoixGroupe.cancel == True:
+                                elif dlgChoixGroupe.cancel:
                                     result = -1
                                     print("rejected")
                                     self.loginWindow.close()
                                     self.loginWindow = None
                                     return
 
-                            #les infos de connexion présentée à l'utilisateur
-                            dlgInfo=FormInfo()
+                            # les infos de connexion présentée à l'utilisateur
+                            dlgInfo = FormInfo()
                             dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace Collaboratif.</b>")
                             dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
                             dlgInfo.textInfo.append("Login : {}".format(self.login))
                             dlgInfo.textInfo.append("Groupe : {}".format(self.profil.titre))
                             if self.profil.zone == cst.ZoneGeographique.UNDEFINED:
                                 zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
-                                if zoneExtraction == "" or zoneExtraction == None:
+                                if zoneExtraction == "" or zoneExtraction is None:
                                     dlgInfo.textInfo.append("Zone : pas de zone définie")
                                 else:
                                     dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
@@ -415,15 +406,15 @@ class Contexte(object):
                             dlgInfo.exec_()
 
                             if dlgInfo.Accepted:
-                                self.client=client
-                                result= 1
+                                self.client = client
+                                result = 1
                                 self.logger.debug("result 1")
-                        else :
+                        else:
                             # fix_print_with_import
                             print("error")
                     except Exception as e:
-                        result=-1
-                        self.pwd=""
+                        result = -1
+                        self.pwd = ""
                         self.logger.error(format(e))
 
                         try:
@@ -435,47 +426,42 @@ class Contexte(object):
         else:
             try:
                 client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
-                result=1
-                self.logger.debug("result ="+ str(result) )
-                self.client=client
+                result = 1
+                self.logger.debug("result =" + str(result))
+                self.client = client
             except RipartException as e:
                 # fix_print_with_import
                 print(format(e))
-                result=-1
+                result = -1
 
-        if result ==1:
-
+        if result == 1:
             self.ripClient = client
             self.logger.debug("ripclient")
 
         return result
 
-
-
-    def saveLogin(self,login):
+    def saveLogin(self, login):
         """Sauvegarde du login dans le contexte et dans le fichier ripart.xml
         """
-        self.login=login
-        RipartHelper.save_login( self.projectDir, login)
-
-
+        self.login = login
+        RipartHelper.save_login(self.projectDir, login)
 
     def getOrCreateDatabase(self):
         """Retourne la base de données spatialite contenant les tables des remarques et croquis
         Si la BD n'existe pas, elle est créée
 
         """
-        dbName = self.projectFileName +"_espaceco"
-        self.dbPath = self.projectDir+"/"+dbName+".sqlite"
+        dbName = self.projectFileName + "_espaceco"
+        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
 
-        createDb=False
+        createDb = False
 
-        if not os.path.isfile(self.dbPath) :
-            createDb=True
+        if not os.path.isfile(self.dbPath):
+            createDb = True
             try:
-                shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep + RipartHelper.ripart_db,
-                             self.dbPath)
-                self.logger.debug("copy espaceco.sqlite" )
+                shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
+                            RipartHelper.ripart_db, self.dbPath)
+                self.logger.debug("copy espaceco.sqlite")
             except Exception as e:
                 self.logger.error("no espaceco.sqlite found in plugin directory" + format(e))
                 raise e
@@ -485,18 +471,18 @@ class Contexte(object):
             # creating a Cursor
             cur = self.conn.cursor()
 
-            sql="SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
+            sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
             cur.execute(sql)
-            if cur.fetchone() ==None:
-                #create layer Signalement
+            if cur.fetchone() is None:
+                # create layer Signalement
                 RipartHelper.createRemarqueTable(self.conn)
 
             for lay in RipartHelper.croquis_layers:
-                sql="SELECT name FROM sqlite_master WHERE type='table' AND name='"+lay+"'"
+                sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + lay + "'"
                 cur.execute(sql)
-                if cur.fetchone() ==None:
-                    #create layer
-                    RipartHelper.createCroquisTable(self.conn,lay,RipartHelper.croquis_layers[lay])
+                if cur.fetchone() is None:
+                    # create layer
+                    RipartHelper.createCroquisTable(self.conn, lay, RipartHelper.croquis_layers[lay])
 
         except RipartException as e:
             self.logger.error(format(e))
@@ -504,8 +490,6 @@ class Contexte(object):
         finally:
             cur.close()
             self.conn.close()
-
-
 
     def appendUri_WFS(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
@@ -530,7 +514,6 @@ class Contexte(object):
             uri.setParam('service', cst.WFS)
 
         return uri
-
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
@@ -558,7 +541,8 @@ class Contexte(object):
             # Il faut indiquer à l'utilisateur que c'est impossible
             # d'ajouter un nouveau groupe dans le projet
             if nodeGroup.name() != nomGroupe and (len(nodesGroup) == 1):
-                QMessageBox.warning(None, "Charger les couches de mon groupe", u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
+                QMessageBox.warning(None, "Charger les couches de mon groupe",
+                                    u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
                 return
             guichet_layers.reverse()
             for layer in guichet_layers:
@@ -637,42 +621,36 @@ class Contexte(object):
                             level=1, duration=10)
             print(str(e))
 
-
-
     def addRipartLayersToMap(self):
         """Add ripart layers to the current map
         """
-
-        uri =QgsDataSourceUri()
-
-        dbName = self.projectFileName +"_espaceco"
-        self.dbPath = self.projectDir+"/"+dbName+".sqlite"
+        uri = QgsDataSourceUri()
+        dbName = self.projectFileName + "_espaceco"
+        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
         uri.setDatabase(self.dbPath)
         self.logger.debug(uri.uri())
 
-        maplayers=self.getAllMapLayers()
+        maplayers = self.getAllMapLayers()
 
         root = self.QgsProject.instance().layerTreeRoot()
 
         for table in RipartHelper.croquis_layers_name:
             if table not in maplayers:
-                uri.setDataSource('',  table, 'geom')
+                uri.setDataSource('', table, 'geom')
                 uri.setSrid('4326')
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
                 vlayer.setCrs(QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId))
-                QgsProject.instance().addMapLayer(vlayer,False)
+                QgsProject.instance().addMapLayer(vlayer, False)
 
-                root.insertLayer(0,vlayer)
+                root.insertLayer(0, vlayer)
 
-                self.logger.debug("Layer "+vlayer.name() + " added to map")
+                self.logger.debug("Layer " + vlayer.name() + " added to map")
 
-                #ajoute les styles aux couches
-                style= os.path.join(self.projectDir, "espacecoStyles",table+".qml")
+                # ajoute les styles aux couches
+                style = os.path.join(self.projectDir, "espacecoStyles", table + ".qml")
                 vlayer.loadNamedStyle(style)
 
         self.mapCan.refresh()
-
-
 
     def getAllMapLayers(self):
         """Return the list of layer names which are loaded in the map
@@ -681,17 +659,14 @@ class Contexte(object):
         :rtype dictionary
         """
         layers = QgsProject.instance().mapLayers()
-
-        layerNames=[]
-        maplayers={}
+        layerNames = []
+        maplayers = {}
         for key in layers:
-            l=layers[key]
+            l = layers[key]
             layerNames.append(l.name())
-            maplayers[l.name()]= l.id()
+            maplayers[l.name()] = l.id()
 
         return maplayers
-
-
 
     def getMapPolygonLayers(self):
         """Retourne les calques qui sont de type polygon ou multipolygon
@@ -701,18 +676,18 @@ class Contexte(object):
         """
         layers = QgsProject.instance().mapLayers()
 
-        polylayers={}
+        polylayers = {}
 
         for key in layers:
-            l=layers[key]
+            l = layers[key]
 
-            if type(l) is QgsVectorLayer and l.geometryType ()!=None and l.geometryType ()== QgsWkbTypes.PolygonGeometry:
-                polylayers[l.id()]=l.name()
+            if type(
+                    l) is QgsVectorLayer and l.geometryType() is not None and l.geometryType() == QgsWkbTypes.PolygonGeometry:
+                polylayers[l.id()] = l.name()
 
         return polylayers
 
-
-    def getLayerByName(self,layName):
+    def getLayerByName(self, layName):
         """Retourne le calque donné par son nom
 
         :param layName: le nom du calque
@@ -721,18 +696,17 @@ class Contexte(object):
         :return: le premier calque ayant pour nom celui donné en paramètre
         :rtype: QgsVectorLayer
         """
-        mapByName= QgsProject.instance().mapLayersByName(layName)
-        if len(mapByName) >0:
+        mapByName = QgsProject.instance().mapLayersByName(layName)
+        if len(mapByName) > 0:
             return mapByName[0]
         else:
             return None
 
-
     def emptyAllRipartLayers(self):
         """Supprime toutes les remarques, vide les tables de la base ripart.sqlite
         """
-        ripartLayers= RipartHelper.croquis_layers
-        ripartLayers[RipartHelper.nom_Calque_Signalement]="POINT"
+        ripartLayers = RipartHelper.croquis_layers
+        ripartLayers[RipartHelper.nom_Calque_Signalement] = "POINT"
 
         try:
             self.conn = spatialite_connect(self.dbPath)
@@ -740,7 +714,7 @@ class Contexte(object):
             for table in ripartLayers:
                 RipartHelper.emptyTable(self.conn, table)
 
-            ripartLayers.pop(RipartHelper.nom_Calque_Signalement,None)
+            ripartLayers.pop(RipartHelper.nom_Calque_Signalement, None)
 
             self.conn.commit()
         except RipartException as e:
@@ -751,62 +725,53 @@ class Contexte(object):
 
         self.refresh_layers()
 
-
-
     def refresh_layers(self):
         """Rafraichissement de la carte
         """
         for layer in self.mapCan.layers():
             layer.triggerRepaint()
 
-
-
-    def updateRemarqueInSqlite(self,rem):
+    def updateRemarqueInSqlite(self, rem):
         """Met à jour une remarque (après l'ajout d'une réponse)
 
         :param rem : la remarque à mettre à jour
         :type rem: Remarque
         """
         try:
-            #self.conn= sqlite3.connect(self.dbPath)
+            # self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
 
-            sql = "UPDATE "+ RipartHelper.nom_Calque_Signalement+" SET "
-            sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") +"',"
-            sql += " Date_validation= '" + rem.getAttribut("dateValidation") +"',"
-            sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) +"', "
-            sql += " Statut='" + rem.statut  +"' "
+            sql = "UPDATE " + RipartHelper.nom_Calque_Signalement + " SET "
+            sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
+            sql += " Date_validation= '" + rem.getAttribut("dateValidation") + "',"
+            sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) + "', "
+            sql += " Statut='" + rem.statut + "' "
             sql += " WHERE NoSignalement = " + rem.id
 
-            cur= self.conn.cursor()
+            cur = self.conn.cursor()
             cur.execute(sql)
 
             self.conn.commit()
 
-        except Exception as e :
+        except Exception as e:
             self.logger.error(format(e))
             raise
         finally:
             cur.close()
             self.conn.close()
 
-
-
-    def countRemarqueByStatut(self,statut):
+    def countRemarqueByStatut(self, statut):
         """Retourne le nombre de remarques ayant le statut donné en paramètre
 
         :param statut: le statut de la remarque (=code renvoyé par le service)
         :type statut: string
         """
-        remLay=self.getLayerByName(RipartHelper.nom_Calque_Signalement)
-        expression='"Statut" = \''+ statut +'\''
-        filtFeatures=remLay.getFeatures(QgsFeatureRequest().setFilterExpression( expression ))
+        remLay = self.getLayerByName(RipartHelper.nom_Calque_Signalement)
+        expression = '"Statut" = \'' + statut + '\''
+        filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
         return len(list(filtFeatures))
 
-
-
     #############Création nouvelle remarque ###########
-
     def hasMapSelectedFeatures(self):
         """Vérifie s'il y a des objets sélectionnés
 
@@ -814,70 +779,72 @@ class Contexte(object):
         :rtype boolean
         """
         mapLayers = self.mapCan.layers()
-        for l in mapLayers:
-            if type(l) is QgsVectorLayer and len(l.selectedFeatures())>0:
+        for la in mapLayers:
+            if type(la) is QgsVectorLayer and len(la.selectedFeatures()) > 0:
                 return True
         return False
-
 
     def makeCroquisFromSelection(self):
         """Transforme en croquis Ripart les object sélectionnés dans la carte en cours.
         Le système de référence spatial doit être celui du service Ripart(i.e. 4326), donc il faut transformer les
         coordonnées si la carte est dans un autre système de réf.
         """
-        #dictionnaire : key: nom calque, value: liste des attributs
-        attCroquis=RipartHelper.load_attCroquis(self.projectDir)
+        # dictionnaire : key: nom calque, value: liste des attributs
+        attCroquis = RipartHelper.load_attCroquis(self.projectDir)
 
-        #Recherche tous les features sélectionnés sur la carte (pour les transformer en croquis)
-        listCroquis=[]
+        # Recherche tous les features sélectionnés sur la carte (pour les transformer en croquis)
+        listCroquis = []
         mapLayers = self.mapCan.layers()
-        for l in mapLayers:
-            if type(l) is not QgsVectorLayer:
+        for lay in mapLayers:
+            if type(lay) is not QgsVectorLayer:
                 continue
-            for f in l.selectedFeatures():
-                fattributes= f.attributes()
+            for f in lay.selectedFeatures():
 
-                #la liste des croquis
-                croquiss=[]
+                # la liste des croquis
+                croquiss = []
 
-                #le type du feature
-                ftype= f.geometry().type()
+                # le type du feature
+                ftype = f.geometry().type()
 
-                geom= f.geometry()
+                geom = f.geometry()
 
-                isMultipart= geom.isMultipart()
+                isMultipart = geom.isMultipart()
 
-                #if geom.isMultipart() => explode to single parts
-                if isMultipart and ftype==QgsWkbTypes.PolygonGeometry:
+                # if geom.isMultipart() => explode to single parts
+                if isMultipart and ftype == QgsWkbTypes.PolygonGeometry:
                     for poly in geom.asMultiPolygon():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolygonXY(poly),QgsWkbTypes.PolygonGeometry,l.crs(),f[0]))
+                        croquiss.append(
+                            self.makeCroquis(QgsGeometry.fromPolygonXY(poly), QgsWkbTypes.PolygonGeometry, lay.crs(),
+                                             f[0]))
 
-                elif isMultipart and ftype==QgsWkbTypes.LineGeometry:
+                elif isMultipart and ftype == QgsWkbTypes.LineGeometry:
                     for line in geom.asMultiPolyline():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPolylineXY(line),QgsWkbTypes.LineGeometry ,l.crs(),f[0]))
+                        croquiss.append(
+                            self.makeCroquis(QgsGeometry.fromPolylineXY(line), QgsWkbTypes.LineGeometry, lay.crs(),
+                                             f[0]))
 
-                elif isMultipart and ftype==QgsWkbTypes.PointGeometry:
+                elif isMultipart and ftype == QgsWkbTypes.PointGeometry:
                     for pt in geom.asMultiPoint():
-                        croquiss.append(self.makeCroquis(QgsGeometry.fromPoint(pt),QgsWkbTypes.PointGeometry,l.crs(),f[0]))
-                else :
-                    croquiss.append(self.makeCroquis(geom,ftype,l.crs(),f[0]))
+                        croquiss.append(
+                            self.makeCroquis(QgsGeometry.fromPoint(pt), QgsWkbTypes.PointGeometry, lay.crs(), f[0]))
+                else:
+                    croquiss.append(self.makeCroquis(geom, ftype, lay.crs(), f[0]))
 
-                if len(croquiss)==0:
+                if len(croquiss) == 0:
                     continue
 
                 for croquisTemp in croquiss:
-                    if l.name() in attCroquis:
-                        for att in attCroquis[l.name()]:
-                            idx= l.fields().lookupField(att)
-                            attribut= Attribut(att,f.attributes()[idx])
+                    if lay.name() in attCroquis:
+                        for att in attCroquis[lay.name()]:
+                            idx = lay.fields().lookupField(att)
+                            attribut = Attribut(att, f.attributes()[idx])
                             croquisTemp.addAttribut(attribut)
 
                     listCroquis.append(croquisTemp)
 
         return listCroquis
 
-
-    def makeCroquis(self, geom, ftype, layerCrs,fId):
+    def makeCroquis(self, geom, ftype, layerCrs, fId):
         """Génère un croquis Ripart à partir d'une géométrie
         Les coordonnées des points du croquis doivent être transformées dans le crs de Ripart (4326)
 
@@ -896,46 +863,43 @@ class Contexte(object):
         :return le croquis créé
         :rtype Croquis ou None s'il y a eu une erreur
         """
-        newCroquis= Croquis()
-        geomPoints=[]
+        newCroquis = Croquis()
+        geomPoints = []
 
         try:
-            destCrs=QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
+            destCrs = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
 
             transformer = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
 
-            if ftype==QgsWkbTypes.PolygonGeometry:
-                geomPoints=geom.asPolygon()
-                if len(geomPoints)>0:
-                    geomPoints=geomPoints[0]      #les points du polygone
+            if ftype == QgsWkbTypes.PolygonGeometry:
+                geomPoints = geom.asPolygon()
+                if len(geomPoints) > 0:
+                    geomPoints = geomPoints[0]  # les points du polygone
                 else:
                     self.logger.debug(u"geomPoints problem " + str(fId))
-                newCroquis.type=newCroquis.CroquisType.Polygone
+                newCroquis.type = newCroquis.CroquisType.Polygone
 
-            elif ftype==QgsWkbTypes.LineGeometry:
+            elif ftype == QgsWkbTypes.LineGeometry:
                 geomPoints = geom.asPolyline()
-                newCroquis.type=newCroquis.CroquisType.Ligne
+                newCroquis.type = newCroquis.CroquisType.Ligne
 
-            elif ftype==QgsWkbTypes.PointGeometry:
-                geomPoints=[geom.asPoint()]
-                newCroquis.type=newCroquis.CroquisType.Point
-            else :
-                newCroquis.type=newCroquis.CroquisType.Vide
+            elif ftype == QgsWkbTypes.PointGeometry:
+                geomPoints = [geom.asPoint()]
+                newCroquis.type = newCroquis.CroquisType.Point
+            else:
+                newCroquis.type = newCroquis.CroquisType.Vide
 
             for pt in geomPoints:
-                pt=transformer.transform(pt)
-                newCroquis.addPoint(Point(pt.x(),pt.y()))
+                pt = transformer.transform(pt)
+                newCroquis.addPoint(Point(pt.x(), pt.y()))
 
         except Exception as e:
-            self.logger.error(u"in makeCroquis:"+format(e))
+            self.logger.error(u"in makeCroquis:" + format(e))
             return None
-
 
         return newCroquis
 
-
-
-    def getPositionRemarque(self,listCroquis):
+    def getPositionRemarque(self, listCroquis):
         """Recherche et retourne la position de la remarque (point).
         La position est calculée à partir des croquis associés à la remarque
 
@@ -946,19 +910,17 @@ class Contexte(object):
         :rtype Point
         """
 
-        #crée la table temporaire dans spatialite et calcule les centroides de chaque croquis
-        res=self._createTempCroquisTable(listCroquis)
+        # crée la table temporaire dans spatialite et calcule les centroides de chaque croquis
+        res = self._createTempCroquisTable(listCroquis)
 
-        #trouve le barycentre de l'ensemble des centroïdes
-        if type(res)==list:
-            barycentre= self._getBarycentre()
+        # trouve le barycentre de l'ensemble des centroïdes
+        if type(res) == list:
+            barycentre = self._getBarycentre()
             return barycentre
         else:
             return None
 
-
-
-    def _createTempCroquisTable(self,listCroquis):
+    def _createTempCroquisTable(self, listCroquis):
         """Crée une table temporaire dans sqlite pour les nouveaux croquis
         La table contient la géométrie des croquis au format texte (WKT).
         Retourne la liste des points des croquis
@@ -970,67 +932,64 @@ class Contexte(object):
         :rtype: list de Point
         """
 
-        dbName = self.projectFileName +"_espaceco"
-        self.dbPath = self.projectDir+"/"+dbName+".sqlite"
+        dbName = self.projectFileName + "_espaceco"
+        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
 
-        tmpTable ="tmpTable"
+        tmpTable = "tmpTable"
 
-        allCroquisPoints=[]
+        allCroquisPoints = []
 
-        if len(listCroquis)==0:
+        if len(listCroquis) == 0:
             return None
 
-        cr= listCroquis[0]
+        cr = listCroquis[0]
 
         try:
-            #self.conn= sqlite3.connect(self.dbPath)
+            # self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
             cur = self.conn.cursor()
 
-            sql=u"Drop table if Exists "+tmpTable
+            sql = u"Drop table if Exists " + tmpTable
             cur.execute(sql)
 
-            sql=u"CREATE TABLE "+tmpTable+" (" + \
-                u"id INTEGER NOT NULL PRIMARY KEY, textGeom TEXT, centroid TEXT)"
+            sql = u"CREATE TABLE " + tmpTable + " (" + \
+                  u"id INTEGER NOT NULL PRIMARY KEY, textGeom TEXT, centroid TEXT)"
             cur.execute(sql)
 
-            i=0
+            i = 0
             for cr in listCroquis:
-                i+=1
-                if cr.type==cr.CroquisType.Ligne:
-                    textGeom="LINESTRING("
-                    textGeomEnd=")"
-                elif cr.type==cr.CroquisType.Polygone:
-                    textGeom="POLYGON(("
-                    textGeomEnd="))"
-                elif cr.type==cr.CroquisType.Point:
-                    textGeom="POINT("
-                    textGeomEnd=")"
+                i += 1
+                if cr.type == cr.CroquisType.Ligne:
+                    textGeom = "LINESTRING("
+                    textGeomEnd = ")"
+                elif cr.type == cr.CroquisType.Polygone:
+                    textGeom = "POLYGON(("
+                    textGeomEnd = "))"
+                elif cr.type == cr.CroquisType.Point:
+                    textGeom = "POINT("
+                    textGeomEnd = ")"
 
                 for pt in cr.points:
-                    textGeom +=  str(pt.longitude) + " " + str(pt.latitude)+","
+                    textGeom += str(pt.longitude) + " " + str(pt.latitude) + ","
                     allCroquisPoints.append(pt)
 
                 textGeom = textGeom[:-1] + textGeomEnd
 
-                sql="INSERT INTO "+ tmpTable + "(id,textGeom,centroid) VALUES ("+ str(i) + ",'"+ textGeom +"',"+\
-                    "AsText(centroid( ST_GeomFromText('"+ textGeom +"'))))"
+                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," + \
+                      "AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
                 cur.execute(sql)
 
             self.conn.commit()
 
 
         except Exception as e:
-            self.logger.error("createTempCroquisTable "+format(e))
+            self.logger.error("createTempCroquisTable " + format(e))
             return False
         finally:
             cur.close()
             self.conn.close()
 
         return allCroquisPoints
-
-
-
 
     def _getBarycentre(self):
         """Calcul du barycentre de l'ensemble des croquis à partir des centroides de chaque croquis;
@@ -1039,73 +998,66 @@ class Contexte(object):
         :return: le barycentre
         :rtype: Point
         """
-        tmpTable ="tmpTable"
-        point=None
+        tmpTable = "tmpTable"
+        point = None
         try:
-            dbName = self.projectFileName +"_espaceco"
-            self.dbPath = self.projectDir+"/"+dbName+".sqlite"
-            #self.conn= sqlite3.connect(self.dbPath)
+            dbName = self.projectFileName + "_espaceco"
+            self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
+            # self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
 
             cur = self.conn.cursor()
 
-            sql ="SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from "  + tmpTable
+            sql = "SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from " + tmpTable
             cur.execute(sql)
 
             rows = cur.fetchall()
-            sumX=0
-            sumY=0
+            sumX = 0
+            sumY = 0
 
             for row in rows:
-                sumX+=row[0]
-                sumY+=row[1]
+                sumX += row[0]
+                sumY += row[1]
 
-            ptX= sumX/float(len(rows))
-            ptY= sumY/float(len(rows))
+            ptX = sumX / float(len(rows))
+            ptY = sumY / float(len(rows))
 
-            barycentre= Point(ptX,ptY)
+            barycentre = Point(ptX, ptY)
 
         except Exception as e:
-            self.logger.error("getBarycentre "+format(e))
-            point=None
+            self.logger.error("getBarycentre " + format(e))
+            point = None
 
         return barycentre
 
-
-
     ################### magicwand  ##################################################
-
-
-    def selectRemarkByNo(self,noSignalements):
+    def selectRemarkByNo(self, noSignalements):
         """Sélection des remarques données par leur no
 
         :param noSignalements : les no de signalements à sélectionner
         :type noSignalements: list de string
         """
 
-        #self.conn= sqlite3.connect(self.dbPath)
+        # self.conn= sqlite3.connect(self.dbPath)
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
 
-        table=RipartHelper.nom_Calque_Signalement
-        lay=self.getLayerByName(table)
+        table = RipartHelper.nom_Calque_Signalement
+        lay = self.getLayerByName(table)
 
-        sql="SELECT * FROM " + table +"  WHERE noSignalement in (" + noSignalements +")"
-        rows=cur.execute(sql)
+        sql = "SELECT * FROM " + table + "  WHERE noSignalement in (" + noSignalements + ")"
+        rows = cur.execute(sql)
 
-        featIds=[]
+        featIds = []
 
         for row in rows:
             # fix_print_with_import
             print(row[0])
             featIds.append(row[0])
 
-        lay.selectByIds( featIds )
+        lay.selectByIds(featIds)
 
-
-
-
-    def getCroquisForRemark(self,noSignalement,croquisSelFeats):
+    def getCroquisForRemark(self, noSignalement, croquisSelFeats):
         """Retourne les croquis associés à une remarque
 
         :param noSignalement: le no de la remarque
@@ -1118,22 +1070,21 @@ class Contexte(object):
         :return: dictionnaire contenant les croquis
         :rtype: dictionnary
         """
-        crlayers= RipartHelper.croquis_layers
+        crlayers = RipartHelper.croquis_layers
 
-        #self.conn= sqlite3.connect(self.dbPath)
+        # self.conn= sqlite3.connect(self.dbPath)
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
 
         for table in crlayers:
-            sql="SELECT * FROM " + table +"  WHERE noSignalement= " + str(noSignalement)
-            rows=cur.execute(sql)
-
-            featIds=[]
-
+            sql = "SELECT * FROM " + table + "  WHERE noSignalement= " + str(noSignalement)
+            rows = cur.execute(sql)
+            featIds = []
             for row in rows:
                 featIds.append(row[0])
-                if not table in  croquisSelFeats:
-                    croquisSelFeats[table]=[]
+                #if not table in croquisSelFeats:
+                if table not in croquisSelFeats:
+                    croquisSelFeats[table] = []
                 croquisSelFeats[table].append(row[0])
 
         return croquisSelFeats

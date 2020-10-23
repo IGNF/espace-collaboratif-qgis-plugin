@@ -9,6 +9,7 @@ from .MongoDBtoQGIS import MongoDBtoQGIS
 import hashlib
 import os
 
+
 class GuichetVectorLayer(QgsVectorLayer):
     # Les statistiques de comptage pour la couche
     stat = None
@@ -24,23 +25,15 @@ class GuichetVectorLayer(QgsVectorLayer):
     fileBeforeWorks = None
     fileAfterWorks = None
 
-
-
     def getStat(self):
         return self.stat
-
-
 
     def openFile(self, nameFile, mode):
         file = open(nameFile, mode)
         return file
 
-
-
     def closeFile(self, fileToClose):
         fileToClose.close()
-
-
 
     '''
     Connexion des signaux
@@ -58,8 +51,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
         self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
 
-
-
     '''
     Connexion des signaux pour les évènements survenus sur la carte
     '''
@@ -71,8 +62,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.attributeAdded.connect(self.attribute_added)
         self.attributeDeleted.connect(self.attribute_deleted)
         self.editingStopped.connect(self.editing_stopped)
-
-
 
     '''
     Calcul d'une clé de hachage à partir des caractéristiques d'un objet
@@ -119,9 +108,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         if id is None:
             id = feature.id()'''
 
-        return (feature.id(), cle)
-
-
+        return feature.id(), cle
 
     '''
     Au chargement de la couche dans QGIS, les caractéristiques des objets initiaux
@@ -141,8 +128,6 @@ class GuichetVectorLayer(QgsVectorLayer):
             fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
         self.closeFile(fichier)
 
-
-
     '''
     Dès la fin de l'édition d'une couche, les caractéristiques des objets
     sont stockées dans un fichier sous la forme d'une clé de hachage :
@@ -158,16 +143,12 @@ class GuichetVectorLayer(QgsVectorLayer):
             fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
         self.closeFile(fichier)
 
-
-
     '''
     L'utilisateur a mis fin à l'édition de la couche,
     les objets sont stockés dans un fichier
     '''
     def editing_stopped(self):
         self.setMd5AfterWorks()
-
-
 
     '''
     Interdiction de supprimer un attribut sinon la synchronisation au serveur est perdue
@@ -176,16 +157,12 @@ class GuichetVectorLayer(QgsVectorLayer):
         fields = self.fields()
         raise Exception("Impossible de supprimer l'attribut {} car la synchronisation au serveur sera perdue.".format(fields[idx].name()))
 
-
-
     '''
     Interdiction d'ajouter un attribut sinon la synchronisation au serveur est perdue
     '''
     def attribute_added(self, idx):
         fields = self.fields()
         raise Exception("Impossible d'ajouter l'attribut {} car la synchronisation au serveur sera perdue.".format(fields[idx].name()))
-
-
 
     '''
     Comptage par différentiel des objets
@@ -240,8 +217,6 @@ class GuichetVectorLayer(QgsVectorLayer):
                 print("feature {} : supprimé".format(cle))
                 self.stat.nfd += 1
 
-
-
     '''
     Modification du formulaire de saisie pour afficher la liste de valeurs de certains attributs "liste"
     [Layer:Propriétés][Bouton:Formulaire d'attributs][Fenêtre:Contrôles disponibles][Onglet:Fields]
@@ -268,14 +243,11 @@ class GuichetVectorLayer(QgsVectorLayer):
             setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
             self.setEditorWidgetSetup(index, setup)
 
-
-
     def setModifyDefaultValue(self, listOfDefaultValues):
         fields = self.fields()
         for attribute, value in listOfDefaultValues.items():
             index = fields.indexOf(attribute)
             self.setDefaultValueDefinition(index, QgsDefaultValue(value))
-
 
     '''
         Transformation de la condition en expression QGIS
@@ -285,27 +257,15 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     def changeConditionToExpression(self, condition, bExpression):
         # Pas de style pour la couche, style QGIS par défaut
-        if bExpression is False and condition is None:
+        if bExpression is False and condition is None or condition == '':
             return ''
 
         #Pas de rule style, capture de toutes les autres entités
         if bExpression is True and condition is None:
             return "ELSE"
 
-        #mongo = MongoDBtoQGIS(condition)
-        #mongo.run()
-
-        if type(condition) is str:
-            c = condition.replace(' ','')
-            c1 = c.replace('"', '')
-            tmp = c1.split(':')
-            attribute = tmp[1].replace('[{', '')
-            value = tmp[2].replace('}]}', '')
-            return "\"{}\" LIKE \'{}\'".format(attribute, value)
-
-        return ''
-
-
+        mongo = MongoDBtoQGIS(condition)
+        return mongo.run()
 
     '''
         Récupère la couleur en fonction du type de géométrie
@@ -332,8 +292,6 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         return ""
 
-
-
     '''
         Récupère l'opacité de la couche
     '''
@@ -351,8 +309,6 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         return 1
 
-
-
     '''
         Récupère la taille du symbole
     '''
@@ -366,8 +322,6 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         return ''
 
-
-
     def setSymbolLine(self, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity):
         lineSymbol = {'capstyle': strokeLinecap, 'line_style': strokeDashstyle,
                       'line_color': strokeColor, 'line_width': strokeWidth,
@@ -375,8 +329,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         symbol = QgsLineSymbol().createSimple(lineSymbol)
         symbol.setOpacity(strokeOpacity)
         return symbol
-
-
 
     def setSymbolPoint(self, fillColor, strokeColor):
         pointSymbol = {'angle': '0', 'color': fillColor, 'horizontal_anchor_point': '1',
@@ -391,8 +343,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         symbol.setOpacity(1)
         return symbol
 
-
-
     def setSymbolPolygon(self, fillColor, strokeColor, strokeDashstyle, strokeWidth, fillOpacity):
         polygonSymbol = {'color': fillColor, 'outline_color': strokeColor,
                          'outline_style': strokeDashstyle, 'outline_width': strokeWidth,
@@ -400,8 +350,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         symbol = QgsFillSymbol().createSimple(polygonSymbol)
         symbol.setOpacity(fillOpacity)
         return symbol
-
-
 
     '''
         Symbologie extraite du style Collaboratif par défaut
@@ -453,8 +401,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         # Refresh layer
         self.triggerRepaint()
 
-
-
     def setModifyWithQgsSingleSymbolRenderer(self, data):
         symbol = None
         for c, v in data.items():
@@ -489,8 +435,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.setRenderer(renderer)
         # Refresh layer
         self.triggerRepaint()
-
-
 
     def setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression):
         # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
@@ -539,8 +483,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         # Refresh layer
         self.triggerRepaint()
 
-
-
     def appendClassRules(self, data, bExpression):
         # class_rules = (
         # 'label=name',
@@ -562,8 +504,6 @@ class GuichetVectorLayer(QgsVectorLayer):
             class_rules.append(tmp)
 
         return class_rules
-
-
 
     '''
         Modification de la symbologie

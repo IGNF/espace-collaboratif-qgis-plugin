@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 26 janv. 2015
 
 version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 
 import xml.etree.ElementTree as ET
 from .Profil import Profil
@@ -30,15 +30,14 @@ class XMLResponse(object):
     """
     Classe pour le parsing des réponses xml et l'extraction des informations nécessaires
     """
-    
-    #la réponse du serveur (au format xml)
+
+    # la réponse du serveur (au format xml)
     response = ""
-    
+
     # racine du document xml
     root = ""
 
     logger = RipartLogger("ripart.XMLResponse").getRipartLogger()
-    
 
     def __init__(self, response):
         """Constructeur
@@ -46,10 +45,10 @@ class XMLResponse(object):
         :param response: la réponse du serveur (xml)
         :type response: string 
         """
-        self.logger.debug("init 1:")
-        
+        self.logger.debug("init 1 :")
+
         self.response = ClientHelper.notNoneValue(response)
-        
+
         self.logger.debug("xmlreponse 2 :")
 
         try:
@@ -59,73 +58,65 @@ class XMLResponse(object):
             self.logger.error(str(e))
 
         self.logger.debug("init !!")
-        
-        
-            
+
     def checkResponseValidity(self):
         """Contrôle la validité de la réponse. 
         
         Si le code erreur="OK", la réponse est valide
         :return un dictionnaire à 2 clés, message et code
-        """ 
-       
+        """
+
         errMessage = {'message': '', 'code': ''}
-        
-        try:     
+
+        try:
             erreur = self.root.findall('./REPONSE/ERREUR')
-            
+
             for m in erreur:
                 errMessage['message'] = m.text
                 errMessage['code'] = m.attrib['code']
-  
+
         except KeyError as e:
             self.logger.error(str(e))
-           
+
         except Exception as e:
             self.logger.error(str(e))
-          
-            
+
         return errMessage
-   
-     
-   
+
     def getAleas(self):
         """ Extraction des Aleas       
         :return une liste contenant les 2 aleas
         """
-        
+
         aleas = list()
-        
-        try:        
+
+        try:
             alea1 = self.root.find('./REPONSE/ALEA1')
             aleas.append(alea1.text)
-            
+
             alea2 = self.root.find('./REPONSE/ALEA2')
             aleas.append(alea2.text)
-            
-        except Exception as e:            
+
+        except Exception as e:
             self.logger.error(str(e))
             raise Exception('Probleme de connexion')
- 
+
         return aleas
- 
-    
-    
-   
+
     def getConnectValues(self):
         """Extraction des paramètres de connexion
         
         :return: un dictionnaire contenant les paramètres de connexion (ID_AUTEUR, JETON, SITE)
         """
         connectValues = {'ID_AUTEUR': None, 'JETON': None, 'SITE': None}
-        
-        try:      
+
+        try:
             id_auteur = self.root.find('./REPONSE/ID_AUTEUR')
-            if id_auteur is not None:           
+            if id_auteur is not None:
                 connectValues['ID_AUTEUR'] = id_auteur.text
             else:
                 raise Exception("ID_AUTEUR inexistant dans la réponse xml")
-                         
+
             jeton = connectValues['JETON'] = self.root.find('./REPONSE/JETON')
             if jeton is not None:
                 connectValues['JETON'] = jeton.text
@@ -137,96 +128,92 @@ class XMLResponse(object):
                 connectValues['SITE'] = site.text
             else:
                 raise Exception("SITE inexistant dans la réponse xml")
-                        
-        except Exception as e:            
+
+        except Exception as e:
             self.logger.error(str(e))
-            raise 
-             
+            raise
+
         return connectValues
-        
-    
-  
+
     def getCurrentJeton(self):
         """Extraction du nouveau jeton
            
         :return le jeton
         """
-        
+
         jeton = ""
-         
+
         try:
             jetonNode = self.root.find('./REPONSE/JETON')
-            
+
             if jetonNode is not None:
-                jeton = jetonNode.text            
+                jeton = jetonNode.text
             else:
                 raise Exception('Pas de jeton')
-            
-        except Exception as e:            
-            self.logger.error('getCurrentJeton:' + str(e) )
+
+        except Exception as e:
+            self.logger.error('getCurrentJeton:' + str(e))
             raise
-            
+
         return jeton
-     
+
     def extractProfil(self):
         """Extraction du profil à partir de la réponse xml
         
         :return: profil de l'utilisateur
-        """     
-             
+        """
+
         profil = Profil()
-        
+
         try:
-            #aut= Auteur()
+            # aut= Auteur()
             node = self.root.find('./AUTEUR/NOM')
             profil.auteur.nom = node.text
-            
+
             node = self.root.find('./PROFIL/ID_GEOPROFIL')
             profil.id_Geoprofil = node.text
-            
+
             node = self.root.find('./PROFIL/TITRE')
             profil.titre = node.text
-            
+
             node = self.root.find('./PROFIL/ZONE')
             if node is not None:
                 profil.zone = cst.ZoneGeographique.__getitemFromString__(node.text)
-            
+
             gr = Groupe()
             node = self.root.find('./PROFIL/ID_GEOGROUPE')
             gr = node.text
-            
+
             node = self.root.find('./PROFIL/GROUPE')
             profil.geogroupe.nom = node.text
-            
-            node =self.root.find('./PROFIL/ID_GEOGROUPE')
+
+            node = self.root.find('./PROFIL/ID_GEOGROUPE')
             profil.geogroupe.id = node.text
-               
+
             node = self.root.find('./PROFIL/LOGO')
             if node is not None and node.text:
                 profil.logo = node.text
 
             node = self.root.find('./PROFIL/FILTRE')
             profil.filtre = node.text
-            
+
             node = self.root.find('./PROFIL/PRIVE')
-            profil.prive = True if node.text==1 else False
-                    
-            #va chercher les thèmes associés au profil      
+            profil.prive = True if node.text == 1 else False
+
+            # va chercher les thèmes associés au profil
             themes = self.getThemes()
             profil.themes = themes
 
-            #va chercher les infos de tous les geogroupes de l'utilisateur
+            # va chercher les infos de tous les geogroupes de l'utilisateur
             infosgeogroupes = self.getInfosGeogroupe()
             profil.infosGeogroupes = infosgeogroupes
 
-            
-        except Exception as e:            
+
+        except Exception as e:
             self.logger.error('extractProfil:' + str(e))
             raise
-            
+
         return profil
-
-
 
     def getInfosGeogroupe(self):
         """Extraction des infos utilisateur sur ses geogroupes
@@ -235,7 +222,7 @@ class XMLResponse(object):
         infosgeogroupes = []
 
         try:
-            #informations sur le geogroupe
+            # informations sur le geogroupe
             nodesGr = self.root.findall('GEOGROUPE')
             for nodegr in nodesGr:
                 infosgeogroupe = InfosGeogroupe()
@@ -276,18 +263,16 @@ class XMLResponse(object):
 
         return infosgeogroupes
 
-
-
     def getThemes(self):
         """Extraction des thèmes associés au profil     
         :return les thèmes 
         """
-        
+
         themes = []
         themesAttDict = {}
-        
-        try: 
-            
+
+        try:
+
             thAttributs = []
             thAttNodes = self.root.findall('THEMES/ATTRIBUT')
             for attNode in thAttNodes:
@@ -302,10 +287,10 @@ class XMLResponse(object):
                 attObligatoire = attNode.find('OBLIGATOIRE')
                 if attObligatoire is not None:
                     thAttribut.setObligatoire()
-                
+
                 for val in attNode.findall('VALEURS/VAL'):
                     thAttribut.addValeur(val.text)
-                
+
                 for val in attNode.findall('VALEURS/DEFAULTVAL'):
                     thAttribut.defaultval = val.text
 
@@ -315,43 +300,39 @@ class XMLResponse(object):
                 themesAttDict[nomTh].append(thAttribut)
 
             nodes = self.root.findall('THEMES/THEME')
-    
+
             for node in nodes:
                 theme = Theme()
                 theme.groupe = Groupe()
                 theme.groupe.nom = (node.find('NOM')).text
-                theme.groupe.id = (node.find('ID_GEOGROUPE')).text 
+                theme.groupe.id = (node.find('ID_GEOGROUPE')).text
                 if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
                     theme.attributs.extend(themesAttDict[ClientHelper.notNoneValue(theme.groupe.nom)])
                 themes.append(theme)
-                
+
         except Exception as e:
             self.logger.error(str(e))
-            raise Exception ("Erreur dans la récupération des thèmes du profil")
-            
-        return themes
-    
+            raise Exception("Erreur dans la récupération des thèmes du profil")
 
-    
+        return themes
+
     def getVersion(self):
         """Retourne la version du service ripart    
         :return la version du service
         """
-        
+
         v = ""
         try:
             v = self.root.attrib['version']
-            
+
         except KeyError as e:
             self.logger.error(str(e))
-           
+
         except Exception as e:
-            self.logger.error(str(e)) 
-        
+            self.logger.error(str(e))
+
         return v
-    
-    
-    
+
     def getDate(self):
         """Retourne la date de la réponse xml
         """
@@ -360,26 +341,22 @@ class XMLResponse(object):
             date = node.text
         except Exception as e:
             self.logger.error('getTotalResponse :' + str(e))
-        
+
         return date
-    
-    
+
     def getTotalResponse(self):
         """Retourne le nombre total de réponses
         :return: nombre total de réponse
-        """       
+        """
         total = 0
         try:
             node = self.root.find('PAGE/TOTAL')
             total = node.text
         except Exception as e:
             self.logger.error('getTotalResponse :' + str(e))
-        
+
         return total
-        
-           
-        
-    
+
     def extractRemarques(self):
         """Extraction des remarques de la réponse xml
         
@@ -387,71 +364,70 @@ class XMLResponse(object):
         :type remarques: Dictionary of Remarque (key: identifiant de la ramarque, value: la remarque
         :return: dictionnaire de remarques (dans l'ordre inverse d'identifiants)
         """
-        
+
         remarques = {}
-        
+
         try:
             georems = self.root.findall('GEOREM')
-            
+
             for node in georems:
-                
+
                 rem = Remarque()
                 themes = []
-                
+
                 rem.id = (node.find('ID_GEOREM')).text
-                
-                
-                nfind=node.find('AUTORISATION')
+
+                nfind = node.find('AUTORISATION')
                 if nfind is not None:
                     rem.autorisation = nfind.text
-              
-                for th in node.findall('THEME'):                    
+
+                for th in node.findall('THEME'):
                     nomGroupe = (th.find('NOM')).text
                     idGroupe = (th.find('ID_GEOGROUPE')).text
-                    
+
                     theme = Theme()
                     theme.groupe = Groupe(idGroupe, nomGroupe)
-                    
+
                     for att in th.findall('ATTRIBUT'):
                         nomAtt = att.attrib["nom"]
                         valAtt = att.text
                         attribut = ThemeAttribut(nomGroupe, nomAtt, valAtt)
                         theme.attributs.append(attribut)
-                    
+
                     themes.append(theme)
-                    
+
                 rem.themes = themes
-                
+
                 nfind = node.find('LIEN')
                 if nfind is not None:
                     rem.lien = nfind.text
                     rem.lien.replace("&amp;", "&");
-                
+
                 nfind = node.find('LIEN_PRIVE')
                 if nfind is not None:
                     rem.lienPrive = nfind.text
                     rem.lienPrive.replace("&amp;", "&");
-                
+
                 nfind = node.find('DATE')
                 if nfind is not None:
                     rem.dateCreation = nfind.text
-                
+
                 nfind = node.find('MAJ')
                 if nfind is not None:
                     rem.dateMiseAJour = nfind.text
-                
+
                 nfind = node.find('DATE_VALID')
                 if nfind is not None:
                     rem.dateValidation = nfind.text
-                
+
                 lon = (node.find('LON')).text
                 lat = (node.find('LAT')).text
-                rem.position = Point(lon,lat)
-                
+                rem.position = Point(lon, lat)
+
                 nfind = node.find('STATUT')
                 if nfind is not None:
                     rem.statut = nfind.text
-                
+
                 rem.departement = Groupe()
                 nfind = node.find('ID_DEP')
                 if nfind is not None:
@@ -460,16 +436,15 @@ class XMLResponse(object):
                 nfind = node.find('DEPARTEMENT')
                 if nfind is not None:
                     rem.departement.nom = nfind.text
-                
+
                 nfind = node.find('COMMUNE')
                 if nfind is not None:
                     rem.commune = nfind.text
-                
+
                 nfind = node.find('COMMENTAIRE')
                 if nfind is not None:
                     rem.commentaire = nfind.text
-                
-                
+
                 rem.auteur = Auteur()
                 nfind = node.find('ID_AUTEUR')
                 if nfind is not None:
@@ -478,7 +453,7 @@ class XMLResponse(object):
                 nfind = node.find('AUTEUR')
                 if nfind is not None:
                     rem.auteur.nom = nfind.text
-                
+
                 rem.groupe = Groupe()
                 nfind = node.find('ID_GEOGROUPE')
                 if nfind is not None:
@@ -491,37 +466,35 @@ class XMLResponse(object):
                 nfind = node.find('ID_PARTITION')
                 if nfind is not None:
                     rem.id_partition = nfind.text
-                
-                #croquis
+
+                # croquis
                 rem = self.getCroquisForRem(rem, node)
-                
-                #documents
+
+                # documents
                 rem = self.getDoc(rem, node)
-                
-                #réponses (GEOREP)
+
+                # réponses (GEOREP)
                 rem = self.getGeoRep(rem, node)
-                
-                
-                #rem.hash = (node.find('HASH')).text
+
+                # rem.hash = (node.find('HASH')).text
                 rem.source = (node.find('SOURCE')).text
-                
+
                 remarques[rem.id] = rem
 
         except Exception as e:
             self.logger.error(str(e))
-            
-            raise Exception("Une erreur est survenue dans l'importation des remarques")   
+
+            raise Exception("Une erreur est survenue dans l'importation des remarques")
 
         return remarques
-        
-        
-    def getNodeText(self,node):
+
+    def getNodeText(self, node):
         if node is not None:
             return node.text
         else:
             return ""
-        
-    def getCroquisForRem (self , rem, node):
+
+    def getCroquisForRem(self, rem, node):
         """ Extrait les croquis d'une remarque et les ajoute dans l'objet Remarque (rem)
 
         :param rem un objet Remarque
@@ -533,16 +506,15 @@ class XMLResponse(object):
         :return la remarque avec les croquis
         :rtype Remarque
         """
-            
+
         objets = node.findall('CROQUIS/objet')
 
-            
         for ob in objets:
             croquis = Croquis()
             croquis.type = ob.attrib['type']
             croquis.nom = ob.find('nom').text
-            
-            #attributs
+
+            # attributs
             attributs = ob.findall('attributs/attribut')
             for att in attributs:
                 attribut = Attribut()
@@ -550,8 +522,8 @@ class XMLResponse(object):
                 attribut.valeur = att.text
                 croquis.addAttribut(attribut)
 
-            #géométrie
-            coords = ob.iterfind('.//gml:coordinates',cst.namespace)
+            # géométrie
+            coords = ob.iterfind('.//gml:coordinates', cst.namespace)
             coordinates = ""
             for c in coords:
                 pts = c.text.split(" ")
@@ -560,27 +532,26 @@ class XMLResponse(object):
                         pt = Point()
                         latlon = spt.split(",")
                         if len(latlon) == 4:
-                            pt.longitude = float(latlon[0] + "." +latlon[1])
-                            pt.latitude = float(latlon[2] + "." +latlon[3])
+                            pt.longitude = float(latlon[0] + "." + latlon[1])
+                            pt.latitude = float(latlon[2] + "." + latlon[3])
                         elif len(latlon) == 2:
-                            pt.longitude = float(latlon[0] )
-                            pt.latitude = float(latlon[1] )
-                      
+                            pt.longitude = float(latlon[0])
+                            pt.latitude = float(latlon[1])
+
                         if pt.longitude is not None and pt.latitude is not None:
                             coordinates += str(pt.longitude) + " " + str(pt.latitude) + ","
-                            croquis.addPoint(pt) 
+                            croquis.addPoint(pt)
                     except:
                         continue
-                    
+
             croquis.coordinates = coordinates[:-1]
 
-            #ajoute les croquis à la remarque
-            rem.addCroquis(croquis)  
-                   
+            # ajoute les croquis à la remarque
+            rem.addCroquis(croquis)
+
         return rem
-                
-                
-    def getDoc(self,rem,node):    
+
+    def getDoc(self, rem, node):
         """Extraction des documents attachés à une remarque
         
         :param rem un objet Remarque
@@ -592,43 +563,41 @@ class XMLResponse(object):
         :return la remarque avec les croquis
         :rtype Remarque
         """
-        
+
         docs = node.findall('DOC')
-        
+
         for doc in docs:
             rem.addDocument(doc)
-            
+
         return rem
 
-    def getGeoRep(self,rem,node):
+    def getGeoRep(self, rem, node):
         """Extraction des réponses d'une remarque
         """
-        
         reponses = node.findall("GEOREP")
-        
+
         for rep in reponses:
             georep = GeoReponse()
-            
+
             gr = Groupe()
             gr.id = rep.find('ID_GEOREP').text
             gr.nom = rep.find('TITRE').text
             georep.groupe = gr
-            
-            georep.auteur=Auteur()
+
+            georep.auteur = Auteur()
             georep.auteur.id = rep.find('ID_AUTEUR').text
             georep.auteur.nom = rep.find('AUTEUR').text
-            
+
             georep.statut = cst.STATUT.__getitemFromString__(rep.find('STATUT').text)
-            georep.date = datetime.strptime(rep.find('DATE').text,"%Y-%m-%d %H:%M:%S")
+            georep.date = datetime.strptime(rep.find('DATE').text, "%Y-%m-%d %H:%M:%S")
             georep.reponse = rep.find('REPONSE').text
-        
+
             rem.addGeoReponse(georep)
-            
+
         return rem
-        
-        
+
+
 if __name__ == "__main__":
-    
     x = """<?xml version='1.0' encoding='UTF-8'?>
                             <geors version='0.1'>
                             <REPONSE type='action=connect'>
@@ -641,8 +610,5 @@ if __name__ == "__main__":
                     """
     xml = XMLResponse(x)
     mess = xml.checkResponseValidity()
-
     version = xml.getVersion()
-    # fix_print_with_import
-    # fix_print_with_import
     print(version)

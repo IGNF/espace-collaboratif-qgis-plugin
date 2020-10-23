@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Created on 22 janv. 2015
 
 version 3.0.0, 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 import re
@@ -32,92 +32,80 @@ from .requests.auth import HTTPBasicAuth
 import os
 
 
-
-
 class Client(object):
     """"
     Cette classe sert de client pour le service RIPart
     """
-    
-    __url=""
+
+    __url = ""
     __login = ""
-    __password=""
+    __password = ""
     __auteur = None
     __version = None
     __profil = None
     __auth = None
     __proxies = None
     __clegeoportail = ""
-    
-    
+
     # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
     message = ""
-    
-    logger=RipartLogger("ripart.client").getRipartLogger()
 
+    logger = RipartLogger("ripart.client").getRipartLogger()
 
     def __init__(self, url, login, pwd, proxies, cle):
         """Constructeur
         Initialisation du client et connexion au service ripart
-        """       
-        self.__url=url
-        self.__login=login
-        self.__password=pwd
-               
-        self.__auth={}
-        self.__auth['login']=self.__login
-        self.__auth['password']=self.__password
+        """
+        self.__url = url
+        self.__login = login
+        self.__password = pwd
+
+        self.__auth = {}
+        self.__auth['login'] = self.__login
+        self.__auth['password'] = self.__password
         self.__proxies = proxies
         self.__clegeoportail = cle
-             
-    def setIface(self,iface):
+
+    def setIface(self, iface):
         """sets the QgsInterface instance, to be able to access the QGIS application objects (map canvas, menus, ...)
         """
-        self.iface=iface
+        self.iface = iface
 
-      
     def connect(self):
         """ Connexion d'un utilisateur par son login et mot de passe
         
         :return: Si la connexion se fait, retourne l'id de l'auteur; sinon retour du message d'erreur
-        """  
-        result =None
-        try:               
-            self.logger.debug("tentative de connexion; " + self.__url + ' connect ' + self.__login) 
-            r= requests.get(self.__url, proxies=self.__proxies,auth=HTTPBasicAuth(self.__login, self.__password))
-                    
-        except Exception as e:         
+        """
+        result = None
+        try:
+            self.logger.debug("tentative de connexion; " + self.__url + ' connect ' + self.__login)
+            r = requests.get(self.__url, proxies=self.__proxies, auth=HTTPBasicAuth(self.__login, self.__password))
+
+        except Exception as e:
             self.logger.error(format(e))
             raise Exception(format(e))
-        
+
         return self
-    
-    
-    
+
     def getVersion(self):
         """Retourne la version du service ripart
         :return: version du service ripart
         """
         return self.__version
-    
-
 
     def getProfil(self):
         """Retourne le profil de l'utilisateur
         :return: le profil
-        """       
+        """
         if self.__profil is None:
             self.__profil = self.getProfilFromService()
-        
+
         return self.__profil
-
-
 
     def getLayersFromCleGeoportailUser(self, cle):
         layers = {}
 
-        #TO DO voir pourquoi la clé est None dans certains cas
-        if cle == None:
+        if cle is None:
             cleGeoportail = "choisirgeoportail"
 
         if cle == "Démonstration":
@@ -150,36 +138,32 @@ class Client(object):
 
         return layers
 
-
-
     def getProfilFromService(self):
         """Requête au service pour le profil utilisateur      
         :return: le profil de l'utilisateur
         """
-        profil= None
+        profil = None
 
         url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
         self.logger.debug(url)
-        data =  requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies= self.__proxies)
+        data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
         self.logger.debug("data auth ")
         xml = XMLResponse(data.text)
 
         errMessage = xml.checkResponseValidity()
-        if errMessage['code'] =='OK':
+        if errMessage['code'] == 'OK':
             profil = xml.extractProfil()
         else:
-            if errMessage['message']!="":
-                result =errMessage['message']
-            elif errMessage['code']!="":
-                result =ClientHelper.getErrorMessage(errMessage['code'])
-            else: 
-                result =ClientHelper.getErrorMessage( data.status_code)
-          
+            if errMessage['message'] != "":
+                result = errMessage['message']
+            elif errMessage['code'] != "":
+                result = ClientHelper.getErrorMessage(errMessage['code'])
+            else:
+                result = ClientHelper.getErrorMessage(data.status_code)
+
             raise Exception(ClientHelper.notNoneValue(result))
-            
+
         return profil
-
-
 
     '''
         Connexion à une base de données et une couche donnée
@@ -188,6 +172,7 @@ class Client(object):
         La réponse transformée en json est sous forme de dictionnaire par exemple :
         ...'attributes': 'zone': {...,'listOfValues': [None, 'Zone1', ' Zone2', 'Zone3'],...}...
     '''
+
     def connexionFeatureTypeJson(self, layerUrl, layerName):
         if '&' not in layerUrl:
             raise Exception(ClientHelper.notNoneValue(
@@ -208,7 +193,6 @@ class Client(object):
         data = json.loads(featuretypeResponse._content)
         return data
 
-
     def getListOfDefaultValuesFromItemAttribute(self, dataFeaturetype):
         listOfDefaultValues = {}
         for cle, valeurs in dataFeaturetype.items():
@@ -224,13 +208,11 @@ class Client(object):
 
         return listOfDefaultValues
 
-
-
-
     '''
         Pour l'item 'attributes', récupération des listes de valeurs pour un attribut de type "Liste"
         en cherchant l'item 'listOfValues'
     '''
+
     def getListOfValuesFromItemAttribute(self, dataFeaturetype):
         listOfValues = {}
 
@@ -253,11 +235,10 @@ class Client(object):
 
         return listOfValues
 
-
-
     '''
         Pour l'item 'style', récupération de la symbologie d'une couche
     '''
+
     def getListOfValuesFromItemStyle(self, dataFeaturetype):
         listOfValues = {}
         tmp = {'children': []}
@@ -283,9 +264,7 @@ class Client(object):
 
         return listOfValues
 
-
-
-    def getGeoRems(self,parameters):
+    def getGeoRems(self, parameters):
         """Recherche les remarques.
         Boucle sur la méthode privée __getGeoRemsTotal, pour récupérer d'éventuelles MAJ ou nouvelles remarques
         faites entre le début et la fin de la requête
@@ -294,44 +273,42 @@ class Client(object):
         :type parameters : dictionary
         """
 
-        #progressbar pour le chargement des remarques
-        self.progressMessageBar = self.iface.messageBar().createMessage("Téléchargement des signalements depuis le serveur ...")
+        # progressbar pour le chargement des remarques
+        self.progressMessageBar = self.iface.messageBar().createMessage(
+            "Téléchargement des signalements depuis le serveur ...")
 
         self.progress = QProgressBar()
         self.progress.setMaximum(200)
 
-        self.progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        self.progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         self.progressMessageBar.layout().addWidget(self.progress)
 
-        self.iface.messageBar().pushWidget(self.progressMessageBar, level= 0)
+        self.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
         self.iface.mainWindow().repaint()
         self.progress.setValue(0)
 
         result = self.__getGeoRemsTotal(parameters)
 
-        total = int(result["total"])   #nb de remarques récupérées
-        sdate = result["sdate"]    #date de la réponse du serveur
+        total = int(result["total"])  # nb de remarques récupérées
+        sdate = result["sdate"]  # date de la réponse du serveur
 
-        while (total > 1) :
+        while total > 1:
             parameters['updatingDate'] = sdate
             tmp = self.__getGeoRemsTotal(parameters)
 
-            result['dicoRems'].update(tmp['dicoRems']) #add the tmp result to the result['dicoRems'] dictionnary
-            total=tmp['total']
+            result['dicoRems'].update(tmp['dicoRems'])  # add the tmp result to the result['dicoRems'] dictionnary
+            total = tmp['total']
             sdate = tmp["sdate"]
 
-            self.logger.debug("loop on total result "+ " total="+ str(result['total']) +",datetime="+sdate )
-
+            self.logger.debug("loop on total result " + " total=" + str(result['total']) + ",datetime=" + sdate)
 
         # tri des remarques par ordre décroissant d'id
-        dicoRems= OrderedDict(sorted(list(result['dicoRems'].items()), key=lambda t: t[0],reverse=True))
+        dicoRems = OrderedDict(sorted(list(result['dicoRems'].items()), key=lambda t: t[0], reverse=True))
 
         return dicoRems
 
-
-
-    def __getGeoRemsTotal(self,parameters):
+    def __getGeoRemsTotal(self, parameters):
         """Recherche les remarques en fonction des paramètres et retourne le nombre total de remarques trouvées
 
         :param parameters: les paramètres de la requête
@@ -342,12 +319,12 @@ class Client(object):
         """
         pagination = parameters['pagination']
         total = 0
-        dicoRems={}
+        dicoRems = {}
 
         try:
-            data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",
-                                                        authent= self.__auth,
-                                                        proxies = self.__proxies,
+            data = RipartServiceRequest.makeHttpRequest(self.__url + "/api/georem/georems_get.xml",
+                                                        authent=self.__auth,
+                                                        proxies=self.__proxies,
                                                         params=parameters)
         except Exception as e:
             self.logger.error(str(e))
@@ -356,9 +333,9 @@ class Client(object):
         xml = XMLResponse(data)
         errMessage = xml.checkResponseValidity()
 
-        count=int(pagination)
+        count = int(pagination)
 
-        if errMessage['code'] =='OK':
+        if errMessage['code'] == 'OK':
             total = int(xml.getTotalResponse())
             sdate = xml.getDate()
             dicoRems = xml.extractRemarques()
@@ -366,37 +343,34 @@ class Client(object):
             if int(pagination) > total:
                 progressMax = int(pagination)
             else:
-                progressMax= total
+                progressMax = total
 
             self.progress.setMaximum(progressMax)
             self.progress.setValue(count)
 
             while (total - count) > 0:
 
-                parameters["offset"]= count.__str__()
+                parameters["offset"] = count.__str__()
 
-                data = RipartServiceRequest.makeHttpRequest(self.__url +"/api/georem/georems_get.xml",authent=self.__auth,proxies = self.__proxies,params=parameters)
+                data = RipartServiceRequest.makeHttpRequest(self.__url + "/api/georem/georems_get.xml",
+                                                            authent=self.__auth, proxies=self.__proxies,
+                                                            params=parameters)
 
                 xml = XMLResponse(data)
 
                 count += int(pagination)
 
                 errMessage2 = xml.checkResponseValidity()
-                if errMessage2['code'] =='OK':
+                if errMessage2['code'] == 'OK':
                     dicoRems.update(xml.extractRemarques())
-
 
                 self.progress.setValue(count)
 
-
-            return {'total':total, 'sdate': sdate, 'dicoRems':dicoRems}
+            return {'total': total, 'sdate': sdate, 'dicoRems': dicoRems}
 
         else:
-            err =errMessage.get('message')
+            err = errMessage.get('message')
             raise NoProfileException(err)
-
-
-
 
     def getGeoRem(self, idSignalement):
         """Requête pour récupérer une remarque avec un identifiant donné
@@ -407,26 +381,25 @@ class Client(object):
         :return la remarque
         :rtype Remarque
         """
-        rem =Remarque()
-        remarques =[]
+        rem = Remarque()
+        remarques = []
 
-        uri =self.__url +"/api/georem/georem_get/" + str(idSignalement)+".xml"
+        uri = self.__url + "/api/georem/georem_get/" + str(idSignalement) + ".xml"
 
-        data= RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,proxies = self.__proxies)
+        data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
 
         xmlResponse = XMLResponse(data)
         errMessage = xmlResponse.checkResponseValidity()
 
         total = xmlResponse.getTotalResponse()
 
-        if errMessage['code']=="OK":
+        if errMessage['code'] == "OK":
 
             if int(total) == 1:
                 remarques = xmlResponse.extractRemarques()
-                rem=list(remarques.values())[0]
+                rem = list(remarques.values())[0]
 
         return rem
-
 
     def setChangeUserProfil(self, idProfil):
         profil = None
@@ -442,11 +415,9 @@ class Client(object):
         elif errMessage['message'] != "":
             message = errMessage['message']
 
-        return (profil, message)
+        return profil, message
 
-
-
-    def addReponse(self,remarque,reponse,titreReponse):
+    def addReponse(self, remarque, reponse, titreReponse):
         """Ajoute une réponse à une remarque
 
         :param remarque: la remarque
@@ -463,54 +434,54 @@ class Client(object):
         remModif = None
 
         try:
-            parameters= {}
+            parameters = {}
             parameters['id'] = str(remarque.id)
             parameters['title'] = titreReponse
             parameters['content'] = reponse
             parameters['status'] = remarque.statut.__str__()
 
-            uri = self.__url +"/api/georem/georep_post.xml"
+            uri = self.__url + "/api/georem/georep_post.xml"
 
-            data = RipartServiceRequest.makeHttpRequest(uri,authent= self.__auth,proxies = self.__proxies,data= parameters)
+            data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies,
+                                                        data=parameters)
             xmlResponse = XMLResponse(data)
             errMessage = xmlResponse.checkResponseValidity()
 
-            if errMessage['code']=="OK":
-                rems =[]
-                rems= xmlResponse.extractRemarques()
-                if len(rems) ==1:
-                    remModif=list(rems.values())[0]
+            if errMessage['code'] == "OK":
+                rems = []
+                rems = xmlResponse.extractRemarques()
+                if len(rems) == 1:
+                    remModif = list(rems.values())[0]
                 else:
                     raise Exception("Problème survenu lors de l'ajout d'une réponse")
 
         except Exception as e:
-            raise Exception(errMessage["message"],e)
+            raise Exception(errMessage["message"], e)
 
         return remModif
 
-
-    def createRemarque(self,remarque):
+    def createRemarque(self, remarque):
         """Ajout d'une nouvelle remarque
         :param remarque : la remarque à créer
         :type remarque: Remarque
         :return la remarque créée
         :rtype: Remarque
         """
-        rem= None
+        rem = None
 
         try:
             params = {}
-            params['version']= ConstanteRipart.RIPART_CLIENT_VERSION
-            params['protocol']=ConstanteRipart.RIPART_CLIENT_PROTOCOL
-            params['comment']= ClientHelper.notNoneValue(remarque.commentaire)
-            geometry = "POINT(" + str(remarque.getLongitude()) +" " + str(remarque.getLatitude()) + ")"
-            params['geometry']= geometry
-            params['territory']= self.getProfil().zone.__str__()
+            params['version'] = ConstanteRipart.RIPART_CLIENT_VERSION
+            params['protocol'] = ConstanteRipart.RIPART_CLIENT_PROTOCOL
+            params['comment'] = ClientHelper.notNoneValue(remarque.commentaire)
+            geometry = "POINT(" + str(remarque.getLongitude()) + " " + str(remarque.getLatitude()) + ")"
+            params['geometry'] = geometry
+            params['territory'] = self.getProfil().zone.__str__()
 
-            #Ajout des thèmes selectionnés
+            # Ajout des thèmes selectionnés
             themes = remarque.themes
 
-            if themes!= None and len(themes)>0:
+            if themes is not None and len(themes) > 0:
                 doc = ET.Element("THEMES")
 
                 attributes = ""
@@ -522,75 +493,67 @@ class Client(object):
                     nom= ET.SubElement(th,"NOM")
                     nom.text=t.groupe.nom"""
 
-                    groupeIdAndNom = ClientHelper.notNoneValue ('"' + t.groupe.id + "::" + t.groupe.nom )
+                    groupeIdAndNom = ClientHelper.notNoneValue('"' + t.groupe.id + "::" + t.groupe.nom)
 
-                    attributes +=  ClientHelper.notNoneValue(groupeIdAndNom + "\"=>\"1\",")
+                    attributes += ClientHelper.notNoneValue(groupeIdAndNom + "\"=>\"1\",")
 
-                    for at in t.attributs :
+                    for at in t.attributs:
                         attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
 
                 attributes = attributes[:-1]
-                params["attributes"]= attributes
+                params["attributes"] = attributes
 
-
-            #ajout des croquis
-            if not remarque.isCroquisEmpty() :
-                croquis= remarque.croquis
-                gmlurl="http://www.opengis.net/gml"
-                doc = ET.Element("CROQUIS",{"xmlns:gml":gmlurl})
+            # ajout des croquis
+            if not remarque.isCroquisEmpty():
+                croquis = remarque.croquis
+                gmlurl = "http://www.opengis.net/gml"
+                doc = ET.Element("CROQUIS", {"xmlns:gml": gmlurl})
 
                 for cr in croquis:
-                    doc= cr.encodeToXML(doc)
+                    doc = cr.encodeToXML(doc)
 
-                params["sketch"] =ET.tostring(doc)
+                params["sketch"] = ET.tostring(doc)
 
-
-            #ajout des documents joints
+            # ajout des documents joints
             documents = remarque.documents
-            docCnt=0
-            docs= {}
+            docCnt = 0
+            docs = {}
 
-            files={}
+            files = {}
             for document in documents:
-                if  os.path.isfile(document) :
-                    docCnt +=1
+                if os.path.isfile(document):
+                    docCnt += 1
                     if os.path.getsize(document) > ConstanteRipart.MAX_TAILLE_UPLOAD_FILE:
-                        raise Exception("Le fichier "+ document + " est de taille supérieure à " + \
+                        raise Exception("Le fichier " + document + " est de taille supérieure à " +
                                         str(ConstanteRipart.MAX_TAILLE_UPLOAD_FILE))
 
+                    files = {"upload" + str(docCnt): open(ClientHelper.notNoneValue(document), 'rb')}
 
-                    files = {"upload"+str(docCnt):  open(ClientHelper.notNoneValue(document), 'rb')}
+            # envoi de la requête
+            uri = self.__url + "/api/georem/georem_post.xml"
 
-
-            #raise Exception("TEST")
-
-            #envoi de la requête
-            uri = self.__url +"/api/georem/georem_post.xml"
-
-            data = RipartServiceRequest.makeHttpRequest(uri, authent= self.__auth,proxies = self.__proxies, data=params, files=files)
+            data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies, data=params,
+                                                        files=files)
 
             xmlResponse = XMLResponse(data)
-            errMessage= xmlResponse.checkResponseValidity()
+            errMessage = xmlResponse.checkResponseValidity()
 
-            if errMessage['code'] =='OK':
-                rems= xmlResponse.extractRemarques()
-                if len(rems)==1:
-                    rem =list(rems.values())[0]
-                else :
+            if errMessage['code'] == 'OK':
+                rems = xmlResponse.extractRemarques()
+                if len(rems) == 1:
+                    rem = list(rems.values())[0]
+                else:
                     self.logger.error("Problème lors de l'ajout de la remarque")
                     raise Exception("Problème lors de l'ajout de la remarque")
             else:
                 self.logger.error(errMessage['message'])
                 raise Exception(errMessage['message'])
 
-
         except Exception as e:
             self.logger.error(str(e))
             raise Exception(e)
 
         return rem
-
-
 
     @staticmethod
     def get_MAX_TAILLE_UPLOAD_FILE():

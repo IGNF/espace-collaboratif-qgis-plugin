@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox
@@ -9,15 +7,13 @@ from PyQt5 import QtCore
 from qgis.PyQt import QtGui, uic, QtWidgets
 from qgis.core import *
 
-from .core.Layer import Layer
-from .Contexte import Contexte
 from .ImporterGuichet import ImporterGuichet
 from .core import ConstanteRipart as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChargerGuichet_base.ui'))
 
-class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
+class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     """
     Dialogue pour afficher la liste des couches disponibles pour le profil utilisateur
     et récupération du choix de l'utilisateur
@@ -34,8 +30,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     # - ref = couche servant de référence pour la saisie (snapping ou routing)
     # - edit, ref-edit = couche éditable sur le guichet
     # "clé xml":"valeur affichage boite"
-    roleCleVal = {"edit":"Edition", "ref-edit":"Edition", "visu":"Visualisation", "ref":"Visualisation"}
-
+    roleCleVal = {"edit": "Edition", "ref-edit": "Edition", "visu": "Visualisation", "ref": "Visualisation"}
 
     def __init__(self, context, parent=None):
         super(FormChargerGuichet, self).__init__(parent)
@@ -63,28 +58,26 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
         self.labelGroupeActif.setText("Groupe actif : {}".format(self.profilUser.geogroupe.nom))
-        self.labelGroupeActif.setStyleSheet("QLabel {color : red}")##ff0000
-
-
+        self.labelGroupeActif.setStyleSheet("QLabel {color : red}")  ##ff0000
 
     def getInfosLayers(self):
         infosLayers = []
 
-        if self.context.ripClient == None:
-            connResult =self.context.getConnexionRipart()
+        if self.context.ripClient is None:
+            connResult = self.context.getConnexionRipart()
             if not connResult:
-                #la connexion a échoué ou l'utilisateur a cliqué sur Annuler
-                return ("Rejected", infosLayers)
+                # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
+                return "Rejected", infosLayers
 
-        if self.context.client == None:
-            return ("Rejected", infosLayers)
+        if self.context.client is None:
+            return "Rejected", infosLayers
 
         self.profilUser = self.context.client.getProfil()
         print("Profil : {0}, {1}".format(self.profilUser.geogroupe.id,
                                          self.profilUser.geogroupe.nom))
 
         if len(self.profilUser.infosGeogroupes) == 0:
-           return ("Rejected", infosLayers)
+            return "Rejected", infosLayers
 
         for infoGeogroupe in self.profilUser.infosGeogroupes:
             if infoGeogroupe.groupe.id != self.profilUser.geogroupe.id:
@@ -95,18 +88,14 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 print(layersAll.nom)
                 infosLayers.append(layersAll)
 
-        return ("Accepted", infosLayers)
-
-
+        return "Accepted", infosLayers
 
     def setColonneCharger(self, tableWidget, row, column):
         itemCheckBox = QtWidgets.QTableWidgetItem()
         itemCheckBox.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-        #itemCheckBox.setCheckState(QtCore.Qt.Checked)
+        # itemCheckBox.setCheckState(QtCore.Qt.Checked)
         itemCheckBox.setCheckState(QtCore.Qt.Unchecked)
         tableWidget.setItem(row, column, itemCheckBox)
-
-
 
     def setTableWidgetMonGuichet(self):
         # Entête
@@ -141,8 +130,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         self.tableWidgetMonGuichet.resizeColumnsToContents()
 
-
-
     def setTableWidgetFondsGeoportail(self):
         # Entête
         entete = ["Nom de la couche", "Charger"]
@@ -173,8 +160,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         self.tableWidgetFondsGeoportail.resizeColumnsToContents()
 
-
-
     def setTableWidgetFondsGeoportailBis(self):
         # Entête
         entete = ["Nom de la couche"]
@@ -196,8 +181,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 item.setForeground(QtGui.QColor(190, 190, 190))
 
         self.tableWidgetFondsGeoportailBis.resizeColumnsToContents()
-
-
 
     def setTableWidgetAutresGeoservices(self):
         # Entête
@@ -230,8 +213,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         self.tableWidgetAutresGeoservices.resizeColumnsToContents()
 
-
-
     def getLayersSelected(self, tableWidget, numCol):
         checked_list = []
         for i in range(tableWidget.rowCount()):
@@ -242,8 +223,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             else:
                 pass
         return checked_list
-
-
 
     def save(self):
         self.accept()
@@ -261,7 +240,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                     # tmp est sous la forme 'troncon_de_voie_ferree' ou 'Cartes IGN (GEOGRAPHICALGRIDSYSTEMS.MAPS)'
                     if '(' in tmp:
                         tmpName = tmp.split('(')
-                        name = tmpName[1].replace(')','')
+                        name = tmpName[1].replace(')', '')
                     else:
                         name = tmp
                     if name == layer.nom:
@@ -269,8 +248,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         importGuichet = ImporterGuichet(self.context)
         importGuichet.doImport(layersQGIS)
-
-
 
     def cancel(self):
         self.reject()
