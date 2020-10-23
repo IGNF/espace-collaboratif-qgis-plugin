@@ -5,6 +5,7 @@ from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbo
     QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes,\
     QgsDefaultValue
 from .Statistics import Statistics
+from .MongoDBtoQGIS import MongoDBtoQGIS
 import hashlib
 import os
 
@@ -290,6 +291,9 @@ class GuichetVectorLayer(QgsVectorLayer):
         #Pas de rule style, capture de toutes les autres entités
         if bExpression is True and condition is None:
             return "ELSE"
+
+        #mongo = MongoDBtoQGIS(condition)
+        #mongo.run()
 
         if type(condition) is str:
             c = condition.replace(' ','')

@@ -312,7 +312,7 @@ class XMLResponse(object):
             
             thAttributs = []
             thAttNodes = self.root.findall('THEMES/ATTRIBUT')
-            for attNode in thAttNodes :
+            for attNode in thAttNodes:
                          
                 nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
                 nomAtt = attNode.find('ATT').text
@@ -325,12 +325,15 @@ class XMLResponse(object):
                     thAttribut.addValeur(val.text)
                 
                 for val in attNode.findall('VALEURS/DEFAULTVAL'):
-                    thAttribut.defaultval =val.text
+                    thAttribut.defaultval = val.text
 
                 thAttributs.append(thAttribut)
                 if nomTh not in themesAttDict:
                     themesAttDict[nomTh] = []
                 themesAttDict[nomTh].append(thAttribut)
+
+                if attNode.find('OBLIGATOIRE'):
+                    thAttribut.setObligatoire()
                 
                 
             nodes =self.root.findall('THEMES/THEME')      

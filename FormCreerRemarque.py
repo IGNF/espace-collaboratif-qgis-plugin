@@ -28,7 +28,7 @@ from .RipartHelper import RipartHelper
 from .core.ThemeAttribut import ThemeAttribut
 
 
-FORM_CLASS , _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
 
 
 class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
@@ -36,24 +36,24 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     Formulaire pour la création d'une nouvelle remarque
     """ 
     logger=RipartLogger("FormCreerRemarque").getRipartLogger()
-    context=None
+    context = None
     
-    send=False
-    cancel=False
+    send = False
+    cancel = False
     
     #le nom du fichier sélectionné (document joint)
-    selFileName=None
+    selFileName = None
     
     #dictionnaire des thèmes sélectionnés (key: nom du theme, value: l'objet Theme)
-    selectedThemesList={}
+    selectedThemesList = {}
     
     #liste des thèmes du profil (objets Theme)
-    profilThemesList=[]
+    profilThemesList = []
     
     #taille maximale du document joint
-    docMaxSize=cst.MAX_TAILLE_UPLOAD_FILE
+    docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
 
-    def __init__(self, context,croquisCnt, parent=None):
+    def __init__(self, context, croquisCnt, parent=None):
         """Constructor."""
         
         super(FormCreerRemarque, self).__init__(parent)
@@ -64,7 +64,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         
-        self.context=context
+        self.context = context
         
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
@@ -75,32 +75,31 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.checkBoxAttDoc.stateChanged.connect(self.openFileDialog)
         
         self.lblDoc.setProperty("visible",False)
-        if croquisCnt<2:
+        if croquisCnt < 2:
             self.radioBtnUnique.setProperty("visible",False)
             self.radioBtnMultiple.setProperty("visible",False)
         else:
             self.radioBtnMultiple.setText(u"Créer "+ str(croquisCnt) + u" signalements distincts")
 
-        profil= self.context.client.getProfil()
+        profil = self.context.client.getProfil()
         
-        if profil.geogroupe.nom !=None :
+        if profil.geogroupe.nom is not None:
             self.groupBoxProfil.setTitle(profil.auteur.nom + " (" + profil.geogroupe.nom + ")")
         else:
             self.groupBoxProfil.setTitle(profil.auteur.nom + u" (Profil par défaut)")
         
         #les noms des thèmes préférés (du fichier de configuration)
-        preferredThemes= RipartHelper.load_preferredThemes(self.context.projectDir)
+        preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
             
         #largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
         self.treeWidget.setColumnWidth(0,160)
         self.treeWidget.setColumnWidth(1,150)
 
-        
-        if len(profil.themes)>0:
+        if len(profil.themes) > 0:
             #boucle sur tous les thèmes du profil
             for th in profil.themes:
                 #ajout du thème dans le treeview
-                thItem= QTreeWidgetItem(self.treeWidget)
+                thItem = QTreeWidgetItem(self.treeWidget)
                 thItem.setText(0,th.groupe.nom)    
                 thItem.setText(1,th.groupe.id)
                 self.treeWidget.addTopLevelItem(thItem)
@@ -127,18 +126,24 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         label = QtWidgets.QLabel(att.nom,self.treeWidget)
                         valeur = QtWidgets.QLineEdit(self.treeWidget)
                         valeur.setText(attDefaultval)
-                        txtItem =  QTreeWidgetItem()
+                        txtItem = QTreeWidgetItem()
                         thItem.addChild(txtItem)
                         self.treeWidget.setItemWidget(txtItem, 0, label)
                         self.treeWidget.setItemWidget(txtItem, 1, valeur)    
-                    elif attType == "checkbox" :
+                    elif attType == "checkbox":
                         label = QtWidgets.QLabel(att.nom,self.treeWidget)
                         valeur = QtWidgets.QCheckBox(self.treeWidget)
-                        if attDefaultval == 'True' : 
+                        if attDefaultval == '1' \
+                                or attDefaultval == 'True' \
+                                or attDefaultval == 'TRUE' \
+                                or attDefaultval == 'true' \
+                                or attDefaultval == 'Vrai' \
+                                or attDefaultval == 'VRAI' \
+                                or attDefaultval == 'vrai':
                             valeur.setChecked(True)
                         else:
                             valeur.setChecked(False)     
-                        attItem =  QTreeWidgetItem()
+                        attItem = QTreeWidgetItem()
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, valeur)  
@@ -146,17 +151,16 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     else:
                         label = QtWidgets.QLabel(att.nom,self.treeWidget)
                         listAtt = QtWidgets.QComboBox(self.treeWidget)
-                        attItem =  QtWidgets.QTreeWidgetItem()
+                        attItem = QtWidgets.QTreeWidgetItem()
                         
                         listAtt.insertItems(0,att.valeurs)
                         
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, listAtt)  
-  
-                
-        self.profilThemesList=profil.themes   
-   
+
+        self.profilThemesList = profil.themes
+
         self.docMaxSize=self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
         
         

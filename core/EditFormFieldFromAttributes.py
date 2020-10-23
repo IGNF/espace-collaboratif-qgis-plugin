@@ -3,8 +3,9 @@ from qgis.core import QgsVectorLayer, QgsEditorWidgetSetup, QgsFieldConstraints,
 '''
 Mise en forme des champs dans le formulaire d'attributs QGIS
 '''
-class EditFormFieldFromAttributes(object):
 
+
+class EditFormFieldFromAttributes(object):
     # les données
     data = None
     # couche concernée
@@ -14,7 +15,6 @@ class EditFormFieldFromAttributes(object):
     # n° du champ dans la liste des champs de l'objet
     index = None
 
-
     '''
     Initialisation de la classe avec la couche active (layer) et les données récupérées (data)
     au format json par la fonction core.client.py/connexionFeatureTypeJson
@@ -22,7 +22,6 @@ class EditFormFieldFromAttributes(object):
     def __init__(self, layer, data):
         self.data = data
         self.layer = layer
-
 
     '''
     Lecture des clé/valeurs de l'item 'attributes', par exemple
@@ -46,8 +45,7 @@ class EditFormFieldFromAttributes(object):
             self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
             self.setFieldListOfValues(v['listOfValues'], v['default_value'])
-            self.setFieldReadOnly(v['readOnly'])
-
+            self.setFieldReadOnly(v['readOnly'], v['automatic'])
 
     '''
     Formatage du champ en fonction du type collaboratif
@@ -86,7 +84,6 @@ class EditFormFieldFromAttributes(object):
             self.setFieldYear(default_value)
             return
 
-
     '''
     Mise en forme du champ dans le formulaire d'attributs QGIS
     '''
@@ -94,7 +91,6 @@ class EditFormFieldFromAttributes(object):
 
         setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
         self.layer.setEditorWidgetSetup(self.index, setup)
-
 
     '''
     Général > Alias
@@ -108,50 +104,54 @@ class EditFormFieldFromAttributes(object):
 
         self.layer.setFieldAlias(self.index, title)
 
-
     '''
     Contraintes > Non nul
     
-    Attention, c'est inversé entre les valeurs true/false de l'API et celles de la case à cocher QGIS :
+    - Attention, c'est inversé entre les valeurs true/false de l'API et celles de la case à cocher QGIS :
     Nullable True --> case décochée
     Nullable False --> case cochée (ConstraintNotNull = 1)
     '''
     def setFieldConstraintNotNull(self, bNullable):
 
-        if bNullable is None or bNullable is True:
+        if bNullable is None or bNullable is True or bNullable == '':
             return
 
-        if bNullable is False:
-            self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintNotNull)
-
+        self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintNotNull)
 
     '''
     Contraintes > Unique
+    
+    - bUnique = True
     '''
     def setFieldConstraintUnique(self, bUnique):
 
-        if bUnique is None or bUnique is False:
+        if bUnique is None or bUnique is False or bUnique == '':
             return
 
-        if bUnique is True:
-            self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
-
+        self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
 
     '''
     Général > Editable
     
-    If readOnly = False, the widget at the given index will be read-only. 
+    - readOnly = False,
+      automatic = True (la valeur du champ est calculée directement par le serveur donc l'utilisateur
+      ne doit normalement pas la remplir)
+      champ = id
+      The widget at the given index will not be editable
     '''
-    def setFieldReadOnly(self, readOnly):
+    def setFieldReadOnly(self, readOnly, automatic):
 
-        if readOnly is None or readOnly is True:
+        if readOnly is False or self.name == 'id' or automatic is True:
+            Qgs_editFormConfig = QgsEditFormConfig()
+            Qgs_editFormConfig.setReadOnly(self.index)
+            self.layer.setEditFormConfig(Qgs_editFormConfig)
+
+        '''if readOnly is None or readOnly is True or readOnly == '':
             return
 
         Qgs_editFormConfig = QgsEditFormConfig()
-        if readOnly is False:
-            Qgs_editFormConfig.setReadOnly(self.index, False)
-            self.layer.setEditFormConfig(Qgs_editFormConfig)
-
+        Qgs_editFormConfig.setReadOnly(self.index, False)
+        self.layer.setEditFormConfig(Qgs_editFormConfig)'''
 
     '''
     Contraintes > Expression (min_value/max_value)
@@ -198,7 +198,6 @@ class EditFormFieldFromAttributes(object):
 
         self.layer.setConstraintExpression(self.index, expression)
 
-
     '''
     Contraintes > Expression (minLength/maxLength)
     
@@ -220,13 +219,13 @@ class EditFormFieldFromAttributes(object):
             expression = "length(\"{}\") <= {}".format(self.name, maxLength)
 
         if minLength is not None and maxLength is not None:
-            expression = "length(\"{}\") >= {} AND length(\"{}\") <= {}".format(self.name, minLength, self.name, maxLength)
+            expression = "length(\"{}\") >= {} AND length(\"{}\") <= {}".format(self.name, minLength, self.name,
+                                                                                maxLength)
 
         if vType == 'String' and bNullable is True:
             expression = "\"{}\" is null or {}".format(self.name, expression)
 
         self.layer.setConstraintExpression(self.index, expression)
-
 
     '''
     Contraintes > Expression
@@ -240,14 +239,13 @@ class EditFormFieldFromAttributes(object):
         if pattern is None or pattern is '':
             return
 
-        newPattern = pattern.replace('\\','\\\\')
+        newPattern = pattern.replace('\\', '\\\\')
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
 
         if vType == 'String' and bNullable is True:
             expression = "\"{}\" is null or {}".format(self.name, expression)
 
         self.layer.setConstraintExpression(self.index, expression)
-
 
     '''
     Représentation du type d'outils : Edition de texte
@@ -263,7 +261,6 @@ class EditFormFieldFromAttributes(object):
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultString)))
 
-
     '''
     Représentation du type d'outils : Case à cocher
     '''
@@ -278,7 +275,6 @@ class EditFormFieldFromAttributes(object):
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultState))
 
-
     '''
     Représentation du type d'outils : Plage
     '''
@@ -287,14 +283,17 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_type = 'Range'
         # Config: {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0, 'Step': 1,
         # 'Style': 'SpinBox'}
-        QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
-                         'Step': 1, 'Style': 'SpinBox'}
+        if self.name == 'id':
+            QgsEWS_config = {'AllowNull': False, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
+                             'Step': 1, 'Style': 'SpinBox'}
+        else:
+            QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
+                             'Step': 1, 'Style': 'SpinBox'}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
         if defaultInteger is None or defaultInteger is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultInteger))
-
 
     '''
     Représentation du type d'outils : Plage
@@ -312,7 +311,6 @@ class EditFormFieldFromAttributes(object):
         if defaultDouble is None or defaultDouble is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDouble))
-
 
     '''
     Représentation du type d'outils : Date/Heure
@@ -334,7 +332,6 @@ class EditFormFieldFromAttributes(object):
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('to_date(now())'))
         else:
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDate)))
-
 
     '''
     Représentation du type d'outils : Date/Heure
@@ -358,7 +355,6 @@ class EditFormFieldFromAttributes(object):
         else:
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDateTime)))
 
-
     '''
     Représentation du type d'outils : Date/Heure
     '''
@@ -374,7 +370,6 @@ class EditFormFieldFromAttributes(object):
         if defaultYear is None or defaultYear is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultYear)))
-
 
     '''
     Représentation du type d'outils : Date/Heure
@@ -393,7 +388,6 @@ class EditFormFieldFromAttributes(object):
         if defaultYearMonth is None or defaultYearMonth is '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultYearMonth)))
-
 
     '''
     Représentation du type d'outils : Liste de valeurs
