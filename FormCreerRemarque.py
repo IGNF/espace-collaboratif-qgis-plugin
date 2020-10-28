@@ -10,12 +10,13 @@ version 3.0.0 , 26/11/2018
 import os
 import urllib.request, urllib.parse, urllib.error
 
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from .core.RipartLoggerCl import RipartLogger
 
-from qgis.PyQt import QtGui, uic, QtWidgets
+#from qgis.PyQt import QtGui, uic, QtWidgets
 from PyQt5.Qt import QDialogButtonBox, QListWidgetItem, QPixmap
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
+from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 
 from .core import ConstanteRipart as cst
 from .core.ClientHelper import ClientHelper
@@ -148,6 +149,41 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, valeur)
+
+                    elif attType == 'date':
+                        dateEdit = QDateEdit()
+
+                        if attDefaultval is not None and attDefaultval != '':
+                            #'2020-10-28'
+                            yyyymmdd = attDefaultval.split('-')
+                            dateEdit.setDate(QDate(int(yyyymmdd[0]), int(yyyymmdd[1]), int(yyyymmdd[2])))
+
+                        dateEdit.setMinimumDate(QDate(1900, 1, 1))
+                        dateEdit.setMaximumDate(QDate(3000, 1, 1))
+                        dateEdit.setDisplayFormat("yyyy-MM-dd")
+                        attItem = QtWidgets.QTreeWidgetItem()
+                        thItem.addChild(attItem)
+                        self.treeWidget.setItemWidget(attItem, 0, label)
+                        self.treeWidget.setItemWidget(attItem, 1, dateEdit)
+
+                    elif attType == 'datetime':
+                        dateTimeEdit = QDateTimeEdit()
+
+                        if attDefaultval is not None and attDefaultval != '':
+                            #'2020-08-15 12:23:48'
+                            dateTime = attDefaultval.split(' ')
+                            date = dateTime[0].split('-')
+                            time = dateTime[1].split(':')
+                            dateTimeEdit.setDateTime(QDateTime(QDate(int(date[0]), int(date[1]), int(date[2])),
+                                                               QTime(int(time[0]), int(time[1]), int(time[2]))))
+
+                        dateTimeEdit.setMinimumDateTime(QDateTime(QDate(1900, 1, 1), QTime(0, 0, 0)))
+                        dateTimeEdit.setMaximumDateTime(QDateTime(QDate(3000, 1, 1), QTime(0, 0, 0)))
+                        dateTimeEdit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+                        attItem = QtWidgets.QTreeWidgetItem()
+                        thItem.addChild(attItem)
+                        self.treeWidget.setItemWidget(attItem, 0, label)
+                        self.treeWidget.setItemWidget(attItem, 1, dateTimeEdit)
 
                     else:
                         listAtt = QtWidgets.QComboBox(self.treeWidget)

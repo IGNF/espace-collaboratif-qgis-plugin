@@ -103,5 +103,7 @@ class MongoDBtoQGIS(object):
             return expression
         elif nbCrochetOuvrant > 1:
             # $or:[$and:[choix:choix 1,entier:$lt:5],double:$ne:null]
+            chaine.split('[')
+
             return ''
 

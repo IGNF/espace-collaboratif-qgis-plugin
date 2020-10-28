@@ -257,7 +257,7 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_config = {'IsMultiline': False, 'UseHtml': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultString is None or defaultString is '':
+        if defaultString is None or defaultString == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultString)))
 
@@ -271,7 +271,7 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_config = {'CheckedState': '1', 'UncheckedState': '0'}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultState is None or defaultState is '':
+        if defaultState is None or defaultState == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultState))
 
@@ -291,7 +291,7 @@ class EditFormFieldFromAttributes(object):
                              'Step': 1, 'Style': 'SpinBox'}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultInteger is None or defaultInteger is '':
+        if defaultInteger is None or defaultInteger == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultInteger))
 
@@ -308,7 +308,7 @@ class EditFormFieldFromAttributes(object):
                          'Style': 'SpinBox'}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultDouble is None or defaultDouble is '':
+        if defaultDouble is None or defaultDouble == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDouble))
 
@@ -326,9 +326,9 @@ class EditFormFieldFromAttributes(object):
                          'field_format': 'yyyy-MM-dd', 'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultDate is None or defaultDate is '':
+        if defaultDate is None or defaultDate == '':
             return
-        if defaultDate is 'CURRENT_DATE':
+        if defaultDate == 'CURRENT_DATE':
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('to_date(now())'))
         else:
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDate)))
@@ -348,9 +348,9 @@ class EditFormFieldFromAttributes(object):
                          'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultDateTime is None or defaultDateTime is '':
+        if defaultDateTime is None or defaultDateTime == '':
             return
-        if defaultDateTime is 'CURRENT_DATE':
+        if defaultDateTime == 'CURRENT_DATE':
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('now()'))
         else:
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDateTime)))
@@ -367,7 +367,7 @@ class EditFormFieldFromAttributes(object):
                          'field_format': 'yyyy', 'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultYear is None or defaultYear is '':
+        if defaultYear is None or defaultYear == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultYear)))
 
@@ -385,7 +385,7 @@ class EditFormFieldFromAttributes(object):
                          'field_format': 'yyyy-MM', 'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultYearMonth is None or defaultYearMonth is '':
+        if defaultYearMonth is None or defaultYearMonth == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultYearMonth)))
 
@@ -400,7 +400,7 @@ class EditFormFieldFromAttributes(object):
     - defaultListValue : une des valeurs de liste
     '''
     def setFieldListOfValues(self, listOfValues, defaultListValue):
-        if listOfValues is None or listOfValues is '':
+        if listOfValues is None or listOfValues == '':
             return
 
         # Type: ValueMap
