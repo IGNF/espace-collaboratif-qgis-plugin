@@ -235,6 +235,10 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                             val = "1"
                     elif type(widg) == QtWidgets.QLineEdit:
                         val = widg.text()
+                    elif type(widg) == QtWidgets.QDateEdit:
+                        val = str(widg.date())
+                    elif type(widg) == QtWidgets.QDateTimeEdit:
+                        val = str(widg.date())
                     else:
                         val = widg.currentText()
 
