@@ -1,29 +1,30 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 27 oct. 2015
 
 version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 
 import os
-import urllib.request, urllib.parse, urllib.error
+# import urllib.request, urllib.parse, urllib.error
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from .core.RipartLoggerCl import RipartLogger
 
-#from qgis.PyQt import QtGui, uic, QtWidgets
-from PyQt5.Qt import QDialogButtonBox, QListWidgetItem, QPixmap
+# from qgis.PyQt import QtGui, uic, QtWidgets
+#from PyQt5.Qt import QDialogButtonBox, QListWidgetItem, QPixmap
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 
-from .core import ConstanteRipart as cst
+
+# from .core import ConstanteRipart as cst
 from .core.ClientHelper import ClientHelper
-from .core.Remarque import Remarque
+# from .core.Remarque import Remarque
 from .core import ConstanteRipart as cst
 from .core.Theme import Theme
-from .core.Groupe import Groupe
+# from .core.Groupe import Groupe
 from .RipartHelper import RipartHelper
 from .core.ThemeAttribut import ThemeAttribut
 
@@ -155,8 +156,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
                         if attDefaultval is not None and attDefaultval != '':
                             #'2020-10-28'
-                            yyyymmdd = attDefaultval.split('-')
-                            dateEdit.setDate(QDate(int(yyyymmdd[0]), int(yyyymmdd[1]), int(yyyymmdd[2])))
+                            date = attDefaultval.split('-')
+                            dateEdit.setDate(QDate(int(date[0]), int(date[1]), int(date[2])))
 
                         dateEdit.setMinimumDate(QDate(1900, 1, 1))
                         dateEdit.setMaximumDate(QDate(3000, 1, 1))
@@ -294,7 +295,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         """Envoi de la requête de création au service ripart
         """
         if self.textEditMessage.toPlainText().strip() == "":
-            self.lblMessageError.setStyleSheet("QLabel { background-color : #F5A802; font-weight:bold}");
+            self.lblMessageError.setStyleSheet("QLabel { background-color : #F5A802; font-weight:bold}")
             self.lblMessageError.setText(u"Le message est obligatoire")
             self.context.iface.messageBar().pushMessage("Attention", u'Le message est obligatoire', level=1,
                                                         duration=10)
@@ -321,7 +322,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             if filename != "":
                 extension = os.path.splitext(filename)[1]
                 if extension[1:] not in self.context.formats:
-                    message = u"Les fichiers de type '" + extension + u"' ne sont pas autorisés comme pièce-jointe dans le service Ripart."
+                    message = u"Les fichiers de type '" + extension + u"' ne sont pas autorisés comme pièce-jointe " \
+                                                                      u"dans le service Ripart. "
                     RipartHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.Unchecked)
 

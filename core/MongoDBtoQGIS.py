@@ -34,7 +34,8 @@ class MongoDBtoQGIS(object):
     }
     operatorConditionNull = {
         ':$eq:': 'IS',
-        ':$ne:': 'IS NOT',
+        ':$ne:': 'IS NOT'
+        # lignes sans style Test écriture IS NULL ou IS ''
     }
 
     '''
@@ -65,6 +66,36 @@ class MongoDBtoQGIS(object):
     def setExpression(self, partOne, operator, partTwo):
         return "\"{}\" {} '{}'".format(partOne, operator, partTwo)
 
+    def conversionToExpression(self, chaineTo):
+        dd = {':[': ',', ']': ''}
+        tmp = self.replaceSomeCharacters(chaineTo, dd)
+        nb_parts = tmp.split(',')
+        orAndNot = None
+        expression = None
+        i = 0
+        for part in nb_parts:
+            nbTwoPoints = self.numberOfOccurrences(':', part)
+            if nbTwoPoints == 0:
+                orAndNot = self.conversionConditions(part)
+            elif nbTwoPoints == 1:
+                part_twoPoints = part.split(':')
+                operator = self.conversionOperatorCondition(':')
+                tmp = self.setExpression(part_twoPoints[0], operator, part_twoPoints[1])
+                if i == 1:
+                    expression = "{}".format(tmp)
+                else:
+                    expression += " {} {}".format(orAndNot, tmp)
+            elif nbTwoPoints == 2:
+                part_twoPoints = part.split(':')
+                operator = self.conversionOperatorCondition(part_twoPoints[1])
+                tmp = self.setExpression(part_twoPoints[0], operator, part_twoPoints[2])
+                if i == 1:
+                    expression = "{}".format(tmp)
+                else:
+                    expression += " {} {}".format(orAndNot, tmp)
+            i = i + 1
+        return expression
+
     def run(self):
         d = {'{': '', '}': '', '"': ''}
         chaine = self.replaceSomeCharacters(self.condition, d)
@@ -73,37 +104,16 @@ class MongoDBtoQGIS(object):
         nbCrochetOuvrant = self.numberOfOccurrences('[', chaine)
 
         if nbCrochetOuvrant == 1:
-            dd = {':[': ',', ']': ''}
-            tmp = self.replaceSomeCharacters(chaine, dd)
-            nb_parts = tmp.split(',')
-            orAndNot = None
-            expression = None
-            i = 0
-            for part in nb_parts:
-                nbTwoPoints = self.numberOfOccurrences(':', part)
-                if nbTwoPoints == 0:
-                    orAndNot = self.conversionConditions(part)
-                elif nbTwoPoints == 1:
-                    part_twoPoints = part.split(':')
-                    operator = self.conversionOperatorCondition(':')
-                    tmp = self.setExpression(part_twoPoints[0], operator, part_twoPoints[1])
-                    if i == 1:
-                        expression = "{}".format(tmp)
-                    else:
-                        expression += " {} {}".format(orAndNot, tmp)
-                elif nbTwoPoints == 2:
-                    part_twoPoints = part.split(':')
-                    operator = self.conversionOperatorCondition(part_twoPoints[1])
-                    tmp = self.setExpression(part_twoPoints[0], operator, part_twoPoints[2])
-                    if i == 1:
-                        expression = "{}".format(tmp)
-                    else:
-                        expression += " {} {}".format(orAndNot, tmp)
-                i = i + 1
-            return expression
-        elif nbCrochetOuvrant > 1:
-            # $or:[$and:[choix:choix 1,entier:$lt:5],double:$ne:null]
-            chaine.split('[')
+            return self.conversionToExpression(chaine)
 
-            return ''
+        elif nbCrochetOuvrant == 2:
+            # $or:[$and:[choix:choix 1,entier:$lt:5],double:$ne:null]
+            conditionOne = chaine.split('[', 1)
+            orAndNot = self.conversionConditions(conditionOne[0])
+            part = conditionOne[1].split(']')
+            partOne = self.conversionToExpression(part[0])
+            partTwo = self.conversionToExpression(part[1])
+            return "{} {} {}".format(partOne, orAndNot, partTwo)
+
+        return ''
 

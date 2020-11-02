@@ -143,15 +143,8 @@ class EditFormFieldFromAttributes(object):
 
         if readOnly is False or self.name == 'id' or automatic is True:
             Qgs_editFormConfig = QgsEditFormConfig()
-            Qgs_editFormConfig.setReadOnly(self.index)
+            Qgs_editFormConfig.setReadOnly(self.index, False)
             self.layer.setEditFormConfig(Qgs_editFormConfig)
-
-        '''if readOnly is None or readOnly is True or readOnly == '':
-            return
-
-        Qgs_editFormConfig = QgsEditFormConfig()
-        Qgs_editFormConfig.setReadOnly(self.index, False)
-        self.layer.setEditFormConfig(Qgs_editFormConfig)'''
 
     '''
     Contraintes > Expression (min_value/max_value)
