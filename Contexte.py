@@ -494,10 +494,10 @@ class Contexte(object):
     def appendUri_WFS(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
         uri.setConnection("", "", self.login, self.pwd)
-        uri.setParam('version', '1.1.0')
-        uri.setParam('request', 'GetFeature')
-        if str(bbox) != "None":
-            uri.setParam('bbox', bbox.boxToString())
+        uri.setParam('version', 'auto')
+        #uri.setParam('request', 'GetFeature')
+        #if str(bbox) != "None":
+        #    uri.setParam('bbox', bbox.boxToString())
 
         # Mon guichet
         if '&' in url:
@@ -507,6 +507,9 @@ class Contexte(object):
             uri.setParam('url', tmp[0])
             uri.setParam('typename', typeName)
             uri.setParam('filter', 'detruit:false')
+            uri.setParam('maxNumFeatures', '10000')
+            uri.setParam('pagingEnabled', 'true')
+            uri.setParam('restrictToRequestBBOX', '1')
 
         # Autres Geoservices
         else:
