@@ -495,7 +495,7 @@ class Contexte(object):
         uri = QgsDataSourceUri()
         uri.setConnection("", "", self.login, self.pwd)
         uri.setParam('version', 'auto')
-        #uri.setParam('request', 'GetFeature')
+        uri.setParam('request', 'GetFeature')
         #if str(bbox) != "None":
         #    uri.setParam('bbox', bbox.boxToString())
 
