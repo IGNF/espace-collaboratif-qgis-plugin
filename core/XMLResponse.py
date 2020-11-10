@@ -239,17 +239,14 @@ class XMLResponse(object):
                     layer.extent = nodelayer.find('EXTENT').text
                     # cas particulier de la balise <ROLE> qui n'existe
                     # que dans la base de qualification
-                    role = None
                     role = nodelayer.find('ROLE')
                     if role is not None:
                         layer.role = role.text
                     layer.visibility = nodelayer.find('VISIBILITY').text
                     layer.opacity = nodelayer.find('OPACITY').text
-                    tilezoom = None
                     tilezoom = nodelayer.find('TILEZOOM')
                     if tilezoom is not None:
                         layer.tilezoom = tilezoom.text
-                    url = None
                     url = nodelayer.find('URL')
                     if url is not None:
                         layer.url = url.text

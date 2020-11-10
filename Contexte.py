@@ -574,8 +574,8 @@ class Contexte(object):
 
                     # Modification du formulaire d'attributs
                     data = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
-                    efa = EditFormFieldFromAttributes(vlayer, data)
-                    efa.readData()
+                    efffa = EditFormFieldFromAttributes(vlayer, data)
+                    vlayer.correspondanceChampType = efffa.readData()
 
                     # Modification de la symbologie de la couche
                     listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(data)

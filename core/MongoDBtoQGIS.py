@@ -16,8 +16,11 @@ class MongoDBtoQGIS(object):
     # Condition en mongoDB
     condition = None
 
+    # Correspondance champ/type
+    champType = None
+
     # Les équivalences entre conditions mongoDB et expressions QGIS
-    conditions = {'$and': 'AND', '$or': 'OR', '$not': 'NOT'}
+    conditions = {'$and': 'AND', '$or': 'OR', '$not': 'NOT', '$and:': 'AND', '$or:': 'OR', '$not:': 'NOT'}
     operatorCondition = {
         '$gt': '>',
         '$gte': '>=',
@@ -33,17 +36,18 @@ class MongoDBtoQGIS(object):
         '$regex': 'LIKE'
     }
     operatorConditionNull = {
-        ':$eq:': 'IS',
-        ':$ne:': 'IS NOT'
-        # lignes sans style Test écriture IS NULL ou IS ''
+        '$eq': 'IS',
+        '$ne': 'IS NOT',
+        ':': 'IS'
     }
 
     '''
     Intialisation de la classe avec la condition issue du collaboratif
     exemple : "{\"$and\":[{\"capacite\":{\"$lte\":5}}]}"
     '''
-    def __init__(self, conditionMongoDB):
+    def __init__(self, conditionMongoDB, correpondanceChampType):
         self.condition = conditionMongoDB
+        self.champType = correpondanceChampType
 
     def numberOfOccurrences(self, searchTo, substring):
         return substring.count(searchTo)
@@ -64,6 +68,17 @@ class MongoDBtoQGIS(object):
         return newString
 
     def setExpression(self, partOne, operator, partTwo):
+        if partTwo == '':
+            return "\"{}\" {} ''".format(partOne, operator)
+
+        if partTwo == 'null':
+            return "\"{}\" {} {}".format(partOne, operator, partTwo)
+
+        typeChamp = self.champType[partOne]
+        if typeChamp == 'Boolean' or typeChamp == 'Double' or typeChamp == 'Integer' or typeChamp == 'Year':
+            # Pas simples quotes autour de la valeur
+            return "\"{}\" {} {}".format(partOne, operator, partTwo)
+
         return "\"{}\" {} '{}'".format(partOne, operator, partTwo)
 
     def conversionToExpression(self, chaineTo):
@@ -74,12 +89,19 @@ class MongoDBtoQGIS(object):
         expression = None
         i = 0
         for part in nb_parts:
+            # ',double:$ne:null' la découpe par la virgule entraine une chaine vide à gauche de celle-ci
+            if part == '':
+                i = i + 1
+                continue
             nbTwoPoints = self.numberOfOccurrences(':', part)
             if nbTwoPoints == 0:
                 orAndNot = self.conversionConditions(part)
             elif nbTwoPoints == 1:
                 part_twoPoints = part.split(':')
-                operator = self.conversionOperatorCondition(':')
+                if part_twoPoints[1] == 'null':
+                    operator = self.conversionOperatorConditionNull(':')
+                else:
+                    operator = self.conversionOperatorCondition(':')
                 tmp = self.setExpression(part_twoPoints[0], operator, part_twoPoints[1])
                 if i == 1:
                     expression = "{}".format(tmp)
@@ -87,7 +109,10 @@ class MongoDBtoQGIS(object):
                     expression += " {} {}".format(orAndNot, tmp)
             elif nbTwoPoints == 2:
                 part_twoPoints = part.split(':')
-                operator = self.conversionOperatorCondition(part_twoPoints[1])
+                if part_twoPoints[2] == 'null':
+                    operator = self.conversionOperatorConditionNull(part_twoPoints[1])
+                else:
+                    operator = self.conversionOperatorCondition(part_twoPoints[1])
                 tmp = self.setExpression(part_twoPoints[0], operator, part_twoPoints[2])
                 if i == 1:
                     expression = "{}".format(tmp)
@@ -116,4 +141,3 @@ class MongoDBtoQGIS(object):
             return "{} {} {}".format(partOne, orAndNot, partTwo)
 
         return ''
-

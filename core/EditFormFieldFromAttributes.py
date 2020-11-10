@@ -33,6 +33,8 @@ class EditFormFieldFromAttributes(object):
     "required": false, "mime_types": null, "type": "String"}
     '''
     def readData(self):
+        # Correspondance nom du champ/type du champ
+        linkFieldType = {}
         valeurs = self.data['attributes']
         for c, v in valeurs.items():
             self.name = v['name']
@@ -46,6 +48,11 @@ class EditFormFieldFromAttributes(object):
             self.setFieldConstraintUnique(v['unique'])
             self.setFieldListOfValues(v['listOfValues'], v['default_value'])
             self.setFieldReadOnly(v['readOnly'], v['automatic'])
+            linkFieldType[v['name']] = v['type']
+
+        return linkFieldType
+
+
 
     '''
     Formatage du champ en fonction du type collaboratif

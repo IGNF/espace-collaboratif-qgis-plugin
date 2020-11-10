@@ -25,6 +25,9 @@ class GuichetVectorLayer(QgsVectorLayer):
     fileBeforeWorks = None
     fileAfterWorks = None
 
+    # Correspondance champ/type
+    correspondanceChampType = None
+
     def getStat(self):
         return self.stat
 
@@ -264,7 +267,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         if bExpression is True and condition is None:
             return "ELSE"
 
-        mongo = MongoDBtoQGIS(condition)
+        mongo = MongoDBtoQGIS(condition, self.correspondanceChampType)
         return mongo.run()
 
     '''
