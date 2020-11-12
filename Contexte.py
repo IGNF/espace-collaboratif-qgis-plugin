@@ -496,8 +496,8 @@ class Contexte(object):
         uri.setConnection("", "", self.login, self.pwd)
         uri.setParam('version', 'auto')
         uri.setParam('request', 'GetFeature')
-        #if str(bbox) != "None":
-        #    uri.setParam('bbox', bbox.boxToString())
+        if str(bbox) != "None":
+            uri.setParam('bbox', bbox.boxToString())
 
         # Mon guichet
         if '&' in url:
@@ -507,7 +507,7 @@ class Contexte(object):
             uri.setParam('url', tmp[0])
             uri.setParam('typename', typeName)
             uri.setParam('filter', 'detruit:false')
-            uri.setParam('maxNumFeatures', '10000')
+            uri.setParam('maxNumFeatures', '5000')
             uri.setParam('pagingEnabled', 'true')
             uri.setParam('restrictToRequestBBOX', '1')
 

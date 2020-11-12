@@ -82,6 +82,9 @@ class MongoDBtoQGIS(object):
         return "\"{}\" {} '{}'".format(partOne, operator, partTwo)
 
     def conversionToExpression(self, chaineTo):
+        if chaineTo.startswith('('):
+            return chaineTo
+
         dd = {':[': ',', ']': ''}
         tmp = self.replaceSomeCharacters(chaineTo, dd)
         nb_parts = tmp.split(',')
@@ -95,7 +98,14 @@ class MongoDBtoQGIS(object):
                 continue
             nbTwoPoints = self.numberOfOccurrences(':', part)
             if nbTwoPoints == 0:
-                orAndNot = self.conversionConditions(part)
+                if not part.startswith('(') :
+                    orAndNot = self.conversionConditions(part)
+                else : # Partie déjà transformée en SQL
+                    if i == 1:
+                        expression = "{}".format(part)
+                    else:
+                        expression += " {} {} ".format(orAndNot, part)
+
             elif nbTwoPoints == 1:
                 part_twoPoints = part.split(':')
                 if part_twoPoints[1] == 'null':
@@ -104,9 +114,10 @@ class MongoDBtoQGIS(object):
                     operator = self.conversionOperatorCondition(':')
                 tmp = self.setExpression(part_twoPoints[0], operator, part_twoPoints[1])
                 if i == 1:
-                    expression = "{}".format(tmp)
+                    expression = "( {} )".format(tmp)
                 else:
-                    expression += " {} {}".format(orAndNot, tmp)
+                    expression += " {} ( {} )".format(orAndNot, tmp)
+
             elif nbTwoPoints == 2:
                 part_twoPoints = part.split(':')
                 if part_twoPoints[2] == 'null':
@@ -115,9 +126,9 @@ class MongoDBtoQGIS(object):
                     operator = self.conversionOperatorCondition(part_twoPoints[1])
                 tmp = self.setExpression(part_twoPoints[0], operator, part_twoPoints[2])
                 if i == 1:
-                    expression = "{}".format(tmp)
+                    expression = "( {} )".format(tmp)
                 else:
-                    expression += " {} {}".format(orAndNot, tmp)
+                    expression += " {} ( {} )".format(orAndNot, tmp)
             i = i + 1
         return expression
 
@@ -131,13 +142,29 @@ class MongoDBtoQGIS(object):
         if nbCrochetOuvrant == 1:
             return self.conversionToExpression(chaine)
 
-        elif nbCrochetOuvrant == 2:
-            # $or:[$and:[choix:choix 1,entier:$lt:5],double:$ne:null]
-            conditionOne = chaine.split('[', 1)
-            orAndNot = self.conversionConditions(conditionOne[0])
-            part = conditionOne[1].split(']')
-            partOne = self.conversionToExpression(part[0])
-            partTwo = self.conversionToExpression(part[1])
-            return "{} {} {}".format(partOne, orAndNot, partTwo)
+        # elif nbCrochetOuvrant == 2:
+        #     # $or:[$and:[choix:choix 1,entier:$lt:5],double:$ne:null]
+        #     conditionOne = chaine.split('[', 1)
+        #     orAndNot = self.conversionConditions(conditionOne[0])
+        #     part = conditionOne[1].split(']')
+        #     partOne = self.conversionToExpression(part[0])
+        #     partTwo = self.conversionToExpression(part[1])
+        #     return "(( {} ) {} {} )".format(partOne, orAndNot, partTwo)
+
+        else:
+            chaineSQL = chaine
+            posClose = chaine.find(']', 1)
+
+            while posClose != -1 :
+                posOpen = chaineSQL.rfind('[', 0, posClose)
+                posOperator = chaineSQL.rfind('$', 0, posOpen)
+                currConditionMongo = chaineSQL[posOperator:posClose]
+                currConditionSQL = "( {} )".format(self.conversionToExpression(currConditionMongo))
+
+                chaineSQL = chaineSQL[0:posOperator] + currConditionSQL + chaineSQL[posClose+1:]
+
+                posClose = chaineSQL.find(']', 1)
+
+            return chaineSQL
 
         return ''
