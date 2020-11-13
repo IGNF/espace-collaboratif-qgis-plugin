@@ -141,21 +141,11 @@ class MongoDBtoQGIS(object):
 
         if nbCrochetOuvrant == 1:
             return self.conversionToExpression(chaine)
-
-        # elif nbCrochetOuvrant == 2:
-        #     # $or:[$and:[choix:choix 1,entier:$lt:5],double:$ne:null]
-        #     conditionOne = chaine.split('[', 1)
-        #     orAndNot = self.conversionConditions(conditionOne[0])
-        #     part = conditionOne[1].split(']')
-        #     partOne = self.conversionToExpression(part[0])
-        #     partTwo = self.conversionToExpression(part[1])
-        #     return "(( {} ) {} {} )".format(partOne, orAndNot, partTwo)
-
         else:
             chaineSQL = chaine
             posClose = chaine.find(']', 1)
 
-            while posClose != -1 :
+            while posClose != -1:
                 posOpen = chaineSQL.rfind('[', 0, posClose)
                 posOperator = chaineSQL.rfind('$', 0, posOpen)
                 currConditionMongo = chaineSQL[posOperator:posClose]

@@ -588,6 +588,10 @@ class Contexte(object):
                 if layer.role == 'visu' or layer.role == 'ref':
                     vlayer.setReadOnly()
 
+                # Affichage des données en fonction de l'échelle
+                vlayer.setDisplayScale(layer.minzoom, layer.maxzoom)
+
+
             for layer in guichet_layers:
 
                 if layer.nom in maplayers or layer.description in maplayers:

@@ -1,4 +1,4 @@
-#Imports
+# Imports
 import urllib
 from .core import ConstanteRipart as cst
 from qgis.core import QgsDataSourceUri, QgsProject
@@ -7,12 +7,14 @@ try:
     from owslib.wmts import WebMapTileService
     from owslib.util import ServiceException
     import owslib
+
     print("Depencencies - owslib version: {}".format(owslib.__version__))
 except ImportError as e:
     print("Depencencies - owslib is not present")
 
 try:
     from owslib.util import HTTPError
+
     print("Depencencies - HTTPError within owslib")
 except ImportError as e:
     print(
@@ -21,6 +23,7 @@ except ImportError as e:
     )
 try:
     from urllib import HTTPError
+
     print("Depencencies - HTTPError within urllib")
 except ImportError as e:
     print(
@@ -29,7 +32,6 @@ except ImportError as e:
 
 
 class importWMTS:
-
     # Variables
     wmts = None
     uri = QgsDataSourceUri()
@@ -40,13 +42,11 @@ class importWMTS:
     crs = None
     title_layer = None
 
-
     def __init__(self, context):
         self.context = context
         self.checkOpenService()
         self.checkGetTile()
         self.checkTileMatrixSet()
-
 
     # Construction url GetCapabilities sur le geoportail
     # exemple : https://wxs.ign.fr/[cle]/wmts?service=WMTS&request=GetCapabilities
@@ -56,7 +56,7 @@ class importWMTS:
             'request': 'GetCapabilities'
         }
         clegeoportail = self.context.clegeoportail
-        if clegeoportail == None or clegeoportail == cst.DEMO:
+        if clegeoportail is None or clegeoportail == cst.DEMO:
             clegeoportail = cst.CLEGEOPORTAILSTANDARD
 
         '''
@@ -66,7 +66,6 @@ class importWMTS:
         self.crs = "EPSG:3857"
         self.uri = "https://wxs.ign.fr/{}/geoportail/wmts?{}" \
             .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(params)))
-
 
     # opening WMTS
     def checkOpenService(self):
@@ -82,7 +81,6 @@ class importWMTS:
 
         return True
 
-
     # check if GetTile operation is available
     def checkGetTile(self):
         if not hasattr(self.wmts, "gettile") or "GetTile" not in [op.name for op in self.wmts.operations]:
@@ -91,7 +89,6 @@ class importWMTS:
         else:
             print("GetTile available")
         return True
-
 
     # check if tilematrixsets is available
     def checkTileMatrixSet(self):
@@ -102,14 +99,12 @@ class importWMTS:
             print("tilematrixsets available")
         return True
 
-
     # GetTile URL
     def getTileUrl(self):
         wmts_lyr_url = self.wmts.getOperationByName("GetTile").methods
         wmts_lyr_url = wmts_lyr_url[0].get("url")
         print("Available url : {}".format(wmts_lyr_url))
         return wmts_lyr_url
-
 
     # Style definition
     def getStyles(self):
@@ -121,11 +116,10 @@ class importWMTS:
             et valeur = {'isDefault': True, 'title': 'Légende générique', 'abstract': 'Fichier de légende générique...}
         '''
         for cle, valeur in styles.items():
-            print ("Available styles : {}".format(cle))
+            print("Available styles : {}".format(cle))
         # Le style est donc la cle du dictionnaire
         lyr_style = cle
         return lyr_style
-
 
     # Get a layer
     def getLayer(self, idGuichetLayerWmts):
@@ -140,20 +134,16 @@ class importWMTS:
             print("Layer picked : {}:{}".format(self.title_layer, self.layer_id))
             return self.layer_id
 
-
     # Tile Matrix Set
     def getTileMatrixSet(self):
         self.tile_matrix_set = self.wmts_lyr._tilematrixsets[0]
         print("Available tileMatrixSet : {}".format(self.tile_matrix_set))
 
-
     # Format
     def getFormat(self):
         layer_format = self.wmts_lyr.formats[0]
-        print ("Available layer format : {}".format(layer_format))
+        print("Available layer format : {}".format(layer_format))
         return layer_format
-
-
 
     # La requete doit être de la forme :
     # crs=EPSG:3857&
@@ -174,7 +164,7 @@ class importWMTS:
             "layers": self.layer_id,
             "styles": self.getStyles(),
             "tileMatrixSet": self.tile_matrix_set,
-            "url": "{}{}".format(self.getTileUrl(),"SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
+            "url": "{}{}".format(self.getTileUrl(), "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
         }
         wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
-        return (self.title_layer, wmts_url_final)
+        return self.title_layer, wmts_url_final

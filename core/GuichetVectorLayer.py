@@ -1,8 +1,8 @@
 import random
 
 from PyQt5.QtGui import QColor
-from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer,\
-    QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes,\
+from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer, \
+    QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes, \
     QgsDefaultValue
 from .Statistics import Statistics
 from .MongoDBtoQGIS import MongoDBtoQGIS
@@ -158,14 +158,16 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     def attribute_deleted(self, idx):
         fields = self.fields()
-        raise Exception("Impossible de supprimer l'attribut {} car la synchronisation au serveur sera perdue.".format(fields[idx].name()))
+        raise Exception("Impossible de supprimer l'attribut {} car la synchronisation au serveur sera perdue.".format(
+            fields[idx].name()))
 
     '''
     Interdiction d'ajouter un attribut sinon la synchronisation au serveur est perdue
     '''
     def attribute_added(self, idx):
         fields = self.fields()
-        raise Exception("Impossible d'ajouter l'attribut {} car la synchronisation au serveur sera perdue.".format(fields[idx].name()))
+        raise Exception("Impossible d'ajouter l'attribut {} car la synchronisation au serveur sera perdue.".format(
+            fields[idx].name()))
 
     '''
     Comptage par différentiel des objets
@@ -263,7 +265,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         if bExpression is False and condition is None or condition == '':
             return ''
 
-        #Pas de rule style, capture de toutes les autres entités
+        # Pas de rule style, capture de toutes les autres entités
         if bExpression is True and condition is None:
             return "ELSE"
 
@@ -413,7 +415,8 @@ class GuichetVectorLayer(QgsVectorLayer):
                                             str(v["strokeWidth"]), v['strokeOpacity'])
 
             if v['type'] == 'polygon':
-                symbol = self.setSymbolPolygon(v["fillColor"], v['strokeColor'], v['strokeDashstyle'], str(v['strokeWidth']),
+                symbol = self.setSymbolPolygon(v["fillColor"], v['strokeColor'], v['strokeDashstyle'],
+                                               str(v['strokeWidth']),
                                                v['fillOpacity'])
 
             if v['type'] == 'point':
@@ -526,3 +529,37 @@ class GuichetVectorLayer(QgsVectorLayer):
         if len(listOfValues) > 1:
             bExpression = True
             self.setModifyWithQgsRuleBasedSymbolRenderer(listOfValues, bExpression)
+
+    '''
+        Définition de l'échelle minimum et maximum de la couche
+        Source : https://geoservices.ign.fr/documentation/geoservices/wmts.html#taille-des-tuiles-en-pixels
+    '''
+    def setDisplayScale(self, min, max):
+        # Correspondance zoom des tuiles - échelle approximative
+        scale = {
+            '0': 559082264,
+            '1': 279541132,
+            '2': 139770566,
+            '3': 69885283,
+            '4': 34942642,
+            '5': 17471321,
+            '6': 8735660,
+            '7': 4367830,
+            '8': 2183915,
+            '9': 1091958,
+            '10': 545979,
+            '11': 272989,
+            '12': 136495,
+            '13': 68247,
+            '14': 34124,
+            '15': 17062,
+            '16': 8531,
+            '17': 4265,
+            '18': 2133,
+            '19': 1066,
+            '20': 533,
+            '21': 267
+        }
+        self.setMinimumScale(scale[min])
+        self.setMaximumScale(scale[max])
+        self.setScaleBasedVisibility(True)
