@@ -17,6 +17,7 @@ from PyQt5.QtCore import *
 
 from .core.RipartLoggerCl import RipartLogger
 from .core.Box import Box
+from .core.ClientHelper import ClientHelper
 from .core.NoProfileException import NoProfileException
 
 
@@ -66,7 +67,7 @@ class ImporterGuichet(object):
                     return 0
                 if self.context.ripClient == None:  # la connexion a échoué, on ne fait rien
                     self.context.iface.messageBar().pushMessage("",
-                                                                "Un problème de connexion avec le service RIPart est survenu. Veuillez rééssayer",
+                                                                "Un problème de connexion avec le service Espace collaboratif est survenu. Veuillez rééssayer",
                                                                 level=2, duration=5)
                     return
 
@@ -118,7 +119,7 @@ class ImporterGuichet(object):
         if filtreLay == None:
             message = "La carte en cours ne contient pas le calque '" + \
                       filtre + \
-                      "' définit pour être le filtrage spatial (ou le calque n'est pas activé).\n\n" + \
+                      "' défini pour être le filtrage spatial (ou le calque n'est pas activé).\n\n" + \
                       "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
                       "(Cela risque de prendre un certain temps)."
 
@@ -136,3 +137,13 @@ class ImporterGuichet(object):
                        filtreExtent.yMaximum())
 
         return bbox
+
+    def noFilterWarningDialog(self, message):
+        """Avertissement si pas de filtre spatial
+        """
+        message = ClientHelper.notNoneValue(message)
+        reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            return True
+        else :
+            return False
