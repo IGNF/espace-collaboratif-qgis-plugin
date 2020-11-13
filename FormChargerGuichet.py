@@ -47,6 +47,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         if connexionLayers[0] == "Accepted":
             self.listLayers = connexionLayers[1]
+            # Les couches sont chargées dans l'ordre renvoyé dans geoaut_get.
+            # Il faut donc inversé l'ordre pour retrouver le paramétrage de la carte du groupe
+            self.listLayers.reverse()
 
         # Remplissage des différentes tables de couches
         self.setTableWidgetMonGuichet()
@@ -228,10 +231,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.accept()
         layersQGIS = []
         print("Liste des couches à afficher après sélection utilisateur")
-        layersChecked = []
-        layersChecked.append(self.getLayersSelected(self.tableWidgetAutresGeoservices, 2))
-        layersChecked.append(self.getLayersSelected(self.tableWidgetFondsGeoportail, 1))
-        layersChecked.append(self.getLayersSelected(self.tableWidgetMonGuichet, 2))
+        layersChecked = [self.getLayersSelected(self.tableWidgetAutresGeoservices, 2),
+                         self.getLayersSelected(self.tableWidgetFondsGeoportail, 1),
+                         self.getLayersSelected(self.tableWidgetMonGuichet, 2)]
 
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
         for layerChecked in layersChecked:
@@ -248,9 +250,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         importGuichet = ImporterGuichet(self.context)
         importGuichet.doImport(layersQGIS)
-
-        # Ne semble fonctionner qu'en debug en pas à pas
-        #self.context.iface.mapCanvas().refreshAllLayers()
 
     def cancel(self):
         self.reject()

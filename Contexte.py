@@ -547,7 +547,7 @@ class Contexte(object):
                 QMessageBox.warning(None, "Charger les couches de mon groupe",
                                     u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
                 return
-            guichet_layers.reverse()
+            #guichet_layers.reverse()
             for layer in guichet_layers:
 
                 if layer.nom in maplayers or layer.description in maplayers:
