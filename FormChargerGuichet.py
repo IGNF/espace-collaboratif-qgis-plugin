@@ -55,7 +55,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.setTableWidgetMonGuichet()
         self.setTableWidgetFondsGeoportail()
         self.setTableWidgetFondsGeoportailBis()
-        self.setTableWidgetAutresGeoservices()
+        #self.setTableWidgetAutresGeoservices()
 
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
@@ -231,8 +231,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.accept()
         layersQGIS = []
         print("Liste des couches à afficher après sélection utilisateur")
-        layersChecked = [self.getLayersSelected(self.tableWidgetAutresGeoservices, 2),
+        '''layersChecked = [self.getLayersSelected(self.tableWidgetAutresGeoservices, 2),
                          self.getLayersSelected(self.tableWidgetFondsGeoportail, 1),
+                         self.getLayersSelected(self.tableWidgetMonGuichet, 2)]'''
+        layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoportail, 1),
                          self.getLayersSelected(self.tableWidgetMonGuichet, 2)]
 
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]

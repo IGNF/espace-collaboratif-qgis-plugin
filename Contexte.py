@@ -584,16 +584,16 @@ class Contexte(object):
                     listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(data)
                     vlayer.setModifySymbols(listOfValuesFromItemStyle)
 
-                    # Rechargement de la couche pour que la visualisation dans la fenêtre carto courante soit réellement prise en compte
+                    # Affichage des données en fonction de l'échelle
+                    vlayer.setDisplayScale(layer.minzoom, layer.maxzoom)
+
+                    # Une couche en visualisation est non modifiable
+                    if layer.role == 'visu' or layer.role == 'ref':
+                        vlayer.setReadOnly()
+
+                    # Rechargement de la couche pour que la visualisation dans la fenêtre carto courante
+                    # soit réellement prise en compte
                     vlayer.reload()
-
-                # Une couche en visualisation est non modifiable
-                if layer.role == 'visu' or layer.role == 'ref':
-                    vlayer.setReadOnly()
-
-                # Affichage des données en fonction de l'échelle
-                vlayer.setDisplayScale(layer.minzoom, layer.maxzoom)
-
 
             for layer in guichet_layers:
 

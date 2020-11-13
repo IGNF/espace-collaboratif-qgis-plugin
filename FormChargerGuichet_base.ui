@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>751</width>
-    <height>875</height>
+    <height>707</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>840</y>
+     <y>670</y>
      <width>201</width>
      <height>32</height>
     </rect>
@@ -67,26 +67,6 @@
    </property>
    <property name="text">
     <string>Fonds Géoportail</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelAutresGeoservices">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>670</y>
-     <width>151</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>9</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="text">
-    <string>Autres géoservices</string>
    </property>
   </widget>
   <widget class="QTableWidget" name="tableWidgetMonGuichet">
@@ -189,49 +169,6 @@
    <attribute name="verticalHeaderStretchLastSection">
     <bool>false</bool>
    </attribute>
-   <column/>
-   <column/>
-  </widget>
-  <widget class="QTableWidget" name="tableWidgetAutresGeoservices">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>700</y>
-     <width>731</width>
-     <height>131</height>
-    </rect>
-   </property>
-   <property name="showGrid">
-    <bool>false</bool>
-   </property>
-   <property name="gridStyle">
-    <enum>Qt::NoPen</enum>
-   </property>
-   <property name="columnCount">
-    <number>3</number>
-   </property>
-   <attribute name="horizontalHeaderCascadingSectionResizes">
-    <bool>true</bool>
-   </attribute>
-   <attribute name="horizontalHeaderHighlightSections">
-    <bool>false</bool>
-   </attribute>
-   <attribute name="horizontalHeaderStretchLastSection">
-    <bool>false</bool>
-   </attribute>
-   <attribute name="verticalHeaderVisible">
-    <bool>false</bool>
-   </attribute>
-   <attribute name="verticalHeaderCascadingSectionResizes">
-    <bool>true</bool>
-   </attribute>
-   <attribute name="verticalHeaderHighlightSections">
-    <bool>false</bool>
-   </attribute>
-   <attribute name="verticalHeaderStretchLastSection">
-    <bool>false</bool>
-   </attribute>
-   <column/>
    <column/>
    <column/>
   </widget>
