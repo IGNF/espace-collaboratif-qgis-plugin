@@ -250,7 +250,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         importGuichet.doImport(layersQGIS)
 
         # Ne semble fonctionner qu'en debug en pas à pas
-        self.context.iface.mapCanvas().refreshAllLayers()
+        #self.context.iface.mapCanvas().refreshAllLayers()
 
     def cancel(self):
         self.reject()
