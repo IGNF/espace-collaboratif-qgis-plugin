@@ -167,6 +167,7 @@ class Contexte(object):
     def getInstance(QObject=None, QgsProject=None):
         """Retourne l'instance du Contexte
         """
+
         if not Contexte.instance:
             Contexte.instance = Contexte._createInstance(QObject, QgsProject)
 
@@ -202,6 +203,13 @@ class Contexte(object):
 
         # nom du fichier du projet enregistré
         fname = ntpath.basename(QgsProject.instance().fileName())
+
+        nbPoints = fname.count(".")
+        if nbPoints != 1:
+            RipartHelper.showMessageBox(
+                u"Le nom de votre projet QGIS ne doit pas contenir de point en dehors de son extension (.qgz). Merci "
+                u"de le renommer.")
+            raise Exception(u"Nom de projet QGIS non valide")
 
         self.projectFileName = fname[:fname.find(".")]
 

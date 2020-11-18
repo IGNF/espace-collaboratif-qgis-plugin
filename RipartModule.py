@@ -68,9 +68,9 @@ import logging
 class RipartPlugin:
     """QGIS Plugin Implementation."""
     
-    context=None
-    logger= None
-    ripartLogger=None
+    context = None
+    logger = None
+    ripartLogger = None
 
     def __init__(self, iface):
         """Constructor.
@@ -113,8 +113,6 @@ class RipartPlugin:
 
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
-        
- 
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -130,7 +128,6 @@ class RipartPlugin:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('RipartPlugin', message)
-
 
     def add_action(
         self,
@@ -181,7 +178,6 @@ class RipartPlugin:
             added to self.actions list.
         :rtype: QAction
         """
-
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
@@ -204,8 +200,6 @@ class RipartPlugin:
         self.actions.append(action)
 
         return action
-
-
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
@@ -315,17 +309,15 @@ class RipartPlugin:
 
         self.toolbar.addWidget(self.toolButton2)
 
-
-
     def chargerGuichet(self):
         try:
             print("Chargement des couches du groupe utilisateur")
-            self.context= Contexte.getInstance(self,QgsProject)
-            if self.context == None :
+            self.context = Contexte.getInstance(self, QgsProject)
+            if self.context is None:
                 return
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
-            if dlgChargerGuichet.context.profil != None:
+            if dlgChargerGuichet.context.profil is not None:
                 if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1:
                     if len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0:
                         raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
@@ -340,14 +332,10 @@ class RipartPlugin:
                             level=1, duration=5)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
-
-
     def compterModifications(self):
         print("Compter les modifications")
         cptg = CompterGuichet()
         cptg.doCount()
-
-
 
     def synchroniserDonnees(self):
         '''print("Synchroniser les données")
@@ -423,8 +411,6 @@ class RipartPlugin:
         root.setCustomLayerOrder(listCustomLayerOrder)
         context.mapCan.refresh()'''
 
-
-
     def unload(self):
         
         log = logging.getLogger()
@@ -468,8 +454,8 @@ class RipartPlugin:
     def run(self):
         """Fenêtre de connexion"""
         
-        self.context= Contexte.getInstance(self,QgsProject)
-        if self.context ==None :
+        self.context = Contexte.getInstance(self, QgsProject)
+        if self.context is None:
             return
       
         if self.context:    
@@ -483,11 +469,11 @@ class RipartPlugin:
         """Downloads remarks
         """
         try:
-            self.context= Contexte.getInstance(self,QgsProject)   
-            if self.context ==None :
+            self.context = Contexte.getInstance(self,QgsProject)
+            if self.context is None:
                 return  
                 
-            importRipart= ImporterRipart(self.context)
+            importRipart = ImporterRipart(self.context)
             result = importRipart.doImport()
             if result == 0:  
                 return 
@@ -520,8 +506,8 @@ class RipartPlugin:
         """Answer to a remark
         """
         try:
-            self.context= Contexte.getInstance(self,QgsProject)  
-            if self.context ==None :
+            self.context = Contexte.getInstance(self, QgsProject)
+            if self.context is None:
                 return 
             reponse = RepondreRipart(self.context)
             reponse.do()
@@ -537,8 +523,8 @@ class RipartPlugin:
         """Create a new remark
         """
         try:
-            self.context= Contexte.getInstance(self,QgsProject)  
-            if self.context ==None :
+            self.context = Contexte.getInstance(self, QgsProject)
+            if self.context is None:
                 return
             create = CreerRipart(self.context)
             create.do()
@@ -554,8 +540,8 @@ class RipartPlugin:
         """
         
         try:
-            self.context= Contexte.getInstance(self,QgsProject)
-            if self.context ==None :
+            self.context = Contexte.getInstance(self, QgsProject)
+            if self.context is None:
                 return 
             message=u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
             
@@ -579,12 +565,12 @@ class RipartPlugin:
         """
         
         try:
-            self.context= Contexte.getInstance(self,QgsProject)   
-            if self.context ==None :
+            self.context = Contexte.getInstance(self, QgsProject)
+            if self.context is None:
                 return 
             
             self.context.checkConfigFile()    
-            self.dlgConfigure=FormConfigure(context=self.context)
+            self.dlgConfigure = FormConfigure(context=self.context)
               
             self.dlgConfigure.exec_()
             
@@ -602,8 +588,10 @@ class RipartPlugin:
           On ne peut pas sélectionnner des signalements et des croquis (soit signalements, soit croquis)  
         """
         try:
-            self.context= Contexte.getInstance(self,QgsProject)  
-            magicw=Magicwand(self.context)
+            self.context = Contexte.getInstance(self, QgsProject)
+            if self.context is None:
+                return
+            magicw = Magicwand(self.context)
             magicw.selectRipartObjects()
            
         except Exception as e:
@@ -614,8 +602,8 @@ class RipartPlugin:
         """Visualisation du signalement (message, réponses et statut)
         """  
         try:
-            self.context= Contexte.getInstance(self,QgsProject)  
-            if self.context ==None :
+            self.context = Contexte.getInstance(self, QgsProject)
+            if self.context is None:
                 return 
            
             reponse = RepondreRipart(self.context)
