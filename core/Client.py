@@ -160,7 +160,12 @@ class Client(object):
         """
         url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
         self.logger.debug(url)
-        data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
+
+        if url.find("localhost.ign.fr") != -1: #Ne pas vérifier le certificat en localhost
+            data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies, verify=False)
+        else:
+            data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
+
         self.logger.debug("data auth ")
         xml = XMLResponse(data.text)
 
