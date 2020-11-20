@@ -126,15 +126,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         myFont.setBold(True)
                         label.setFont(myFont)
 
-                    if attType == "text":
-                        valeur = QtWidgets.QLineEdit(self.treeWidget)
-                        valeur.setText(attDefaultval)
-                        attItem = QtWidgets.QTreeWidgetItem()
-                        thItem.addChild(attItem)
-                        self.treeWidget.setItemWidget(attItem, 0, label)
-                        self.treeWidget.setItemWidget(attItem, 1, valeur)
-
-                    elif attType == "checkbox":
+                    if attType == "checkbox":
                         valeur = QtWidgets.QCheckBox(self.treeWidget)
                         valeur.setChecked(False)
                         if attDefaultval == '1' \
@@ -186,13 +178,21 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, dateTimeEdit)
 
-                    else:
+                    elif attType == 'list':
                         listAtt = QtWidgets.QComboBox(self.treeWidget)
                         listAtt.insertItems(0, att.valeurs)
                         attItem = QtWidgets.QTreeWidgetItem()
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, listAtt)
+
+                    else:
+                        valeur = QtWidgets.QLineEdit(self.treeWidget)
+                        valeur.setText(attDefaultval)
+                        attItem = QtWidgets.QTreeWidgetItem()
+                        thItem.addChild(attItem)
+                        self.treeWidget.setItemWidget(attItem, 0, label)
+                        self.treeWidget.setItemWidget(attItem, 1, valeur)
 
         self.profilThemesList = profil.themes
 
