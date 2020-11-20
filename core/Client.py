@@ -9,24 +9,18 @@ version 3.0.0, 26/11/2018
 """
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
-import re
-import time
 import os.path
 import json
 
 from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
 from PyQt5.QtCore import *
-
 from . import ConstanteRipart
-from .Enum import Enum
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
 from .XMLResponse import XMLResponse
 from .ClientHelper import ClientHelper
 from .NoProfileException import NoProfileException
-
 from .RipartLoggerCl import RipartLogger
-
 from . import requests
 from .requests.auth import HTTPBasicAuth
 import os
@@ -138,12 +132,32 @@ class Client(object):
 
         return layers
 
+    def getNomProfil(self):
+        url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
+        self.logger.debug(url)
+        data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
+        self.logger.debug("data auth ")
+        xml = XMLResponse(data.text)
+
+        errMessage = xml.checkResponseValidity()
+        if errMessage['code'] == 'OK':
+            nomProfil = xml.extractNomProfil()
+        else:
+            if errMessage['message'] != "":
+                result = errMessage['message']
+            elif errMessage['code'] != "":
+                result = ClientHelper.getErrorMessage(errMessage['code'])
+            else:
+                result = ClientHelper.getErrorMessage(data.status_code)
+
+            raise Exception(ClientHelper.notNoneValue(result))
+
+        return nomProfil
+
     def getProfilFromService(self):
         """Requête au service pour le profil utilisateur      
         :return: le profil de l'utilisateur
         """
-        profil = None
-
         url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
         self.logger.debug(url)
         data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
@@ -172,7 +186,6 @@ class Client(object):
         La réponse transformée en json est sous forme de dictionnaire par exemple :
         ...'attributes': 'zone': {...,'listOfValues': [None, 'Zone1', ' Zone2', 'Zone3'],...}...
     '''
-
     def connexionFeatureTypeJson(self, layerUrl, layerName):
         if '&' not in layerUrl:
             raise Exception(ClientHelper.notNoneValue(

@@ -157,12 +157,22 @@ class XMLResponse(object):
 
         return jeton
 
+    def extractNomProfil(self):
+        try:
+            node = self.root.find('./PROFIL/TITRE')
+            nomProfil = node.text
+
+        except Exception as e:
+            self.logger.error('extractNomProfil:' + str(e))
+            raise
+
+        return nomProfil
+
     def extractProfil(self):
         """Extraction du profil à partir de la réponse xml
         
         :return: profil de l'utilisateur
         """
-
         profil = Profil()
 
         try:

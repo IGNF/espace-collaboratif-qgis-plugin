@@ -21,13 +21,13 @@
  *                                                                         *
  ***************************************************************************/
 """
-#from __future__ import absolute_import
+# from __future__ import absolute_import
 
-#from future import standard_library
-#standard_library.install_aliases()
+# from future import standard_library
+# standard_library.install_aliases()
 from builtins import str
 from builtins import range
-#from builtins import object
+# from builtins import object
 import os.path
 
 from PyQt5.QtGui import QColor
@@ -38,8 +38,8 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication,
 from qgis.PyQt import QtGui, uic
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
-#from qgis.core import *
-from qgis.core import QgsProject,  QgsMessageLog, QgsWkbTypes, QgsCoordinateReferenceSystem,\
+# from qgis.core import *
+from qgis.core import QgsProject, QgsMessageLog, QgsWkbTypes, QgsCoordinateReferenceSystem, \
     QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer
 import configparser
 
@@ -65,9 +65,10 @@ from .CompterGuichet import CompterGuichet
 
 import logging
 
+
 class RipartPlugin:
     """QGIS Plugin Implementation."""
-    
+
     context = None
     logger = None
     ripartLogger = None
@@ -80,10 +81,9 @@ class RipartPlugin:
             application at run time.
         :type iface: QgsInterface
         """
-        self.ripartLogger=RipartLogger("RipartPlugin")
-        self.logger=self.ripartLogger.getRipartLogger()
-        
-        
+        self.ripartLogger = RipartLogger("RipartPlugin")
+        self.logger = self.ripartLogger.getRipartLogger()
+
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
@@ -101,12 +101,10 @@ class RipartPlugin:
 
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
-        
-      
+
         # Create the dialog (after translation) and keep reference
         self.dlgConnexion = FormConnexionDialog()
-        
-  
+
         # La toolbar du plugin
         self.actions = []
         self.menu = self.tr(u'&IGN_Espace_Collaboratif')
@@ -130,16 +128,16 @@ class RipartPlugin:
         return QCoreApplication.translate('RipartPlugin', message)
 
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -211,7 +209,7 @@ class RipartPlugin:
             callback=self.run,
             status_tip=self.tr(u'Se connecter a l\'Espace Collaboratif'),
             parent=self.iface.mainWindow())
-              
+
         icon_path = ':/plugins/RipartPlugin/images/update.png'
         self.add_action(
             icon_path,
@@ -219,7 +217,7 @@ class RipartPlugin:
             callback=self.downloadRemarks,
             status_tip=self.tr(u'Télécharger les signalements'),
             parent=self.iface.mainWindow())
-        
+
         icon_path = ':/plugins/RipartPlugin/images/viewRem.png'
         self.add_action(
             icon_path,
@@ -227,7 +225,7 @@ class RipartPlugin:
             callback=self.viewRem,
             status_tip=self.tr(u'Voir le signalement'),
             parent=self.iface.mainWindow())
-        
+
         icon_path = ':/plugins/RipartPlugin/images/answer.png'
         self.add_action(
             icon_path,
@@ -235,7 +233,7 @@ class RipartPlugin:
             callback=self.answerToRemark,
             status_tip=self.tr(u'Répondre à un signalement'),
             parent=self.iface.mainWindow())
-        
+
         icon_path = ':/plugins/RipartPlugin/images/create.png'
         self.add_action(
             icon_path,
@@ -243,7 +241,7 @@ class RipartPlugin:
             callback=self.createRemark,
             status_tip=self.tr(u'Créer un nouveau signalement'),
             parent=self.iface.mainWindow())
-        
+
         icon_path = ':/plugins/RipartPlugin/images/cleaning.png'
         self.add_action(
             icon_path,
@@ -251,7 +249,7 @@ class RipartPlugin:
             callback=self.removeRemarks,
             status_tip=self.tr(u'Supprimer les signalements de la carte en cours'),
             parent=self.iface.mainWindow())
-               
+
         icon_path = ':/plugins/RipartPlugin/images/magicwand.png'
         self.add_action(
             icon_path,
@@ -283,28 +281,32 @@ class RipartPlugin:
             callback=self.synchroniserDonnees,
             status_tip=self.tr(u'Synchroniser'),
             parent=self.iface.mainWindow())
-           
-        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin", self.iface.mainWindow())
-        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin", self.iface.mainWindow())
-        self.log= QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin", self.iface.mainWindow())
-        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin", self.iface.mainWindow())
-             
-        self.config.triggered.connect( self.configurePref )
+
+        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
+                              self.iface.mainWindow())
+        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin",
+                            self.iface.mainWindow())
+        self.log = QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin",
+                           self.iface.mainWindow())
+        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin",
+                             self.iface.mainWindow())
+
+        self.config.triggered.connect(self.configurePref)
         self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration du plugin."))
-        
-        self.about.triggered.connect( self.ripAbout)
+
+        self.about.triggered.connect(self.ripAbout)
         self.help.triggered.connect(self.showHelp)
         self.log.triggered.connect(self.showLog)
 
-        self.helpMenu= QMenu("Aide")
+        self.helpMenu = QMenu("Aide")
         self.helpMenu.addAction(self.config)
         self.helpMenu.addAction(self.help)
         self.helpMenu.addAction(self.log)
         self.helpMenu.addAction(self.about)
         self.toolButton2 = QToolButton()
-        self.toolButton2.setMenu( self.helpMenu )
-        self.toolButton2.setPopupMode( QToolButton.InstantPopup)
-        self.toolButton2.setToolButtonStyle (Qt.ToolButtonTextOnly)
+        self.toolButton2.setMenu(self.helpMenu)
+        self.toolButton2.setPopupMode(QToolButton.InstantPopup)
+        self.toolButton2.setToolButtonStyle(Qt.ToolButtonTextOnly)
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
@@ -316,12 +318,14 @@ class RipartPlugin:
             if self.context is None:
                 return
 
+            # Les profils serveur/client se correspondent-ils ?
+            self.context.checkProfilServeurClient()
+
             dlgChargerGuichet = FormChargerGuichet(self.context)
             if dlgChargerGuichet.context.profil is not None:
                 if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1:
                     if len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0:
                         raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
-
             dlgChargerGuichet.exec_()
 
         except Exception as e:
@@ -412,112 +416,112 @@ class RipartPlugin:
         context.mapCan.refresh()'''
 
     def unload(self):
-        
+
         log = logging.getLogger()
-        
+
         logs = logging.Logger.manager.loggerDict
         cntLogs = len(logs)
-        
+
         for lg in logs:
             logger = logs[lg]
-            if isinstance(logger,logging.Logger) :
+            if isinstance(logger, logging.Logger):
                 handlers = logger.handlers
                 cntHandlers = len(logger.handlers)
-                for i in range(cntHandlers-1,-1,-1):
-                   try:
-                       if os.path.basename(handlers[i].baseFilename)[-10:] == u"plugin_espaceco.log" :
-                           handlers[i].close()
-                           logger.removeHandler(handlers[i])
-                   except AttributeError as e:
-                       continue        
-        
-        logdir =os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs') 
+                for i in range(cntHandlers - 1, -1, -1):
+                    try:
+                        if os.path.basename(handlers[i].baseFilename)[-10:] == u"plugin_espaceco.log":
+                            handlers[i].close()
+                            logger.removeHandler(handlers[i])
+                    except AttributeError as e:
+                        continue
+
+        logdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
         if os.path.exists(logdir):
-            for f in os.listdir(logdir):  
-                    file = open(os.path.join(logdir,f),'r+')
-                    file.close()
-                    try:        
-                        os.remove(os.path.join(logdir,f))
-                    except Exception as e:
-                        self.logger.error(format(e))
-            
+            for f in os.listdir(logdir):
+                file = open(os.path.join(logdir, f), 'r+')
+                file.close()
+                try:
+                    os.remove(os.path.join(logdir, f))
+                except Exception as e:
+                    self.logger.error(format(e))
+
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&IGN_Espace_Collaboratif'),
                 action)
             self.iface.removeToolBarIcon(action)
-            #action.setVisible(False)
+            # action.setVisible(False)
         del self.toolbar
-            
 
     def run(self):
         """Fenêtre de connexion"""
-        
+
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
-      
-        if self.context:    
-            res=self.context.getConnexionRipart(newLogin=True)  
-            
+
+        if self.context:
+            res = self.context.getConnexionRipart(newLogin=True)
+
         if not res:
             self.logger.debug("cancel")
-       
-        
+
     def downloadRemarks(self):
         """Downloads remarks
         """
         try:
-            self.context = Contexte.getInstance(self,QgsProject)
+            self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
-                return  
-                
+                return
+
+            # Les profils serveur/client se correspondent-ils ?
+            self.context.checkProfilServeurClient()
+
             importRipart = ImporterRipart(self.context)
             result = importRipart.doImport()
-            if result == 0:  
-                return 
+            if result == 0:
+                return
         except NoProfileException as e:
             self.context.iface.messageBar().clearWidgets()
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
-            pushMessage("Remarque",
-                         format(e), \
-                         level=2, duration=20)
+                pushMessage("Remarque",
+                            format(e),
+                            level=2, duration=5)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
         except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
-            pushMessage("Erreur",
-                         u"Un problème est survenu dans le téléchargement des signalements", \
-                         level=2, duration=10)
+                pushMessage("Erreur",
+                            u"Un problème est survenu dans le téléchargement des signalements",
+                            level=2, duration=5)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
-
-
-    def connectToRipart(self,context):
+    def connectToRipart(self, context):
         """Connection to the ripart service 
         """
         client = Client(context.urlHostRipart, context.login, context.pwd, context.proxy, context.clegeoportail)
-        return client       
-       
-        
+        return client
+
     def answerToRemark(self):
         """Answer to a remark
         """
         try:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
-                return 
+                return
+
+            # Les profils serveur/client se correspondent-ils ?
+            self.context.checkProfilServeurClient()
+
             reponse = RepondreRipart(self.context)
             reponse.do()
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"Un problème est survenu lors de l'ajout de la réponse ou lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.", \
-                             level=2, duration=10)
-
-
+                            level=2, duration=5)
 
     def createRemark(self):
         """Create a new remark
@@ -526,62 +530,60 @@ class RipartPlugin:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
                 return
+
+            # Les profils serveur/client se correspondent-ils ?
+            self.context.checkProfilServeurClient()
+
             create = CreerRipart(self.context)
             create.do()
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"Un problème est survenu lors de la création du signalement", \
-                             level=2, duration=10)
-        
+                            level=2, duration=5)
+
     def removeRemarks(self):
         """Remove all remarks from current map
         (empty the tables from ripart table of the sqlite DB)
         """
-        
         try:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
-                return 
-            message=u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
-            
-            reply= QMessageBox.question(None,'IGN Espace Collaboratif',message,QMessageBox.Yes, QMessageBox.No)
+                return
+            message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
+            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.context.emptyAllRipartLayers()
-            else : 
+            else:
                 return
-                             
+
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"Un problème est survenu lors de la suppression des signalements", \
-                             level=2, duration=10)
-        
+                            level=2, duration=5)
 
- 
-   
     def configurePref(self):
         """Lance la fenêtre de configuration des préférences 
         """
-        
+
         try:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
-                return 
-            
-            self.context.checkConfigFile()    
+                return
+
+            self.context.checkConfigFile()
             self.dlgConfigure = FormConfigure(context=self.context)
-              
+
             self.dlgConfigure.exec_()
-            
+
         except (Exception) as e:
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
-            pushMessage("Erreur",
-                         u"Un problème est survenu dans le chargement de la configuration."+format(e), \
-                        level=2, duration=10)
-                     
-        
+                pushMessage("Erreur",
+                            u"Un problème est survenu dans le chargement de la configuration." + format(e), \
+                            level=2, duration=5)
+
     def magicwand(self):
         """Sélectionne le/les signalement(s) associé(s) au(x) croquis sélectionnés 
           ou le/les croquis associé(s) au signalement sélectionné.
@@ -593,76 +595,71 @@ class RipartPlugin:
                 return
             magicw = Magicwand(self.context)
             magicw.selectRipartObjects()
-           
+
         except Exception as e:
-            self.logger.error("magicWand "+ format(e))
-    
-    
+            self.logger.error("magicWand " + format(e))
+
     def viewRem(self):
         """Visualisation du signalement (message, réponses et statut)
-        """  
+        """
         try:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
-                return 
-           
+                return
+
             reponse = RepondreRipart(self.context)
-            self.formView=reponse.do(isView=True)
-                       
+            self.formView = reponse.do(isView=True)
+
         except Exception as e:
-            self.logger.error("viewRem "+ format(e))
+            self.logger.error("viewRem " + format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.", \
-                             level=2, duration=10)
-        
-        
-    
+                            level=2, duration=5)
+
     def ripAbout(self):
         """Montre la fenêtre "about" avec les informations de version du plugin 
         """
-        version='0.'
-        date='2018'
-        
+        version = '0.'
+        date = '2018'
+
         file_path = os.path.abspath(os.path.join(
-            os.path.dirname(__file__),'metadata.txt'))
-     
+            os.path.dirname(__file__), 'metadata.txt'))
+
         parser = configparser.ConfigParser()
         parser.optionxform = str
         parser.read(file_path)
         if parser.has_section('general'):
             try:
-                version=parser.get('general','version')
-                date=parser.get('general','date')
+                version = parser.get('general', 'version')
+                date = parser.get('general', 'date')
             except Exception as e:
                 self.logger.error("No version/date in metadata")
-       
-        
-        dlgInfo=FormInfo()
+
+        dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(u"<b>Plugin Espace Collaboratif</b>")
         dlgInfo.textInfo.append(u"<br/>Plugin intégrant le service de signalement de l'IGN")
-        dlgInfo.textInfo.append(u"<br/>Version: "+ version )
-        dlgInfo.textInfo.append(u"\u00A9 IGN - " + date )
-       
+        dlgInfo.textInfo.append(u"<br/>Version: " + version)
+        dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
+
         dlgInfo.exec_()
-  
-  
+
     # @TODO !!! lien vers le bon manuel (à partir de http://logiciels.ign.fr)!!!
     def showHelp(self):
         """Ouvre le document d'aide utilisateur   
         """
-        file_path="http://logiciels.ign.fr/IMG/pdf/enr_espace_co_plugin_pour_qgis.pdf"
-        #file_path = os.path.abspath(os.path.join(
+        file_path = "http://logiciels.ign.fr/IMG/pdf/enr_espace_co_plugin_pour_qgis.pdf"
+        # file_path = os.path.abspath(os.path.join(
         #    os.path.dirname(__file__),"files",cst.helpFile))
-        
+
         RipartHelper.open_file(file_path)
-        
-        #TODO lien web 
-        #os.startfile("http://logiciels.ign.fr/IMG/pdf/add-in-ripart_1-0.pdf")        
-        
+
+        # TODO lien web
+        # os.startfile("http://logiciels.ign.fr/IMG/pdf/add-in-ripart_1-0.pdf")
+
     def showLog(self):
         """Ouvre le dernier fichier de log
         """
-        logpath=self.ripartLogger.getLogpath()
-        if logpath!=None:
+        logpath = self.ripartLogger.getLogpath()
+        if logpath != None:
             RipartHelper.open_file(logpath)

@@ -1106,3 +1106,15 @@ class Contexte(object):
                 croquisSelFeats[table].append(row[0])
 
         return croquisSelFeats
+
+    def checkProfilServeurClient(self):
+        # Le profil a t'il pu être changé sur le serveur ?
+        nomProfilServeur = self.client.getNomProfil()
+        if self.profil.titre != nomProfilServeur:
+            message = "Votre groupe actif ({} versus {}) semble avoir été modifié par une autre application cliente " \
+                      "de l'Espace collaboratif.\nMerci de vous reconnecter via le bouton 'Se connecter à l'Espace " \
+                      "collaboratif' pour confirmer dans quel groupe vous souhaitez travailler.\nAttention : si vous " \
+                      "avez déjà chargé les couches d'un autre groupe, vous devez les supprimer au préalable ou " \
+                      "créer un autre projet QGIS.".format(self.profil.titre, nomProfilServeur)
+            RipartHelper.showMessageBox(message)
+            raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")
