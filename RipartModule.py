@@ -266,21 +266,21 @@ class RipartPlugin:
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/compter.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Compter les modifications'),
-            callback=self.compterModifications,
-            status_tip=self.tr(u'Compter les modifications'),
-            parent=self.iface.mainWindow())
-
-        icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Synchroniser'),
-            callback=self.synchroniserDonnees,
-            status_tip=self.tr(u'Synchroniser'),
-            parent=self.iface.mainWindow())
+        # icon_path = ':/plugins/RipartPlugin/images/compter.png'
+        # self.add_action(
+        #     icon_path,
+        #     text=self.tr(u'Compter les modifications'),
+        #     callback=self.compterModifications,
+        #     status_tip=self.tr(u'Compter les modifications'),
+        #     parent=self.iface.mainWindow())
+        #
+        # icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
+        # self.add_action(
+        #     icon_path,
+        #     text=self.tr(u'Synchroniser'),
+        #     callback=self.synchroniserDonnees,
+        #     status_tip=self.tr(u'Synchroniser'),
+        #     parent=self.iface.mainWindow())
 
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
                               self.iface.mainWindow())

@@ -335,20 +335,26 @@ class Contexte(object):
                             # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
                             # si l'utilisateur n'appartient à aucun groupe, un profil par défaut
                             # est attribué mais il ne contient pas d'infosgeogroupes
-                            if len(profil.infosGeogroupes) <= 1:
-                                # le profil de l'utilisateur est déjà récupéré et reste actif
+
+                            if len(profil.infosGeogroupes) < 1:
+                                # le profil de l'utilisateur est déjà récupéré et reste actif (NB: a priori, il n'a pas de profil)
                                 result = 1
                                 self.profil = profil
-                                RipartHelper.save_groupeactif(self.projectDir, profil.geogroupe.nom)
 
                                 # si l'utilisateur n'a pas de profil, il faut indiquer que le groupe actif est vide
-                                # et vider la clé Géoportail puisque si une clé est vide c'est celle par défaut qui est prise
                                 if "défaut" in profil.titre:
                                     RipartHelper.save_groupeactif(self.projectDir, "Aucun")
-                                    RipartHelper.save_clegeoportail(self.projectDir, "")
+                                else:
+                                    RipartHelper.save_groupeactif(self.projectDir, profil.geogroupe.nom)
+
+                                # Il faut aussi vider la clé Géoportail puisque si une clé est vide c'est celle par défaut qui est prise
+                                RipartHelper.save_clegeoportail(self.projectDir, "")
 
                             # sinon le choix d'un autre groupe est présenté à l'utilisateur
+                            # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
+                            # afin qu'il puisse remplir sa clé Géoportail
                             else:
+
                                 dlgChoixGroupe = FormChoixGroupe(profil, self.clegeoportail, self.groupeactif)
                                 dlgChoixGroupe.exec_()
                                 # bouton Valider
@@ -358,28 +364,30 @@ class Contexte(object):
                                     # le choix du nouveau profil est validé
                                     # le nouvel id et nom du groupe, la clé Geoportail sont retournés dans un tuple
                                     idNomGroupeCleGeoPortail = dlgChoixGroupe.save()
+                                    self.clegeoportail = idNomGroupeCleGeoPortail[2]
 
-                                    # récupère le profil et un message dans un tuple
-                                    profilMessage = client.setChangeUserProfil(idNomGroupeCleGeoPortail[0])
-                                    messTmp = profilMessage[1]
-
-                                    # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
-                                    if messTmp.find('actif') != -1:
-                                        # le profil chargé reste actif
+                                    # si l'utilisateur n'appartient qu'à un seul gorupe, le profil chargé reste actif
+                                    if len(profil.infosGeogroupes) == 1:
                                         self.profil = profil
-                                        # mais il faut enregistrer le choix utilisateur sur la clé Géoportail
-                                        self.clegeoportail = idNomGroupeCleGeoPortail[2]
-                                        RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
-                                        RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
+
                                     else:
-                                        # setChangeUserProfil retourne un message vide
-                                        # le nouveau profil devient actif
-                                        self.profil = profilMessage[0]
-                                        # Sauvegarde de la clé Géoportail et du groupe actif
-                                        # dans le xml du projet utilisateur
-                                        self.clegeoportail = idNomGroupeCleGeoPortail[2]
-                                        RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
-                                        RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
+                                        # récupère le profil et un message dans un tuple
+                                        profilMessage = client.setChangeUserProfil(idNomGroupeCleGeoPortail[0])
+                                        messTmp = profilMessage[1]
+
+                                        # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
+                                        if messTmp.find('actif') != -1:
+                                            # le profil chargé reste actif
+                                            self.profil = profil
+                                        else:
+                                            # setChangeUserProfil retourne un message vide
+                                            # le nouveau profil devient actif
+                                            self.profil = profilMessage[0]
+
+                                    # Sauvegarde de la clé Géoportail et du groupe actif
+                                    # dans le xml du projet utilisateur
+                                    RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
+                                    RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
 
                                     # Récupération des layers GéoPortail valides en fonction
                                     # de la clé Geoportail utilisateur

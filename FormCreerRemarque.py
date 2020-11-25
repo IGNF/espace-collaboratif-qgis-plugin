@@ -41,6 +41,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     send = False
     cancel = False
 
+    infogeogroupes = []
+
     # le nom du fichier sélectionné (document joint)
     selFileName = None
 
@@ -87,6 +89,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             self.groupBoxProfil.setTitle(profil.auteur.nom + " (" + profil.geogroupe.nom + ")")
         else:
             self.groupBoxProfil.setTitle(profil.auteur.nom + u" (Profil par défaut)")
+
+        #Ajout des noms de groupes trouvés pour l'utilisateur
+        self.infosgeogroupes = profil.infosGeogroupes
+        for igg in self.infosgeogroupes:
+            self.comboBoxGroupe.addItem(igg.groupe.nom)
 
         # les noms des thèmes préférés (du fichier de configuration)
         preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)

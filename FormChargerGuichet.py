@@ -61,7 +61,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
         self.labelGroupeActif.setText("Groupe actif : {}".format(self.profilUser.geogroupe.nom))
-        self.labelGroupeActif.setStyleSheet("QLabel {color : red}")  ##ff0000
+        self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  ##ff0000
 
     def getInfosLayers(self):
         infosLayers = []
@@ -104,6 +104,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetMonGuichet.setHorizontalHeaderLabels(entete)
+        self.tableWidgetMonGuichet.setHorizontalHeaderLabels(entete)
+        self.tableWidgetMonGuichet.setColumnWidth(0, 400);
+        self.tableWidgetMonGuichet.setColumnWidth(1, 200);
+        self.tableWidgetMonGuichet.setColumnWidth(2, 130);
 
         # Autres lignes de la table
         for layer in self.listLayers:
@@ -131,12 +135,15 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # Colonne "Charger"
             self.setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
 
-        self.tableWidgetMonGuichet.resizeColumnsToContents()
+        #self.tableWidgetMonGuichet.resizeColumnsToContents()
 
     def setTableWidgetFondsGeoportail(self):
         # Entête
-        entete = ["Nom de la couche", "Charger"]
+        entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetFondsGeoportail.setHorizontalHeaderLabels(entete)
+        self.tableWidgetFondsGeoportail.setColumnWidth(0, 400);
+        self.tableWidgetFondsGeoportail.setColumnWidth(1, 200);
+        self.tableWidgetFondsGeoportail.setColumnWidth(2, 130);
 
         # Autres lignes de la table
         for layer in self.listLayers:
@@ -158,15 +165,24 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             item = QtWidgets.QTableWidgetItem(layerComposed)
             self.tableWidgetFondsGeoportail.setItem(rowPosition, 0, item)
 
-            # Colonne "Charger"
-            self.setColonneCharger(self.tableWidgetFondsGeoportail, rowPosition, 1)
+            # Colonne "Rôle"
+            role = layer.role
+            if role in self.roleCleVal:
+                item = QtWidgets.QTableWidgetItem(self.roleCleVal[role])
+            else:
+                item = QtWidgets.QTableWidgetItem("Pas de rôle, bizarre !")
+            self.tableWidgetFondsGeoportail.setItem(rowPosition, 1, item)
 
-        self.tableWidgetFondsGeoportail.resizeColumnsToContents()
+            # Colonne "Charger"
+            self.setColonneCharger(self.tableWidgetFondsGeoportail, rowPosition, 2)
+
+        #self.tableWidgetFondsGeoportail.resizeColumnsToContents()
 
     def setTableWidgetFondsGeoportailBis(self):
         # Entête
         entete = ["Nom de la couche"]
         self.tableWidgetFondsGeoportailBis.setHorizontalHeaderLabels(entete)
+        self.tableWidgetFondsGeoportailBis.setColumnWidth(0, 400);
 
         # Autres lignes de la table
         for layer in self.listLayers:
@@ -181,9 +197,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 layerComposed = "{} ({})".format(layer.description, layer.nom)
                 item = QtWidgets.QTableWidgetItem(layerComposed)
                 self.tableWidgetFondsGeoportailBis.setItem(rowPosition, 0, item)
-                item.setForeground(QtGui.QColor(190, 190, 190))
+                item.setForeground(QtGui.QColor(89, 89, 89))
 
-        self.tableWidgetFondsGeoportailBis.resizeColumnsToContents()
+        #self.tableWidgetFondsGeoportailBis.resizeColumnsToContents()
 
     def setTableWidgetAutresGeoservices(self):
         # Entête
@@ -234,7 +250,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         '''layersChecked = [self.getLayersSelected(self.tableWidgetAutresGeoservices, 2),
                          self.getLayersSelected(self.tableWidgetFondsGeoportail, 1),
                          self.getLayersSelected(self.tableWidgetMonGuichet, 2)]'''
-        layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoportail, 1),
+        layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoportail, 2),
                          self.getLayersSelected(self.tableWidgetMonGuichet, 2)]
 
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
@@ -255,4 +271,4 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     def cancel(self):
         self.reject()
-        print("L'utilisateur est sorti de la boite Charger le guichet")
+        print("L'utilisateur est sorti de la boite Charger les couches du groupe")

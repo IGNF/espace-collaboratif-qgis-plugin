@@ -429,7 +429,8 @@ class RipartHelper:
         :type projectDir: string
         """
         prefThemes=[]
-        try:    
+        try:
+            print (RipartHelper.nom_Fichier_Parametres_Ripart)
             tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot =tree.getroot()
             

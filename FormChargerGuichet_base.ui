@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Charger le guichet</string>
+   <string>Charger les couches de mon groupe</string>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
@@ -81,6 +81,24 @@
      <height>191</height>
     </rect>
    </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
+   </property>
+   <property name="sizeAdjustPolicy">
+    <enum>QAbstractScrollArea::AdjustIgnored</enum>
+   </property>
+   <property name="autoScroll">
+    <bool>true</bool>
+   </property>
+   <property name="horizontalScrollMode">
+    <enum>QAbstractItemView::ScrollPerItem</enum>
+   </property>
    <property name="showGrid">
     <bool>false</bool>
    </property>
@@ -99,8 +117,14 @@
    <attribute name="horizontalHeaderCascadingSectionResizes">
     <bool>true</bool>
    </attribute>
+   <attribute name="horizontalHeaderDefaultSectionSize">
+    <number>225</number>
+   </attribute>
    <attribute name="horizontalHeaderHighlightSections">
     <bool>false</bool>
+   </attribute>
+   <attribute name="horizontalHeaderMinimumSectionSize">
+    <number>30</number>
    </attribute>
    <attribute name="horizontalHeaderStretchLastSection">
     <bool>false</bool>
@@ -136,6 +160,15 @@
      <height>181</height>
     </rect>
    </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
+   </property>
+   <property name="sizeAdjustPolicy">
+    <enum>QAbstractScrollArea::AdjustIgnored</enum>
+   </property>
+   <property name="verticalScrollMode">
+    <enum>QAbstractItemView::ScrollPerItem</enum>
+   </property>
    <property name="showGrid">
     <bool>false</bool>
    </property>
@@ -143,7 +176,7 @@
     <enum>Qt::NoPen</enum>
    </property>
    <property name="columnCount">
-    <number>2</number>
+    <number>3</number>
    </property>
    <attribute name="horizontalHeaderVisible">
     <bool>true</bool>
@@ -151,8 +184,14 @@
    <attribute name="horizontalHeaderCascadingSectionResizes">
     <bool>true</bool>
    </attribute>
+   <attribute name="horizontalHeaderDefaultSectionSize">
+    <number>225</number>
+   </attribute>
    <attribute name="horizontalHeaderHighlightSections">
     <bool>false</bool>
+   </attribute>
+   <attribute name="horizontalHeaderMinimumSectionSize">
+    <number>30</number>
    </attribute>
    <attribute name="horizontalHeaderStretchLastSection">
     <bool>false</bool>
@@ -171,6 +210,7 @@
    </attribute>
    <column/>
    <column/>
+   <column/>
   </widget>
   <widget class="QTableWidget" name="tableWidgetFondsGeoportailBis">
    <property name="geometry">
@@ -180,6 +220,9 @@
      <width>731</width>
      <height>121</height>
     </rect>
+   </property>
+   <property name="sizeAdjustPolicy">
+    <enum>QAbstractScrollArea::AdjustToContents</enum>
    </property>
    <property name="showGrid">
     <bool>false</bool>
@@ -197,7 +240,7 @@
     <bool>false</bool>
    </attribute>
    <attribute name="horizontalHeaderStretchLastSection">
-    <bool>false</bool>
+    <bool>true</bool>
    </attribute>
    <attribute name="verticalHeaderVisible">
     <bool>false</bool>
@@ -224,8 +267,8 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>7</pointsize>
-     <italic>true</italic>
+     <pointsize>8</pointsize>
+     <italic>false</italic>
     </font>
    </property>
    <property name="text">
@@ -250,9 +293,9 @@
    <property name="font">
     <font>
      <pointsize>9</pointsize>
-     <weight>50</weight>
-     <italic>true</italic>
-     <bold>false</bold>
+     <weight>75</weight>
+     <italic>false</italic>
+     <bold>true</bold>
     </font>
    </property>
    <property name="text">
