@@ -8,13 +8,12 @@ from .core import ConstanteRipart as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 
-class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
+class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     """
     Dialogue pour le choix du groupe après la connexion au serveur
     et récupération du profil utilisateur
     """
-
     infosgeogroupes = None
     cancel = True
 
@@ -28,7 +27,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         for igg in self.infosgeogroupes:
             self.comboBoxGroupe.addItem(igg.groupe.nom)
 
-        if groupeActif != None and groupeActif != "":
+        if groupeActif is not None and groupeActif != "":
             self.comboBoxGroupe.setCurrentText(groupeActif)
 
         if cleGeoportail == cst.DEMO:
@@ -40,7 +39,6 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
-
     def save(self):
         """
         Retourne l'identifiant du groupe de l'utilisateur
@@ -51,14 +49,13 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         idGroup = self.infosgeogroupes[index].groupe.id
         nomGroup = self.infosgeogroupes[index].groupe.nom
         cleGeoportail = ""
-        if self.radioButtonOui.isChecked() == True:
+        if self.radioButtonOui.isChecked():
             cleGeoportail = self.lineEditCleGeoportailUser.text()
-        if self.radioButtonNon.isChecked() == True:
+        if self.radioButtonNon.isChecked():
             cleGeoportail = cst.DEMO
         self.cancel = False
 
-        return (idGroup, nomGroup, cleGeoportail)
-
+        return idGroup, nomGroup, cleGeoportail
 
     def cancel(self):
         self.cancel = True

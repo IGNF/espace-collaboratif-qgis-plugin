@@ -319,7 +319,7 @@ class RipartPlugin:
                 return
 
             # Les profils serveur/client se correspondent-ils ?
-            self.context.checkProfilServeurClient()
+            #self.context.checkProfilServeurClient()
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
             if dlgChargerGuichet.context.profil is not None:
@@ -476,7 +476,7 @@ class RipartPlugin:
                 return
 
             # Les profils serveur/client se correspondent-ils ?
-            self.context.checkProfilServeurClient()
+            #self.context.checkProfilServeurClient()
 
             importRipart = ImporterRipart(self.context)
             result = importRipart.doImport()
@@ -513,7 +513,7 @@ class RipartPlugin:
                 return
 
             # Les profils serveur/client se correspondent-ils ?
-            self.context.checkProfilServeurClient()
+            #self.context.checkProfilServeurClient()
 
             reponse = RepondreRipart(self.context)
             reponse.do()
@@ -532,7 +532,7 @@ class RipartPlugin:
                 return
 
             # Les profils serveur/client se correspondent-ils ?
-            self.context.checkProfilServeurClient()
+            #self.context.checkProfilServeurClient()
 
             create = CreerRipart(self.context)
             create.do()

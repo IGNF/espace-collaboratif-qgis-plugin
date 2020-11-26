@@ -470,10 +470,8 @@ class Contexte(object):
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
 
-        createDb = False
-
         if not os.path.isfile(self.dbPath):
-            createDb = True
+
             try:
                 shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
                             RipartHelper.ripart_db, self.dbPath)
@@ -514,6 +512,9 @@ class Contexte(object):
         uri.setParam('request', 'GetFeature')
         if str(bbox) != "None":
             uri.setParam('bbox', bbox.boxToString())
+            #box = "{},srsname:EPSG:4326".format(bbox.boxToString())
+            #uri.setParam('bbox', box)
+        #uri.setSrid("EPSG:4326")
 
         # Mon guichet
         if '&' in url:
@@ -523,6 +524,9 @@ class Contexte(object):
             uri.setParam('url', tmp[0])
             uri.setParam('typename', typeName)
             uri.setParam('filter', 'detruit:false')
+            #uri.setParam('filter', '<Filter><PropertyIsEqualTo><PropertyName>detruit</' \
+            #'PropertyName><Literal>false</Literal></PropertyIsEqualTo><Box><coordinates>2.518667618084235,' \
+            #'48.85218456255414 2.567725038730373,48.87557235363674</coordinates></Box></Filter>')
             uri.setParam('maxNumFeatures', '5000')
             uri.setParam('pagingEnabled', 'true')
             uri.setParam('restrictToRequestBBOX', '1')
@@ -575,6 +579,8 @@ class Contexte(object):
                 '''
                 if layer.type == cst.WFS:
                     uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
+                    print("toto")
+                    print("url : {}".format(uri.uri()))
                     vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type)
 
                     if not vlayer.isValid():
@@ -1117,12 +1123,13 @@ class Contexte(object):
 
     def checkProfilServeurClient(self):
         # Le profil a t'il pu être changé sur le serveur ?
-        nomProfilServeur = self.client.getNomProfil()
-        if self.profil.titre != nomProfilServeur:
-            message = "Votre groupe actif ({} versus {}) semble avoir été modifié par une autre application cliente " \
-                      "de l'Espace collaboratif.\nMerci de vous reconnecter via le bouton 'Se connecter à l'Espace " \
-                      "collaboratif' pour confirmer dans quel groupe vous souhaitez travailler.\nAttention : si vous " \
-                      "avez déjà chargé les couches d'un autre groupe, vous devez les supprimer au préalable ou " \
-                      "créer un autre projet QGIS.".format(self.profil.titre, nomProfilServeur)
-            RipartHelper.showMessageBox(message)
-            raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")
+        if self.client is not None:
+            nomProfilServeur = self.client.getNomProfil()
+            if self.profil.titre != nomProfilServeur:
+                message = "Votre groupe actif ({} versus {}) semble avoir été modifié par une autre application cliente " \
+                          "de l'Espace collaboratif.\nMerci de vous reconnecter via le bouton 'Se connecter à l'Espace " \
+                          "collaboratif' pour confirmer dans quel groupe vous souhaitez travailler.\nAttention : si vous " \
+                          "avez déjà chargé les couches d'un autre groupe, vous devez les supprimer au préalable ou " \
+                          "créer un autre projet QGIS.".format(self.profil.titre, nomProfilServeur)
+                RipartHelper.showMessageBox(message)
+                raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")

@@ -9,6 +9,7 @@ version 3.0.0 , 26/11/2018
 
 from PyQt5.QtCore import *
 
+
 class ThemeAttribut(object):
     """
     Classe représentant un attribut d'un thème

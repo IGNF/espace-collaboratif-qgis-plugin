@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 25 mai 2020
 
 version 4.0.0
 
 @author: EPeyrouse
-'''
+"""
 
 from .Groupe import *
+
 
 class InfosGeogroupe(object):
     """
