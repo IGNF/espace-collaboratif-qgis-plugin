@@ -26,3 +26,4 @@ class Theme(object):
         """
         self.groupe = Groupe()
         self.attributs = []
+        self.isFiltered = True

@@ -128,7 +128,7 @@ class Client(object):
                         print(mess)
 
         else:
-            raise Exception(ClientHelper.notNoneValue("{} : {}".format(reponse.status_code, reponse.reason)))
+            raise Exception(ClientHelper.notNoneValue("{} : {}".format(reponse.status_code, "Votre clé Géoportail semble erronée. Vous pouvez utiliser la clé de démonstration.")))
 
         return layers
 
@@ -478,7 +478,7 @@ class Client(object):
 
         return remModif
 
-    def createRemarque(self, remarque):
+    def createRemarque(self, remarque, idSelectedGeogroupe):
         """Ajout d'une nouvelle remarque
         :param remarque : la remarque à créer
         :type remarque: Remarque
@@ -495,6 +495,7 @@ class Client(object):
             geometry = "POINT(" + str(remarque.getLongitude()) + " " + str(remarque.getLatitude()) + ")"
             params['geometry'] = geometry
             params['territory'] = self.getProfil().zone.__str__()
+            params['group'] = idSelectedGeogroupe
 
             # Ajout des thèmes selectionnés
             themes = remarque.themes

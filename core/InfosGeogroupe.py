@@ -20,9 +20,13 @@ class InfosGeogroupe(object):
     # Couches visibles sur les cartes de ce groupe (dans l'ordre dans lequel les superposer)
     layers = []
 
+    # Thèmes du groupe
+    themes = []
+
     def __init__(self, parent=None):
         """
         Constructor
         """
         self.groupe = Groupe()
         self.layers = []
+        self.themes = []

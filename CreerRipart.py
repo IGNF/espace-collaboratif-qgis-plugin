@@ -99,7 +99,7 @@ class CreerRipart(object):
            
             #création d'une seule remarque
             if formCreate.isSingleRemark():  
-                remarqueNouvelle = self._prepareAndSendRemark(tmpRem, croquisList, formCreate.optionWithCroquis())
+                remarqueNouvelle = self._prepareAndSendRemark(tmpRem, croquisList, formCreate.optionWithCroquis(), formCreate.idSelectedGeogroupe)
                 if remarqueNouvelle is None:
                     self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création du "
                                                                     u"signalement ",level=2, duration =15)
@@ -112,7 +112,7 @@ class CreerRipart(object):
                 
                 for cr in croquisList:                
                     tmpRem.clearCroquis()
-                    remarqueNouvelle = self._prepareAndSendRemark(tmpRem, [cr], formCreate.optionWithCroquis())
+                    remarqueNouvelle = self._prepareAndSendRemark(tmpRem, [cr], formCreate.optionWithCroquis(), formCreate.idSelectedGeogroupe)
                     if remarqueNouvelle is None:
                         self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création "
                                                                         u"d'un signalement",level=2, duration =15)
@@ -132,7 +132,7 @@ class CreerRipart(object):
         finally:
             self.context.conn.close()   
 
-    def _prepareAndSendRemark(self, tmpRem, croquisList, optionWithCroquis):
+    def _prepareAndSendRemark(self, tmpRem, croquisList, optionWithCroquis, idSelectedGeogroupe):
         """Trouve la position de la remarque, ajoute les croquis et envoie la requête au service Ripart
         
         :param tmpRem: remarque temporaire
@@ -162,7 +162,7 @@ class CreerRipart(object):
             tmpRem.addCroquisList(croquisList)
                    
         #create new remark (ripart service)
-        remarqueNouvelle = client.createRemarque(tmpRem)
+        remarqueNouvelle = client.createRemarque(tmpRem, idSelectedGeogroupe)
 
         self.logger.info(u"Succès de la création du nouveau signalement n°" + str(remarqueNouvelle.id))
         

@@ -2,9 +2,9 @@
 """
 Created on 26 janv. 2015
 
-version 3.0.0 , 26/11/2018
+version 4.0.1 , 01 dec. 2020
 
-@author: AChang-Wailing
+@author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
 import xml.etree.ElementTree as ET
@@ -25,6 +25,7 @@ from .ClientHelper import ClientHelper
 from .RipartLoggerCl import RipartLogger
 from .Layer import Layer
 
+import re
 
 class XMLResponse(object):
     """
@@ -239,6 +240,8 @@ class XMLResponse(object):
                 infosgeogroupe.groupe = Groupe()
                 infosgeogroupe.groupe.nom = (nodegr.find('NOM')).text
                 infosgeogroupe.groupe.id = (nodegr.find('ID_GEOGROUPE')).text
+
+                # Récupération des layers du groupe
                 for nodelayer in nodegr.findall('LAYERS/LAYER'):
                     layer = Layer()
                     layer.type = nodelayer.find('TYPE').text
@@ -262,6 +265,67 @@ class XMLResponse(object):
                         layer.url = url.text
 
                     infosgeogroupe.layers.append(layer)
+
+                # Récupération des thèmes du groupe
+                themesAttDict = {}
+
+                try:
+
+                    thAttributs = []
+                    thAttNodes = nodegr.findall('THEMES/ATTRIBUT')
+                    for attNode in thAttNodes:
+
+                        nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
+                        nomAtt = attNode.find('ATT').text
+                        thAttribut = ThemeAttribut(nomTh, nomAtt, None)
+
+                        attType = attNode.find('TYPE').text
+                        thAttribut.setType(attType)
+
+                        attObligatoire = attNode.find('OBLIGATOIRE')
+                        if attObligatoire is not None:
+                            thAttribut.setObligatoire()
+
+                        for val in attNode.findall('VALEURS/VAL'):
+                            thAttribut.addValeur(val.text)
+
+                        for val in attNode.findall('VALEURS/DEFAULTVAL'):
+                            thAttribut.defaultval = val.text
+
+                        thAttributs.append(thAttribut)
+                        if nomTh not in themesAttDict:
+                            themesAttDict[nomTh] = []
+                        themesAttDict[nomTh].append(thAttribut)
+
+                    nodes = nodegr.findall('THEMES/THEME')
+
+                    # Récupérer les thèmes à afficher dans le profil (balise <FILTER>)
+                    # Exemple : [{"group_id":375,"themes":["Test_signalement","test leve",
+                    # "Theme_table_bool_TestEcriture"]},{"group_id":1,"themes":["Bati"]}]
+
+                    # filterDict = nodegr.find('FILTER').text
+                    # groupFilters = re.findall('\{.*?\}',filterDict)
+                    # filteredThemes = self.getFilteredThemes(groupFilters, infosgeogroupe.groupe.id)
+
+                    for node in nodes:
+                        theme = Theme()
+                        theme.groupe = Groupe()
+
+                        nom = (node.find('NOM')).text
+                        theme.groupe.nom = nom
+                        # if nom in filteredThemes:
+                        #      theme.isFiltered = True
+
+                        theme.groupe.id = infosgeogroupe.groupe.id
+                        if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
+                            theme.attributs.extend(themesAttDict[ClientHelper.notNoneValue(theme.groupe.nom)])
+
+                        infosgeogroupe.themes.append(theme)
+
+                except Exception as e:
+                    self.logger.error(str(e))
+                    raise Exception("Erreur dans la récupération des thèmes du groupe")
+
                 infosgeogroupes.append(infosgeogroupe)
 
         except Exception as e:
@@ -269,6 +333,46 @@ class XMLResponse(object):
             raise Exception("Erreur dans la récupération des informations sur le GEOGROUPE")
 
         return infosgeogroupes
+
+
+    def getFilteredThemes(self, groupFilters, idGeogroupe):
+
+        """Récupération des thèmes à afficher dans le profil
+        :return les thèmes filtrés
+        """
+
+        filteredThemes = []
+
+        for groupFilter in groupFilters:
+            # Si le filtre ne concerne pas le geogroupe en cours, on ne le traite pas
+            # car les thèmes des autres groupes ne sont envoyés que dans la partie profil actif de geoaut_get
+            listElements = groupFilter.split(":")
+            idGroupe = listElements[1].split(",")[0]
+
+            processFilter = False
+
+            if idGeogroupe == "":
+                processFilter = True
+            else:
+                idGeogroupeInt = int(idGeogroupe)
+                idGroupeInt = int(idGroupe)
+                intDiff = idGeogroupeInt - idGroupeInt
+                if intDiff == 0:
+                    processFilter = True
+                else:
+                    processFilter = False
+
+            if processFilter:
+                listThemesTmp = listElements[2]
+                listThemesTmp = listThemesTmp[1:len(listThemesTmp) - 2]
+                filteredThemesTmp = re.findall('\".*?\"', listThemesTmp)
+                # Suppression des guillements
+                for i in range(len(filteredThemesTmp)):
+                    currTheme = self.convertEncodedCharacters(filteredThemesTmp[i].strip("\""))
+                    filteredThemes.append(currTheme)
+
+        return filteredThemes
+
 
     def getThemes(self):
         """Extraction des thèmes associés au profil     
@@ -306,12 +410,22 @@ class XMLResponse(object):
                     themesAttDict[nomTh] = []
                 themesAttDict[nomTh].append(thAttribut)
 
+            # Récupération du filtre sur les thèmes
+            # filterDict = self.root.find('PROFIL/FILTRE').text
+            # groupFilters = re.findall('\{.*?\}', filterDict)
+            # filteredThemes = self.getFilteredThemes(groupFilters, "")
+
             nodes = self.root.findall('THEMES/THEME')
 
             for node in nodes:
                 theme = Theme()
                 theme.groupe = Groupe()
-                theme.groupe.nom = (node.find('NOM')).text
+
+                nom = (node.find('NOM')).text
+                theme.groupe.nom = nom
+                # if nom in filteredThemes:
+                #     theme.isFiltered = True
+
                 theme.groupe.id = (node.find('ID_GEOGROUPE')).text
                 if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
                     theme.attributs.extend(themesAttDict[ClientHelper.notNoneValue(theme.groupe.nom)])
@@ -602,6 +716,31 @@ class XMLResponse(object):
             rem.addGeoReponse(georep)
 
         return rem
+
+    def convertEncodedCharacters(self, substring):
+        # Equivalences entre les caractères spéciaux de l'API et les chaines Python
+        charConversion = {
+            "\\u00e0": 'à',
+            "\\u00e2": 'â',
+            "\\u00e4": 'ä',
+            "\\u00e7": 'ç',
+            "\\u00e8": 'è',
+            "\\u00e9": 'é',
+            "\\u00ea": 'ê',
+            "\\u00eb": 'ë',
+            "\\u00ee": 'î',
+            "\\u00ef": 'ï',
+            "\\u00f4": 'ô',
+            "\\u00f6": 'ö',
+            "\\u00f9": 'ù',
+            "\\u00f6": 'û',
+            "\\u00fc": 'ü',
+        }
+
+        newString = substring
+        for c, v in charConversion.items():
+            newString = newString.replace(c, v)
+        return newString
 
 
 if __name__ == "__main__":

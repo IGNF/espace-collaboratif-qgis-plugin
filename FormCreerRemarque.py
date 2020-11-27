@@ -52,6 +52,12 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     # liste des thèmes du profil (objets Theme)
     profilThemesList = []
 
+    # liste des thèmes préférés
+    preferredThemes = []
+
+    # groupe sélectionné
+    idSelectedGeogroupe = ""
+
     # taille maximale du document joint
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
 
@@ -95,6 +101,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         for igg in self.infosgeogroupes:
             self.comboBoxGroupe.addItem(igg.groupe.nom)
 
+        # Valeur par défaut : groupe actif
+        groupeActif = self.context.groupeactif
+        if groupeActif != None and groupeActif != "":
+            self.comboBoxGroupe.setCurrentText(groupeActif)
+
         # les noms des thèmes préférés (du fichier de configuration)
         preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
 
@@ -102,9 +113,27 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.setColumnWidth(0, 160)
         self.treeWidget.setColumnWidth(1, 150)
 
-        if len(profil.themes) > 0:
+        # On modifie les thèmes proposés en fonction du groupe sélectionné
+        self.comboBoxGroupe.currentIndexChanged.connect(self.groupIndexChanged)
+        self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
+
+        self.profilThemesList = profil.themes
+
+        self.docMaxSize = self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
+
+
+    def displayThemes(self, themes):
+        """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
+        """
+        preferredThemes = self.preferredThemes
+
+        if len(themes) > 0:
             # boucle sur tous les thèmes du profil
-            for th in profil.themes:
+            for th in themes:
+                # Si le thème n'est pas dans le filtre du profil, on ne l'affiche pas
+                if not th.isFiltered:
+                    continue
+
                 # ajout du thème dans le treeview
                 thItem = QTreeWidgetItem(self.treeWidget)
                 thItem.setText(0, th.groupe.nom)
@@ -201,9 +230,25 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, valeur)
 
-        self.profilThemesList = profil.themes
 
-        self.docMaxSize = self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
+
+    def groupIndexChanged(self, index):
+        """Détecte le groupe choisi et lance l'affiche des thèmes adequats.
+        """
+        self.treeWidget.clear()
+
+        infosgeogroupe = self.infosgeogroupes[index]
+        nomGroupe = infosgeogroupe.groupe.nom
+        self.idSelectedGeogroupe = infosgeogroupe.groupe.id
+
+        themes = []
+        if nomGroupe == self.context.groupeactif:
+            themes = self.context.profil.themes
+        else:
+            themes = infosgeogroupe.themes
+
+        self.displayThemes(themes)
+
 
     def isSingleRemark(self):
         """Indique si l'option de création d'une remarque unique a été choisie.

@@ -388,6 +388,7 @@ class Contexte(object):
                                     # dans le xml du projet utilisateur
                                     RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
                                     RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
+                                    self.groupeactif = idNomGroupeCleGeoPortail[1]
 
                                     # Récupération des layers GéoPortail valides en fonction
                                     # de la clé Geoportail utilisateur
