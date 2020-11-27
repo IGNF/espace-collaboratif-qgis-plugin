@@ -363,7 +363,7 @@ class XMLResponse(object):
                     processFilter = False
 
             if processFilter:
-                listThemesTmp = listElements[2]
+                listThemesTmp = listElements[len(listElements)-1]
                 listThemesTmp = listThemesTmp[1:len(listThemesTmp) - 2]
                 filteredThemesTmp = re.findall('\".*?\"', listThemesTmp)
                 # Suppression des guillements

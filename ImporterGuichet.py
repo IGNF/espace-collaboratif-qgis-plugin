@@ -76,24 +76,27 @@ class ImporterGuichet(object):
                     "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
             # filtre spatial
-            filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
+            # Non pris en compte en v4.0.1 car le filtrage par BBOX du WFS ne semble pas fonctionner
+            bbox = None
+            # filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
+            #
+            # if (filtre != None and len(filtre.strip()) > 0):
+            #     self.logger.debug("Spatial filter :" + filtre)
+            #
+            #     filtreLay = self.context.getLayerByName(filtre)
+            #     bbox = self.getSpatialFilterBbox(filtre, filtreLay)
+            #     if bbox == -999:
+            #         return
+            #
+            # else:
+            #     message = "Impossible de déterminer dans le fichier de paramétrage de l'Espace Collaboratif, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
+            #               "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
+            #               "(Cela risque de prendre un certain temps)."
+            #     if self.noFilterWarningDialog(message):
+            #         bbox = None
+            #     else:
+            #         return
 
-            if (filtre != None and len(filtre.strip()) > 0):
-                self.logger.debug("Spatial filter :" + filtre)
-
-                filtreLay = self.context.getLayerByName(filtre)
-                bbox = self.getSpatialFilterBbox(filtre, filtreLay)
-                if bbox == -999:
-                    return
-
-            else:
-                message = "Impossible de déterminer dans le fichier de paramétrage de l'Espace Collaboratif, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
-                          "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
-                          "(Cela risque de prendre un certain temps)."
-                if self.noFilterWarningDialog(message):
-                    bbox = None
-                else:
-                    return
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             QApplication.setOverrideCursor(Qt.BusyCursor)
 
