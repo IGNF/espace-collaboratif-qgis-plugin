@@ -638,7 +638,7 @@ class RipartPlugin:
 
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(u"<b>Plugin Espace Collaboratif</b>")
-        dlgInfo.textInfo.append(u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif")
+        dlgInfo.textInfo.append(u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif.")
         dlgInfo.textInfo.append(u"<br/>Version: " + version)
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
 

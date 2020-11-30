@@ -304,7 +304,7 @@ class Contexte(object):
             self.clegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_CleGeoportail,
                                                                 "Serveur").text
             if self.clegeoportail is None:
-                self.clegeoportail = ""
+                self.clegeoportail = cst.DEMO
             else:
                 self.logger.debug("this.clegeoportail " + self.clegeoportail)
 
@@ -347,8 +347,8 @@ class Contexte(object):
                                 else:
                                     RipartHelper.save_groupeactif(self.projectDir, profil.geogroupe.nom)
 
-                                # Il faut aussi vider la clé Géoportail puisque si une clé est vide c'est celle par défaut qui est prise
-                                RipartHelper.save_clegeoportail(self.projectDir, "")
+                                # Par défaut, on enregistre la clé Géoportail de démonstration
+                                RipartHelper.save_clegeoportail(self.projectDir, cst.DEMO)
 
                             # sinon le choix d'un autre groupe est présenté à l'utilisateur
                             # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe

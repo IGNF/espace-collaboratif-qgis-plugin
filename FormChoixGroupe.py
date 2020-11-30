@@ -30,7 +30,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if groupeActif is not None and groupeActif != "":
             self.comboBoxGroupe.setCurrentText(groupeActif)
 
-        if cleGeoportail == cst.DEMO:
+        if cleGeoportail == cst.DEMO or cleGeoportail == "":
             self.radioButtonNon.setChecked(True)
         if cleGeoportail != cst.DEMO and cleGeoportail != "":
             self.radioButtonOui.setChecked(True)
