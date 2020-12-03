@@ -177,24 +177,32 @@ class EditFormFieldFromAttributes(object):
             maxValue = maxValue.replace(' ', 'T')
 
         expression = None
+        listExpressions = []
 
-        if minValue is not None and maxValue is None or maxValue is '':
-            expression = "\"{}\" >= {}".format(self.name, minValue)
-        elif vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
-            expression = "\"{}\" >= '{}'".format(self.name, minValue)
+        # minValue
+        if minValue is not None and minValue != '':
+            expTmp = ""
+            if vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
+                expTmp = "\"{}\" >= \'{}\'".format(self.name, minValue)
+            else:
+                expTmp = "\"{}\" >= {}".format(self.name, minValue)
+        listExpressions.append(expTmp)
 
-        if minValue is None or minValue is '' and maxValue is not None:
-            expression = "\"{}\" <= {}".format(self.name, maxValue)
-        elif vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
-            expression = "\"{}\" <= '{}'".format(self.name, maxValue)
+        # maxValue
+        if maxValue is not None and maxValue != '':
+            expTmp = ""
+            if vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
+                expTmp = "\"{}\" <= \'{}\'".format(self.name, maxValue)
+            else:
+                expTmp = "\"{}\" <= {}".format(self.name, maxValue)
+        listExpressions.append(expTmp)
 
-        if minValue is not None and maxValue is not None:
-            expression = "\"{}\" >= {} and \"{}\" <= {}".format(self.name, minValue, self.name, maxValue)
-        elif vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
-            expression = "\"{}\" >= '{}' and \"{}\" <= '{}'".format(self.name, minValue, self.name, maxValue)
-
-        if vType == 'String' and bNullable is True:
-            expression = "\"{}\" is null or {}".format(self.name, expression)
+        if len(listExpressions) == 0:
+            return
+        elif len(listExpressions) == 1:
+            expression = listExpressions[0]
+        else:
+            expression = "{} and {}".format(listExpressions[0], listExpressions[1])
 
         self.layer.setConstraintExpression(self.index, expression)
 
@@ -211,19 +219,29 @@ class EditFormFieldFromAttributes(object):
             return
 
         expression = None
+        listExpressions = []
 
-        if minLength is not None and maxLength is None or maxLength is '':
-            expression = "length(\"{}\") >= {}".format(self.name, minLength)
+        # minLength
+        if minLength is not None and minLength != '':
+            expTmp = "length(\"{}\") >= {}".format(self.name, minLength)
+            listExpressions.append(expTmp)
 
-        if minLength is None or minLength is '' and maxLength is not None:
-            expression = "length(\"{}\") <= {}".format(self.name, maxLength)
+        # maxLength
+        if maxLength is not None and minLength != '':
+            expTmp = "length(\"{}\") <= {}".format(self.name, maxLength)
+            listExpressions.append(expTmp)
 
-        if minLength is not None and maxLength is not None:
-            expression = "length(\"{}\") >= {} AND length(\"{}\") <= {}".format(self.name, minLength, self.name,
-                                                                                maxLength)
+        # Expression
+        if len(listExpressions) == 0:
+            return
+        elif len(listExpressions) == 1:
+            expression = listExpressions[0]
+        else:
+            expression = "{} and {}".format(listExpressions[0], listExpressions[1])
 
+        # Cas particulier des string nullable
         if vType == 'String' and bNullable is True:
-            expression = "\"{}\" is null or {}".format(self.name, expression)
+            expression = "\"{}\" is null or ({})".format(self.name, expression)
 
         self.layer.setConstraintExpression(self.index, expression)
 
