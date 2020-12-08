@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+Created on 25 nov. 2020
+
+version 4.0.1, 15/12/2020
+
+@author: EPeyrouse, NGremeaux
+"""
+
+
 import os
 from PyQt5.QtWidgets import QDialogButtonBox
 

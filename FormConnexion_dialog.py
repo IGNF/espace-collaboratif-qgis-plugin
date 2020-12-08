@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+'''
+Created on 20 oct. 2015
+Updated on 23 oct. 2020
+
+version 4.0.1, 15/12/2020
+
+@author: AChang-Wailing, EPeyrouse
+'''
+
 import os
 
 from qgis.PyQt import QtGui, uic, QtWidgets 

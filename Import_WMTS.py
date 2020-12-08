@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+Created on 13 nov. 2020
+
+version 4.0.1, 15/12/2020
+
+@author: EPeyrouse, NGremeaux
+"""
+
+
 # Imports
 import urllib
 from .core import ConstanteRipart as cst

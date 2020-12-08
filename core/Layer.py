@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on 25 mai 2020
+Created on 25 may 2020
 
-version 4.0.0
+version 4.0.1, 15/12/2020
 
 @author: EPeyrouse
 """

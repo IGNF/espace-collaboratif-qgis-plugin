@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on 26 janv. 2015
+Updated on 8 dec. 2020
 
-version 4.0.1 , 01 dec. 2020
+version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
@@ -213,7 +214,8 @@ class XMLResponse(object):
 
             # va chercher les thèmes associés au profil
             themes = self.getThemes()
-            profil.themes = themes
+            profil.themes = themes[0]
+            profil.filteredThemes = themes[1]
 
             # va chercher les infos de tous les geogroupes de l'utilisateur
             infosgeogroupes = self.getInfosGeogroupe()
@@ -303,9 +305,10 @@ class XMLResponse(object):
                     # Exemple : [{"group_id":375,"themes":["Test_signalement","test leve",
                     # "Theme_table_bool_TestEcriture"]},{"group_id":1,"themes":["Bati"]}]
 
-                    # filterDict = nodegr.find('FILTER').text
-                    # groupFilters = re.findall('\{.*?\}',filterDict)
-                    # filteredThemes = self.getFilteredThemes(groupFilters, infosgeogroupe.groupe.id)
+                    filterDict = nodegr.find('FILTER').text
+                    groupFilters = re.findall('\{.*?\}',filterDict)
+                    filteredThemes = self.getFilteredThemes(groupFilters, infosgeogroupe.groupe.id)
+                    infosgeogroupe.filteredThemes = filteredThemes
 
                     for node in nodes:
                         theme = Theme()
@@ -313,8 +316,8 @@ class XMLResponse(object):
 
                         nom = (node.find('NOM')).text
                         theme.groupe.nom = nom
-                        # if nom in filteredThemes:
-                        #      theme.isFiltered = True
+                        if nom in filteredThemes:
+                             theme.isFiltered = True
 
                         theme.groupe.id = infosgeogroupe.groupe.id
                         if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
@@ -411,9 +414,11 @@ class XMLResponse(object):
                 themesAttDict[nomTh].append(thAttribut)
 
             # Récupération du filtre sur les thèmes
-            # filterDict = self.root.find('PROFIL/FILTRE').text
-            # groupFilters = re.findall('\{.*?\}', filterDict)
-            # filteredThemes = self.getFilteredThemes(groupFilters, "")
+            filterDict = self.root.find('PROFIL/FILTRE').text
+            filteredThemes = []
+            if filterDict != None:
+                groupFilters = re.findall('\{.*?\}', filterDict)
+                filteredThemes = self.getFilteredThemes(groupFilters, "")
 
             nodes = self.root.findall('THEMES/THEME')
 
@@ -423,8 +428,8 @@ class XMLResponse(object):
 
                 nom = (node.find('NOM')).text
                 theme.groupe.nom = nom
-                # if nom in filteredThemes:
-                #     theme.isFiltered = True
+                if nom in filteredThemes or len(filteredThemes) == 0:
+                    theme.isFiltered = True
 
                 theme.groupe.id = (node.find('ID_GEOGROUPE')).text
                 if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
@@ -435,7 +440,7 @@ class XMLResponse(object):
             self.logger.error(str(e))
             raise Exception("Erreur dans la récupération des thèmes du profil")
 
-        return themes
+        return [themes, filteredThemes]
 
     def getVersion(self):
         """Retourne la version du service ripart    

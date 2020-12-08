@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+'''
+Created on 23 oct. 2020
+
+version 4.0.1, 15/12/2020
+
+@author: EPeyrouse, NGremeaux
+'''
+
 import random
 
 from PyQt5.QtGui import QColor

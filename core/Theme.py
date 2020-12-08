@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Created on 23 janv. 2015
+Updated on 27 nov. 2020
 
-version 3.0.0 , 26/11/2018
+version 4.0.1, 15/12/2020
 
-@author: AChang-Wailing
+@author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
 from .Groupe import *
@@ -26,5 +27,5 @@ class Theme(object):
         """
         self.groupe = Groupe()
         self.attributs = []
-        #self.isFiltered = False
-        self.isFiltered = True
+        self.isFiltered = False
+        #self.isFiltered = True

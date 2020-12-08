@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+Created on 7 aug. 2020
+
+version 4.0.1, 15/12/2020
+
+@author: EPeyrouse
+"""
+
+
 class Statistics(object):
     # Number total of features
     nft = None

@@ -2,10 +2,11 @@
 
 """
 Created on 22 janv. 2015
+Updated on 15 dec. 2020
 
-version 3.0.0, 26/11/2018
+version 4.0.1, 15/12/2020
 
-@author: AChang-Wailing
+@author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 import xml.etree.ElementTree as ET
 from collections import OrderedDict

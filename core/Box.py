@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on 26/11/2018
+Updated on 15 dec. 2020
 
-@author: AChang-Wailing
+@author: AChang-Wailing, EPeyrouse
 """
 
 

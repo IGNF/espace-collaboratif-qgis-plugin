@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Created on 27 oct. 2015
+Updated on 27 nov. 2020
 
-version 3.0.0 , 26/11/2018
+version 4.0.1, 15/12/2020
 
-@author: AChang-Wailing
+@author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
 import os
@@ -105,6 +106,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         groupeActif = self.context.groupeactif
         if groupeActif != None and groupeActif != "":
             self.comboBoxGroupe.setCurrentText(groupeActif)
+        else:
+            self.comboBoxGroupe.setCurrentText('Aucun')
 
         # les noms des thèmes préférés (du fichier de configuration)
         preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
@@ -114,22 +117,38 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.setColumnWidth(1, 150)
 
         # On modifie les thèmes proposés en fonction du groupe sélectionné
-        self.comboBoxGroupe.currentIndexChanged.connect(self.groupIndexChanged)
-        self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
+        if groupeActif != 'Aucun':
+            self.comboBoxGroupe.currentIndexChanged.connect(self.groupIndexChanged)
+            self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
+        else:
+            self.displayThemes(profil.filteredThemes, profil.themes)
 
         self.profilThemesList = profil.themes
 
         self.docMaxSize = self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
 
 
-    def displayThemes(self, themes):
+    def displayThemes(self, filteredThemes, themes):
         """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
         """
         preferredThemes = self.preferredThemes
 
         if len(themes) > 0:
-            # boucle sur tous les thèmes du profil
-            for th in themes:
+
+            # boucle sur tous les thèmes filtrés du groupe
+            for thName in filteredThemes:
+
+                # On cherche l'objet theme correspondant dans la liste des themes
+                foundTheme = False
+                for th in themes :
+                    nomTheme = th.groupe.nom
+                    if th.groupe.nom == thName:
+                        foundTheme = True
+                        break
+
+                if not foundTheme:
+                    continue
+
                 # Si le thème n'est pas dans le filtre du profil, on ne l'affiche pas
                 if not th.isFiltered:
                     continue
@@ -244,10 +263,12 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         themes = []
         if nomGroupe == self.context.groupeactif:
             themes = self.context.profil.themes
+            filteredThemes = self.context.profil.filteredThemes
         else:
             themes = infosgeogroupe.themes
+            filteredThemes = infosgeogroupe.filteredThemes
 
-        self.displayThemes(themes)
+        self.displayThemes(filteredThemes, themes)
 
 
     def isSingleRemark(self):
@@ -288,9 +309,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     elif type(widg) == QtWidgets.QLineEdit:
                         val = widg.text()
                     elif type(widg) == QtWidgets.QDateEdit:
-                        val = str(widg.date())
+                        date = widg.date()
+                        val = date.toString('yyyy-MM-dd')
                     elif type(widg) == QtWidgets.QDateTimeEdit:
-                        val = str(widg.date())
+                        datetime = widg.dateTime()
+                        val = datetime.toString('yyyy-MM-dd hh:mm:ss')
                     else:
                         val = widg.currentText()
 

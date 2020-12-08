@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 '''
 Created on 23 janv. 2015
-Modified on 29 mai 2020
-version 3.0.0 , 26/11/2018
+Updated on 9 sept. 2020
 
-@author: AChang-Wailing
-@author: EPeyrouse
+version 4.0.1, 15/12/2020
+
+@author: AChang-Wailing, EPeyrouse, NGremeaux
 '''
 
 from .Auteur import *
@@ -44,6 +44,7 @@ class Profil(object):
 
     #Les éventuels thèmes attachés au profil
     themes = list()
+    filteredThemes = list() # Liste des thèmes filtrés
 
     #identifiant geoprofil    
     id_Geoprofil=""
