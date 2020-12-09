@@ -31,3 +31,4 @@ class InfosGeogroupe(object):
         self.layers = []
         self.themes = []
         self.filteredThemes = []
+        self.georemComment = ""

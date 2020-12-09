@@ -243,6 +243,9 @@ class XMLResponse(object):
                 infosgeogroupe.groupe.nom = (nodegr.find('NOM')).text
                 infosgeogroupe.groupe.id = (nodegr.find('ID_GEOGROUPE')).text
 
+                # Récupération du commentaire par défaut des signalements
+                infosgeogroupe.georemComment = nodegr.find('COMMENTAIRE_GEOREM').text
+
                 # Récupération des layers du groupe
                 for nodelayer in nodegr.findall('LAYERS/LAYER'):
                     layer = Layer()
