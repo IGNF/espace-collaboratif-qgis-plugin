@@ -86,8 +86,9 @@ class CreerRipart(object):
             tmpRem.setCommentaire(formCreate.textEditMessage.toPlainText())
             
             selectedThemes = formCreate.getSelectedThemes()
-            
             RipartHelper.save_preferredThemes(self.context.projectDir, selectedThemes)
+
+            RipartHelper.save_preferredGroup(self.context.projectDir, formCreate.preferredGroup)
             
             tmpRem.addThemeList(selectedThemes)  
             
@@ -123,7 +124,7 @@ class CreerRipart(object):
    
             self.context.refresh_layers()
           
-            RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u"nouveau(x) "
+            RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouveau(x) "
                                                                                                  u"signalement(s)")
              
         except Exception as e:

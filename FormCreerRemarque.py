@@ -55,6 +55,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
     # liste des thèmes préférés
     preferredThemes = []
+    preferredGroup = ""
 
     # groupe sélectionné
     idSelectedGeogroupe = ""
@@ -97,20 +98,27 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         else:
             self.groupBoxProfil.setTitle(profil.auteur.nom + u" (Profil par défaut)")
 
+        # les noms des thèmes préférés (du fichier de configuration)
+        self.preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
+        preferredGroup = RipartHelper.load_preferredGroup(self.context.projectDir)
+
         #Ajout des noms de groupes trouvés pour l'utilisateur
         self.infosgeogroupes = profil.infosGeogroupes
+        listeNomsGroupes = []
         for igg in self.infosgeogroupes:
             self.comboBoxGroupe.addItem(igg.groupe.nom)
+            listeNomsGroupes.append(igg.groupe.nom)
 
         # Valeur par défaut : groupe actif
         groupeActif = self.context.groupeactif
-        if groupeActif != None and groupeActif != "":
-            self.comboBoxGroupe.setCurrentText(groupeActif)
+        if preferredGroup in listeNomsGroupes:
+            self.comboBoxGroupe.setCurrentText(preferredGroup)
         else:
-            self.comboBoxGroupe.setCurrentText('Aucun')
-
-        # les noms des thèmes préférés (du fichier de configuration)
-        preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
+            groupeActif = self.context.groupeactif
+            if groupeActif != None and groupeActif != "":
+                self.comboBoxGroupe.setCurrentText(groupeActif)
+            else:
+                self.comboBoxGroupe.setCurrentText('Aucun')
 
         # largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
         self.treeWidget.setColumnWidth(0, 160)
@@ -272,6 +280,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         else:
             themes = infosgeogroupe.themes
             filteredThemes = infosgeogroupe.filteredThemes
+
+        self.preferredGroup = nomGroupe
 
         self.displayThemes(filteredThemes, themes)
 

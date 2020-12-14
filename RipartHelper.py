@@ -102,6 +102,7 @@ class RipartHelper:
     xml_proxy="Proxy"
     xml_GroupeActif = "groupe_actif"
     xml_CleGeoportail="cle_geoportail"
+    xml_GroupePrefere = "groupe_prefere"
 
     defaultDate = "1900-01-01 00:00:00"
     defaultPagination=100
@@ -270,6 +271,46 @@ class RipartHelper:
         except Exception as e:
             RipartHelper.logger.error(format(e))
 
+    @staticmethod
+    def load_preferredGroup(projectDir):
+        """Retourne le groupe actif sauvegardé dans le fichier de configuration xml
+
+                :param projectDir: le chemin vers le répertoire du projet
+                :type projectDir: string
+                """
+        groupePrefere = ""
+        try:
+            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            groupePrefere = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupePrefere, "Serveur"))
+            if groupePrefere == None:
+                groupePrefere = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_GroupePrefere, "Serveur")
+
+        except Exception as e:
+            RipartHelper.logger.error(str(e))
+
+        return ClientHelper.notNoneValue(groupePrefere.text)
+
+    @staticmethod
+    def save_preferredGroup(projectDir, groupePrefere):
+        """Enregistre le groupe préféré pour la création de signalement dans le fichier de configuration
+
+                :param projectDir: le chemin vers le répertoire du projet
+                :type projectDir: string
+
+                :param preferredGroup: le groupe préféré de l'utilisateur
+                :type preferredGroup: string
+                """
+        try:
+            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            xgroupePrefere = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupePrefere, "Serveur"))
+            xgroupePrefere.text = groupePrefere
+
+            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+
+        except Exception as e:
+            RipartHelper.logger.error(format(e))
 
     @staticmethod
     def load_clegeoportail(projectDir):

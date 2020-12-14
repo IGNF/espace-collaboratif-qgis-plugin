@@ -188,10 +188,6 @@ class XMLResponse(object):
             node = self.root.find('./PROFIL/TITRE')
             profil.titre = node.text
 
-            node = self.root.find('./PROFIL/ZONE')
-            if node is not None:
-                profil.zone = cst.ZoneGeographique.__getitemFromString__(node.text)
-
             gr = Groupe()
             node = self.root.find('./PROFIL/ID_GEOGROUPE')
             gr = node.text

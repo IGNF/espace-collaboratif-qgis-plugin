@@ -311,13 +311,18 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_type = 'Range'
         # Config: {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0, 'Step': 1,
         # 'Style': 'SpinBox'}
-        if self.name == 'id':
-            QgsEWS_config = {'AllowNull': False, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
-                             'Step': 1, 'Style': 'SpinBox'}
-        else:
-            QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
-                             'Step': 1, 'Style': 'SpinBox'}
-        self.setFormEditor(QgsEWS_type, QgsEWS_config)
+
+        # [NG] On autorise NULL pour l'identifiant car il sera en réalité rempli par l'Espace co en cas de création
+        # if self.name == 'id':
+        #     QgsEWS_config = {'AllowNull': False, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
+        #                      'Step': 1, 'Style': 'SpinBox'}
+        # else:
+        #     QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
+        #                      'Step': 1, 'Style': 'SpinBox'}
+        # self.setFormEditor(QgsEWS_type, QgsEWS_config)
+
+        QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
+                         'Step': 1, 'Style': 'SpinBox'}
 
         if defaultInteger is None or defaultInteger == '':
             return

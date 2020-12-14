@@ -348,6 +348,14 @@ class Contexte(object):
                                 else:
                                     RipartHelper.save_groupeactif(self.projectDir, profil.geogroupe.nom)
 
+                                    # On enregistre le groupe comme groupe préféré (par défaut) pour la création de signalement
+                                    # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
+                                    formerPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
+                                    if formerPreferredGroup != profil.geogroupe.nom:
+                                        RipartHelper.save_preferredThemes(self.projectDir, [])
+
+                                    RipartHelper.save_preferredGroup(self.projectDir, profil.geogroupe.nom)
+
                                 # Par défaut, on enregistre la clé Géoportail de démonstration
                                 RipartHelper.save_clegeoportail(self.projectDir, cst.DEMO)
 
@@ -390,6 +398,14 @@ class Contexte(object):
                                     RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
                                     RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
                                     self.groupeactif = idNomGroupeCleGeoPortail[1]
+
+                                    # On enregistre le groupe comme groupe préféré pour la création de signalement
+                                    # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
+                                    formerPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
+                                    if formerPreferredGroup != profil.geogroupe.nom:
+                                        RipartHelper.save_preferredThemes(self.projectDir, [])
+
+                                    RipartHelper.save_preferredGroup(self.projectDir, profil.geogroupe.nom)
 
                                     # Récupération des layers GéoPortail valides en fonction
                                     # de la clé Geoportail utilisateur
@@ -567,7 +583,10 @@ class Contexte(object):
             # d'ajouter un nouveau groupe dans le projet
             if nodeGroup.name() != nomGroupe and (len(nodesGroup) == 1):
                 QMessageBox.warning(None, "Charger les couches de mon groupe",
-                                    u"Un projet ne doit contenir qu'un seul groupe. Pour visualiser ce groupe, il faut créer un autre projet")
+                                    u"Votre projet QGIS contient des couches d'un autre groupe Espace collaboratif (" + nodeGroup.name() +
+                                    "). \nPour pouvoir charger les données du groupe " + nomGroupe +
+                                    ", veuillez supprimer les couches existantes de votre projet QGIS ou travailler dans un nouveau projet." +
+                                    "\n\nNB : ces couches seront simplement supprimées de la carte QGIS en cours, elles resteront disponibles sur l'Espace collaboratif.")
                 return
             #guichet_layers.reverse()
             for layer in guichet_layers:
