@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest, QgsCoordinateTransform, \
     QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsPolygon, \
-    QgsWkbTypes, QgsLayerTreeGroup
+    QgsWkbTypes, QgsLayerTreeGroup, QgsRectangle
 
 from .RipartException import RipartException
 
@@ -629,6 +629,9 @@ class Contexte(object):
 
                     # Affichage des données en fonction de l'échelle
                     vlayer.setDisplayScale(layer.minzoom, layer.maxzoom)
+
+                    # Paramétrage de l'emprise
+                    vlayer.updateExtents(True)
 
                     # Une couche en visualisation est non modifiable
                     if layer.role == 'visu' or layer.role == 'ref':
