@@ -1,19 +1,32 @@
 # -*- coding: utf-8 -*-
 '''
 Created on 30 sept. 2015
+Updated on 9 sept. 2020
 
-@author: AChang-Wailing
+version 4.0.1, 15/12/2020
+
+@author: AChang-Wailing, EPeyrouse
 '''
+
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QMessageBox
-from PyQt4.QtCore import *
-import FormInfo_base
+
+from PyQt5 import uic
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+from qgis.PyQt import QtGui, uic, QtWidgets
+from qgis.PyQt.QtWidgets import QMessageBox
+
+
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
+
+from qgis.PyQt.QtGui import QIcon
+
+from . import FormInfo_base
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo_base.ui'))
 
-class FormInfo(QtGui.QDialog, FORM_CLASS):
+class FormInfo(QtWidgets.QDialog, FORM_CLASS):
     '''
     Fenêtre donnant des informations 
     '''
@@ -32,9 +45,3 @@ class FormInfo(QtGui.QDialog, FORM_CLASS):
         
         self.textInfo.setText("")
         self.btnOK.clicked.connect(self.close)
-      
-        
-    def addMessage(self, mess):
-        self.textInfo.append(mess)
-        
-        

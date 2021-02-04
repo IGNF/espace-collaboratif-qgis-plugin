@@ -3,7 +3,7 @@
  <class>InfoDialog</class>
  <widget class="QDialog" name="InfoDialog">
   <property name="windowModality">
-   <enum>Qt::WindowModal</enum>
+   <enum>Qt::ApplicationModal</enum>
   </property>
   <property name="geometry">
    <rect>
@@ -78,7 +78,7 @@
    </palette>
   </property>
   <property name="windowTitle">
-   <string>IGN RIPart</string>
+   <string>Espace Collaboratif IGN</string>
   </property>
   <property name="autoFillBackground">
    <bool>false</bool>
@@ -228,6 +228,5 @@
    </property>
   </widget>
  </widget>
-
  <connections/>
 </ui>

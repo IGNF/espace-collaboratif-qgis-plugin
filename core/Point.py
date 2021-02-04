@@ -2,12 +2,15 @@
 '''
 Created on 23 janv. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
 
+
 class Point(object):
     """
-    Classe représentant un Point Ripart, donné en longitude/latitude
+    Classe représentant un Point (Signalement), donné en longitude/latitude
     """
     
     # La longitude (WGS84 en degrés décimaux) du point
@@ -41,19 +44,3 @@ class Point(object):
         else :
             return False
     
-    
-"""if __name__ == "__main__":
-    
-    a=Point(1,2)
-    b=Point(2.1,3)
-    
-    c= Point(1,2)
-    r= a.eq( b)
-    
-    print r
-    print a.eq(c)
-    
-    print a.isEmpty()
-    
-    print Point().isEmpty()
-"""

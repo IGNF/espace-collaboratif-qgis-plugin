@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Connexion au service RIPart</string>
+   <string>Connexion à l'Espace Collaboratif</string>
   </property>
   <property name="windowIcon">
    <iconset resource="resources.qrc">

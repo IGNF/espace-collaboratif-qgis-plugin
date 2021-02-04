@@ -2,23 +2,26 @@
 '''
 Created on 9 nov. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
+
 import os
 import logging
-from core.RipartLoggerCl import RipartLogger 
-from PyQt4 import QtGui, uic
-import core.ConstanteRipart as cst
-from core.ClientHelper import ClientHelper
-from Magicwand import Magicwand
-from RipartHelper import RipartHelper
+from .core.RipartLoggerCl import RipartLogger 
+from qgis.PyQt import QtGui, uic,QtWidgets
+from .core import ConstanteRipart as cst
+from .core.ClientHelper import ClientHelper
+from .Magicwand import Magicwand
+from .RipartHelper import RipartHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormView_base.ui'))
 
 context=None
 remarqueId=None
 
-class FormView(QtGui.QDialog, FORM_CLASS):
+class FormView(QtWidgets.QDialog, FORM_CLASS):
     """
     Forme de visualisation de l'historique de la remarque + sélection/déselection croquis + ouverture document joint 
     """
@@ -38,38 +41,34 @@ class FormView(QtGui.QDialog, FORM_CLASS):
               
         self.btnCroquis.clicked.connect(self.toggleCroquis)
         
-        self.textEditCntCroquisDetail.setFrameStyle(QtGui.QFrame.NoFrame)
+        #self.textEditCntCroquisDetail.setFrameStyle(QtGui.QFrame.NoFrame)
         self.textEditCntCroquisDetail.viewport().setAutoFillBackground(False)
         
-        self.btnDoc.clicked.connect(lambda:self.openDoc(0))
-        self.btnDoc_2.clicked.connect(lambda:self.openDoc(1))
-        self.btnDoc_3.clicked.connect(lambda:self.openDoc(2))
-        self.btnDoc_4.clicked.connect(lambda:self.openDoc(3))
+        self.btnDoc_0.clicked.connect(lambda:self.openDoc(0))
+        self.btnDoc_1.clicked.connect(lambda:self.openDoc(1))
+        self.btnDoc_2.clicked.connect(lambda:self.openDoc(2))
+        self.btnDoc_3.clicked.connect(lambda:self.openDoc(3))
      
        
         
     def setRemarque(self,remarque):
         try:
-            self.lblMessage.setText(u"Message de la remarque n°" + remarque.id)
+            self.lblMessage.setText("Message de la remarque n°" + remarque.id)
             statutIndex=cst.statuts().index(remarque.statut )
             self.textStatut.setText( cst.statutLibelle[statutIndex])
-            self.textMessage.setText(ClientHelper.getEncodeType(remarque.commentaire))
-            self.textOldRep.setHtml(ClientHelper.getEncodeType(remarque.concatenateReponseHTML()))
+            self.textMessage.setText(ClientHelper.notNoneValue(remarque.commentaire))
+            self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateReponseHTML()))
             self.remarqueId= remarque.id
             
             self.doc=remarque.getAllDocuments()
             
             if self.doc !="":
-                self.btnDoc.setEnabled(True)
                 self.docs = self.doc.split()
-
-                for i in range(2,len(self.docs)+1):
-                    btn= self.findChild(QtGui.QPushButton, "btnDoc_"+ str(i))
-                    #btn.setText("Document 1")
-                    btn.setEnabled(True)
-                   
-                
             
+                for i in range(0,len(self.docs)):                  
+                    btn= self.findChild(QtWidgets.QPushButton, "btnDoc_"+ str(i))       
+                    btn.setEnabled(True)
+
         except Exception as e:
             self.logger.error("setRemarque")
             raise e  
@@ -92,7 +91,7 @@ class FormView(QtGui.QDialog, FORM_CLASS):
             
             for cr in self.selCroquis:
                 lay=self.context.getLayerByName(cr) 
-                lay.setSelectedFeatures( self.selCroquis[cr])
+                lay.selectByIds( self.selCroquis[cr])
                 
                 nbCroquis+=len(self.selCroquis[cr])
                 
@@ -103,7 +102,7 @@ class FormView(QtGui.QDialog, FORM_CLASS):
             self.textEditCntCroquisDetail.setText(cntMessage)
            
         except Exception as e:
-            self.logger.error("selectCroquis "+ e.message)
+            self.logger.error("selectCroquis "+ format(e))
       
             
     def deselectCroquis(self):
@@ -116,7 +115,7 @@ class FormView(QtGui.QDialog, FORM_CLASS):
             self.textEditCntCroquisDetail.setText(u"")
             
         except Exception as e:
-            self.logger.error("deselectCroquis "+ e.message)
+            self.logger.error("deselectCroquis "+ format(e))
     
     
     def openDoc(self, n):

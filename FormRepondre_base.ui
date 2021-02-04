@@ -11,10 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>IGN RIPart : Ajout d'une nouvelle réponse</string>
+   <string>Espace Collaboratif : Ajout d'une nouvelle réponse</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="IGN">
+   <iconset>
     <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
   </property>
   <widget class="QDialogButtonBox" name="btnCancel">
@@ -47,6 +47,9 @@
    </property>
    <property name="text">
     <string>Envoyer la réponse</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QLabel" name="lblStatut">

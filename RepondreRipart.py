@@ -2,24 +2,25 @@
 '''
 Created on 8 oct. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
+from .core.RipartLoggerCl import RipartLogger
 
-from core.RipartLoggerCl import RipartLogger
-
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import *
-from PyQt4.QtGui import QMessageBox,QComboBox
+from qgis.PyQt import QtCore, QtGui
+from PyQt5.QtCore import *
+from qgis.PyQt.QtWidgets import QMessageBox, QComboBox
 from qgis.core import  QgsGeometry
 from qgis.gui import QgsMessageBar
 
-from RipartHelper import RipartHelper
-from core.Box import Box
-from core.Client import Client
-from core.ClientHelper import ClientHelper
-import core.ConstanteRipart as cst
-from FormRepondre import FormRepondreDialog
-from FormView import FormView
+from .RipartHelper import RipartHelper
+from .core.Box import Box
+from .core.Client import Client
+from .core.ClientHelper import ClientHelper
+from .core import ConstanteRipart as cst
+from .FormRepondre import FormRepondreDialog
+from .FormView import FormView
 
 class RepondreRipart(object):
     """"Classe pour les réponses Ripart
@@ -46,14 +47,14 @@ class RepondreRipart(object):
             
             activeLayer = self.context.iface.activeLayer()
             if activeLayer==None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
-                self.context.iface.messageBar().pushMessage("Attention", u'Le calque "Signalement" doit être le calque actif', level=1, duration=5)
+                self.context.iface.messageBar().pushMessage("Attention", 'Le calque "Signalement" doit être le calque actif', level=1, duration=5)
                 return
             else:
                 #get selected features
                 selFeats = activeLayer.selectedFeatures()
                 
                 if len(selFeats)==0:
-                    self.context.iface.messageBar().pushMessage("Attention", u'Pas de signalement sélectionné', level=1, duration=10)
+                    self.context.iface.messageBar().pushMessage("Attention", 'Pas de signalement sélectionné', level=1, duration=10)
                     return
                 
        
@@ -67,7 +68,9 @@ class RepondreRipart(object):
                                         level=1, duration=10)
                     
             if  self.context.ripClient == None :
-                self.context.getConnexionRipart()
+                connResult =self.context.getConnexionRipart()
+                if not connResult:
+                    return 0
                 if self.context.ripClient == None : #la connexion a échoué, on ne fait rien
                     self.context.iface.messageBar().pushMessage("",u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer", level=2, duration=5)       
                     return
@@ -81,11 +84,11 @@ class RepondreRipart(object):
                 mess= "Impossible de répondre au signalement n°"+ str(remId) + \
                          ", car il est clôturé depuis le "+ remarque.dateValidation
                                                     
-                self.context.iface.messageBar().pushMessage("Attention",ClientHelper.getEncodeType(mess), level=1, duration=5)
+                self.context.iface.messageBar().pushMessage("Attention",mess, level=1, duration=5)
                 return
                
             if remarque.autorisation not in ["RW","RW+","RW-"] and not isView:
-                mess=u"Vous n'êtes pas autorisé à modifier le signalement n°"+ str(remId)
+                mess="Vous n'êtes pas autorisé à modifier le signalement n°"+ str(remId)
                 self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
                 return
                 
@@ -107,11 +110,11 @@ class RepondreRipart(object):
                     
                 if formReponse.answer :
                     remarque.statut=formReponse.newStat
-                    remMaj=client.addReponse(remarque,ClientHelper.stringToStringType(formReponse.newRep),
-                                                ClientHelper.stringToStringType(formReponse.repTitre) ) 
+                    remMaj=client.addReponse(remarque,ClientHelper.notNoneValue(formReponse.newRep),
+                                                ClientHelper.notNoneValue(formReponse.repTitre) ) 
                            
                     self.context.updateRemarqueInSqlite(remMaj)
-                    mess=u"de l'ajout d'une réponse au signalement n°" + str(remId) 
+                    mess="de l'ajout d'une réponse au signalement n°" + str(remId) 
                     
                     if hasattr(activeLayer, "setCacheImage"):
                         activeLayer.setCacheImage(None)
@@ -119,10 +122,10 @@ class RepondreRipart(object):
                     activeLayer.removeSelection()
                    
                     
-                    self.context.iface.messageBar().pushMessage(u"Succès", mess, level=QgsMessageBar.INFO, duration=15)
+                    self.context.iface.messageBar().pushMessage("Succès", mess, level=0, duration=15)
                
         except Exception as e:
-            self.logger.error(e.message + ";" + str(type(e)) + " " +str(e))
+            self.logger.error(format(e) + ";" + str(type(e)) + " " +str(e))
             raise
         
        

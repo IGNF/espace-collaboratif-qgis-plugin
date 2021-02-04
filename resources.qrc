@@ -1,17 +1,20 @@
 <RCC>
-    <qresource prefix="/plugins/RipartPlugin" >
-       <file>images/connect.png</file>
-       <file>images/update.png</file>
-       <file>images/answer.png</file>
-       <file>images/create.png</file>
-       <file>images/cleaning.png</file>
-	   <file>images/logo_IGN.png</file>
-	   <file>images/ign.png</file>
-	   <file>images/config.png</file>
-	   <file>images/Book.png</file>
-	   <file>images/Log.png</file>
-	   <file>images/About.png</file>
-	   <file>images/viewRem.png</file>
-	   <file>images/magicwand.png</file>
+	<qresource prefix="/plugins/RipartPlugin" >
+		<file>images/connect.png</file>
+      	<file>images/update.png</file>
+       	<file>images/answer.png</file>
+       	<file>images/create.png</file>
+       	<file>images/cleaning.png</file>
+	   	<file>images/logo_IGN.png</file>
+	   	<file>images/ign.png</file>
+	   	<file>images/config.png</file>
+	   	<file>images/Book.png</file>
+	   	<file>images/Log.png</file>
+	   	<file>images/About.png</file>
+	   	<file>images/viewRem.png</file>
+		<file>images/magicwand.png</file>
+		<file>images/charger.png</file>
+		<file>images/compter.png</file>
+		<file>images/synchroniser.png</file>
     </qresource>
 </RCC>

@@ -2,18 +2,23 @@
 '''
 Created on 2 oct. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
+
 import logging
 import os
 from datetime import datetime
 import dateutil.relativedelta
 import string
+import importlib
+from os.path import expanduser
 
 class RipartLogger(object):
     """Paramètres du log
     """
-    
+
     logger=None
     logpath=None
 
@@ -22,12 +27,13 @@ class RipartLogger(object):
         Constructor
         '''
            
-        #trouve le dossier d'installation du plugin et le nom du fichier de log (yyyymmdd_ripart.log)
-        lastSlashIdx=string.rfind(os.path.dirname(__file__),"\\")
-        logdir= os.path.join(os.path.dirname(__file__)[:lastSlashIdx],"logs")   
+        #trouve le dossier d'installation du plugin et le nom du fichier de log (yyyymmdd_espaceco.log)
+        home = expanduser("~")
+        
+        logdir= os.path.join(home,".IGN_plugin_logs")     
             
         today= datetime.now().date().strftime('%Y%m%d')
-        logFilename= today+"_ripart.log"   
+        logFilename= today+"_espaceco.log"   
         self.logpath=os.path.abspath(os.path.join(logdir,logFilename))
         
                 
@@ -35,14 +41,14 @@ class RipartLogger(object):
             os.makedirs(logdir)
                 
         if param=="":
-            param= "ripart"
+            param= "espaceco"
             
         self.logger = logging.getLogger(param)    
                 
         self.logger.setLevel(logging.DEBUG)
               
-        if not os.path.exists(self.logpath):
-            file(self.logpath, 'w').close()
+        #if not os.path.exists(self.logpath):
+        #    file(self.logpath, 'w').close()
             
         fh = logging.FileHandler(self.logpath)
                 

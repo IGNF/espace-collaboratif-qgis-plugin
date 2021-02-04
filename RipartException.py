@@ -1,9 +1,11 @@
 '''
 Created on 1 oct. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
-from qgis.utils import *
+
 class RipartException (Exception):
     '''
     classdocs

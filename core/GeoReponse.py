@@ -2,14 +2,16 @@
 '''
 Created on 23 janv. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
 
 from datetime import datetime
 import xml.etree.cElementTree as et
-from Groupe import *
-from Auteur import *
-import ConstanteRipart
+from .Groupe import *
+from .Auteur import *
+from . import ConstanteRipart
 
 
 
@@ -78,18 +80,6 @@ class GeoReponse(object):
         return tree
       
 
- 
-"""if __name__ == "__main__": 
-    
-    rep= GeoReponse()
-    rep.auteur=Auteur("354","zz")
-    rep.reponse="un texte sqfff"
-
-    tree=rep.encodeToXML()
-    
-    print tree.findtext('AUTEUR')
-"""
-   
     
     
     

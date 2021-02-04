@@ -7,11 +7,18 @@
     <x>0</x>
     <y>0</y>
     <width>432</width>
-    <height>538</height>
+    <height>539</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>IGN RIPart : Créer un nouveau signalement</string>
+   <string>Espace collaboratif : Créer un nouveau signalement</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
+  </property>
+  <property name="toolTipDuration">
+   <number>-4</number>
   </property>
   <widget class="QGroupBox" name="groupBoxProfil">
    <property name="geometry">
@@ -19,7 +26,7 @@
      <x>10</x>
      <y>10</y>
      <width>411</width>
-     <height>481</height>
+     <height>471</height>
     </rect>
    </property>
    <property name="font">
@@ -36,7 +43,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>50</y>
+      <y>110</y>
       <width>391</width>
       <height>231</height>
      </rect>
@@ -195,7 +202,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Créer une remarque unique</string>
+            <string>Créer un signalement unique</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -212,7 +219,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Créer remarques distinctes</string>
+            <string>Créer signalements distincts</string>
            </property>
           </widget>
          </item>
@@ -226,9 +233,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>310</y>
+      <y>380</y>
       <width>391</width>
-      <height>161</height>
+      <height>81</height>
      </rect>
     </property>
     <property name="font">
@@ -244,7 +251,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>290</y>
+      <y>360</y>
       <width>51</width>
       <height>16</height>
      </rect>
@@ -281,7 +288,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>30</y>
+      <y>90</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -307,6 +314,35 @@
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>161</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Groupe</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBoxGroupe">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>50</y>
+      <width>251</width>
+      <height>21</height>
+     </rect>
     </property>
    </widget>
   </widget>

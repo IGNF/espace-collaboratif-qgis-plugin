@@ -1,63 +1,39 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 30 sept. 2015
+Updated on 15 dec. 2020
 
-@author: AChang-Wailing
-'''
+version 4.0.1, 15/12/2020
+
+@author: AChang-Wailing, EPeyrouse
+"""
 
 
 class ClientHelper(object):
-    '''
+    """
     Méthodes utiles
-    '''
-
-    @staticmethod
-    def stringToStringType(val):
-        """Retourne un string à partir d'un texte unicode ou string
-        """
-        if val==None:
-            return ""
-
-        elif type(val)==type('str'):
-            return val
-        else :
-            return val.encode('utf-8');
-    
-    @staticmethod
-    def getEncodeType(val):
-        """Retourne une valeur unicode à partir d'un texte (unicode ou string)
-        """
-        if val==None:
-            return u""
-        elif type(val)==type('str'):
-            return val.decode('utf8')
-        else :
-            return val
-        
+    """
     @staticmethod
     def getValForDB(val):
-        val=ClientHelper.stringToStringType(val)
-        val=val.replace("'","''")
-        val=val.replace('"','""')
+        val = ClientHelper.notNoneValue(val)
+        val = val.replace("'", "''")
+        val = val.replace('"', '""')
         return val
-        
-        
+
     @staticmethod
     def getErrorMessage(code):
         if code == 401:
-            return ClientHelper.stringToStringType('Login et/ou mot de passe erroné(s)')
-        elif code =="no_profile":
-            return ClientHelper.stringToStringType("Accès refusé. Pas de profil actif.")
+            return ClientHelper.notNoneValue('Login et/ou mot de passe erroné(s)')
+        elif code == "no_profile":
+            return ClientHelper.notNoneValue("Accès refusé. Pas de profil actif.")
         else:
-            return ClientHelper.stringToStringType("Impossible d'accéder au service Ripart") 
-                           
- 
-    
+            return ClientHelper.notNoneValue("Impossible d'accéder à l'Espace Collaboratif") 
+
     @staticmethod
     def notNoneValue(val):
         """Retourne une chaine vide si le paramètre = None
         """
-        if val ==None:
+        if val is None:
             return ""
         else: 
             return val

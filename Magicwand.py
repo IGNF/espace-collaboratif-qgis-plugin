@@ -2,11 +2,14 @@
 '''
 Created on 10 nov. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 '''
 
-from RipartHelper import RipartHelper
-from __builtin__ import False
+#standard_library.install_aliases()
+
+from .RipartHelper import RipartHelper
 
 
 class Magicwand(object):
@@ -88,7 +91,7 @@ class Magicwand(object):
             if l.name() in RipartHelper.croquis_layers and len(l.selectedFeatures())>0:
 
                 for feat in l.selectedFeatures():
-                    idx= l.fieldNameIndex("NoSignalement")
+                    idx= l.fields().lookupField("NoSignalement")
                     noSignalement= feat.attributes()[idx]
                     remNos+=str(noSignalement)+","         
                     l.removeSelection()
@@ -107,14 +110,14 @@ class Magicwand(object):
         feats=remarqueLay.selectedFeatures()
         
         for f in feats:
-            idx= remarqueLay.fieldNameIndex("NoSignalement")
+            idx= remarqueLay.fields().lookupField("NoSignalement")
             noSignalement= f.attributes()[idx]
             croquisLays=self.context.getCroquisForRemark(noSignalement,croquisLays)
             
 
         for cr in croquisLays:
             lay=self.context.getLayerByName(cr) 
-            lay.setSelectedFeatures( croquisLays[cr])       
+            lay.selectByIds( croquisLays[cr])       
             remarqueLay.removeSelection()
         
         

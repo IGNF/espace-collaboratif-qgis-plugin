@@ -2,17 +2,19 @@
 """
 Created on 23 janv. 2015
 
+version 3.0.0 , 26/11/2018
+
 @author: AChang-Wailing
 """
 
-from Point import Point
-import ConstanteRipart
-from  Groupe import Groupe
-from Auteur import Auteur
-from Theme  import Theme
+from .Point import Point
+from . import ConstanteRipart
+from  .Groupe import Groupe
+from .Auteur import Auteur
+from .Theme  import Theme
 from datetime import datetime
-from ClientHelper import ClientHelper
-from RipartLoggerCl import RipartLogger
+from .ClientHelper import ClientHelper
+from .RipartLoggerCl import RipartLogger
 
 class Remarque(object):
     """
@@ -22,22 +24,22 @@ class Remarque(object):
     #Identifiant de la remarque
     id = None  
     
-    # Url vers la remarque sur le site  web  publicde Ripart
+    # Url vers la remarque sur le site  web  public de l'Espace collaboratif
     lien =""
     
-    #Url vers la partie privée du site web de Ripart
+    #Url vers la partie privée du site web de l'Espace collaboratif
     lienPrive=""
     
-    # date de création de la remarque Ripart
+    # date de création de la remarque 
     dateCreation = datetime.now()
     
-    # date de mise-à-jour de la remarque Ripart
+    # date de mise-à-jour de la remarque 
     dateMiseAJour = datetime.now()
     
-    #date de validation de la remarque Ripart
+    #date de validation de la remarque 
     dateValidation = None
     
-    #position de la remarque ripart (lon/lat)
+    #position de la remarque (lon/lat)
     position = Point()
     
     #statut de la remarque
@@ -56,13 +58,13 @@ class Remarque(object):
     auteur = Auteur()
     
     
-    #Définit les droits d'action de l'utilisateur en cours sur la remarque Ripart
+    #Définit les droits d'action de l'utilisateur en cours sur la remarque 
     autorisation=""
  
     #
     id_partition=""
     
-    # groupe sous lequel l'auteur a crée la remarque Ripart 
+    # groupe sous lequel l'auteur a crée la remarque 
     groupe= Groupe()
     
     # réponses de la remarque Ripart (liste d'objet GeoReponse)
@@ -140,6 +142,8 @@ class Remarque(object):
                     if z==0:
                         result += "(" 
                         z+=1
+                    if att.valeur == None :
+                        att.valeur =""
                     result += ClientHelper.getValForDB(att.nom + "=" + att.valeur +",")
                 if z>0:
                     result = result[:-1]
@@ -212,17 +216,17 @@ class Remarque(object):
                 concatenate +="<li><b><font color=\"green\">Réponse n°" + count.__str__();
                 count -=1  
                 if len(rep.auteur.nom)!=0 : 
-                    concatenate +=" par " + ClientHelper.stringToStringType(rep.auteur.nom)
+                    concatenate +=" par " + ClientHelper.notNoneValue(rep.auteur.nom)
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 if rep.statut is not None:
-                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts().index(rep.statut.__str__())].encode('utf8')           
+                    concatenate+=", "+ ConstanteRipart.statutLibelle[ConstanteRipart.statuts().index(rep.statut.__str__())]     
                 concatenate += ".</font></b><br/>"
                 
                 if rep.titre() is not None and  rep.titre()!="" :
-                    concatenate += "<b>" +  ClientHelper.stringToStringType(rep.titre().strip()) +"</b><br/>";
+                    concatenate += "<b>" +  ClientHelper.notNoneValue(rep.titre().strip()) +"</b><br/>";
                 if (rep.reponse!=None ): 
-                    concatenate +=  ClientHelper.stringToStringType(rep.reponse.strip().replace("\n","<br/>")) + "</li>";
+                    concatenate +=  ClientHelper.notNoneValue(rep.reponse.strip().replace("\n","<br/>")) + "</li>";
             
         return concatenate
     
@@ -241,17 +245,17 @@ class Remarque(object):
                 count -=1
                 
                 if len(rep.auteur.nom)!=0 : 
-                    concatenate +=" par " +  ClientHelper.stringToStringType(rep.auteur.nom)
+                    concatenate +=" par " +  rep.auteur.nom
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
                 
                 try:
                     if (rep.reponse!=None): 
-                        concatenate += ".\n" + ClientHelper.stringToStringType(rep.reponse.strip()) + "\n";
+                        concatenate += ".\n" + rep.reponse.strip() + "\n";
                     else : 
                         self.logger.error("No message in response "+ self.id)
                 except Exception as e:
-                    self.logger.error(e.message)
+                    self.logger.error(format(e))
                     
             
         return concatenate

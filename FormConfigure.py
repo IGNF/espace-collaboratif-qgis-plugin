@@ -1,26 +1,30 @@
 # -*- coding: utf-8 -*-
 '''
 Created on 20 oct. 2015
+Updated on 30 nov. 2020
 
-@author: AChang-Wailing
+version 4.0.1, 15/12/2020
+
+@author: AChang-Wailing, EPeyrouse, NGremeaux
 '''
+
 import os
+import os.path
 from datetime import datetime, timedelta
 import calendar
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtCore import *
-from PyQt4.Qt import QTreeWidgetItem, QDialogButtonBox
-from qgis.core import *
+from PyQt5 import QtGui, uic, QtWidgets 
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt, QDate
+from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
+from qgis.core import QgsProject,QgsMessageLog,QgsVectorLayer,QgsWkbTypes
 
-
-import FormConfigurerRipart_base
-from RipartHelper import RipartHelper
+from . import FormConfigurerRipart_base
+from .RipartHelper import RipartHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
 
 
-class FormConfigure(QtGui.QDialog, FORM_CLASS):
+class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     """
     Dialogue pour la configuration des préférences de téléchargement des remarques
     """
@@ -102,10 +106,13 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         self.setAttributCroquis()
         
         proxy=RipartHelper.load_proxy(context.projectDir).text
-        
         self.lineEditProxy.setText(proxy)
-        
-        
+
+        groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
+        self.lineEditGroupeActif.setText(groupeactif)
+
+        clegeoportail=RipartHelper.load_clegeoportail(context.projectDir).text
+        self.lineEditCleGeoportail.setText(clegeoportail)
     
     def setComboBoxFilter(self):
         """
@@ -113,7 +120,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         """
         polyLayers=self.context.getMapPolygonLayers()
         
-        polyList=[val for key,val in polyLayers.iteritems() if val!=RipartHelper.nom_Calque_Croquis_Polygone]
+        polyList=[val for key,val in polyLayers.items() if val!=RipartHelper.nom_Calque_Croquis_Polygone]
         self.comboBoxFiltre.clear()
         self.comboBoxFiltre.addItems(polyList)
         
@@ -140,17 +147,15 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         
         ripartLayers=[RipartHelper.nom_Calque_Signalement,
                      RipartHelper.nom_Calque_Croquis_Ligne,
-                     RipartHelper.nom_Calque_Croquis_Fleche,
                      RipartHelper.nom_Calque_Croquis_Point,
-                     RipartHelper.nom_Calque_Croquis_Polygone,
-                     RipartHelper.nom_Calque_Croquis_Texte]
+                     RipartHelper.nom_Calque_Croquis_Polygone]
         
         topItems=[]
         
         for lay in maplayers :
             if type(lay) is QgsVectorLayer and not lay.name() in ripartLayers:
                 item = QTreeWidgetItem()
-                item.setText(0,unicode (lay.name()))
+                item.setText(0,str (lay.name()))
                 inConfig=lay.name() in attCroq
                 if inConfig:
                     state=Qt.Checked
@@ -174,7 +179,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
        
         self.treeWidget.insertTopLevelItems(0, topItems)
         
-        self.connect(self.treeWidget, SIGNAL("itemClicked(QTreeWidgetItem*, int)"),self.onClickItem)
+        self.treeWidget.itemClicked.connect(self.onClickItem)
     
     
     def addSubItems(self,item,layer,attList):
@@ -191,11 +196,11 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
         :param attList: un dictionnaire des attributs à ajouter (key:nom du calque, value:liste des attributs du calque)
         :type attList: dictionary 
         """
-        fieldNames = [field.name() for field in layer.pendingFields() ]
+        fieldNames = [field.name() for field in layer.fields() ]
         
         for f in fieldNames:
             subItem=  QTreeWidgetItem()
-            subItem.setText(0,unicode(f))
+            subItem.setText(0,str(f))
             
             if attList !=None and f in attList: 
                 subItem.setCheckState(0,Qt.Checked)
@@ -312,8 +317,7 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
             filtre =""
         
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_Zone_extraction,filtre,"Map")
-        
-        
+
         #filtre groupe
         if self.checkBoxGroup.isChecked():
             groupFilter="true"
@@ -331,6 +335,12 @@ class FormConfigure(QtGui.QDialog, FORM_CLASS):
                 
         #proxy         
         RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_proxy,self.lineEditProxy.text(),"Serveur")
+
+        #Groupe actif
+        RipartHelper.setXmlTagValue(self.context.projectDir,RipartHelper.xml_GroupeActif,self.lineEditGroupeActif.text(), "Serveur")
+
+        #Clé Geoportail
+        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_CleGeoportail, self.lineEditCleGeoportail.text(),"Serveur")
        
     
     def keyPressEvent(self, event):

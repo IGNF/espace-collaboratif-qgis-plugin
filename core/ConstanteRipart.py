@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 '''
 Created on 23 janv. 2015
+Updated on 15 dec. 2020
 
-@author: AChang-Wailing
+version 4.0.1, 15/12/2020
+
+@author: AChang-Wailing, EPeyrouse
 '''
-from Enum import Enum
+
+from .Enum import Enum
 
 
 '''
@@ -78,7 +82,7 @@ ZoneGeographique = Enum ("UNDEFINED",
 
 namespace={'gml':'http://www.opengis.net/gml'}      
 
-helpFile="Manuel utilisateur plugin RIPart pour QGIS.pdf"    
+helpFile="Manuel utilisateur plugin Espace Collaboratif pour QGIS.pdf"    
 
 
 
@@ -94,4 +98,16 @@ def statuts():
              STATUT.pending2.__str__()
              ]
     return statuts
-    
+
+# Constantes pour le chargement des couches du guichet
+# Types de couches, balise <TYPE>
+WMS = "WMS"
+WFS = "WFS"
+WMTS = "WMTS"
+WCS = "WCS"
+GEOPORTAIL = "GeoPortail"
+COLLABORATIF = "collaboratif.ign.fr"
+WXSIGN = "wxs.ign.fr"
+DEMO = "Démonstration"
+CLEGEOPORTAILSTANDARD = "choisirgeoportail"
+
