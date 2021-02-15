@@ -13,6 +13,7 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from .core.RipartLoggerCl import RipartLogger
 
+from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 
 from .core.ClientHelper import ClientHelper
