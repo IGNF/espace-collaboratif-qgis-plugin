@@ -168,4 +168,3 @@ class MongoDBtoQGIS(object):
 
             return chaineSQL
 
-        return ''

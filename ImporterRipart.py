@@ -271,6 +271,4 @@ class ImporterRipart(object):
                         "- " + str(valid) + " signalement(s)  validé(s).\n" + \
                         "- " + str(reject) + " signalement(s) rejeté(s).\n"
 
-        resultMessage = resultMessage
-
         RipartHelper.showMessageBox(resultMessage)
