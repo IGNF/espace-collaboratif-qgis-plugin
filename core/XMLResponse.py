@@ -659,7 +659,7 @@ class XMLResponse(object):
                         if len(latlon) == 4:
                             pt.longitude = float(latlon[0] + "." + latlon[1])
                             pt.latitude = float(latlon[2] + "." + latlon[3])
-                        elif len(latlon) == 2:
+                        elif len(latlon) == 2 or len(latlon) == 3:
                             pt.longitude = float(latlon[0])
                             pt.latitude = float(latlon[1])
 
@@ -737,7 +737,7 @@ class XMLResponse(object):
             "\\u00f4": 'ô',
             "\\u00f6": 'ö',
             "\\u00f9": 'ù',
-            "\\u00f6": 'û',
+            "\\u00fb": 'û',
             "\\u00fc": 'ü',
         }
 

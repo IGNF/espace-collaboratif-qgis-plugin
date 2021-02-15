@@ -701,6 +701,9 @@ class RipartHelper:
              
         try:
             RipartHelper.logger.debug("INSERT rem id:" + str(rem.id))
+
+            if rem.id == '491836' or rem.id == 491836:
+                b = True
              
             ptx=rem.position.longitude
             pty= rem.position.latitude
@@ -769,7 +772,8 @@ class RipartHelper:
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Point,geom)
                     elif str(cr.type) =="Texte":
                         geom= sgeom % ('POINT',coord)
-                        sql =sql % (RipartHelper.nom_Calque_Croquis_Texte,geom)
+                        #sql =sql % (RipartHelper.nom_Calque_Croquis_Texte,geom)
+                        sql = sql % (RipartHelper.nom_Calque_Croquis_Point, geom)
                     elif str(cr.type)=="Ligne":
                         geom= sgeom % ('LINESTRING',coord)
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Ligne,geom)
