@@ -9,23 +9,15 @@ version 4.0.1, 15/12/2020
 """
 
 import os
-# import urllib.request, urllib.parse, urllib.error
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from .core.RipartLoggerCl import RipartLogger
 
-# from qgis.PyQt import QtGui, uic, QtWidgets
-#from PyQt5.Qt import QDialogButtonBox, QListWidgetItem, QPixmap
-from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 
-
-# from .core import ConstanteRipart as cst
 from .core.ClientHelper import ClientHelper
-# from .core.Remarque import Remarque
 from .core import ConstanteRipart as cst
 from .core.Theme import Theme
-# from .core.Groupe import Groupe
 from .RipartHelper import RipartHelper
 from .core.ThemeAttribut import ThemeAttribut
 

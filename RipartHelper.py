@@ -701,9 +701,6 @@ class RipartHelper:
              
         try:
             RipartHelper.logger.debug("INSERT rem id:" + str(rem.id))
-
-            if rem.id == '491836' or rem.id == 491836:
-                b = True
              
             ptx=rem.position.longitude
             pty= rem.position.latitude
@@ -767,26 +764,17 @@ class RipartHelper:
                     sgeom= " GeomFromText('%s(%s)', 4326)" 
                     coord= cr.getCoordinatesFromPoints()
 
-                    if str(cr.type)=="Point" :                        
+                    if str(cr.type)=="Point" or str(cr.type) =="Texte" :
                         geom= sgeom % ('POINT',coord)
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Point,geom)
-                    elif str(cr.type) =="Texte":
-                        geom= sgeom % ('POINT',coord)
-                        #sql =sql % (RipartHelper.nom_Calque_Croquis_Texte,geom)
-                        sql = sql % (RipartHelper.nom_Calque_Croquis_Point, geom)
-                    elif str(cr.type)=="Ligne":
-                        geom= sgeom % ('LINESTRING',coord)
-                        sql =sql % (RipartHelper.nom_Calque_Croquis_Ligne,geom)
-                    elif str(cr.type) =="Fleche" :
+                    elif str(cr.type)=="Ligne" or str(cr.type) =="Fleche" :
                         geom= sgeom % ('LINESTRING',coord)
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Ligne,geom)
                     elif str(cr.type)=='Polygone':
                         geom= sgeom % ('POLYGON(',coord+")")
                         sql =sql % (RipartHelper.nom_Calque_Croquis_Polygone,geom)
                     cur.execute(sql) 
-                
-            #conn.commit()
-        
+
         except Exception as e:
             RipartHelper.logger.error(format(e))
             raise
