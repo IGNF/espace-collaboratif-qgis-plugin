@@ -236,7 +236,10 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     elif attType == 'list':
                         valeursToDisplay = []
                         for c, v in att.valeurs.items():
-                            valeursToDisplay.append(v)
+                            if v == "":
+                                valeursToDisplay.append(c)
+                            else:
+                                valeursToDisplay.append(v)
                         listAtt = QtWidgets.QComboBox(self.treeWidget)
                         listAtt.insertItems(0, valeursToDisplay)
                         attItem = QtWidgets.QTreeWidgetItem()
@@ -321,14 +324,15 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         datetime = widg.dateTime()
                         val = datetime.toString('yyyy-MM-dd hh:mm:ss')
                     elif type(widg) == QtWidgets.QComboBox:
+                        val = widg.currentText()
                         for th in self.profilThemesList:
-                            if th.groupe.nom != thItem.text:
+                            if th.groupe.nom != thItem.text(0):
                                 continue
                             for att in th.attributs:
                                 for c, v in att.valeurs.items():
-                                    if v == widg.currentText():
+                                    if v != "" and v == widg.currentText():
                                         val = c
-                                        break;
+                                        break
                     else:
                         val = widg.currentText()
 

@@ -16,7 +16,7 @@ class ThemeAttribut(object):
     Classe représentant un attribut d'un thème
     """
     theme = ""
-    tagNom = ""
+    nom = ""
     tagDisplay = ""
     valeur = ""
     defaultval = None
@@ -35,7 +35,7 @@ class ThemeAttribut(object):
         :type valeur:string
         """
         self.theme = theme
-        self.tagNom = nom
+        self.nom = nom
         self.valeur = valeur
         self.valeurs = {}
         self.obligatoire = False
@@ -55,5 +55,5 @@ class ThemeAttribut(object):
     def setTagDisplay(self, display):
         self.tagDisplay = display
 
-    def setTagNom(self, nom):
-        self.tagNom = nom
+    def setNom(self, nom):
+        self.nom = nom

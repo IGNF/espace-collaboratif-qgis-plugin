@@ -28,6 +28,7 @@ from .Layer import Layer
 
 import re
 
+
 class XMLResponse(object):
     """
     Classe pour le parsing des réponses xml et l'extraction des informations nécessaires
@@ -277,8 +278,13 @@ class XMLResponse(object):
                     for attNode in thAttNodes:
 
                         nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
-                        nomAtt = attNode.find('ATT').text
+                        attNodeATT = attNode.find('ATT')
+                        nomAtt = attNodeATT.text
                         thAttribut = ThemeAttribut(nomTh, nomAtt, None)
+                        thAttribut.setTagDisplay(nomAtt)
+                        display = attNodeATT.get('display')
+                        if display is not None:
+                            thAttribut.setTagDisplay(display)
 
                         attType = attNode.find('TYPE').text
                         thAttribut.setType(attType)
@@ -288,7 +294,11 @@ class XMLResponse(object):
                             thAttribut.setObligatoire()
 
                         for val in attNode.findall('VALEURS/VAL'):
-                            thAttribut.addValeur(val.text)
+                            valDisplay = val.get('display')
+                            if valDisplay is not None:
+                                thAttribut.addValeur(val.text, valDisplay)
+                            else:
+                                thAttribut.addValeur(val.text, "")
 
                         for val in attNode.findall('VALEURS/DEFAULTVAL'):
                             thAttribut.defaultval = val.text
@@ -305,7 +315,7 @@ class XMLResponse(object):
                     # "Theme_table_bool_TestEcriture"]},{"group_id":1,"themes":["Bati"]}]
 
                     filterDict = nodegr.find('FILTER').text
-                    groupFilters = re.findall('\{.*?\}',filterDict)
+                    groupFilters = re.findall('\{.*?\}', filterDict)
                     filteredThemes = self.getFilteredThemes(groupFilters, infosgeogroupe.groupe.id)
                     infosgeogroupe.filteredThemes = filteredThemes
 
@@ -316,7 +326,7 @@ class XMLResponse(object):
                         nom = (node.find('NOM')).text
                         theme.groupe.nom = nom
                         if nom in filteredThemes:
-                             theme.isFiltered = True
+                            theme.isFiltered = True
 
                         theme.groupe.id = infosgeogroupe.groupe.id
                         if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
@@ -335,7 +345,6 @@ class XMLResponse(object):
             raise Exception("Erreur dans la récupération des informations sur le GEOGROUPE")
 
         return infosgeogroupes
-
 
     def getFilteredThemes(self, groupFilters, idGeogroupe):
 
@@ -365,7 +374,7 @@ class XMLResponse(object):
                     processFilter = False
 
             if processFilter:
-                listThemesTmp = listElements[len(listElements)-1]
+                listThemesTmp = listElements[len(listElements) - 1]
                 listThemesTmp = listThemesTmp[1:len(listThemesTmp) - 2]
                 filteredThemesTmp = re.findall('\".*?\"', listThemesTmp)
                 # Suppression des guillements
@@ -375,12 +384,10 @@ class XMLResponse(object):
 
         return filteredThemes
 
-
     def getThemes(self):
         """Extraction des thèmes associés au profil     
         :return les thèmes 
         """
-
         themes = []
         themesAttDict = {}
 
@@ -388,13 +395,14 @@ class XMLResponse(object):
 
             thAttributs = []
             thAttNodes = self.root.findall('THEMES/ATTRIBUT')
-            for attNode in thAttNodes:
 
+            for attNode in thAttNodes:
                 nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
-                nomAtt = attNode.find('ATT').text
+                attNodeATT = attNode.find('ATT')
+                nomAtt = attNodeATT.text
                 thAttribut = ThemeAttribut(nomTh, nomAtt, None)
                 thAttribut.setTagDisplay(nomAtt)
-                display = attNode.attrib['display']
+                display = attNodeATT.get('display')
                 if display is not None:
                     thAttribut.setTagDisplay(display)
 
@@ -406,10 +414,11 @@ class XMLResponse(object):
                     thAttribut.setObligatoire()
 
                 for val in attNode.findall('VALEURS/VAL'):
-                    valDisplay = val.attrib['display']
+                    valDisplay = val.get('display')
                     if valDisplay is not None:
                         thAttribut.addValeur(val.text, valDisplay)
-                    thAttribut.addValeur(val.text, "")
+                    else:
+                        thAttribut.addValeur(val.text, "")
 
                 for val in attNode.findall('VALEURS/DEFAULTVAL'):
                     thAttribut.defaultval = val.text
@@ -444,7 +453,7 @@ class XMLResponse(object):
 
         except Exception as e:
             self.logger.error(str(e))
-            raise Exception("Erreur dans la récupération des thèmes du profil")
+            raise Exception("Erreur dans la récupération des thèmes du profil : {}".format(str(e)))
 
         return [themes, filteredThemes]
 
@@ -614,8 +623,7 @@ class XMLResponse(object):
 
         except Exception as e:
             self.logger.error(str(e))
-
-            raise Exception("Une erreur est survenue dans l'importation des remarques")
+            raise Exception("Une erreur est survenue dans l'importation des remarques : {}".format(str(e)))
 
         return remarques
 
