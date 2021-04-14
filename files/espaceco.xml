@@ -1,17 +1,16 @@
-<Paramètres_connexion_à_Ripart>
+<Parametres_connexion_a_EspaceCollaboratif>
   <Serveur>
     <URLHost>https://espacecollaboratif.ign.fr</URLHost>
-
   </Serveur>
   <Map>
     <Date_extraction>01/06/2000 00:00:00</Date_extraction>
     <Pagination>100</Pagination>
     <Zone_extraction>
     </Zone_extraction>
-    <Themes_pref>
+    <Themes_preferes>
         <Theme>Administratif</Theme>
-    </Themes_pref>
+    </Themes_preferes>
     <Afficher_Croquis>Oui</Afficher_Croquis>
     <Import_pour_groupe>true</Import_pour_groupe>
   </Map>
-</Paramètres_connexion_à_Ripart>
+</Parametres_connexion_a_EspaceCollaboratif>

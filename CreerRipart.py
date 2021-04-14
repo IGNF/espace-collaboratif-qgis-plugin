@@ -37,7 +37,7 @@ class CreerRipart(object):
             hasSelectedFeature = self.context.hasMapSelectedFeatures()
        
             if not hasSelectedFeature:
-                RipartHelper.showMessageBox(u"Aucun object sélectionné.\nIl est donc impossible de déterminer le "
+                RipartHelper.showMessageBox(u"Aucun objet sélectionné.\nIl est donc impossible de déterminer le "
                                             u"point d'application du nouveau signalement à créer.")
                 return    #si pas d'objet sélectionné, on arrête le processus
 
@@ -126,7 +126,6 @@ class CreerRipart(object):
           
             RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouveau(x) "
                                                                                                  u"signalement(s)")
-             
         except Exception as e:
             self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=15)
             self.logger.error("in _createNewRemark " + format(e))

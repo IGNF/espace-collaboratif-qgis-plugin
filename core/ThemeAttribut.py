@@ -16,10 +16,11 @@ class ThemeAttribut(object):
     Classe représentant un attribut d'un thème
     """
     theme = ""
-    nom = ""
+    tagNom = ""
+    tagDisplay = ""
     valeur = ""
     defaultval = None
-    valeurs = []
+    valeurs = {}
     type = None
     obligatoire = None
 
@@ -34,14 +35,13 @@ class ThemeAttribut(object):
         :type valeur:string
         """
         self.theme = theme
-        self.nom = nom
+        self.tagNom = nom
         self.valeur = valeur
-
-        self.valeurs = []
+        self.valeurs = {}
         self.obligatoire = False
 
-    def addValeur(self, val):
-        self.valeurs.append(val)
+    def addValeur(self, key, value):
+        self.valeurs[key] = value
 
     def setDefaultVal(self, val):
         self.defaultval = val
@@ -51,3 +51,9 @@ class ThemeAttribut(object):
 
     def setObligatoire(self):
         self.obligatoire = True
+
+    def setTagDisplay(self, display):
+        self.tagDisplay = display
+
+    def setTagNom(self, nom):
+        self.tagNom = nom

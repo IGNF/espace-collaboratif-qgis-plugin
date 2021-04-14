@@ -95,7 +95,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
         preferredGroup = RipartHelper.load_preferredGroup(self.context.projectDir)
 
-        #Ajout des noms de groupes trouvés pour l'utilisateur
+        # Ajout des noms de groupes trouvés pour l'utilisateur
         self.infosgeogroupes = profil.infosGeogroupes
         listeNomsGroupes = []
         for igg in self.infosgeogroupes:
@@ -108,7 +108,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             self.comboBoxGroupe.setCurrentText(preferredGroup)
         else:
             groupeActif = self.context.groupeactif
-            if groupeActif != None and groupeActif != "":
+            if groupeActif is not None and groupeActif != "":
                 self.comboBoxGroupe.setCurrentText(groupeActif)
             else:
                 self.comboBoxGroupe.setCurrentText('Aucun')
@@ -128,7 +128,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         self.docMaxSize = self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
 
-
     def displayThemes(self, filteredThemes, themes):
         """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
         """
@@ -141,7 +140,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
                 # On cherche l'objet theme correspondant dans la liste des themes
                 foundTheme = False
-                for th in themes :
+                for th in themes:
                     nomTheme = th.groupe.nom
                     if th.groupe.nom == thName:
                         foundTheme = True
@@ -171,7 +170,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
                 # ajout des attributs du thème
                 for att in th.attributs:
-                    attLabel = att.nom
+                    attLabel = att.tagDisplay
                     attType = att.type
                     attDefaultval = att.defaultval
 
@@ -203,7 +202,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         dateEdit = QDateEdit()
 
                         if attDefaultval is not None and attDefaultval != '':
-                            #'2020-10-28'
+                            # '2020-10-28'
                             date = attDefaultval.split('-')
                             dateEdit.setDate(QDate(int(date[0]), int(date[1]), int(date[2])))
 
@@ -219,7 +218,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         dateTimeEdit = QDateTimeEdit()
 
                         if attDefaultval is not None and attDefaultval != '':
-                            #'2020-08-15 12:23:48'
+                            # '2020-08-15 12:23:48'
                             dateTime = attDefaultval.split(' ')
                             date = dateTime[0].split('-')
                             time = dateTime[1].split(':')
@@ -235,13 +234,15 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         self.treeWidget.setItemWidget(attItem, 1, dateTimeEdit)
 
                     elif attType == 'list':
+                        valeursToDisplay = []
+                        for c, v in att.valeurs.items():
+                            valeursToDisplay.append(v)
                         listAtt = QtWidgets.QComboBox(self.treeWidget)
-                        listAtt.insertItems(0, att.valeurs)
+                        listAtt.insertItems(0, valeursToDisplay)
                         attItem = QtWidgets.QTreeWidgetItem()
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, listAtt)
-
                     else:
                         valeur = QtWidgets.QLineEdit(self.treeWidget)
                         valeur.setText(attDefaultval)
@@ -249,8 +250,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                         thItem.addChild(attItem)
                         self.treeWidget.setItemWidget(attItem, 0, label)
                         self.treeWidget.setItemWidget(attItem, 1, valeur)
-
-
 
     def groupIndexChanged(self, index):
         """Détecte le groupe choisi et lance l'affiche des thèmes adequats.
@@ -277,7 +276,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.preferredGroup = nomGroupe
 
         self.displayThemes(filteredThemes, themes)
-
 
     def isSingleRemark(self):
         """Indique si l'option de création d'une remarque unique a été choisie.
@@ -322,6 +320,15 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     elif type(widg) == QtWidgets.QDateTimeEdit:
                         datetime = widg.dateTime()
                         val = datetime.toString('yyyy-MM-dd hh:mm:ss')
+                    elif type(widg) == QtWidgets.QComboBox:
+                        for th in self.profilThemesList:
+                            if th.groupe.nom != thItem.text:
+                                continue
+                            for att in th.attributs:
+                                for c, v in att.valeurs.items():
+                                    if v == widg.currentText():
+                                        val = c
+                                        break;
                     else:
                         val = widg.currentText()
 
@@ -395,15 +402,13 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     def openFileDialog(self):
         if self.checkBoxAttDoc.isChecked():
 
-            filters = "Text files (*.txt);;Images (*.png *.xpm *.jpg)"
-
+            # filters = "Text files (*.txt);;Images (*.png *.xpm *.jpg)"
             filters = u"All files (*.*);;" + \
-                      u"Images (*.BMP;*.JPG;*.GIF;*.JPG2000;*.TIFF;*.ECW;*.PSD);;" + \
-                      u"Tracées (*.KML;*.GPX;*.SWG;*.WMF;*.AI);;" + \
-                      u"Textes (*.TXT;*.PDF;*.RTF;*.DOC;*.DOCX;*.ODT);;" + \
-                      u"Tableurs (*.XML;*.CSV;*XLS;*.XLSX;*.ODS);;" + \
-                      u"Base de données (*.MDB;*.MDBX;*.ODB;*.DBF);;" + \
-                      u"SIG (*.SHP;*.LYR;*.GDB;*.MXD;*GCM;*.GCR;*.DXF;*.DWG;*.QGS;*.MIF;*MID)"
+                      u"Images (*.BMP;*.GIF;*.JPG;*.JPEG;*.PNG);;" + \
+                      u"Tracées (*.GPX);;" + \
+                      u"Textes (*.DOC;*.DOCX;*.ODT;*.PDF;*.TXT);;" + \
+                      u"Tableurs (*.CSV;*.KML;*.ODS;*XLS;*.XLSX);;" + \
+                      u"Compressés (*.ZIP;*.7Z)"
 
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Document à joindre à la remarque', '.', filters)
             if filename != "":
@@ -418,7 +423,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     message = u"Le fichier \"" + filename + \
                               u"\" ne peut être envoyé au service Ripart, car sa taille (" + \
                               str(os.path.getsize(filename) / 1000) + \
-                              u" Ko) dépasse celle maximalle autorisée (" + str(self.docMaxSize / 1000) + u" Ko)"
+                              u" Ko) dépasse celle maximale autorisée (" + str(self.docMaxSize / 1000) + u" Ko)"
 
                     RipartHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.Unchecked)

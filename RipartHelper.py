@@ -87,7 +87,7 @@ class RipartHelper:
     xml_Login = "Login"
     xml_DateExtraction = "Date_extraction"
     xml_Pagination = "Pagination"
-    xml_Themes = "Themes_pref"
+    xml_Themes = "Themes_preferes"
     xml_Theme="Theme"
     xml_Zone_extraction = "Zone_extraction"
     xml_AfficherCroquis = "Afficher_Croquis"
@@ -471,21 +471,21 @@ class RipartHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         """
-        prefThemes=[]
+        prefThemes = []
         try:
             print (RipartHelper.nom_Fichier_Parametres_Ripart)
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
             
-            prefThs= xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_Themes+"/"+RipartHelper.xml_Theme,"Map"))
+            prefThs = xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_Themes+"/"+RipartHelper.xml_Theme,"Map"))
 
-            for n in  prefThs:
+            for n in prefThs:
                 prefThemes.append(ClientHelper.notNoneValue(n.text))  
          
         except Exception as e:
             RipartHelper.logger.error(str(e))
         
-        return  prefThemes
+        return prefThemes
     
     
     @staticmethod

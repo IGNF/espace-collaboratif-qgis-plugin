@@ -16,7 +16,7 @@ constantes
 '''
    
 #taille maximale pour un document uploadé
-MAX_TAILLE_UPLOAD_FILE =  5000000
+MAX_TAILLE_UPLOAD_FILE = 16000000
 
 #nombre par défaut de remarques par page
 NB_DEFAULT_REMARQUES_PAGINATION = 100

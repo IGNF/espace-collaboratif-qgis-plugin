@@ -393,6 +393,10 @@ class XMLResponse(object):
                 nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
                 nomAtt = attNode.find('ATT').text
                 thAttribut = ThemeAttribut(nomTh, nomAtt, None)
+                thAttribut.setTagDisplay(nomAtt)
+                display = attNode.attrib['display']
+                if display is not None:
+                    thAttribut.setTagDisplay(display)
 
                 attType = attNode.find('TYPE').text
                 thAttribut.setType(attType)
@@ -402,7 +406,10 @@ class XMLResponse(object):
                     thAttribut.setObligatoire()
 
                 for val in attNode.findall('VALEURS/VAL'):
-                    thAttribut.addValeur(val.text)
+                    valDisplay = val.attrib['display']
+                    if valDisplay is not None:
+                        thAttribut.addValeur(val.text, valDisplay)
+                    thAttribut.addValeur(val.text, "")
 
                 for val in attNode.findall('VALEURS/DEFAULTVAL'):
                     thAttribut.defaultval = val.text
@@ -445,7 +452,6 @@ class XMLResponse(object):
         """Retourne la version du service ripart    
         :return la version du service
         """
-
         v = ""
         try:
             v = self.root.attrib['version']
