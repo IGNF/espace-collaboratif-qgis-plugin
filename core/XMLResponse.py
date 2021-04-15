@@ -517,6 +517,9 @@ class XMLResponse(object):
 
                 rem.id = (node.find('ID_GEOREM')).text
 
+                if str(rem.id) == "500580":
+                    debug = True
+
                 nfind = node.find('AUTORISATION')
                 if nfind is not None:
                     rem.autorisation = nfind.text
@@ -633,62 +636,101 @@ class XMLResponse(object):
         else:
             return ""
 
+
     def getCroquisForRem(self, rem, node):
         """ Extrait les croquis d'une remarque et les ajoute dans l'objet Remarque (rem)
 
         :param rem un objet Remarque
         :type rem: Remarque
-        
+
         :param node: le noeud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
         :type node: string
-        
+
         :return la remarque avec les croquis
         :rtype Remarque
         """
 
-        objets = node.findall('CROQUIS/objet')
+        try:
 
-        for ob in objets:
-            croquis = Croquis()
-            croquis.type = ob.attrib['type']
-            croquis.nom = ob.find('nom').text
+            objets = node.findall('CROQUIS/objet')
 
-            # attributs
-            attributs = ob.findall('attributs/attribut')
-            for att in attributs:
-                attribut = Attribut()
-                attribut.nom = att.attrib['name']
-                attribut.valeur = att.text
-                croquis.addAttribut(attribut)
+            for ob in objets:
 
-            # géométrie
-            coords = ob.iterfind('.//gml:coordinates', cst.namespace)
-            coordinates = ""
-            for c in coords:
-                pts = c.text.split(" ")
-                for spt in pts:
-                    try:
-                        pt = Point()
-                        latlon = spt.split(",")
-                        if len(latlon) == 4:
-                            pt.longitude = float(latlon[0] + "." + latlon[1])
-                            pt.latitude = float(latlon[2] + "." + latlon[3])
-                        elif len(latlon) == 2 or len(latlon) == 3:
-                            pt.longitude = float(latlon[0])
-                            pt.latitude = float(latlon[1])
+                # Récupération du type
+                typeObjet = ob.attrib['type']
+                typeCroquis = ""
 
-                        if pt.longitude is not None and pt.latitude is not None:
-                            coordinates += str(pt.longitude) + " " + str(pt.latitude) + ","
-                            croquis.addPoint(pt)
-                    except:
-                        continue
+                if not typeObjet.startswith("Multi"):
+                    typeCroquis = typeObjet
+                else:
+                    if typeObjet == "MultiPoint":
+                        typeCroquis = "Point"
 
-            croquis.coordinates = coordinates[:-1]
+                    elif typeObjet == "MultiLigne":
+                        typeCroquis = "Ligne"
 
-            # ajoute les croquis à la remarque
-            rem.addCroquis(croquis)
+                    elif typeObjet == "MultiPolygone":
+                        typeCroquis = "Polygone"
+                    else:
+                        self.logger.error("Type de croquis inconnu pour le signalement " + str(rem.id) + " : " + typeObjet)
+                        return
+
+                # Récupération du nom
+                nomCroquis = ob.find('nom').text
+
+                # Récupération des attributs
+                attributs = ob.findall('attributs/attribut')
+                listAttCroquis = []
+                for att in attributs:
+                    attribut = Attribut()
+                    attribut.nom = att.attrib['name']
+                    attribut.valeur = att.text
+                    listAttCroquis.append(attribut)
+
+                # On itère sur les géométries de l'objet xml.
+                # Si c'est un croquis avec une géométrie multiple, il peut y en avoir plusieurs.
+                # Si le croquis a une géométrie simple, il n'y en a qu'une.
+
+                coords = ob.iterfind('.//gml:coordinates', cst.namespace)
+                coordinates = ""
+                for c in coords:
+
+                    # On crée un croquis par ensemble de coordonnées récupérées
+                    croquis = Croquis()
+                    croquis.type = typeCroquis
+                    croquis.nom = nomCroquis
+                    croquis.attributs = listAttCroquis
+
+                    pts = c.text.split(" ")
+                    for spt in pts:
+                        try:
+                            pt = Point()
+                            latlon = spt.split(",")
+                            if len(latlon) == 4:
+                                pt.longitude = float(latlon[0] + "." + latlon[1])
+                                pt.latitude = float(latlon[2] + "." + latlon[3])
+                            elif len(latlon) == 2 or len(latlon) == 3:
+                                pt.longitude = float(latlon[0])
+                                pt.latitude = float(latlon[1])
+
+                            if pt.longitude is not None and pt.latitude is not None:
+                                coordinates += str(pt.longitude) + " " + str(pt.latitude) + ","
+                                croquis.addPoint(pt)
+                        except:
+                            continue
+
+                    croquis.coordinates = coordinates[:-1]
+
+                    # Ajout du croquis au signalement
+                    rem.addCroquis(croquis)
+
+        except Exception as e:
+            self.logger.error(str(e))
+            raise Exception("Erreur dans la récupération du croquis pour le signalement " + str(rem.id) + " : {}".format(str(e)))
 
         return rem
+
+
 
     def getDoc(self, rem, node):
         """Extraction des documents attachés à une remarque
