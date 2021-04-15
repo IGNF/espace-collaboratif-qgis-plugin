@@ -323,6 +323,7 @@ class EditFormFieldFromAttributes(object):
 
         QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
                          'Step': 1, 'Style': 'SpinBox'}
+        self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
         if defaultInteger is None or defaultInteger == '':
             return
