@@ -517,9 +517,6 @@ class XMLResponse(object):
 
                 rem.id = (node.find('ID_GEOREM')).text
 
-                if str(rem.id) == "500580":
-                    debug = True
-
                 nfind = node.find('AUTORISATION')
                 if nfind is not None:
                     rem.autorisation = nfind.text
