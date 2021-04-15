@@ -161,6 +161,8 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     def editing_stopped(self):
         self.setMd5AfterWorks()
+        print ("Rechargement de la couche")
+        self.reload()
 
     '''
     Interdiction de supprimer un attribut sinon la synchronisation au serveur est perdue

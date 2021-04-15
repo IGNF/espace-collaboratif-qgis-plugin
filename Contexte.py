@@ -600,7 +600,6 @@ class Contexte(object):
                 '''
                 if layer.type == cst.WFS:
                     uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
-                    print("toto")
                     print("url : {}".format(uri.uri()))
                     vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type)
 

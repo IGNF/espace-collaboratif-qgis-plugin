@@ -59,7 +59,7 @@ class EditFormFieldFromAttributes(object):
             self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
             self.setFieldListOfValues(v['listOfValues'], v['default_value'])
-            self.setFieldReadOnly(v['readOnly'], v['automatic'])
+            self.setFieldReadOnly(v['readOnly'], v['computed'])
             linkFieldType[v['name']] = v['type']
 
             # Cas particulier de l'identifiant : on le rend non éditable dans le formulaire
