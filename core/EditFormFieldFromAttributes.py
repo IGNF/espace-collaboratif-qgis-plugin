@@ -46,6 +46,8 @@ class EditFormFieldFromAttributes(object):
         # Correspondance nom du champ/type du champ
         linkFieldType = {}
         valeurs = self.data['attributes']
+        idName = self.data['idName']
+
         for c, v in valeurs.items():
             self.name = v['name']
             self.index = self.layer.fields().indexOf(self.name)
@@ -60,8 +62,14 @@ class EditFormFieldFromAttributes(object):
             self.setFieldReadOnly(v['readOnly'], v['automatic'])
             linkFieldType[v['name']] = v['type']
 
-        return linkFieldType
+            # Cas particulier de l'identifiant : on le rend non éditable dans le formulaire
+            # Contrairement à ce que dit l'aide de QGIS, setReadOnly doit être mis à True pour que le champ ne soit pas éditable
+            if self.name == idName:
+                formConfig = self.layer.editFormConfig()
+                formConfig.setReadOnly(self.index, True)
+                self.layer.setEditFormConfig(formConfig)
 
+        return linkFieldType
 
 
     '''
@@ -155,13 +163,16 @@ class EditFormFieldFromAttributes(object):
       ne doit normalement pas la remplir)
       champ = id
       The widget at the given index will not be editable
+      
+      Contrairement à ce que dit l'aide de QGIS, setReadOnly doit être mis à True pour que le champ ne soit pas éditable
     '''
     def setFieldReadOnly(self, readOnly, automatic):
 
-        if readOnly is False or self.name == 'id' or automatic is True:
-            Qgs_editFormConfig = QgsEditFormConfig()
-            Qgs_editFormConfig.setReadOnly(self.index, False)
-            self.layer.setEditFormConfig(Qgs_editFormConfig)
+        if readOnly is True or automatic is True:
+            formConfig = self.layer.editFormConfig()
+            formConfig.setReadOnly(self.index, True)
+            self.layer.setEditFormConfig(formConfig)
+
 
     '''
     Contraintes > Expression (min_value/max_value)
