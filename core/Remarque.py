@@ -233,8 +233,9 @@ class Remarque(object):
                 concatenate += "Réponse n°" + count.__str__();
                 count -= 1
 
-                if len(rep.auteur.nom) != 0:
-                    concatenate += " par " + rep.auteur.nom
+                if rep.auteur.nom is not None:
+                    if len(rep.auteur.nom) != 0:
+                        concatenate += " par " + rep.auteur.nom
                 if rep.date is not None:
                     concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
 
