@@ -23,10 +23,14 @@ repository=http://repo
 # Recommended items:
 
 # Optional items:
-date=15/02/2021
+date=26/04/2021
 
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=
+	4.0.4 - Traitement des croquis avec multi-géométries et améliorations cosmétiques.
+    4.0.3 - Patch correctif
+    4.0.2 - Patch correctif
+	4.0.1 - Intégration de la contribution directe aux guichets Espace collaboratif
 
 # Tags are comma separated with spaces allowed
 tags=python
