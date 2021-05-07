@@ -406,7 +406,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     def openFileDialog(self):
         if self.checkBoxAttDoc.isChecked():
 
-            # filters = "Text files (*.txt);;Images (*.png *.xpm *.jpg)"
             filters = u"All files (*.*);;" + \
                       u"Images (*.BMP;*.GIF;*.JPG;*.JPEG;*.PNG);;" + \
                       u"Tracées (*.GPX);;" + \

@@ -282,9 +282,9 @@ class XMLResponse(object):
                         nomAtt = attNodeATT.text
                         thAttribut = ThemeAttribut(nomTh, nomAtt, None)
                         thAttribut.setTagDisplay(nomAtt)
-                        display = attNodeATT.get('display')
-                        if display is not None:
-                            thAttribut.setTagDisplay(display)
+                        display_tag= attNodeATT.get('display')
+                        if display_tag is not None:
+                            thAttribut.setTagDisplay(display_tag)
 
                         attType = attNode.find('TYPE').text
                         thAttribut.setType(attType)
