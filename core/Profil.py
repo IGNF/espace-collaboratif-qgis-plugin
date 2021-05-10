@@ -19,13 +19,13 @@ class Profil(object):
     """
 
     #Nom de l'auteur   
-    auteur=Auteur()
+    auteur = Auteur()
                         
     #Nom du Geogroupe    
-    geogroupe= Groupe()
+    geogroupe = Groupe()
         
     #Titre du Geogroupe   
-    titre=""
+    titre = ""
 
     #Statut (privilèges) du profil        
     statut=""
@@ -37,14 +37,15 @@ class Profil(object):
     filtre=""
 
     #La zone géographique de travail du profil        
-    zone= ConstanteRipart.ZoneGeographique.UNDEFINED
+    zone = ConstanteRipart.ZoneGeographique.UNDEFINED
 
     #Indique si le profil a accès aux groupes privés
     prive = False
 
     #Les éventuels thèmes attachés au profil
-    themes = list()
+    themes = list()         # Liste des thèmes du profil actif
     filteredThemes = list() # Liste des thèmes filtrés
+    allThemes = list()      # Liste de tous les thèmes du profil de l'utilsateur (issus de tous ses groupes)
 
     #identifiant geoprofil    
     id_Geoprofil=""

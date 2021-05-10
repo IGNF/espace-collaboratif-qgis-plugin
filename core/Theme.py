@@ -21,11 +21,11 @@ class Theme(object):
     #liste d'attributs
     attributs = []
 
-    def __init__(self, params= None):
+    def __init__(self, params=None):
         """
         Constructor
         """
         self.groupe = Groupe()
         self.attributs = []
         self.isFiltered = False
-        #self.isFiltered = True
+

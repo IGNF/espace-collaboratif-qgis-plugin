@@ -215,7 +215,7 @@ class XMLResponse(object):
             profil.filteredThemes = themes[1]
 
             # va chercher les infos de tous les geogroupes de l'utilisateur
-            infosgeogroupes = self.getInfosGeogroupe()
+            infosgeogroupes = self.getInfosGeogroupe(profil)
             profil.infosGeogroupes = infosgeogroupes
 
 
@@ -225,7 +225,7 @@ class XMLResponse(object):
 
         return profil
 
-    def getInfosGeogroupe(self):
+    def getInfosGeogroupe(self, profil):
         """Extraction des infos utilisateur sur ses geogroupes
         :return les infos
         """
@@ -268,45 +268,10 @@ class XMLResponse(object):
 
                     infosgeogroupe.layers.append(layer)
 
-                # Récupération des thèmes du groupe
-                themesAttDict = {}
 
                 try:
-
-                    thAttributs = []
-                    thAttNodes = nodegr.findall('THEMES/ATTRIBUT')
-                    for attNode in thAttNodes:
-
-                        nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
-                        attNodeATT = attNode.find('ATT')
-                        nomAtt = attNodeATT.text
-                        thAttribut = ThemeAttribut(nomTh, nomAtt, None)
-                        thAttribut.setTagDisplay(nomAtt)
-                        display_tag= attNodeATT.get('display')
-                        if display_tag is not None:
-                            thAttribut.setTagDisplay(display_tag)
-
-                        attType = attNode.find('TYPE').text
-                        thAttribut.setType(attType)
-
-                        attObligatoire = attNode.find('OBLIGATOIRE')
-                        if attObligatoire is not None:
-                            thAttribut.setObligatoire()
-
-                        for val in attNode.findall('VALEURS/VAL'):
-                            valDisplay = val.get('display')
-                            if valDisplay is not None:
-                                thAttribut.addValeur(val.text, valDisplay)
-                            else:
-                                thAttribut.addValeur(val.text, "")
-
-                        for val in attNode.findall('VALEURS/DEFAULTVAL'):
-                            thAttribut.defaultval = val.text
-
-                        thAttributs.append(thAttribut)
-                        if nomTh not in themesAttDict:
-                            themesAttDict[nomTh] = []
-                        themesAttDict[nomTh].append(thAttribut)
+                    # Récupération des thèmes du groupe
+                    themesAttDict = self.get_themes_attributes(nodegr.findall('THEMES/ATTRIBUT'))
 
                     nodes = nodegr.findall('THEMES/THEME')
 
@@ -333,6 +298,7 @@ class XMLResponse(object):
                             theme.attributs.extend(themesAttDict[ClientHelper.notNoneValue(theme.groupe.nom)])
 
                         infosgeogroupe.themes.append(theme)
+                        profil.allThemes.append(theme)
 
                 except Exception as e:
                     self.logger.error(str(e))
@@ -345,6 +311,50 @@ class XMLResponse(object):
             raise Exception("Erreur dans la récupération des informations sur le GEOGROUPE")
 
         return infosgeogroupes
+
+
+    def get_themes_attributes(self, thAttNodes):
+        """Récupération des attributs des thèmes de signalement
+        :return dictionnaire contenant pour chaque thème la liste de ses attributs
+        """
+        themesAttDict = {}
+        thAttributs = []
+
+        for attNode in thAttNodes:
+
+            nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
+            attNodeATT = attNode.find('ATT')
+            nomAtt = attNodeATT.text
+            thAttribut = ThemeAttribut(nomTh, nomAtt, None)
+            thAttribut.setTagDisplay(nomAtt)
+            display_tag = attNodeATT.get('display')
+            if display_tag is not None:
+                thAttribut.setTagDisplay(display_tag)
+
+            attType = attNode.find('TYPE').text
+            thAttribut.setType(attType)
+
+            attObligatoire = attNode.find('OBLIGATOIRE')
+            if attObligatoire is not None:
+                thAttribut.setObligatoire()
+
+            for val in attNode.findall('VALEURS/VAL'):
+                valDisplay = val.get('display')
+                if valDisplay is not None:
+                    thAttribut.addValeur(val.text, valDisplay)
+                else:
+                    thAttribut.addValeur(val.text, "")
+
+            for val in attNode.findall('VALEURS/DEFAULTVAL'):
+                thAttribut.defaultval = val.text
+
+            thAttributs.append(thAttribut)
+            if nomTh not in themesAttDict:
+                themesAttDict[nomTh] = []
+            themesAttDict[nomTh].append(thAttribut)
+
+        return themesAttDict
+
 
     def getFilteredThemes(self, groupFilters, idGeogroupe):
 
@@ -386,47 +396,14 @@ class XMLResponse(object):
 
     def getThemes(self):
         """Extraction des thèmes associés au profil     
-        :return les thèmes 
+        :return les thèmes et la liste des thèmes cochés dans le profil
         """
         themes = []
         themesAttDict = {}
 
         try:
 
-            thAttributs = []
-            thAttNodes = self.root.findall('THEMES/ATTRIBUT')
-
-            for attNode in thAttNodes:
-                nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
-                attNodeATT = attNode.find('ATT')
-                nomAtt = attNodeATT.text
-                thAttribut = ThemeAttribut(nomTh, nomAtt, None)
-                thAttribut.setTagDisplay(nomAtt)
-                display = attNodeATT.get('display')
-                if display is not None:
-                    thAttribut.setTagDisplay(display)
-
-                attType = attNode.find('TYPE').text
-                thAttribut.setType(attType)
-
-                attObligatoire = attNode.find('OBLIGATOIRE')
-                if attObligatoire is not None:
-                    thAttribut.setObligatoire()
-
-                for val in attNode.findall('VALEURS/VAL'):
-                    valDisplay = val.get('display')
-                    if valDisplay is not None:
-                        thAttribut.addValeur(val.text, valDisplay)
-                    else:
-                        thAttribut.addValeur(val.text, "")
-
-                for val in attNode.findall('VALEURS/DEFAULTVAL'):
-                    thAttribut.defaultval = val.text
-
-                thAttributs.append(thAttribut)
-                if nomTh not in themesAttDict:
-                    themesAttDict[nomTh] = []
-                themesAttDict[nomTh].append(thAttribut)
+            themesAttDict = self.get_themes_attributes(self.root.findall('THEMES/ATTRIBUT'))
 
             # Récupération du filtre sur les thèmes
             filterDict = self.root.find('PROFIL/FILTRE').text
