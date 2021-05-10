@@ -176,15 +176,12 @@ class Croquis(object):
         """Contrôle la validité de la géométrie
         """
         nPoints = len(self.points)
-        if (nPoints==0):
+        if nPoints == 0 \
+                or ((self.type == self.CroquisType.Point or self.type == self.CroquisType.Texte) and nPoints != 1)\
+                or (self.type == self.CroquisType.Polygone and not self.firstCoord().eq(self.lastCoord()))\
+                or (self.type == self.CroquisType.Vide and nPoints > 0):
             return False
-        elif (self.type==self.CroquisType.Point or self.type == self.CroquisType.Texte) and nPoints!=1 :
-            return False
-        elif self.type ==self.CroquisType.Polygone and not self.firstCoord().eq(self.lastCoord()) :
-            return False
-        elif (self.type == self.CroquisType.Vide and nPoints>0):
-            return False
-        
+
         return True
     
     

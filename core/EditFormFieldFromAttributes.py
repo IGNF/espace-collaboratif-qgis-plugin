@@ -79,35 +79,31 @@ class EditFormFieldFromAttributes(object):
 
         if vType == 'Boolean':
             self.setFieldBoolean(default_value)
-            return
 
-        if vType == 'DateTime':
+        elif vType == 'DateTime':
             self.setFieldDateTime(default_value)
-            return
 
-        if vType == 'Date':
+        elif vType == 'Date':
             self.setFieldDate(default_value)
-            return
 
-        if vType == 'Double':
+        elif vType == 'Double':
             self.setFieldDouble(default_value)
-            return
 
-        if vType == 'Integer':
+        elif vType == 'Integer':
             self.setFieldInteger(default_value)
-            return
 
-        if vType == 'String':
+        elif vType == 'String':
             self.setFieldString(default_value)
-            return
 
-        if vType == 'YearMonth':
+        elif vType == 'YearMonth':
             self.setFieldYearMonth(default_value)
+
+        elif vType == 'Year':
+            self.setFieldYear(default_value)
+
+        else:
             return
 
-        if vType == 'Year':
-            self.setFieldYear(default_value)
-            return
 
     '''
     Mise en forme du champ dans le formulaire d'attributs QGIS
@@ -124,7 +120,7 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldTitle(self, title):
 
-        if title is None or title is '':
+        if title is None or title == '':
             return
 
         self.layer.setFieldAlias(self.index, title)
@@ -190,7 +186,7 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, bNullable):
 
-        if minValue is None and maxValue is None or minValue is '' and maxValue is '':
+        if minValue is None and maxValue is None or minValue == '' and maxValue == '':
             return
 
         if vType == 'DateTime':
@@ -236,7 +232,7 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, vType, bNullable):
 
-        if minLength is None and maxLength is None or minLength is '' and maxLength is '':
+        if minLength is None and maxLength is None or minLength == '' and maxLength == '':
             return
 
         expression = None
@@ -275,7 +271,7 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
 
-        if pattern is None or pattern is '':
+        if pattern is None or pattern == '':
             return
 
         newPattern = pattern.replace('\\', '\\\\')
@@ -464,6 +460,6 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_config = {'map': attribute_values}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultListValue is None or defaultListValue is '':
+        if defaultListValue is None or defaultListValue == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultListValue)))

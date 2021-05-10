@@ -121,7 +121,7 @@ class Client(object):
                 for elementNodelayer in nodeLayer:
                     name = elementNodelayer.find('{http://www.opengis.net/context}Name').text
                     title = elementNodelayer.find('{http://www.opengis.net/context}Title').text
-                    if name is not "" and title is not "":
+                    if name != "" and title != "":
                         layers[name] = title
                         mess = "{} ({})".format(title, name)
                         title = ""

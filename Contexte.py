@@ -8,7 +8,6 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
-from qgis.utils import *
 
 from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
@@ -109,6 +108,9 @@ class Contexte(object):
     # les statistiques
     guichetLayers = []
 
+    # extension sqlite
+    sqlite_ext = ".sqlite"
+
     def __init__(self, QObject, QgsProject):
         """
         Constructor
@@ -169,10 +171,7 @@ class Contexte(object):
         """Retourne l'instance du Contexte
         """
 
-        if not Contexte.instance:
-            Contexte.instance = Contexte._createInstance(QObject, QgsProject)
-
-        elif (Contexte.instance.projectDir != QgsProject.instance().homePath() or
+        if not Contexte.instance or (Contexte.instance.projectDir != QgsProject.instance().homePath() or
               ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName + ".qgs",
                                                                         Contexte.instance.projectFileName + ".qgz"]):
             Contexte.instance = Contexte._createInstance(QObject, QgsProject)
@@ -486,7 +485,7 @@ class Contexte(object):
 
         """
         dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
+        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
         if not os.path.isfile(self.dbPath):
 
@@ -681,7 +680,7 @@ class Contexte(object):
         """
         uri = QgsDataSourceUri()
         dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
+        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
         uri.setDatabase(self.dbPath)
         self.logger.debug(uri.uri())
 
@@ -988,7 +987,7 @@ class Contexte(object):
         """
 
         dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
+        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
         tmpTable = "tmpTable"
 
@@ -1057,8 +1056,7 @@ class Contexte(object):
         point = None
         try:
             dbName = self.projectFileName + "_espaceco"
-            self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
-            # self.conn= sqlite3.connect(self.dbPath)
+            self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
             self.conn = spatialite_connect(self.dbPath)
 
             cur = self.conn.cursor()
