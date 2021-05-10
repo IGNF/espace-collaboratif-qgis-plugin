@@ -8,6 +8,7 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
+from qgis.utils import *
 
 from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
