@@ -1,27 +1,21 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 20 oct. 2015
 Updated on 23 oct. 2020
 
 version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse
-'''
+"""
 
 import os
 
-from qgis.PyQt import QtGui, uic, QtWidgets 
+from qgis.PyQt import uic, QtWidgets
 from qgis.PyQt.QtWidgets import QMessageBox
 from PyQt5.QtCore import *
-from qgis.core import *
 
 from .core.RipartLoggerCl import RipartLogger
-from .core.Client import Client
-from .core import ConstanteRipart
-from .core import Profil
-from .core.ClientHelper import ClientHelper
 
-from .FormInfo import FormInfo
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnexion_dialog_base.ui'))
 

@@ -8,14 +8,11 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
-from qgis.utils import *
-
-from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest, QgsCoordinateTransform, \
-    QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsPolygon, \
-    QgsWkbTypes, QgsLayerTreeGroup, QgsRectangle
+from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
+    QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
+    QgsWkbTypes, QgsLayerTreeGroup
 
 from .RipartException import RipartException
 
@@ -23,13 +20,10 @@ import os.path
 import shutil
 import ntpath
 from qgis.utils import spatialite_connect
-import sqlite3 as sqlite
 import configparser
-import urllib
 
 from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
-from .core.Profil import Profil
 from .core.Client import Client
 from .core.ClientHelper import ClientHelper
 from .core.Attribut import Attribut
@@ -42,8 +36,6 @@ from .core import ConstanteRipart as cst
 from .Import_WMTS import importWMTS
 from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
-
-from .core.Statistics import Statistics
 
 
 class Contexte(object):
@@ -266,7 +258,7 @@ class Contexte(object):
         """
         self.logger.debug("GetConnexionRipart ")
 
-        result = -1;
+        result = -1
 
         try:
             self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
@@ -607,7 +599,7 @@ class Contexte(object):
                         print("Layer {} failed to load !".format(layer.nom))
                         continue
 
-                    QgsProject.instance().addMapLayer(vlayer, False)
+                    QgsProject.instance.addMapLayer(vlayer, False)
                     nodeGroup.addLayer(vlayer)
                     self.guichetLayers.append(vlayer)
                     self.logger.debug("Layer {} added to map".format(vlayer.name()))
@@ -672,7 +664,7 @@ class Contexte(object):
             self.logger.error(format(e))
             self.iface.messageBar(). \
                 pushMessage("Remarque",
-                            str(e), \
+                            str(e),
                             level=1, duration=10)
             print(str(e))
 
@@ -881,7 +873,7 @@ class Contexte(object):
                 elif isMultipart and ftype == QgsWkbTypes.PointGeometry:
                     for pt in geom.asMultiPoint():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPoint(pt), QgsWkbTypes.PointGeometry, lay.crs(), f[0]))
+                            self.makeCroquis(QgsGeometry.fromPointXY(pt), QgsWkbTypes.PointGeometry, lay.crs(), f[0]))
                 else:
                     croquiss.append(self.makeCroquis(geom, ftype, lay.crs(), f[0]))
 
@@ -1012,6 +1004,8 @@ class Contexte(object):
             cur.execute(sql)
 
             i = 0
+            textGeom = ""
+            textGeomEnd = ""
             for cr in listCroquis:
                 i += 1
                 if cr.type == cr.CroquisType.Ligne:

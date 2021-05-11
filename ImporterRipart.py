@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 1 oct. 2015
 
 version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 
 from .core.RipartLoggerCl import RipartLogger
 from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
 from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsVectorLayer
 from qgis.utils import spatialite_connect
 from .RipartHelper import RipartHelper

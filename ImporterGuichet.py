@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
-'''
+
+"""
 Created on 3 jul. 2020
 
 version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
-'''
+"""
 
-import logging
+
 from PyQt5 import Qt
 from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
 
 from .RipartHelper import RipartHelper
-
-from PyQt5.QtCore import *
 
 from .core.RipartLoggerCl import RipartLogger
 from .core.Box import Box

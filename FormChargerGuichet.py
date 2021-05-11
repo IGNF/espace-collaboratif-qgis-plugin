@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5 import QtCore
 
 from qgis.PyQt import QtGui, uic, QtWidgets
-from qgis.core import *
 
 from .ImporterGuichet import ImporterGuichet
 from .core import ConstanteRipart as cst
@@ -113,9 +112,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetMonGuichet.setHorizontalHeaderLabels(entete)
         self.tableWidgetMonGuichet.setHorizontalHeaderLabels(entete)
-        self.tableWidgetMonGuichet.setColumnWidth(0, 400);
-        self.tableWidgetMonGuichet.setColumnWidth(1, 200);
-        self.tableWidgetMonGuichet.setColumnWidth(2, 130);
+        self.tableWidgetMonGuichet.setColumnWidth(0, 400)
+        self.tableWidgetMonGuichet.setColumnWidth(1, 200)
+        self.tableWidgetMonGuichet.setColumnWidth(2, 130)
 
         # Autres lignes de la table
         for layer in self.listLayers:
@@ -149,9 +148,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetFondsGeoportail.setHorizontalHeaderLabels(entete)
-        self.tableWidgetFondsGeoportail.setColumnWidth(0, 400);
-        self.tableWidgetFondsGeoportail.setColumnWidth(1, 200);
-        self.tableWidgetFondsGeoportail.setColumnWidth(2, 130);
+        self.tableWidgetFondsGeoportail.setColumnWidth(0, 400)
+        self.tableWidgetFondsGeoportail.setColumnWidth(1, 200)
+        self.tableWidgetFondsGeoportail.setColumnWidth(2, 130)
 
         # Autres lignes de la table
         for layer in self.listLayers:
@@ -190,7 +189,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Entête
         entete = ["Nom de la couche"]
         self.tableWidgetFondsGeoportailBis.setHorizontalHeaderLabels(entete)
-        self.tableWidgetFondsGeoportailBis.setColumnWidth(0, 400);
+        self.tableWidgetFondsGeoportailBis.setColumnWidth(0, 400)
 
         # Autres lignes de la table
         for layer in self.listLayers:
@@ -247,17 +246,11 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             if item.checkState() == QtCore.Qt.Checked:
                 itemCouche = tableWidget.item(i, 0)
                 checked_list.append(itemCouche.text())
-            else:
-                pass
         return checked_list
 
     def save(self):
         self.accept()
         layersQGIS = []
-        print("Liste des couches à afficher après sélection utilisateur")
-        '''layersChecked = [self.getLayersSelected(self.tableWidgetAutresGeoservices, 2),
-                         self.getLayersSelected(self.tableWidgetFondsGeoportail, 1),
-                         self.getLayersSelected(self.tableWidgetMonGuichet, 2)]'''
         layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoportail, 2),
                          self.getLayersSelected(self.tableWidgetMonGuichet, 2)]
 

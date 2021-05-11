@@ -8,7 +8,7 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
-from .Groupe import *
+from .Groupe import Groupe
 
 
 class Theme(object):

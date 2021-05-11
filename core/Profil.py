@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
-'''
+
+"""
 Created on 23 janv. 2015
 Updated on 9 sept. 2020
 
 version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
-'''
+"""
 
-from .Auteur import *
-from .InfosGeogroupe import *
+
+from .Auteur import Auteur
+from .Groupe import Groupe
 from . import ConstanteRipart 
 
 

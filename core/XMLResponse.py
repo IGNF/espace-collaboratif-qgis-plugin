@@ -690,8 +690,11 @@ class XMLResponse(object):
                             if pt.longitude is not None and pt.latitude is not None:
                                 coordinates += str(pt.longitude) + " " + str(pt.latitude) + ","
                                 croquis.addPoint(pt)
-                        except:
-                            continue
+
+                        except Exception as e:
+                            self.logger.error(str(e))
+                            raise Exception("Erreur dans la récupération de l'un des points du croquis pour le signalement "
+                                            + str(rem.id) + " : {}".format(str(e)))
 
                     croquis.coordinates = coordinates[:-1]
 

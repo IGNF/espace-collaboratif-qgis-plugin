@@ -348,7 +348,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         key = event.key()
         if key ==Qt.Key_Return or key ==Qt.Key_Enter:
-            #print"do nothing"
             pass
     
     def dateChanged(self):
@@ -371,7 +370,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         if not date.isValid():
             maxday=calendar.monthrange(y,m)[1]
             date =QDate(y,m,maxday)
-        #print date.toString('dd/MM/yyyy') 
         self.calendarWidget.setSelectedDate(date)
         
         

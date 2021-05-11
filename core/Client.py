@@ -13,8 +13,8 @@ from collections import OrderedDict
 import os.path
 import json
 
-from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
-from PyQt5.QtCore import *
+from qgis.PyQt.QtWidgets import QProgressBar
+from PyQt5.QtCore import Qt
 from . import ConstanteRipart
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
@@ -394,8 +394,8 @@ class Client(object):
     def getGeoRem(self, idSignalement):
         """Requête pour récupérer une remarque avec un identifiant donné
 
-        :param idRemarque: identifiant de la remarque que l'on souhaite récupérer
-        :type idRemarque: int
+        :param idSignalement: identifiant de la remarque que l'on souhaite récupérer
+        :type idSignalement: int
 
         :return la remarque
         :rtype Remarque
@@ -412,11 +412,9 @@ class Client(object):
 
         total = xmlResponse.getTotalResponse()
 
-        if errMessage['code'] == "OK":
-
-            if int(total) == 1:
-                remarques = xmlResponse.extractRemarques()
-                rem = list(remarques.values())[0]
+        if errMessage['code'] == "OK" and int(total) == 1:
+            remarques = xmlResponse.extractRemarques()
+            rem = list(remarques.values())[0]
 
         return rem
 

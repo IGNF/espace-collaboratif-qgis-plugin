@@ -11,8 +11,7 @@ version 4.0.1, 15/12/2020
 import os
 from PyQt5.QtWidgets import QDialogButtonBox
 
-from qgis.PyQt import QtGui, uic, QtWidgets
-from qgis.core import *
+from qgis.PyQt import uic, QtWidgets
 from .core import ConstanteRipart as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
