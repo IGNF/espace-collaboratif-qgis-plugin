@@ -548,7 +548,7 @@ class Contexte(object):
 
         return uri
 
-    def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
+    def add_guichet_layers_to_map(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
         """
         try:
@@ -599,7 +599,7 @@ class Contexte(object):
                         print("Layer {} failed to load !".format(layer.nom))
                         continue
 
-                    QgsProject.instance.addMapLayer(vlayer, False)
+                    QgsProject.instance().addMapLayer(vlayer, False)
                     nodeGroup.addLayer(vlayer)
                     self.guichetLayers.append(vlayer)
                     self.logger.debug("Layer {} added to map".format(vlayer.name()))

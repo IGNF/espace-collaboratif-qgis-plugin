@@ -8,9 +8,8 @@ version 4.0.1, 15/12/2020
 @author: EPeyrouse, NGremeaux
 """
 
-
-from PyQt5 import Qt
 from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
+from PyQt5.QtCore import Qt
 
 from .RipartHelper import RipartHelper
 
