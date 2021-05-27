@@ -25,11 +25,10 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
     """
     Formulaire de réponse à une remarque
     """
-    
-    answer= False
+    answer = False
     cancel = True
-    newRep =""
-    newStat =""
+    newRep = ""
+    newStat = ""
     repTitre = ""
 
     def __init__(self, parent=None):
@@ -47,36 +46,29 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
         self.btnCancel.clicked.connect(self.cancel)
         self.btnCancel.button(QDialogButtonBox.Cancel).setText("Annuler")
         
-        for i in range(0,9):
-            if cst.statutLibelle[i]!="En attente de validation":
-                self.cboxStatut.addItem(cst.statutLibelle[i],i)
-          
-        
-    
-    def setRemarque(self,remarque):
+        for i in range(0, 9):
+            if cst.statutLibelle[i] != "En attente de validation":
+                self.cboxStatut.addItem(cst.statutLibelle[i], i)
+
+    def setRemarque(self, remarque):
         self.lblMessage.setText(u"Message de la remarque n°" + remarque.id);
         self.setStatut(remarque.statut)
         self.textMessage.setText(ClientHelper.notNoneValue(remarque.commentaire))
         self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateReponseHTML()))
-     
-        
-    def setStatut(self,statut):
-        st=[i for i in range(len(cst.statutLibelle)) if cst.statuts()[i]==statut]
+
+    def setStatut(self, statut):
+        st = [i for i in range(len(cst.statutLibelle)) if cst.statuts()[i] == statut]
         self.cboxStatut.setCurrentIndex(st[0])
-      
-        
+
     def sendResponse(self):
-        self.cancel=False
-        self.answer=True
-        self.newRep=self.textNewRep.toPlainText()
-        self.newStat= cst.statuts()[self.cboxStatut.currentIndex()]
+        self.cancel = False
+        self.answer = True
+        self.newRep = self.textNewRep.toPlainText()
+        self.newStat = cst.statuts()[self.cboxStatut.currentIndex()]
         self.repTitre = self.textTitre.text()
         self.close()
-        
-        
+
     def cancel(self):
-        self.cancel=True
-        self.answer=False
+        self.cancel = True
+        self.answer = False
         self.close()
-        
-        
