@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
-'''
+
+"""
 Created on 23 janv. 2015
 Updated on 9 sept. 2020
 
 version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
-'''
+"""
 
-from .Auteur import *
-from .InfosGeogroupe import *
+
+from .Auteur import Auteur
+from .Groupe import Groupe
 from . import ConstanteRipart 
 
 
@@ -19,13 +21,13 @@ class Profil(object):
     """
 
     #Nom de l'auteur   
-    auteur=Auteur()
+    auteur = Auteur()
                         
     #Nom du Geogroupe    
-    geogroupe= Groupe()
+    geogroupe = Groupe()
         
     #Titre du Geogroupe   
-    titre=""
+    titre = ""
 
     #Statut (privilèges) du profil        
     statut=""
@@ -37,14 +39,15 @@ class Profil(object):
     filtre=""
 
     #La zone géographique de travail du profil        
-    zone= ConstanteRipart.ZoneGeographique.UNDEFINED
+    zone = ConstanteRipart.ZoneGeographique.UNDEFINED
 
     #Indique si le profil a accès aux groupes privés
     prive = False
 
     #Les éventuels thèmes attachés au profil
-    themes = list()
+    themes = list()         # Liste des thèmes du profil actif
     filteredThemes = list() # Liste des thèmes filtrés
+    allThemes = list()      # Liste de tous les thèmes du profil de l'utilsateur (issus de tous ses groupes)
 
     #identifiant geoprofil    
     id_Geoprofil=""

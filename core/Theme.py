@@ -8,7 +8,7 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
-from .Groupe import *
+from .Groupe import Groupe
 
 
 class Theme(object):
@@ -21,11 +21,11 @@ class Theme(object):
     #liste d'attributs
     attributs = []
 
-    def __init__(self, params= None):
+    def __init__(self, params=None):
         """
         Constructor
         """
         self.groupe = Groupe()
         self.attributs = []
         self.isFiltered = False
-        #self.isFiltered = True
+

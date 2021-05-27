@@ -13,7 +13,7 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from .core.RipartLoggerCl import RipartLogger
 
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 
 from .core.ClientHelper import ClientHelper
@@ -124,135 +124,138 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         else:
             self.displayThemes(profil.filteredThemes, profil.themes)
 
-        self.profilThemesList = profil.themes
+        self.profilThemesList = profil.allThemes
 
         self.docMaxSize = self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
+
 
     def displayThemes(self, filteredThemes, themes):
         """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
         """
         preferredThemes = self.preferredThemes
 
-        if len(themes) > 0:
+        if len(themes) <= 0:
+            return
 
-            # boucle sur tous les thèmes filtrés du groupe
-            for thName in filteredThemes:
+        # boucle sur tous les thèmes filtrés du groupe
+        for thName in filteredThemes:
 
-                # On cherche l'objet theme correspondant dans la liste des themes
-                foundTheme = False
-                for th in themes:
-                    nomTheme = th.groupe.nom
-                    if th.groupe.nom == thName:
-                        foundTheme = True
-                        break
+            # On cherche l'objet theme correspondant dans la liste des themes
+            foundTheme = False
+            for th in themes:
+                nomTheme = th.groupe.nom
+                if th.groupe.nom == thName:
+                    foundTheme = True
+                    break
 
-                if not foundTheme:
-                    continue
+            if not foundTheme:
+                continue
 
-                # Si le thème n'est pas dans le filtre du profil, on ne l'affiche pas
-                if not th.isFiltered:
-                    continue
+            # Si le thème n'est pas dans le filtre du profil, on ne l'affiche pas
+            if not th.isFiltered:
+                continue
 
-                # ajout du thème dans le treeview
-                thItem = QTreeWidgetItem(self.treeWidget)
-                thItem.setText(0, th.groupe.nom)
-                thItem.setText(1, th.groupe.id)
-                self.treeWidget.addTopLevelItem(thItem)
+            # ajout du thème dans le treeview
+            thItem = QTreeWidgetItem(self.treeWidget)
+            thItem.setText(0, th.groupe.nom)
+            thItem.setText(1, th.groupe.id)
+            self.treeWidget.addTopLevelItem(thItem)
 
-                # Pour masquer la 2ème colonne (qui contient le groupe id)
-                thItem.setForeground(1, QtGui.QBrush(Qt.white))
+            # Pour masquer la 2ème colonne (qui contient le groupe id)
+            thItem.setForeground(1, QtGui.QBrush(Qt.white))
 
-                if ClientHelper.notNoneValue(th.groupe.nom) in preferredThemes:
-                    thItem.setCheckState(0, Qt.Checked)
-                    thItem.setExpanded(True)
+            if ClientHelper.notNoneValue(th.groupe.nom) in preferredThemes:
+                thItem.setCheckState(0, Qt.Checked)
+                thItem.setExpanded(True)
+            else:
+                thItem.setCheckState(0, Qt.Unchecked)
+
+            # Affichage des attributs du thème et des modules d'aide à la saisie associés
+            for att in th.attributs:
+                attLabel = att.tagDisplay
+                attType = att.type
+                attDefaultval = att.defaultval
+
+                label = QtWidgets.QLabel(attLabel, self.treeWidget)
+                # Les attributs obligatoires sont en gras
+                if att.obligatoire is True:
+                    myFont = QtGui.QFont()
+                    myFont.setBold(True)
+                    label.setFont(myFont)
+
+                item_value = self.get_item_value_from_type(att)
+
+                attItem = QtWidgets.QTreeWidgetItem()
+                thItem.addChild(attItem)
+                self.treeWidget.setItemWidget(attItem, 0, label)
+                self.treeWidget.setItemWidget(attItem, 1, item_value)
+
+
+    '''
+    Renvoie le type d'item pré-rempli avec sa valeur par défaut à afficher en face de chaque
+    attribut du thème de signalement.
+    '''
+    def get_item_value_from_type(self, att):
+
+        item_value = ""
+
+        attType = att.type
+        attDefaultval = att.defaultval
+
+        if attType == "checkbox":
+            item_value = QtWidgets.QCheckBox(self.treeWidget)
+            item_value.setChecked(False)
+            if attDefaultval == '1' \
+                    or attDefaultval == 'True' \
+                    or attDefaultval == 'TRUE' \
+                    or attDefaultval == 'true' \
+                    or attDefaultval == 'Vrai' \
+                    or attDefaultval == 'VRAI' \
+                    or attDefaultval == 'vrai':
+                item_value.setChecked(True)
+
+        elif attType == 'date':
+            item_value = QDateEdit()
+
+            if attDefaultval is not None and attDefaultval != '':
+                # '2020-10-28'
+                date = attDefaultval.split('-')
+                item_value.setDate(QDate(int(date[0]), int(date[1]), int(date[2])))
+
+            item_value.setMinimumDate(QDate(1900, 1, 1))
+            item_value.setMaximumDate(QDate(3000, 1, 1))
+            item_value.setDisplayFormat("yyyy-MM-dd")
+
+        elif attType == 'datetime':
+            item_value = QDateTimeEdit()
+
+            if attDefaultval is not None and attDefaultval != '':
+                # '2020-08-15 12:23:48'
+                dateTime = attDefaultval.split(' ')
+                date = dateTime[0].split('-')
+                time = dateTime[1].split(':')
+                item_value.setDateTime(QDateTime(QDate(int(date[0]), int(date[1]), int(date[2])),
+                                                   QTime(int(time[0]), int(time[1]), int(time[2]))))
+            item_value.setMinimumDateTime(QDateTime(QDate(1900, 1, 1), QTime(0, 0, 0)))
+            item_value.setMaximumDateTime(QDateTime(QDate(3000, 1, 1), QTime(0, 0, 0)))
+            item_value.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+
+        elif attType == 'list':
+            valeursToDisplay = []
+            for c, v in att.valeurs.items():
+                if v == "":
+                    valeursToDisplay.append(c)
                 else:
-                    thItem.setCheckState(0, Qt.Unchecked)
+                    valeursToDisplay.append(v)
+            item_value = QtWidgets.QComboBox(self.treeWidget)
+            item_value.insertItems(0, valeursToDisplay)
 
-                # ajout des attributs du thème
-                for att in th.attributs:
-                    attLabel = att.tagDisplay
-                    attType = att.type
-                    attDefaultval = att.defaultval
+        else:
+            item_value = QtWidgets.QLineEdit(self.treeWidget)
+            item_value.setText(attDefaultval)
 
-                    label = QtWidgets.QLabel(attLabel, self.treeWidget)
-                    # Les attributs obligatoires sont en gras
-                    if att.obligatoire is True:
-                        myFont = QtGui.QFont()
-                        myFont.setBold(True)
-                        label.setFont(myFont)
+        return item_value
 
-                    if attType == "checkbox":
-                        valeur = QtWidgets.QCheckBox(self.treeWidget)
-                        valeur.setChecked(False)
-                        if attDefaultval == '1' \
-                                or attDefaultval == 'True' \
-                                or attDefaultval == 'TRUE' \
-                                or attDefaultval == 'true' \
-                                or attDefaultval == 'Vrai' \
-                                or attDefaultval == 'VRAI' \
-                                or attDefaultval == 'vrai':
-                            valeur.setChecked(True)
-
-                        attItem = QtWidgets.QTreeWidgetItem()
-                        thItem.addChild(attItem)
-                        self.treeWidget.setItemWidget(attItem, 0, label)
-                        self.treeWidget.setItemWidget(attItem, 1, valeur)
-
-                    elif attType == 'date':
-                        dateEdit = QDateEdit()
-
-                        if attDefaultval is not None and attDefaultval != '':
-                            # '2020-10-28'
-                            date = attDefaultval.split('-')
-                            dateEdit.setDate(QDate(int(date[0]), int(date[1]), int(date[2])))
-
-                        dateEdit.setMinimumDate(QDate(1900, 1, 1))
-                        dateEdit.setMaximumDate(QDate(3000, 1, 1))
-                        dateEdit.setDisplayFormat("yyyy-MM-dd")
-                        attItem = QtWidgets.QTreeWidgetItem()
-                        thItem.addChild(attItem)
-                        self.treeWidget.setItemWidget(attItem, 0, label)
-                        self.treeWidget.setItemWidget(attItem, 1, dateEdit)
-
-                    elif attType == 'datetime':
-                        dateTimeEdit = QDateTimeEdit()
-
-                        if attDefaultval is not None and attDefaultval != '':
-                            # '2020-08-15 12:23:48'
-                            dateTime = attDefaultval.split(' ')
-                            date = dateTime[0].split('-')
-                            time = dateTime[1].split(':')
-                            dateTimeEdit.setDateTime(QDateTime(QDate(int(date[0]), int(date[1]), int(date[2])),
-                                                               QTime(int(time[0]), int(time[1]), int(time[2]))))
-
-                        dateTimeEdit.setMinimumDateTime(QDateTime(QDate(1900, 1, 1), QTime(0, 0, 0)))
-                        dateTimeEdit.setMaximumDateTime(QDateTime(QDate(3000, 1, 1), QTime(0, 0, 0)))
-                        dateTimeEdit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
-                        attItem = QtWidgets.QTreeWidgetItem()
-                        thItem.addChild(attItem)
-                        self.treeWidget.setItemWidget(attItem, 0, label)
-                        self.treeWidget.setItemWidget(attItem, 1, dateTimeEdit)
-
-                    elif attType == 'list':
-                        valeursToDisplay = []
-                        for c, v in att.valeurs.items():
-                            if v == "":
-                                valeursToDisplay.append(c)
-                            else:
-                                valeursToDisplay.append(v)
-                        listAtt = QtWidgets.QComboBox(self.treeWidget)
-                        listAtt.insertItems(0, valeursToDisplay)
-                        attItem = QtWidgets.QTreeWidgetItem()
-                        thItem.addChild(attItem)
-                        self.treeWidget.setItemWidget(attItem, 0, label)
-                        self.treeWidget.setItemWidget(attItem, 1, listAtt)
-                    else:
-                        valeur = QtWidgets.QLineEdit(self.treeWidget)
-                        valeur.setText(attDefaultval)
-                        attItem = QtWidgets.QTreeWidgetItem()
-                        thItem.addChild(attItem)
-                        self.treeWidget.setItemWidget(attItem, 0, label)
-                        self.treeWidget.setItemWidget(attItem, 1, valeur)
 
     def groupIndexChanged(self, index):
         """Détecte le groupe choisi et lance l'affiche des thèmes adequats.
@@ -292,6 +295,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
     def getSelectedThemes(self):
         """Retourne la liste des thèmes (objets de type THEME) sélectionnés
+        dans le formulaire de création du signalement
         """
         selectedThemes = []
 
@@ -299,50 +303,94 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         for i in range(root.childCount()):
             thItem = root.child(i)
 
-            if thItem.checkState(0) == Qt.Checked:
-                theme = Theme()
-                theme.groupe.nom = thItem.text(0)
-                theme.groupe.id = thItem.text(1)
+            if thItem.checkState(0) != Qt.Checked:
+                continue
 
-                for j in range(thItem.childCount()):
+            theme = Theme()
+            theme.groupe.nom = thItem.text(0)
+            theme.groupe.id = thItem.text(1)
 
-                    att = thItem.child(j)
-                    label = self.treeWidget.itemWidget(att, 0).text()
-                    widg = self.treeWidget.itemWidget(att, 1)
-                    if type(widg) == QtWidgets.QCheckBox:
-                        state = widg.checkState()
-                        if state == 0:
-                            val = "0"
-                        else:
-                            val = "1"
-                    elif type(widg) == QtWidgets.QLineEdit:
-                        val = widg.text()
-                    elif type(widg) == QtWidgets.QDateEdit:
-                        date = widg.date()
-                        val = date.toString('yyyy-MM-dd')
-                    elif type(widg) == QtWidgets.QDateTimeEdit:
-                        datetime = widg.dateTime()
-                        val = datetime.toString('yyyy-MM-dd hh:mm:ss')
-                    elif type(widg) == QtWidgets.QComboBox:
-                        val = widg.currentText()
-                        for th in self.profilThemesList:
-                            if th.groupe.nom != thItem.text(0):
-                                continue
-                            for att in th.attributs:
-                                for c, v in att.valeurs.items():
-                                    if v != "" and v == widg.currentText():
-                                        val = c
-                                        break
-                    else:
-                        val = widg.currentText()
+            for j in range(thItem.childCount()):
 
-                    attribut = ThemeAttribut(theme.groupe.nom, ClientHelper.notNoneValue(label),
-                                             ClientHelper.notNoneValue(val))
-                    theme.attributs.append(attribut)
+                att = thItem.child(j)
+                label = self.treeWidget.itemWidget(att, 0).text()
+                widg = self.treeWidget.itemWidget(att, 1)
+
+                val = self.get_value_from_widget(widg, label, theme.groupe.nom)
+
+                attribut = ThemeAttribut(theme.groupe.nom, ClientHelper.notNoneValue(label),
+                                         ClientHelper.notNoneValue(val))
+                theme.attributs.append(attribut)
 
                 selectedThemes.append(theme)
 
         return selectedThemes
+
+
+    def get_value_from_widget(self, widg, widg_label, theme_name):
+        """
+        Récupération au format adapté de la valeur saisie dans le formulaire pour chaque widget
+        correspondant à un attribut du thème de signalement sélectionné.
+        """
+
+        if type(widg) == QtWidgets.QCheckBox:
+            state = widg.checkState()
+            if state == 0:
+                val = "0"
+            else:
+                val = "1"
+
+        elif type(widg) == QtWidgets.QLineEdit:
+            val = widg.text()
+
+        elif type(widg) == QtWidgets.QDateEdit:
+            date = widg.date()
+            val = date.toString('yyyy-MM-dd')
+
+        elif type(widg) == QtWidgets.QDateTimeEdit:
+            datetime = widg.dateTime()
+            val = datetime.toString('yyyy-MM-dd hh:mm:ss')
+
+        elif type(widg) == QtWidgets.QComboBox:
+            form_value = widg.currentText()
+            val = self.get_key_from_value(form_value, widg_label, theme_name)
+
+        else:
+            val = widg.currentText()
+
+        return val
+
+
+    def get_key_from_value(self, form_value, widg_label, theme_name):
+        """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
+         par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
+         récupérée dans le formulaire est directement utilisée.
+        """
+
+        # Récupération de l'objet Thème correspondant au nom du thème coché dans le formulaire
+        th = self._getThemeObject(theme_name)
+        if th is None:
+            return form_value
+
+        # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
+        found_att = False
+        for att in th.attributs:
+            if found_att:
+                break
+
+            if att.tagDisplay != widg_label:
+                continue
+
+            # Une fois que l'attribut est trouvé, on remplace si besoin la valeur récupérée sur le formulaire par
+            # la clé qui lui correspond dans la définition du thème
+            found_att = True
+            for c, v in att.valeurs.items():
+                if v != "" and v == form_value:
+                    val = c
+                    return val
+
+        return form_value
+
 
     def _getThemeObject(self, themeName):
         """Retourne l'objet THEME à partir de son nom
@@ -406,7 +454,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     def openFileDialog(self):
         if self.checkBoxAttDoc.isChecked():
 
-            # filters = "Text files (*.txt);;Images (*.png *.xpm *.jpg)"
             filters = u"All files (*.*);;" + \
                       u"Images (*.BMP;*.GIF;*.JPG;*.JPEG;*.PNG);;" + \
                       u"Tracées (*.GPX);;" + \

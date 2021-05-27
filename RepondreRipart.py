@@ -1,22 +1,16 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 8 oct. 2015
 
 version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 from .core.RipartLoggerCl import RipartLogger
 
-from qgis.PyQt import QtCore, QtGui
-from PyQt5.QtCore import *
-from qgis.PyQt.QtWidgets import QMessageBox, QComboBox
-from qgis.core import QgsGeometry
-from qgis.gui import QgsMessageBar
+from PyQt5.QtCore import Qt
 
 from .RipartHelper import RipartHelper
-from .core.Box import Box
-from .core.Client import Client
 from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
 from .FormRepondre import FormRepondreDialog

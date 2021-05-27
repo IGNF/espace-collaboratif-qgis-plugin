@@ -7,7 +7,7 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 '''
 
-from PyQt5.QtCore import *
+from PyQt5.QtCore import QDate, QDateTime
 
 class Attribut(object):
     '''
@@ -30,12 +30,12 @@ class Attribut(object):
         """
         self.nom=nom
         
-        typeAtt=type(valeur)
-        if typeAtt==QDate:
-            valeur=valeur.toString('yyyy-MM-dd')
-        elif typeAtt==QDateTime:
-            valeur=valeur.toString('yyyy-MM-dd hh:mm:ss')
+        typeAtt = type(valeur)
+        if typeAtt == QDate:
+            valeur = valeur.toString('yyyy-MM-dd')
+        elif typeAtt == QDateTime:
+            valeur = valeur.toString('yyyy-MM-dd hh:mm:ss')
         elif typeAtt!=str:
-            valeur=str(valeur)
+            valeur = str(valeur)
             
         self.valeur=valeur

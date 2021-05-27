@@ -215,7 +215,7 @@ class XMLResponse(object):
             profil.filteredThemes = themes[1]
 
             # va chercher les infos de tous les geogroupes de l'utilisateur
-            infosgeogroupes = self.getInfosGeogroupe()
+            infosgeogroupes = self.getInfosGeogroupe(profil)
             profil.infosGeogroupes = infosgeogroupes
 
 
@@ -225,7 +225,7 @@ class XMLResponse(object):
 
         return profil
 
-    def getInfosGeogroupe(self):
+    def getInfosGeogroupe(self, profil):
         """Extraction des infos utilisateur sur ses geogroupes
         :return les infos
         """
@@ -268,45 +268,10 @@ class XMLResponse(object):
 
                     infosgeogroupe.layers.append(layer)
 
-                # Récupération des thèmes du groupe
-                themesAttDict = {}
 
                 try:
-
-                    thAttributs = []
-                    thAttNodes = nodegr.findall('THEMES/ATTRIBUT')
-                    for attNode in thAttNodes:
-
-                        nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
-                        attNodeATT = attNode.find('ATT')
-                        nomAtt = attNodeATT.text
-                        thAttribut = ThemeAttribut(nomTh, nomAtt, None)
-                        thAttribut.setTagDisplay(nomAtt)
-                        display = attNodeATT.get('display')
-                        if display is not None:
-                            thAttribut.setTagDisplay(display)
-
-                        attType = attNode.find('TYPE').text
-                        thAttribut.setType(attType)
-
-                        attObligatoire = attNode.find('OBLIGATOIRE')
-                        if attObligatoire is not None:
-                            thAttribut.setObligatoire()
-
-                        for val in attNode.findall('VALEURS/VAL'):
-                            valDisplay = val.get('display')
-                            if valDisplay is not None:
-                                thAttribut.addValeur(val.text, valDisplay)
-                            else:
-                                thAttribut.addValeur(val.text, "")
-
-                        for val in attNode.findall('VALEURS/DEFAULTVAL'):
-                            thAttribut.defaultval = val.text
-
-                        thAttributs.append(thAttribut)
-                        if nomTh not in themesAttDict:
-                            themesAttDict[nomTh] = []
-                        themesAttDict[nomTh].append(thAttribut)
+                    # Récupération des thèmes du groupe
+                    themesAttDict = self.get_themes_attributes(nodegr.findall('THEMES/ATTRIBUT'))
 
                     nodes = nodegr.findall('THEMES/THEME')
 
@@ -333,6 +298,7 @@ class XMLResponse(object):
                             theme.attributs.extend(themesAttDict[ClientHelper.notNoneValue(theme.groupe.nom)])
 
                         infosgeogroupe.themes.append(theme)
+                        profil.allThemes.append(theme)
 
                 except Exception as e:
                     self.logger.error(str(e))
@@ -345,6 +311,50 @@ class XMLResponse(object):
             raise Exception("Erreur dans la récupération des informations sur le GEOGROUPE")
 
         return infosgeogroupes
+
+
+    def get_themes_attributes(self, thAttNodes):
+        """Récupération des attributs des thèmes de signalement
+        :return dictionnaire contenant pour chaque thème la liste de ses attributs
+        """
+        themesAttDict = {}
+        thAttributs = []
+
+        for attNode in thAttNodes:
+
+            nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
+            attNodeATT = attNode.find('ATT')
+            nomAtt = attNodeATT.text
+            thAttribut = ThemeAttribut(nomTh, nomAtt, None)
+            thAttribut.setTagDisplay(nomAtt)
+            display_tag = attNodeATT.get('display')
+            if display_tag is not None:
+                thAttribut.setTagDisplay(display_tag)
+
+            attType = attNode.find('TYPE').text
+            thAttribut.setType(attType)
+
+            attObligatoire = attNode.find('OBLIGATOIRE')
+            if attObligatoire is not None:
+                thAttribut.setObligatoire()
+
+            for val in attNode.findall('VALEURS/VAL'):
+                valDisplay = val.get('display')
+                if valDisplay is not None:
+                    thAttribut.addValeur(val.text, valDisplay)
+                else:
+                    thAttribut.addValeur(val.text, "")
+
+            for val in attNode.findall('VALEURS/DEFAULTVAL'):
+                thAttribut.defaultval = val.text
+
+            thAttributs.append(thAttribut)
+            if nomTh not in themesAttDict:
+                themesAttDict[nomTh] = []
+            themesAttDict[nomTh].append(thAttribut)
+
+        return themesAttDict
+
 
     def getFilteredThemes(self, groupFilters, idGeogroupe):
 
@@ -386,47 +396,14 @@ class XMLResponse(object):
 
     def getThemes(self):
         """Extraction des thèmes associés au profil     
-        :return les thèmes 
+        :return les thèmes et la liste des thèmes cochés dans le profil
         """
         themes = []
         themesAttDict = {}
 
         try:
 
-            thAttributs = []
-            thAttNodes = self.root.findall('THEMES/ATTRIBUT')
-
-            for attNode in thAttNodes:
-                nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
-                attNodeATT = attNode.find('ATT')
-                nomAtt = attNodeATT.text
-                thAttribut = ThemeAttribut(nomTh, nomAtt, None)
-                thAttribut.setTagDisplay(nomAtt)
-                display = attNodeATT.get('display')
-                if display is not None:
-                    thAttribut.setTagDisplay(display)
-
-                attType = attNode.find('TYPE').text
-                thAttribut.setType(attType)
-
-                attObligatoire = attNode.find('OBLIGATOIRE')
-                if attObligatoire is not None:
-                    thAttribut.setObligatoire()
-
-                for val in attNode.findall('VALEURS/VAL'):
-                    valDisplay = val.get('display')
-                    if valDisplay is not None:
-                        thAttribut.addValeur(val.text, valDisplay)
-                    else:
-                        thAttribut.addValeur(val.text, "")
-
-                for val in attNode.findall('VALEURS/DEFAULTVAL'):
-                    thAttribut.defaultval = val.text
-
-                thAttributs.append(thAttribut)
-                if nomTh not in themesAttDict:
-                    themesAttDict[nomTh] = []
-                themesAttDict[nomTh].append(thAttribut)
+            themesAttDict = self.get_themes_attributes(self.root.findall('THEMES/ATTRIBUT'))
 
             # Récupération du filtre sur les thèmes
             filterDict = self.root.find('PROFIL/FILTRE').text
@@ -633,62 +610,104 @@ class XMLResponse(object):
         else:
             return ""
 
+
     def getCroquisForRem(self, rem, node):
         """ Extrait les croquis d'une remarque et les ajoute dans l'objet Remarque (rem)
 
         :param rem un objet Remarque
         :type rem: Remarque
-        
+
         :param node: le noeud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
         :type node: string
-        
+
         :return la remarque avec les croquis
         :rtype Remarque
         """
 
-        objets = node.findall('CROQUIS/objet')
+        try:
 
-        for ob in objets:
-            croquis = Croquis()
-            croquis.type = ob.attrib['type']
-            croquis.nom = ob.find('nom').text
+            objets = node.findall('CROQUIS/objet')
 
-            # attributs
-            attributs = ob.findall('attributs/attribut')
-            for att in attributs:
-                attribut = Attribut()
-                attribut.nom = att.attrib['name']
-                attribut.valeur = att.text
-                croquis.addAttribut(attribut)
+            for ob in objets:
 
-            # géométrie
-            coords = ob.iterfind('.//gml:coordinates', cst.namespace)
-            coordinates = ""
-            for c in coords:
-                pts = c.text.split(" ")
-                for spt in pts:
-                    try:
-                        pt = Point()
-                        latlon = spt.split(",")
-                        if len(latlon) == 4:
-                            pt.longitude = float(latlon[0] + "." + latlon[1])
-                            pt.latitude = float(latlon[2] + "." + latlon[3])
-                        elif len(latlon) == 2 or len(latlon) == 3:
-                            pt.longitude = float(latlon[0])
-                            pt.latitude = float(latlon[1])
+                # Récupération du type
+                typeObjet = ob.attrib['type']
+                typeCroquis = ""
 
-                        if pt.longitude is not None and pt.latitude is not None:
-                            coordinates += str(pt.longitude) + " " + str(pt.latitude) + ","
-                            croquis.addPoint(pt)
-                    except:
-                        continue
+                if not typeObjet.startswith("Multi"):
+                    typeCroquis = typeObjet
+                else:
+                    if typeObjet == "MultiPoint":
+                        typeCroquis = "Point"
 
-            croquis.coordinates = coordinates[:-1]
+                    elif typeObjet == "MultiLigne":
+                        typeCroquis = "Ligne"
 
-            # ajoute les croquis à la remarque
-            rem.addCroquis(croquis)
+                    elif typeObjet == "MultiPolygone":
+                        typeCroquis = "Polygone"
+                    else:
+                        self.logger.error("Type de croquis inconnu pour le signalement " + str(rem.id) + " : " + typeObjet)
+                        return
+
+                # Récupération du nom
+                nomCroquis = ob.find('nom').text
+
+                # Récupération des attributs
+                attributs = ob.findall('attributs/attribut')
+                listAttCroquis = []
+                for att in attributs:
+                    attribut = Attribut()
+                    attribut.nom = att.attrib['name']
+                    attribut.valeur = att.text
+                    listAttCroquis.append(attribut)
+
+                # On itère sur les géométries de l'objet xml.
+                # Si c'est un croquis avec une géométrie multiple, il peut y en avoir plusieurs.
+                # Si le croquis a une géométrie simple, il n'y en a qu'une.
+
+                coords = ob.iterfind('.//gml:coordinates', cst.namespace)
+                coordinates = ""
+                for c in coords:
+
+                    # On crée un croquis par ensemble de coordonnées récupérées
+                    croquis = Croquis()
+                    croquis.type = typeCroquis
+                    croquis.nom = nomCroquis
+                    croquis.attributs = listAttCroquis
+
+                    pts = c.text.split(" ")
+                    for spt in pts:
+                        try:
+                            pt = Point()
+                            latlon = spt.split(",")
+                            if len(latlon) == 4:
+                                pt.longitude = float(latlon[0] + "." + latlon[1])
+                                pt.latitude = float(latlon[2] + "." + latlon[3])
+                            elif len(latlon) == 2 or len(latlon) == 3:
+                                pt.longitude = float(latlon[0])
+                                pt.latitude = float(latlon[1])
+
+                            if pt.longitude is not None and pt.latitude is not None:
+                                coordinates += str(pt.longitude) + " " + str(pt.latitude) + ","
+                                croquis.addPoint(pt)
+
+                        except Exception as e:
+                            self.logger.error(str(e))
+                            raise Exception("Erreur dans la récupération de l'un des points du croquis pour le signalement "
+                                            + str(rem.id) + " : {}".format(str(e)))
+
+                    croquis.coordinates = coordinates[:-1]
+
+                    # Ajout du croquis au signalement
+                    rem.addCroquis(croquis)
+
+        except Exception as e:
+            self.logger.error(str(e))
+            raise Exception("Erreur dans la récupération du croquis pour le signalement " + str(rem.id) + " : {}".format(str(e)))
 
         return rem
+
+
 
     def getDoc(self, rem, node):
         """Extraction des documents attachés à une remarque

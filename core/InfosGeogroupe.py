@@ -7,7 +7,7 @@ version 4.0.1, 15/12/2020
 @author: EPeyrouse, NGremeaux
 """
 
-from .Groupe import *
+from .Groupe import Groupe
 
 
 class InfosGeogroupe(object):

@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 8 oct. 2015
 
 @author: AChang-Wailing
-'''
+"""
+
 from __future__ import absolute_import
 from builtins import range
 import os
 
-from qgis.PyQt import QtGui, uic, QtWidgets
-from qgis.PyQt.QtWidgets import QMessageBox
-from PyQt5.QtCore import *
-from PyQt5.Qt import  QDialogButtonBox
+from qgis.PyQt import uic, QtWidgets
 
-from .core.RipartLoggerCl import RipartLogger 
 from .core import ConstanteRipart as cst
 from .core.ClientHelper import ClientHelper
 
@@ -44,14 +41,14 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
          
         self.btnSend.clicked.connect(self.sendResponse)
         self.btnCancel.clicked.connect(self.cancel)
-        self.btnCancel.button(QDialogButtonBox.Cancel).setText("Annuler")
+        self.btnCancel.button(QtWidgets.QDialogButtonBox.Cancel).setText("Annuler")
         
         for i in range(0, 9):
             if cst.statutLibelle[i] != "En attente de validation":
                 self.cboxStatut.addItem(cst.statutLibelle[i], i)
 
     def setRemarque(self, remarque):
-        self.lblMessage.setText(u"Message de la remarque n°" + remarque.id);
+        self.lblMessage.setText(u"Message de la remarque n°" + remarque.id)
         self.setStatut(remarque.statut)
         self.textMessage.setText(ClientHelper.notNoneValue(remarque.commentaire))
         self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateReponseHTML()))

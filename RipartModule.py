@@ -323,9 +323,10 @@ class RipartPlugin:
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
             if dlgChargerGuichet.context.profil is not None:
-                if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1:
-                    if len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0:
-                        raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
+                if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1 and \
+                        len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0 :
+                    raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
+
             dlgChargerGuichet.exec_()
 
         except Exception as e:

@@ -37,6 +37,11 @@ class GuichetVectorLayer(QgsVectorLayer):
     # Correspondance champ/type
     correspondanceChampType = None
 
+    # Base historisée
+    idxFingerprint = -1                 ## index du champ gcms_fingerprint dans la couche
+    fingerprint = "gcms_fingerprint"    ## nom du champ gcms_fingerprint (présent sur les bases historisées)
+    listUpdatedFeaturesIds = None            ## liste des identifiants des objets créés/modifiés/supprimés
+
     def getStat(self):
         return self.stat
 
@@ -54,6 +59,12 @@ class GuichetVectorLayer(QgsVectorLayer):
     def __init__(self, projectDirectory, layerName, layerType):
 
         super(GuichetVectorLayer, self).__init__(projectDirectory, layerName, layerType)
+
+        # Remplissage de idxFingerprint (index du champ gcms_fingerprint) pour les tables historisées
+        listFields = self.fields()
+        self.idxFingerprint = listFields.indexFromName(self.fingerprint)
+        self.listUpdatedFeaturesIds = []
+
         self.connectSignals()
         self.stat = Statistics(self.featureCount())
         self.repertoire = projectDirectory
@@ -63,17 +74,35 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
         self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
 
+
+
+
     '''
     Connexion des signaux pour les évènements survenus sur la carte
     '''
     def connectSignals(self):
-        # self.geometryChanged.connect(self.geometry_changed)
-        # self.attributeValueChanged.connect(self.attribute_value_changed)
-        # self.featureAdded.connect(self.feature_added)
-        # self.featuresDeleted.connect(self.features_deleted)
+
+        # Connexion des signaux permettant le traitement de gcms_fingerprint pour les tables historisées
+        if self.idxFingerprint != -1:
+            # Signaux pour la modification d'objets
+            self.geometryChanged.connect(self.geometry_changed)
+            self.attributeValueChanged.connect(self.attribute_value_changed)
+            #self.featureAdded.connect(self.feature_added)
+            self.featureDeleted.connect(self.feature_deleted)
+
+            # Signaux pour réinitialiser la liste des objets modifiés
+            # self.afterCommitChanges.connect(self.clear_features_list)
+            # self.afterRollBack.connect(self.clear_features_list)
+            # self.editingStarted.connect(self.clear_features_list)
+            # self.editingStopped.connect(self.clear_features_list)
+            self.beforeCommitChanges.connect(self.before_commit_changes)
+
         self.attributeAdded.connect(self.attribute_added)
         self.attributeDeleted.connect(self.attribute_deleted)
         self.editingStopped.connect(self.editing_stopped)
+
+    def print_list(self):
+        print (self.listUpdatedFeaturesIds)
 
     '''
     Calcul d'une clé de hachage à partir des caractéristiques d'un objet
@@ -161,6 +190,37 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     def editing_stopped(self):
         self.setMd5AfterWorks()
+        print ("Rechargement de la couche")
+        self.reload()
+
+
+    def attribute_value_changed(self, fid, idx, value):
+        self.include_fingerprint(fid, idx)
+
+    def geometry_changed(self, fid, geometry):
+        self.include_fingerprint(fid)
+
+    def feature_deleted(self, fid):
+        self.include_fingerprint(fid)
+
+    def before_commit_changes(self):
+        print ("Before commit changes")
+
+    '''
+    Lors de toute modification sur un objet d'une table historisée (table contenant le champ gcms_fingerprint),
+    on simule une modification du champ gcms_fingerprint pour que celui-ci soit inclus dans la transaction.
+    Sinon, la transaction est refusée par l'espace collaboratif.
+    '''
+    def include_fingerprint(self, fid, idx = None):
+        if idx is not None and (idx == self.idxFingerprint or self.idxFingerprint == -1):
+            return
+
+        #if fid in self.listUpdatedFeaturesIds:
+        #    return
+
+        feat = self.getFeature(fid)
+        valFingerPrint = feat[self.fingerprint]
+        self.changeAttributeValue(fid, self.idxFingerprint, valFingerPrint, valFingerPrint)
 
     '''
     Interdiction de supprimer un attribut sinon la synchronisation au serveur est perdue

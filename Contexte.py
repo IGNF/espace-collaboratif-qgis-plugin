@@ -8,14 +8,11 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
-from qgis.utils import *
-
-from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsMessageLog, QgsFeatureRequest, QgsCoordinateTransform, \
-    QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, QgsPolygon, \
-    QgsWkbTypes, QgsLayerTreeGroup, QgsRectangle
+from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
+    QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
+    QgsWkbTypes, QgsLayerTreeGroup
 
 from .RipartException import RipartException
 
@@ -23,13 +20,10 @@ import os.path
 import shutil
 import ntpath
 from qgis.utils import spatialite_connect
-import sqlite3 as sqlite
 import configparser
-import urllib
 
 from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
-from .core.Profil import Profil
 from .core.Client import Client
 from .core.ClientHelper import ClientHelper
 from .core.Attribut import Attribut
@@ -42,8 +36,6 @@ from .core import ConstanteRipart as cst
 from .Import_WMTS import importWMTS
 from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
-
-from .core.Statistics import Statistics
 
 
 class Contexte(object):
@@ -109,6 +101,9 @@ class Contexte(object):
     # les statistiques
     guichetLayers = []
 
+    # extension sqlite
+    sqlite_ext = ".sqlite"
+
     def __init__(self, QObject, QgsProject):
         """
         Constructor
@@ -169,10 +164,7 @@ class Contexte(object):
         """Retourne l'instance du Contexte
         """
 
-        if not Contexte.instance:
-            Contexte.instance = Contexte._createInstance(QObject, QgsProject)
-
-        elif (Contexte.instance.projectDir != QgsProject.instance().homePath() or
+        if not Contexte.instance or (Contexte.instance.projectDir != QgsProject.instance().homePath() or
               ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName + ".qgs",
                                                                         Contexte.instance.projectFileName + ".qgz"]):
             Contexte.instance = Contexte._createInstance(QObject, QgsProject)
@@ -266,7 +258,7 @@ class Contexte(object):
         """
         self.logger.debug("GetConnexionRipart ")
 
-        result = -1;
+        result = -1
 
         try:
             self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
@@ -486,7 +478,7 @@ class Contexte(object):
 
         """
         dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
+        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
         if not os.path.isfile(self.dbPath):
 
@@ -556,7 +548,7 @@ class Contexte(object):
 
         return uri
 
-    def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
+    def add_guichet_layers_to_map(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
         """
         try:
@@ -600,7 +592,6 @@ class Contexte(object):
                 '''
                 if layer.type == cst.WFS:
                     uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
-                    print("toto")
                     print("url : {}".format(uri.uri()))
                     vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type)
 
@@ -673,7 +664,7 @@ class Contexte(object):
             self.logger.error(format(e))
             self.iface.messageBar(). \
                 pushMessage("Remarque",
-                            str(e), \
+                            str(e),
                             level=1, duration=10)
             print(str(e))
 
@@ -682,7 +673,7 @@ class Contexte(object):
         """
         uri = QgsDataSourceUri()
         dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
+        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
         uri.setDatabase(self.dbPath)
         self.logger.debug(uri.uri())
 
@@ -882,7 +873,7 @@ class Contexte(object):
                 elif isMultipart and ftype == QgsWkbTypes.PointGeometry:
                     for pt in geom.asMultiPoint():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPoint(pt), QgsWkbTypes.PointGeometry, lay.crs(), f[0]))
+                            self.makeCroquis(QgsGeometry.fromPointXY(pt), QgsWkbTypes.PointGeometry, lay.crs(), f[0]))
                 else:
                     croquiss.append(self.makeCroquis(geom, ftype, lay.crs(), f[0]))
 
@@ -989,7 +980,7 @@ class Contexte(object):
         """
 
         dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
+        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
         tmpTable = "tmpTable"
 
@@ -1013,6 +1004,8 @@ class Contexte(object):
             cur.execute(sql)
 
             i = 0
+            textGeom = ""
+            textGeomEnd = ""
             for cr in listCroquis:
                 i += 1
                 if cr.type == cr.CroquisType.Ligne:
@@ -1058,8 +1051,7 @@ class Contexte(object):
         point = None
         try:
             dbName = self.projectFileName + "_espaceco"
-            self.dbPath = self.projectDir + "/" + dbName + ".sqlite"
-            # self.conn= sqlite3.connect(self.dbPath)
+            self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
             self.conn = spatialite_connect(self.dbPath)
 
             cur = self.conn.cursor()

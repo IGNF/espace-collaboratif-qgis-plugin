@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 23 janv. 2015
 
 version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 
 from datetime import datetime
 import xml.etree.cElementTree as et
-from .Groupe import *
-from .Auteur import *
+from .Groupe import Groupe
+from .Auteur import Auteur
 from . import ConstanteRipart
 
 
