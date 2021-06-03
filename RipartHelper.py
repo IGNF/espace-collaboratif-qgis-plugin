@@ -28,19 +28,19 @@ import errno
 import shutil
 import os, sys, subprocess
 
+
 class RipartHelper:
-    """"
+    """
     Classe contenant des utilitaires pour le plugin
     """
-    
-    ripart_files_dir="files"
+    ripart_files_dir = "files"
     ripart_db = "espaceco.sqlite"
     
     #fichier de configuration
     nom_Fichier_Parametres_Ripart = "espaceco.xml"
     
     #dossier des fichiers de style .qml
-    qmlStylesDir="espacecoStyles"          
+    qmlStylesDir = "espacecoStyles"
 
     nom_Calque_Signalement = "Signalement"
     #nom_Calque_Croquis_Fleche = "Croquis_EC_Fleche"
@@ -49,12 +49,12 @@ class RipartHelper:
     nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
     nom_Calque_Croquis_Point = "Croquis_EC_Point"
    
-    croquis_layers ={nom_Calque_Croquis_Polygone:'POLYGON',nom_Calque_Croquis_Ligne:'LINESTRING',
-                    nom_Calque_Croquis_Point:'POINT'}
+    croquis_layers = {nom_Calque_Croquis_Polygone: 'POLYGON',nom_Calque_Croquis_Ligne: 'LINESTRING',
+                    nom_Calque_Croquis_Point: 'POINT'}
      
     #liste des noms, car le dictionnaire ne préserve pas l'ordre des éléments
-    croquis_layers_name=[nom_Calque_Croquis_Polygone,nom_Calque_Croquis_Ligne,         
-                         nom_Calque_Croquis_Point,nom_Calque_Signalement]
+    croquis_layers_name = [nom_Calque_Croquis_Polygone, nom_Calque_Croquis_Ligne,
+                         nom_Calque_Croquis_Point, nom_Calque_Signalement]
 
     calque_Signalement_Lyr = "Signalement.lyr"
 
@@ -80,15 +80,15 @@ class RipartHelper:
     nom_Champ_Attributs = "Attributs_croquis"
     nom_Champ_LienBDuni = "Lien_object_BDUni"""
 
-    xmlServeur="Serveur"
-    xmlMap="Map"
+    xmlServeur = "Serveur"
+    xmlMap = "Map"
   
     xml_UrlHost = "URLHost"
     xml_Login = "Login"
     xml_DateExtraction = "Date_extraction"
     xml_Pagination = "Pagination"
     xml_Themes = "Themes_preferes"
-    xml_Theme="Theme"
+    xml_Theme = "Theme"
     xml_Zone_extraction = "Zone_extraction"
     xml_AfficherCroquis = "Afficher_Croquis"
     xml_AttributsCroquis = "Attributs_croquis"
@@ -96,16 +96,16 @@ class RipartHelper:
     xml_BaliseNomCalque = "Calque_Nom"
     xml_BaliseChampCalque = "Calque_Champ"
     #xml_Group = "./Map/Import_pour_groupe"
-    xml_Group ="Import_pour_groupe"
-    xml_Map="./Map"
+    xml_Group = "Import_pour_groupe"
+    xml_Map = "./Map"
     
-    xml_proxy="Proxy"
+    xml_proxy = "Proxy"
     xml_GroupeActif = "groupe_actif"
-    xml_CleGeoportail="cle_geoportail"
+    xml_CleGeoportail = "cle_geoportail"
     xml_GroupePrefere = "groupe_prefere"
 
     defaultDate = "1900-01-01 00:00:00"
-    defaultPagination=100
+    defaultPagination = 100
     longueurMaxChamp = 5000
     
     #Système de coordonnées de référence de Ripart
@@ -113,15 +113,12 @@ class RipartHelper:
     
     logger=RipartLogger("RipartHelper").getRipartLogger()
 
-
-    
     @staticmethod
     def getXPath(tagName,parentName):
         """Construction du xpath
         """
         xpath="./"+parentName+"/"+tagName
         return xpath
-    
 
     @staticmethod
     def load_urlhost(projectDir):
@@ -130,21 +127,19 @@ class RipartHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         """
-        urlhost=""
+        urlhost = ""
         try:    
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            urlhost= xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_UrlHost,"Serveur"))     
-            if urlhost==None:
-                urlhost=RipartHelper.addXmlElement(projectDir,"URLHost","Serveur")
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            urlhost = xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_UrlHost,"Serveur"))
+            if urlhost is None:
+                urlhost = RipartHelper.addXmlElement(projectDir,"URLHost","Serveur")
                  
         except Exception as e:
             RipartHelper.logger.error(str(e))
     
         return urlhost
-    
-   
-    
+
     @staticmethod
     def load_login(projectDir):
         """Retourne le login sauvegardé dans le fichier de configuration xml
@@ -152,22 +147,21 @@ class RipartHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         """
-        login=""
+        login = ""
         try:    
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            login= xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_Login,"Serveur"))     
-            if login==None:
-                login=RipartHelper.addXmlElement(projectDir,"Login","Serveur")
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            login = xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_Login,"Serveur"))
+            if login is None:
+                login = RipartHelper.addXmlElement(projectDir,"Login","Serveur")
                 
         except Exception as e:
             RipartHelper.logger.error(str(e))
     
         return login
-    
-    
+
     @staticmethod
-    def save_login(projectDir,login):
+    def save_login(projectDir, login):
         """Enregistre le login dans le fichier de configuration
         
         :param projectDir: le chemin vers le répertoire du projet
@@ -177,17 +171,16 @@ class RipartHelper:
         :type login: string
         """
         try:
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            xlogin= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Login,"Serveur"))
-            xlogin.text=login 
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            xlogin = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Login, "Serveur"))
+            xlogin.text = login
             
-            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
            
         except Exception as e:
             RipartHelper.logger.error(format(e))
-            
-       
+
     @staticmethod
     def load_proxy(projectDir):
         """Retourne le proxy sauvegardé dans le fichier de configuration xml
@@ -195,22 +188,21 @@ class RipartHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         """
-        proxy=""
+        proxy = ""
         try:    
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            proxy= xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_proxy,"Serveur"))     
-            if proxy==None:
-                proxy=RipartHelper.addXmlElement(projectDir,RipartHelper.xml_proxy,"Serveur")
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            proxy= xmlroot.find( RipartHelper.getXPath(RipartHelper.xml_proxy, "Serveur"))
+            if proxy is None:
+                proxy = RipartHelper.addXmlElement(projectDir,RipartHelper.xml_proxy, "Serveur")
                 
         except Exception as e:
             RipartHelper.logger.error(str(e))
     
         return proxy
-    
-    
+
     @staticmethod
-    def save_proxy(projectDir,proxy):
+    def save_proxy(projectDir, proxy):
         """Enregistre le proxy dans le fichier de configuration
         
         :param projectDir: le chemin vers le répertoire du projet
@@ -220,12 +212,12 @@ class RipartHelper:
         :type login: string
         """
         try:
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            xproxy= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_proxy,"Serveur"))
-            xproxy.text=proxy
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            xproxy = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_proxy, "Serveur"))
+            xproxy.text = proxy
             
-            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
            
         except Exception as e:
             RipartHelper.logger.error(format(e))
@@ -242,7 +234,7 @@ class RipartHelper:
             tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot = tree.getroot()
             groupeactif = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupeActif, "Serveur"))
-            if groupeactif == None:
+            if groupeactif is None:
                 groupeactif = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_GroupeActif, "Serveur")
 
         except Exception as e:
@@ -283,7 +275,7 @@ class RipartHelper:
             tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot = tree.getroot()
             groupePrefere = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupePrefere, "Serveur"))
-            if groupePrefere == None:
+            if groupePrefere is None:
                 groupePrefere = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_GroupePrefere, "Serveur")
 
         except Exception as e:
@@ -324,14 +316,13 @@ class RipartHelper:
             tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot = tree.getroot()
             clegeoportail = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_CleGeoportail, "Serveur"))
-            if clegeoportail == None:
+            if clegeoportail is None:
                 clegeoportail = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_CleGeoportail, "Serveur")
 
         except Exception as e:
             RipartHelper.logger.error(str(e))
 
         return clegeoportail
-
 
     @staticmethod
     def save_clegeoportail(projectDir, clegeoportail):
@@ -361,21 +352,19 @@ class RipartHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         """
-        calque=""
+        calque = ""
         try:    
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            calque= xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Zone_extraction,"Map"))     
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            calque = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Zone_extraction, "Map"))
             
         except Exception as e:
             RipartHelper.logger.error(str(e))
         
         return calque
 
- 
-
     @staticmethod
-    def load_ripartXmlTag(projectDir,tag,parent=None):
+    def load_ripartXmlTag(projectDir, tag, parent=None):
         """Recherche un élément (tag) dans le fichier xml.
         Si l'élément n'existe pas ,il est créé
         
@@ -391,22 +380,20 @@ class RipartHelper:
         :return l'élément xml recherché
         :rtype Element
         """
-        node=None
+        node = None
         try:    
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            node= xmlroot.find(RipartHelper.getXPath(tag,parent))     
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            node = xmlroot.find(RipartHelper.getXPath(tag, parent))
             
-            if node==None:
-                node=RipartHelper.addXmlElement(projectDir, tag, parent)
+            if node is None:
+                node = RipartHelper.addXmlElement(projectDir, tag, parent)
             
         except Exception as e:
             RipartHelper.logger.error(str(e))
         
-        return  node
-    
-    
-    
+        return node
+
     @staticmethod
     def addXmlElement(projectDir,elem,parentElem,value=None):
         """Ajoute un élément xml "elem", avec comme élémént paren "parentElem"
@@ -420,25 +407,24 @@ class RipartHelper:
         :return l'élément xml créé
         :rtype: Element
         """
-        tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-        xmlroot =tree.getroot()
-        if parentElem!="root":
-            parentNode= xmlroot.find(parentElem)  
+        tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+        xmlroot = tree.getroot()
+        if parentElem != "root":
+            parentNode = xmlroot.find(parentElem)
         else:
-            parentNode=xmlroot  
-        if parentNode==None:
-            parentNode=RipartHelper.addXmlElement(projectDir, parentElem, "root")
+            parentNode = xmlroot
+        if parentNode is None:
+            parentNode = RipartHelper.addXmlElement(projectDir, parentElem, "root")
             
-        elementNode=ET.SubElement(parentNode,elem)
+        elementNode = ET.SubElement(parentNode,elem)
         
-        if value!=None:
+        if value is not None:
             elementNode.text=value
                     
-        tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+        tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
         
         return elementNode
-    
-    
+
     @staticmethod
     def load_attCroquis(projectDir):
         """Retourne les attributs de croquis sauvegardés dans le fichier de configuration xml
@@ -446,16 +432,16 @@ class RipartHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         """
-        attCroquis={}
+        attCroquis = {}
         try:
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            nodes=xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_AttributsCroquis,"Map"))
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            nodes = xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_AttributsCroquis, "Map"))
             
             for cr in nodes:
-                nomCalque=cr.find(RipartHelper.xml_BaliseNomCalque).text
-                attCroquis[nomCalque]=[]
-                fields=cr.iter(RipartHelper.xml_BaliseChampCalque)
+                nomCalque = cr.find(RipartHelper.xml_BaliseNomCalque).text
+                attCroquis[nomCalque] = []
+                fields = cr.iter(RipartHelper.xml_BaliseChampCalque)
                 for f in fields:
                     attCroquis[nomCalque].append(f.text)
                 
@@ -477,7 +463,7 @@ class RipartHelper:
             tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot = tree.getroot()
             
-            prefThs = xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_Themes+"/"+RipartHelper.xml_Theme,"Map"))
+            prefThs = xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_Themes+"/"+RipartHelper.xml_Theme, "Map"))
 
             for n in prefThs:
                 prefThemes.append(ClientHelper.notNoneValue(n.text))  
@@ -486,8 +472,7 @@ class RipartHelper:
             RipartHelper.logger.error(str(e))
         
         return prefThemes
-    
-    
+
     @staticmethod
     def save_preferredThemes(projectDir,prefThemes):
         """Enregistre les thèmes dans le fichier de config
@@ -499,25 +484,24 @@ class RipartHelper:
         :type prefThemes: list de Theme
         """
         #first load Themes_prefs tag (create the tag if the tag doesn't exist yet)
-        themesNode= RipartHelper.load_ripartXmlTag(projectDir,RipartHelper.xml_Themes,"Map")
-        RipartHelper.removeNode(projectDir, RipartHelper.xml_Theme,"Map/"+RipartHelper.xml_Themes )
+        themesNode = RipartHelper.load_ripartXmlTag(projectDir,RipartHelper.xml_Themes, "Map")
+        RipartHelper.removeNode(projectDir, RipartHelper.xml_Theme, "Map/"+RipartHelper.xml_Themes )
         
         for th in prefThemes:
-            RipartHelper.addXmlElement(projectDir,  RipartHelper.xml_Theme, "Map/"+RipartHelper.xml_Themes, th.groupe.nom)
-            
-    
+            RipartHelper.addXmlElement(projectDir, RipartHelper.xml_Theme, "Map/"+RipartHelper.xml_Themes, th.groupe.nom)
+
     @staticmethod
-    def addNode(projectDir,tag,value, parentTag=None):
+    def addNode(projectDir, tag, value, parentTag = None):
         try:
             tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot = tree.getroot()
-            if parentTag == None:
+            if parentTag is None:
                 parentNode = xmlroot
             else:   
                 parentNode = xmlroot.find(parentTag)
                 
-            newTag=ET.SubElement(parentNode, tag)
-            newTag.text=value
+            newTag = ET.SubElement(parentNode, tag)
+            newTag.text = value
                
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
             
@@ -525,11 +509,11 @@ class RipartHelper:
             RipartHelper.logger.error(format(e))
     
     @staticmethod
-    def removeNode(projectDir,tag, parentTag=None):
+    def removeNode(projectDir, tag, parentTag = None):
         try:
             tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
             xmlroot = tree.getroot()
-            if parentTag == None:
+            if parentTag is None:
                 parentNode = xmlroot
             else:   
                 parentNode = xmlroot.find(parentTag)
@@ -537,101 +521,89 @@ class RipartHelper:
             for c in parentNode.findall(tag):
                 parentNode.remove(c)
                
-            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
             
         except Exception as e:
             RipartHelper.logger.error(format(e))
-    
-    
+
     @staticmethod
-    def setXmlTagValue(projectDir,tag,value,parent=None):
+    def setXmlTagValue(projectDir, tag, value, parent=None):
         """Donne une valeur à un tag du fichier de config
         """
         try:
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            node= xmlroot.find(RipartHelper.getXPath(tag, parent))  
-            node.text=value
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            node = xmlroot.find(RipartHelper.getXPath(tag, parent))
+            node.text = value
             
-            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
            
         except Exception as e:
             RipartHelper.logger.error(format(e))
-            
 
-            
     @staticmethod
-    def setAttributsCroquis(projectDir,calqueName,values):
+    def setAttributsCroquis(projectDir, calqueName, values):
         try:
-            tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot =tree.getroot()
-            mapNode= xmlroot.find(RipartHelper.xml_Map)
+            tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+            xmlroot = tree.getroot()
+            mapNode = xmlroot.find(RipartHelper.xml_Map)
             
-            nodeAtributsCroquis= ET.SubElement(mapNode,'Attributs_croquis')
-            nodeNom= ET.SubElement(nodeAtributsCroquis,'Calque_Nom')
-            nodeNom.text=calqueName
+            nodeAtributsCroquis = ET.SubElement(mapNode, 'Attributs_croquis')
+            nodeNom = ET.SubElement(nodeAtributsCroquis, 'Calque_Nom')
+            nodeNom.text = calqueName
             for val in values:
-                field= ET.SubElement(nodeAtributsCroquis,'Calque_Champ')
+                field = ET.SubElement(nodeAtributsCroquis, 'Calque_Champ')
                 field.text=val
             
-            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
+            tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
         except Exception as e:
             # fix_print_with_import
             print(format(e))
         
     @staticmethod
     def removeAttCroquis(projectDir,):
-        tree= ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
-        xmlroot =tree.getroot()
-        maptag= xmlroot.find('Map')
+        tree = ET.parse(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart)
+        xmlroot = tree.getroot()
+        maptag = xmlroot.find('Map')
         for c in maptag.findall('Attributs_croquis'):
             maptag.remove(c)
-        tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart,encoding="utf-8")
-            
-         
+        tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+
     @staticmethod    
     def createRemarqueTable(conn):   
-        """Création de la table Signalement
         """
-        
-        sql=u"CREATE TABLE Signalement (" + \
+        Création de la table Signalement
+        """
+        sql = u"CREATE TABLE Signalement (" + \
             u"id INTEGER NOT NULL PRIMARY KEY," + \
-            u"NoSignalement INTEGER,"  + \
+            u"NoSignalement INTEGER," + \
             u"Auteur TEXT, " + \
             u"Commune TEXT, " + \
             u"Département TEXT, " + \
-            u"Département_id  TEXT,"+ \
-            u"Date_création TEXT,"+ \
-            u"Date_MAJ TEXT,"+ \
-            u"Date_validation TEXT,"+ \
-            u"Thèmes TEXT ,"+ \
-            u"Statut TEXT ,"+ \
-            u"Message TEXT,"+ \
-            u"Réponses TEXT,"+ \
-            u"URL TEXT,"+ \
-            u"URL_privé TEXT ,"+ \
-            u"Document TEXT,"+ \
+            u"Département_id  TEXT," + \
+            u"Date_création TEXT," + \
+            u"Date_MAJ TEXT," + \
+            u"Date_validation TEXT," + \
+            u"Thèmes TEXT ," + \
+            u"Statut TEXT ," + \
+            u"Message TEXT," + \
+            u"Réponses TEXT," + \
+            u"URL TEXT," + \
+            u"URL_privé TEXT ," + \
+            u"Document TEXT," + \
             u"Autorisation TEXT)"
         
         cur = conn.cursor()
-        r=cur.execute(sql)
+        r = cur.execute(sql)
         
         # creating a POINT Geometry column
-        
-        sql = "SELECT AddGeometryColumn('Signalement','geom', "+str(RipartHelper.epsgCrs)+",  'POINT', 'XY')" 
-        
+        sql = "SELECT AddGeometryColumn('Signalement','geom', "+str(RipartHelper.epsgCrs)+", 'POINT', 'XY')"
         cur = conn.cursor()
         cur.execute(sql)
-        
         conn.commit()
-        
-        #conn.close()
-        
-    
-        
-  
+
     @staticmethod     
-    def createCroquisTable(conn,table,geomType):
+    def createCroquisTable(conn, table, geomType):
         """Création d'une table de croquis
         
         :param conn: la connexion à la base de données
@@ -645,11 +617,11 @@ class RipartHelper:
         """
         cur = conn.cursor()
         
-        sql=u"CREATE TABLE "+table+" (" + \
+        sql = u"CREATE TABLE "+table+" (" + \
             u"id INTEGER NOT NULL PRIMARY KEY," + \
-            u"NoSignalement INTEGER,"  + \
-            u"Nom TEXT ,"+ \
-            u"Attributs_croquis,"+ \
+            u"NoSignalement INTEGER," + \
+            u"Nom TEXT ," + \
+            u"Attributs_croquis," + \
             u"Lien_objet_BDUNI TEXT) " 
         
         cur.execute(sql)
@@ -658,12 +630,10 @@ class RipartHelper:
         sql = "SELECT AddGeometryColumn('"+table+"',"
         sql += "'geom',"+str(RipartHelper.epsgCrs)+",'"+geomType+"', 'XY')"
         cur.execute(sql)
-        
         cur.close()
-        
-        
+
     @staticmethod    
-    def emptyTable(conn,table):
+    def emptyTable(conn, table):
         """Vide le contenu de la table donnée en paramètre
         
         :param conn: la connexion à la base de données
@@ -672,23 +642,20 @@ class RipartHelper:
         :param table: la table à vider
         :type: string
         """
-
         cur = conn.cursor()
         try:
-            sql=u"DELETE FROM "+table
-            
+            sql = u"DELETE FROM "+table
             cur.execute(sql)
-            rowcount=cur.rowcount
+            rowcount = cur.rowcount
             
-            sql =u"SELECT count(*) FROM "+ table
+            sql = u"SELECT count(*) FROM " + table
             cur.execute(sql)
-            rowcount=cur.rowcount
+            rowcount = cur.rowcount
         finally: 
             cur.close()
-        
-    
+
     @staticmethod
-    def insertRemarques(conn,rem):
+    def insertRemarques(conn, rem):
         """Insertion d'une nouvelle remarque dans la table Signalement
         
         @param conn: la connexion à la base de données
@@ -702,77 +669,74 @@ class RipartHelper:
         try:
             RipartHelper.logger.debug("INSERT rem id:" + str(rem.id))
              
-            ptx=rem.position.longitude
-            pty= rem.position.latitude
+            ptx = rem.position.longitude
+            pty = rem.position.latitude
              
-            if type(rem.dateCreation)==datetime:
-                rem.dateCreation=RipartHelper.formatDatetime(rem.dateCreation)
-            if type(rem.dateMiseAJour)==datetime:
-                rem.dateMiseAJour=RipartHelper.formatDatetime(rem.dateMiseAJour)
-            if type(rem.dateValidation)==datetime:
-                rem.dateValidation=RipartHelper.formatDatetime(rem.dateValidation)
+            if type(rem.dateCreation) == datetime:
+                rem.dateCreation = RipartHelper.formatDatetime(rem.dateCreation)
+            if type(rem.dateMiseAJour) == datetime:
+                rem.dateMiseAJour = RipartHelper.formatDatetime(rem.dateMiseAJour)
+            if type(rem.dateValidation) == datetime:
+                rem.dateValidation = RipartHelper.formatDatetime(rem.dateValidation)
             
-            if rem.dateValidation==None: 
-                rem.dateValidation=""
+            if rem.dateValidation is None:
+                rem.dateValidation = ""
                 
-            geom= " GeomFromText('POINT("+ str(ptx)+" "+str(pty) +")', 4326)"
+            geom = " GeomFromText('POINT("+ str(ptx)+" "+str(pty) + ")', 4326)"
              
-            sql=u"INSERT INTO "+ RipartHelper.nom_Calque_Signalement
-            sql+= u" (NoSignalement, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ," 
-            sql+= u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation,geom) "
-            sql+= u"VALUES (" 
-            sql+= str(rem.id) +", '" 
-            sql+= ClientHelper.getValForDB(rem.auteur.nom) +"', '" 
-            sql+= rem.getAttribut("commune") +"', '" 
-            sql+= rem.getAttribut("departement","nom") +"', '" 
-            sql+= rem.getAttribut("departement","id")+"', '" 
-            sql+= rem.dateCreation+"', '" 
-            sql+= rem.dateMiseAJour +"', '" 
-            sql+= rem.dateValidation+"', '" 
-            sql+= rem.concatenateThemes()+"', '"
-            sql+= rem.statut.__str__()+"', '" 
-            sql+= rem.getAttribut("commentaire") +"', '"
-            sql+= ClientHelper.getValForDB(rem.concatenateReponse()) +"', '" 
-            sql+= rem.getAttribut("lien") +"', '" 
-            sql+= rem.getAttribut("lienPrive") +"', '" 
-            sql+= ClientHelper.getValForDB(rem.getAllDocuments()) +"', '" 
-            sql+= rem.getAttribut("autorisation") + "', "
-            sql+= geom +")"
-               
+            sql = u"INSERT INTO "+ RipartHelper.nom_Calque_Signalement
+            sql += u" (NoSignalement, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ,"
+            sql += u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document,Autorisation,geom) "
+            sql += u"VALUES ("
+            sql += str(rem.id) + ", '"
+            sql += ClientHelper.getValForDB(rem.auteur.nom) + "', '"
+            sql += rem.getAttribut("commune") + "', '"
+            sql += rem.getAttribut("departement", "nom") + "', '"
+            sql += rem.getAttribut("departement", "id") + "', '"
+            sql += rem.dateCreation + "', '"
+            sql += rem.dateMiseAJour + "', '"
+            sql += rem.dateValidation + "', '"
+            sql += rem.concatenateThemes() + "', '"
+            sql += rem.statut.__str__() + "', '"
+            sql += rem.getAttribut("commentaire") + "', '"
+            sql += ClientHelper.getValForDB(rem.concatenateReponse()) + "', '"
+            sql += rem.getAttribut("lien") + "', '"
+            sql += rem.getAttribut("lienPrive") + "', '"
+            sql += ClientHelper.getValForDB(rem.getAllDocuments()) + "', '"
+            sql += rem.getAttribut("autorisation") + "', "
+            sql += geom + ")"
 
             cur = conn.cursor()
             cur.execute(sql)
-            rowcount=cur.rowcount
-            if rowcount!=1:
+            rowcount = cur.rowcount
+            if rowcount != 1:
                 RipartHelper.logger.error("No row inserted:" + sql)
                            
-            if len(rem.croquis) >0 :
-                croquis= rem.croquis
-                geom=None
-             
+            if len(rem.croquis) > 0:
+                croquis = rem.croquis
+                geom = None
                 for cr in croquis:
-                    sql="INSERT INTO %s (NoSignalement, Nom,Attributs_croquis,geom) VALUES "
-                    if len(cr.points)==0:
+                    sql = "INSERT INTO %s (NoSignalement, Nom,Attributs_croquis,geom) VALUES "
+                    if len(cr.points) == 0:
                         return
                         
-                    values= "("+str(rem.id) + ",'"+ \
-                            ClientHelper.getValForDB(cr.nom ) + "', '" + \
+                    values = "("+str(rem.id) + ",'" + \
+                            ClientHelper.getValForDB(cr.nom) + "', '" + \
                             ClientHelper.getValForDB(cr.getAttributsInStringFormat()) + "', %s)"
-                            
                     sql += values
                           
-                    sgeom= " GeomFromText('%s(%s)', 4326)" 
-                    coord= cr.getCoordinatesFromPoints()
+                    sgeom = " GeomFromText('%s(%s)', 4326)"
+                    coord = cr.getCoordinatesFromPoints()
 
-                    if str(cr.type)=="Point" or str(cr.type) =="Texte" :
-                        geom= sgeom % ('POINT',coord)
-                        sql =sql % (RipartHelper.nom_Calque_Croquis_Point,geom)
-                    elif str(cr.type)=="Ligne" or str(cr.type) =="Fleche" :
-                        geom= sgeom % ('LINESTRING',coord)
-                        sql =sql % (RipartHelper.nom_Calque_Croquis_Ligne,geom)
-                    elif str(cr.type)=='Polygone':
-                        geom= sgeom % ('POLYGON(',coord+")")
-                        sql =sql % (RipartHelper.nom_Calque_Croquis_Polygone,geom)
+                    if str(cr.type) == "Point" or str(cr.type) == "Texte":
+                        geom = sgeom % ('POINT', coord)
+                        sql = sql % (RipartHelper.nom_Calque_Croquis_Point,geom)
+                    elif str(cr.type) == "Ligne" or str(cr.type) == "Fleche":
+                        geom = sgeom % ('LINESTRING', coord)
+                        sql = sql % (RipartHelper.nom_Calque_Croquis_Ligne,geom)
+                    elif str(cr.type) == 'Polygone':
+                        geom= sgeom % ('POLYGON(', coord+")")
+                        sql = sql % (RipartHelper.nom_Calque_Croquis_Polygone,geom)
                     cur.execute(sql) 
 
         except Exception as e:
@@ -780,11 +744,7 @@ class RipartHelper:
             raise
         finally:
             cur.close()
-            
-    
-    
-        
-    
+
     @staticmethod
     def isInGeometry(pt, geomLayer):
         """Si le point est dans la géométrie (définie par les objets d'une couche donnée)
@@ -795,26 +755,20 @@ class RipartHelper:
         :param geomlayer: le calque
         :param geomLayer: QgsVectorlayer
         """
-        
-        layerCrs=  geomLayer.crs()
-        destCrs= QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
-        xform= QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
-        
+        layerCrs = geomLayer.crs()
+        destCrs = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
+        xform = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
         featsPoly = geomLayer.getFeatures()
- 
-        isWithin=False
+        isWithin = False
         
         for featPoly in featsPoly:
             geomPoly = featPoly.geometry()
             geomPoly.transform(xform)
-            
             if pt.within(geomPoly):
-                isWithin= True
+                isWithin = True
             
         return isWithin            
-    
-  
-    
+
     @staticmethod
     def getBboxFromLayer(filtreLay):
         """Retourne la bbox du calque donné en paramètre
@@ -822,18 +776,14 @@ class RipartHelper:
         :param filtreLay: le calque
         :type filtreLay: QgsVectorlayer
         """
-        filtreExtent= filtreLay.extent()
-        
-        filtCrs= filtreLay.crs()
-        destCrs= QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
-        
-        xform= QgsCoordinateTransform(filtCrs, destCrs, QgsProject.instance())
-        
-        bbox= xform.transform(filtreExtent)
+        filtreExtent = filtreLay.extent()
+        filtCrs = filtreLay.crs()
+        destCrs = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
+        xform = QgsCoordinateTransform(filtCrs, destCrs, QgsProject.instance())
+        bbox = xform.transform(filtreExtent)
         
         return bbox
-        
-        
+
     @staticmethod
     def formatDate(sdate):
         """
@@ -846,16 +796,15 @@ class RipartHelper:
         :rtype: string
         """
         try:
-            if len(sdate.split("/"))>0:
-                dt= datetime.strptime(sdate, '%d/%m/%Y %H:%M:%S')
-                rdate= dt.strftime('%Y-%m-%d %H:%M:%S')
-            elif len(sdate.split("-"))>0:
-                rdate=sdate
+            if len(sdate.split("/")) > 0:
+                dt = datetime.strptime(sdate, '%d/%m/%Y %H:%M:%S')
+                rdate = dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif len(sdate.split("-")) > 0:
+                rdate = sdate
         except Exception as e:
-            rdate=RipartHelper.defaultDate
+            rdate = RipartHelper.defaultDate
         return rdate
-    
-    
+
     @staticmethod
     def formatDatetime(dt):
         """Retourne la date au format '%Y-%m-%d %H:%M:%S'
@@ -863,13 +812,11 @@ class RipartHelper:
         :param dt : la date
         :type dt: datetime
         """
-        rdate=dt.strftime('%Y-%m-%d %H:%M:%S')
+        rdate = dt.strftime('%Y-%m-%d %H:%M:%S')
         return rdate
-    
- 
-   
+
     @staticmethod   
-    def showMessageBox( message):
+    def showMessageBox(message):
         """Affiche une fen^tre avec le message donné
         
         :param message
@@ -880,8 +827,7 @@ class RipartHelper:
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setText(message)
         ret = msgBox.exec_()
-        
-    
+
     @staticmethod         
     def copy(src, dest):
         """Copie un fichier ou un répertoire 
@@ -903,12 +849,11 @@ class RipartHelper:
                     shutil.copy(src, dest)
             else:
                 print('Directory not copied. Error: %s' % e)
-                
-                
+
     @staticmethod  
     def open_file(filename):
         if sys.platform == "win32":
             os.startfile(filename)
         else:
-            opener ="open" if sys.platform == "darwin" else "xdg-open"
+            opener = "open" if sys.platform == "darwin" else "xdg-open"
             subprocess.call([opener, filename])
