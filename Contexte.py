@@ -548,7 +548,7 @@ class Contexte(object):
 
         return uri
 
-    def add_guichet_layers_to_map(self, guichet_layers, bbox, nomGroupe):
+    def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
         """
         try:

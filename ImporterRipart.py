@@ -150,6 +150,10 @@ class ImporterRipart(object):
                 self.context.conn = spatialite_connect(self.context.dbPath)
 
                 for remId in remsToKeep:
+
+                    if remId == 467015 or remId == '467015':
+                        debug = True
+
                     RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
                     i += 1
                     if cnt > 0:

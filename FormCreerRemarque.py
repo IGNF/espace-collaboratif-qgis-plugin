@@ -310,21 +310,24 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             theme.groupe.nom = thItem.text(0)
             theme.groupe.id = thItem.text(1)
 
+
             for j in range(thItem.childCount()):
 
                 att = thItem.child(j)
                 label = self.treeWidget.itemWidget(att, 0).text()
+                key = self.get_key_from_attribute_value(label, thItem.text(0))
                 widg = self.treeWidget.itemWidget(att, 1)
 
                 val = self.get_value_from_widget(widg, label, theme.groupe.nom)
 
-                attribut = ThemeAttribut(theme.groupe.nom, ClientHelper.notNoneValue(label),
+                attribut = ThemeAttribut(theme.groupe.nom, ClientHelper.notNoneValue(key),
                                          ClientHelper.notNoneValue(val))
                 theme.attributs.append(attribut)
 
-                selectedThemes.append(theme)
+            selectedThemes.append(theme)
 
         return selectedThemes
+
 
 
     def get_value_from_widget(self, widg, widg_label, theme_name):
@@ -353,7 +356,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         elif type(widg) == QtWidgets.QComboBox:
             form_value = widg.currentText()
-            val = self.get_key_from_value(form_value, widg_label, theme_name)
+            val = self.get_key_from_list_of_values(form_value, widg_label, theme_name)
 
         else:
             val = widg.currentText()
@@ -361,7 +364,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         return val
 
 
-    def get_key_from_value(self, form_value, widg_label, theme_name):
+    def get_key_from_list_of_values(self, form_value, widg_label, theme_name):
         """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
          par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
          récupérée dans le formulaire est directement utilisée.
@@ -390,6 +393,32 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     return val
 
         return form_value
+
+
+    def get_key_from_attribute_value(self, widg_label, theme_name):
+        """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
+         par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
+         récupérée dans le formulaire est directement utilisée.
+        """
+
+        # Récupération de l'objet Thème correspondant au nom du thème coché dans le formulaire
+        th = self._getThemeObject(theme_name)
+        if th is None:
+            return widg_label
+
+        # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
+        found_att = False
+        for att in th.attributs:
+            if found_att:
+                break
+
+            if att.tagDisplay != widg_label:
+                continue
+
+            key = att.nom
+            return key
+
+        return widg_label
 
 
     def _getThemeObject(self, themeName):
