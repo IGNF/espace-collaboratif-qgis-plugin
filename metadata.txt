@@ -23,11 +23,11 @@ repository=http://repo
 # Recommended items:
 
 # Optional items:
-date=26/04/2021
+date=06/07/2021
 
 # Uncomment the following line and add your changelog:
 changelog=
-    4.0.5 - TO-DO
+    4.0.5 - Améliorations suite à un renforcement des contrôles de l'API sur les attributs de signalements
 	4.0.4 - Traitement des croquis avec multi-géométries et améliorations cosmétiques.
     4.0.3 - Patch correctif
     4.0.2 - Patch correctif
