@@ -272,7 +272,6 @@ class Contexte(object):
             return
 
         self.loginWindow = FormConnexionDialog()
-
         loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")
         if loginXmlNode is None:
             self.login = ""

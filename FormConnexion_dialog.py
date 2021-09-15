@@ -13,9 +13,11 @@ import os
 from qgis.PyQt import uic, QtWidgets
 from qgis.PyQt.QtWidgets import QMessageBox
 from PyQt5.QtCore import *
+from qgis.core import QgsProject
 
 from .core.RipartLoggerCl import RipartLogger
-
+from PyQt5 import QtGui, QtWidgets
+from .RipartHelper import RipartHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnexion_dialog_base.ui'))
 
@@ -41,14 +43,19 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-   
         self.textError.setVisible(False)
-           
         self.btnConnect.clicked.connect(self.connectToService)
-      
         self.btnCancel.clicked.connect(self.cancel)
 
-    def setLogin(self,login):
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.lblPwd.setFont(font)
+        self.lblLogin.setFont(font)
+
+        urlHostRipart = RipartHelper.load_ripartXmlTag(QgsProject.instance().homePath(), RipartHelper.xml_UrlHost, "Serveur").text
+        self.setWindowTitle("Connexion à {}".format(urlHostRipart))
+
+    def setLogin(self, login):
         self.lineEditLogin.setText(login)  
     
     def getLogin(self):
@@ -57,7 +64,7 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
     def getPwd(self):
         return self.lineEditPwd.text()
     
-    def setErreur(self,message):
+    def setErreur(self, message):
         self.textError.setText(message)
         self.textError.setVisible(True)
         
@@ -75,7 +82,6 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
     def connectToService(self):
         """Connexion au service Ripart
         """
-        
         self.logger.debug("connectToService")
 
         login = self.lineEditLogin.text()
@@ -88,7 +94,7 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
             self.connect = True
             self.close()
 
-    def setContext(self,context):
+    def setContext(self, context):
         """Set du contexte
         """
         self.context = context
@@ -96,7 +102,7 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lineEditPwd.setText("")
         self.setUrlHost(context.urlHostRipart)  
 
-    def setUrlHost(self,urlhost):
+    def setUrlHost(self, urlhost):
         """Set de l'url du service ripart
         """
         self.urlhost = urlhost

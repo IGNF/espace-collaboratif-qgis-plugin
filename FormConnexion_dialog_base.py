@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file 'FormConnexion_dialog_base.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_RipartPlugin(object):
     def setupUi(self, RipartPlugin):
@@ -102,7 +104,7 @@ class Ui_RipartPlugin(object):
 
     def retranslateUi(self, RipartPlugin):
         _translate = QtCore.QCoreApplication.translate
-        RipartPlugin.setWindowTitle(_translate("RipartPlugin", "Connexion au service"))
+        RipartPlugin.setWindowTitle(_translate("RipartPlugin", "Connexion à l\'Espace Collaboratif"))
         self.btnConnect.setWhatsThis(_translate("RipartPlugin", "<html><head/><body><p>connexion au service</p></body></html>"))
         self.btnConnect.setText(_translate("RipartPlugin", "Connecter"))
         self.lblLogin.setText(_translate("RipartPlugin", "Votre login"))
@@ -113,5 +115,3 @@ class Ui_RipartPlugin(object):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Sans Serif\'; font-size:8.25pt; font-weight:600; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p></body></html>"))
-
-import resources_rc
