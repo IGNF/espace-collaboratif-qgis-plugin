@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Paramétrage</string>
+   <string>Choix du groupe</string>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="enabled">

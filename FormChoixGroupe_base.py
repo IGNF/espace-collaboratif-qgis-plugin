@@ -52,7 +52,7 @@ class Ui_DialogParametrage(object):
 
     def retranslateUi(self, DialogParametrage):
         _translate = QtCore.QCoreApplication.translate
-        DialogParametrage.setWindowTitle(_translate("DialogParametrage", "Paramétrage"))
+        DialogParametrage.setWindowTitle(_translate("DialogParametrage", "Choix du groupe"))
         self.lblGroupe.setText(_translate("DialogParametrage", "Dans quel groupe souhaitez-vous travailler ? "))
         self.radioButtonOui.setText(_translate("DialogParametrage", "Oui"))
         self.radioButtonNon.setText(_translate("DialogParametrage", "Non - Utiliser la clé Géoportail de démonstration"))
