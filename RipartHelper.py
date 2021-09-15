@@ -716,7 +716,7 @@ class RipartHelper:
                 croquis = rem.croquis
                 geom = None
                 for cr in croquis:
-                    sql = "INSERT INTO %s (NoSignalement, Nom,Attributs_croquis,geom) VALUES "
+                    sql = "INSERT INTO %s (NoSignalement, Nom, Attributs_croquis, geom) VALUES "
                     if len(cr.points) == 0:
                         return
                         
