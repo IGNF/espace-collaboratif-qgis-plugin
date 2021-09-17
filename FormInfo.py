@@ -10,26 +10,16 @@ version 4.0.1, 15/12/2020
 
 import os
 
-
-from PyQt5 import uic
-from PyQt5 import QtCore, QtGui, QtWidgets
-
+from PyQt5 import QtCore
 from qgis.PyQt import QtGui, uic, QtWidgets
-from qgis.PyQt.QtWidgets import QMessageBox
-
-
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
-
-from qgis.PyQt.QtGui import QIcon
-
-from . import FormInfo_base
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo_base.ui'))
 
+
 class FormInfo(QtWidgets.QDialog, FORM_CLASS):
-    '''
-    Fenêtre donnant des informations 
-    '''
+    """
+    Fenêtre donnant des informations
+    """
     
     def __init__(self, parent=None):
         """Constructor."""
@@ -45,3 +35,19 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         
         self.textInfo.setText("")
         self.btnOK.clicked.connect(self.close)
+
+        self.resize(511, 200)
+        self.setWindowTitle("IGN Espace collaboratif")
+        self.textInfo.setGeometry(QtCore.QRect(150, 10, 341, 151))
+        self.btnOK.setGeometry(QtCore.QRect(420, 170, 75, 23))
+        self.logo = QtWidgets.QLabel(self)
+        self.logo.setGeometry(QtCore.QRect(10, 0, 121, 141))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.logo.setFont(font)
+        self.logo.setText("")
+        self.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/no_logo.png"))
+        self.logo.setScaledContents(True)
+        self.logo.setObjectName("logo")
+        #self.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/no_logo.png"))
+        #self.logo.setScaledContents(True)

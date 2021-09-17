@@ -30,13 +30,13 @@ class Profil(object):
     titre = ""
 
     #Statut (privilèges) du profil        
-    statut=""
+    statut = ""
         
     #Lien vers le logo du profil
-    logo=""
+    logo = ""
 
     #Filtre du profil       
-    filtre=""
+    filtre = ""
 
     #La zone géographique de travail du profil        
     zone = ConstanteRipart.ZoneGeographique.UNDEFINED
@@ -50,7 +50,7 @@ class Profil(object):
     allThemes = list()      # Liste de tous les thèmes du profil de l'utilsateur (issus de tous ses groupes)
 
     #identifiant geoprofil    
-    id_Geoprofil=""
+    id_Geoprofil = ""
 
     #Les différents groupes de l'utilisateur
     infosGeogroupes = list()

@@ -7,7 +7,7 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-
+from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
@@ -272,6 +272,7 @@ class Contexte(object):
             return
 
         self.loginWindow = FormConnexionDialog()
+        self.loginWindow.setWindowTitle(self.urlHostRipart)
         loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")
         if loginXmlNode is None:
             self.login = ""
@@ -413,7 +414,16 @@ class Contexte(object):
 
                             # les infos de connexion présentée à l'utilisateur
                             dlgInfo = FormInfo()
-                            dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace Collaboratif.</b>")
+
+                            # Modification du logo en fonction du groupe
+                            if profil.logo != "":
+                                dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
+                            elif profil.titre == "Profil par défaut":
+                                dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
+
+                            print("{0}{1}".format(self.urlHostRipart, profil.logo))
+
+                            dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
                             dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
                             dlgInfo.textInfo.append("Login : {}".format(self.login))
                             dlgInfo.textInfo.append("Groupe : {}".format(self.profil.titre))

@@ -202,6 +202,8 @@ class XMLResponse(object):
             node = self.root.find('./PROFIL/LOGO')
             if node is not None and node.text:
                 profil.logo = node.text
+            else:
+                profil.logo = ""
 
             node = self.root.find('./PROFIL/FILTRE')
             profil.filtre = node.text

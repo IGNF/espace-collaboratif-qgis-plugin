@@ -46,14 +46,10 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.textError.setVisible(False)
         self.btnConnect.clicked.connect(self.connectToService)
         self.btnCancel.clicked.connect(self.cancel)
-
         font = QtGui.QFont()
         font.setPointSize(8)
         self.lblPwd.setFont(font)
         self.lblLogin.setFont(font)
-
-        urlHostRipart = RipartHelper.load_ripartXmlTag(QgsProject.instance().homePath(), RipartHelper.xml_UrlHost, "Serveur").text
-        self.setWindowTitle("Connexion à {}".format(urlHostRipart))
 
     def setLogin(self, login):
         self.lineEditLogin.setText(login)  
