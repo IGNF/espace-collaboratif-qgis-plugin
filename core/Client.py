@@ -13,6 +13,7 @@ from collections import OrderedDict
 import os.path
 import json
 
+from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtWidgets import QProgressBar
 from PyQt5.QtCore import Qt
 from . import ConstanteRipart
@@ -368,21 +369,15 @@ class Client(object):
             self.progress.setValue(count)
 
             while (total - count) > 0:
-
                 parameters["offset"] = count.__str__()
-
                 data = RipartServiceRequest.makeHttpRequest(self.__url + "/api/georem/georems_get.xml",
                                                             authent=self.__auth, proxies=self.__proxies,
                                                             params=parameters)
-
                 xml = XMLResponse(data)
-
                 count += int(pagination)
-
                 errMessage2 = xml.checkResponseValidity()
                 if errMessage2['code'] == 'OK':
                     dicoRems.update(xml.extractRemarques())
-
                 self.progress.setValue(count)
 
             return {'total': total, 'sdate': sdate, 'dicoRems': dicoRems}
@@ -401,7 +396,6 @@ class Client(object):
         :rtype Remarque
         """
         rem = Remarque()
-        remarques = []
 
         uri = self.__url + "/api/georem/georem_get/" + str(idSignalement) + ".xml"
 
@@ -451,11 +445,8 @@ class Client(object):
         remModif = None
 
         try:
-            parameters = {}
-            parameters['id'] = str(remarque.id)
-            parameters['title'] = titreReponse
-            parameters['content'] = reponse
-            parameters['status'] = remarque.statut.__str__()
+            parameters = {'id': str(remarque.id), 'title': titreReponse, 'content': reponse,
+                          'status': remarque.statut.__str__()}
 
             uri = self.__url + "/api/georem/georep_post.xml"
 
@@ -572,6 +563,51 @@ class Client(object):
             raise Exception(e)
 
         return rem
+
+    def pushDeletedFeatures(self, deletedFeatures, layer):
+        actions = None
+        for d in deletedFeatures:
+            qgsFeature = layer.getFeature(d)
+            cleabs = qgsFeature.attribute('cleabs')
+            fingerprint = qgsFeature.attribute('gcms_fingerprint')
+            actions.append('{"feature": {"gcms_fingerprint": "{}", '.format(fingerprint) +
+                           '"cleabs": "{}", '.format(cleabs) +
+                           '"state": "Delete",'
+                           '"typeName": "{}"'.format(layer.nom) +
+                           '},')
+        res = '['
+        for action in actions:
+            res += action
+        pos = len(res)
+        # Remplacement de la virgule de fin par un crochet fermant
+        strActions = res[0:pos-1]
+        strActions += ']'
+
+        uri = self.__url + '/gcms/wfstransactions'
+        print(uri)
+        params = dict(actions=strActions, database=layer.databasename)
+        print(params)
+        response = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies, data=params)
+        print(response)
+        xmlResponse = XMLResponse(response)
+        errMessage = xmlResponse.checkResponseWfsTransactions()
+        if errMessage['status'] == 'SUCCESS':
+            self.logger.info(errMessage['message'])
+            QMessageBox().information(errMessage['message'])
+        else:
+            self.logger.error(errMessage['message'])
+            raise Exception(errMessage['message'])
+
+    def gcms_transactions(self, layer):
+
+        editBuffer = layer.editBuffer()
+        if editBuffer:
+            self.pushDeletedFeatures(editBuffer.deletedFeatureIds(), layer)
+
+
+
+
+
 
     @staticmethod
     def get_MAX_TAILLE_UPLOAD_FILE():

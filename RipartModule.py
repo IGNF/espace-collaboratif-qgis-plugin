@@ -30,8 +30,6 @@ from builtins import range
 # from builtins import object
 import os.path
 
-from PyQt5.QtGui import QColor
-
 from .core.RipartLoggerCl import RipartLogger
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
@@ -40,7 +38,7 @@ from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QAppli
 from qgis.PyQt.QtGui import QIcon
 # from qgis.core import *
 from qgis.core import QgsProject, QgsMessageLog, QgsWkbTypes, QgsCoordinateReferenceSystem, \
-    QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer
+    QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer, QgsVectorLayerEditBuffer
 import configparser
 
 import urllib
@@ -54,7 +52,6 @@ from .FormConnexion_dialog import FormConnexionDialog
 from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
 from .Contexte import Contexte
-from .core.Client import Client
 from .ImporterRipart import ImporterRipart
 from .RepondreRipart import RepondreRipart
 from .CreerRipart import CreerRipart
@@ -268,19 +265,19 @@ class RipartPlugin:
 
         icon_path = ':/plugins/RipartPlugin/images/compter.png'
         self.add_action(
-             icon_path,
-             text=self.tr(u'Compter les modifications'),
-             callback=self.compterModifications,
-             status_tip=self.tr(u'Compter les modifications'),
-             parent=self.iface.mainWindow())
+            icon_path,
+            text=self.tr(u'Compter les modifications'),
+            callback=self.compterModifications,
+            status_tip=self.tr(u'Compter les modifications'),
+            parent=self.iface.mainWindow())
 
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
         self.add_action(
-             icon_path,
-             text=self.tr(u'Synchroniser'),
-             callback=self.synchroniserDonnees,
-             status_tip=self.tr(u'Synchroniser'),
-             parent=self.iface.mainWindow())
+            icon_path,
+            text=self.tr(u'Synchroniser'),
+            callback=self.synchroniserDonnees,
+            status_tip=self.tr(u'Synchroniser'),
+            parent=self.iface.mainWindow())
 
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
                               self.iface.mainWindow())
@@ -319,12 +316,12 @@ class RipartPlugin:
                 return
 
             # Les profils serveur/client se correspondent-ils ?
-            #self.context.checkProfilServeurClient()
+            # self.context.checkProfilServeurClient()
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
             if dlgChargerGuichet.context.profil is not None:
                 if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1 and \
-                        len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0 :
+                        len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0:
                     raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
 
             dlgChargerGuichet.exec_()
@@ -343,15 +340,17 @@ class RipartPlugin:
         cptg.doCount()
 
     def synchroniserDonnees(self):
-        '''print("Synchroniser les données")
+        print("Synchroniser les données")
         self.context = Contexte.getInstance(self, QgsProject)
-        if self.context != None:
-            if not self.context.getVisibilityLayersFromGroupeActif():
-                self.context.iface.messageBar(). \
-                    pushMessage("Remarque",
-                                "Pas de couche(s) éditable(s)", \
-                                level=2, duration=5)
-                return'''
+        if self.context is None:
+            return
+
+        if self.context:
+            self.context.getConnexionRipart(newLogin=True)
+
+        # 'bduni_interne_qualif_fxx'
+        self.context.client.gcms_transactions(self.context.iface.activeLayer())
+
         '''self.context = Contexte.getInstance(self, QgsProject)
         layer = self.context.iface.activeLayer()
         fields = layer.fields()
@@ -477,7 +476,7 @@ class RipartPlugin:
                 return
 
             # Les profils serveur/client se correspondent-ils ?
-            #self.context.checkProfilServeurClient()
+            # self.context.checkProfilServeurClient()
 
             importRipart = ImporterRipart(self.context)
             result = importRipart.doImport()
@@ -499,12 +498,6 @@ class RipartPlugin:
                             level=2, duration=5)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
-    def connectToRipart(self, context):
-        """Connection to the ripart service 
-        """
-        client = Client(context.urlHostRipart, context.login, context.pwd, context.proxy, context.clegeoportail)
-        return client
-
     def answerToRemark(self):
         """Answer to a remark
         """
@@ -514,7 +507,7 @@ class RipartPlugin:
                 return
 
             # Les profils serveur/client se correspondent-ils ?
-            #self.context.checkProfilServeurClient()
+            # self.context.checkProfilServeurClient()
 
             reponse = RepondreRipart(self.context)
             reponse.do()
@@ -533,7 +526,7 @@ class RipartPlugin:
                 return
 
             # Les profils serveur/client se correspondent-ils ?
-            #self.context.checkProfilServeurClient()
+            # self.context.checkProfilServeurClient()
 
             create = CreerRipart(self.context)
             create.do()
@@ -639,7 +632,8 @@ class RipartPlugin:
 
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(u"<b>Plugin Espace Collaboratif</b>")
-        dlgInfo.textInfo.append(u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif.")
+        dlgInfo.textInfo.append(
+            u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif.")
         dlgInfo.textInfo.append(u"<br/>Version: " + version)
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
 

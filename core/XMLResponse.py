@@ -68,29 +68,42 @@ class XMLResponse(object):
         Si le code erreur="OK", la réponse est valide
         :return un dictionnaire à 2 clés, message et code
         """
-
         errMessage = {'message': '', 'code': ''}
-
         try:
             erreur = self.root.findall('./REPONSE/ERREUR')
-
             for m in erreur:
                 errMessage['message'] = m.text
                 errMessage['code'] = m.attrib['code']
-
         except KeyError as e:
             self.logger.error(str(e))
-
         except Exception as e:
             self.logger.error(str(e))
-
         return errMessage
+
+    def checkResponseWfsTransactions(self):
+        errMessage = {'message': '', 'status': ''}
+        try:
+            result = self.root.find('{http://www.opengis.net/wfs}TransactionResult')
+            errMessage['status'] = result.find('{http://www.opengis.net/wfs}Status').text
+            errMessage['message'] = result.find('{http://www.opengis.net/wfs}Message').text
+        except Exception as e:
+            self.logger.error(str(e))
+        return errMessage
+        #<?xml version="1.0" encoding="UTF-8"?>
+        #<wfs:WFS_TransactionResponse version="1.0.0" xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc">
+        #<wfs:InsertResult>
+        #<ogc:FeatureId fid="none"/>
+        #</wfs:InsertResult>
+        #<wfs:TransactionResult>
+        #<wfs:Status><wfs:SUCCESS/></wfs:Status>
+        #<wfs:TransactionURL>https://espacecollaboratif.ign.fr/gcms/database/bduni_interne_qualif_fxx/transaction/245986</wfs:TransactionURL>
+        #<wfs:Message>Transaction appliquée avec succès. Id : 245986</wfs:Message>
+        #</wfs:TransactionResult>
 
     def getAleas(self):
         """ Extraction des Aleas       
         :return une liste contenant les 2 aleas
         """
-
         aleas = list()
 
         try:
@@ -220,12 +233,19 @@ class XMLResponse(object):
             infosgeogroupes = self.getInfosGeogroupe(profil)
             profil.infosGeogroupes = infosgeogroupes
 
-
         except Exception as e:
             self.logger.error('extractProfil:' + str(e))
             raise
 
         return profil
+
+    def findDatabaseName(self, urlStr):
+        # La chaine url est de type
+        # https://espacecollaboratif.ign.fr/gcms/wfs?service=wfs&databasename=bdtopo_metropole
+        pos = urlStr.find('&')
+        if pos == -1:
+            return ""
+        return urlStr[pos+14:len(urlStr)]
 
     def getInfosGeogroupe(self, profil):
         """Extraction des infos utilisateur sur ses geogroupes
@@ -267,9 +287,10 @@ class XMLResponse(object):
                     url = nodelayer.find('URL')
                     if url is not None:
                         layer.url = url.text
+                        layer.databasename = self.findDatabaseName(url.text)
+                        print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroupe.groupe.nom, layer.nom, layer.databasename))
 
                     infosgeogroupe.layers.append(layer)
-
 
                 try:
                     # Récupération des thèmes du groupe

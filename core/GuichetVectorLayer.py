@@ -23,6 +23,8 @@ class GuichetVectorLayer(QgsVectorLayer):
     # Les statistiques de comptage pour la couche
     stat = None
 
+    databasename = ""
+
     # La liste des id/md5 par objet AVANT le travail de l'utilisateur
     md5BeforeWorks = []
 
@@ -56,7 +58,7 @@ class GuichetVectorLayer(QgsVectorLayer):
     Connexion des signaux
     Initialisation des comptages
     '''
-    def __init__(self, projectDirectory, layerName, layerType):
+    def __init__(self, projectDirectory, layerName, layerType, databasename):
 
         super(GuichetVectorLayer, self).__init__(projectDirectory, layerName, layerType)
 
@@ -73,9 +75,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
         self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
         self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
-
-
-
+        self.databasename = databasename
 
     '''
     Connexion des signaux pour les évènements survenus sur la carte
@@ -88,7 +88,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             self.geometryChanged.connect(self.geometry_changed)
             self.attributeValueChanged.connect(self.attribute_value_changed)
             #self.featureAdded.connect(self.feature_added)
-            self.featureDeleted.connect(self.feature_deleted)
+            #self.featureDeleted.connect(self.feature_deleted)
 
             # Signaux pour réinitialiser la liste des objets modifiés
             # self.afterCommitChanges.connect(self.clear_features_list)
@@ -200,8 +200,8 @@ class GuichetVectorLayer(QgsVectorLayer):
     def geometry_changed(self, fid, geometry):
         self.include_fingerprint(fid)
 
-    def feature_deleted(self, fid):
-        self.include_fingerprint(fid)
+    #def feature_deleted(self, fid):
+     #   self.include_fingerprint(fid)
 
     def before_commit_changes(self):
         print ("Before commit changes")
