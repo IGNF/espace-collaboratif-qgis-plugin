@@ -13,7 +13,6 @@ from collections import OrderedDict
 import os.path
 import json
 
-from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtWidgets import QProgressBar
 from PyQt5.QtCore import Qt
 from . import ConstanteRipart
@@ -32,7 +31,6 @@ class Client(object):
     """"
     Cette classe sert de client pour le service RIPart
     """
-
     __url = ""
     __login = ""
     __password = ""
@@ -61,6 +59,15 @@ class Client(object):
         self.__auth['password'] = self.__password
         self.__proxies = proxies
         self.__clegeoportail = cle
+
+    def getUrl(self):
+        return self.__url
+
+    def getAuth(self):
+        return self.__auth
+
+    def getProxies(self):
+        return self.__proxies
 
     def setIface(self, iface):
         """sets the QgsInterface instance, to be able to access the QGIS application objects (map canvas, menus, ...)
@@ -563,51 +570,6 @@ class Client(object):
             raise Exception(e)
 
         return rem
-
-    def pushDeletedFeatures(self, deletedFeatures, layer):
-        actions = None
-        for d in deletedFeatures:
-            qgsFeature = layer.getFeature(d)
-            cleabs = qgsFeature.attribute('cleabs')
-            fingerprint = qgsFeature.attribute('gcms_fingerprint')
-            actions.append('{"feature": {"gcms_fingerprint": "{}", '.format(fingerprint) +
-                           '"cleabs": "{}", '.format(cleabs) +
-                           '"state": "Delete",'
-                           '"typeName": "{}"'.format(layer.nom) +
-                           '},')
-        res = '['
-        for action in actions:
-            res += action
-        pos = len(res)
-        # Remplacement de la virgule de fin par un crochet fermant
-        strActions = res[0:pos-1]
-        strActions += ']'
-
-        uri = self.__url + '/gcms/wfstransactions'
-        print(uri)
-        params = dict(actions=strActions, database=layer.databasename)
-        print(params)
-        response = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies, data=params)
-        print(response)
-        xmlResponse = XMLResponse(response)
-        errMessage = xmlResponse.checkResponseWfsTransactions()
-        if errMessage['status'] == 'SUCCESS':
-            self.logger.info(errMessage['message'])
-            QMessageBox().information(errMessage['message'])
-        else:
-            self.logger.error(errMessage['message'])
-            raise Exception(errMessage['message'])
-
-    def gcms_transactions(self, layer):
-
-        editBuffer = layer.editBuffer()
-        if editBuffer:
-            self.pushDeletedFeatures(editBuffer.deletedFeatureIds(), layer)
-
-
-
-
-
 
     @staticmethod
     def get_MAX_TAILLE_UPLOAD_FILE():

@@ -11,8 +11,6 @@ import logging
 import os
 from datetime import datetime
 import dateutil.relativedelta
-import string
-import importlib
 from os.path import expanduser
 
 class RipartLogger(object):

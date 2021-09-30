@@ -81,24 +81,16 @@ class XMLResponse(object):
         return errMessage
 
     def checkResponseWfsTransactions(self):
-        errMessage = {'message': '', 'status': ''}
+        errMessage = {'message': '', 'status': 'SUCCESS'}
         try:
-            result = self.root.find('{http://www.opengis.net/wfs}TransactionResult')
-            errMessage['status'] = result.find('{http://www.opengis.net/wfs}Status').text
-            errMessage['message'] = result.find('{http://www.opengis.net/wfs}Message').text
+            transactionResult = self.root.find('{http://www.opengis.net/wfs}TransactionResult')
+            status = transactionResult.find('{http://www.opengis.net/wfs}Status')
+            if status.find('{http://www.opengis.net/wfs}SUCCESS') is None:
+                errMessage['status'] = 'FAILED'
+            errMessage['message'] = transactionResult.find('{http://www.opengis.net/wfs}Message').text
         except Exception as e:
             self.logger.error(str(e))
         return errMessage
-        #<?xml version="1.0" encoding="UTF-8"?>
-        #<wfs:WFS_TransactionResponse version="1.0.0" xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc">
-        #<wfs:InsertResult>
-        #<ogc:FeatureId fid="none"/>
-        #</wfs:InsertResult>
-        #<wfs:TransactionResult>
-        #<wfs:Status><wfs:SUCCESS/></wfs:Status>
-        #<wfs:TransactionURL>https://espacecollaboratif.ign.fr/gcms/database/bduni_interne_qualif_fxx/transaction/245986</wfs:TransactionURL>
-        #<wfs:Message>Transaction appliquée avec succès. Id : 245986</wfs:Message>
-        #</wfs:TransactionResult>
 
     def getAleas(self):
         """ Extraction des Aleas       

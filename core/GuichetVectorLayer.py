@@ -26,23 +26,23 @@ class GuichetVectorLayer(QgsVectorLayer):
     databasename = ""
 
     # La liste des id/md5 par objet AVANT le travail de l'utilisateur
-    md5BeforeWorks = []
+    #md5BeforeWorks = []
 
     # La liste des id/md5 par objet APRES le travail de l'utilisateur
-    md5AfterWorks = []
+    #md5AfterWorks = []
 
     # Les fichiers ou sont stockés les objets
-    repertoire = None
-    fileBeforeWorks = None
-    fileAfterWorks = None
+    #repertoire = None
+    #fileBeforeWorks = None
+    #fileAfterWorks = None
 
     # Correspondance champ/type
     correspondanceChampType = None
 
     # Base historisée
-    idxFingerprint = -1                 ## index du champ gcms_fingerprint dans la couche
-    fingerprint = "gcms_fingerprint"    ## nom du champ gcms_fingerprint (présent sur les bases historisées)
-    listUpdatedFeaturesIds = None            ## liste des identifiants des objets créés/modifiés/supprimés
+    #idxFingerprint = -1                 ## index du champ gcms_fingerprint dans la couche
+    #fingerprint = "gcms_fingerprint"    ## nom du champ gcms_fingerprint (présent sur les bases historisées)
+    #listUpdatedFeaturesIds = None            ## liste des identifiants des objets créés/modifiés/supprimés
 
     def getStat(self):
         return self.stat
@@ -63,18 +63,18 @@ class GuichetVectorLayer(QgsVectorLayer):
         super(GuichetVectorLayer, self).__init__(projectDirectory, layerName, layerType)
 
         # Remplissage de idxFingerprint (index du champ gcms_fingerprint) pour les tables historisées
-        listFields = self.fields()
-        self.idxFingerprint = listFields.indexFromName(self.fingerprint)
-        self.listUpdatedFeaturesIds = []
+        #listFields = self.fields()
+        #self.idxFingerprint = listFields.indexFromName(self.fingerprint)
+        #self.listUpdatedFeaturesIds = []
 
-        self.connectSignals()
-        self.stat = Statistics(self.featureCount())
-        self.repertoire = projectDirectory
-        fileName = QgsProject.instance().fileName()
-        tmp = fileName.replace(".qgz", "")
-        nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
-        self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
-        self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
+        #self.connectSignals()
+        #self.stat = Statistics(self.featureCount())
+        #self.repertoire = projectDirectory
+        #fileName = QgsProject.instance().fileName()
+        #tmp = fileName.replace(".qgz", "")
+        #nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
+        #self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
+        #self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
         self.databasename = databasename
 
     '''
@@ -101,8 +101,8 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.attributeDeleted.connect(self.attribute_deleted)
         self.editingStopped.connect(self.editing_stopped)
 
-    def print_list(self):
-        print (self.listUpdatedFeaturesIds)
+    #def print_list(self):
+    #    print(self.listUpdatedFeaturesIds)
 
     '''
     Calcul d'une clé de hachage à partir des caractéristiques d'un objet

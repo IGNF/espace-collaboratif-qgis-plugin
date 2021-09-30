@@ -30,6 +30,7 @@ from builtins import range
 # from builtins import object
 import os.path
 
+from .core.WfsTransactions import WfsTransactions
 from .core.RipartLoggerCl import RipartLogger
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
@@ -345,11 +346,15 @@ class RipartPlugin:
         if self.context is None:
             return
 
-        if self.context:
-            self.context.getConnexionRipart(newLogin=True)
+        if self.context.client is None:
+            res = self.context.getConnexionRipart(newLogin=True)
+            if not res:
+                return
+
 
         # 'bduni_interne_qualif_fxx'
-        self.context.client.gcms_transactions(self.context.iface.activeLayer())
+        wfsTransactions = WfsTransactions(self.context)
+        wfsTransactions.commitLayer()
 
         '''self.context = Contexte.getInstance(self, QgsProject)
         layer = self.context.iface.activeLayer()

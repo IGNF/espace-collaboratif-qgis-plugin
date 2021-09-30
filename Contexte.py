@@ -616,7 +616,7 @@ class Contexte(object):
                     print("Layer {} contains {} objects".format(vlayer.name(), len(list(vlayer.getFeatures()))))
 
                     # Initialisation des données pour le comptage
-                    vlayer.setMd5BeforeWorks()
+                    #vlayer.setMd5BeforeWorks()
 
                     # Modification du formulaire d'attributs
                     data = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
