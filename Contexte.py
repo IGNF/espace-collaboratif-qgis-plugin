@@ -503,7 +503,6 @@ class Contexte(object):
 
             # creating a Cursor
             cur = self.conn.cursor()
-
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
             cur.execute(sql)
             if cur.fetchone() is None:
@@ -615,8 +614,8 @@ class Contexte(object):
                     print("Layer {} added to map".format(vlayer.name()))
                     print("Layer {} contains {} objects".format(vlayer.name(), len(list(vlayer.getFeatures()))))
 
-                    # Initialisation des données pour le comptage
-                    #vlayer.setMd5BeforeWorks()
+                    # Remplissage de la table de correspondance id/cleabs/fingerprint
+                    vlayer.setTableLayer()
 
                     # Modification du formulaire d'attributs
                     data = self.client.connexionFeatureTypeJson(layer.url, layer.nom)

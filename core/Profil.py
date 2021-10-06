@@ -8,8 +8,6 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-
-
 from .Auteur import Auteur
 from .Groupe import Groupe
 from . import ConstanteRipart 

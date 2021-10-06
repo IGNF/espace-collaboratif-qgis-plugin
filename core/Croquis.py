@@ -8,10 +8,8 @@ version 3.0.0 , 26/11/2018
 '''
 
 from .Enum import Enum
-from .Point import Point
 import xml.etree.ElementTree as ET
 from .ClientHelper import ClientHelper
-from datetime import date
 
 
 class Croquis(object):

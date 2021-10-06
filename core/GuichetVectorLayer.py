@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 23 oct. 2020
 
 version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
-'''
+"""
 
 import random
+import hashlib
+import os
 
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer, \
     QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes, \
     QgsDefaultValue
-from .Statistics import Statistics
+
 from .MongoDBtoQGIS import MongoDBtoQGIS
-import hashlib
-import os
+from .SQLiteManager import SQLiteManager
 
 
 class GuichetVectorLayer(QgsVectorLayer):
@@ -33,11 +34,13 @@ class GuichetVectorLayer(QgsVectorLayer):
 
     # Les fichiers ou sont stockés les objets
     #repertoire = None
-    #fileBeforeWorks = None
+    fileBeforeWorks = None
     #fileAfterWorks = None
 
     # Correspondance champ/type
     correspondanceChampType = None
+
+    sqliteManager = None
 
     # Base historisée
     #idxFingerprint = -1                 ## index du champ gcms_fingerprint dans la couche
@@ -62,6 +65,10 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         super(GuichetVectorLayer, self).__init__(projectDirectory, layerName, layerType)
 
+        # Est-ce que la table "layerName" de correspondance entre id, cleabs et fingerprint existe ?
+        self.sqliteManager = SQLiteManager()
+        self.sqliteManager.createTableFromLayerIfNotExist(layerName)
+
         # Remplissage de idxFingerprint (index du champ gcms_fingerprint) pour les tables historisées
         #listFields = self.fields()
         #self.idxFingerprint = listFields.indexFromName(self.fingerprint)
@@ -73,8 +80,8 @@ class GuichetVectorLayer(QgsVectorLayer):
         #fileName = QgsProject.instance().fileName()
         #tmp = fileName.replace(".qgz", "")
         #nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
-        #self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
         #self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
+        #self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
         self.databasename = databasename
 
     '''
@@ -151,6 +158,16 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         return feature.id(), cle
 
+    def setTableLayer(self):
+        corr = []
+        features = self.getFeatures()
+        for feature in features:
+            cleabs = feature.attribute('cleabs')
+            fingerprint = feature.attribute('gcms_fingerprint')
+            id = feature.id()
+            corr.append((id, cleabs, fingerprint))
+        self.sqliteManager.insertRowsInTable(corr, self.name())
+
     '''
     Au chargement de la couche dans QGIS, les caractéristiques des objets initiaux
     sont stockées dans un fichier sous la forme d'une clé de hachage :
@@ -190,7 +207,7 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     def editing_stopped(self):
         self.setMd5AfterWorks()
-        print ("Rechargement de la couche")
+        print("Rechargement de la couche")
         self.reload()
 
 
@@ -204,7 +221,7 @@ class GuichetVectorLayer(QgsVectorLayer):
      #   self.include_fingerprint(fid)
 
     def before_commit_changes(self):
-        print ("Before commit changes")
+        print("Before commit changes")
 
     '''
     Lors de toute modification sur un objet d'une table historisée (table contenant le champ gcms_fingerprint),

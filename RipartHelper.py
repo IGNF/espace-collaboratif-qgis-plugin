@@ -1,32 +1,24 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 29 sept. 2015
 Updated on 30 nov. 2020
 
 version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
-'''
-
-from .core.RipartLoggerCl import RipartLogger
-import xml.etree.ElementTree as ET
-
-from qgis.utils import spatialite_connect
-import sqlite3 as sqlite
-
-from qgis.core import QgsCoordinateReferenceSystem,QgsCoordinateTransform,QgsVectorLayer,QgsProject
-from .core.ClientHelper import ClientHelper
-from .RipartException import RipartException
-import collections
-from datetime import datetime
-from qgis.PyQt.QtWidgets import QMessageBox
-
-from .core.Croquis import Croquis
-from .core.Point import  Point
+"""
 
 import errno
+import os
 import shutil
-import os, sys, subprocess
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+from .core.ClientHelper import ClientHelper
+from .core.RipartLoggerCl import RipartLogger
 
 
 class RipartHelper:
@@ -111,7 +103,7 @@ class RipartHelper:
     #Système de coordonnées de référence de Ripart
     epsgCrs = 4326
     
-    logger=RipartLogger("RipartHelper").getRipartLogger()
+    logger = RipartLogger("RipartHelper").getRipartLogger()
 
     @staticmethod
     def getXPath(tagName,parentName):
@@ -553,7 +545,7 @@ class RipartHelper:
             nodeNom.text = calqueName
             for val in values:
                 field = ET.SubElement(nodeAtributsCroquis, 'Calque_Champ')
-                field.text=val
+                field.text = val
             
             tree.write(projectDir+"/"+RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
         except Exception as e:

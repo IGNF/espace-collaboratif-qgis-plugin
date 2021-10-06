@@ -5,11 +5,11 @@ Taken from http://code.activestate.com/recipes/413486-first-class-enums-in-pytho
 (released under PSF license)
 """
 from __future__ import print_function
-
-
 from past.builtins import cmp
 from builtins import str
 from builtins import object
+
+
 def Enum(*names):
     ##assert names, "Empty enums are not supported" # <- Don't like empty enums? Uncomment!
 

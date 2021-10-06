@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 2 oct. 2015
 
 version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 
 import logging
 import os
 from datetime import datetime
 import dateutil.relativedelta
 from os.path import expanduser
+
 
 class RipartLogger(object):
     """Paramètres du log

@@ -351,7 +351,6 @@ class RipartPlugin:
             if not res:
                 return
 
-
         # 'bduni_interne_qualif_fxx'
         wfsTransactions = WfsTransactions(self.context)
         wfsTransactions.commitLayer()

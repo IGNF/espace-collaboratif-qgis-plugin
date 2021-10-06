@@ -14,7 +14,6 @@ from .Auteur import Auteur
 from . import ConstanteRipart
 
 
-
 class GeoReponse(object):
     """
     Classe pour définir un objet réponse de Ripart.

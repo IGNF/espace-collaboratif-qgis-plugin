@@ -9,7 +9,6 @@ version 4.0.1, 15/12/2020
 """
 
 
-
 class ThemeAttribut(object):
     """
     Classe représentant un attribut d'un thème
