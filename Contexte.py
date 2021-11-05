@@ -9,19 +9,17 @@ version 4.0.1, 15/12/2020
 """
 from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
-
+from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
     QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
     QgsWkbTypes, QgsLayerTreeGroup
 
-from .RipartException import RipartException
-
 import os.path
 import shutil
 import ntpath
-from qgis.utils import spatialite_connect
 import configparser
 
+from .RipartException import RipartException
 from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.Client import Client
@@ -36,6 +34,8 @@ from .core import ConstanteRipart as cst
 from .Import_WMTS import importWMTS
 from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
+from .core.WfsGet import WfsGet
+from .core.SQLiteManager import SQLiteManager
 
 
 class Contexte(object):
@@ -126,7 +126,7 @@ class Contexte(object):
 
         self.logger = RipartLogger("Contexte").getRipartLogger()
 
-        self.spatialRef = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
+        self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
 
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata('general', 'version')
@@ -148,7 +148,6 @@ class Contexte(object):
             formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
             lines = formatFile.readlines()
             self.formats = [x.split("\n")[0] for x in lines]
-
 
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
@@ -256,6 +255,7 @@ class Contexte(object):
         :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
         :rtype int
         """
+        global client
         self.logger.debug("GetConnexionRipart ")
 
         result = -1
@@ -486,6 +486,7 @@ class Contexte(object):
         Si la BD n'existe pas, elle est créée
 
         """
+        global cur
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
@@ -526,13 +527,10 @@ class Contexte(object):
     def appendUri_WFS(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
         uri.setConnection("", "", self.login, self.pwd)
-        uri.setParam('version', '1.0.0') # Patch pour pouvoir éditer les données avec QGIS 3.16
+        uri.setParam('version', '1.0.0')# Patch pour pouvoir éditer les données avec QGIS 3.16
         uri.setParam('request', 'GetFeature')
         if str(bbox) != "None":
             uri.setParam('bbox', bbox.boxToString())
-            #box = "{},srsname:EPSG:4326".format(bbox.boxToString())
-            #uri.setParam('bbox', box)
-        #uri.setSrid("EPSG:4326")
 
         # Mon guichet
         if '&' in url:
@@ -542,9 +540,6 @@ class Contexte(object):
             uri.setParam('url', tmp[0])
             uri.setParam('typename', typeName)
             uri.setParam('filter', 'detruit:false')
-            #uri.setParam('filter', '<Filter><PropertyIsEqualTo><PropertyName>detruit</' \
-            #'PropertyName><Literal>false</Literal></PropertyIsEqualTo><Box><coordinates>2.518667618084235,' \
-            #'48.85218456255414 2.567725038730373,48.87557235363674</coordinates></Box></Filter>')
             uri.setParam('maxNumFeatures', '5000')
             uri.setParam('pagingEnabled', 'true')
             uri.setParam('restrictToRequestBBOX', '1')
@@ -555,6 +550,81 @@ class Contexte(object):
             uri.setParam('service', cst.WFS)
 
         return uri
+
+    def importWFS(self, layer, structure):
+        # Création éventuelle de la table SQLite liée à la couche
+        sqlitemanager = SQLiteManager()
+
+        # Est-ce que la table du nom de la couche existe ?
+        # si non elle est crée
+        if not sqlitemanager.isTableExist(layer.nom):
+            sqlitemanager.createTableFromLayer(layer.nom, structure)
+        # si oui, elle est vidée
+        else:
+            sqlitemanager.emptyTable(layer.nom)
+
+        # Création de la source pour la couche dans la carte liée à la table SQLite
+        uri = self.getUriDatabaseSqlite()
+        self.logger.debug(uri.uri())
+        print("url : {}".format(uri.uri()))
+        uri.setDataSource('', layer.nom, structure['geometryName'])
+        uri.setSrid(str(cst.EPSGCRS))
+        #parameters = {}
+        #parameters['uri'] = uri.uri()
+        #parameters['name'] = layer.nom
+        #parameters['genre'] = 'spatialite'
+        # parameters['type'] = layer.type
+        #parameters['attributes'] = structure['attributes']
+        # vlayer = GuichetVectorLayer(parameters)
+        vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
+        vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
+        return vlayer
+
+    def formatLayer(self, layer, newLayer, nodeGroup, structure, bbox):
+        # Ajout de la couche dans la carte
+        QgsProject.instance().addMapLayer(newLayer, False)
+        nodeGroup.addLayer(newLayer)
+        self.guichetLayers.append(newLayer)
+        self.logger.debug("Layer {} added to map".format(newLayer.name()))
+        print("Layer {} added to map".format(newLayer.name()))
+        print("Layer {} contains {} objects".format(newLayer.name(), len(list(newLayer.getFeatures()))))
+
+        # Remplissage de la table SQLite liée à la couche
+        parameters = {}
+        parameters['databasename'] = layer.databasename
+        parameters['layerName'] = layer.nom
+        parameters['role'] = layer.role
+        geometryName = structure['geometryName']
+        parameters['geometryName'] = geometryName
+        parameters['sridProject'] = cst.EPSGCRS
+        parameters['sridLayer'] = int(structure['attributes'][geometryName]['srid'])
+        parameters['is3d'] = structure['attributes'][geometryName]['is3d']
+        parameters['bbox'] = bbox
+        wfsGet = WfsGet(self, parameters)
+        wfsGet.gcms_get()
+
+        # Modification du formulaire d'attributs
+        efffa = EditFormFieldFromAttributes(newLayer, structure)
+        newLayer.correspondanceChampType = efffa.readData()
+
+        """
+        # Modification de la symbologie de la couche
+        listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(structure)
+        newLayer.setModifySymbols(listOfValuesFromItemStyle)
+
+        # Affichage des données en fonction de l'échelle
+        newLayer.setDisplayScale(layer.minzoom, layer.maxzoom)
+
+        # Paramétrage de l'emprise
+        newLayer.updateExtents(True)
+
+        # Une couche en visualisation est non modifiable
+        if layer.role == 'visu' or layer.role == 'ref':
+            newLayer.setReadOnly()
+
+        # Rechargement de la couche pour que la visualisation dans la fenêtre carto courante
+        # soit réellement prise en compte
+        newLayer.reload()"""
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
@@ -588,63 +658,26 @@ class Contexte(object):
                                     ", veuillez supprimer les couches existantes de votre projet QGIS ou travailler dans un nouveau projet." +
                                     "\n\nNB : ces couches seront simplement supprimées de la carte QGIS en cours, elles resteront disponibles sur l'Espace collaboratif.")
                 return
-            #guichet_layers.reverse()
-            for layer in guichet_layers:
 
+            for layer in guichet_layers:
                 if layer.nom in maplayers or layer.description in maplayers:
                     print("Layer {} already exists !".format(layer.nom))
                     continue
-
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WFS:
-                    uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
-                    print("url : {}".format(uri.uri()))
-                    vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type, layer.databasename)
+                    # uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
+                    # print("url : {}".format(uri.uri()))
+                    # vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type, layer.databasename)
 
-                    if not vlayer.isValid():
+                    # Récupération de la structure de la future table
+                    structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
+                    sourceLayer = self.importWFS(layer, structure)
+                    if not sourceLayer.isValid():
                         print("Layer {} failed to load !".format(layer.nom))
                         continue
-
-                    QgsProject.instance().addMapLayer(vlayer, False)
-                    nodeGroup.addLayer(vlayer)
-                    self.guichetLayers.append(vlayer)
-                    self.logger.debug("Layer {} added to map".format(vlayer.name()))
-                    print("Layer {} added to map".format(vlayer.name()))
-                    print("Layer {} contains {} objects".format(vlayer.name(), len(list(vlayer.getFeatures()))))
-
-                    # Remplissage de la table de correspondance id/cleabs/fingerprint
-                    vlayer.setTableLayer()
-
-                    # Modification du formulaire d'attributs
-                    data = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
-                    efffa = EditFormFieldFromAttributes(vlayer, data)
-                    vlayer.correspondanceChampType = efffa.readData()
-
-                    # Modification de la symbologie de la couche
-                    listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(data)
-                    vlayer.setModifySymbols(listOfValuesFromItemStyle)
-
-                    # Affichage des données en fonction de l'échelle
-                    vlayer.setDisplayScale(layer.minzoom, layer.maxzoom)
-
-                    # Paramétrage de l'emprise
-                    vlayer.updateExtents(True)
-
-                    # Une couche en visualisation est non modifiable
-                    if layer.role == 'visu' or layer.role == 'ref':
-                        vlayer.setReadOnly()
-
-                    # Rechargement de la couche pour que la visualisation dans la fenêtre carto courante
-                    # soit réellement prise en compte
-                    vlayer.reload()
-
-            for layer in guichet_layers:
-
-                if layer.nom in maplayers or layer.description in maplayers:
-                    print("Layer {} already exists !".format(layer.nom))
-                    continue
+                    self.formatLayer(layer, sourceLayer, nodeGroup, structure, bbox)
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
@@ -676,13 +709,17 @@ class Contexte(object):
                             level=1, duration=10)
             print(str(e))
 
-    def addRipartLayersToMap(self):
-        """Add ripart layers to the current map
-        """
-        uri = QgsDataSourceUri()
+    def getUriDatabaseSqlite(self):
+        uri = QgsDataSourceUri(cst.EPSG4326)
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
         uri.setDatabase(self.dbPath)
+        return uri
+
+    def addRipartLayersToMap(self):
+        """Add ripart layers to the current map
+        """
+        uri = self.getUriDatabaseSqlite()
         self.logger.debug(uri.uri())
 
         maplayers = self.getAllMapLayers()
@@ -692,9 +729,9 @@ class Contexte(object):
         for table in RipartHelper.croquis_layers_name:
             if table not in maplayers:
                 uri.setDataSource('', table, 'geom')
-                uri.setSrid('4326')
+                uri.setSrid(str(cst.EPSGCRS))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.EpsgCrsId))
+                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
                 QgsProject.instance().addMapLayer(vlayer, False)
 
                 root.insertLayer(0, vlayer)
@@ -792,6 +829,7 @@ class Contexte(object):
         :param rem : la remarque à mettre à jour
         :type rem: Remarque
         """
+        global cur
         try:
             # self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
@@ -922,7 +960,7 @@ class Contexte(object):
         geomPoints = []
 
         try:
-            destCrs = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
+            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
 
             transformer = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
 
@@ -987,6 +1025,7 @@ class Contexte(object):
         :rtype: list de Point
         """
 
+        global cur
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
@@ -1055,6 +1094,7 @@ class Contexte(object):
         :return: le barycentre
         :rtype: Point
         """
+        global barycentre
         tmpTable = "tmpTable"
         point = None
         try:

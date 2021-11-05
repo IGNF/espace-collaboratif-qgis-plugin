@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 23 oct. 2020
 
 version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
-'''
+"""
 
 
 from qgis.core import QgsVectorLayer, QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue, QgsEditFormConfig
@@ -186,6 +186,7 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, bNullable):
 
+        global expTmp
         if minValue is None and maxValue is None or minValue == '' and maxValue == '':
             return
 

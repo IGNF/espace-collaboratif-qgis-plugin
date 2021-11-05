@@ -19,7 +19,7 @@ class Point(object):
     # La latitude (WGS84 en degrés décimaux) du point
     latitude = None
 
-    def __init__(self, lon= None, lat=None):
+    def __init__(self, lon=None, lat=None):
         """
         Constructeur à partir d'une longitude/latitude
         
@@ -29,18 +29,16 @@ class Point(object):
         :type float
         """
         self.longitude = lon
-        self.latitude  = lat
-        
-        
+        self.latitude = lat
+
     def isEmpty(self): 
         """
         Teste si le point est vide
         """
         return self.longitude is None or self.latitude is None
     
-    def eq(self,b):
-        if (self.longitude == b.longitude and self.latitude==b.latitude):
+    def eq(self, b):
+        if self.longitude == b.longitude and self.latitude == b.latitude:
             return True
-        else :
+        else:
             return False
-    

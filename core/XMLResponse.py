@@ -489,6 +489,10 @@ class XMLResponse(object):
 
         return total
 
+    def extractData(self):
+        data = {}
+        return data
+
     def extractRemarques(self):
         """Extraction des remarques de la réponse xml
         

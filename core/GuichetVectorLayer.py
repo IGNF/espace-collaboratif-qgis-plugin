@@ -24,7 +24,7 @@ class GuichetVectorLayer(QgsVectorLayer):
     # Les statistiques de comptage pour la couche
     stat = None
 
-    databasename = ""
+    #databasename = ""
 
     # La liste des id/md5 par objet AVANT le travail de l'utilisateur
     #md5BeforeWorks = []
@@ -61,13 +61,14 @@ class GuichetVectorLayer(QgsVectorLayer):
     Connexion des signaux
     Initialisation des comptages
     '''
-    def __init__(self, projectDirectory, layerName, layerType, databasename):
+    #def __init__(self, uri, layerName, layerType, databasename, tableAttributes):
+    def __init__(self, parameters):
 
-        super(GuichetVectorLayer, self).__init__(projectDirectory, layerName, layerType)
 
-        # Est-ce que la table "layerName" de correspondance entre id, cleabs et fingerprint existe ?
-        self.sqliteManager = SQLiteManager()
-        self.sqliteManager.createTableFromLayerIfNotExist(layerName)
+
+        #super(GuichetVectorLayer, self).__init__(uri, layerName, layerType)
+        super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
+
 
         # Remplissage de idxFingerprint (index du champ gcms_fingerprint) pour les tables historisées
         #listFields = self.fields()
@@ -82,8 +83,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         #nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
         #self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
         #self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
-        self.databasename = databasename
-
+        #self.databasename = databasename
     '''
     Connexion des signaux pour les évènements survenus sur la carte
     '''
@@ -157,16 +157,6 @@ class GuichetVectorLayer(QgsVectorLayer):
             id = feature.id()'''
 
         return feature.id(), cle
-
-    def setTableLayer(self):
-        corr = []
-        features = self.getFeatures()
-        for feature in features:
-            cleabs = feature.attribute('cleabs')
-            fingerprint = feature.attribute('gcms_fingerprint')
-            id = feature.id()
-            corr.append((id, cleabs, fingerprint))
-        self.sqliteManager.insertRowsInTable(corr, self.name())
 
     '''
     Au chargement de la couche dans QGIS, les caractéristiques des objets initiaux

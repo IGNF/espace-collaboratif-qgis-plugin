@@ -15,6 +15,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .core.Box import Box
 from .core.ClientHelper import ClientHelper
 from .core.NoProfileException import NoProfileException
+from .Contexte import Contexte
 
 
 class ImporterGuichet(object):
@@ -28,7 +29,6 @@ class ImporterGuichet(object):
     # barre de progression (des remarques importées)
     progressMessageBar = None
     progress = None
-    progressVal = 0
 
     def __init__(self, context):
         """
@@ -72,25 +72,23 @@ class ImporterGuichet(object):
 
             # filtre spatial
             # Non pris en compte en v4.0.1 car le filtrage par BBOX du WFS ne semble pas fonctionner
-            bbox = None
-            # filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
-            #
-            # if (filtre != None and len(filtre.strip()) > 0):
-            #     self.logger.debug("Spatial filter :" + filtre)
-            #
-            #     filtreLay = self.context.getLayerByName(filtre)
-            #     bbox = self.getSpatialFilterBbox(filtre, filtreLay)
-            #     if bbox == -999:
-            #         return
-            #
-            # else:
-            #     message = "Impossible de déterminer dans le fichier de paramétrage de l'Espace Collaboratif, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
-            #               "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
-            #               "(Cela risque de prendre un certain temps)."
-            #     if self.noFilterWarningDialog(message):
-            #         bbox = None
-            #     else:
-            #         return
+            filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
+
+            if filtre is not None and len(filtre.strip()) > 0:
+                self.logger.debug("Spatial filter :" + filtre)
+
+                filtreLay = self.context.getLayerByName(filtre)
+                bbox = self.getSpatialFilterBbox(filtre, filtreLay)
+                if bbox == -999:
+                    return
+            else:
+                message = "Impossible de déterminer dans le fichier de paramétrage de l'Espace Collaboratif, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
+                           "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
+                           "(Cela risque de prendre un certain temps)."
+                if self.noFilterWarningDialog(message):
+                    bbox = None
+                else:
+                    return
 
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             QApplication.setOverrideCursor(Qt.BusyCursor)
@@ -112,7 +110,6 @@ class ImporterGuichet(object):
         :type filtreLay: QgsVectorLayer
         """
         bbox = None
-
         if filtreLay is None:
             message = "La carte en cours ne contient pas le calque '" + \
                       filtre + \
@@ -129,7 +126,6 @@ class ImporterGuichet(object):
         else:
             # emprise=> getExtent + transform in 4326 crs
             filtreExtent = RipartHelper.getBboxFromLayer(filtreLay)
-
             bbox = Box(filtreExtent.xMinimum(), filtreExtent.yMinimum(), filtreExtent.xMaximum(),
                        filtreExtent.yMaximum())
 

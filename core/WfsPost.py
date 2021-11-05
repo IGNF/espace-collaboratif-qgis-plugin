@@ -5,7 +5,7 @@ from .SQLiteManager import SQLiteManager
 from .XMLResponse import XMLResponse
 
 
-class WfsTransactions(object):
+class WfsPost(object):
     context = None
     layer = None
     url = None
@@ -32,26 +32,26 @@ class WfsTransactions(object):
         strActions += ']'
         return strActions
 
-    def getHeader(self):
+    def setHeader(self):
         return '{"feature": {'
 
-    def getGeometry(self, geometry):
+    def setGeometry(self, geometry):
         wktGeometry = geometry.asWkt()
         return '"geometrie": "{0}"'.format(wktGeometry)
 
-    def getGeometries(self, changedGeometries):
+    def setGeometries(self, changedGeometries):
         geometries = {}
         for featureId, geometry in changedGeometries.items():
-            geometries[featureId] = self.getGeometry(geometry)
+            geometries[featureId] = self.setGeometry(geometry)
         return geometries
 
-    def getCleabs(self, cleabs):
+    def setCleabs(self, cleabs):
         return '"cleabs": "{0}"'.format(cleabs)
 
-    def getFingerPrint(self, fingerprint):
+    def setFingerPrint(self, fingerprint):
         return '"gcms_fingerprint": "{0}", '.format(fingerprint)
 
-    def getFieldsNameValue(self, feature):
+    def setFieldsNameValue(self, feature):
         fieldsNameValue = ""
         for field in feature.fields():
             fieldName = field.name()
@@ -61,24 +61,23 @@ class WfsTransactions(object):
             fieldsNameValue += '"{0}": "{1}", '.format(fieldName, fieldValue)
         return fieldsNameValue
 
-    def getStateAndLayerName(self, state):
+    def setStateAndLayerName(self, state):
         return '"state": "{0}", "typeName": "{1}"'.format(state, self.layer.name())
 
-    def gcms_transactions(self, strActions, databasename):
-        params = dict(actions=strActions, database=databasename)
+    def gcms_post(self, strActions):
+        params = dict(actions=strActions, database=self.layer.databasename)
         print(params)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
         print(response)
         xmlResponse = XMLResponse(response)
-        errMessage = xmlResponse.checkResponseWfsTransactions()
-        if errMessage['status'] == 'SUCCESS':
-            #self.logger.info(errMessage['message'])
-            self.showMessage('Transaction réussie : {}'.format(errMessage['message']))
+        message = xmlResponse.checkResponseWfsTransactions()
+        if message['status'] == 'SUCCESS':
+            self.showMessage(message['message'])
+            self.layer.reload()
         else:
-            #self.logger.error(errMessage['message'])
-            self.showMessage('Transaction interrompue : {}'.format(errMessage['message']))
-            raise Exception(errMessage['message'])
+            self.showMessage('Transaction interrompue : {}'.format(message['message']))
+            raise Exception(message['message'])
 
     def commitLayer(self):
         self.actions.clear()
@@ -89,7 +88,6 @@ class WfsTransactions(object):
             addedFeatures = editBuffer.addedFeatures().values()
             if len(addedFeatures) != 0:
                 self.pushAddedFeatures(addedFeatures)
-
             # géométrie modifiée
             changedGeometries = editBuffer.changedGeometries()
             # attributs modifiés
@@ -100,7 +98,7 @@ class WfsTransactions(object):
                 self.pushChangedGeometries(changedGeometries)
             elif len(changedAttributeValues) != 0:
                 self.pushChangedAttributeValues(changedAttributeValues)
-
+            # suppression
             deletedFeaturesId = editBuffer.deletedFeatureIds()
             if len(deletedFeaturesId) != 0:
                 self.pushDeletedFeatures(deletedFeaturesId)
@@ -108,67 +106,66 @@ class WfsTransactions(object):
             # Lancement de la transaction
             strActions = self.formatItemActions()
             print(strActions)
-            databaseName = 'bduni_interne_qualif_fxx'
-            self.gcms_transactions(strActions, databaseName)
+            self.gcms_post(strActions)
 
     def pushAddedFeatures(self, addedFeatures):
         for feature in addedFeatures:
-            strFeature = self.getHeader()
-            strFeature += self.getFieldsNameValue(feature)
-            strFeature += self.getGeometry(feature.geometry())
+            strFeature = self.setHeader()
+            strFeature += self.setFieldsNameValue(feature)
+            strFeature += self.setGeometry(feature.geometry())
             strFeature += '},'
-            strFeature += self.getStateAndLayerName('Insert', self.layer.name())
+            strFeature += self.setStateAndLayerName('Insert')
             strFeature += '}'
             self.actions.append(strFeature)
 
     def pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries):
         # Récupération des géométries par identifiant d'objet
-        geometries = self.getGeometries(changedGeometries)
+        geometries = self.setGeometries(changedGeometries)
         # Récupération des attributs et ajout de la géométrie
         for featureId, attributes in changedAttributeValues.items():
             feature = self.layer.getFeature(featureId)
-            strFeature = self.getHeader()
-            strFeature += self.getFieldsNameValue(feature)
-            strFeature += self.getFingerPrint(feature.attribute('gcms_fingerprint'))
-            strFeature += self.getCleabs(feature.attribute('cleabs'))
+            strFeature = self.setHeader()
+            strFeature += self.setFieldsNameValue(feature)
+            strFeature += self.setFingerPrint(feature.attribute('gcms_fingerprint'))
+            strFeature += self.setCleabs(feature.attribute('cleabs'))
             strFeature += geometries[featureId]
             strFeature += '},'
-            strFeature += self.getStateAndLayerName('Update')
+            strFeature += self.setStateAndLayerName('Update')
             strFeature += '}'
             self.actions.append(strFeature)
 
     def pushChangedGeometries(self, changedGeometries):
         for featureId, geometry in changedGeometries.items():
             feature = self.layer.getFeature(featureId)
-            strFeature = self.getHeader()
-            strFeature += self.getFingerPrint(feature.attribute('gcms_fingerprint'))
-            strFeature += self.getCleabs(feature.attribute('cleabs'))
-            strFeature += self.getGeometry(geometry)
+            strFeature = self.setHeader()
+            strFeature += self.setFingerPrint(feature.attribute('gcms_fingerprint'))
+            strFeature += self.setCleabs(feature.attribute('cleabs'))
+            strFeature += self.setGeometry(geometry)
             strFeature += '},'
-            strFeature += self.getStateAndLayerName('Update')
+            strFeature += self.setStateAndLayerName('Update')
             strFeature += '}'
             self.actions.append(strFeature)
 
     def pushChangedAttributeValues(self, changedAttributeValues):
         for featureId, attributes in changedAttributeValues.items():
             feature = self.layer.getFeature(featureId)
-            strFeature = self.getHeader()
-            strFeature += self.getFieldsNameValue(feature)
-            strFeature += self.getFingerPrint(feature.attribute('gcms_fingerprint'))
-            strFeature += self.getCleabs(feature.attribute('cleabs'))
+            strFeature = self.setHeader()
+            strFeature += self.setFieldsNameValue(feature)
+            strFeature += self.setFingerPrint(feature.attribute('gcms_fingerprint'))
+            strFeature += self.setCleabs(feature.attribute('cleabs'))
             strFeature += '},'
-            strFeature += self.getStateAndLayerName('Update')
+            strFeature += self.setStateAndLayerName('Update')
             strFeature += '}'
             self.actions.append(strFeature)
 
     def pushDeletedFeatures(self, deletedFeatures):
         result = SQLiteManager.selectRowsInTable(self.layer.name(), deletedFeatures)
         for r in result:
-            strFeature = self.getHeader()
-            strFeature += self.getFingerPrint(r[1])
-            strFeature += self.getCleabs(r[0])
+            strFeature = self.setHeader()
+            strFeature += self.setFingerPrint(r[1])
+            strFeature += self.setCleabs(r[0])
             strFeature += '},'
-            strFeature += self.getStateAndLayerName('Delete')
+            strFeature += self.setStateAndLayerName('Delete')
             strFeature += '}'
             self.actions.append(strFeature)
 

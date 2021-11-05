@@ -19,6 +19,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from .core.ClientHelper import ClientHelper
 from .core.RipartLoggerCl import RipartLogger
+from .core import ConstanteRipart as cst
 
 
 class RipartHelper:
@@ -99,9 +100,6 @@ class RipartHelper:
     defaultDate = "1900-01-01 00:00:00"
     defaultPagination = 100
     longueurMaxChamp = 5000
-    
-    #Système de coordonnées de référence de Ripart
-    epsgCrs = 4326
     
     logger = RipartLogger("RipartHelper").getRipartLogger()
 
@@ -589,7 +587,7 @@ class RipartHelper:
         r = cur.execute(sql)
         
         # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('Signalement','geom', "+str(RipartHelper.epsgCrs)+", 'POINT', 'XY')"
+        sql = "SELECT AddGeometryColumn('Signalement','geom', "+str(cst.EPSGCRS)+", 'POINT', 'XY')"
         cur = conn.cursor()
         cur.execute(sql)
         conn.commit()
@@ -620,7 +618,7 @@ class RipartHelper:
         
         # creating a POINT Geometry column
         sql = "SELECT AddGeometryColumn('"+table+"',"
-        sql += "'geom',"+str(RipartHelper.epsgCrs)+",'"+geomType+"', 'XY')"
+        sql += "'geom',"+str(cst.EPSGCRS)+",'"+geomType+"', 'XY')"
         cur.execute(sql)
         cur.close()
 
@@ -674,7 +672,7 @@ class RipartHelper:
             if rem.dateValidation is None:
                 rem.dateValidation = ""
                 
-            geom = " GeomFromText('POINT("+ str(ptx)+" "+str(pty) + ")', 4326)"
+            geom = " GeomFromText('POINT("+ str(ptx)+" "+str(pty) + ")', {})".format(cst.EPSGCRS)
              
             sql = u"INSERT INTO "+ RipartHelper.nom_Calque_Signalement
             sql += u" (NoSignalement, Auteur,Commune, Département, Département_id, Date_création, Date_MAJ,"
@@ -717,7 +715,7 @@ class RipartHelper:
                             ClientHelper.getValForDB(cr.getAttributsInStringFormat()) + "', %s)"
                     sql += values
                           
-                    sgeom = " GeomFromText('%s(%s)', 4326)"
+                    sgeom = " GeomFromText('%s(%s)', {})".format(cst.EPSGCRS)
                     coord = cr.getCoordinatesFromPoints()
 
                     if str(cr.type) == "Point" or str(cr.type) == "Texte":
@@ -748,7 +746,7 @@ class RipartHelper:
         :param geomLayer: QgsVectorlayer
         """
         layerCrs = geomLayer.crs()
-        destCrs = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
         xform = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
         featsPoly = geomLayer.getFeatures()
         isWithin = False
@@ -770,7 +768,7 @@ class RipartHelper:
         """
         filtreExtent = filtreLay.extent()
         filtCrs = filtreLay.crs()
-        destCrs = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs, QgsCoordinateReferenceSystem.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
         xform = QgsCoordinateTransform(filtCrs, destCrs, QgsProject.instance())
         bbox = xform.transform(filtreExtent)
         

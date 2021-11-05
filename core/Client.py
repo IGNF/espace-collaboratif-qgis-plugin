@@ -209,7 +209,7 @@ class Client(object):
         tmp = layerUrl.split('&')
         dbName = tmp[1].split('=')
         url = "{}/{}/{}/feature-type/{}.json".format(self.__url, "gcms/database", dbName[1], layerName)
-        self.logger.debug("{0} {1}".format("connexionFeatureTypeJson", url))
+        self.logger.debug("{0} {1}".format("connexionFeatureTypeJson : ", url))
 
         featuretypeResponse = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password),
                                            proxies=self.__proxies)
@@ -367,7 +367,7 @@ class Client(object):
             sdate = xml.getDate()
             dicoRems = xml.extractRemarques()
 
-            if int(pagination) > total:
+            if count > total:
                 progressMax = int(pagination)
             else:
                 progressMax = total

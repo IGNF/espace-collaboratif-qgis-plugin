@@ -17,6 +17,7 @@ from .core.Box import Box
 from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
+from .Contexte import Contexte
 
 
 class ImporterRipart(object):
@@ -152,7 +153,8 @@ class ImporterRipart(object):
                 for remId in remsToKeep:
 
                     if remId == 467015 or remId == '467015':
-                        debug = True
+                        #debug = True
+                        continue
 
                     RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
                     i += 1
@@ -236,7 +238,7 @@ class ImporterRipart(object):
         
         :param box: bounding box
         """
-        source_crs = QgsCoordinateReferenceSystem(RipartHelper.epsgCrs)
+        source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
 
         mapCrs = self.context.mapCan.mapSettings().destinationCrs().authid()
         dest_crs = QgsCoordinateReferenceSystem(mapCrs)

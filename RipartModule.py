@@ -30,7 +30,7 @@ from builtins import range
 # from builtins import object
 import os.path
 
-from .core.WfsTransactions import WfsTransactions
+from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
@@ -316,9 +316,6 @@ class RipartPlugin:
             if self.context is None:
                 return
 
-            # Les profils serveur/client se correspondent-ils ?
-            # self.context.checkProfilServeurClient()
-
             dlgChargerGuichet = FormChargerGuichet(self.context)
             if dlgChargerGuichet.context.profil is not None:
                 if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1 and \
@@ -331,7 +328,7 @@ class RipartPlugin:
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Remarque",
-                            str(e), \
+                            str(e),
                             level=1, duration=5)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
@@ -352,72 +349,8 @@ class RipartPlugin:
                 return
 
         # 'bduni_interne_qualif_fxx'
-        wfsTransactions = WfsTransactions(self.context)
-        wfsTransactions.commitLayer()
-
-        '''self.context = Contexte.getInstance(self, QgsProject)
-        layer = self.context.iface.activeLayer()
-        fields = layer.fields()
-        for field in fields:
-            name = field.name()
-            print(name)
-            index = fields.indexOf(name)
-            ews = layer.editorWidgetSetup(index)
-            field.constraints().constraintExpression()
-            print("Type:", ews.type())
-            print("Config:", ews.config())
-            print(field.constraints().constraintExpression())
-            print(layer.expressionField(index))'''
-
-        '''context = Contexte.getInstance(self, QgsProject)
-        root = context.QgsProject.instance().layerTreeRoot()
-        order = root.customLayerOrder()
-        print("order : {}".format(order))
-        print("---------------------")
-        layers = QgsProject.instance().mapLayers()
-        for key in layers:
-            order.insert(0, order.pop())  # Last layer to first position
-        print("order : {}".format(order))
-        root.setCustomLayerOrder(order)'''
-
-        '''listLayerOrder = root.layerOrder() #QgsMapLayer
-        for layer in listLayerOrder:
-            print(layer.name())
-        print('-----------------')
-
-        nodesGroup = root.findGroups()
-        for nodeGroup in nodesGroup:
-            listFindLayers = nodeGroup.findLayers()
-            for findLayer in listFindLayers:
-                fl = findLayer.layer()
-                print(fl.name())
-        print('-----------------')
-
-        listGeoportail = []
-        #QgsMapLayer
-        listCustomLayerOrder = []
-        for layer in listLayerOrder:
-            #trouve = False
-            lName = layer.name()
-            if lName.find('IGN') != -1:
-                listGeoportail.append(layer.id())
-            else:
-                listCustomLayerOrder.append(layer.id())
-            for qgsLayerTreeLayer in listFindLayers:
-                ltl = qgsLayerTreeLayer.layer()
-                if lName == ltl.name():
-                    listCustomLayerOrder.append(layer)
-                    trouve = True
-                    break;
-            if trouve is False:
-                listGeoportail.append(layer)
-
-        listCustomLayerOrder.extend(listGeoportail)
-        for c in listCustomLayerOrder:
-            print(c.name())
-
-        root.setCustomLayerOrder(listCustomLayerOrder)
-        context.mapCan.refresh()'''
+        wfsPost = WfsPost(self.context)
+        wfsPost.commitLayer()
 
     def unload(self):
 
@@ -461,6 +394,7 @@ class RipartPlugin:
     def run(self):
         """Fenêtre de connexion"""
 
+        global res
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
@@ -537,7 +471,7 @@ class RipartPlugin:
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu lors de la création du signalement", \
+                            u"Un problème est survenu lors de la création du signalement",
                             level=2, duration=5)
 
     def removeRemarks(self):
@@ -558,7 +492,7 @@ class RipartPlugin:
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu lors de la suppression des signalements", \
+                            u"Un problème est survenu lors de la suppression des signalements",
                             level=2, duration=5)
 
     def configurePref(self):
@@ -579,7 +513,7 @@ class RipartPlugin:
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu dans le chargement de la configuration." + format(e), \
+                            u"Un problème est survenu dans le chargement de la configuration." + format(e),
                             level=2, duration=5)
 
     def magicwand(self):
@@ -612,7 +546,7 @@ class RipartPlugin:
             self.logger.error("viewRem " + format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.", \
+                            u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.",
                             level=2, duration=5)
 
     def ripAbout(self):
@@ -660,5 +594,5 @@ class RipartPlugin:
         """Ouvre le dernier fichier de log
         """
         logpath = self.ripartLogger.getLogpath()
-        if logpath != None:
+        if logpath is not None:
             RipartHelper.open_file(logpath)
