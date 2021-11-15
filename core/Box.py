@@ -48,10 +48,10 @@ class Box(object):
         strBox = str(self.XMin) + "," + str(self.YMin) + "," + str(self.XMax) + "," + str(self.YMax)
         return strBox
 
-    def boxToStringLambert93(self):
-        crsWGS84 = QgsCoordinateReferenceSystem(cst.EPSG4326)
-        crsLambert93 = QgsCoordinateReferenceSystem(cst.EPSG2154)
-        transformer = QgsCoordinateTransform(crsWGS84, crsLambert93, QgsProject.instance())
+    def boxToString(self, sridProject, sridLayer):
+        crsProject = QgsCoordinateReferenceSystem(sridProject)
+        crsLayer = QgsCoordinateReferenceSystem(sridLayer)
+        transformer = QgsCoordinateTransform(crsProject, crsLayer, QgsProject.instance())
         min = transformer.transform(self.XMin, self.YMin)
         max = transformer.transform(self.XMax, self.YMax)
         strBox = str(min.x()) + "," + str(min.y()) + "," + str(max.x()) + "," + str(max.y())

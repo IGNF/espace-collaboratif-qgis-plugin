@@ -31,11 +31,14 @@ class SQLiteManager(object):
         return True
 
     def setAttributesTableToSql(self, geometryName):
+        columnDetruitExist = False
         typeGeometrie = ''
         #tester si la variable id n'existe pas dans tableAttributes
         sqlAttributes = "id INTEGER NOT NULL PRIMARY KEY,"
         for value in self.tableAttributes.values():
-            if value['name'] == geometryName:
+            if value['name'] == "detruit":
+                columnDetruitExist = True
+            elif value['name'] == geometryName:
                 typeGeometrie = self.setSwitchType(value['type'])
             elif value['name'] == "id":
                 sqlAttributes += "{0} {1},".format(cst.ID_ORIGINAL, self.setSwitchType(value['type']))
@@ -43,7 +46,7 @@ class SQLiteManager(object):
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
         # que devient gcms_fingerprint dans la table zone_d_activite_ou_d_interet ?
         # ordre d'insertion geometrie,gcms_fingerprint
-        return sqlAttributes, typeGeometrie
+        return sqlAttributes, typeGeometrie, columnDetruitExist
 
     def setAddGeometryColumn(self, parameters):
         if not parameters['is3d']:
@@ -86,6 +89,8 @@ class SQLiteManager(object):
         cur.close()
         connection.commit()
         connection.close()
+        #retourne True si la colonne detruit existe dans la table
+        return t[2]
 
     def setSwitchType(self, vType):
         if vType == 'Boolean':
@@ -267,5 +272,14 @@ class SQLiteManager(object):
         cursor.execute(sql)
         if len(cursor.fetchall()) == 0:
             print("SQLiteManager : table {0} vidée".format(tableName))
+        cursor.close()
+        connection.commit()
+
+    def deleteTable(self, tableName):
+        connection = spatialite_connect(self.dbPath)
+        cursor = connection.cursor()
+        sql = u"DROP TABLE {0}".format(tableName)
+        cursor.execute(sql)
+        print("SQLiteManager : table {0} détruite".format(tableName))
         cursor.close()
         connection.commit()

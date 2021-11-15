@@ -42,9 +42,11 @@ class RipartServiceRequest(object):
             else:
                 r = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
                                   data=data, files=files, verify=False)
-     
-            if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
+
+            #if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
+            if r.status_code != '200':
                 RipartServiceRequest.logger.error(r.text)
+                raise Exception(r.status_code + ", " + r.reason)
             
             r.encoding = 'utf-8'
             response = r.text
@@ -52,6 +54,6 @@ class RipartServiceRequest(object):
         except Exception as e:
             RipartServiceRequest.logger.error(format(e))
             raise Exception(u"Connexion impossible.\nVeuillez vérifier les paramètres de connexion\n(Aide>Configurer "
-                            u"le plugin)")
+                            u"le plugin.\nErreur : )" + format(e))
         
         return response

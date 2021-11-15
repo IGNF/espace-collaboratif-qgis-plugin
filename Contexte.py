@@ -555,13 +555,12 @@ class Contexte(object):
         # Création éventuelle de la table SQLite liée à la couche
         sqlitemanager = SQLiteManager()
 
-        # Est-ce que la table du nom de la couche existe ?
-        # si non elle est crée
-        if not sqlitemanager.isTableExist(layer.nom):
-            sqlitemanager.createTableFromLayer(layer.nom, structure)
-        # si oui, elle est vidée
-        else:
+        # Si la table du nom de la couche existe,
+        # elle est vidée et détruite
+        if sqlitemanager.isTableExist(layer.nom):
             sqlitemanager.emptyTable(layer.nom)
+            sqlitemanager.deleteTable(layer.nom)
+        bDetruit = sqlitemanager.createTableFromLayer(layer.nom, structure)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
@@ -578,9 +577,9 @@ class Contexte(object):
         # vlayer = GuichetVectorLayer(parameters)
         vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
-        return vlayer
+        return vlayer, bDetruit
 
-    def formatLayer(self, layer, newLayer, nodeGroup, structure, bbox):
+    def formatLayer(self, layer, newLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
         # Ajout de la couche dans la carte
         QgsProject.instance().addMapLayer(newLayer, False)
         nodeGroup.addLayer(newLayer)
@@ -600,6 +599,7 @@ class Contexte(object):
         parameters['sridLayer'] = int(structure['attributes'][geometryName]['srid'])
         parameters['is3d'] = structure['attributes'][geometryName]['is3d']
         parameters['bbox'] = bbox
+        parameters['detruit'] = bColumnDetruitExist
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get()
 
@@ -674,10 +674,10 @@ class Contexte(object):
                     # Récupération de la structure de la future table
                     structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
                     sourceLayer = self.importWFS(layer, structure)
-                    if not sourceLayer.isValid():
+                    if not sourceLayer[0].isValid():
                         print("Layer {} failed to load !".format(layer.nom))
                         continue
-                    self.formatLayer(layer, sourceLayer, nodeGroup, structure, bbox)
+                    self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
