@@ -211,12 +211,15 @@ class SQLiteManager(object):
             # si la couche est en visualisation, la table sqlite ne contient pas la colonne gcms_fingerprint
             if column == 'gcms_fingerprint' and (parameters['role'] == 'visu' or parameters['role'] == 'ref'):
                 continue
-            tmpColumns += '{0},'.format(column)
-            if column == parameters['geometryName']:
+            elif column == parameters['geometryName']:
+                tmpColumns += '{0},'.format(column)
                 tmpValues += "{},".format(SQLiteManager.formatAndTransformGeometry(value, parameters))
+                continue
             elif column == 'id':
                 tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
-            elif value is None:
+            else:
+                tmpColumns += '{0},'.format(column)
+            if value is None:
                 tmpValues += "'',"
             else:
                 if type(value) == str:

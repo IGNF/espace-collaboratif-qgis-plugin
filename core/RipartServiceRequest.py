@@ -44,9 +44,9 @@ class RipartServiceRequest(object):
                                   data=data, files=files, verify=False)
 
             #if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
-            if r.status_code != '200':
+            if r.status_code != 200:
                 RipartServiceRequest.logger.error(r.text)
-                raise Exception(r.status_code + ", " + r.reason)
+                raise Exception(r.reason)
             
             r.encoding = 'utf-8'
             response = r.text
