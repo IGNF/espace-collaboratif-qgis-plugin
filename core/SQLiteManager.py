@@ -38,6 +38,7 @@ class SQLiteManager(object):
         for value in self.tableAttributes.values():
             if value['name'] == "detruit":
                 columnDetruitExist = True
+                sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
             elif value['name'] == geometryName:
                 typeGeometrie = self.setSwitchType(value['type'])
             elif value['name'] == "id":
@@ -143,7 +144,8 @@ class SQLiteManager(object):
             xy = coordinate.split(' ')
             pt = transformer.transform(float(xy[0]), float(xy[1]))
             res += str(pt.x()) + " " + str(pt.y()) + ", "
-        geom = res[0:len(res) - 2] + ')))'
+            res += "{0} {1}, ".format(str(pt.x()), str(pt.y()))
+        geom = "{0})))".format(res[0:len(res) - 2])
         return "GeomFromText('{0}', {1})".format(geom, sridProject)
 
     @staticmethod
@@ -156,36 +158,64 @@ class SQLiteManager(object):
         for coordinate in coordinates:
             xyz = coordinate.split(' ')
             pt = transformer.transform(float(xyz[0]), float(xyz[1]))
-            res += str(pt.x()) + " " + str(pt.y()) + " " + xyz[2] + ","
-        geom = res[0:len(res) - 1] + ')))'
+            res += "{0} {1} {2}, ".format(str(pt.x()), str(pt.y()), xyz[2])
+        geom = "{0})))".format(res[0:len(res) - 2])
         return "GeomFromText('{0}', {1})".format(geom, sridProject)
 
     @staticmethod
     def set2dGeomFromText(value, transformer, sridProject):
         pos = value.find('(')
         res = value[0:pos]
-        res += " ("
+        if "POLYGON" in value:
+            res += " (("
+        else:
+            res += " ("
         tmp = value[pos + 1:len(value) - 1]
         coordinates = tmp.split(',')
         for coordinate in coordinates:
             xy = coordinate.split(' ')
-            pt = transformer.transform(float(xy[0]), float(xy[1]))
-            res += str(pt.x()) + " " + str(pt.y()) + ", "
-        geom = res[0:len(res) - 2] + ')'
+            posX = xy[0].find('(')
+            x = xy[0]
+            y = xy[1]
+            if posX != -1:
+                x = xy[0][posX + 1:len(xy[0])]
+            posY = xy[1].find(')')
+            if posY != -1:
+                y = xy[1][0:posY - 1]
+            pt = transformer.transform(float(x), float(y))
+            res += "{0} {1}, ".format(str(pt.x()), str(pt.y()))
+        if "POLYGON" in value:
+            geom = "{0}))".format(res[0:len(res) - 2])
+        else:
+            geom = "{0})".format(res[0:len(res) - 2])
         return "GeomFromText('{0}', {1})".format(geom, sridProject)
 
     @staticmethod
     def set3dGeomFromText(value, transformer, sridProject):
         pos = value.find('(')
         res = value[0:pos]
-        res += " Z("
+        if "POLYGON" in value:
+            res += " Z(("
+        else:
+            res += " Z("
         tmp = value[pos + 1:len(value) - 1]
         coordinates = tmp.split(',')
         for coordinate in coordinates:
             xyz = coordinate.split(' ')
-            pt = transformer.transform(float(xyz[0]), float(xyz[1]))
-            res += str(pt.x()) + " " + str(pt.y()) + " " + xyz[2] + ","
-        geom = res[0:len(res) - 1] + ')'
+            posX = xyz[0].find('(')
+            x = xyz[0]
+            y = xyz[1]
+            if posX != -1:
+                x = xyz[0][posX + 1:len(xyz[0])]
+            posY = xyz[1].find(')')
+            if posY != -1:
+                y = xyz[1][0:posY - 1]
+            pt = transformer.transform(float(x), float(y))
+            res += "{0} {1} {2}, ".format(str(pt.x()), str(pt.y()), xyz[2])
+        if "POLYGON" in value:
+            geom = "{0}))".format(res[0:len(res) - 2])
+        else:
+            geom = "{0})".format(res[0:len(res) - 2])
         return "GeomFromText('{0}', {1})".format(geom, sridProject)
 
     @staticmethod
