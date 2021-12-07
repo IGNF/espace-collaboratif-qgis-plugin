@@ -26,7 +26,7 @@ from .core.Client import Client
 from .core.ClientHelper import ClientHelper
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
-from .core.Croquis import Croquis
+from .core.Sketch import Sketch
 from .FormConnexion_dialog import FormConnexionDialog
 from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
@@ -956,7 +956,7 @@ class Contexte(object):
         :return le croquis créé
         :rtype Croquis ou None s'il y a eu une erreur
         """
-        newCroquis = Croquis()
+        newCroquis = Sketch()
         geomPoints = []
 
         try:
@@ -970,17 +970,17 @@ class Contexte(object):
                     geomPoints = geomPoints[0]  # les points du polygone
                 else:
                     self.logger.debug(u"geomPoints problem " + str(fId))
-                newCroquis.type = newCroquis.CroquisType.Polygone
+                newCroquis.type = newCroquis.SketchType.Polygone
 
             elif ftype == QgsWkbTypes.LineGeometry:
                 geomPoints = geom.asPolyline()
-                newCroquis.type = newCroquis.CroquisType.Ligne
+                newCroquis.type = newCroquis.SketchType.Ligne
 
             elif ftype == QgsWkbTypes.PointGeometry:
                 geomPoints = [geom.asPoint()]
-                newCroquis.type = newCroquis.CroquisType.Point
+                newCroquis.type = newCroquis.SketchType.Point
             else:
-                newCroquis.type = newCroquis.CroquisType.Vide
+                newCroquis.type = newCroquis.SketchType.Vide
 
             for pt in geomPoints:
                 pt = transformer.transform(pt)
@@ -1054,13 +1054,13 @@ class Contexte(object):
             textGeomEnd = ""
             for cr in listCroquis:
                 i += 1
-                if cr.type == cr.CroquisType.Ligne:
+                if cr.type == cr.SketchType.Ligne:
                     textGeom = "LINESTRING("
                     textGeomEnd = ")"
-                elif cr.type == cr.CroquisType.Polygone:
+                elif cr.type == cr.SketchType.Polygone:
                     textGeom = "POLYGON(("
                     textGeomEnd = "))"
-                elif cr.type == cr.CroquisType.Point:
+                elif cr.type == cr.SketchType.Point:
                     textGeom = "POINT("
                     textGeomEnd = ")"
 

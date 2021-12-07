@@ -16,7 +16,7 @@ from .Theme import Theme
 from .ThemeAttribut import ThemeAttribut
 from .Point import Point
 from .Author import Author
-from .Croquis import Croquis
+from .Sketch import Sketch
 from .Groupe import Groupe
 from .InfosGeogroupe import InfosGeogroupe
 from .SketchAttributes import SketchAttributes
@@ -689,7 +689,7 @@ class XMLResponse(object):
                 for c in coords:
 
                     # On crée un croquis par ensemble de coordonnées récupérées
-                    croquis = Croquis()
+                    croquis = Sketch()
                     croquis.type = typeCroquis
                     croquis.nom = nomCroquis
                     croquis.attributs = listAttCroquis
