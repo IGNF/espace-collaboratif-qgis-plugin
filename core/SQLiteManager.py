@@ -186,7 +186,7 @@ class SQLiteManager(object):
                 Y = xyz[1]
                 posY = xyz[1].find(')')
                 if posY != -1:
-                    Y = xyz[1][0:posY - 1]
+                    Y = xyz[1][0:posY]
                 pt = transformer.transform(float(X), float(Y))
                 if is3D:
                     if closeBracket:
@@ -220,7 +220,7 @@ class SQLiteManager(object):
                 x = xyz[0][posX + 1:len(xyz[0])]
             posY = xyz[1].find(')')
             if posY != -1:
-                y = xyz[1][0:posY - 1]
+                y = xyz[1][0:posY]
             pt = transformer.transform(float(x), float(y))
             if is3D:
                 res += "{0} {1} {2}, ".format(str(pt.x()), str(pt.y()), xyz[2])
@@ -231,7 +231,6 @@ class SQLiteManager(object):
 
     @staticmethod
     def formatAndTransformGeometry(value, parameters):
-        print(value)
         transformer = SQLiteManager.getTransformer(parameters['sridProject'], parameters['sridLayer'])
         if 'MULTI' in value:
             if not parameters['is3d']:
@@ -243,7 +242,6 @@ class SQLiteManager(object):
                 geomFromText = SQLiteManager.setGeomFromText(value, transformer, parameters['sridProject'], False)
             else:
                 geomFromText = SQLiteManager.setGeomFromText(value, transformer, parameters['sridProject'], True)
-        print(geomFromText)
         return geomFromText
 
     @staticmethod
@@ -304,7 +302,6 @@ class SQLiteManager(object):
         sql = "SELECT cleabs, fingerprint FROM {0} WHERE id IN {1}".format(tableName, listId)
         cur.execute(sql)
         result = cur.fetchall()
-        print(result)
         cur.close()
         connection.close()
         return result

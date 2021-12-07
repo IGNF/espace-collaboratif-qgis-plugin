@@ -15,11 +15,11 @@ from .Remarque import Remarque
 from .Theme import Theme
 from .ThemeAttribut import ThemeAttribut
 from .Point import Point
-from .Auteur import Auteur
+from .Author import Author
 from .Croquis import Croquis
 from .Groupe import Groupe
 from .InfosGeogroupe import InfosGeogroupe
-from .Attribut import Attribut
+from .SketchAttributes import SketchAttributes
 from .GeoReponse import GeoReponse
 from datetime import datetime
 from .ClientHelper import ClientHelper
@@ -581,7 +581,7 @@ class XMLResponse(object):
                 if nfind is not None:
                     rem.commentaire = nfind.text
 
-                rem.auteur = Auteur()
+                rem.auteur = Author()
                 nfind = node.find('ID_AUTEUR')
                 if nfind is not None:
                     rem.auteur.id = nfind.text
@@ -675,7 +675,7 @@ class XMLResponse(object):
                 attributs = ob.findall('attributs/attribut')
                 listAttCroquis = []
                 for att in attributs:
-                    attribut = Attribut()
+                    attribut = SketchAttributes()
                     attribut.nom = att.attrib['name']
                     attribut.valeur = att.text
                     listAttCroquis.append(attribut)
@@ -761,7 +761,7 @@ class XMLResponse(object):
             gr.nom = rep.find('TITRE').text
             georep.groupe = gr
 
-            georep.auteur = Auteur()
+            georep.auteur = Author()
             georep.auteur.id = rep.find('ID_AUTEUR').text
             georep.auteur.nom = rep.find('AUTEUR').text
 

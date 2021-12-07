@@ -10,7 +10,7 @@ version 3.0.0 , 26/11/2018
 from datetime import datetime
 import xml.etree.cElementTree as et
 from .Groupe import Groupe
-from .Auteur import Auteur
+from .Author import Author
 from . import ConstanteRipart
 
 
@@ -22,7 +22,7 @@ class GeoReponse(object):
     groupe= Groupe()
     
     # L'auteur de la réponse
-    auteur= Auteur()
+    auteur= Author()
     
     # La réponse incluse dans l'object GeoReponse
     reponse =""
@@ -40,7 +40,7 @@ class GeoReponse(object):
         Constructor
         '''
         self.groupe=Groupe()
-        self.auteur=Auteur()
+        self.auteur=Author()
         self.reponse= ""
         self.date = datetime.now()
         self.statut=ConstanteRipart.STATUT.undefined

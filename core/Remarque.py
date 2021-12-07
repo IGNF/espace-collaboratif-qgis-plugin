@@ -10,7 +10,7 @@ version 3.0.0 , 26/11/2018
 from .Point import Point
 from . import ConstanteRipart
 from .Groupe import Groupe
-from .Auteur import Auteur
+from .Author import Author
 from .Theme import Theme
 from datetime import datetime
 from .ClientHelper import ClientHelper
@@ -56,7 +56,7 @@ class Remarque(object):
     commentaire = ""
 
     # auteur de la remarque
-    auteur = Auteur()
+    auteur = Author()
 
     # Définit les droits d'action de l'utilisateur en cours sur la remarque
     autorisation = ""
@@ -100,7 +100,7 @@ class Remarque(object):
         self.departement = Groupe()
         self.commune = ""
         self.commentaire = ""
-        self.auteur = Auteur()
+        self.auteur = Author()
         self.autorisation = ""
         self.id_partition = ""
         self.groupe = Groupe()

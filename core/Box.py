@@ -7,8 +7,6 @@ Updated on 15 dec. 2020
 """
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 
-from . import ConstanteRipart as cst
-
 
 class Box(object):
     """
@@ -37,7 +35,6 @@ class Box(object):
             self.YMin = None
             self.XMax = None
             self.YMax = None
-
         else:
             self.XMin = min(xMin, xMax)
             self.XMax = max(xMin, xMax)
@@ -48,7 +45,7 @@ class Box(object):
         strBox = str(self.XMin) + "," + str(self.YMin) + "," + str(self.XMax) + "," + str(self.YMax)
         return strBox
 
-    def boxToString(self, sridProject, sridLayer):
+    def boxToStringWithSrid(self, sridProject, sridLayer):
         crsProject = QgsCoordinateReferenceSystem(sridProject)
         crsLayer = QgsCoordinateReferenceSystem(sridLayer)
         transformer = QgsCoordinateTransform(crsProject, crsLayer, QgsProject.instance())

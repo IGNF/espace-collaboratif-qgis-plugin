@@ -8,7 +8,7 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-from .Auteur import Auteur
+from .Author import Author
 from .Groupe import Groupe
 from . import ConstanteRipart 
 
@@ -19,7 +19,7 @@ class Profil(object):
     """
 
     #Nom de l'auteur   
-    auteur = Auteur()
+    auteur = Author()
                         
     #Nom du Geogroupe    
     geogroupe = Groupe()

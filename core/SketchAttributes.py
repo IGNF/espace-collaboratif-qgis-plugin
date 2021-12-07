@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 23 janv. 2015
 
-version 3.0.0 , 26/11/2018
+version 3.0.0, 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 
 from PyQt5.QtCore import QDate, QDateTime
 
-class Attribut(object):
-    '''
+
+class SketchAttributes(object):
+    """
     Classe représentant un attribut (d'un croquis)
     sous forme nom/valeur
-    '''
-    nom=""
-    valeur=""
+    """
+    name = ""
+    value = ""
 
-        
-    def __init__(self, nom="", valeur=""):
+    def __init__(self, name="", value=""):
         """
         Constructeur
         
@@ -28,14 +28,14 @@ class Attribut(object):
         :param valeur: la valeur de l'attribut
         :type valeur:string
         """
-        self.nom=nom
-        
-        typeAtt = type(valeur)
+        self.name = name
+
+        typeAtt = type(value)
         if typeAtt == QDate:
-            valeur = valeur.toString('yyyy-MM-dd')
+            value = value.toString('yyyy-MM-dd')
         elif typeAtt == QDateTime:
-            valeur = valeur.toString('yyyy-MM-dd hh:mm:ss')
-        elif typeAtt!=str:
-            valeur = str(valeur)
-            
-        self.valeur=valeur
+            value = value.toString('yyyy-MM-dd hh:mm:ss')
+        elif typeAtt != str:
+            value = str(value)
+
+        self.value = value

@@ -96,7 +96,7 @@ class WfsGet(object):
             self.parametersGcmsGet['filter'] = '{"detruit":false}'
 
     def setBBox(self, bbox):
-        self.parametersGcmsGet['bbox'] = bbox.boxToString(self.sridProject, self.sridLayer)
+        self.parametersGcmsGet['bbox'] = bbox.boxToStringWithSrid(self.sridProject, self.sridLayer)
 
     def setOffset(self, offset):
         self.parametersGcmsGet['offset'] = offset

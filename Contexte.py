@@ -24,7 +24,7 @@ from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.Client import Client
 from .core.ClientHelper import ClientHelper
-from .core.Attribut import Attribut
+from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
 from .core.Croquis import Croquis
 from .FormConnexion_dialog import FormConnexionDialog
@@ -930,7 +930,7 @@ class Contexte(object):
                     if lay.name() in attCroquis:
                         for att in attCroquis[lay.name()]:
                             idx = lay.fields().lookupField(att)
-                            attribut = Attribut(att, f.attributes()[idx])
+                            attribut = SketchAttributes(att, f.attributes()[idx])
                             croquisTemp.addAttribut(attribut)
 
                     listCroquis.append(croquisTemp)

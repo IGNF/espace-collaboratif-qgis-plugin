@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 23 janv. 2015
 
 version 3.0.0, 26/11/2018
 
 @author: AChang-Wailing
-'''
+"""
 
-class Auteur(object):
+
+class Author(object):
     """
     Classe représentant un auteur
     """
     
     #identifiant de l'auteur
-    id=""
+    id = ""
    
     #nom de l'auteur
-    nom=""
-     
-        
-    def __init__(self, idAuteur="", nom=""):
+    name = ""
+
+    def __init__(self, idAuthor="", name=""):
         """
         Constructeur
   
@@ -29,5 +29,5 @@ class Auteur(object):
         :param nom: nom de l'auteur
         :type nom:string
         """
-        self.id=idAuteur
-        self.nom=nom
+        self.id = idAuthor
+        self.name = name
