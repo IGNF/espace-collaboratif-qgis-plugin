@@ -568,14 +568,14 @@ class Contexte(object):
         print("url : {}".format(uri.uri()))
         uri.setDataSource('', layer.nom, structure['geometryName'])
         uri.setSrid(str(cst.EPSGCRS))
-        #parameters = {}
-        #parameters['uri'] = uri.uri()
-        #parameters['name'] = layer.nom
-        #parameters['genre'] = 'spatialite'
+        parameters = {}
+        parameters['uri'] = uri.uri()
+        parameters['name'] = layer.nom
+        parameters['genre'] = 'spatialite'
         # parameters['type'] = layer.type
         #parameters['attributes'] = structure['attributes']
-        # vlayer = GuichetVectorLayer(parameters)
-        vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
+        vlayer = GuichetVectorLayer(parameters)
+        #vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
         return vlayer, bDetruit
 
@@ -607,7 +607,7 @@ class Contexte(object):
         efffa = EditFormFieldFromAttributes(newLayer, structure)
         newLayer.correspondanceChampType = efffa.readData()
 
-        """
+
         # Modification de la symbologie de la couche
         listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(structure)
         newLayer.setModifySymbols(listOfValuesFromItemStyle)
@@ -624,7 +624,7 @@ class Contexte(object):
 
         # Rechargement de la couche pour que la visualisation dans la fenêtre carto courante
         # soit réellement prise en compte
-        newLayer.reload()"""
+        newLayer.reload()
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
         """Add guichet layers to the current map
@@ -1024,7 +1024,6 @@ class Contexte(object):
         :return une liste contenant tous les points des croquis
         :rtype: list de Point
         """
-
         global cur
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext

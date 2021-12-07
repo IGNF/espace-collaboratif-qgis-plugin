@@ -63,13 +63,9 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     #def __init__(self, uri, layerName, layerType, databasename, tableAttributes):
     def __init__(self, parameters):
-
-
-
         #super(GuichetVectorLayer, self).__init__(uri, layerName, layerType)
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
-
-
+        #
         # Remplissage de idxFingerprint (index du champ gcms_fingerprint) pour les tables historisées
         #listFields = self.fields()
         #self.idxFingerprint = listFields.indexFromName(self.fingerprint)
