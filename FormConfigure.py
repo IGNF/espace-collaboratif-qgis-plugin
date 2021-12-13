@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 20 oct. 2015
 Updated on 30 nov. 2020
 
 version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
-'''
+"""
 
-import os
 import os.path
 from datetime import datetime, timedelta
 import calendar
@@ -17,9 +16,8 @@ from PyQt5 import QtGui, uic, QtWidgets
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.core import QgsProject, QgsMessageLog, QgsVectorLayer, QgsWkbTypes
-
-from . import FormConfigurerRipart_base
 from .RipartHelper import RipartHelper
+from .Contexte import Contexte
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
 
@@ -98,7 +96,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         if groupFilter is not None and groupFilter == "true":
             self.checkBoxGroup.setChecked(True)
         if self.context.profil is not None:
-            self.lblGroup.setText(self.context.profil.geogroupe.nom)
+            self.lblGroup.setText(self.context.profil.geogroup.name)
 
         self.setAttributCroquis()
 

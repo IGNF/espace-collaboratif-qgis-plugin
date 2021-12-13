@@ -7,15 +7,15 @@ version 4.0.1, 15/12/2020
 @author: EPeyrouse, NGremeaux
 """
 
-from .Groupe import Groupe
+from .Group import Group
 
 
-class InfosGeogroupe(object):
+class InfosGeogroup(object):
     """
     Classe représentant les infos du <GEOGROUPE> de l'utilisateur
     """
     # ID & Nom du Geogroupe
-    groupe = Groupe()
+    group = Group()
 
     # Couches visibles sur les cartes de ce groupe (dans l'ordre dans lequel les superposer)
     layers = []
@@ -27,7 +27,7 @@ class InfosGeogroupe(object):
         """
         Constructor
         """
-        self.groupe = Groupe()
+        self.group = Group()
         self.layers = []
         self.themes = []
         self.filteredThemes = []

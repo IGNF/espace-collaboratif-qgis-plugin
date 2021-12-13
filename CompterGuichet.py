@@ -19,12 +19,12 @@ class CompterGuichet(object):
         if len(self.nodeGroups) != 0:
             self.message = "Groupe {}\n\n".format(self.nodeGroups[0].name())
 
-        self.titre = "Comptage"
+        self.title = "Comptage"
 
     def doCount(self):
         # si pas de groupe : warning
         if len(self.nodeGroups) == 0:
-            QMessageBox.warning(None, self.titre, u"Pas de groupe actif")
+            QMessageBox.warning(None, self.title, u"Pas de groupe actif")
         else:
             # indice 0 parce que le projet ne comporte qu'un seul groupe
             layersId = self.nodeGroups[0].findLayerIds()
@@ -40,4 +40,4 @@ class CompterGuichet(object):
                 self.message += stat.countToDialog(layerName)
 
             # Affichage du résultat
-            QMessageBox.information(None, self.titre, self.message)
+            QMessageBox.information(None, self.title, self.message)

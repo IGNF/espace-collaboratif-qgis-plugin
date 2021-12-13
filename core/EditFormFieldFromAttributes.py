@@ -104,7 +104,6 @@ class EditFormFieldFromAttributes(object):
         else:
             return
 
-
     '''
     Mise en forme du champ dans le formulaire d'attributs QGIS
     '''

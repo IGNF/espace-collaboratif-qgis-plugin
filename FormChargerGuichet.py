@@ -67,7 +67,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
-        self.labelGroupeActif.setText("Groupe actif : {}".format(self.profilUser.geogroupe.nom))
+        self.labelGroupeActif.setText("Groupe actif : {}".format(self.profilUser.geogroup.name))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  ##ff0000
 
     def getInfosLayers(self):
@@ -83,18 +83,18 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             return "Rejected", infosLayers
 
         self.profilUser = self.context.client.getProfil()
-        print("Profil : {0}, {1}".format(self.profilUser.geogroupe.id,
-                                         self.profilUser.geogroupe.nom))
+        print("Profil : {0}, {1}".format(self.profilUser.geogroup.id,
+                                         self.profilUser.geogroup.name))
 
-        if len(self.profilUser.infosGeogroupes) == 0:
+        if len(self.profilUser.infosGeogroups) == 0:
             return "Rejected", infosLayers
 
-        for infoGeogroupe in self.profilUser.infosGeogroupes:
-            if infoGeogroupe.groupe.id != self.profilUser.geogroupe.id:
+        for infoGeogroup in self.profilUser.infosGeogroups:
+            if infoGeogroup.group.id != self.profilUser.geogroup.id:
                 continue
 
             print("Liste des couches du profil utilisateur")
-            for layersAll in infoGeogroupe.layers:
+            for layersAll in infoGeogroup.layers:
                 print(layersAll.nom)
                 infosLayers.append(layersAll)
 

@@ -196,7 +196,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         print("Rechargement de la couche")
         self.reload()
 
-
     def attribute_value_changed(self, fid, idx, value):
         self.include_fingerprint(fid, idx)
 

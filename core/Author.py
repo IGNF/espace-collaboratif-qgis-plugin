@@ -13,21 +13,21 @@ class Author(object):
     Classe représentant un auteur
     """
     
-    #identifiant de l'auteur
+    # identifiant de l'auteur
     id = ""
    
-    #nom de l'auteur
+    # nom de l'auteur
     name = ""
 
-    def __init__(self, idAuthor="", name=""):
+    def __init__(self, id_author="", name=""):
         """
         Constructeur
   
-        :param idAuteur: identifiant de l'auteu r
-        :type idAuteur: string
+        :param id_author: identifiant de l'auteu r
+        :type id_author: string
         
-        :param nom: nom de l'auteur
-        :type nom:string
+        :param name: nom de l'auteur
+        :type name:string
         """
-        self.id = idAuthor
+        self.id = id_author
         self.name = name

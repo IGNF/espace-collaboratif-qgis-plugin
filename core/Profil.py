@@ -9,7 +9,7 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 from .Author import Author
-from .Groupe import Groupe
+from .Group import Group
 from . import ConstanteRipart 
 
 
@@ -19,13 +19,13 @@ class Profil(object):
     """
 
     #Nom de l'auteur   
-    auteur = Author()
+    author = Author()
                         
     #Nom du Geogroupe    
-    geogroupe = Groupe()
+    geogroup = Group()
         
     #Titre du Geogroupe   
-    titre = ""
+    title = ""
 
     #Statut (privilèges) du profil        
     statut = ""
@@ -51,7 +51,7 @@ class Profil(object):
     id_Geoprofil = ""
 
     #Les différents groupes de l'utilisateur
-    infosGeogroupes = list()
+    infosGeogroups = list()
 
     # La liste des couches Geoportail visible avec la clé geoportail utilisateur
     layersCleGeoportail = {}

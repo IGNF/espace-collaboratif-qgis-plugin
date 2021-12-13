@@ -24,23 +24,23 @@ class Sketch(object):
     Texte : un champ texte du croquis
     Fleche : une flêche du croquis
     '''
-    SketchType = Enum("Vide", "Point", "Ligne", "Polygone", "Texte", "Fleche")
+    sketchType = Enum("Vide", "Point", "Ligne", "Polygone", "Texte", "Fleche")
     
     # Type du croquis
-    Type = SketchType.Vide
+    type = sketchType.Vide
     
     # Nom du croquis
     name = ""
     
     # La liste des attributs (clé, valeur)
-    attributs = list()
+    attributes = list()
     
     # La liste des points composants le croquis (coordonnées)
     points = list()
     
     coordinates = ""
 
-    def __init__(self, name="", typeSketch=SketchType.Vide, points=None):
+    def __init__(self, name="", typeSketch=sketchType.Vide, points=None):
         """
         Constructeur d'un croquis
         
@@ -153,16 +153,16 @@ class Sketch(object):
         """Contrôle si la ligne est ouverte
         :rtype boolean
         """      
-        return (self.type == self.SketchType.Fleche or self.type == self.SketchType.Ligne) and not self.isClosed()
+        return (self.type == self.sketchType.Fleche or self.type == self.sketchType.Ligne) and not self.isClosed()
 
     def isValid(self):
         """Contrôle la validité de la géométrie
         """
         nPoints = len(self.points)
         if nPoints == 0 \
-                or ((self.type == self.SketchType.Point or self.type == self.SketchType.Texte) and nPoints != 1)\
-                or (self.type == self.SketchType.Polygone and not self.firstCoord().eq(self.lastCoord()))\
-                or (self.type == self.SketchType.Vide and nPoints > 0):
+                or ((self.type == self.sketchType.Point or self.type == self.sketchType.Texte) and nPoints != 1)\
+                or (self.type == self.sketchType.Polygone and not self.firstCoord().eq(self.lastCoord()))\
+                or (self.type == self.sketchType.Vide and nPoints > 0):
             return False
         return True
 
@@ -173,7 +173,7 @@ class Sketch(object):
         
         :return le xml au format string
         """
-        if self.type == self.SketchType.Vide:
+        if self.type == self.sketchType.Vide:
             return xmlDoc
         
         objet = ET.Element('objet', {"type": self.type.__str__()})
@@ -189,11 +189,11 @@ class Sketch(object):
             
         coord = coord[:-1]
         ingeom = ''
-        if self.type in [self.SketchType.Ligne, self.SketchType.Fleche]:
+        if self.type in [self.sketchType.Ligne, self.sketchType.Fleche]:
             ingeom = ET.SubElement(geom, ns+':LineString')
-        elif self.type in [self.SketchType.Point, self.SketchType.Texte]:
+        elif self.type in [self.sketchType.Point, self.sketchType.Texte]:
             ingeom = ET.SubElement(geom, ns+':Point')
-        elif self.type == self.SketchType.Polygone:
+        elif self.type == self.sketchType.Polygone:
             pol = ET.SubElement(geom, ns+':Polygon')
             outer = ET.SubElement(pol, ns+':outerBoundaryIs')
             ingeom = ET.SubElement(outer, ns+':LinearRing')
@@ -203,7 +203,7 @@ class Sketch(object):
         
         # les attributs
         xattributs = ET.SubElement(objet, 'attributs')
-        for att in self.attributs:           
+        for att in self.attributes:
             xatt = ET.SubElement(xattributs, 'attribut', {'name': ClientHelper.notNoneValue(att.nom)})
             xatt.text = ClientHelper.notNoneValue(att.valeur)
             
@@ -214,8 +214,8 @@ class Sketch(object):
         """
         """
         satt = ""
-        for att in self.attributs:       
-            satt += ClientHelper.notNoneValue(att.nom) + "='" + ClientHelper.notNoneValue(att.valeur) + "'|"
+        for att in self.attributes:
+            satt += ClientHelper.notNoneValue(att.name) + "='" + ClientHelper.notNoneValue(att.value) + "'|"
        
         if len(satt) > 0:
             satt = satt[:-1]

@@ -8,7 +8,7 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
-from .Groupe import Groupe
+from .Group import Group
 
 
 class Theme(object):
@@ -16,16 +16,16 @@ class Theme(object):
     Classe représentant un thème
     """
     
-    groupe = Groupe()
+    group = None
     
     #liste d'attributs
-    attributs = []
+    attributes = []
 
     def __init__(self, params=None):
         """
         Constructor
         """
-        self.groupe = Groupe()
-        self.attributs = []
+        self.group = Group()
+        self.attributes = []
         self.isFiltered = False
 

@@ -13,7 +13,7 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from .core.RipartLoggerCl import RipartLogger
 
-from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
+from PyQt5.QtCore import Qt, QDate, QDateTime, QTime, pyqtSlot
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 
 from .core.ClientHelper import ClientHelper
@@ -35,7 +35,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     send = False
     cancel = False
 
-    infogeogroupes = []
+    infogeogroups = []
 
     # le nom du fichier sélectionné (document joint)
     selFileName = None
@@ -51,7 +51,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     preferredGroup = ""
 
     # groupe sélectionné
-    idSelectedGeogroupe = ""
+    idSelectedGeogroup = ""
 
     # taille maximale du document joint
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
@@ -86,25 +86,25 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         profil = self.context.client.getProfil()
 
-        if profil.geogroupe.nom is not None:
-            self.groupBoxProfil.setTitle(profil.auteur.nom + " (" + profil.geogroupe.nom + ")")
+        if profil.geogroup.name is not None:
+            self.groupBoxProfil.setTitle(profil.author.name + " (" + profil.geogroup.name + ")")
         else:
-            self.groupBoxProfil.setTitle(profil.auteur.nom + u" (Profil par défaut)")
+            self.groupBoxProfil.setTitle(profil.author.name + u" (Profil par défaut)")
 
         # les noms des thèmes préférés (du fichier de configuration)
         self.preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
         preferredGroup = RipartHelper.load_preferredGroup(self.context.projectDir)
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
-        self.infosgeogroupes = profil.infosGeogroupes
-        listeNomsGroupes = []
-        for igg in self.infosgeogroupes:
-            self.comboBoxGroupe.addItem(igg.groupe.nom)
-            listeNomsGroupes.append(igg.groupe.nom)
+        self.infosgeogroups = profil.infosGeogroups
+        listeNamesGroups = []
+        for igg in self.infosgeogroups:
+            self.comboBoxGroupe.addItem(igg.group.name)
+            listeNamesGroups.append(igg.group.name)
 
         # Valeur par défaut : groupe actif
         groupeActif = self.context.groupeactif
-        if preferredGroup in listeNomsGroupes:
+        if preferredGroup in listeNamesGroups:
             self.comboBoxGroupe.setCurrentText(preferredGroup)
         else:
             groupeActif = self.context.groupeactif
@@ -143,8 +143,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             # On cherche l'objet theme correspondant dans la liste des themes
             foundTheme = False
             for th in themes:
-                nomTheme = th.groupe.nom
-                if th.groupe.nom == thName:
+                if th.group.name == thName:
                     foundTheme = True
                     break
 
@@ -157,14 +156,14 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
             # ajout du thème dans le treeview
             thItem = QTreeWidgetItem(self.treeWidget)
-            thItem.setText(0, th.groupe.nom)
-            thItem.setText(1, th.groupe.id)
+            thItem.setText(0, th.group.name)
+            thItem.setText(1, th.group.id)
             self.treeWidget.addTopLevelItem(thItem)
 
             # Pour masquer la 2ème colonne (qui contient le groupe id)
             thItem.setForeground(1, QtGui.QBrush(Qt.white))
 
-            if ClientHelper.notNoneValue(th.groupe.nom) in preferredThemes:
+            if ClientHelper.notNoneValue(th.group.name) in preferredThemes:
                 thItem.setCheckState(0, Qt.Checked)
                 thItem.setExpanded(True)
             else:
@@ -262,24 +261,24 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         """
         self.treeWidget.clear()
 
-        infosgeogroupe = self.infosgeogroupes[index]
-        nomGroupe = infosgeogroupe.groupe.nom
-        self.idSelectedGeogroupe = infosgeogroupe.groupe.id
+        infosgeogroup = self.infosgeogroups[index]
+        nameGroup = infosgeogroup.group.name
+        self.idSelectedGeogroup = infosgeogroup.group.id
 
         # Affichage du commentaire par défaut dans la fenêtre message
-        georemComment = infosgeogroupe.georemComment
+        georemComment = infosgeogroup.georemComment
         if georemComment != "":
             self.textEditMessage.setText(georemComment)
 
         themes = []
-        if nomGroupe == self.context.groupeactif:
+        if nameGroup == self.context.groupeactif:
             themes = self.context.profil.themes
             filteredThemes = self.context.profil.filteredThemes
         else:
-            themes = infosgeogroupe.themes
-            filteredThemes = infosgeogroupe.filteredThemes
+            themes = infosgeogroup.themes
+            filteredThemes = infosgeogroup.filteredThemes
 
-        self.preferredGroup = nomGroupe
+        self.preferredGroup = nameGroup
 
         self.displayThemes(filteredThemes, themes)
 
@@ -307,8 +306,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 continue
 
             theme = Theme()
-            theme.groupe.nom = thItem.text(0)
-            theme.groupe.id = thItem.text(1)
+            theme.group.name = thItem.text(0)
+            theme.group.id = thItem.text(1)
 
 
             for j in range(thItem.childCount()):
@@ -318,11 +317,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 key = self.get_key_from_attribute_value(label, thItem.text(0))
                 widg = self.treeWidget.itemWidget(att, 1)
 
-                val = self.get_value_from_widget(widg, label, theme.groupe.nom)
+                val = self.get_value_from_widget(widg, label, theme.group.name)
 
-                attribut = ThemeAttribut(theme.groupe.nom, ClientHelper.notNoneValue(key),
+                attribut = ThemeAttribut(theme.group.name, ClientHelper.notNoneValue(key),
                                          ClientHelper.notNoneValue(val))
-                theme.attributs.append(attribut)
+                theme.attributes.append(attribut)
 
             selectedThemes.append(theme)
 
@@ -408,7 +407,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
         found_att = False
-        for att in th.attributs:
+        for att in th.attributes:
             if found_att:
                 break
 
@@ -431,7 +430,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         :rtype: Theme
         """
         for th in self.profilThemesList:
-            if th.groupe.nom == themeName:
+            if th.group.name == themeName:
                 return th
         return None
 
@@ -520,6 +519,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             self.lblDoc.setProperty("visible", False)
             self.selFileName = None
 
+    @pyqtSlot()
     def cancel(self):
         self.cancel = True
         self.send = False

@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from builtins import range
 import os
 
+from PyQt5.QtCore import pyqtSlot
 from qgis.PyQt import uic, QtWidgets
 
 from .core import ConstanteRipart as cst
@@ -26,7 +27,7 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
     cancel = True
     newRep = ""
     newStat = ""
-    repTitre = ""
+    repTitle = ""
 
     def __init__(self, parent=None):
         """Constructor."""
@@ -51,7 +52,7 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lblMessage.setText(u"Message de la remarque n°" + remarque.id)
         self.setStatut(remarque.statut)
         self.textMessage.setText(ClientHelper.notNoneValue(remarque.commentaire))
-        self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateReponseHTML()))
+        self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateResponseHTML()))
 
     def setStatut(self, statut):
         st = [i for i in range(len(cst.statutLibelle)) if cst.statuts()[i] == statut]
@@ -62,9 +63,10 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
         self.answer = True
         self.newRep = self.textNewRep.toPlainText()
         self.newStat = cst.statuts()[self.cboxStatut.currentIndex()]
-        self.repTitre = self.textTitre.text()
+        self.repTitle = self.textTitre.text()
         self.close()
 
+    @pyqtSlot()
     def cancel(self):
         self.cancel = True
         self.answer = False

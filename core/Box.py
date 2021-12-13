@@ -22,13 +22,9 @@ class Box(object):
         Constructeur à partir de deux points 
         
         :param xMin coord X min
-        :type float
         :param yMin coord y min
-        :type float
         :param xMax coord X max
-        :type float
         :param yMax coord Y max
-        :type float
         """
         if xMin is None or yMin is None or xMax is None or yMax is None:
             self.XMin = None

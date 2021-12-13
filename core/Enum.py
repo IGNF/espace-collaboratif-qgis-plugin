@@ -26,9 +26,9 @@ def Enum(*names):
                 if e.__str__() == strValue:
                     return e
             return None
-        
-      
-         
+
+
+
     class EnumValue(object):
         __slots__ = ('__value')
         def __init__(self, value): self.__value = value
@@ -60,5 +60,3 @@ def Enum(*names):
 
 def __init__(self, params):
     """ Constructor """
-
-        

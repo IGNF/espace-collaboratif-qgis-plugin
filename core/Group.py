@@ -7,27 +7,26 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 """
 
-class Groupe(object):
+
+class Group(object):
     """
     Classe représentant un groupe de l'espace collaboratif
     """
     
     # identifiant du groupe
-    id=""
+    id = ""
     
     # nom du groupe 
-    nom=""
+    name = ""
 
-        
-    def __init__(self, idGroup="" , nom=""):
+    def __init__(self, id_group="", name=""):
         """
         Constructor
         
-        :param idGroup identifiant du groupe
+        :param id_group identifiant du groupe
         :type string       
-        :param nom le nom du groupe
+        :param name le nom du groupe
         :type string  
         """
-        self.id=idGroup
-        self.nom=nom
-        
+        self.id = id_group
+        self.name = name

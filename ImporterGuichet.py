@@ -66,7 +66,7 @@ class ImporterGuichet(object):
                                                                 level=2, duration=5)
                     return
 
-            if self.context.profil.geogroupe.nom is None:
+            if self.context.profil.geogroup.name is None:
                 raise NoProfileException(
                     "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
@@ -94,7 +94,7 @@ class ImporterGuichet(object):
             QApplication.setOverrideCursor(Qt.BusyCursor)
 
             # Import des couches du guichet sélectionnées par l'utilisateur
-            self.context.addGuichetLayersToMap(guichet_layers, bbox, self.context.profil.geogroupe.nom)
+            self.context.addGuichetLayersToMap(guichet_layers, bbox, self.context.profil.geogroup.name)
 
         finally:
             self.context.iface.messageBar().clearWidgets()

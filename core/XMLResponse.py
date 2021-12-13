@@ -17,10 +17,10 @@ from .ThemeAttribut import ThemeAttribut
 from .Point import Point
 from .Author import Author
 from .Sketch import Sketch
-from .Groupe import Groupe
-from .InfosGeogroupe import InfosGeogroupe
+from .Group import Group
+from .InfosGeogroup import InfosGeogroup
 from .SketchAttributes import SketchAttributes
-from .GeoReponse import GeoReponse
+from .GeoResponse import GeoResponse
 from datetime import datetime
 from .ClientHelper import ClientHelper
 from .RipartLoggerCl import RipartLogger
@@ -119,9 +119,9 @@ class XMLResponse(object):
         connectValues = {'ID_AUTEUR': None, 'JETON': None, 'SITE': None}
 
         try:
-            id_auteur = self.root.find('./REPONSE/ID_AUTEUR')
-            if id_auteur is not None:
-                connectValues['ID_AUTEUR'] = id_auteur.text
+            id_author = self.root.find('./REPONSE/ID_AUTEUR')
+            if id_author is not None:
+                connectValues['ID_AUTEUR'] = id_author.text
             else:
                 raise Exception("ID_AUTEUR inexistant dans la réponse xml")
 
@@ -186,7 +186,7 @@ class XMLResponse(object):
         try:
             # aut= Auteur()
             node = self.root.find('./AUTEUR/NOM')
-            profil.auteur.nom = node.text
+            profil.author.name = node.text
 
             node = self.root.find('./PROFIL/ID_GEOPROFIL')
             profil.id_Geoprofil = node.text
@@ -194,15 +194,15 @@ class XMLResponse(object):
             node = self.root.find('./PROFIL/TITRE')
             profil.titre = node.text
 
-            gr = Groupe()
+            gr = Group()
             node = self.root.find('./PROFIL/ID_GEOGROUPE')
             gr = node.text
 
             node = self.root.find('./PROFIL/GROUPE')
-            profil.geogroupe.nom = node.text
+            profil.geogroup.name = node.text
 
             node = self.root.find('./PROFIL/ID_GEOGROUPE')
-            profil.geogroupe.id = node.text
+            profil.geogroup.id = node.text
 
             node = self.root.find('./PROFIL/LOGO')
             if node is not None and node.text:
@@ -222,8 +222,8 @@ class XMLResponse(object):
             profil.filteredThemes = themes[1]
 
             # va chercher les infos de tous les geogroupes de l'utilisateur
-            infosgeogroupes = self.getInfosGeogroupe(profil)
-            profil.infosGeogroupes = infosgeogroupes
+            infosgeogroups = self.getInfosGeogroup(profil)
+            profil.infosGeogroups = infosgeogroups
 
         except Exception as e:
             self.logger.error('extractProfil:' + str(e))
@@ -239,23 +239,23 @@ class XMLResponse(object):
             return ""
         return urlStr[pos+14:len(urlStr)]
 
-    def getInfosGeogroupe(self, profil):
+    def getInfosGeogroup(self, profil):
         """Extraction des infos utilisateur sur ses geogroupes
         :return les infos
         """
-        infosgeogroupes = []
+        infosgeogroups = []
 
         try:
             # informations sur le geogroupe
             nodesGr = self.root.findall('GEOGROUPE')
             for nodegr in nodesGr:
-                infosgeogroupe = InfosGeogroupe()
-                infosgeogroupe.groupe = Groupe()
-                infosgeogroupe.groupe.nom = (nodegr.find('NOM')).text
-                infosgeogroupe.groupe.id = (nodegr.find('ID_GEOGROUPE')).text
+                infosgeogroup = InfosGeogroup()
+                infosgeogroup.group = Group()
+                infosgeogroup.group.name = (nodegr.find('NOM')).text
+                infosgeogroup.group.id = (nodegr.find('ID_GEOGROUPE')).text
 
                 # Récupération du commentaire par défaut des signalements
-                infosgeogroupe.georemComment = nodegr.find('COMMENTAIRE_GEOREM').text
+                infosgeogroup.georemComment = nodegr.find('COMMENTAIRE_GEOREM').text
 
                 # Récupération des layers du groupe
                 for nodelayer in nodegr.findall('LAYERS/LAYER'):
@@ -280,9 +280,9 @@ class XMLResponse(object):
                     if url is not None:
                         layer.url = url.text
                         layer.databasename = self.findDatabaseName(url.text)
-                        print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroupe.groupe.nom, layer.nom, layer.databasename))
+                        print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.name, layer.nom, layer.databasename))
 
-                    infosgeogroupe.layers.append(layer)
+                    infosgeogroup.layers.append(layer)
 
                 try:
                     # Récupération des thèmes du groupe
@@ -296,36 +296,36 @@ class XMLResponse(object):
 
                     filterDict = nodegr.find('FILTER').text
                     groupFilters = re.findall('\{.*?\}', filterDict)
-                    filteredThemes = self.getFilteredThemes(groupFilters, infosgeogroupe.groupe.id)
-                    infosgeogroupe.filteredThemes = filteredThemes
+                    filteredThemes = self.getFilteredThemes(groupFilters, infosgeogroup.group.id)
+                    infosgeogroup.filteredThemes = filteredThemes
 
                     for node in nodes:
                         theme = Theme()
-                        theme.groupe = Groupe()
+                        theme.group = Group()
 
-                        nom = (node.find('NOM')).text
-                        theme.groupe.nom = nom
-                        if nom in filteredThemes:
+                        name = (node.find('NOM')).text
+                        theme.group.name = name
+                        if name in filteredThemes:
                             theme.isFiltered = True
 
-                        theme.groupe.id = infosgeogroupe.groupe.id
-                        if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
-                            theme.attributs.extend(themesAttDict[ClientHelper.notNoneValue(theme.groupe.nom)])
+                        theme.group.id = infosgeogroup.group.id
+                        if ClientHelper.notNoneValue(theme.group.name) in themesAttDict:
+                            theme.attributes.extend(themesAttDict[ClientHelper.notNoneValue(theme.group.name)])
 
-                        infosgeogroupe.themes.append(theme)
+                        infosgeogroup.themes.append(theme)
                         profil.allThemes.append(theme)
 
                 except Exception as e:
                     self.logger.error(str(e))
                     raise Exception("Erreur dans la récupération des thèmes du groupe")
 
-                infosgeogroupes.append(infosgeogroupe)
+                infosgeogroups.append(infosgeogroup)
 
         except Exception as e:
             self.logger.error(str(e))
             raise Exception("Erreur dans la récupération des informations sur le GEOGROUPE")
 
-        return infosgeogroupes
+        return infosgeogroups
 
 
     def get_themes_attributes(self, thAttNodes):
@@ -340,7 +340,7 @@ class XMLResponse(object):
             nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
             attNodeATT = attNode.find('ATT')
             nomAtt = attNodeATT.text
-            thAttribut = ThemeAttribut(nomTh, nomAtt, None)
+            thAttribut = ThemeAttribut(nomTh, nomAtt, "")
             thAttribut.setTagDisplay(nomAtt)
             display_tag = attNodeATT.get('display')
             if display_tag is not None:
@@ -371,7 +371,7 @@ class XMLResponse(object):
         return themesAttDict
 
 
-    def getFilteredThemes(self, groupFilters, idGeogroupe):
+    def getFilteredThemes(self, groupFilters, idGeogroup):
 
         """Récupération des thèmes à afficher dans le profil
         :return les thèmes filtrés
@@ -387,12 +387,12 @@ class XMLResponse(object):
 
             processFilter = False
 
-            if idGeogroupe == "":
+            if idGeogroup == "":
                 processFilter = True
             else:
-                idGeogroupeInt = int(idGeogroupe)
-                idGroupeInt = int(idGroupe)
-                intDiff = idGeogroupeInt - idGroupeInt
+                idGeogroupInt = int(idGeogroup)
+                idGroupInt = int(idGroupe)
+                intDiff = idGeogroupInt - idGroupInt
                 if intDiff == 0:
                     processFilter = True
                 else:
@@ -423,7 +423,7 @@ class XMLResponse(object):
             # Récupération du filtre sur les thèmes
             filterDict = self.root.find('PROFIL/FILTRE').text
             filteredThemes = []
-            if filterDict != None:
+            if filterDict is not None:
                 groupFilters = re.findall('\{.*?\}', filterDict)
                 filteredThemes = self.getFilteredThemes(groupFilters, "")
 
@@ -431,16 +431,16 @@ class XMLResponse(object):
 
             for node in nodes:
                 theme = Theme()
-                theme.groupe = Groupe()
+                theme.group = Group()
 
-                nom = (node.find('NOM')).text
-                theme.groupe.nom = nom
-                if nom in filteredThemes or len(filteredThemes) == 0:
+                name = (node.find('NOM')).text
+                theme.group.name = name
+                if name in filteredThemes or len(filteredThemes) == 0:
                     theme.isFiltered = True
 
-                theme.groupe.id = (node.find('ID_GEOGROUPE')).text
-                if ClientHelper.notNoneValue(theme.groupe.nom) in themesAttDict:
-                    theme.attributs.extend(themesAttDict[ClientHelper.notNoneValue(theme.groupe.nom)])
+                theme.group.id = (node.find('ID_GEOGROUPE')).text
+                if ClientHelper.notNoneValue(theme.group.name) in themesAttDict:
+                    theme.attributes.extend(themesAttDict[ClientHelper.notNoneValue(theme.group.name)])
                 themes.append(theme)
 
         except Exception as e:
@@ -468,12 +468,12 @@ class XMLResponse(object):
     def getDate(self):
         """Retourne la date de la réponse xml
         """
+        date = ""
         try:
             node = self.root.find('PAGE/DATE')
             date = node.text
         except Exception as e:
             self.logger.error('getTotalResponse :' + str(e))
-
         return date
 
     def getTotalResponse(self):
@@ -495,12 +495,7 @@ class XMLResponse(object):
 
     def extractRemarques(self):
         """Extraction des remarques de la réponse xml
-        
-        :param remarques: dictionnaire  de remarques
-        :type remarques: Dictionary of Remarque (key: identifiant de la ramarque, value: la remarque
-        :return: dictionnaire de remarques (dans l'ordre inverse d'identifiants)
         """
-
         remarques = {}
 
         try:
@@ -518,17 +513,17 @@ class XMLResponse(object):
                     rem.autorisation = nfind.text
 
                 for th in node.findall('THEME'):
-                    nomGroupe = (th.find('NOM')).text
-                    idGroupe = (th.find('ID_GEOGROUPE')).text
+                    nameGroup = (th.find('NOM')).text
+                    idGroup = (th.find('ID_GEOGROUPE')).text
 
                     theme = Theme()
-                    theme.groupe = Groupe(idGroupe, nomGroupe)
+                    theme.group = Group(idGroup, nameGroup)
 
                     for att in th.findall('ATTRIBUT'):
                         nomAtt = att.attrib["nom"]
                         valAtt = att.text
-                        attribut = ThemeAttribut(nomGroupe, nomAtt, valAtt)
-                        theme.attributs.append(attribut)
+                        attribut = ThemeAttribut(nameGroup, nomAtt, valAtt)
+                        theme.attributes.append(attribut)
 
                     themes.append(theme)
 
@@ -537,12 +532,12 @@ class XMLResponse(object):
                 nfind = node.find('LIEN')
                 if nfind is not None:
                     rem.lien = nfind.text
-                    rem.lien.replace("&amp;", "&");
+                    rem.lien.replace("&amp;", "&")
 
                 nfind = node.find('LIEN_PRIVE')
                 if nfind is not None:
                     rem.lienPrive = nfind.text
-                    rem.lienPrive.replace("&amp;", "&");
+                    rem.lienPrive.replace("&amp;", "&")
 
                 nfind = node.find('DATE')
                 if nfind is not None:
@@ -564,40 +559,43 @@ class XMLResponse(object):
                 if nfind is not None:
                     rem.statut = nfind.text
 
-                rem.departement = Groupe()
                 nfind = node.find('ID_DEP')
                 if nfind is not None:
                     rem.departement.id = nfind.text
 
                 nfind = node.find('DEPARTEMENT')
                 if nfind is not None:
-                    rem.departement.nom = nfind.text
+                    rem.departement.name = nfind.text
 
                 nfind = node.find('COMMUNE')
                 if nfind is not None:
                     rem.commune = nfind.text
 
+                nfind = node.find('INSEE_COM')
+                if nfind is not None:
+                    rem.insee = nfind.text
+
                 nfind = node.find('COMMENTAIRE')
                 if nfind is not None:
                     rem.commentaire = nfind.text
 
-                rem.auteur = Author()
+                rem.author = Author()
                 nfind = node.find('ID_AUTEUR')
                 if nfind is not None:
-                    rem.auteur.id = nfind.text
+                    rem.author.id = nfind.text
 
                 nfind = node.find('AUTEUR')
                 if nfind is not None:
-                    rem.auteur.nom = nfind.text
+                    rem.author.name = nfind.text
 
-                rem.groupe = Groupe()
+                rem.group = Group()
                 nfind = node.find('ID_GEOGROUPE')
                 if nfind is not None:
-                    rem.groupe.id = nfind.text
+                    rem.group.id = nfind.text
 
                 nfind = node.find('GROUPE')
                 if nfind is not None:
-                    rem.groupe.nom = nfind.text
+                    rem.group.name = nfind.text
 
                 nfind = node.find('ID_PARTITION')
                 if nfind is not None:
@@ -629,7 +627,6 @@ class XMLResponse(object):
         else:
             return ""
 
-
     def getCroquisForRem(self, rem, node):
         """ Extrait les croquis d'une remarque et les ajoute dans l'objet Remarque (rem)
 
@@ -637,7 +634,7 @@ class XMLResponse(object):
         :type rem: Remarque
 
         :param node: le noeud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
-        :type node: string
+        :type node: Element
 
         :return la remarque avec les croquis
         :rtype Remarque
@@ -675,10 +672,10 @@ class XMLResponse(object):
                 attributs = ob.findall('attributs/attribut')
                 listAttCroquis = []
                 for att in attributs:
-                    attribut = SketchAttributes()
-                    attribut.nom = att.attrib['name']
-                    attribut.valeur = att.text
-                    listAttCroquis.append(attribut)
+                    attribute = SketchAttributes()
+                    attribute.name = att.attrib['name']
+                    attribute.valeur = att.text
+                    listAttCroquis.append(attribute)
 
                 # On itère sur les géométries de l'objet xml.
                 # Si c'est un croquis avec une géométrie multiple, il peut y en avoir plusieurs.
@@ -689,10 +686,10 @@ class XMLResponse(object):
                 for c in coords:
 
                     # On crée un croquis par ensemble de coordonnées récupérées
-                    croquis = Sketch()
-                    croquis.type = typeCroquis
-                    croquis.nom = nomCroquis
-                    croquis.attributs = listAttCroquis
+                    sketch = Sketch()
+                    sketch.type = typeCroquis
+                    sketch.name = nomCroquis
+                    sketch.attributes = listAttCroquis
 
                     pts = c.text.split(" ")
                     for spt in pts:
@@ -708,25 +705,23 @@ class XMLResponse(object):
 
                             if pt.longitude is not None and pt.latitude is not None:
                                 coordinates += str(pt.longitude) + " " + str(pt.latitude) + ","
-                                croquis.addPoint(pt)
+                                sketch.addPoint(pt)
 
                         except Exception as e:
                             self.logger.error(str(e))
                             raise Exception("Erreur dans la récupération de l'un des points du croquis pour le signalement "
                                             + str(rem.id) + " : {}".format(str(e)))
 
-                    croquis.coordinates = coordinates[:-1]
+                    sketch.coordinates = coordinates[:-1]
 
                     # Ajout du croquis au signalement
-                    rem.addCroquis(croquis)
+                    rem.addCroquis(sketch)
 
         except Exception as e:
             self.logger.error(str(e))
             raise Exception("Erreur dans la récupération du croquis pour le signalement " + str(rem.id) + " : {}".format(str(e)))
 
         return rem
-
-
 
     def getDoc(self, rem, node):
         """Extraction des documents attachés à une remarque
@@ -735,41 +730,38 @@ class XMLResponse(object):
         :type rem: Remarque
         
         :param node: le noeud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
-        :type node: string
+        :type node: Element
         
         :return la remarque avec les croquis
         :rtype Remarque
         """
-
         docs = node.findall('DOC')
-
         for doc in docs:
             rem.addDocument(doc)
-
         return rem
 
     def getGeoRep(self, rem, node):
         """Extraction des réponses d'une remarque
         """
-        reponses = node.findall("GEOREP")
+        responses = node.findall("GEOREP")
 
-        for rep in reponses:
-            georep = GeoReponse()
+        for response in responses:
+            georep = GeoResponse()
 
-            gr = Groupe()
-            gr.id = rep.find('ID_GEOREP').text
-            gr.nom = rep.find('TITRE').text
-            georep.groupe = gr
+            gr = Group()
+            gr.id = response.find('ID_GEOREP').text
+            gr.name = response.find('TITRE').text
+            georep.group = gr
 
-            georep.auteur = Author()
-            georep.auteur.id = rep.find('ID_AUTEUR').text
-            georep.auteur.nom = rep.find('AUTEUR').text
+            georep.author = Author()
+            georep.author.id = response.find('ID_AUTEUR').text
+            georep.author.name = response.find('AUTEUR').text
 
-            georep.statut = cst.STATUT.__getitemFromString__(rep.find('STATUT').text)
-            georep.date = datetime.strptime(rep.find('DATE').text, "%Y-%m-%d %H:%M:%S")
-            georep.reponse = rep.find('REPONSE').text
+            georep.status = cst.STATUT.__getitemFromString__(response.find('STATUT').text)
+            georep.date = datetime.strptime(response.find('DATE').text, "%Y-%m-%d %H:%M:%S")
+            georep.response = response.find('REPONSE').text
 
-            rem.addGeoReponse(georep)
+            rem.addGeoResponse(georep)
 
         return rem
 

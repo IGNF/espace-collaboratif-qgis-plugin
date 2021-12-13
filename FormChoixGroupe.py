@@ -9,8 +9,8 @@ version 4.0.1, 15/12/2020
 
 
 import os
-from PyQt5.QtWidgets import QDialogButtonBox
 
+from PyQt5.QtWidgets import QDialogButtonBox
 from qgis.PyQt import uic, QtWidgets
 from .core import ConstanteRipart as cst
 
@@ -22,7 +22,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     Dialogue pour le choix du groupe après la connexion au serveur
     et récupération du profil utilisateur
     """
-    infosgeogroupes = None
+    infosgeogroups = None
     cancel = True
 
     def __init__(self, profil, cleGeoportail, groupeActif, parent=None):
@@ -31,9 +31,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setFocus()
 
         #Ajout des noms de groupes trouvés pour l'utilisateur
-        self.infosgeogroupes = profil.infosGeogroupes
-        for igg in self.infosgeogroupes:
-            self.comboBoxGroupe.addItem(igg.groupe.nom)
+        self.infosgeogroups = profil.infosGeogroups
+        for igg in self.infosgeogroups:
+            self.comboBoxGroupe.addItem(igg.group.name)
 
         if groupeActif is not None and groupeActif != "":
             self.comboBoxGroupe.setCurrentText(groupeActif)
@@ -54,8 +54,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         """
         self.accept()
         index = self.comboBoxGroupe.currentIndex()
-        idGroup = self.infosgeogroupes[index].groupe.id
-        nomGroup = self.infosgeogroupes[index].groupe.nom
+        idGroup = self.infosgeogroups[index].group.id
+        nameGroup = self.infosgeogroups[index].group.name
         cleGeoportail = ""
         if self.radioButtonOui.isChecked():
             cleGeoportail = self.lineEditCleGeoportailUser.text()
@@ -63,7 +63,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             cleGeoportail = cst.DEMO
         self.cancel = False
 
-        return idGroup, nomGroup, cleGeoportail
+        return idGroup, nameGroup, cleGeoportail
 
     def cancel(self):
         self.cancel = True

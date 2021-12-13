@@ -9,7 +9,7 @@ version 3.0.0 , 26/11/2018
 
 from .Point import Point
 from . import ConstanteRipart
-from .Groupe import Groupe
+from .Group import Group
 from .Author import Author
 from .Theme import Theme
 from datetime import datetime
@@ -47,16 +47,18 @@ class Remarque(object):
     statut = ConstanteRipart.STATUT.undefined
 
     # Le département où est située la remarque (indicatif + nom)
-    departement = Groupe()
+    departement = None
 
     # commune de la remarque
     commune = ""
+
+    insee = ""
 
     # texte de la remarque
     commentaire = ""
 
     # auteur de la remarque
-    auteur = Author()
+    author = Author()
 
     # Définit les droits d'action de l'utilisateur en cours sur la remarque
     autorisation = ""
@@ -65,10 +67,10 @@ class Remarque(object):
     id_partition = ""
 
     # groupe sous lequel l'auteur a crée la remarque 
-    groupe = Groupe()
+    group = Group()
 
     # réponses de la remarque Ripart (liste d'objet GeoReponse)
-    reponses = []
+    responses = []
 
     # croquis de la remarque  list(Croquis)
     croquis = []
@@ -97,14 +99,15 @@ class Remarque(object):
         self.dateValidation = None
         self.position = Point()
         self.statut = ConstanteRipart.STATUT.undefined
-        self.departement = Groupe()
+        self.departement = Group()
         self.commune = ""
+        self.insee = ""
         self.commentaire = ""
-        self.auteur = Author()
+        self.author = Author()
         self.autorisation = ""
         self.id_partition = ""
-        self.groupe = Groupe()
-        self.reponses = []
+        self.group = Group()
+        self.responses = []
         self.croquis = []
         self.documents = []
         self.themes = []
@@ -130,11 +133,11 @@ class Remarque(object):
 
         for t in self.themes:
             if isinstance(t, Theme):
-                result += ClientHelper.getValForDB(t.groupe.nom)
+                result += ClientHelper.getValForDB(t.group.name)
 
                 # attributs du thème
                 z = 0
-                for att in t.attributs:
+                for att in t.attributes:
                     if z == 0:
                         result += "("
                         z += 1
@@ -153,15 +156,15 @@ class Remarque(object):
         """
         return len(self.croquis) == 0
 
-    def getAuteurNom(self):
+    def getAuthorName(self):
         """Retourne le  nom de l'auteur de la remarque
         """
-        return self.auteur.nom
+        return self.author.name
 
-    def getAuteurId(self):
+    def getAuthorId(self):
         """Retourne l'id de l'auteur de la remarque
         """
-        return self.auteur.id
+        return self.author.id
 
     def getLongitude(self):
         """Retourne la longitude 
@@ -192,57 +195,57 @@ class Remarque(object):
                 docs += self.documents[i].text + " "
             return docs[:-1]
 
-    def concatenateReponseHTML(self):
+    def concatenateResponseHTML(self):
         """Crée et retourne la réponse au format html, à partir des réponses existantes pour la remarque
         """
         concatenate = ""
 
-        if len(self.reponses) == 0:
+        if len(self.responses) == 0:
             concatenate += "<font color=\"red\">Pas de réponse actuellement pour la remarque n°" + self.id.__str__() + ".</font>"
         else:
-            count = len(self.reponses)
-            for rep in self.reponses:
-                concatenate += "<li><b><font color=\"green\">Réponse n°" + count.__str__();
+            count = len(self.responses)
+            for response in self.responses:
+                concatenate += "<li><b><font color=\"green\">Réponse n°" + count.__str__()
                 count -= 1
-                if len(rep.auteur.nom) != 0:
-                    concatenate += " par " + ClientHelper.notNoneValue(rep.auteur.nom)
-                if rep.date is not None:
-                    concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
-                if rep.statut is not None:
+                if len(response.author.name) != 0:
+                    concatenate += " par " + ClientHelper.notNoneValue(response.author.name)
+                if response.date is not None:
+                    concatenate += " le " + response.date.strftime("%Y-%m-%d %H:%M:%S")
+                if response.status is not None:
                     concatenate += ", " + ConstanteRipart.statutLibelle[
-                        ConstanteRipart.statuts().index(rep.statut.__str__())]
+                        ConstanteRipart.statuts().index(response.statut.__str__())]
                 concatenate += ".</font></b><br/>"
 
-                if rep.titre() is not None and rep.titre() != "":
-                    concatenate += "<b>" + ClientHelper.notNoneValue(rep.titre().strip()) + "</b><br/>";
-                if rep.reponse is not None:
-                    concatenate += ClientHelper.notNoneValue(rep.reponse.strip().replace("\n", "<br/>")) + "</li>";
+                if response.title() is not None and response.title() != "":
+                    concatenate += "<b>" + ClientHelper.notNoneValue(response.title().strip()) + "</b><br/>"
+                if response.response is not None:
+                    concatenate += ClientHelper.notNoneValue(response.response.strip().replace("\n", "<br/>")) + "</li>"
 
         return concatenate
 
-    def concatenateReponse(self):
+    def concatenateResponse(self):
         """Crée et retourne la réponse à partir des réponses existantes pour la remarque
         """
         concatenate = ""
 
-        if len(self.reponses) == 0:
+        if len(self.responses) == 0:
             concatenate += "Pas de réponse actuellement pour la remarque n°" + self.id.__str__() + "."
         else:
-            count = len(self.reponses)
-            for rep in self.reponses:
-                concatenate += "Réponse n°" + count.__str__();
+            count = len(self.responses)
+            for response in self.responses:
+                concatenate += "Réponse n°" + count.__str__()
                 count -= 1
 
-                if rep.auteur.nom is not None:
-                    author_name = rep.auteur.nom
+                if response.author.name is not None:
+                    author_name = response.author.name
                     if len(author_name) != 0:
-                        concatenate += " par " + rep.auteur.nom
-                if rep.date is not None:
-                    concatenate += " le " + rep.date.strftime("%Y-%m-%d %H:%M:%S")
+                        concatenate += " par " + response.author.name
+                if response.date is not None:
+                    concatenate += " le " + response.date.strftime("%Y-%m-%d %H:%M:%S")
 
                 try:
-                    if rep.reponse is not None:
-                        concatenate += ".\n" + rep.reponse.strip() + "\n";
+                    if response.response is not None:
+                        concatenate += ".\n" + response.response.strip() + "\n"
                     else:
                         self.logger.error("No message in response " + self.id)
                 except Exception as e:
@@ -252,23 +255,18 @@ class Remarque(object):
 
     def setPosition(self, position):
         """ Set de la position de la remarque
-        
         :param position la position de la remarque  (point)
-        :type Point
         """
         self.position = position
 
     def setCommentaire(self, commentaire):
         """Set du commentaire
-        
         :param commentaire le commentaire (message) de la remarque
-        :type string
         """
         self.commentaire = commentaire
 
     def addDocument(self, document):
         """Ajoute un document à la remarque
-        
         :param document : le document à ajouter à la remarque
         :type document : string
         """
@@ -277,7 +275,6 @@ class Remarque(object):
     # TODO voir si utile ???
     def addDocumentList(self, docList):
         """Ajoute une liste de documents à la remarque
-        
         :param docList : une liste de documents
         :type docList: list (of string)
         """
@@ -303,13 +300,13 @@ class Remarque(object):
         """ Supprime tous les croquis de la liste"""
         self.croquis = []
 
-    def addGeoReponse(self, reponse):
+    def addGeoResponse(self, response):
         """Ajoute une réponse à la remarque
           
-        :param reponse: la réponse
-        :type reponse: GeoReponse
+        :param response: la réponse
+        :type response: GeoResponse
         """
-        self.reponses.append(reponse)
+        self.responses.append(response)
 
     def addTheme(self, theme):
         """Ajoute un thème

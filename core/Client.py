@@ -34,7 +34,7 @@ class Client(object):
     __url = ""
     __login = ""
     __password = ""
-    __auteur = None
+    __author = None
     __version = None
     __profil = None
     __auth = None
@@ -107,7 +107,7 @@ class Client(object):
 
     def getLayersFromCleGeoportailUser(self, cle):
         layers = {}
-
+        cleGeoportail = ""
         if cle is None:
             cleGeoportail = "choisirgeoportail"
 
@@ -119,10 +119,10 @@ class Client(object):
         # https://wxs.ign.fr/clegeoportail/autoconf?gp-access-lib=2.1.2&output=xml
         url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(cleGeoportail)
         self.logger.debug("{0} {1}".format("getLayersFromCleGeoportailUser", url))
-        reponse = requests.get(url)
-        if reponse.status_code == 200:
+        response = requests.get(url)
+        if response.status_code == 200:
             print("Liste des couches correspondant à la clé Géoportail")
-            root = ET.fromstring(reponse.text)
+            root = ET.fromstring(response.text)
             nodeLayerList = root.find('.{http://www.opengis.net/context}LayerList')
             for elementNodeLayerList in nodeLayerList.iter():
                 nodeLayer = elementNodeLayerList.findall('.{http://www.opengis.net/context}Layer')
@@ -137,7 +137,7 @@ class Client(object):
                         print(mess)
 
         else:
-            raise Exception(ClientHelper.notNoneValue("{} : {}".format(reponse.status_code, "Votre clé Géoportail semble erronée. Vous pouvez utiliser la clé de démonstration.")))
+            raise Exception(ClientHelper.notNoneValue("{} : {}".format(response.status_code, "Votre clé Géoportail semble erronée. Vous pouvez utiliser la clé de démonstration.")))
 
         return layers
 
@@ -203,8 +203,7 @@ class Client(object):
     def connexionFeatureTypeJson(self, layerUrl, layerName):
         if '&' not in layerUrl:
             raise Exception(ClientHelper.notNoneValue(
-                "{} : l'url fournie ({}) ne permet pas de déterminer le nom de la base données"
-                    .format("getListOfValuesAttributeFromLayerInDatabase", layerUrl)))
+                "{} : l'url fournie ({}) ne permet pas de déterminer le nom de la base données".format("getListOfValuesAttributeFromLayerInDatabase", layerUrl)))
 
         tmp = layerUrl.split('&')
         dbName = tmp[1].split('=')
@@ -435,25 +434,25 @@ class Client(object):
 
         return profil, message
 
-    def addReponse(self, remarque, reponse, titreReponse):
+    def addResponse(self, report, response, titleResponse):
         """Ajoute une réponse à une remarque
 
-        :param remarque: la remarque
-        :type remarque: Remarque
+        :param report: la remarque
+        :type report: Remarque
 
-        :param reponse : la réponse
-        :type reponse: string
+        :param response : la réponse
+        :type response: string
 
-        :param titreReponse: le titre de la réponse
-        :type titreReponse : string
+        :param titleResponse: le titre de la réponse
+        :type titleResponse : string
 
         :return la remarque à laquelle a été ajoutée la réponse
         """
         remModif = None
-
+        errMessage = {}
         try:
-            parameters = {'id': str(remarque.id), 'title': titreReponse, 'content': reponse,
-                          'status': remarque.statut.__str__()}
+            parameters = {'id': str(report.id), 'title': titleResponse, 'content': response,
+                          'status': report.statut.__str__()}
 
             uri = self.__url + "/api/georem/georep_post.xml"
 
@@ -471,19 +470,11 @@ class Client(object):
                     raise Exception("Problème survenu lors de l'ajout d'une réponse")
 
         except Exception as e:
-            raise Exception(errMessage["message"], e)
+            raise Exception(errMessage['message'], e)
 
         return remModif
 
-    def createRemarque(self, remarque, idSelectedGeogroupe):
-        """Ajout d'une nouvelle remarque
-        :param remarque : la remarque à créer
-        :type remarque: Remarque
-        :return la remarque créée
-        :rtype: Remarque
-        """
-        rem = None
-
+    def createRemarque(self, remarque, idSelectedGeogroup):
         try:
             params = {}
             params['version'] = ConstanteRipart.RIPART_CLIENT_VERSION
@@ -492,7 +483,7 @@ class Client(object):
             geometry = "POINT(" + str(remarque.getLongitude()) + " " + str(remarque.getLatitude()) + ")"
             params['geometry'] = geometry
             params['territory'] = self.getProfil().zone.__str__()
-            params['group'] = idSelectedGeogroupe
+            params['group'] = idSelectedGeogroup
 
             # Ajout des thèmes selectionnés
             themes = remarque.themes
@@ -509,10 +500,8 @@ class Client(object):
                     nom= ET.SubElement(th,"NOM")
                     nom.text=t.groupe.nom"""
 
-                    groupeIdAndNom = ClientHelper.notNoneValue('"' + t.groupe.id + "::" + t.groupe.nom)
-
+                    groupeIdAndNom = ClientHelper.notNoneValue('"' + t.group.id + "::" + t.group.name)
                     attributes += ClientHelper.notNoneValue(groupeIdAndNom + "\"=>\"1\",")
-
                     for at in t.attributs:
                         attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
 

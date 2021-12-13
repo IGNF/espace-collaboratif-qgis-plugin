@@ -69,7 +69,7 @@ class ImporterRipart(object):
                                                             level=2, duration=5)
                 return
 
-        if self.context.profil.geogroupe.nom is None:
+        if self.context.profil.geogroup.name is None:
             raise NoProfileException(
                 "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
@@ -111,7 +111,7 @@ class ImporterRipart(object):
         groupFilter = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Group, "Map").text
 
         if groupFilter == 'true':
-            groupId = self.context.profil.geogroupe.id
+            groupId = self.context.profil.geogroup.id
 
             params['group'] = str(groupId)
 

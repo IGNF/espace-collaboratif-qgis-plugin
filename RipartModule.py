@@ -318,8 +318,8 @@ class RipartPlugin:
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
             if dlgChargerGuichet.context.profil is not None:
-                if len(dlgChargerGuichet.context.profil.infosGeogroupes) == 1 and \
-                        len(dlgChargerGuichet.context.profil.infosGeogroupes[0].layers) == 0:
+                if len(dlgChargerGuichet.context.profil.infosGeogroups) == 1 and \
+                        len(dlgChargerGuichet.context.profil.infosGeogroups[0].layers) == 0:
                     raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
 
             dlgChargerGuichet.exec_()
@@ -447,8 +447,8 @@ class RipartPlugin:
             # Les profils serveur/client se correspondent-ils ?
             # self.context.checkProfilServeurClient()
 
-            reponse = RepondreRipart(self.context)
-            reponse.do()
+            response = RepondreRipart(self.context)
+            response.do()
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
@@ -539,8 +539,8 @@ class RipartPlugin:
             if self.context is None:
                 return
 
-            reponse = RepondreRipart(self.context)
-            self.formView = reponse.do(isView=True)
+            response = RepondreRipart(self.context)
+            self.SeeReportView = response.do(isView=True)
 
         except Exception as e:
             self.logger.error("viewRem " + format(e))

@@ -6,6 +6,7 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
+from .SeeReportView import SeeReportView
 from .core.RipartLoggerCl import RipartLogger
 
 from PyQt5.QtCore import Qt
@@ -90,12 +91,17 @@ class RepondreRipart(object):
                 return
 
             if isView:
-                self.logger.debug("view remark")
+                '''self.logger.debug("view remark")
                 formView = FormView(self.context)
                 formView.setRemarque(remarque)
                 formView.setWindowFlags(Qt.WindowStaysOnTopHint)
                 formView.show()
-                return formView
+                return formView'''
+                self.logger.debug("view report")
+                seeReportView = SeeReportView(self.context, remarque)
+                seeReportView.setReport()
+                seeReportView.show()
+                return seeReportView
             else:
                 self.logger.debug("answer to remark")
                 formReponse = FormRepondreDialog()
@@ -103,7 +109,7 @@ class RepondreRipart(object):
                 formReponse.exec_()
                 if formReponse.answer:
                     remarque.statut = formReponse.newStat
-                    remMaj = client.addReponse(remarque, ClientHelper.notNoneValue(formReponse.newRep),
+                    remMaj = client.addResponse(remarque, ClientHelper.notNoneValue(formReponse.newRep),
                                                ClientHelper.notNoneValue(formReponse.repTitre))
 
                     self.context.updateRemarqueInSqlite(remMaj)

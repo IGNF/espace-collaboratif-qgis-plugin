@@ -236,11 +236,11 @@ class Contexte(object):
         if self.profil is None:
             return False
 
-        for infoGeogroupe in self.profil.infosGeogroupes:
-            if infoGeogroupe.groupe.nom != self.groupeactif:
+        for infoGeogroup in self.profil.infosGeogroups:
+            if infoGeogroup.group.name != self.groupeactif:
                 continue
 
-            for layer in infoGeogroupe.layers:
+            for layer in infoGeogroup.layers:
                 if layer.role == "edit" or layer.role == "ref-edit":
                     return True
 
@@ -329,24 +329,24 @@ class Contexte(object):
                             # si l'utilisateur n'appartient à aucun groupe, un profil par défaut
                             # est attribué mais il ne contient pas d'infosgeogroupes
 
-                            if len(profil.infosGeogroupes) < 1:
+                            if len(profil.infosGeogroups) < 1:
                                 # le profil de l'utilisateur est déjà récupéré et reste actif (NB: a priori, il n'a pas de profil)
                                 result = 1
                                 self.profil = profil
 
                                 # si l'utilisateur n'a pas de profil, il faut indiquer que le groupe actif est vide
-                                if "défaut" in profil.titre:
+                                if "défaut" in profil.title:
                                     RipartHelper.save_groupeactif(self.projectDir, "Aucun")
                                 else:
-                                    RipartHelper.save_groupeactif(self.projectDir, profil.geogroupe.nom)
+                                    RipartHelper.save_groupeactif(self.projectDir, profil.geogroup.name)
 
                                     # On enregistre le groupe comme groupe préféré (par défaut) pour la création de signalement
                                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
                                     formerPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
-                                    if formerPreferredGroup != profil.geogroupe.nom:
+                                    if formerPreferredGroup != profil.geogroup.name:
                                         RipartHelper.save_preferredThemes(self.projectDir, [])
 
-                                    RipartHelper.save_preferredGroup(self.projectDir, profil.geogroupe.nom)
+                                    RipartHelper.save_preferredGroup(self.projectDir, profil.geogroup.name)
 
                                 # Par défaut, on enregistre la clé Géoportail de démonstration
                                 RipartHelper.save_clegeoportail(self.projectDir, cst.DEMO)
@@ -368,7 +368,7 @@ class Contexte(object):
                                     self.clegeoportail = idNomGroupeCleGeoPortail[2]
 
                                     # si l'utilisateur n'appartient qu'à un seul gorupe, le profil chargé reste actif
-                                    if len(profil.infosGeogroupes) == 1:
+                                    if len(profil.infosGeogroups) == 1:
                                         self.profil = profil
 
                                     else:
@@ -394,10 +394,10 @@ class Contexte(object):
                                     # On enregistre le groupe comme groupe préféré pour la création de signalement
                                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
                                     formerPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
-                                    if formerPreferredGroup != profil.geogroupe.nom:
+                                    if formerPreferredGroup != profil.geogroup.name:
                                         RipartHelper.save_preferredThemes(self.projectDir, [])
 
-                                    RipartHelper.save_preferredGroup(self.projectDir, profil.geogroupe.nom)
+                                    RipartHelper.save_preferredGroup(self.projectDir, profil.geogroup.name)
 
                                     # Récupération des layers GéoPortail valides en fonction
                                     # de la clé Geoportail utilisateur
@@ -418,7 +418,7 @@ class Contexte(object):
                             # Modification du logo en fonction du groupe
                             if profil.logo != "":
                                 dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
-                            elif profil.titre == "Profil par défaut":
+                            elif profil.title == "Profil par défaut":
                                 dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
 
                             print("{0}{1}".format(self.urlHostRipart, profil.logo))
@@ -426,7 +426,7 @@ class Contexte(object):
                             dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
                             dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
                             dlgInfo.textInfo.append("Login : {}".format(self.login))
-                            dlgInfo.textInfo.append("Groupe : {}".format(self.profil.titre))
+                            dlgInfo.textInfo.append("Groupe : {}".format(self.profil.title))
                             if self.profil.zone == cst.ZoneGeographique.UNDEFINED:
                                 zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
                                 if zoneExtraction == "" or zoneExtraction is None:
@@ -626,7 +626,7 @@ class Contexte(object):
         # soit réellement prise en compte
         newLayer.reload()
 
-    def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
+    def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
         """Add guichet layers to the current map
         """
         try:
@@ -639,22 +639,22 @@ class Contexte(object):
             nodesGroup = root.findGroups()
             for nodeGroup in nodesGroup:
                 # Si le groupe existe déjà, on sort
-                if nodeGroup.name() == nomGroupe:
+                if nodeGroup.name() == nameGroup:
                     break
 
             # Si le groupe n'existe pas, création du groupe dans le projet
             if nodeGroup is None and (len(nodesGroup) == 0):
-                newNode = QgsLayerTreeGroup(nomGroupe)
+                newNode = QgsLayerTreeGroup(nameGroup)
                 root.addChildNode(newNode)
-                nodeGroup = root.findGroup(nomGroupe)
+                nodeGroup = root.findGroup(nameGroup)
 
             # Il y a déjà un groupe dans le projet
             # Il faut indiquer à l'utilisateur que c'est impossible
             # d'ajouter un nouveau groupe dans le projet
-            if nodeGroup.name() != nomGroupe and (len(nodesGroup) == 1):
+            if nodeGroup.name() != nameGroup and (len(nodesGroup) == 1):
                 QMessageBox.warning(None, "Charger les couches de mon groupe",
                                     u"Votre projet QGIS contient des couches d'un autre groupe Espace collaboratif (" + nodeGroup.name() +
-                                    "). \nPour pouvoir charger les données du groupe " + nomGroupe +
+                                    "). \nPour pouvoir charger les données du groupe " + nameGroup +
                                     ", veuillez supprimer les couches existantes de votre projet QGIS ou travailler dans un nouveau projet." +
                                     "\n\nNB : ces couches seront simplement supprimées de la carte QGIS en cours, elles resteront disponibles sur l'Espace collaboratif.")
                 return
@@ -837,7 +837,7 @@ class Contexte(object):
             sql = "UPDATE " + RipartHelper.nom_Calque_Signalement + " SET "
             sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
             sql += " Date_validation= '" + rem.getAttribut("dateValidation") + "',"
-            sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateReponse()) + "', "
+            sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateResponse()) + "', "
             sql += " Statut='" + rem.statut + "' "
             sql += " WHERE NoSignalement = " + rem.id
 
@@ -970,17 +970,17 @@ class Contexte(object):
                     geomPoints = geomPoints[0]  # les points du polygone
                 else:
                     self.logger.debug(u"geomPoints problem " + str(fId))
-                newCroquis.type = newCroquis.SketchType.Polygone
+                newCroquis.type = newCroquis.sketchType.Polygone
 
             elif ftype == QgsWkbTypes.LineGeometry:
                 geomPoints = geom.asPolyline()
-                newCroquis.type = newCroquis.SketchType.Ligne
+                newCroquis.type = newCroquis.sketchType.Ligne
 
             elif ftype == QgsWkbTypes.PointGeometry:
                 geomPoints = [geom.asPoint()]
-                newCroquis.type = newCroquis.SketchType.Point
+                newCroquis.type = newCroquis.sketchType.Point
             else:
-                newCroquis.type = newCroquis.SketchType.Vide
+                newCroquis.type = newCroquis.sketchType.Vide
 
             for pt in geomPoints:
                 pt = transformer.transform(pt)
@@ -1070,7 +1070,7 @@ class Contexte(object):
 
                 textGeom = textGeom[:-1] + textGeomEnd
 
-                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," + \
+                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," +\
                       "AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
                 cur.execute(sql)
 
@@ -1158,7 +1158,7 @@ class Contexte(object):
         :param noSignalement: le no de la remarque
         :type noSignalement: int
 
-        :param ccroquisSelFeats: dictionnaire contenant les croquis
+        :param croquisSelFeats: dictionnaire contenant les croquis
                                  (key: le nom de la table du croquis, value: liste des identifiants de croquis)
         :type croquisSelFeats: dictionnary
 
@@ -1188,11 +1188,11 @@ class Contexte(object):
         # Le profil a t'il pu être changé sur le serveur ?
         if self.client is not None:
             nomProfilServeur = self.client.getNomProfil()
-            if self.profil.titre != nomProfilServeur:
+            if self.profil.title != nomProfilServeur:
                 message = "Votre groupe actif ({} versus {}) semble avoir été modifié par une autre application cliente " \
                           "de l'Espace collaboratif.\nMerci de vous reconnecter via le bouton 'Se connecter à l'Espace " \
                           "collaboratif' pour confirmer dans quel groupe vous souhaitez travailler.\nAttention : si vous " \
                           "avez déjà chargé les couches d'un autre groupe, vous devez les supprimer au préalable ou " \
-                          "créer un autre projet QGIS.".format(self.profil.titre, nomProfilServeur)
+                          "créer un autre projet QGIS.".format(self.profil.title, nomProfilServeur)
                 RipartHelper.showMessageBox(message)
                 raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")

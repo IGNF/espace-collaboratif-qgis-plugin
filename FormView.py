@@ -50,7 +50,7 @@ class FormView(QtWidgets.QDialog, FORM_CLASS):
             statutIndex = cst.statuts().index(remarque.statut)
             self.textStatut.setText(cst.statutLibelle[statutIndex])
             self.textMessage.setText(ClientHelper.notNoneValue(remarque.commentaire))
-            self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateReponseHTML()))
+            self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateResponseHTML()))
             self.remarqueId = remarque.id
             
             self.doc = remarque.getAllDocuments()
