@@ -195,6 +195,18 @@ class Remarque(object):
                 docs += self.documents[i].text + " "
             return docs[:-1]
 
+    def getAllDocumentsForDisplay(self):
+        """Retourne les documents attachés à la remarque (s'il y en a)
+        """
+        if len(self.documents) == 0:
+            return ""
+        else:
+            docs = []
+            for i in range(len(self.documents)):
+                doc = self.documents[i].text + "\n"
+                docs.append(doc)
+        return docs
+
     def concatenateResponseHTML(self):
         """Crée et retourne la réponse au format html, à partir des réponses existantes pour la remarque
         """
@@ -229,7 +241,7 @@ class Remarque(object):
         concatenate = ""
 
         if len(self.responses) == 0:
-            concatenate += "Pas de réponse actuellement pour la remarque n°" + self.id.__str__() + "."
+            concatenate += "Ce signalement n'a pas reçu de réponses."
         else:
             count = len(self.responses)
             for response in self.responses:

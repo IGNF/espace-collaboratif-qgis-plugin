@@ -15,10 +15,17 @@ class ClientHelper(object):
     """
     @staticmethod
     def getValForDB(val):
-        val = ClientHelper.notNoneValue(val)
-        val = val.replace("'", "''")
-        val = val.replace('"', '""')
-        return val
+        valForDB = ''
+        if type(val) is list:
+            for tmp in val:
+                valForDB = ClientHelper.notNoneValue(tmp)
+                valForDB = valForDB.replace("'", "''")
+                valForDB = valForDB.replace('"', '""')
+        else:
+            valForDB = ClientHelper.notNoneValue(val)
+            valForDB = valForDB.replace("'", "''")
+            valForDB = valForDB.replace('"', '""')
+        return valForDB
 
     @staticmethod
     def getErrorMessage(code):
