@@ -33,26 +33,10 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             self.lbl_contentNumberReport.setText("Signalement n°{0}".format(self.report.id))
             self.lbl_contentNumberReport.setStyleSheet("QLabel {color : blue}")  # #ff0000
             self.lbl_displayGeneralInformation.setText(self.DisplayGeneralInformation())
-            self.lbl_displayThemes.setText(self.DisplayThemes())
+            self.pte_displayThemes.setPlainText(self.DisplayThemes())
             self.lbl_displayDescription.setText(self.report.commentaire)
             self.DisplayFilesAttached()
-            self.lbl_displayResponses.setText(self.report.concatenateResponse())
-
-            '''statutIndex = cst.statuts().index(report.statut)
-            self.textStatut.setText(cst.statutLibelle[statutIndex])
-            self.textMessage.setText(ClientHelper.notNoneValue(report.commentaire))
-            self.textOldRep.setHtml(ClientHelper.notNoneValue(report.concatenateReponseHTML()))
-            self.remarqueId = report.id
-
-            self.doc = report.getAllDocuments()
-
-            if self.doc != "":
-                self.docs = self.doc.split()
-
-                for i in range(0, len(self.docs)):
-                    btn = self.findChild(QtWidgets.QPushButton, "btnDoc_" + str(i))
-                    btn.setEnabled(True)'''
-
+            self.pte_displayResponses.setPlainText(self.report.concatenateResponse())
         except Exception as e:
             self.logger.error("setRemarque")
             raise e
@@ -118,9 +102,9 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             firstSeparator = {"|", ")"}
             for ch in firstSeparator:
                 theme = theme.replace(ch, "\n")
-                secondSeparator = {"(", ","}
-                for ch in secondSeparator:
-                    theme = theme.replace(ch, "\n    ")
+            secondSeparator = {"(", ","}
+            for ch in secondSeparator:
+                theme = theme.replace(ch, "\n    ")
             displayThemes += theme
         return displayThemes.replace("=", " : ")
 
@@ -131,45 +115,3 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             self.lbl_displayDocuments.setTextFormat(QtCore.Qt.RichText)
             self.lbl_displayDocuments.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
 
-    '''def toggleCroquis(self):
-        if self.selCroquis is None:
-            self.selectCroquis()
-        else:
-            self.deselectCroquis()
-            self.selCroquis = None
-
-    def selectCroquis(self):
-        nbCroquis = 0
-        cntMessage = ""
-        try:
-            self.selCroquis = self.context.getCroquisForRemark(self.remarqueId, {})
-
-            for cr in self.selCroquis:
-                lay = self.context.getLayerByName(cr)
-                lay.selectByIds(self.selCroquis[cr])
-
-                nbCroquis += len(self.selCroquis[cr])
-
-                cntMessage += str(len(self.selCroquis[cr])) + " " + cr + "\n"
-
-            self.lblCntCroquis.setText(u"Nombre de croquis sélectionnés: " + str(nbCroquis))
-
-            self.textEditCntCroquisDetail.setText(cntMessage)
-
-        except Exception as e:
-            self.logger.error("selectCroquis " + format(e))
-
-    def deselectCroquis(self):
-        try:
-            for cr in self.selCroquis:
-                lay = self.context.getLayerByName(cr)
-                lay.deselect(self.selCroquis[cr])
-
-            self.lblCntCroquis.setText(u"Nombre de croquis sélectionnés: -")
-            self.textEditCntCroquisDetail.setText(u"")
-
-        except Exception as e:
-            self.logger.error("deselectCroquis " + format(e))
-
-    def openDoc(self, n):
-        RipartHelper.open_file(self.docs[n])'''

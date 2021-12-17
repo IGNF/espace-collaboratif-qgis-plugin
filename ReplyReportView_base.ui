@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ReplyReportView</class>
+ <widget class="QDialog" name="ReplyReportView">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>401</width>
+    <height>328</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Répondre au(x) signalement(s)</string>
+  </property>
+  <widget class="QComboBox" name="StatutItemsSourceComboBox">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>250</y>
+     <width>271</width>
+     <height>31</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_sendResponse">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>290</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Enregistrer</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lbl_newStatut">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>240</y>
+     <width>111</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A propos des statuts de réponse&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;En cours de traitement : le signalement est en cours d'analyse ou de traitement par un responsable.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;En attente de saisie : la prise en compte effective du signalement nécessite un laps de temps plus long (attente de passage terrain par exemple). La mise à jour des données est donc différée.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Pris en compte : le signalement est clos et a été pris en compte dans nos données.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Déjà pris en compte : le signalement est clos. Aucune modification n'a été faite dans les données car la mise à jour avait déjà été faite par ailleurs.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Rejeté (hors spéc.) : le signalement est clos et n'a pas été pris en compte car il n'entre pas dans le champs des spécifications des données.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Rejeté (hors de propos) : le signalement est clos et n'a pas été pris en compte car hors de propos par rapport aux données.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;La clôture d'un signalement (un des 4 derniers statuts) nécessite l'intervention d'un valideur : votre gestionnaire de groupe. Le statut du signalement restera à en attente de validation tant qu'il n'aura pas validé votre réponse.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Si le gestionnaire de groupe l'a autorisé, la clôture du signalement peut également être automatique dès lors que vous choisissez un des 4 derniers statuts. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Nouveau statut</string>
+   </property>
+  </widget>
+  <widget class="QTextBrowser" name="NewResponseTextBox">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>90</y>
+     <width>381</width>
+     <height>151</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lbl_response">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>55</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Ma réponse</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lbl_numberReportLabel">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>15</y>
+     <width>381</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

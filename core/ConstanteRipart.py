@@ -48,6 +48,14 @@ statutLibelle = [u"Reçu dans nos services",
                  u"Rejeté (hors de propos)",
                  u"En attente de validation"]
 
+ListWordings = [
+            u"En cours de traitement",
+            u"En attente de saisie",
+            u"Pris en compte",
+            u"Déjà pris en compte",
+            u"Rejeté (hors spéc.)",
+            u"Rejeté (hors de propos)"]
+
 ZoneGeographique = Enum("UNDEFINED",
                         # France métropolitaine (Corse incluse).
                         "FXX",

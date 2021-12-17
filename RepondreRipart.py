@@ -8,14 +8,10 @@ version 3.0.0 , 26/11/2018
 """
 from .SeeReportView import SeeReportView
 from .core.RipartLoggerCl import RipartLogger
-
-from PyQt5.QtCore import Qt
-
 from .RipartHelper import RipartHelper
 from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
 from .FormRepondre import FormRepondreDialog
-from .FormView import FormView
 
 
 class RepondreRipart(object):
