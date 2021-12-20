@@ -11,8 +11,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
 from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
-from .FormRepondre import FormRepondreDialog
-
+from .ReplyReportView import ReplyReportView
 
 class RepondreRipart(object):
     """"Classe pour les réponses Ripart
@@ -22,13 +21,14 @@ class RepondreRipart(object):
     context = None
 
     def __init__(self, context):
-        '''
+        """
         Constructor
-        '''
+        """
         self.context = context
 
     def do(self, isView = False):
-        """Affichage de la fenêtre de réponse ou de la fenêtre de visualisation du signalement
+        """
+        Affichage de la fenêtre de réponse ou de la fenêtre de visualisation du signalement
         
         :param isView: true si on veut afficher la fenêtre de visualisation, false pour la fenêtre de réponse
         :type isView: boolean
@@ -99,8 +99,10 @@ class RepondreRipart(object):
                 seeReportView.show()
                 return seeReportView
             else:
-                self.logger.debug("answer to remark")
-                formReponse = FormRepondreDialog()
+                self.logger.debug("view reply report")
+                replyReport = ReplyReportView(selFeats)
+                replyReport.exec_()
+                '''formReponse = FormRepondreDialog()
                 formReponse.setRemarque(remarque)
                 formReponse.exec_()
                 if formReponse.answer:
@@ -116,7 +118,7 @@ class RepondreRipart(object):
                     activeLayer.triggerRepaint()
                     activeLayer.removeSelection()
 
-                    self.context.iface.messageBar().pushMessage("Succès", mess, level=0, duration=15)
+                    self.context.iface.messageBar().pushMessage("Succès", mess, level=0, duration=15)'''
 
         except Exception as e:
             self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))

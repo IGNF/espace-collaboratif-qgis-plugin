@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from builtins import range
 import os
 
-from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt import QtGui, uic, QtWidgets
 from .core import ConstanteRipart as cst
-from .core.ClientHelper import ClientHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ReplyReportView_base.ui'))
 
@@ -13,23 +10,26 @@ class ReplyReportView(QtWidgets.QDialog, FORM_CLASS):
     """
     Formulaire de réponse à une remarque
     """
-    '''answer = False
+    '''
+    answer = False
     cancel = True   
-    repTitle = ""'''
+    repTitle = ""
+    '''
     reports = []
     newResponse = ""
     newStatus = ""
 
-    def __init__(self, reports, parent=None):
+    def __init__(self, reports):
         """Constructor."""
 
-        super(ReplyReportView, self).__init__(parent)
+        super(ReplyReportView, self).__init__(None)
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
         # self.<objectname>, and you can use autoconnect slots - see
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.InitializeReplyReportView()
         self.btn_sendResponse.clicked.connect(self.onSend)
         self.reports = reports
 
@@ -44,6 +44,8 @@ class ReplyReportView(QtWidgets.QDialog, FORM_CLASS):
                 self.lbl_numberReportLabel.setText("Attention, {0} signalements sélectionnés".format(numberReports))
 
     def onSend(self):
-        self.newResponse = self.NewResponseTextBox.toPlainText()
-        self.newStatus = cst.ListWordings()[self.StatutItemsSourceComboBox.currentIndex()]
+        self.newResponse = self.pte_NewResponse.toPlainText()
+        print(self.newResponse)
+        self.newStatus = cst.ListWordings[self.StatutItemsSourceComboBox.currentIndex()]
+        print(self.newStatus)
         self.close()
