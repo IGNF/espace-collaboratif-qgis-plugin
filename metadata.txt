@@ -1,11 +1,3 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
-# is no longer supported since version 2.0.
-
-# This file should be included when you package your plugin.# Mandatory items:
-
 [general]
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
@@ -27,6 +19,7 @@ date=XX/XX/XXXX
 
 # Uncomment the following line and add your changelog:
 changelog=
+	4.0.6 -
     4.0.5 - Améliorations suite à un renforcement des contrôles de l'API sur les attributs de signalements
 	4.0.4 - Traitement des croquis avec multi-géométries et améliorations cosmétiques.
     4.0.3 - Patch correctif
@@ -36,7 +29,7 @@ changelog=
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://logiciels.ign.fr/?-RIPart-QGIS-
+homepage=https://espacecollaboratif.ign.fr/plugins/qgis
 category=Plugins
 icon=images/ign.png
 # experimental flag
