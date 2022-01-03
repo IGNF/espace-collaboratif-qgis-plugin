@@ -159,6 +159,13 @@ class Contexte(object):
         return config.get('general', 'version')
 
     @staticmethod
+    def IsLayerInMap(layerName):
+        for layer in QgsProject.instance().mapLayers().values():
+            if layer.Name() == layerName:
+                return True
+        return False
+
+    @staticmethod
     def getInstance(QObject=None, QgsProject=None):
         """Retourne l'instance du Contexte
         """

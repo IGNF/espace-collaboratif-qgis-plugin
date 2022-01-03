@@ -54,7 +54,7 @@ from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
 from .Contexte import Contexte
 from .ImporterRipart import ImporterRipart
-from .RepondreRipart import RepondreRipart
+from .SeeReport import SeeReport
 from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
@@ -220,7 +220,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Voir le signalement'),
-            callback=self.viewRem,
+            callback=self.viewReport,
             status_tip=self.tr(u'Voir le signalement'),
             parent=self.iface.mainWindow())
 
@@ -531,7 +531,7 @@ class RipartPlugin:
         except Exception as e:
             self.logger.error("magicWand " + format(e))
 
-    def viewRem(self):
+    def viewReport(self):
         """Visualisation du signalement (message, réponses et statut)
         """
         try:
@@ -539,11 +539,11 @@ class RipartPlugin:
             if self.context is None:
                 return
 
-            response = RepondreRipart(self.context)
-            self.SeeReportView = response.do(isView=True)
+            seeReport = SeeReport(self.context)
+            self.SeeReportView = seeReport.do()
 
         except Exception as e:
-            self.logger.error("viewRem " + format(e))
+            self.logger.error("SeeReport " + format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.",

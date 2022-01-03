@@ -10,11 +10,6 @@ class ReplyReportView(QtWidgets.QDialog, FORM_CLASS):
     """
     Formulaire de réponse à une remarque
     """
-    '''
-    answer = False
-    cancel = True   
-    repTitle = ""
-    '''
     reports = []
     newResponse = ""
     newStatus = ""
