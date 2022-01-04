@@ -14,6 +14,7 @@ class Ui_DialogParametrage(object):
     def setupUi(self, DialogParametrage):
         DialogParametrage.setObjectName("DialogParametrage")
         DialogParametrage.resize(399, 237)
+        DialogParametrage.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.buttonBox = QtWidgets.QDialogButtonBox(DialogParametrage)
         self.buttonBox.setEnabled(True)
         self.buttonBox.setGeometry(QtCore.QRect(190, 200, 201, 31))

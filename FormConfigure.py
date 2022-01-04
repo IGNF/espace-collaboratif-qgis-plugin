@@ -51,6 +51,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
         self.setFocus()
 
+        self.setStyleSheet("background-color: rgb(255, 255, 255)")
+
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
 

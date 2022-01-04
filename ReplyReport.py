@@ -7,6 +7,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
 from .core import ConstanteRipart as cst
 from .ReplyReportView import ReplyReportView
+from .core.ClientHelper import ClientHelper
 
 
 class ReplyReport(object):
@@ -31,7 +32,7 @@ class ReplyReport(object):
                 # la connexion a échoué, on ne fait rien
                 if self.context.ripClient is None:
                     self.context.iface.messageBar().pushMessage("",
-                                                                u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer",
+                                                                u"Un problème de connexion avec avec l'Espace Collaboratif est survenu. Veuillez rééssayer",
                                                                 level=2, duration=5)
                     return
 
@@ -49,7 +50,7 @@ class ReplyReport(object):
                                                                 level=1, duration=5)
                     return
                 # get selected features
-                selFeats = activeLayer().selectedFeatures()
+                selFeats = activeLayer.selectedFeatures()
                 messageReportNoValid = ""
                 replyReports = []
                 for feat in selFeats:
@@ -76,25 +77,19 @@ class ReplyReport(object):
                     return
 
                 self.logger.debug("view reply report")
-                replyReport = ReplyReportView(replyReports)
-                replyReport.exec_()
-                '''formReponse = FormRepondreDialog()
-                formReponse.setRemarque(remarque)
-                formReponse.exec_()
-                if formReponse.answer:
-                    remarque.statut = formReponse.newStat
-                    remMaj = client.addResponse(remarque, ClientHelper.notNoneValue(formReponse.newRep),
-                                               ClientHelper.notNoneValue(formReponse.repTitre))
-
-                    self.context.updateRemarqueInSqlite(remMaj)
-                    mess = "de l'ajout d'une réponse au signalement n°" + str(remId)
-
-                    if hasattr(activeLayer, "setCacheImage"):
-                        activeLayer.setCacheImage(None)
-                    activeLayer.triggerRepaint()
-                    activeLayer.removeSelection()
-
-                    self.context.iface.messageBar().pushMessage("Succès", mess, level=0, duration=15)'''
+                dlgReplyReport = ReplyReportView(replyReports)
+                dlgReplyReport.exec_()
+                if dlgReplyReport.bResponse:
+                    for report in replyReports:
+                        report.statut = dlgReplyReport.newStatus
+                        newReport = self.context.client.addResponse(report, ClientHelper.notNoneValue(dlgReplyReport.newResponse), "")
+                        self.context.updateRemarqueInSqlite(newReport)
+                    information = "Votre réponse "
+                    if len(replyReports) == 1:
+                        information += "au signalement {0} a bien été envoyée.".format(replyReports[0].Id)
+                    else:
+                        information += "aux {0} signalements a bien été envoyée.".format(len(replyReports))
+                    self.context.iface.messageBar().pushMessage("Succès", information, level=0, duration=15)
 
         except Exception as e:
             self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))

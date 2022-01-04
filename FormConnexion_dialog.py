@@ -50,6 +50,7 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
         font.setPointSize(8)
         self.lblPwd.setFont(font)
         self.lblLogin.setFont(font)
+        self.setStyleSheet("background-color: rgb(255, 255, 255)")
 
     def setLogin(self, login):
         self.lineEditLogin.setText(login)  

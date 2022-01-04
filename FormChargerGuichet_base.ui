@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Charger les couches de mon groupe</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(255, 255, 255);</string>
+  </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>

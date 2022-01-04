@@ -18,36 +18,24 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo
 
 class FormInfo(QtWidgets.QDialog, FORM_CLASS):
     """
-    Fenêtre donnant des informations
+    Dialogue donnant des informations sur le résultat
+    des actions effectuées par l'utilisateur
     """
-    
     def __init__(self, parent=None):
-        """Constructor."""
          
         super(FormInfo, self).__init__(parent)
-        # Set up the user interface from Designer.
-        # After setupUI you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
+
         self.setupUi(self)
-        # Save reference to the QGIS interface
         
         self.textInfo.setText("")
+        self.textInfo.setGeometry(QtCore.QRect(150, 10, 341, 151))
+
         self.btnOK.clicked.connect(self.close)
+        self.btnOK.setGeometry(QtCore.QRect(420, 140, 75, 23))
+        self.btnOK.setText('OK')
 
         self.resize(511, 200)
         self.setWindowTitle("IGN Espace collaboratif")
-        self.textInfo.setGeometry(QtCore.QRect(150, 10, 341, 151))
-        self.btnOK.setGeometry(QtCore.QRect(420, 170, 75, 23))
-        self.logo = QtWidgets.QLabel(self)
-        self.logo.setGeometry(QtCore.QRect(10, 0, 121, 141))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.logo.setFont(font)
-        self.logo.setText("")
-        self.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/no_logo.png"))
-        self.logo.setScaledContents(True)
-        self.logo.setObjectName("logo")
-        #self.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/no_logo.png"))
-        #self.logo.setScaledContents(True)
+        self.setStyleSheet("background-color: rgb(255, 255, 255)")
+
+        self.logo.setOpenExternalLinks(True)

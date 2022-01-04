@@ -50,7 +50,7 @@ from . import resources
 # modules ripart
 from .FormChargerGuichet import FormChargerGuichet
 from .FormConnexion_dialog import FormConnexionDialog
-from .FormInfo import FormInfo
+from .FeedbackInformationView import FeedbackInformationView
 from .FormConfigure import FormConfigure
 from .Contexte import Contexte
 from .ImporterRipart import ImporterRipart
@@ -60,6 +60,7 @@ from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
 from .core.NoProfileException import NoProfileException
 from .CompterGuichet import CompterGuichet
+from .ReplyReport import ReplyReport
 
 import logging
 
@@ -228,7 +229,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Répondre à un signalement'),
-            callback=self.answerToRemark,
+            callback=self.answerToReport,
             status_tip=self.tr(u'Répondre à un signalement'),
             parent=self.iface.mainWindow())
 
@@ -436,23 +437,20 @@ class RipartPlugin:
                             level=2, duration=5)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
-    def answerToRemark(self):
-        """Answer to a remark
+    def answerToReport(self):
+        """
+        Répondre à un signalement
         """
         try:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
                 return
-
-            # Les profils serveur/client se correspondent-ils ?
-            # self.context.checkProfilServeurClient()
-
-            response = RepondreRipart(self.context)
-            response.do()
+            replyReport = ReplyReport(self.context)
+            replyReport.do()
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu lors de l'ajout de la réponse ou lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.", \
+                            "Problème dans la réponse faite au(x) signalement(s) : {0}".format(str(e)),
                             level=2, duration=5)
 
     def createRemark(self):
@@ -568,12 +566,12 @@ class RipartPlugin:
             except Exception as e:
                 self.logger.error("No version/date in metadata")
 
-        dlgInfo = FormInfo()
-        dlgInfo.textInfo.setText(u"<b>Plugin Espace Collaboratif</b>")
-        dlgInfo.textInfo.append(
+        dlgInfo = FeedbackInformationView()
+        dlgInfo.MessageTextBrowser.setText(u"<b>Plugin Espace Collaboratif</b>")
+        dlgInfo.MessageTextBrowser.append(
             u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif.")
-        dlgInfo.textInfo.append(u"<br/>Version: " + version)
-        dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
+        dlgInfo.MessageTextBrowser.append(u"<br/>Version : " + version)
+        dlgInfo.MessageTextBrowser.append(u"\u00A9 IGN - " + date)
 
         dlgInfo.exec_()
 

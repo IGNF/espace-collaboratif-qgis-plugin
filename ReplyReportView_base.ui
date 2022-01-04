@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Répondre au(x) signalement(s)</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(255, 255, 255);</string>
+  </property>
   <widget class="QComboBox" name="StatutItemsSourceComboBox">
    <property name="geometry">
     <rect>
@@ -87,6 +90,8 @@
    <property name="font">
     <font>
      <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
     </font>
    </property>
    <property name="text">
