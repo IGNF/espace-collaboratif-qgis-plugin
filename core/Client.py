@@ -468,6 +468,8 @@ class Client(object):
                     remModif = list(rems.values())[0]
                 else:
                     raise Exception("Problème survenu lors de l'ajout d'une réponse")
+            else:
+                raise Exception(errMessage['code'] + " " + errMessage['message'])
 
         except Exception as e:
             raise Exception(errMessage['message'], e)
@@ -502,7 +504,7 @@ class Client(object):
 
                     groupeIdAndNom = ClientHelper.notNoneValue('"' + t.group.id + "::" + t.group.name)
                     attributes += ClientHelper.notNoneValue(groupeIdAndNom + "\"=>\"1\",")
-                    for at in t.attributs:
+                    for at in t.attributes:
                         attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
 
                 attributes = attributes[:-1]

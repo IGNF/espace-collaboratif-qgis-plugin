@@ -14,7 +14,7 @@
    <string>Répondre au(x) signalement(s)</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(255, 255, 255);</string>
+   <string notr="true">QDialog {background-color: rgb(255, 255, 255)}</string>
   </property>
   <widget class="QComboBox" name="StatutItemsSourceComboBox">
    <property name="geometry">
@@ -89,7 +89,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
+     <pointsize>9</pointsize>
      <weight>75</weight>
      <bold>true</bold>
     </font>

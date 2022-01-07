@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Created on 30 sept. 2015
 Updated on 9 sept. 2020
 
-version 4.0.1, 15/12/2020
+version 4.0.6, 30/12/2021
 
 @author: AChang-Wailing, EPeyrouse
-'''
+"""
 
 import os
 
@@ -21,12 +21,12 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
     Dialogue donnant des informations sur le résultat
     des actions effectuées par l'utilisateur
     """
+
     def __init__(self, parent=None):
-         
         super(FormInfo, self).__init__(parent)
 
         self.setupUi(self)
-        
+
         self.textInfo.setText("")
         self.textInfo.setGeometry(QtCore.QRect(150, 10, 341, 151))
 
@@ -36,6 +36,8 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
 
         self.resize(511, 200)
         self.setWindowTitle("IGN Espace collaboratif")
-        self.setStyleSheet("background-color: rgb(255, 255, 255)")
+        self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
         self.logo.setOpenExternalLinks(True)
+        self.logo.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        self.logo.setStyleSheet("background-color: transparent")

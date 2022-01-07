@@ -81,12 +81,14 @@ class ReplyReport(object):
                 dlgReplyReport.exec_()
                 if dlgReplyReport.bResponse:
                     for report in replyReports:
-                        report.statut = dlgReplyReport.newStatus
+                        report.statut = cst.CorrespondenceStatusWording[dlgReplyReport.newStatus]
                         newReport = self.context.client.addResponse(report, ClientHelper.notNoneValue(dlgReplyReport.newResponse), "")
+                        if newReport is None:
+                            raise Exception("georep_post a renvoyé une erreur")
                         self.context.updateRemarqueInSqlite(newReport)
                     information = "Votre réponse "
                     if len(replyReports) == 1:
-                        information += "au signalement {0} a bien été envoyée.".format(replyReports[0].Id)
+                        information += "au signalement {0} a bien été envoyée.".format(replyReports[0].id)
                     else:
                         information += "aux {0} signalements a bien été envoyée.".format(len(replyReports))
                     self.context.iface.messageBar().pushMessage("Succès", information, level=0, duration=15)

@@ -2,16 +2,18 @@
 
 # Form implementation generated from reading ui file 'FormInfo_base.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_InfoDialog(object):
     def setupUi(self, InfoDialog):
         InfoDialog.setObjectName("InfoDialog")
-        InfoDialog.setWindowModality(QtCore.Qt.WindowModal)
+        InfoDialog.setWindowModality(QtCore.Qt.ApplicationModal)
         InfoDialog.resize(511, 176)
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
@@ -36,6 +38,11 @@ class Ui_InfoDialog(object):
         InfoDialog.setAutoFillBackground(False)
         InfoDialog.setSizeGripEnabled(True)
         InfoDialog.setModal(True)
+        self.label = QtWidgets.QLabel(InfoDialog)
+        self.label.setGeometry(QtCore.QRect(20, 20, 46, 13))
+        self.label.setText("")
+        self.label.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/icon.png"))
+        self.label.setObjectName("label")
         self.logo = QtWidgets.QLabel(InfoDialog)
         self.logo.setGeometry(QtCore.QRect(10, 0, 121, 141))
         font = QtGui.QFont()
@@ -82,6 +89,5 @@ class Ui_InfoDialog(object):
 
     def retranslateUi(self, InfoDialog):
         _translate = QtCore.QCoreApplication.translate
-        InfoDialog.setWindowTitle(_translate("InfoDialog", "IGN Espace Collaboratif"))
+        InfoDialog.setWindowTitle(_translate("InfoDialog", "Espace Collaboratif IGN"))
         self.btnOK.setText(_translate("InfoDialog", "Ok"))
-

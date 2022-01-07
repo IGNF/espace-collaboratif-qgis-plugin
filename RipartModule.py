@@ -50,7 +50,7 @@ from . import resources
 # modules ripart
 from .FormChargerGuichet import FormChargerGuichet
 from .FormConnexion_dialog import FormConnexionDialog
-from .FeedbackInformationView import FeedbackInformationView
+from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
 from .Contexte import Contexte
 from .ImporterRipart import ImporterRipart
@@ -566,12 +566,12 @@ class RipartPlugin:
             except Exception as e:
                 self.logger.error("No version/date in metadata")
 
-        dlgInfo = FeedbackInformationView()
-        dlgInfo.MessageTextBrowser.setText(u"<b>Plugin Espace Collaboratif</b>")
-        dlgInfo.MessageTextBrowser.append(
+        dlgInfo = FormInfo()
+        dlgInfo.textInfo.setText(u"<b>Plugin Espace Collaboratif</b>")
+        dlgInfo.textInfo.append(
             u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif.")
-        dlgInfo.MessageTextBrowser.append(u"<br/>Version : " + version)
-        dlgInfo.MessageTextBrowser.append(u"\u00A9 IGN - " + date)
+        dlgInfo.textInfo.append(u"<br/>Version : " + version)
+        dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
 
         dlgInfo.exec_()
 

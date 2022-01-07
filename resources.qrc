@@ -16,5 +16,6 @@
 		<file>images/charger.png</file>
 		<file>images/compter.png</file>
 		<file>images/synchroniser.png</file>
+		<file>images/no_logo.png</file>
     </qresource>
 </RCC>

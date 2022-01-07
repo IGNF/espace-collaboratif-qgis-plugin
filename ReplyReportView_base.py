@@ -14,7 +14,7 @@ class Ui_ReplyReportView(object):
     def setupUi(self, ReplyReportView):
         ReplyReportView.setObjectName("ReplyReportView")
         ReplyReportView.resize(401, 328)
-        ReplyReportView.setStyleSheet("background-color: rgb(255, 255, 255);")
+        ReplyReportView.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
         self.StatutItemsSourceComboBox = QtWidgets.QComboBox(ReplyReportView)
         self.StatutItemsSourceComboBox.setGeometry(QtCore.QRect(120, 250, 271, 31))
         self.StatutItemsSourceComboBox.setObjectName("StatutItemsSourceComboBox")
@@ -36,7 +36,7 @@ class Ui_ReplyReportView(object):
         self.lbl_numberReportLabel = QtWidgets.QLabel(ReplyReportView)
         self.lbl_numberReportLabel.setGeometry(QtCore.QRect(10, 15, 381, 31))
         font = QtGui.QFont()
-        font.setPointSize(10)
+        font.setPointSize(9)
         font.setBold(True)
         font.setWeight(75)
         self.lbl_numberReportLabel.setFont(font)

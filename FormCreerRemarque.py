@@ -32,8 +32,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     logger = RipartLogger("FormCreerRemarque").getRipartLogger()
     context = None
 
-    send = False
-    cancel = False
+    bSend = False
 
     infogeogroups = []
 
@@ -56,7 +55,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     # taille maximale du document joint
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
 
-    def __init__(self, context, croquisCnt, parent=None):
+    def __init__(self, context, NbSketch, parent=None):
         """Constructor."""
 
         super(FormCreerRemarque, self).__init__(parent)
@@ -70,19 +69,15 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
-
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.send)
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
+        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.onSend)
 
         self.checkBoxAttDoc.stateChanged.connect(self.openFileDialog)
 
         self.lblDoc.setProperty("visible", False)
-        if croquisCnt < 2:
-            self.radioBtnUnique.setProperty("visible", False)
-            self.radioBtnMultiple.setProperty("visible", False)
-        else:
-            self.radioBtnMultiple.setText(u"Créer " + str(croquisCnt) + u" signalements distincts")
+        if NbSketch >= 2:
+            self.radioBtnUnique.setChecked(False)
+            self.radioBtnMultiple.setChecked(True)
+            self.radioBtnMultiple.setText(u"Créer {0} signalements".format(NbSketch))
 
         profil = self.context.client.getProfil()
 
@@ -128,10 +123,10 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         self.docMaxSize = self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
 
-
     def displayThemes(self, filteredThemes, themes):
         """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
         """
+        global th
         preferredThemes = self.preferredThemes
 
         if len(themes) <= 0:
@@ -170,7 +165,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 thItem.setCheckState(0, Qt.Unchecked)
 
             # Affichage des attributs du thème et des modules d'aide à la saisie associés
-            for att in th.attributs:
+            for att in th.attributes:
                 attLabel = att.tagDisplay
                 attType = att.type
                 attDefaultval = att.defaultval
@@ -189,11 +184,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 self.treeWidget.setItemWidget(attItem, 0, label)
                 self.treeWidget.setItemWidget(attItem, 1, item_value)
 
-
     '''
     Renvoie le type d'item pré-rempli avec sa valeur par défaut à afficher en face de chaque
     attribut du thème de signalement.
     '''
+
     def get_item_value_from_type(self, att):
 
         item_value = ""
@@ -234,7 +229,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 date = dateTime[0].split('-')
                 time = dateTime[1].split(':')
                 item_value.setDateTime(QDateTime(QDate(int(date[0]), int(date[1]), int(date[2])),
-                                                   QTime(int(time[0]), int(time[1]), int(time[2]))))
+                                                 QTime(int(time[0]), int(time[1]), int(time[2]))))
             item_value.setMinimumDateTime(QDateTime(QDate(1900, 1, 1), QTime(0, 0, 0)))
             item_value.setMaximumDateTime(QDateTime(QDate(3000, 1, 1), QTime(0, 0, 0)))
             item_value.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
@@ -254,7 +249,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             item_value.setText(attDefaultval)
 
         return item_value
-
 
     def groupIndexChanged(self, index):
         """Détecte le groupe choisi et lance l'affiche des thèmes adequats.
@@ -309,9 +303,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             theme.group.name = thItem.text(0)
             theme.group.id = thItem.text(1)
 
-
             for j in range(thItem.childCount()):
-
                 att = thItem.child(j)
                 label = self.treeWidget.itemWidget(att, 0).text()
                 key = self.get_key_from_attribute_value(label, thItem.text(0))
@@ -326,8 +318,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             selectedThemes.append(theme)
 
         return selectedThemes
-
-
 
     def get_value_from_widget(self, widg, widg_label, theme_name):
         """
@@ -362,7 +352,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         return val
 
-
     def get_key_from_list_of_values(self, form_value, widg_label, theme_name):
         """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
          par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
@@ -376,7 +365,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
         found_att = False
-        for att in th.attributs:
+        for att in th.attributes:
             if found_att:
                 break
 
@@ -392,7 +381,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     return val
 
         return form_value
-
 
     def get_key_from_attribute_value(self, widg_label, theme_name):
         """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
@@ -418,7 +406,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             return key
 
         return widg_label
-
 
     def _getThemeObject(self, themeName):
         """Retourne l'objet THEME à partir de son nom
@@ -465,7 +452,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         """
         return self.checkBoxJoinCroquis.isChecked()
 
-    def send(self):
+    def onSend(self):
         """Envoi de la requête de création au service ripart
         """
         if self.textEditMessage.toPlainText().strip() == "":
@@ -475,13 +462,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                                                         duration=10)
             return
 
-        self.send = True
-        self.cancel = False
+        self.bSend = True
         self.close()
 
     def openFileDialog(self):
         if self.checkBoxAttDoc.isChecked():
-
             filters = u"All files (*.*);;" + \
                       u"Images (*.BMP;*.GIF;*.JPG;*.JPEG;*.PNG);;" + \
                       u"Tracées (*.GPX);;" + \
@@ -518,9 +503,3 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         else:
             self.lblDoc.setProperty("visible", False)
             self.selFileName = None
-
-    @pyqtSlot()
-    def cancel(self):
-        self.cancel = True
-        self.send = False
-        self.close()

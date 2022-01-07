@@ -17,19 +17,16 @@ from .core.Remarque import Remarque
 class CreerRipart(object):
     """
     Classe pour la création d'une nouvelle remarque ripart
-    
     """
     logger = RipartLogger("CreerRipart").getRipartLogger()
     context = None
 
     def __init__(self, context):
-        """
-        Constructor
-        """
         self.context = context
 
     def do(self): 
-        """Création de la nouvelle remarque
+        """
+        Création de la nouvelle remarque
         """
         self.context.iface.messageBar().clearWidgets()
 
@@ -39,39 +36,37 @@ class CreerRipart(object):
             if not hasSelectedFeature:
                 RipartHelper.showMessageBox(u"Aucun objet sélectionné.\nIl est donc impossible de déterminer le "
                                             u"point d'application du nouveau signalement à créer.")
-                return    #si pas d'objet sélectionné, on arrête le processus
+                return    # si pas d'objet sélectionné, on arrête le processus
 
             if self.context.ripClient is None:
                 connResult = self.context.getConnexionRipart()
                 if not connResult:
                     return 0
-                if self.context.ripClient is None: #la connexion a échoué, on ne fait rien
+                # la connexion a échoué, on ne fait rien
+                if self.context.ripClient is None:
                     self.context.iface.messageBar().pushMessage("", u"Un problème de connexion avec le service est "
                                                                    u"survenu.Veuillez rééssayer", level=2, duration=5)
                     return
 
-            #Création des croquis à partir de la sélection de features
+            # Création des croquis à partir de la sélection de features
             croquisList = self.context.makeCroquisFromSelection()
                        
             self.logger.debug(str(len(croquisList)) + u" croquis générés")
         
-            #ouverture du formulaire de création de la remarque
-            formCreate = FormCreerRemarque(context=self.context, croquisCnt=len(croquisList))
-            r = formCreate.exec_()
-            
-            if formCreate.cancel:
-                return
-            
-            else:
-                #création de la remarque
-                self._createNewRemark(formCreate, croquisList)
+            # ouverture du formulaire de création de la remarque
+            formCreate = FormCreerRemarque(context=self.context, NbSketch=len(croquisList))
+            formCreate.exec_()
+
+            # création de la remarque
+            if formCreate.bSend:
+                self._createNewReport(formCreate, croquisList)
               
         except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)", level=2,
                                                         duration=15)
 
-    def _createNewRemark(self, formCreate, croquisList):
+    def _createNewReport(self, formCreate, croquisList):
         """Création d'une nouvelle remarque (requête au service ripart)
         
         :param formCreate: le formulaire de création de la remarque
@@ -92,48 +87,54 @@ class CreerRipart(object):
             
             tmpRem.addThemeList(selectedThemes)  
             
-            #liste contenant les identifiants des nouvelles remarques créées
-            listNewRemIds = []
+            # liste contenant les identifiants des nouvelles remarques créées
+            listNewReportIds = []
             
-            #si on doit attacher un document
+            # si on doit attacher un document
             if formCreate.optionWithAttDoc():
                 tmpRem.addDocument(formCreate.getAttachedDoc())
            
-            #création d'une seule remarque
-            if formCreate.isSingleRemark():  
-                remarqueNouvelle = self._prepareAndSendRemark(tmpRem, croquisList, formCreate.optionWithCroquis(), formCreate.idSelectedGeogroupe)
-                if remarqueNouvelle is None:
+            # création d'une seule remarque
+            if formCreate.isSingleRemark():
+                listNewReportIds.clear()
+                newReport = self._prepareAndSendReport(tmpRem, croquisList, formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
+                if newReport is None:
                     self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création du "
                                                                     u"signalement ",level=2, duration =15)
                      
-                listNewRemIds.append(remarqueNouvelle.id)        
+                listNewReportIds.append(newReport.id)
             
-            #création de plusieurs remarques  
+            # création de plusieurs signalements
             else:             
-                listNewRemIds = []
-                
+                listNewReportIds.clear()
                 for cr in croquisList:                
                     tmpRem.clearCroquis()
-                    remarqueNouvelle = self._prepareAndSendRemark(tmpRem, [cr], formCreate.optionWithCroquis(), formCreate.idSelectedGeogroupe)
-                    if remarqueNouvelle is None:
+                    newReport = self._prepareAndSendReport(tmpRem, [cr], formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
+                    if newReport is None:
                         self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création "
                                                                         u"d'un signalement",level=2, duration =15)
                         continue
-                    
-                    listNewRemIds.append(remarqueNouvelle.id)
+                    listNewReportIds.append(newReport.id)
    
             self.context.refresh_layers()
-          
-            RipartHelper.showMessageBox(u"Succès de la création de " + str(len(listNewRemIds)) + u" nouveau(x) "
-                                                                                                 u"signalement(s)")
+
+            message = 'Succès '
+            nbReports = len(listNewReportIds)
+            if nbReports == 1:
+                message += ": création d'un nouveau signalement n°{0}".format(listNewReportIds[0])
+            else:
+                message += "de la création de {0} nouveaux signalements pour l'espace collaboratif.\n".format(nbReports)
+                message += "Les identifiants vont de {0} à {1}.".format(listNewReportIds[0], listNewReportIds[nbReports - 1]);
+            RipartHelper.showMessageBox(message)
+
         except Exception as e:
             self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=15)
-            self.logger.error("in _createNewRemark " + format(e))
+            self.logger.error("in _createNewReport " + format(e))
 
         finally:
             self.context.conn.close()   
 
-    def _prepareAndSendRemark(self, tmpRem, croquisList, optionWithCroquis, idSelectedGeogroupe):
+    def _prepareAndSendReport(self, tmpRem, croquisList, optionWithCroquis, idSelectedGeogroupe):
         """Trouve la position de la remarque, ajoute les croquis et envoie la requête au service Ripart
         
         :param tmpRem: remarque temporaire
@@ -154,7 +155,7 @@ class CreerRipart(object):
         positionRemarque = self.context.getPositionRemarque(croquisList)
                     
         if positionRemarque is None:
-            self.logger.error("error in _createRemark: positionRemarque not created")
+            self.logger.error("error in _prepareAndSendReport : positionRemarque not created")
             return None
         
         tmpRem.setPosition(positionRemarque)
@@ -162,7 +163,7 @@ class CreerRipart(object):
         if optionWithCroquis:
             tmpRem.addCroquisList(croquisList)
                    
-        #create new remark (ripart service)
+        # create new remark (ripart service)
         remarqueNouvelle = client.createRemarque(tmpRem, idSelectedGeogroupe)
 
         self.logger.info(u"Succès de la création du nouveau signalement n°" + str(remarqueNouvelle.id))

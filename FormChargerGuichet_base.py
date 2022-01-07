@@ -14,7 +14,7 @@ class Ui_DialogChargerGuichet(object):
     def setupUi(self, DialogChargerGuichet):
         DialogChargerGuichet.setObjectName("DialogChargerGuichet")
         DialogChargerGuichet.resize(751, 707)
-        DialogChargerGuichet.setStyleSheet("background-color: rgb(255, 255, 255);")
+        DialogChargerGuichet.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
         self.buttonBox = QtWidgets.QDialogButtonBox(DialogChargerGuichet)
         self.buttonBox.setGeometry(QtCore.QRect(540, 670, 201, 32))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)

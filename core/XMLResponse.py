@@ -192,7 +192,7 @@ class XMLResponse(object):
             profil.id_Geoprofil = node.text
 
             node = self.root.find('./PROFIL/TITRE')
-            profil.titre = node.text
+            profil.title = node.text
 
             gr = Group()
             node = self.root.find('./PROFIL/ID_GEOGROUPE')
@@ -669,9 +669,9 @@ class XMLResponse(object):
                 nomCroquis = ob.find('nom').text
 
                 # Récupération des attributs
-                attributs = ob.findall('attributs/attribut')
+                attributes = ob.findall('attributs/attribut')
                 listAttCroquis = []
-                for att in attributs:
+                for att in attributes:
                     attribute = SketchAttributes()
                     attribute.name = att.attrib['name']
                     attribute.valeur = att.text

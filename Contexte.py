@@ -28,7 +28,7 @@ from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
 from .core.Sketch import Sketch
 from .FormConnexion_dialog import FormConnexionDialog
-from .FeedbackInformationView import FeedbackInformationView
+from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
 from .core import ConstanteRipart as cst
 from .Import_WMTS import importWMTS
@@ -420,30 +420,28 @@ class Contexte(object):
                                     return
 
                             # les infos de connexion présentée à l'utilisateur
-                            dlgInfo = FeedbackInformationView()
+                            dlgInfo = FormInfo()
 
                             # Modification du logo en fonction du groupe
                             if profil.logo != "":
-                                dlgInfo.logoGroup.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
+                                dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
                             elif profil.title == "Profil par défaut":
-                                dlgInfo.logoGroup.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
+                                dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
 
-                            print("{0}{1}".format(self.urlHostRipart, profil.logo))
-
-                            dlgInfo.MessageTextBrowser.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
-                            dlgInfo.MessageTextBrowser.append("<br/>Serveur : {}".format(self.urlHostRipart))
-                            dlgInfo.MessageTextBrowser.append("Login : {}".format(self.login))
-                            dlgInfo.MessageTextBrowser.append("Groupe : {}".format(self.profil.title))
+                            dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
+                            dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
+                            dlgInfo.textInfo.append("Login : {}".format(self.login))
+                            dlgInfo.textInfo.append("Groupe : {}".format(self.profil.title))
                             if self.profil.zone == cst.ZoneGeographique.UNDEFINED:
                                 zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
                                 if zoneExtraction == "" or zoneExtraction is None:
-                                    dlgInfo.MessageTextBrowser.append("Zone : pas de zone définie")
+                                    dlgInfo.textInfo.append("Zone : pas de zone définie")
                                 else:
-                                    dlgInfo.MessageTextBrowser.append("Zone : {}".format(zoneExtraction))
+                                    dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
                                 self.profil.zone = zoneExtraction
                             else:
-                                dlgInfo.MessageTextBrowser.append("Zone : {}".format(self.profil.zone.__str__()))
-                            dlgInfo.MessageTextBrowser.append("Clé Géoportail : {}".format(self.clegeoportail))
+                                dlgInfo.textInfo.append("Zone : {}".format(self.profil.zone.__str__()))
+                            dlgInfo.textInfo.append("Clé Géoportail : {}".format(self.clegeoportail))
 
                             dlgInfo.exec_()
 
@@ -1061,13 +1059,13 @@ class Contexte(object):
             textGeomEnd = ""
             for cr in listCroquis:
                 i += 1
-                if cr.type == cr.SketchType.Ligne:
+                if cr.type == cr.sketchType.Ligne:
                     textGeom = "LINESTRING("
                     textGeomEnd = ")"
-                elif cr.type == cr.SketchType.Polygone:
+                elif cr.type == cr.sketchType.Polygone:
                     textGeom = "POLYGON(("
                     textGeomEnd = "))"
-                elif cr.type == cr.SketchType.Point:
+                elif cr.type == cr.sketchType.Point:
                     textGeom = "POINT("
                     textGeomEnd = ")"
 

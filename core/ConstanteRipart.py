@@ -48,6 +48,15 @@ statutLibelle = [u"Reçu dans nos services",
                  u"Rejeté (hors de propos)",
                  u"En attente de validation"]
 
+CorrespondenceStatusWording = {
+            "En cours de traitement": STATUT.pending,
+            "En attente de saisie": STATUT.pending1,
+            "Pris en compte": STATUT.valid,
+            "Déjà pris en compte": STATUT.valid0,
+            "Rejeté (hors spéc.)": STATUT.reject,
+            "Rejeté (hors de propos)": STATUT.reject0
+        }
+
 ListWordings = [
             u"En cours de traitement",
             u"En attente de saisie",
@@ -84,7 +93,6 @@ namespace = {'gml': 'http://www.opengis.net/gml'}
 
 helpFile = "Manuel utilisateur plugin Espace Collaboratif pour QGIS.pdf"
 
-
 def statuts():
     statuts = [STATUT.submit.__str__(),
                STATUT.pending.__str__(),
@@ -97,7 +105,6 @@ def statuts():
                STATUT.pending2.__str__()
                ]
     return statuts
-
 
 # Constantes pour le chargement des couches du guichet
 # Types de couches, balise <TYPE>

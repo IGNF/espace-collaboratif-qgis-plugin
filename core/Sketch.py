@@ -45,7 +45,7 @@ class Sketch(object):
         Constructeur d'un croquis
         
         :param name: string le nom du croquis
-        :param typeSketch: SketchType le type du croquis
+        :param typeSketch: sketchType le type du croquis
         :param points: une liste de points 
         """
         self.name = name
