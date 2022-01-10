@@ -154,21 +154,24 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.listLayers:
-            if layer.type != cst.GEOPORTAIL:
+            if layer.type != cst.WMTS and layer.type != cst.WMS:
                 continue
 
-            if layer.nom not in self.profilUser.layersCleGeoportail:
+            if layer.url.find(cst.WXSIGN) == -1:
                 continue
 
-            title = self.profilUser.layersCleGeoportail[layer.nom]
-            if title is None:
-                continue
+#            if layer.nom not in self.profilUser.layersCleGeoportail:
+#                continue
+
+            # title = self.profilUser.layersCleGeoportail[layer.nom]
+            # if title is None:
+            #     continue
 
             rowPosition = self.tableWidgetFondsGeoportail.rowCount()
             self.tableWidgetFondsGeoportail.insertRow(rowPosition)
 
             # Colonne "Nom de la couche"
-            layerComposed = "{} ({})".format(title, layer.nom)
+            layerComposed = "{} ({})".format(layer.nom, layer.layer_id)
             item = QtWidgets.QTableWidgetItem(layerComposed)
             self.tableWidgetFondsGeoportail.setItem(rowPosition, 0, item)
 
@@ -257,15 +260,16 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
         for layerChecked in layersChecked:
             for tmp in layerChecked:
+                # tmp est sous la forme 'troncon_de_voie_ferree' ou 'Cartes IGN (GEOGRAPHICALGRIDSYSTEMS.MAPS)'
+                if '(' in tmp:
+                    tmpName = tmp.split('(')
+                    name = tmpName[0].rstrip() # pour supprimer l'espace final
+                else:
+                    name = tmp
                 for layer in self.listLayers:
-                    # tmp est sous la forme 'troncon_de_voie_ferree' ou 'Cartes IGN (GEOGRAPHICALGRIDSYSTEMS.MAPS)'
-                    if '(' in tmp:
-                        tmpName = tmp.split('(')
-                        name = tmpName[1].replace(')', '')
-                    else:
-                        name = tmp
                     if name == layer.nom:
                         layersQGIS.append(layer)
+                        break
 
         importGuichet = ImporterGuichet(self.context)
         importGuichet.doImport(layersQGIS)

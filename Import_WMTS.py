@@ -18,23 +18,23 @@ try:
     from owslib.util import ServiceException
     import owslib
 
-    print("Depencencies - owslib version: {}".format(owslib.__version__))
+    print("Dependencies - owslib version: {}".format(owslib.__version__))
 except ImportError as e:
-    print("Depencencies - owslib is not present")
+    print("Dependencies - owslib is not present")
 
 try:
     from owslib.util import HTTPError
 
-    print("Depencencies - HTTPError within owslib")
+    print("Dependencies - HTTPError within owslib")
 except ImportError as e:
     print(
-        "Depencencies - HTTPError not within owslib."
+        "Dependencies - HTTPError not within owslib."
         " Trying to get it from urllib directly."
     )
 try:
     from urllib import HTTPError
 
-    print("Depencencies - HTTPError within urllib")
+    print("Dependencies - HTTPError within urllib")
 except ImportError as e:
     print(
         "Depencencies - HTTPError not within urllib."
@@ -51,9 +51,11 @@ class importWMTS:
     layer_id = None
     crs = None
     title_layer = None
+    selected_layer= None
 
-    def __init__(self, context):
+    def __init__(self, context, layer):
         self.context = context
+        self.selected_layer = layer
         self.checkOpenService()
         self.checkGetTile()
         self.checkTileMatrixSet()
@@ -65,23 +67,23 @@ class importWMTS:
             'service': cst.WMTS,
             'request': 'GetCapabilities'
         }
-        clegeoportail = self.context.clegeoportail
-        if clegeoportail is None or clegeoportail == cst.DEMO:
-            clegeoportail = cst.CLEGEOPORTAILSTANDARD
+        # clegeoportail = self.context.clegeoportail
+        # if clegeoportail is None or clegeoportail == cst.DEMO:
+        #     clegeoportail = cst.CLEGEOPORTAILSTANDARD
 
         '''
         Avec l'url http://wxs.ign.fr/VOTRE_CLE/geoportail/wmts, la projection proposée est
         web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
         '''
         self.crs = "EPSG:3857"
-        self.uri = "https://wxs.ign.fr/{}/geoportail/wmts?{}" \
-            .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(params)))
+        self.uri = self.selected_layer.url.format(urllib.parse.unquote(urllib.parse.urlencode(params)))
 
     # opening WMTS
     def checkOpenService(self):
         self.appendUriCapabilities()
         try:
-            self.wmts = WebMapTileService(self.uri)
+            self.wmts = WebMapTileService(self.uri, '1.0.0', None, None, None,
+                 False, None, None, None, 120) #Ajout de tous les paramètres par défaut pour pouvoir modifier le timeout, par défaut à 30s
         except TypeError as e:
             print("OWSLib mixing str and unicode args", str(e))
         except ServiceException as e:

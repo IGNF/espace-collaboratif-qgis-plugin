@@ -35,6 +35,8 @@ class Layer(object):
     tilezoom = ""
     # <URL>
     url = ""
+    # <LAYER>
+    layer_id = ""
 
     def __init__(self):
         """
@@ -51,8 +53,9 @@ class Layer(object):
         self.opacity = 1
         self.tilezoom = ""
         self.url = ""
+        self.layer_id = ""
 
     def GetAllInfo(self):
         infos = [self.type, self.nom, self.description, self.minzoom, self.maxzoom, self.extent, self.role,
-                 self.visibility, self.opacity, self.tilezoom, self.url]
+                 self.visibility, self.opacity, self.tilezoom, self.url, self.layer_id]
         return infos

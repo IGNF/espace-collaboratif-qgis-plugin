@@ -631,19 +631,14 @@ class Contexte(object):
                     # Rechargement de la couche pour que la visualisation dans la fenêtre carto courante
                     # soit réellement prise en compte
                     vlayer.reload()
-
-            for layer in guichet_layers:
-
-                if layer.nom in maplayers or layer.description in maplayers:
-                    print("Layer {} already exists !".format(layer.nom))
                     continue
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
                 '''
-                if layer.type == cst.GEOPORTAIL:
-                    importWmts = importWMTS(self)
-                    titleLayer_uri = importWmts.getWtmsUrlParams(layer.nom)
+                if layer.type == cst.WMTS:
+                    importWmts = importWMTS(self, layer)
+                    titleLayer_uri = importWmts.getWtmsUrlParams(layer.layer_id)
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
 
                     if not rlayer.isValid():

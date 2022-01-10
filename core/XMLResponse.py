@@ -265,6 +265,9 @@ class XMLResponse(object):
                     url = nodelayer.find('URL')
                     if url is not None:
                         layer.url = url.text
+                    layer_id = nodelayer.find('LAYER')
+                    if layer_id is not None:
+                        layer.layer_id = layer_id.text
 
                     infosgeogroupe.layers.append(layer)
 
