@@ -41,11 +41,8 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-   
         self.textError.setVisible(False)
-           
         self.btnConnect.clicked.connect(self.connectToService)
-      
         self.btnCancel.clicked.connect(self.cancel)
 
     def setLogin(self,login):

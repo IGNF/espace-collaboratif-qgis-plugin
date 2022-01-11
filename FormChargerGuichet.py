@@ -61,7 +61,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Remplissage des différentes tables de couches
         self.setTableWidgetMonGuichet()
         self.setTableWidgetFondsGeoportail()
-        self.setTableWidgetFondsGeoportailBis()
         #self.setTableWidgetAutresGeoservices()
 
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
@@ -142,8 +141,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # Colonne "Charger"
             self.setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
 
-        #self.tableWidgetMonGuichet.resizeColumnsToContents()
-
     def setTableWidgetFondsGeoportail(self):
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
@@ -159,13 +156,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             if layer.url.find(cst.WXSIGN) == -1:
                 continue
-
-#            if layer.nom not in self.profilUser.layersCleGeoportail:
-#                continue
-
-            # title = self.profilUser.layersCleGeoportail[layer.nom]
-            # if title is None:
-            #     continue
 
             rowPosition = self.tableWidgetFondsGeoportail.rowCount()
             self.tableWidgetFondsGeoportail.insertRow(rowPosition)
@@ -185,31 +175,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             # Colonne "Charger"
             self.setColonneCharger(self.tableWidgetFondsGeoportail, rowPosition, 2)
-
-        #self.tableWidgetFondsGeoportail.resizeColumnsToContents()
-
-    def setTableWidgetFondsGeoportailBis(self):
-        # Entête
-        entete = ["Nom de la couche"]
-        self.tableWidgetFondsGeoportailBis.setHorizontalHeaderLabels(entete)
-        self.tableWidgetFondsGeoportailBis.setColumnWidth(0, 400)
-
-        # Autres lignes de la table
-        for layer in self.listLayers:
-            if layer.type != cst.GEOPORTAIL:
-                continue
-
-            if layer.nom not in self.profilUser.layersCleGeoportail:
-                rowPosition = self.tableWidgetFondsGeoportailBis.rowCount()
-                self.tableWidgetFondsGeoportailBis.insertRow(rowPosition)
-
-                # Colonne "Nom de la couche"
-                layerComposed = "{} ({})".format(layer.description, layer.nom)
-                item = QtWidgets.QTableWidgetItem(layerComposed)
-                self.tableWidgetFondsGeoportailBis.setItem(rowPosition, 0, item)
-                item.setForeground(QtGui.QColor(89, 89, 89))
-
-        #self.tableWidgetFondsGeoportailBis.resizeColumnsToContents()
 
     def setTableWidgetAutresGeoservices(self):
         # Entête

@@ -82,8 +82,7 @@ class importWMTS:
     def checkOpenService(self):
         self.appendUriCapabilities()
         try:
-            self.wmts = WebMapTileService(self.uri, '1.0.0', None, None, None,
-                 False, None, None, None, 120) #Ajout de tous les paramètres par défaut pour pouvoir modifier le timeout, par défaut à 30s
+            self.wmts = WebMapTileService(self.uri)
         except TypeError as e:
             print("OWSLib mixing str and unicode args", str(e))
         except ServiceException as e:

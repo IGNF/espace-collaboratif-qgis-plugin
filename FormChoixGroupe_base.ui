@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>399</width>
-    <height>237</height>
+    <width>272</width>
+    <height>102</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>190</x>
-     <y>200</y>
+     <x>40</x>
+     <y>60</y>
      <width>201</width>
      <height>31</height>
     </rect>
@@ -56,76 +56,6 @@
      <width>251</width>
      <height>21</height>
     </rect>
-   </property>
-  </widget>
-  <widget class="QRadioButton" name="radioButtonOui">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>140</y>
-     <width>51</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Oui</string>
-   </property>
-  </widget>
-  <widget class="QRadioButton" name="radioButtonNon">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>170</y>
-     <width>301</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Non - Utiliser la clé Géoportail de démonstration</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="lineEditCleGeoportailUser">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>140</y>
-     <width>321</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="whatsThis">
-    <string/>
-   </property>
-   <property name="accessibleDescription">
-    <string/>
-   </property>
-   <property name="inputMask">
-    <string/>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="placeholderText">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QLabel" name="lblCleGeoportailUser">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>70</y>
-     <width>391</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Vous pouvez utiliser une clé Géoportail pour afficher les fonds IGN de votre groupe directement dans QGIS.&lt;/p&gt;&lt;p&gt;Disposez-vous de votre propre clé Géoportail ?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="textFormat">
-    <enum>Qt::AutoText</enum>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
    </property>
   </widget>
  </widget>

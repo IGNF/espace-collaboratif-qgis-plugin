@@ -53,7 +53,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>270</y>
+     <y>370</y>
      <width>131</width>
      <height>21</height>
     </rect>
@@ -78,7 +78,7 @@
      <x>10</x>
      <y>70</y>
      <width>731</width>
-     <height>191</height>
+     <height>261</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -155,9 +155,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>300</y>
+     <y>400</y>
      <width>731</width>
-     <height>181</height>
+     <height>261</height>
     </rect>
    </property>
    <property name="horizontalScrollBarPolicy">
@@ -211,75 +211,6 @@
    <column/>
    <column/>
    <column/>
-  </widget>
-  <widget class="QTableWidget" name="tableWidgetFondsGeoportailBis">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>540</y>
-     <width>731</width>
-     <height>121</height>
-    </rect>
-   </property>
-   <property name="sizeAdjustPolicy">
-    <enum>QAbstractScrollArea::AdjustToContents</enum>
-   </property>
-   <property name="showGrid">
-    <bool>false</bool>
-   </property>
-   <property name="gridStyle">
-    <enum>Qt::NoPen</enum>
-   </property>
-   <property name="columnCount">
-    <number>1</number>
-   </property>
-   <attribute name="horizontalHeaderCascadingSectionResizes">
-    <bool>true</bool>
-   </attribute>
-   <attribute name="horizontalHeaderHighlightSections">
-    <bool>false</bool>
-   </attribute>
-   <attribute name="horizontalHeaderStretchLastSection">
-    <bool>true</bool>
-   </attribute>
-   <attribute name="verticalHeaderVisible">
-    <bool>false</bool>
-   </attribute>
-   <attribute name="verticalHeaderCascadingSectionResizes">
-    <bool>true</bool>
-   </attribute>
-   <attribute name="verticalHeaderHighlightSections">
-    <bool>false</bool>
-   </attribute>
-   <attribute name="verticalHeaderStretchLastSection">
-    <bool>false</bool>
-   </attribute>
-   <column/>
-  </widget>
-  <widget class="QLabel" name="labelFondsGeopportailBis">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>480</y>
-     <width>731</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>8</pointsize>
-     <italic>false</italic>
-    </font>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Les fonds Géoportail suivants sont également paramétrés dans la carte de votre groupe mais la clé Géoportail que vous utilisez sous QGIS ne vous y donne pas accès. Pour pouvoir les charger, veuillez modifier votre clé Géoportail en vous adressant à &lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;contact.geoservices@ign.fr&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="textFormat">
-    <enum>Qt::AutoText</enum>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
   </widget>
   <widget class="QLabel" name="labelGroupeActif">
    <property name="geometry">

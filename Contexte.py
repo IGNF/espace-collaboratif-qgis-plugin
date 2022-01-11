@@ -292,15 +292,6 @@ class Contexte(object):
             if self.groupeactif is not None:
                 self.logger.debug("this.groupeactif " + self.groupeactif)
 
-        xmlclegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_CleGeoportail, "Serveur")
-        if xmlclegeoportail is not None:
-            self.clegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_CleGeoportail,
-                                                                "Serveur").text
-            if self.clegeoportail is None:
-                self.clegeoportail = cst.DEMO
-            else:
-                self.logger.debug("this.clegeoportail " + self.clegeoportail)
-
         if self.login == "" or self.pwd == "" or newLogin:
             self.loginWindow.setLogin(self.login)
             self.loginWindow.exec_()
@@ -318,7 +309,7 @@ class Contexte(object):
                     self.pwd = self.loginWindow.getPwd()
                     print("login " + self.login)
                     try:
-                        client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
+                        client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
                         profil = client.getProfil()
 
                         if profil is not None:
@@ -348,24 +339,20 @@ class Contexte(object):
 
                                     RipartHelper.save_preferredGroup(self.projectDir, profil.geogroupe.nom)
 
-                                # Par défaut, on enregistre la clé Géoportail de démonstration
-                                RipartHelper.save_clegeoportail(self.projectDir, cst.DEMO)
-
                             # sinon le choix d'un autre groupe est présenté à l'utilisateur
                             # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
                             # afin qu'il puisse remplir sa clé Géoportail
                             else:
 
-                                dlgChoixGroupe = FormChoixGroupe(profil, self.clegeoportail, self.groupeactif)
+                                dlgChoixGroupe = FormChoixGroupe(profil, self.groupeactif)
                                 dlgChoixGroupe.exec_()
                                 # bouton Valider
-                                if not dlgChoixGroupe.cancel:
+                                if not dlgChoixGroupe.bCancel:
                                     result = 1
 
                                     # le choix du nouveau profil est validé
-                                    # le nouvel id et nom du groupe, la clé Geoportail sont retournés dans un tuple
-                                    idNomGroupeCleGeoPortail = dlgChoixGroupe.save()
-                                    self.clegeoportail = idNomGroupeCleGeoPortail[2]
+                                    # le nouvel id et nom du groupe sont retournés dans un tuple
+                                    idNomGroupe = dlgChoixGroupe.save()
 
                                     # si l'utilisateur n'appartient qu'à un seul gorupe, le profil chargé reste actif
                                     if len(profil.infosGeogroupes) == 1:
@@ -373,7 +360,7 @@ class Contexte(object):
 
                                     else:
                                         # récupère le profil et un message dans un tuple
-                                        profilMessage = client.setChangeUserProfil(idNomGroupeCleGeoPortail[0])
+                                        profilMessage = client.setChangeUserProfil(idNomGroupe[0])
                                         messTmp = profilMessage[1]
 
                                         # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
@@ -385,24 +372,17 @@ class Contexte(object):
                                             # le nouveau profil devient actif
                                             self.profil = profilMessage[0]
 
-                                    # Sauvegarde de la clé Géoportail et du groupe actif
+                                    # Sauvegarde du groupe actif
                                     # dans le xml du projet utilisateur
-                                    RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
-                                    RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
-                                    self.groupeactif = idNomGroupeCleGeoPortail[1]
+                                    RipartHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
+                                    self.groupeactif = idNomGroupe[1]
 
                                     # On enregistre le groupe comme groupe préféré pour la création de signalement
                                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
                                     formerPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
                                     if formerPreferredGroup != profil.geogroupe.nom:
                                         RipartHelper.save_preferredThemes(self.projectDir, [])
-
                                     RipartHelper.save_preferredGroup(self.projectDir, profil.geogroupe.nom)
-
-                                    # Récupération des layers GéoPortail valides en fonction
-                                    # de la clé Geoportail utilisateur
-                                    layersCleGeoportail = client.getLayersFromCleGeoportailUser(self.clegeoportail)
-                                    self.profil.layersCleGeoportail = layersCleGeoportail
 
                                 # Bouton Annuler
                                 elif dlgChoixGroupe.cancel:
@@ -427,10 +407,8 @@ class Contexte(object):
                                 self.profil.zone = zoneExtraction
                             else:
                                 dlgInfo.textInfo.append("Zone : {}".format(self.profil.zone.__str__()))
-                            dlgInfo.textInfo.append("Clé Géoportail : {}".format(self.clegeoportail))
 
                             dlgInfo.exec_()
-
                             if dlgInfo.Accepted:
                                 self.client = client
                                 result = 1
@@ -451,7 +429,7 @@ class Contexte(object):
 
         else:
             try:
-                client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
+                client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
                 result = 1
                 self.logger.debug("result =" + str(result))
                 self.client = client
