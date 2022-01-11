@@ -12,11 +12,11 @@ from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
 from PyQt5.QtCore import Qt
 
 from .RipartHelper import RipartHelper
-
 from .core.RipartLoggerCl import RipartLogger
 from .core.Box import Box
 from .core.ClientHelper import ClientHelper
 from .core.NoProfileException import NoProfileException
+from .Contexte import Contexte
 
 
 class ImporterGuichet(object):
@@ -48,53 +48,30 @@ class ImporterGuichet(object):
         self.progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.progressMessageBar.layout().addWidget(self.progress)
 
-
     def doImport(self, guichet_layers):
         """Téléchargement et import des couches du guichet sur la carte
         """
         try:
             self.logger.debug("doImport")
-
             params = {}  # paramètres pour la requête au service Ripart
-
             filtreLay = None
-
-            if self.context.ripClient == None:
+            if self.context.ripClient is None:
                 connResult = self.context.getConnexionRipart()
                 if not connResult:
                     return 0
-                if self.context.ripClient == None:  # la connexion a échoué, on ne fait rien
+                if self.context.ripClient is None:  # la connexion a échoué, on ne fait rien
                     self.context.iface.messageBar().pushMessage("",
                                                                 "Un problème de connexion avec le service Espace collaboratif est survenu. Veuillez rééssayer",
                                                                 level=2, duration=5)
                     return
 
-            if self.context.profil.geogroupe.nom == None:
+            if self.context.profil.geogroupe.nom is None:
                 raise NoProfileException(
                     "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
             # filtre spatial
             # Non pris en compte en v4.0.1 car le filtrage par BBOX du WFS ne semble pas fonctionner
             bbox = None
-            # filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
-            #
-            # if (filtre != None and len(filtre.strip()) > 0):
-            #     self.logger.debug("Spatial filter :" + filtre)
-            #
-            #     filtreLay = self.context.getLayerByName(filtre)
-            #     bbox = self.getSpatialFilterBbox(filtre, filtreLay)
-            #     if bbox == -999:
-            #         return
-            #
-            # else:
-            #     message = "Impossible de déterminer dans le fichier de paramétrage de l'Espace Collaboratif, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
-            #               "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
-            #               "(Cela risque de prendre un certain temps)."
-            #     if self.noFilterWarningDialog(message):
-            #         bbox = None
-            #     else:
-            #         return
-
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             QApplication.setOverrideCursor(Qt.BusyCursor)
 
@@ -104,7 +81,6 @@ class ImporterGuichet(object):
         finally:
             self.context.iface.messageBar().clearWidgets()
             QApplication.setOverrideCursor(Qt.ArrowCursor)
-
 
     def getSpatialFilterBbox(self, filtre, filtreLay):
         """Retourne la boundingbox du filtre spatial
@@ -117,7 +93,7 @@ class ImporterGuichet(object):
         """
         bbox = None
 
-        if filtreLay == None:
+        if filtreLay is None:
             message = "La carte en cours ne contient pas le calque '" + \
                       filtre + \
                       "' défini pour être le filtrage spatial (ou le calque n'est pas activé).\n\n" + \
@@ -146,5 +122,5 @@ class ImporterGuichet(object):
         reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
             return True
-        else :
+        else:
             return False

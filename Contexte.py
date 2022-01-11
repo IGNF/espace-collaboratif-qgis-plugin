@@ -256,8 +256,8 @@ class Contexte(object):
         :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
         :rtype int
         """
+        client = None
         self.logger.debug("GetConnexionRipart ")
-
         result = -1
 
         try:
@@ -426,7 +426,6 @@ class Contexte(object):
                         except Exception as e2:
                             self.loginWindow.setErreur("la connexion a échoué")
                         self.loginWindow.exec_()
-
         else:
             try:
                 client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
@@ -445,16 +444,18 @@ class Contexte(object):
         return result
 
     def saveLogin(self, login):
-        """Sauvegarde du login dans le contexte et dans le fichier ripart.xml
+        """
+        Sauvegarde du login dans le contexte et dans le fichier ripart.xml
         """
         self.login = login
         RipartHelper.save_login(self.projectDir, login)
 
     def getOrCreateDatabase(self):
-        """Retourne la base de données spatialite contenant les tables des remarques et croquis
-        Si la BD n'existe pas, elle est créée
-
         """
+        Retourne la base de données spatialite contenant les tables des remarques et croquis
+        Si la BD n'existe pas, elle est créée
+        """
+        curs = None
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
@@ -471,18 +472,18 @@ class Contexte(object):
             self.conn = spatialite_connect(self.dbPath)
 
             # creating a Cursor
-            cur = self.conn.cursor()
+            curs = self.conn.cursor()
 
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
-            cur.execute(sql)
-            if cur.fetchone() is None:
+            curs.execute(sql)
+            if curs.fetchone() is None:
                 # create layer Signalement
                 RipartHelper.createRemarqueTable(self.conn)
 
             for lay in RipartHelper.croquis_layers:
                 sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + lay + "'"
-                cur.execute(sql)
-                if cur.fetchone() is None:
+                curs.execute(sql)
+                if curs.fetchone() is None:
                     # create layer
                     RipartHelper.createCroquisTable(self.conn, lay, RipartHelper.croquis_layers[lay])
 
@@ -490,19 +491,20 @@ class Contexte(object):
             self.logger.error(format(e))
             raise
         finally:
-            cur.close()
+            curs.close()
             self.conn.close()
 
     def appendUri_WFS(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
         uri.setConnection("", "", self.login, self.pwd)
-        uri.setParam('version', '1.0.0') # Patch pour pouvoir éditer les données avec QGIS 3.16
+        # Patch pour pouvoir éditer les données avec QGIS 3.16
+        uri.setParam('version', '1.0.0')
         uri.setParam('request', 'GetFeature')
         if str(bbox) != "None":
             uri.setParam('bbox', bbox.boxToString())
-            #box = "{},srsname:EPSG:4326".format(bbox.boxToString())
-            #uri.setParam('bbox', box)
-        #uri.setSrid("EPSG:4326")
+            # box = "{},srsname:EPSG:4326".format(bbox.boxToString())
+            # uri.setParam('bbox', box)
+        # uri.setSrid("EPSG:4326")
 
         # Mon guichet
         if '&' in url:
@@ -512,9 +514,9 @@ class Contexte(object):
             uri.setParam('url', tmp[0])
             uri.setParam('typename', typeName)
             uri.setParam('filter', 'detruit:false')
-            #uri.setParam('filter', '<Filter><PropertyIsEqualTo><PropertyName>detruit</' \
-            #'PropertyName><Literal>false</Literal></PropertyIsEqualTo><Box><coordinates>2.518667618084235,' \
-            #'48.85218456255414 2.567725038730373,48.87557235363674</coordinates></Box></Filter>')
+            # uri.setParam('filter', '<Filter><PropertyIsEqualTo><PropertyName>detruit</' \
+            # 'PropertyName><Literal>false</Literal></PropertyIsEqualTo><Box><coordinates>2.518667618084235,' \
+            # '48.85218456255414 2.567725038730373,48.87557235363674</coordinates></Box></Filter>')
             uri.setParam('maxNumFeatures', '5000')
             uri.setParam('pagingEnabled', 'true')
             uri.setParam('restrictToRequestBBOX', '1')
@@ -527,7 +529,8 @@ class Contexte(object):
         return uri
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nomGroupe):
-        """Add guichet layers to the current map
+        """
+        Add guichet layers to the current map
         """
         try:
             # Quelles sont les cartes chargées dans le projet QGIS courant
@@ -542,8 +545,14 @@ class Contexte(object):
                 if nodeGroup.name() == nomGroupe:
                     break
 
-            # Si le groupe n'existe pas, création du groupe dans le projet
-            if nodeGroup is None and (len(nodesGroup) == 0):
+            # Si le groupe n'existe pas et que des couches doivent être chargées
+            # alors il y a création du groupe dans le projet
+            nbLayersWFS = 0
+            for layer in guichet_layers:
+                if layer.type == cst.WFS:
+                    nbLayersWFS += 1
+
+            if nodeGroup is None and len(nodesGroup) == 0 and nbLayersWFS != 0:
                 newNode = QgsLayerTreeGroup(nomGroupe)
                 root.addChildNode(newNode)
                 nodeGroup = root.findGroup(nomGroupe)
@@ -551,14 +560,15 @@ class Contexte(object):
             # Il y a déjà un groupe dans le projet
             # Il faut indiquer à l'utilisateur que c'est impossible
             # d'ajouter un nouveau groupe dans le projet
-            if nodeGroup.name() != nomGroupe and (len(nodesGroup) == 1):
-                QMessageBox.warning(None, "Charger les couches de mon groupe",
+            if nodeGroup is not None:
+                if nodeGroup.name() != nomGroupe and (len(nodesGroup) == 1):
+                    QMessageBox.warning(None, "Charger les couches de mon groupe",
                                     u"Votre projet QGIS contient des couches d'un autre groupe Espace collaboratif (" + nodeGroup.name() +
                                     "). \nPour pouvoir charger les données du groupe " + nomGroupe +
                                     ", veuillez supprimer les couches existantes de votre projet QGIS ou travailler dans un nouveau projet." +
                                     "\n\nNB : ces couches seront simplement supprimées de la carte QGIS en cours, elles resteront disponibles sur l'Espace collaboratif.")
-                return
-            #guichet_layers.reverse()
+                    return
+
             for layer in guichet_layers:
 
                 if layer.nom in maplayers or layer.description in maplayers:
@@ -685,7 +695,6 @@ class Contexte(object):
             l = layers[key]
             layerNames.append(l.name())
             maplayers[l.name()] = l.id()
-
         return maplayers
 
     def getMapPolygonLayers(self):
@@ -694,17 +703,12 @@ class Contexte(object):
         :return dictionnaire des couches de type polygon(key: layer id, value: layer name)
         :rtype dictionary
         """
-        layers = QgsProject.instance().mapLayers()
-
         polylayers = {}
-
+        layers = QgsProject.instance().mapLayers()
         for key in layers:
-            l = layers[key]
-
-            if type(
-                    l) is QgsVectorLayer and l.geometryType() is not None and l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                polylayers[l.id()] = l.name()
-
+            layer = layers[key]
+            if type(layer) is QgsVectorLayer and layer.geometryType() is not None and layer.geometryType() == QgsWkbTypes.PolygonGeometry:
+                polylayers[layer.id()] = layer.name()
         return polylayers
 
     def getLayerByName(self, layName):
@@ -757,6 +761,7 @@ class Contexte(object):
         :param rem : la remarque à mettre à jour
         :type rem: Remarque
         """
+        curs = None
         try:
             # self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
@@ -768,8 +773,8 @@ class Contexte(object):
             sql += " Statut='" + rem.statut + "' "
             sql += " WHERE NoSignalement = " + rem.id
 
-            cur = self.conn.cursor()
-            cur.execute(sql)
+            curs = self.conn.cursor()
+            curs.execute(sql)
 
             self.conn.commit()
 
@@ -777,7 +782,7 @@ class Contexte(object):
             self.logger.error(format(e))
             raise
         finally:
-            cur.close()
+            curs.close()
             self.conn.close()
 
     def countRemarqueByStatut(self, statut):
@@ -791,7 +796,7 @@ class Contexte(object):
         filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
         return len(list(filtFeatures))
 
-    #############Création nouvelle remarque ###########
+    '''Création nouvelle remarque'''
     def hasMapSelectedFeatures(self):
         """Vérifie s'il y a des objets sélectionnés
 
@@ -951,7 +956,7 @@ class Contexte(object):
         :return une liste contenant tous les points des croquis
         :rtype: list de Point
         """
-
+        cur = None
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
@@ -1003,7 +1008,6 @@ class Contexte(object):
 
             self.conn.commit()
 
-
         except Exception as e:
             self.logger.error("createTempCroquisTable " + format(e))
             return False
@@ -1020,6 +1024,7 @@ class Contexte(object):
         :return: le barycentre
         :rtype: Point
         """
+        barycentre = None
         tmpTable = "tmpTable"
         point = None
         try:
@@ -1051,31 +1056,23 @@ class Contexte(object):
 
         return barycentre
 
-    ################### magicwand  ##################################################
+    '''magicwand'''
     def selectRemarkByNo(self, noSignalements):
         """Sélection des remarques données par leur no
 
         :param noSignalements : les no de signalements à sélectionner
         :type noSignalements: list de string
         """
-
-        # self.conn= sqlite3.connect(self.dbPath)
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
-
         table = RipartHelper.nom_Calque_Signalement
         lay = self.getLayerByName(table)
-
         sql = "SELECT * FROM " + table + "  WHERE noSignalement in (" + noSignalements + ")"
         rows = cur.execute(sql)
-
         featIds = []
-
         for row in rows:
-            # fix_print_with_import
             print(row[0])
             featIds.append(row[0])
-
         lay.selectByIds(featIds)
 
     def getCroquisForRemark(self, noSignalement, croquisSelFeats):
@@ -1084,7 +1081,7 @@ class Contexte(object):
         :param noSignalement: le no de la remarque
         :type noSignalement: int
 
-        :param ccroquisSelFeats: dictionnaire contenant les croquis
+        :param croquisSelFeats: dictionnaire contenant les croquis
                                  (key: le nom de la table du croquis, value: liste des identifiants de croquis)
         :type croquisSelFeats: dictionnary
 
