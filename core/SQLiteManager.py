@@ -127,11 +127,11 @@ class SQLiteManager(object):
         else:
             return ''
 
-    @staticmethod
-    def getTransformer(sridProject, sridLayer):
-        crsProject = QgsCoordinateReferenceSystem(sridProject)
-        crsLayer = QgsCoordinateReferenceSystem(sridLayer)
-        return QgsCoordinateTransform(crsLayer, crsProject, QgsProject.instance())
+
+    def getTransformer(sridSource, sridTarget):
+        crsSource = QgsCoordinateReferenceSystem(sridSource)
+        crsTarget = QgsCoordinateReferenceSystem(sridTarget)
+        return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
 
     @staticmethod
     def setOpenBracket(value, pos, is3D):
@@ -150,12 +150,14 @@ class SQLiteManager(object):
 
     @staticmethod
     def setCloseBracket(value, res):
+        pos = res.rfind(',')
         if 'MULTIPOLYGON' in value:
             ch = "{0})))".format(res[0:len(res) - 3])
         elif 'MULTILINESTRING' in value or "POLYGON" in value:
             ch = "{0}))".format(res[0:len(res) - 3])
         else:
-            ch = "{0})".format(res[0:len(res) - 3])
+            #ch = "{0})".format(res[0:len(res) - 3])
+            ch = "{0})".format(res[0:pos])
         return ch
 
     @staticmethod
@@ -178,7 +180,7 @@ class SQLiteManager(object):
             coordinates = tmp.split(',')
             for coordinate in coordinates:
                 closeBracket = False
-                xyz = coordinate.split(' ')
+                xyz = coordinate.lstrip().split(' ')
                 X = xyz[0]
                 posX = xyz[0].find('(')
                 if posX != -1:
@@ -203,7 +205,8 @@ class SQLiteManager(object):
                 res = ch + '),'
             coordinates.clear()
         geom = SQLiteManager.setCloseBracket(value, res)
-        return "GeomFromText('{0}', {1})".format(geom, sridProject)
+        return geom
+        #return "GeomFromText('{0}', {1})".format(geom, sridProject)
 
     @staticmethod
     def setGeomFromText(value, transformer, sridProject, is3D):
@@ -212,7 +215,7 @@ class SQLiteManager(object):
         tmp = value[pos + 1:len(value) - 1]
         coordinates = tmp.split(',')
         for coordinate in coordinates:
-            xyz = coordinate.split(' ')
+            xyz = coordinate.lstrip().split(' ')
             posX = xyz[0].find('(')
             x = xyz[0]
             y = xyz[1]
@@ -227,21 +230,42 @@ class SQLiteManager(object):
             else:
                 res += "{0} {1}, ".format(str(pt.x()), str(pt.y()))
         geom = SQLiteManager.setCloseBracket(value, res)
-        return "GeomFromText('{0}', {1})".format(geom, sridProject)
+
+        # Patch
+        if geom.startswith('LineStringZ  Z'):
+            geom = geom.replace('LineStringZ  Z', 'LineStringZ')
+
+        return geom
+        #return "GeomFromText('{0}', {1})".format(geom, sridProject)
+
+    # @staticmethod
+    # def formatAndTransformGeometry(value, parameters):
+    #     transformer = SQLiteManager.getTransformer(parameters['sridLayer'], parameters['sridProject'])
+    #     if 'MULTI' in value:
+    #         if not parameters['is3d']:
+    #             geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, parameters['sridProject'], False)
+    #         else:
+    #             geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, parameters['sridProject'], True)
+    #     else:
+    #         if not parameters['is3d']:
+    #             geomFromText = SQLiteManager.setGeomFromText(value, transformer, parameters['sridProject'], False)
+    #         else:
+    #             geomFromText = SQLiteManager.setGeomFromText(value, transformer, parameters['sridProject'], True)
+    #     return geomFromText
 
     @staticmethod
-    def formatAndTransformGeometry(value, parameters):
-        transformer = SQLiteManager.getTransformer(parameters['sridProject'], parameters['sridLayer'])
+    def formatAndTransformGeometry(value, source_crs, destination_crs, is3d):
+        transformer = SQLiteManager.getTransformer(source_crs, destination_crs)
         if 'MULTI' in value:
-            if not parameters['is3d']:
-                geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, parameters['sridProject'], False)
+            if not is3d:
+                geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, destination_crs, False)
             else:
-                geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, parameters['sridProject'], True)
+                geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, destination_crs, True)
         else:
-            if not parameters['is3d']:
-                geomFromText = SQLiteManager.setGeomFromText(value, transformer, parameters['sridProject'], False)
+            if not is3d:
+                geomFromText = SQLiteManager.setGeomFromText(value, transformer, destination_crs, False)
             else:
-                geomFromText = SQLiteManager.setGeomFromText(value, transformer, parameters['sridProject'], True)
+                geomFromText = SQLiteManager.setGeomFromText(value, transformer, destination_crs, True)
         return geomFromText
 
     @staticmethod
@@ -254,7 +278,9 @@ class SQLiteManager(object):
                 continue
             elif column == parameters['geometryName']:
                 tmpColumns += '{0},'.format(column)
-                tmpValues += "{},".format(SQLiteManager.formatAndTransformGeometry(value, parameters))
+                geomFromTextTmp = SQLiteManager.formatAndTransformGeometry(value, parameters['sridLayer'], parameters['sridProject'], parameters['is3d'])
+                tmpValues += "GeomFromText('{0}', {1}),".format(geomFromTextTmp, parameters['sridProject'])
+                #tmpValues += "{},".format(SQLiteManager.formatAndTransformGeometry(value, parameters['sridLayer'], parameters['sridProject'], parameters['is3d']))
                 continue
             elif column == cst.ID_SQLITE:
                 tmpColumns += '{0},'.format(cst.ID_ORIGINAL)

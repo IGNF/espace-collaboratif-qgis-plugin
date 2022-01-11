@@ -67,6 +67,7 @@ class EditFormFieldFromAttributes(object):
             if self.name == idName:
                 formConfig = self.layer.editFormConfig()
                 formConfig.setReadOnly(self.index, True)
+                #formConfig.setFieldConstraintNotNull(self.index, False)
                 self.layer.setEditFormConfig(formConfig)
 
         return linkFieldType

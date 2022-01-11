@@ -37,6 +37,8 @@ class Layer(object):
     url = ""
     # Extraction du nom de la base de données à partir de l'url
     databasename = ""
+    # SRID
+    srid = -1
 
     def __init__(self):
         """

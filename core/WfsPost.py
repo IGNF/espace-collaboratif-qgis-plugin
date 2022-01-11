@@ -38,7 +38,10 @@ class WfsPost(object):
         return '{"feature": {'
 
     def setGeometry(self, geometry):
-        wktGeometry = geometry.asWkt()
+        wktGeometry = SQLiteManager.formatAndTransformGeometry(geometry.asWkt(), cst.EPSGCRS, self.layer.srid, True) #TO-DO
+        # transformer = SQLiteManager.getTransformer(cst.EPSGCRS, self.layer.srid)
+        # geometryInLayerCrs = transformer.transform(geometry)
+        # wktGeometry = geometryInLayerCrs.asWkt()
         return '"geometrie": "{0}"'.format(wktGeometry)
 
     def setGeometries(self, changedGeometries):

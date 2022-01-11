@@ -609,6 +609,9 @@ class Contexte(object):
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get()
 
+        # On stocke le srid de la layer pour pouvoir traiter le post
+        newLayer.srid = parameters['sridLayer']
+
         # Modification du formulaire d'attributs
         efffa = EditFormFieldFromAttributes(newLayer, structure)
         newLayer.correspondanceChampType = efffa.readData()

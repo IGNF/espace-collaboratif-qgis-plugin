@@ -42,6 +42,7 @@ class GuichetVectorLayer(QgsVectorLayer):
 
     sqliteManager = None
 
+    srid = -1
     # Base historisée
     #idxFingerprint = -1                 ## index du champ gcms_fingerprint dans la couche
     #fingerprint = "gcms_fingerprint"    ## nom du champ gcms_fingerprint (présent sur les bases historisées)
