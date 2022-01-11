@@ -34,14 +34,14 @@ class SQLiteManager(object):
         columnDetruitExist = False
         typeGeometrie = ''
         #tester si la variable id n'existe pas dans tableAttributes
-        sqlAttributes = "id INTEGER NOT NULL PRIMARY KEY,"
+        sqlAttributes = "{0} INTEGER PRIMARY KEY AUTOINCREMENT,".format(cst.ID_SQLITE)
         for value in self.tableAttributes.values():
             if value['name'] == "detruit":
                 columnDetruitExist = True
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
             elif value['name'] == geometryName:
                 typeGeometrie = self.setSwitchType(value['type'])
-            elif value['name'] == "id":
+            elif value['name'] == cst.ID_SQLITE: # au cas où il y aurait déjà un attribut nommé id_sqlite
                 sqlAttributes += "{0} {1},".format(cst.ID_ORIGINAL, self.setSwitchType(value['type']))
             else:
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
@@ -256,7 +256,7 @@ class SQLiteManager(object):
                 tmpColumns += '{0},'.format(column)
                 tmpValues += "{},".format(SQLiteManager.formatAndTransformGeometry(value, parameters))
                 continue
-            elif column == 'id':
+            elif column == cst.ID_SQLITE:
                 tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
             else:
                 tmpColumns += '{0},'.format(column)
@@ -299,7 +299,7 @@ class SQLiteManager(object):
         listId += ')'
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
-        sql = "SELECT cleabs, fingerprint FROM {0} WHERE id IN {1}".format(tableName, listId)
+        sql = "SELECT cleabs, gcms_fingerprint FROM {0} WHERE {1} IN {2}".format(tableName, cst.ID_SQLITE, listId)
         cur.execute(sql)
         result = cur.fetchall()
         cur.close()

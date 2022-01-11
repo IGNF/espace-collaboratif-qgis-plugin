@@ -123,3 +123,4 @@ EPSGCRS = 4326
 EPSG4326 = 'EPSG:4326'
 EPSG2154 = 'EPSG:2154'
 ID_ORIGINAL = 'id_original'
+ID_SQLITE = 'id_sqlite_1gnQg1s'

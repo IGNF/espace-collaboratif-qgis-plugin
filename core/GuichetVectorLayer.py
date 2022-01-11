@@ -24,7 +24,7 @@ class GuichetVectorLayer(QgsVectorLayer):
     # Les statistiques de comptage pour la couche
     stat = None
 
-    #databasename = ""
+    databasename = ""
 
     # La liste des id/md5 par objet AVANT le travail de l'utilisateur
     #md5BeforeWorks = []
@@ -79,7 +79,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         #nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
         #self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
         #self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
-        #self.databasename = databasename
+        self.databasename = parameters['databasename']
     '''
     Connexion des signaux pour les évènements survenus sur la carte
     '''

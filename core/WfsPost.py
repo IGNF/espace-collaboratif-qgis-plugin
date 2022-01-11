@@ -4,6 +4,8 @@ from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
 from .XMLResponse import XMLResponse
 
+from . import ConstanteRipart as cst
+
 
 class WfsPost(object):
     context = None
@@ -55,6 +57,8 @@ class WfsPost(object):
         fieldsNameValue = ""
         for field in feature.fields():
             fieldName = field.name()
+            if fieldName == cst.ID_SQLITE:
+                continue
             fieldValue = feature.attribute(field.name())
             if fieldValue is None:
                 fieldValue = ""

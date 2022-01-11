@@ -577,6 +577,7 @@ class Contexte(object):
         parameters['uri'] = uri.uri()
         parameters['name'] = layer.nom
         parameters['genre'] = 'spatialite'
+        parameters['databasename'] = layer.databasename
         # parameters['type'] = layer.type
         #parameters['attributes'] = structure['attributes']
         vlayer = GuichetVectorLayer(parameters)
