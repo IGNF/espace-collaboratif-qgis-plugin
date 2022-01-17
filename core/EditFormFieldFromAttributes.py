@@ -62,14 +62,6 @@ class EditFormFieldFromAttributes(object):
             self.setFieldReadOnly(v['readOnly'], v['computed'])
             linkFieldType[v['name']] = v['type']
 
-            # Cas particulier de l'identifiant : on le rend non éditable dans le formulaire
-            # Contrairement à ce que dit l'aide de QGIS, setReadOnly doit être mis à True pour que le champ ne soit pas éditable
-            if self.name == idName:
-                formConfig = self.layer.editFormConfig()
-                formConfig.setReadOnly(self.index, True)
-                #formConfig.setFieldConstraintNotNull(self.index, False)
-                self.layer.setEditFormConfig(formConfig)
-
         return linkFieldType
 
 
@@ -134,7 +126,7 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldConstraintNotNull(self, bNullable):
 
-        if bNullable is None or bNullable is True or bNullable == '':
+        if bNullable is None or bNullable is True or bNullable == '' or self.name == self.data['idName']:
             return
 
         self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintNotNull)
@@ -162,12 +154,14 @@ class EditFormFieldFromAttributes(object):
       
       Contrairement à ce que dit l'aide de QGIS, setReadOnly doit être mis à True pour que le champ ne soit pas éditable
     '''
-    def setFieldReadOnly(self, readOnly, automatic):
+    def setFieldReadOnly(self, readOnly, computed):
 
-        if readOnly is True or automatic is True:
+        if self.name == self.data['idName'] or readOnly or computed:
             formConfig = self.layer.editFormConfig()
             formConfig.setReadOnly(self.index, True)
             self.layer.setEditFormConfig(formConfig)
+
+
 
 
     '''
@@ -187,7 +181,7 @@ class EditFormFieldFromAttributes(object):
     def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, bNullable):
 
         global expTmp
-        if minValue is None and maxValue is None or minValue == '' and maxValue == '':
+        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == self.data['idName']:
             return
 
         if vType == 'DateTime':
@@ -233,7 +227,7 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, vType, bNullable):
 
-        if minLength is None and maxLength is None or minLength == '' and maxLength == '':
+        if (minLength is None and maxLength is None) or (minLength == '' and maxLength == '') or self.name == self.data['idName']:
             return
 
         expression = None
@@ -272,7 +266,7 @@ class EditFormFieldFromAttributes(object):
     '''
     def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
 
-        if pattern is None or pattern == '':
+        if pattern is None or pattern == '' or self.name == self.data['idName']:
             return
 
         newPattern = pattern.replace('\\', '\\\\')
