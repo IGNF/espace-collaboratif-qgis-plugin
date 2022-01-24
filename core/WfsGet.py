@@ -19,6 +19,7 @@ class WfsGet(object):
     bbox = None
     parametersGcmsGet = None
     bDetruit = None
+    sqliteManager = None
 
     def __init__(self, context, parameters):
         self.context = context
@@ -31,10 +32,11 @@ class WfsGet(object):
         self.geometryName = parameters['geometryName']
         self.sridProject = parameters['sridProject']
         self.sridLayer = parameters['sridLayer']
-        self.is3d = parameters['is3d']
+        #self.is3d = parameters['is3d']
         self.bbox = parameters['bbox']
         self.parametersGcmsGet = {}
         self.bDetruit = parameters['detruit']
+        self.sqliteManager = parameters['sqliteManager']
 
     # La requête doit être de type :
     # https://espacecollaboratif.ign.fr/gcms/wfs
@@ -71,9 +73,9 @@ class WfsGet(object):
         parametersForInsertsInTable['geometryName'] = self.geometryName
         parametersForInsertsInTable['sridProject'] = self.sridProject
         parametersForInsertsInTable['sridLayer'] = self.sridLayer
-        parametersForInsertsInTable['is3d'] = self.is3d
+        #parametersForInsertsInTable['is3d'] = self.is3d
         parametersForInsertsInTable['role'] = self.layerRole
-        SQLiteManager.insertRowsInTable(parametersForInsertsInTable, json.loads(data))
+        self.sqliteManager.insertRowsInTable(parametersForInsertsInTable, json.loads(data))
 
     def setService(self):
         self.parametersGcmsGet['service'] = 'WFS'

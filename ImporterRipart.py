@@ -152,9 +152,9 @@ class ImporterRipart(object):
 
                 for remId in remsToKeep:
 
-                    if remId == 467015 or remId == '467015':
-                        #debug = True
-                        continue
+                    if remId == '618195' or remId == '618197':
+                        debug = True
+                        #continue
 
                     RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
                     i += 1

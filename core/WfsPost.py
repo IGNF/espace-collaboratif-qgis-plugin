@@ -38,11 +38,8 @@ class WfsPost(object):
         return '{"feature": {'
 
     def setGeometry(self, geometry):
-        wktGeometry = SQLiteManager.formatAndTransformGeometry(geometry.asWkt(), cst.EPSGCRS, self.layer.srid, True) #TO-DO
-        # transformer = SQLiteManager.getTransformer(cst.EPSGCRS, self.layer.srid)
-        # geometryInLayerCrs = transformer.transform(geometry)
-        # wktGeometry = geometryInLayerCrs.asWkt()
-        return '"geometrie": "{0}"'.format(wktGeometry)
+        wktGeometry = SQLiteManager.formatAndTransformGeometry(geometry.asWkt(), cst.EPSGCRS, self.layer.srid, self.layer.sqliteManager.is3D) #TO-DO
+        return '"{0}": "{1}"'.format(self.layer.sqliteManager.geometryName, wktGeometry)
 
     def setGeometries(self, changedGeometries):
         geometries = {}
@@ -63,8 +60,9 @@ class WfsPost(object):
             if fieldName == cst.ID_SQLITE:
                 continue
             fieldValue = feature.attribute(field.name())
-            if fieldValue is None:
-                fieldValue = ""
+            if fieldValue is None or str(fieldValue) == "NULL":
+                continue
+                #fieldValue = ""
             fieldsNameValue += '"{0}": "{1}", '.format(fieldName, fieldValue)
         return fieldsNameValue
 
@@ -81,39 +79,42 @@ class WfsPost(object):
         message = xmlResponse.checkResponseWfsTransactions()
         if message['status'] == 'SUCCESS':
             self.showMessage(message['message'])
-            self.layer.reload()
+            self.layer.commitChanges(False)
+            #self.layer.reload() - semble inutile pour la couche sqlite, les données enregistrées sont directement affichées
         else:
             self.showMessage('Transaction interrompue : {}'.format(message['message']))
-            raise Exception(message['message'])
+            #raise Exception(message['message'])
 
     def commitLayer(self):
         self.actions.clear()
 
         editBuffer = self.layer.editBuffer()
-        if editBuffer:
-            # ajout
-            addedFeatures = editBuffer.addedFeatures().values()
-            if len(addedFeatures) != 0:
-                self.pushAddedFeatures(addedFeatures)
-            # géométrie modifiée
-            changedGeometries = editBuffer.changedGeometries()
-            # attributs modifiés
-            changedAttributeValues = editBuffer.changedAttributeValues()
-            if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
-                self.pushChangedAttributesAndGeometries(changedAttributeValues, changedGeometries)
-            elif len(changedGeometries) != 0:
-                self.pushChangedGeometries(changedGeometries)
-            elif len(changedAttributeValues) != 0:
-                self.pushChangedAttributeValues(changedAttributeValues)
-            # suppression
-            deletedFeaturesId = editBuffer.deletedFeatureIds()
-            if len(deletedFeaturesId) != 0:
-                self.pushDeletedFeatures(deletedFeaturesId)
+        if not editBuffer:
+            return
 
-            # Lancement de la transaction
-            strActions = self.formatItemActions()
-            print(strActions)
-            self.gcms_post(strActions)
+        # ajout
+        addedFeatures = editBuffer.addedFeatures().values()
+        if len(addedFeatures) != 0:
+            self.pushAddedFeatures(addedFeatures)
+        # géométrie modifiée
+        changedGeometries = editBuffer.changedGeometries()
+        # attributs modifiés
+        changedAttributeValues = editBuffer.changedAttributeValues()
+        if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
+            self.pushChangedAttributesAndGeometries(changedAttributeValues, changedGeometries)
+        elif len(changedGeometries) != 0:
+            self.pushChangedGeometries(changedGeometries)
+        elif len(changedAttributeValues) != 0:
+            self.pushChangedAttributeValues(changedAttributeValues)
+        # suppression
+        deletedFeaturesId = editBuffer.deletedFeatureIds()
+        if len(deletedFeaturesId) != 0:
+            self.pushDeletedFeatures(deletedFeaturesId)
+
+        # Lancement de la transaction
+        strActions = self.formatItemActions()
+        print(strActions)
+        self.gcms_post(strActions)
 
     def pushAddedFeatures(self, addedFeatures):
         for feature in addedFeatures:
@@ -147,7 +148,7 @@ class WfsPost(object):
             strFeature = self.setHeader()
             strFeature += self.setFingerPrint(feature.attribute('gcms_fingerprint'))
             strFeature += self.setCleabs(feature.attribute('cleabs'))
-            strFeature += self.setGeometry(geometry)
+            strFeature += ', {0}'.format(self.setGeometry(geometry))
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Update')
             strFeature += '}'
@@ -182,3 +183,4 @@ class WfsPost(object):
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setText(message)
         ret = msgBox.exec_()
+

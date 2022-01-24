@@ -54,6 +54,7 @@ class RipartHelper:
     """nom_Champ_IdSignalement = u"N°signalement"
     nom_Champ_Auteur = "Auteur"
     nom_Champ_Commune = "Commune"
+    nom_Champ_Insee = "Insee"
     nom_Champ_Departement = u"Département"
     nom_Champ_IDDepartement = "Département_ID"
     nom_Champ_DateCreation = "Date_de_création"

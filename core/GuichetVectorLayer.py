@@ -81,6 +81,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         #self.fileBeforeWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5BeforeWorks.txt")
         #self.fileAfterWorks = "{}{}{}_{}".format(tmp, nodeGroups[0].name(), layerName, "md5AfterWorks.txt")
         self.databasename = parameters['databasename']
+        self.sqliteManager = parameters['sqliteManager']
     '''
     Connexion des signaux pour les évènements survenus sur la carte
     '''

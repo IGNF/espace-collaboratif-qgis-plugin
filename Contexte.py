@@ -558,14 +558,14 @@ class Contexte(object):
 
     def importWFS(self, layer, structure):
         # Création éventuelle de la table SQLite liée à la couche
-        sqlitemanager = SQLiteManager()
+        sqliteManager = SQLiteManager()
 
         # Si la table du nom de la couche existe,
         # elle est vidée et détruite
-        if sqlitemanager.isTableExist(layer.nom):
-            sqlitemanager.emptyTable(layer.nom)
-            sqlitemanager.deleteTable(layer.nom)
-        bDetruit = sqlitemanager.createTableFromLayer(layer.nom, structure)
+        if sqliteManager.isTableExist(layer.nom):
+            sqliteManager.emptyTable(layer.nom)
+            sqliteManager.deleteTable(layer.nom)
+        bDetruit = sqliteManager.createTableFromLayer(layer.nom, structure)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
@@ -578,6 +578,7 @@ class Contexte(object):
         parameters['name'] = layer.nom
         parameters['genre'] = 'spatialite'
         parameters['databasename'] = layer.databasename
+        parameters['sqliteManager'] = sqliteManager
         # parameters['type'] = layer.type
         #parameters['attributes'] = structure['attributes']
         vlayer = GuichetVectorLayer(parameters)
@@ -585,14 +586,14 @@ class Contexte(object):
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
         return vlayer, bDetruit
 
-    def formatLayer(self, layer, newLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
+    def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
         # Ajout de la couche dans la carte
-        QgsProject.instance().addMapLayer(newLayer, False)
-        nodeGroup.addLayer(newLayer)
-        self.guichetLayers.append(newLayer)
-        self.logger.debug("Layer {} added to map".format(newLayer.name()))
-        print("Layer {} added to map".format(newLayer.name()))
-        print("Layer {} contains {} objects".format(newLayer.name(), len(list(newLayer.getFeatures()))))
+        QgsProject.instance().addMapLayer(newVectorLayer, False)
+        nodeGroup.addLayer(newVectorLayer)
+        self.guichetLayers.append(newVectorLayer)
+        self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
+        print("Layer {} added to map".format(newVectorLayer.name()))
+        print("Layer {} contains {} objects".format(newVectorLayer.name(), len(list(newVectorLayer.getFeatures()))))
 
         # Remplissage de la table SQLite liée à la couche
         parameters = {}
@@ -603,37 +604,37 @@ class Contexte(object):
         parameters['geometryName'] = geometryName
         parameters['sridProject'] = cst.EPSGCRS
         parameters['sridLayer'] = int(structure['attributes'][geometryName]['srid'])
-        parameters['is3d'] = structure['attributes'][geometryName]['is3d']
+        #parameters['is3d'] = structure['attributes'][geometryName]['is3d']
         parameters['bbox'] = bbox
         parameters['detruit'] = bColumnDetruitExist
+        parameters['sqliteManager'] = newVectorLayer.sqliteManager
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get()
 
         # On stocke le srid de la layer pour pouvoir traiter le post
-        newLayer.srid = parameters['sridLayer']
+        newVectorLayer.srid = parameters['sridLayer']
 
         # Modification du formulaire d'attributs
-        efffa = EditFormFieldFromAttributes(newLayer, structure)
-        newLayer.correspondanceChampType = efffa.readData()
-
+        efffa = EditFormFieldFromAttributes(newVectorLayer, structure)
+        newVectorLayer.correspondanceChampType = efffa.readData()
 
         # Modification de la symbologie de la couche
         listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(structure)
-        newLayer.setModifySymbols(listOfValuesFromItemStyle)
+        newVectorLayer.setModifySymbols(listOfValuesFromItemStyle)
 
         # Affichage des données en fonction de l'échelle
-        newLayer.setDisplayScale(layer.minzoom, layer.maxzoom)
+        newVectorLayer.setDisplayScale(layer.minzoom, layer.maxzoom)
 
         # Paramétrage de l'emprise
-        newLayer.updateExtents(True)
+        newVectorLayer.updateExtents(True)
 
         # Une couche en visualisation est non modifiable
         if layer.role == 'visu' or layer.role == 'ref':
-            newLayer.setReadOnly()
+            newVectorLayer.setReadOnly()
 
         # Rechargement de la couche pour que la visualisation dans la fenêtre carto courante
         # soit réellement prise en compte
-        newLayer.reload()
+        newVectorLayer.reload()
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
         """Add guichet layers to the current map
@@ -654,7 +655,7 @@ class Contexte(object):
             # Si le groupe n'existe pas, création du groupe dans le projet
             if nodeGroup is None and (len(nodesGroup) == 0):
                 newNode = QgsLayerTreeGroup(nameGroup)
-                root.addChildNode(newNode)
+                root.insertChildNode(0, newNode)
                 nodeGroup = root.findGroup(nameGroup)
 
             # Il y a déjà un groupe dans le projet
@@ -682,10 +683,10 @@ class Contexte(object):
 
                     # Récupération de la structure de la future table
                     structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
-                    sourceLayer = self.importWFS(layer, structure)
-                    if not sourceLayer[0].isValid():
-                        print("Layer {} failed to load !".format(layer.nom))
-                        continue
+                    sourceLayer = self.importWFS(layer, structure) # Renvoie une liste du type [vectorLayer, bDetruit]
+                    # if not sourceLayer[0].isValid():
+                    #     print("Layer {} failed to load !".format(layer.nom))
+                    #     continue
                     self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
 
                 '''
