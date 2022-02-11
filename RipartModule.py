@@ -649,9 +649,7 @@ class RipartPlugin:
     def showHelp(self):
         """Ouvre le document d'aide utilisateur   
         """
-        file_path = "http://logiciels.ign.fr/IMG/pdf/enr_espace_co_plugin_pour_qgis.pdf"
-        # file_path = os.path.abspath(os.path.join(
-        #    os.path.dirname(__file__),"files",cst.helpFile))
+        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"files", RipartHelper.ripart_help_file))
 
         RipartHelper.open_file(file_path)
 

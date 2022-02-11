@@ -79,9 +79,6 @@ ZoneGeographique = Enum ("UNDEFINED",
 
 namespace={'gml':'http://www.opengis.net/gml'}      
 
-helpFile="Manuel utilisateur plugin Espace Collaboratif pour QGIS.pdf"    
-
-
 
 def statuts():
     statuts=[STATUT.submit.__str__(),
