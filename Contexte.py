@@ -256,6 +256,14 @@ class Contexte(object):
         :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
         :rtype int
         """
+        # Message version dépréciée
+        RipartHelper.showMessageBox(u"<br/><b>ATTENTION </b></br>"
+                                    u"<br><br>Vous utilisez une version dépréciée du plugin Espace collaboratif pour QGIS. "
+                                    u"Pour obtenir la dernière version, merci de vous connecter au nouveau dépôt d'extensions Espace collaboratif : </br>"
+                                    u"<br><b>https://espacecollaboratif.ign.fr/plugins/plugin-qgis.xml </b></br>"
+                                    u"<br><br>Plus de détails sur la procédure d'installation ici : https://espacecollaboratif.ign.fr/plugins/qgis</br>"
+                                    u"<br></br><br>L'ancien dépôt d'extensions logiciels.ign.fr disparaîtra définitivement le 15/03/2022.</br>")
+
         self.logger.debug("GetConnexionRipart ")
 
         result = -1

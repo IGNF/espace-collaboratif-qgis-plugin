@@ -639,7 +639,12 @@ class RipartPlugin:
 
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(u"<b>Plugin Espace Collaboratif</b>")
-        dlgInfo.textInfo.append(u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif.")
+        dlgInfo.textInfo.append(u"<br/><b>ATTENTION </b></br>"
+                                    u"<br><br>Vous utilisez une version dépréciée du plugin Espace collaboratif pour QGIS. "
+                                    u"Pour obtenir la dernière version, merci de vous connecter au nouveau dépôt d'extensions Espace collaboratif : </br>"
+                                    u"<br><b>https://espacecollaboratif.ign.fr/plugins/plugin-qgis.xml </b></br>"
+                                    u"<br><br>Plus de détails sur la procédure d'installation ici : https://espacecollaboratif.ign.fr/plugins/qgis</br>"
+                                    u"<br></br><br>L'ancien dépôt d'extensions logiciels.ign.fr disparaîtra définitivement le 15/03/2022.</br>")
         dlgInfo.textInfo.append(u"<br/>Version: " + version)
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
 
@@ -649,9 +654,8 @@ class RipartPlugin:
     def showHelp(self):
         """Ouvre le document d'aide utilisateur   
         """
-        file_path = "http://logiciels.ign.fr/IMG/pdf/enr_espace_co_plugin_pour_qgis.pdf"
-        # file_path = os.path.abspath(os.path.join(
-        #    os.path.dirname(__file__),"files",cst.helpFile))
+        #file_path = "http://logiciels.ign.fr/IMG/pdf/enr_espace_co_plugin_pour_qgis.pdf"
+        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"files","ENR_espace_co_plugin_pour_qgis.pdf"))
 
         RipartHelper.open_file(file_path)
 
