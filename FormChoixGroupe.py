@@ -23,9 +23,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     et récupération du profil utilisateur
     """
     infosgeogroups = None
-    cancel = True
+    bCancel = True
 
-    def __init__(self, profil, cleGeoportail, groupeActif, parent=None):
+    def __init__(self, profil, groupeActif, parent=None):
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
@@ -37,12 +37,6 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
         if groupeActif is not None and groupeActif != "":
             self.comboBoxGroupe.setCurrentText(groupeActif)
-
-        if cleGeoportail == cst.DEMO or cleGeoportail == "":
-            self.radioButtonNon.setChecked(True)
-        if cleGeoportail != cst.DEMO and cleGeoportail != "":
-            self.radioButtonOui.setChecked(True)
-            self.lineEditCleGeoportailUser.setText(cleGeoportail)
 
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
@@ -56,15 +50,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         index = self.comboBoxGroupe.currentIndex()
         idGroup = self.infosgeogroups[index].group.id
         nameGroup = self.infosgeogroups[index].group.name
-        cleGeoportail = ""
-        if self.radioButtonOui.isChecked():
-            cleGeoportail = self.lineEditCleGeoportailUser.text()
-        if self.radioButtonNon.isChecked():
-            cleGeoportail = cst.DEMO
-        self.cancel = False
+        self.bCancel = False
 
-        return idGroup, nameGroup, cleGeoportail
+        return idGroup, nameGroup
 
     def cancel(self):
-        self.cancel = True
+        self.bCancel = True
         self.reject()

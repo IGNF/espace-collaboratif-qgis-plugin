@@ -31,34 +31,29 @@ class Client(object):
     """"
     Cette classe sert de client pour le service RIPart
     """
-    __url = ""
-    __login = ""
-    __password = ""
+    __url = None
+    __login = None
+    __password = None
     __author = None
     __version = None
     __profil = None
     __auth = None
     __proxies = None
-    __clegeoportail = ""
 
     # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
     message = ""
 
     logger = RipartLogger("ripart.client").getRipartLogger()
 
-    def __init__(self, url, login, pwd, proxies, cle):
-        """Constructeur
+    def __init__(self, url, login, pwd, proxies):
+        """
         Initialisation du client et connexion au service ripart
         """
         self.__url = url
         self.__login = login
         self.__password = pwd
-
-        self.__auth = {}
-        self.__auth['login'] = self.__login
-        self.__auth['password'] = self.__password
+        self.__auth = {'login': self.__login, 'password': self.__password}
         self.__proxies = proxies
-        self.__clegeoportail = cle
 
     def getUrl(self):
         return self.__url
@@ -75,8 +70,8 @@ class Client(object):
         self.iface = iface
 
     def connect(self):
-        """ Connexion d'un utilisateur par son login et mot de passe
-        
+        """
+        Connexion d'un utilisateur par son login et mot de passe
         :return: Si la connexion se fait, retourne l'id de l'auteur; sinon retour du message d'erreur
         """
         result = None
@@ -105,42 +100,6 @@ class Client(object):
 
         return self.__profil
 
-    def getLayersFromCleGeoportailUser(self, cle):
-        layers = {}
-        cleGeoportail = ""
-        if cle is None:
-            cleGeoportail = "choisirgeoportail"
-
-        if cle == "Démonstration":
-            cleGeoportail = "choisirgeoportail"
-        elif cle != "":
-            cleGeoportail = cle
-
-        # https://wxs.ign.fr/clegeoportail/autoconf?gp-access-lib=2.1.2&output=xml
-        url = "https://wxs.ign.fr/{}/autoconf?gp-access-lib=2.1.2&output=xml".format(cleGeoportail)
-        self.logger.debug("{0} {1}".format("getLayersFromCleGeoportailUser", url))
-        response = requests.get(url)
-        if response.status_code == 200:
-            print("Liste des couches correspondant à la clé Géoportail")
-            root = ET.fromstring(response.text)
-            nodeLayerList = root.find('.{http://www.opengis.net/context}LayerList')
-            for elementNodeLayerList in nodeLayerList.iter():
-                nodeLayer = elementNodeLayerList.findall('.{http://www.opengis.net/context}Layer')
-                for elementNodelayer in nodeLayer:
-                    name = elementNodelayer.find('{http://www.opengis.net/context}Name').text
-                    title = elementNodelayer.find('{http://www.opengis.net/context}Title').text
-                    if name != "" and title != "":
-                        layers[name] = title
-                        mess = "{} ({})".format(title, name)
-                        title = ""
-                        name = ""
-                        print(mess)
-
-        else:
-            raise Exception(ClientHelper.notNoneValue("{} : {}".format(response.status_code, "Votre clé Géoportail semble erronée. Vous pouvez utiliser la clé de démonstration.")))
-
-        return layers
-
     def getNomProfil(self):
         url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
         self.logger.debug(url)
@@ -164,13 +123,14 @@ class Client(object):
         return nomProfil
 
     def getProfilFromService(self):
-        """Requête au service pour le profil utilisateur      
+        """
+        Requête au service pour le profil utilisateur
         :return: le profil de l'utilisateur
         """
         url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
         self.logger.debug(url)
 
-        if url.find("localhost.ign.fr") != -1: #Ne pas vérifier le certificat en localhost
+        if url.find("localhost.ign.fr") != -1: # Ne pas vérifier le certificat en localhost
             data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies, verify=False)
         else:
             data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
@@ -238,7 +198,6 @@ class Client(object):
         Pour l'item 'attributes', récupération des listes de valeurs pour un attribut de type "Liste"
         en cherchant l'item 'listOfValues'
     '''
-
     def getListOfValuesFromItemAttribute(self, dataFeaturetype):
         listOfValues = {}
 
@@ -264,7 +223,6 @@ class Client(object):
     '''
         Pour l'item 'style', récupération de la symbologie d'une couche
     '''
-
     def getListOfValuesFromItemStyle(self, dataFeaturetype):
         listOfValues = {}
         tmp = {'children': []}

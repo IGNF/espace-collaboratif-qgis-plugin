@@ -28,7 +28,6 @@ from .Layer import Layer
 
 import re
 
-
 class XMLResponse(object):
     """
     Classe pour le parsing des réponses xml et l'extraction des informations nécessaires
@@ -281,6 +280,9 @@ class XMLResponse(object):
                         layer.url = url.text
                         layer.databasename = self.findDatabaseName(url.text)
                         print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.name, layer.nom, layer.databasename))
+                    layer_id = nodelayer.find('LAYER')
+                    if layer_id is not None:
+                        layer.layer_id = layer_id.text
 
                     infosgeogroup.layers.append(layer)
 
@@ -327,7 +329,6 @@ class XMLResponse(object):
 
         return infosgeogroups
 
-
     def get_themes_attributes(self, thAttNodes):
         """Récupération des attributs des thèmes de signalement
         :return dictionnaire contenant pour chaque thème la liste de ses attributs
@@ -370,7 +371,6 @@ class XMLResponse(object):
 
         return themesAttDict
 
-
     def getFilteredThemes(self, groupFilters, idGeogroup):
 
         """Récupération des thèmes à afficher dans le profil
@@ -384,8 +384,6 @@ class XMLResponse(object):
             # car les thèmes des autres groupes ne sont envoyés que dans la partie profil actif de geoaut_get
             listElements = groupFilter.split(":")
             idGroupe = listElements[1].split(",")[0]
-
-            processFilter = False
 
             if idGeogroup == "":
                 processFilter = True
@@ -402,7 +400,7 @@ class XMLResponse(object):
                 listThemesTmp = listElements[len(listElements) - 1]
                 listThemesTmp = listThemesTmp[1:len(listThemesTmp) - 2]
                 filteredThemesTmp = re.findall('\".*?\"', listThemesTmp)
-                # Suppression des guillements
+                # Suppression des guillemets
                 for i in range(len(filteredThemesTmp)):
                     currTheme = self.convertEncodedCharacters(filteredThemesTmp[i].strip("\""))
                     filteredThemes.append(currTheme)
@@ -414,10 +412,7 @@ class XMLResponse(object):
         :return les thèmes et la liste des thèmes cochés dans le profil
         """
         themes = []
-        themesAttDict = {}
-
         try:
-
             themesAttDict = self.get_themes_attributes(self.root.findall('THEMES/ATTRIBUT'))
 
             # Récupération du filtre sur les thèmes
@@ -488,10 +483,6 @@ class XMLResponse(object):
             self.logger.error('getTotalResponse :' + str(e))
 
         return total
-
-    def extractData(self):
-        data = {}
-        return data
 
     def extractRemarques(self):
         """Extraction des remarques de la réponse xml
@@ -610,7 +601,6 @@ class XMLResponse(object):
                 # réponses (GEOREP)
                 rem = self.getGeoRep(rem, node)
 
-                # rem.hash = (node.find('HASH')).text
                 rem.source = (node.find('SOURCE')).text
 
                 remarques[rem.id] = rem
@@ -639,26 +629,19 @@ class XMLResponse(object):
         :return la remarque avec les croquis
         :rtype Remarque
         """
-
         try:
-
             objets = node.findall('CROQUIS/objet')
-
             for ob in objets:
 
                 # Récupération du type
                 typeObjet = ob.attrib['type']
-                typeCroquis = ""
-
                 if not typeObjet.startswith("Multi"):
                     typeCroquis = typeObjet
                 else:
                     if typeObjet == "MultiPoint":
                         typeCroquis = "Point"
-
                     elif typeObjet == "MultiLigne":
                         typeCroquis = "Ligne"
-
                     elif typeObjet == "MultiPolygone":
                         typeCroquis = "Polygone"
                     else:

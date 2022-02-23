@@ -12,33 +12,34 @@ class Layer(object):
     """
     Classe représentant les caractéristiques d'une couche appartenant au <GEOGROUPE>
     """
-
     # <TYPE> GeoPortail </TYPE>
-    type = ""
+    type = None
     # <NOM> ORTHOIMAGERY.ORTHOPHOTOS </NOM>
-    nom = ""
+    nom = None
     # <DESCRIPTION> Photographies aériennes </DESCRIPTION>
-    description = ""
+    description = None
     # <MINZOOM> 0 </MINZOOM>
-    minzoom = 0
+    minzoom = None
     # <MAXZOOM> 20 </MAXZOOM>
-    maxzoom = 20
+    maxzoom = None
     # <EXTENT> -180, -86, 180, 84 </EXTENT>
     extent = None
     # <ROLE> Droit utilisateur sur la couche </ROLE>
-    role = ""
+    role = None
     # <VISIBILITY> 1 </VISIBILITY>
-    visibility = 1
+    visibility = None
     # <OPACITY> 1 </OPACITY>
-    opacity = 1
+    opacity = None
     # <TILEZOOM>
-    tilezoom = ""
+    tilezoom = None
     # <URL>
-    url = ""
+    url = None
     # Extraction du nom de la base de données à partir de l'url
-    databasename = ""
+    databasename = None
     # SRID
-    srid = -1
+    srid = None
+    # <LAYER>
+    layer_id = None
 
     def __init__(self):
         """
@@ -56,8 +57,10 @@ class Layer(object):
         self.tilezoom = ""
         self.url = ""
         self.databasename = ""
+        self.srid = -1
+        self.layer_id = ""
 
     def GetAllInfo(self):
         infos = [self.type, self.nom, self.description, self.minzoom, self.maxzoom, self.extent, self.role,
-                 self.visibility, self.opacity, self.tilezoom, self.url, self.databasename]
+                 self.visibility, self.opacity, self.tilezoom, self.url, self.databasename, self.layer_id]
         return infos

@@ -55,9 +55,9 @@ class MongoDBtoQGIS(object):
     Intialisation de la classe avec la condition issue du collaboratif
     exemple : "{\"$and\":[{\"capacite\":{\"$lte\":5}}]}"
     '''
-    def __init__(self, conditionMongoDB, correpondanceChampType):
+    def __init__(self, conditionMongoDB, correspondanceChampType):
         self.condition = conditionMongoDB
-        self.champType = correpondanceChampType
+        self.champType = correspondanceChampType
 
     def numberOfOccurrences(self, searchTo, substring):
         return substring.count(searchTo)
@@ -110,7 +110,8 @@ class MongoDBtoQGIS(object):
             if nbTwoPoints == 0:
                 if not part.startswith('(') :
                     orAndNot = self.conversionConditions(part)
-                else : # Partie déjà transformée en SQL
+                # Partie déjà transformée en SQL
+                else:
                     if i == 1:
                         expression = "{}".format(part)
                     else:
@@ -160,10 +161,7 @@ class MongoDBtoQGIS(object):
                 posOperator = chaineSQL.rfind('$', 0, posOpen)
                 currConditionMongo = chaineSQL[posOperator:posClose]
                 currConditionSQL = "( {} )".format(self.conversionToExpression(currConditionMongo))
-
                 chaineSQL = chaineSQL[0:posOperator] + currConditionSQL + chaineSQL[posClose+1:]
-
                 posClose = chaineSQL.find(']', 1)
 
-            return chaineSQL
-
+        return chaineSQL

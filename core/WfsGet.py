@@ -32,7 +32,6 @@ class WfsGet(object):
         self.geometryName = parameters['geometryName']
         self.sridProject = parameters['sridProject']
         self.sridLayer = parameters['sridLayer']
-        #self.is3d = parameters['is3d']
         self.bbox = parameters['bbox']
         self.parametersGcmsGet = {}
         self.bDetruit = parameters['detruit']
@@ -73,7 +72,6 @@ class WfsGet(object):
         parametersForInsertsInTable['geometryName'] = self.geometryName
         parametersForInsertsInTable['sridProject'] = self.sridProject
         parametersForInsertsInTable['sridLayer'] = self.sridLayer
-        #parametersForInsertsInTable['is3d'] = self.is3d
         parametersForInsertsInTable['role'] = self.layerRole
         self.sqliteManager.insertRowsInTable(parametersForInsertsInTable, json.loads(data))
 

@@ -7,6 +7,7 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
+
 from PyQt5 import QtGui
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
@@ -53,9 +54,6 @@ class Contexte(object):
 
     # groupe actif
     groupeactif = ""
-
-    # cle geoportail
-    clegeoportail = ""
 
     # client pour le service RIPart
     client = None
@@ -113,19 +111,14 @@ class Contexte(object):
         self.QObject = QObject
         self.QgsProject = QgsProject
         self.mapCan = QObject.iface.mapCanvas()
-
         self.iface = QObject.iface
-
         self.login = ""
         self.pwd = ""
         self.urlHostRipart = ""
-        self.clegeoportail = ""
         self.groupeactif = ""
         self.profil = None
         self.ripClient = None
-
         self.logger = RipartLogger("Contexte").getRipartLogger()
-
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
 
         # version in metadata
@@ -167,34 +160,32 @@ class Contexte(object):
 
     @staticmethod
     def getInstance(QObject=None, QgsProject=None):
-        """Retourne l'instance du Contexte
         """
-
+        Retourne l'instance du Contexte
+        """
         if not Contexte.instance or (Contexte.instance.projectDir != QgsProject.instance().homePath() or
               ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName + ".qgs",
                                                                         Contexte.instance.projectFileName + ".qgz"]):
             Contexte.instance = Contexte._createInstance(QObject, QgsProject)
-
         return Contexte.instance
 
     @staticmethod
     def _createInstance(QObject, QgsProject):
-        """Création de l'instance du contexte
+        """
+        Création de l'instance du contexte
         """
         try:
             Contexte.instance = Contexte(QObject, QgsProject)
-            Contexte.instance.logger.debug("nouvelle instance de contexte créée")
+            Contexte.instance.logger.debug("Nouvelle instance de contexte créée")
         except Exception as e:
             Contexte.instance = None
             return None
-
         return Contexte.instance
 
     def setProjectParams(self, QgsProject):
         """set des paramètres du projet
         """
         self.projectDir = QgsProject.instance().homePath()
-
         if self.projectDir == "":
             RipartHelper.showMessageBox(
                 u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser le plugin de l'espace collaboratif")
@@ -213,21 +204,23 @@ class Contexte(object):
         self.projectFileName = fname[:fname.find(".")]
 
     def checkConfigFile(self):
-        """Contrôle de l'existence du fichier de configuration
+        """
+        Contrôle de l'existence du fichier de configuration
         """
         ripartxml = self.projectDir + os.path.sep + RipartHelper.nom_Fichier_Parametres_Ripart
         if not os.path.isfile(ripartxml):
             try:
                 shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
                             RipartHelper.nom_Fichier_Parametres_Ripart, ripartxml)
-                self.logger.debug("copy espaceco.xml")
+                self.logger.debug("Copy espaceco.xml")
             except Exception as e:
-                self.logger.error("no espaceco.xml found in plugin directory" + format(e))
+                self.logger.error("No espaceco.xml found in plugin directory" + format(e))
                 raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
                                 " n'a pas été trouvé.")
 
     def copyRipartStyleFiles(self):
-        """Copie les fichiers de styles (pour les remarques et croquis ripart)
+        """
+        Copie les fichiers de styles (pour les remarques et croquis ripart)
         """
         styleFilesDir = self.projectDir + os.path.sep + RipartHelper.qmlStylesDir
 
@@ -235,8 +228,10 @@ class Contexte(object):
                           RipartHelper.qmlStylesDir, styleFilesDir)
 
     def getVisibilityLayersFromGroupeActif(self):
-        '''Retourne True si au moins une couche est éditable
-        False sinon'''
+        """
+        Retourne True si au moins une couche est éditable
+        False sinon
+        """
         if self.groupeactif is None or self.groupeactif == "":
             return False
 
@@ -250,21 +245,19 @@ class Contexte(object):
             for layer in infoGeogroup.layers:
                 if layer.role == "edit" or layer.role == "ref-edit":
                     return True
-
         return False
 
     def getConnexionRipart(self, newLogin=False):
         """Connexion au service ripart
 
-        :param newLogin: booléen indiquant si on fait un nouveau login (fonctionalité "Connexion au service Ripart")
+        :param newLogin: booléen indiquant si on fait un nouveau login (fonctionnalité "Connexion au service Ripart")
         :type newLogin: boolean
 
         :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
         :rtype int
         """
-        global client
+        client = None
         self.logger.debug("GetConnexionRipart ")
-
         result = -1
 
         try:
@@ -299,15 +292,6 @@ class Contexte(object):
             if self.groupeactif is not None:
                 self.logger.debug("this.groupeactif " + self.groupeactif)
 
-        xmlclegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_CleGeoportail, "Serveur")
-        if xmlclegeoportail is not None:
-            self.clegeoportail = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_CleGeoportail,
-                                                                "Serveur").text
-            if self.clegeoportail is None:
-                self.clegeoportail = cst.DEMO
-            else:
-                self.logger.debug("this.clegeoportail " + self.clegeoportail)
-
         if self.login == "" or self.pwd == "" or newLogin:
             self.loginWindow.setLogin(self.login)
             self.loginWindow.exec_()
@@ -325,7 +309,7 @@ class Contexte(object):
                     self.pwd = self.loginWindow.getPwd()
                     print("login " + self.login)
                     try:
-                        client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
+                        client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
                         profil = client.getProfil()
 
                         if profil is not None:
@@ -349,38 +333,33 @@ class Contexte(object):
 
                                     # On enregistre le groupe comme groupe préféré (par défaut) pour la création de signalement
                                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-                                    formerPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
-                                    if formerPreferredGroup != profil.geogroup.name:
+                                    preferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
+                                    if preferredGroup != profil.geogroup.name:
                                         RipartHelper.save_preferredThemes(self.projectDir, [])
 
                                     RipartHelper.save_preferredGroup(self.projectDir, profil.geogroup.name)
-
-                                # Par défaut, on enregistre la clé Géoportail de démonstration
-                                RipartHelper.save_clegeoportail(self.projectDir, cst.DEMO)
 
                             # sinon le choix d'un autre groupe est présenté à l'utilisateur
                             # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
                             # afin qu'il puisse remplir sa clé Géoportail
                             else:
 
-                                dlgChoixGroupe = FormChoixGroupe(profil, self.clegeoportail, self.groupeactif)
+                                dlgChoixGroupe = FormChoixGroupe(profil, self.groupeactif)
                                 dlgChoixGroupe.exec_()
                                 # bouton Valider
-                                if not dlgChoixGroupe.cancel:
+                                if not dlgChoixGroupe.bCancel:
                                     result = 1
 
                                     # le choix du nouveau profil est validé
-                                    # le nouvel id et nom du groupe, la clé Geoportail sont retournés dans un tuple
-                                    idNomGroupeCleGeoPortail = dlgChoixGroupe.save()
-                                    self.clegeoportail = idNomGroupeCleGeoPortail[2]
+                                    # le nouvel id et nom du groupe sont retournés dans un tuple
+                                    idNomGroupe = dlgChoixGroupe.save()
 
                                     # si l'utilisateur n'appartient qu'à un seul gorupe, le profil chargé reste actif
                                     if len(profil.infosGeogroups) == 1:
                                         self.profil = profil
-
                                     else:
                                         # récupère le profil et un message dans un tuple
-                                        profilMessage = client.setChangeUserProfil(idNomGroupeCleGeoPortail[0])
+                                        profilMessage = client.setChangeUserProfil(idNomGroupe[0])
                                         messTmp = profilMessage[1]
 
                                         # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
@@ -392,24 +371,17 @@ class Contexte(object):
                                             # le nouveau profil devient actif
                                             self.profil = profilMessage[0]
 
-                                    # Sauvegarde de la clé Géoportail et du groupe actif
+                                    # Sauvegarde du groupe actif
                                     # dans le xml du projet utilisateur
-                                    RipartHelper.save_clegeoportail(self.projectDir, idNomGroupeCleGeoPortail[2])
-                                    RipartHelper.save_groupeactif(self.projectDir, idNomGroupeCleGeoPortail[1])
-                                    self.groupeactif = idNomGroupeCleGeoPortail[1]
+                                    RipartHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
+                                    self.groupeactif = idNomGroupe[1]
 
                                     # On enregistre le groupe comme groupe préféré pour la création de signalement
                                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-                                    formerPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
-                                    if formerPreferredGroup != profil.geogroup.name:
+                                    formPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
+                                    if formPreferredGroup != profil.geogroup.name:
                                         RipartHelper.save_preferredThemes(self.projectDir, [])
-
                                     RipartHelper.save_preferredGroup(self.projectDir, profil.geogroup.name)
-
-                                    # Récupération des layers GéoPortail valides en fonction
-                                    # de la clé Geoportail utilisateur
-                                    layersCleGeoportail = client.getLayersFromCleGeoportailUser(self.clegeoportail)
-                                    self.profil.layersCleGeoportail = layersCleGeoportail
 
                                 # Bouton Annuler
                                 elif dlgChoixGroupe.cancel:
@@ -441,10 +413,8 @@ class Contexte(object):
                                 self.profil.zone = zoneExtraction
                             else:
                                 dlgInfo.textInfo.append("Zone : {}".format(self.profil.zone.__str__()))
-                            dlgInfo.textInfo.append("Clé Géoportail : {}".format(self.clegeoportail))
 
                             dlgInfo.exec_()
-
                             if dlgInfo.Accepted:
                                 self.client = client
                                 result = 1
@@ -462,10 +432,9 @@ class Contexte(object):
                         except Exception as e2:
                             self.loginWindow.setErreur("la connexion a échoué")
                         self.loginWindow.exec_()
-
         else:
             try:
-                client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy, self.clegeoportail)
+                client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
                 result = 1
                 self.logger.debug("result =" + str(result))
                 self.client = client
@@ -481,22 +450,22 @@ class Contexte(object):
         return result
 
     def saveLogin(self, login):
-        """Sauvegarde du login dans le contexte et dans le fichier ripart.xml
+        """
+        Sauvegarde du login dans le contexte et dans le fichier ripart.xml
         """
         self.login = login
         RipartHelper.save_login(self.projectDir, login)
 
     def getOrCreateDatabase(self):
-        """Retourne la base de données spatialite contenant les tables des remarques et croquis
-        Si la BD n'existe pas, elle est créée
-
         """
-        global cur
+        Retourne la base de données spatialite contenant les tables des remarques et croquis
+        Si la BD n'existe pas, elle est créée
+        """
+        curs = None
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
 
         if not os.path.isfile(self.dbPath):
-
             try:
                 shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
                             RipartHelper.ripart_db, self.dbPath)
@@ -508,17 +477,17 @@ class Contexte(object):
             self.conn = spatialite_connect(self.dbPath)
 
             # creating a Cursor
-            cur = self.conn.cursor()
+            curs = self.conn.cursor()
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
-            cur.execute(sql)
-            if cur.fetchone() is None:
+            curs.execute(sql)
+            if curs.fetchone() is None:
                 # create layer Signalement
                 RipartHelper.createRemarqueTable(self.conn)
 
             for lay in RipartHelper.croquis_layers:
                 sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + lay + "'"
-                cur.execute(sql)
-                if cur.fetchone() is None:
+                curs.execute(sql)
+                if curs.fetchone() is None:
                     # create layer
                     RipartHelper.createCroquisTable(self.conn, lay, RipartHelper.croquis_layers[lay])
 
@@ -526,13 +495,14 @@ class Contexte(object):
             self.logger.error(format(e))
             raise
         finally:
-            cur.close()
+            curs.close()
             self.conn.close()
 
     def appendUri_WFS(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
         uri.setConnection("", "", self.login, self.pwd)
-        uri.setParam('version', '1.0.0')# Patch pour pouvoir éditer les données avec QGIS 3.16
+        # Patch pour pouvoir éditer les données avec QGIS 3.16
+        uri.setParam('version', '1.0.0')
         uri.setParam('request', 'GetFeature')
         if str(bbox) != "None":
             uri.setParam('bbox', bbox.boxToString())
@@ -548,7 +518,6 @@ class Contexte(object):
             uri.setParam('maxNumFeatures', '5000')
             uri.setParam('pagingEnabled', 'true')
             uri.setParam('restrictToRequestBBOX', '1')
-
         # Autres Geoservices
         else:
             uri.setParam('url', url)
@@ -561,11 +530,11 @@ class Contexte(object):
         sqliteManager = SQLiteManager()
 
         # Si la table du nom de la couche existe,
-        # elle est vidée et détruite
+        # elle est vidée, détruite et recréée
         if sqliteManager.isTableExist(layer.nom):
             sqliteManager.emptyTable(layer.nom)
             sqliteManager.deleteTable(layer.nom)
-        bDetruit = sqliteManager.createTableFromLayer(layer.nom, structure)
+        bColumnDetruitExist = sqliteManager.createTableFromLayer(layer.nom, structure)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
@@ -573,18 +542,97 @@ class Contexte(object):
         print("url : {}".format(uri.uri()))
         uri.setDataSource('', layer.nom, structure['geometryName'])
         uri.setSrid(str(cst.EPSGCRS))
-        parameters = {}
-        parameters['uri'] = uri.uri()
-        parameters['name'] = layer.nom
-        parameters['genre'] = 'spatialite'
-        parameters['databasename'] = layer.databasename
-        parameters['sqliteManager'] = sqliteManager
-        # parameters['type'] = layer.type
-        #parameters['attributes'] = structure['attributes']
+        parameters = {'uri': uri.uri(), 'name': layer.nom, 'genre': 'spatialite', 'databasename': layer.databasename,
+                      'sqliteManager': sqliteManager}
         vlayer = GuichetVectorLayer(parameters)
         #vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
-        return vlayer, bDetruit
+        return vlayer, bColumnDetruitExist
+
+    def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
+        """
+        Add guichet layers to the current map
+        """
+        try:
+            # Quelles sont les cartes chargées dans le projet QGIS courant
+            maplayers = self.getAllMapLayers()
+            root = self.QgsProject.instance().layerTreeRoot()
+
+            # Le groupe existe t-il dans le projet
+            nodeGroup = None
+            nodesGroup = root.findGroups()
+            for nodeGroup in nodesGroup:
+                # Si le groupe existe déjà, on sort
+                if nodeGroup.name() == nameGroup:
+                    break
+
+            # Si le groupe n'existe pas et que des couches doivent être chargées
+            # alors il y a création du groupe dans le projet
+            nbLayersWFS = 0
+            for layer in guichet_layers:
+                if layer.type == cst.WFS:
+                    nbLayersWFS += 1
+
+            if nodeGroup is None and len(nodesGroup) == 0 and nbLayersWFS != 0:
+                newNode = QgsLayerTreeGroup(nameGroup)
+                root.insertChildNode(0, newNode)
+                nodeGroup = root.findGroup(nameGroup)
+
+            # Il y a déjà un groupe dans le projet
+            # Il faut indiquer à l'utilisateur que c'est impossible
+            # d'ajouter un nouveau groupe dans le projet
+            if nodeGroup is not None:
+                if nodeGroup.name() != nameGroup and (len(nodesGroup) == 1):
+                    QMessageBox.warning(None, "Charger les couches de mon groupe",
+                                    u"Votre projet QGIS contient des couches d'un autre groupe Espace collaboratif (" + nodeGroup.name() +
+                                    "). \nPour pouvoir charger les données du groupe " + nameGroup +
+                                    ", veuillez supprimer les couches existantes de votre projet QGIS ou travailler dans un nouveau projet." +
+                                    "\n\nNB : ces couches seront simplement supprimées de la carte QGIS en cours, elles resteront disponibles sur l'Espace collaboratif.")
+                    return
+
+            for layer in guichet_layers:
+                if layer.nom in maplayers or layer.description in maplayers:
+                    print("Layer {} already exists !".format(layer.nom))
+                    continue
+                '''
+                Ajout des couches WFS selectionnées dans "Mon guichet"
+                '''
+                if layer.type == cst.WFS:
+                    # Récupération de la structure de la future table
+                    structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
+                    sourceLayer = self.importWFS(layer, structure)
+                    if not sourceLayer[0].isValid():
+                        print("Layer {} failed to load !".format(layer.nom))
+                        continue
+                    self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
+
+                '''
+                Ajout des couches WMTS selectionnées dans "Mon guichet"
+                '''
+                if layer.type == cst.WMTS:
+                    importWmts = importWMTS(self, layer)
+                    titleLayer_uri = importWmts.getWtmsUrlParams(layer.layer_id)
+                    rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
+                    if not rlayer.isValid():
+                        print("Layer {} failed to load !".format(rlayer.name()))
+                        continue
+
+                    QgsProject.instance().addMapLayer(rlayer, False)
+                    # Insertion à la fin avec -1
+                    root.insertLayer(-1, rlayer)
+                    self.logger.debug("Layer {} added to map".format(rlayer.name()))
+                    print("Layer {} added to map".format(rlayer.name()))
+
+            # Refraichissement de la carte
+            self.mapCan.refresh()
+
+        except Exception as e:
+            self.logger.error(format(e))
+            self.iface.messageBar(). \
+                pushMessage("Remarque",
+                            str(e),
+                            level=1, duration=10)
+            print(str(e))
 
     def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
         # Ajout de la couche dans la carte
@@ -604,10 +652,10 @@ class Contexte(object):
         parameters['geometryName'] = geometryName
         parameters['sridProject'] = cst.EPSGCRS
         parameters['sridLayer'] = int(structure['attributes'][geometryName]['srid'])
-        #parameters['is3d'] = structure['attributes'][geometryName]['is3d']
         parameters['bbox'] = bbox
         parameters['detruit'] = bColumnDetruitExist
         parameters['sqliteManager'] = newVectorLayer.sqliteManager
+        #parameters['sqliteManager'] = SQLiteManager()
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get()
 
@@ -636,89 +684,6 @@ class Contexte(object):
         # soit réellement prise en compte
         newVectorLayer.reload()
 
-    def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
-        """Add guichet layers to the current map
-        """
-        try:
-            # Quelles sont les cartes chargées dans le projet QGIS courant
-            maplayers = self.getAllMapLayers()
-            root = self.QgsProject.instance().layerTreeRoot()
-
-            # Le groupe existe t-il dans le projet
-            nodeGroup = None
-            nodesGroup = root.findGroups()
-            for nodeGroup in nodesGroup:
-                # Si le groupe existe déjà, on sort
-                if nodeGroup.name() == nameGroup:
-                    break
-
-            # Si le groupe n'existe pas, création du groupe dans le projet
-            if nodeGroup is None and (len(nodesGroup) == 0):
-                newNode = QgsLayerTreeGroup(nameGroup)
-                root.insertChildNode(0, newNode)
-                nodeGroup = root.findGroup(nameGroup)
-
-            # Il y a déjà un groupe dans le projet
-            # Il faut indiquer à l'utilisateur que c'est impossible
-            # d'ajouter un nouveau groupe dans le projet
-            if nodeGroup.name() != nameGroup and (len(nodesGroup) == 1):
-                QMessageBox.warning(None, "Charger les couches de mon groupe",
-                                    u"Votre projet QGIS contient des couches d'un autre groupe Espace collaboratif (" + nodeGroup.name() +
-                                    "). \nPour pouvoir charger les données du groupe " + nameGroup +
-                                    ", veuillez supprimer les couches existantes de votre projet QGIS ou travailler dans un nouveau projet." +
-                                    "\n\nNB : ces couches seront simplement supprimées de la carte QGIS en cours, elles resteront disponibles sur l'Espace collaboratif.")
-                return
-
-            for layer in guichet_layers:
-                if layer.nom in maplayers or layer.description in maplayers:
-                    print("Layer {} already exists !".format(layer.nom))
-                    continue
-                '''
-                Ajout des couches WFS selectionnées dans "Mon guichet"
-                '''
-                if layer.type == cst.WFS:
-                    # uri = self.appendUri_WFS(layer.url, layer.nom, bbox)
-                    # print("url : {}".format(uri.uri()))
-                    # vlayer = GuichetVectorLayer(uri.uri(), layer.nom, layer.type, layer.databasename)
-
-                    # Récupération de la structure de la future table
-                    structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
-                    sourceLayer = self.importWFS(layer, structure) # Renvoie une liste du type [vectorLayer, bDetruit]
-                    # if not sourceLayer[0].isValid():
-                    #     print("Layer {} failed to load !".format(layer.nom))
-                    #     continue
-                    self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
-
-                '''
-                Ajout des couches WMTS selectionnées dans "Mon guichet"
-                '''
-                if layer.type == cst.GEOPORTAIL:
-                    importWmts = importWMTS(self)
-                    titleLayer_uri = importWmts.getWtmsUrlParams(layer.nom)
-                    rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
-
-                    if not rlayer.isValid():
-                        print("Layer {} failed to load !".format(rlayer.name()))
-                        print(rlayer.error().message())
-                        continue
-
-                    QgsProject.instance().addMapLayer(rlayer, False)
-                    # Insertion à la fin avec -1
-                    root.insertLayer(-1, rlayer)
-                    self.logger.debug("Layer {} added to map".format(rlayer.name()))
-                    print("Layer {} added to map".format(rlayer.name()))
-
-            # Refraichissement de la carte
-            self.mapCan.refresh()
-
-        except Exception as e:
-            self.logger.error(format(e))
-            self.iface.messageBar(). \
-                pushMessage("Remarque",
-                            str(e),
-                            level=1, duration=10)
-            print(str(e))
-
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)
         dbName = self.projectFileName + "_espaceco"
@@ -733,9 +698,7 @@ class Contexte(object):
         self.logger.debug(uri.uri())
 
         maplayers = self.getAllMapLayers()
-
         root = self.QgsProject.instance().layerTreeRoot()
-
         for table in RipartHelper.croquis_layers_name:
             if table not in maplayers:
                 uri.setDataSource('', table, 'geom')
@@ -743,9 +706,7 @@ class Contexte(object):
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
                 vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
                 QgsProject.instance().addMapLayer(vlayer, False)
-
                 root.insertLayer(0, vlayer)
-
                 self.logger.debug("Layer " + vlayer.name() + " added to map")
 
                 # ajoute les styles aux couches
@@ -755,8 +716,8 @@ class Contexte(object):
         self.mapCan.refresh()
 
     def getAllMapLayers(self):
-        """Return the list of layer names which are loaded in the map
-
+        """
+        Return the list of layer names which are loaded in the map
         :return dictionnaire des couches chargées sur la carte (key: layer name, value: layer id)
         :rtype dictionary
         """
@@ -767,31 +728,25 @@ class Contexte(object):
             l = layers[key]
             layerNames.append(l.name())
             maplayers[l.name()] = l.id()
-
         return maplayers
 
     def getMapPolygonLayers(self):
-        """Retourne les calques qui sont de type polygon ou multipolygon
-
+        """
+        Retourne les calques qui sont de type polygon ou multipolygon
         :return dictionnaire des couches de type polygon(key: layer id, value: layer name)
         :rtype dictionary
         """
-        layers = QgsProject.instance().mapLayers()
-
         polylayers = {}
-
+        layers = QgsProject.instance().mapLayers()
         for key in layers:
-            l = layers[key]
-
-            if type(
-                    l) is QgsVectorLayer and l.geometryType() is not None and l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                polylayers[l.id()] = l.name()
-
+            layer = layers[key]
+            if type(layer) is QgsVectorLayer and layer.geometryType() is not None and layer.geometryType() == QgsWkbTypes.PolygonGeometry:
+                polylayers[layer.id()] = layer.name()
         return polylayers
 
     def getLayerByName(self, layName):
-        """Retourne le calque donné par son nom
-
+        """
+        Retourne le calque donné par son nom
         :param layName: le nom du calque
         :type layName: string
 
@@ -805,41 +760,38 @@ class Contexte(object):
             return None
 
     def emptyAllRipartLayers(self):
-        """Supprime toutes les remarques, vide les tables de la base ripart.sqlite
+        """
+        Supprime toutes les remarques, vide les tables de la base ripart.sqlite
         """
         ripartLayers = RipartHelper.croquis_layers
         ripartLayers[RipartHelper.nom_Calque_Signalement] = "POINT"
-
         try:
             self.conn = spatialite_connect(self.dbPath)
-
             for table in ripartLayers:
                 RipartHelper.emptyTable(self.conn, table)
-
             ripartLayers.pop(RipartHelper.nom_Calque_Signalement, None)
-
             self.conn.commit()
         except RipartException as e:
             self.logger.error(format(e))
             raise
         finally:
             self.conn.close()
-
         self.refresh_layers()
 
     def refresh_layers(self):
-        """Rafraichissement de la carte
+        """
+        Rafraichissement de la carte
         """
         for layer in self.mapCan.layers():
             layer.triggerRepaint()
 
     def updateRemarqueInSqlite(self, rem):
-        """Met à jour une remarque (après l'ajout d'une réponse)
-
+        """
+        Met à jour une remarque (après l'ajout d'une réponse)
         :param rem : la remarque à mettre à jour
         :type rem: Remarque
         """
-        global cur
+        curs = None
         try:
             # self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
@@ -851,21 +803,20 @@ class Contexte(object):
             sql += " Statut='" + rem.statut + "' "
             sql += " WHERE NoSignalement = " + rem.id
 
-            cur = self.conn.cursor()
-            cur.execute(sql)
-
+            curs = self.conn.cursor()
+            curs.execute(sql)
             self.conn.commit()
 
         except Exception as e:
             self.logger.error(format(e))
             raise
         finally:
-            cur.close()
+            curs.close()
             self.conn.close()
 
     def countRemarqueByStatut(self, statut):
-        """Retourne le nombre de remarques ayant le statut donné en paramètre
-
+        """
+        Retourne le nombre de remarques ayant le statut donné en paramètre
         :param statut: le statut de la remarque (=code renvoyé par le service)
         :type statut: string
         """
@@ -874,21 +825,21 @@ class Contexte(object):
         filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
         return len(list(filtFeatures))
 
-    #############Création nouvelle remarque ###########
     def hasMapSelectedFeatures(self):
-        """Vérifie s'il y a des objets sélectionnés
-
+        """
+        Vérifie s'il y a des objets sélectionnés
         :return true si de objets sont sélectionnés, false sinon
         :rtype boolean
         """
         mapLayers = self.mapCan.layers()
-        for la in mapLayers:
-            if type(la) is QgsVectorLayer and len(la.selectedFeatures()) > 0:
+        for layer in mapLayers:
+            if type(layer) is QgsVectorLayer and len(layer.selectedFeatures()) > 0:
                 return True
         return False
 
     def makeCroquisFromSelection(self):
-        """Transforme en croquis Ripart les object sélectionnés dans la carte en cours.
+        """
+        Transforme en croquis Ripart les object sélectionnés dans la carte en cours.
         Le système de référence spatial doit être celui du service Ripart(i.e. 4326), donc il faut transformer les
         coordonnées si la carte est dans un autre système de réf.
         """
@@ -902,30 +853,21 @@ class Contexte(object):
             if type(lay) is not QgsVectorLayer:
                 continue
             for f in lay.selectedFeatures():
-
                 # la liste des croquis
                 croquiss = []
-
                 # le type du feature
                 ftype = f.geometry().type()
-
                 geom = f.geometry()
-
                 isMultipart = geom.isMultipart()
-
                 # if geom.isMultipart() => explode to single parts
                 if isMultipart and ftype == QgsWkbTypes.PolygonGeometry:
                     for poly in geom.asMultiPolygon():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPolygonXY(poly), QgsWkbTypes.PolygonGeometry, lay.crs(),
-                                             f[0]))
-
+                            self.makeCroquis(QgsGeometry.fromPolygonXY(poly), QgsWkbTypes.PolygonGeometry, lay.crs(), f[0]))
                 elif isMultipart and ftype == QgsWkbTypes.LineGeometry:
                     for line in geom.asMultiPolyline():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPolylineXY(line), QgsWkbTypes.LineGeometry, lay.crs(),
-                                             f[0]))
-
+                            self.makeCroquis(QgsGeometry.fromPolylineXY(line), QgsWkbTypes.LineGeometry, lay.crs(), f[0]))
                 elif isMultipart and ftype == QgsWkbTypes.PointGeometry:
                     for pt in geom.asMultiPoint():
                         croquiss.append(
@@ -942,13 +884,13 @@ class Contexte(object):
                             idx = lay.fields().lookupField(att)
                             attribut = SketchAttributes(att, f.attributes()[idx])
                             croquisTemp.addAttribut(attribut)
-
                     listCroquis.append(croquisTemp)
 
         return listCroquis
 
     def makeCroquis(self, geom, ftype, layerCrs, fId):
-        """Génère un croquis Ripart à partir d'une géométrie
+        """
+        Génère un croquis Ripart à partir d'une géométrie
         Les coordonnées des points du croquis doivent être transformées dans le crs de Ripart (4326)
 
         :param geom: la géométrie à transformer en croquis
@@ -971,9 +913,7 @@ class Contexte(object):
 
         try:
             destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
-
             transformer = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
-
             if ftype == QgsWkbTypes.PolygonGeometry:
                 geomPoints = geom.asPolygon()
                 if len(geomPoints) > 0:
@@ -981,11 +921,9 @@ class Contexte(object):
                 else:
                     self.logger.debug(u"geomPoints problem " + str(fId))
                 newCroquis.type = newCroquis.sketchType.Polygone
-
             elif ftype == QgsWkbTypes.LineGeometry:
                 geomPoints = geom.asPolyline()
                 newCroquis.type = newCroquis.sketchType.Ligne
-
             elif ftype == QgsWkbTypes.PointGeometry:
                 geomPoints = [geom.asPoint()]
                 newCroquis.type = newCroquis.sketchType.Point
@@ -1003,7 +941,8 @@ class Contexte(object):
         return newCroquis
 
     def getPositionRemarque(self, listCroquis):
-        """Recherche et retourne la position de la remarque (point).
+        """
+        Recherche et retourne la position de la remarque (point).
         La position est calculée à partir des croquis associés à la remarque
 
         :param listCroquis: la liste des croquis
@@ -1012,7 +951,6 @@ class Contexte(object):
         :return la position de la remarque
         :rtype Point
         """
-
         # crée la table temporaire dans spatialite et calcule les centroides de chaque croquis
         res = self._createTempCroquisTable(listCroquis)
 
@@ -1024,7 +962,8 @@ class Contexte(object):
             return None
 
     def _createTempCroquisTable(self, listCroquis):
-        """Crée une table temporaire dans sqlite pour les nouveaux croquis
+        """
+        Crée une table temporaire dans sqlite pour les nouveaux croquis
         La table contient la géométrie des croquis au format texte (WKT).
         Retourne la liste des points des croquis
 
@@ -1034,21 +973,16 @@ class Contexte(object):
         :return une liste contenant tous les points des croquis
         :rtype: list de Point
         """
-        global cur
+        cur = None
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
-
         tmpTable = "tmpTable"
-
         allCroquisPoints = []
-
         if len(listCroquis) == 0:
             return None
 
         cr = listCroquis[0]
-
         try:
-            # self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
             cur = self.conn.cursor()
 
@@ -1079,16 +1013,14 @@ class Contexte(object):
                     allCroquisPoints.append(pt)
 
                 textGeom = textGeom[:-1] + textGeomEnd
-
                 sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," +\
                       "AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
                 cur.execute(sql)
 
             self.conn.commit()
 
-
         except Exception as e:
-            self.logger.error("createTempCroquisTable " + format(e))
+            self.logger.error("_createTempCroquisTable " + format(e))
             return False
         finally:
             cur.close()
@@ -1097,20 +1029,20 @@ class Contexte(object):
         return allCroquisPoints
 
     def _getBarycentre(self):
-        """Calcul du barycentre de l'ensemble des croquis à partir des centroides de chaque croquis;
+        """
+        Calcul du barycentre de l'ensemble des croquis à partir des centroides de chaque croquis;
         ces centroides sont stockés dans la table temporaire "tmpTable"
 
         :return: le barycentre
         :rtype: Point
         """
-        global barycentre
+        barycentre = None
         tmpTable = "tmpTable"
         point = None
         try:
             dbName = self.projectFileName + "_espaceco"
             self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
             self.conn = spatialite_connect(self.dbPath)
-
             cur = self.conn.cursor()
 
             sql = "SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from " + tmpTable
@@ -1119,14 +1051,11 @@ class Contexte(object):
             rows = cur.fetchall()
             sumX = 0
             sumY = 0
-
             for row in rows:
                 sumX += row[0]
                 sumY += row[1]
-
             ptX = sumX / float(len(rows))
             ptY = sumY / float(len(rows))
-
             barycentre = Point(ptX, ptY)
 
         except Exception as e:
@@ -1135,35 +1064,28 @@ class Contexte(object):
 
         return barycentre
 
-    ################### magicwand  ##################################################
+    '''magicwand'''
     def selectRemarkByNo(self, noSignalements):
-        """Sélection des remarques données par leur no
-
+        """
+        Sélection des remarques données par leur no
         :param noSignalements : les no de signalements à sélectionner
         :type noSignalements: list de string
         """
-
-        # self.conn= sqlite3.connect(self.dbPath)
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
-
         table = RipartHelper.nom_Calque_Signalement
         lay = self.getLayerByName(table)
-
         sql = "SELECT * FROM " + table + "  WHERE noSignalement in (" + noSignalements + ")"
         rows = cur.execute(sql)
-
         featIds = []
-
         for row in rows:
-            # fix_print_with_import
             print(row[0])
             featIds.append(row[0])
-
         lay.selectByIds(featIds)
 
     def getCroquisForRemark(self, noSignalement, croquisSelFeats):
-        """Retourne les croquis associés à une remarque
+        """
+        Retourne les croquis associés à une remarque
 
         :param noSignalement: le no de la remarque
         :type noSignalement: int
@@ -1176,8 +1098,6 @@ class Contexte(object):
         :rtype: dictionnary
         """
         crlayers = RipartHelper.croquis_layers
-
-        # self.conn= sqlite3.connect(self.dbPath)
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
 
@@ -1187,7 +1107,6 @@ class Contexte(object):
             featIds = []
             for row in rows:
                 featIds.append(row[0])
-                #if not table in croquisSelFeats:
                 if table not in croquisSelFeats:
                     croquisSelFeats[table] = []
                 croquisSelFeats[table].append(row[0])

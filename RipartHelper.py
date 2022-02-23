@@ -28,6 +28,7 @@ class RipartHelper:
     """
     ripart_files_dir = "files"
     ripart_db = "espaceco.sqlite"
+    ripart_help_file = "ENR_Espace_co_plugin_pour_qgis.pdf"
 
     # fichier de configuration
     nom_Fichier_Parametres_Ripart = "espaceco.xml"
@@ -95,7 +96,6 @@ class RipartHelper:
 
     xml_proxy = "Proxy"
     xml_GroupeActif = "groupe_actif"
-    xml_CleGeoportail = "cle_geoportail"
     xml_GroupePrefere = "groupe_prefere"
 
     defaultDate = "1900-01-01 00:00:00"
@@ -289,47 +289,6 @@ class RipartHelper:
             xmlroot = tree.getroot()
             xgroupePrefere = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupePrefere, "Serveur"))
             xgroupePrefere.text = preferredGroup
-
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
-
-        except Exception as e:
-            RipartHelper.logger.error(format(e))
-
-    @staticmethod
-    def load_clegeoportail(projectDir):
-        """Retourne la clé Géoportail sauvegardée dans le fichier de configuration xml
-
-                :param projectDir: le chemin vers le répertoire du projet
-                :type projectDir: string
-                """
-        clegeoportail = ""
-        try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot = tree.getroot()
-            clegeoportail = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_CleGeoportail, "Serveur"))
-            if clegeoportail is None:
-                clegeoportail = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_CleGeoportail, "Serveur")
-
-        except Exception as e:
-            RipartHelper.logger.error(str(e))
-
-        return clegeoportail
-
-    @staticmethod
-    def save_clegeoportail(projectDir, clegeoportail):
-        """Enregistre la clé Géoportail dans le fichier de configuration
-
-                :param projectDir: le chemin vers le répertoire du projet
-                :type projectDir: string
-
-                :param clegeoportail: la clé Géoportail de l'utilisateur
-                :type clegeoportail: string
-                """
-        try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
-            xmlroot = tree.getroot()
-            xclegeoportail = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_CleGeoportail, "Serveur"))
-            xclegeoportail.text = clegeoportail
 
             tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
 

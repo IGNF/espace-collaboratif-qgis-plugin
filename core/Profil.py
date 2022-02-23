@@ -52,6 +52,3 @@ class Profil(object):
 
     #Les différents groupes de l'utilisateur
     infosGeogroups = list()
-
-    # La liste des couches Geoportail visible avec la clé geoportail utilisateur
-    layersCleGeoportail = {}

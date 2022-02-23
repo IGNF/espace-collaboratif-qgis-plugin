@@ -51,9 +51,7 @@ class ImporterGuichet(object):
         """
         try:
             self.logger.debug("doImport")
-
             params = {}  # paramètres pour la requête au service Ripart
-
             filtreLay = None
 
             if self.context.ripClient is None:
@@ -72,6 +70,7 @@ class ImporterGuichet(object):
 
             # filtre spatial
             # Non pris en compte en v4.0.1 car le filtrage par BBOX du WFS ne semble pas fonctionner
+            bbox = None
             filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
 
             if filtre is not None and len(filtre.strip()) > 0:
@@ -110,6 +109,7 @@ class ImporterGuichet(object):
         :type filtreLay: QgsVectorLayer
         """
         bbox = None
+
         if filtreLay is None:
             message = "La carte en cours ne contient pas le calque '" + \
                       filtre + \

@@ -200,7 +200,6 @@ class RipartPlugin:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
         icon_path = ':/plugins/RipartPlugin/images/connect.png'
         self.add_action(
             icon_path,
@@ -343,7 +342,6 @@ class RipartPlugin:
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
-
         if self.context.client is None:
             res = self.context.getConnexionRipart(newLogin=True)
             if not res:
@@ -354,9 +352,7 @@ class RipartPlugin:
         wfsPost.commitLayer()
 
     def unload(self):
-
         log = logging.getLogger()
-
         logs = logging.Logger.manager.loggerDict
         cntLogs = len(logs)
 
@@ -496,7 +492,6 @@ class RipartPlugin:
     def configurePref(self):
         """Lance la fenêtre de configuration des préférences 
         """
-
         try:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
@@ -572,21 +567,13 @@ class RipartPlugin:
             u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif.")
         dlgInfo.textInfo.append(u"<br/>Version : " + version)
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
-
         dlgInfo.exec_()
 
-    # @TODO !!! lien vers le bon manuel (à partir de http://logiciels.ign.fr)!!!
     def showHelp(self):
         """Ouvre le document d'aide utilisateur   
         """
-        file_path = "http://logiciels.ign.fr/IMG/pdf/enr_espace_co_plugin_pour_qgis.pdf"
-        # file_path = os.path.abspath(os.path.join(
-        #    os.path.dirname(__file__),"files",cst.helpFile))
-
+        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "files", RipartHelper.ripart_help_file))
         RipartHelper.open_file(file_path)
-
-        # TODO lien web
-        # os.startfile("http://logiciels.ign.fr/IMG/pdf/add-in-ripart_1-0.pdf")
 
     def showLog(self):
         """Ouvre le dernier fichier de log

@@ -91,8 +91,6 @@ ZoneGeographique = Enum("UNDEFINED",
 
 namespace = {'gml': 'http://www.opengis.net/gml'}
 
-helpFile = "Manuel utilisateur plugin Espace Collaboratif pour QGIS.pdf"
-
 def statuts():
     statuts = [STATUT.submit.__str__(),
                STATUT.pending.__str__(),
@@ -112,11 +110,8 @@ WMS = "WMS"
 WFS = "WFS"
 WMTS = "WMTS"
 WCS = "WCS"
-GEOPORTAIL = "GeoPortail"
 COLLABORATIF = "collaboratif.ign.fr"
 WXSIGN = "wxs.ign.fr"
-DEMO = "Démonstration"
-CLEGEOPORTAILSTANDARD = "choisirgeoportail"
 
 # Système de coordonnées de référence de Ripart
 EPSGCRS = 4326

@@ -10,6 +10,7 @@ version 4.0.1, 15/12/2020
 
 # Imports
 import urllib
+from urllib.parse import urlparse
 from .core import ConstanteRipart as cst
 from qgis.core import QgsDataSourceUri, QgsProject
 
@@ -18,23 +19,23 @@ try:
     from owslib.util import ServiceException
     import owslib
 
-    print("Depencencies - owslib version: {}".format(owslib.__version__))
+    print("Dependencies - owslib version: {}".format(owslib.__version__))
 except ImportError as e:
-    print("Depencencies - owslib is not present")
+    print("Dependencies - owslib is not present")
 
 try:
     from owslib.util import HTTPError
 
-    print("Depencencies - HTTPError within owslib")
+    print("Dependencies - HTTPError within owslib")
 except ImportError as e:
     print(
-        "Depencencies - HTTPError not within owslib."
+        "Dependencies - HTTPError not within owslib."
         " Trying to get it from urllib directly."
     )
 try:
     from urllib import HTTPError
 
-    print("Depencencies - HTTPError within urllib")
+    print("Dependencies - HTTPError within urllib")
 except ImportError as e:
     print(
         "Depencencies - HTTPError not within urllib."
@@ -51,9 +52,11 @@ class importWMTS:
     layer_id = None
     crs = None
     title_layer = None
+    selected_layer = None
 
-    def __init__(self, context):
+    def __init__(self, context, layer):
         self.context = context
+        self.selected_layer = layer
         self.checkOpenService()
         self.checkGetTile()
         self.checkTileMatrixSet()
@@ -65,17 +68,13 @@ class importWMTS:
             'service': cst.WMTS,
             'request': 'GetCapabilities'
         }
-        clegeoportail = self.context.clegeoportail
-        if clegeoportail is None or clegeoportail == cst.DEMO:
-            clegeoportail = cst.CLEGEOPORTAILSTANDARD
 
         '''
         Avec l'url http://wxs.ign.fr/VOTRE_CLE/geoportail/wmts, la projection proposée est
         web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
         '''
         self.crs = "EPSG:3857"
-        self.uri = "https://wxs.ign.fr/{}/geoportail/wmts?{}" \
-            .format(clegeoportail, urllib.parse.unquote(urllib.parse.urlencode(params)))
+        self.uri = self.selected_layer.url.format(urllib.parse.unquote(urllib.parse.urlencode(params)))
 
     # opening WMTS
     def checkOpenService(self):
@@ -118,6 +117,7 @@ class importWMTS:
 
     # Style definition
     def getStyles(self):
+        lyr_style = None
         styles = self.wmts_lyr.styles
         '''
             La variable styles est de type dict cle:valeur, exemple :
@@ -127,8 +127,9 @@ class importWMTS:
         '''
         for cle, valeur in styles.items():
             print("Available styles : {}".format(cle))
-        # Le style est donc la cle du dictionnaire
-        lyr_style = cle
+            # Le style est donc la cle du dictionnaire
+            lyr_style = cle
+
         return lyr_style
 
     # Get a layer
@@ -142,7 +143,8 @@ class importWMTS:
             self.layer_id = self.wmts_lyr.id
             self.title_layer = self.wmts_lyr.title
             print("Layer picked : {}:{}".format(self.title_layer, self.layer_id))
-            return self.layer_id
+            return layer
+        return None
 
     # Tile Matrix Set
     def getTileMatrixSet(self):
@@ -165,7 +167,10 @@ class importWMTS:
     # url=https://wxs.ign.fr/choisirgeoportail/geoportail/wmts?
     # SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities
     def getWtmsUrlParams(self, idGuichetLayerWmts):
-        self.getLayer(idGuichetLayerWmts)
+        if not idGuichetLayerWmts:
+            raise Exception("Import_WMTS.py::getWtmsUrlParams : le nom de la couche geoportail est vide")
+        if self.getLayer(idGuichetLayerWmts) is None:
+           raise Exception("Import_WMTS.py::getWtmsUrlParams : impossible de récupérer la couche Geoportail")
         self.getTileMatrixSet()
         wmts_url_params = {
             "crs": self.crs,

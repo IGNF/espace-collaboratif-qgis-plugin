@@ -1,8 +1,16 @@
+# This file contains metadata for your plugin. Since
+# version 2.0 of QGIS this is the proper way to supply
+# information about a plugin. The old method of
+# embedding metadata in __init__.py will
+# is no longer supported since version 2.0.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
 [general]
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
-description=Service de signalement de l'IGN, plugin QGIS3
-version=4.0.6
+description=Service de signalement et contribution de l'IGN, plugin QGIS3
+version=4.1.1
 author=IGN
 email=service-client@ign.fr
 
@@ -15,16 +23,12 @@ repository=http://repo
 # Recommended items:
 
 # Optional items:
-date=XX/XX/XXXX
+date=11/02/2022
 
 # Uncomment the following line and add your changelog:
 changelog=
-	4.0.6 -
-    4.0.5 - Améliorations suite à un renforcement des contrôles de l'API sur les attributs de signalements
-	4.0.4 - Traitement des croquis avec multi-géométries et améliorations cosmétiques.
-    4.0.3 - Patch correctif
-    4.0.2 - Patch correctif
-	4.0.1 - Intégration de la contribution directe aux guichets Espace collaboratif
+	4.1.1 - Installation avec compte Espace collaboratif
+    4.1.0 - Adaptation géoservices
 
 # Tags are comma separated with spaces allowed
 tags=python
@@ -33,8 +37,7 @@ homepage=https://espacecollaboratif.ign.fr/plugins/qgis
 category=Plugins
 icon=images/ign.png
 # experimental flag
-#experimental=False
+# experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
-

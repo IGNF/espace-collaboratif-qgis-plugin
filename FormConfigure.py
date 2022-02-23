@@ -26,8 +26,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     """
     Dialogue pour la configuration des préférences de téléchargement des remarques
     """
-
-    # le contexte
+    #le contexte
     context = None
 
     def __init__(self, context, parent=None):
@@ -54,6 +53,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")
+        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
 
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
@@ -108,9 +108,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
         self.lineEditGroupeActif.setText(groupeactif)
 
-        clegeoportail = RipartHelper.load_clegeoportail(context.projectDir).text
-        self.lineEditCleGeoportail.setText(clegeoportail)
-
     def setComboBoxFilter(self):
         """
         Set de la liste des couches de type "polygone" susceptibles d'être utilisées comme zone d'extraction
@@ -156,7 +153,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                     state = Qt.Checked
                 else:
                     state = Qt.Unchecked
-                item.setCheckState(0, state)  # Qt.Unchecked/Qt.Checked
+                item.setCheckState(0, state) # Qt.Unchecked/Qt.Checked
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
                 topItems.append(item)
 
@@ -173,7 +170,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                     item.setCheckState(0, pstate)
 
         self.treeWidget.insertTopLevelItems(0, topItems)
-
         self.treeWidget.itemClicked.connect(self.onClickItem)
 
     def addSubItems(self, item, layer, attList):
@@ -238,8 +234,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                 if parent.child(i).checkState(0) == Qt.Unchecked:
                     pstate = Qt.PartiallyChecked
                     break
-
-        else:
+        else:  
             pstate = Qt.Unchecked
             for i in range(0, childCount):
                 child = parent.child(i)
@@ -250,12 +245,12 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         return pstate
 
     def getCheckedTreeItems(self):
-        """Retourne les items de l'arbre des attributs qui sont cochés
+        """
+        Retourne les items de l'arbre des attributs qui sont cochés
         """
         tree = self.treeWidget
         checkedItems = {}
         for i in range(0, self.treeWidget.topLevelItemCount()):
-
             item = tree.topLevelItem(i)
             if item.checkState(0):
                 checkedItems[item.text(0)] = []
@@ -263,17 +258,16 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                     subitem = item.child(j)
                     if subitem.checkState(0):
                         checkedItems[item.text(0)].append(subitem.text(0))
-
         return checkedItems
 
     def save(self):
-        """Sauvegarde la configuration des différents paramètres dans le fichier xml
         """
-
+        Sauvegarde la configuration des différents paramètres dans le fichier xml
+        """
+        
         # Url
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, self.lineEditUrl.text(),
-                                    "Serveur")
-
+        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, self.lineEditUrl.text(), "Serveur")
+        
         # login
         if self.checkBoxLogin.isChecked():
             login = self.lineEditLogin.text()
@@ -302,7 +296,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             filtre = self.comboBoxFiltre.currentText()
         else:
             filtre = ""
-
+        
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, filtre, "Map")
 
         # filtre groupe
@@ -320,20 +314,12 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             for calque in checkedItems:
                 RipartHelper.setAttributsCroquis(self.context.projectDir, calque, checkedItems[calque])
 
-        # proxy
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_proxy, self.lineEditProxy.text(),
-                                    "Serveur")
-
         # Groupe actif
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif,
-                                    self.lineEditGroupeActif.text(), "Serveur")
-
-        # Clé Geoportail
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_CleGeoportail,
-                                    self.lineEditCleGeoportail.text(), "Serveur")
-
+        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.lineEditGroupeActif.text(), "Serveur")
+    
     def keyPressEvent(self, event):
-        """Pour désactiver la fermeture de la fenêtre lors d'un clic sur "Enter"
+        """
+        Pour désactiver la fermeture de la fenêtre lors d'un clic sur "Enter"
         """
         key = event.key()
         if key == Qt.Key_Return or key == Qt.Key_Enter:
@@ -363,14 +349,12 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
     def getCountDays(self, qdate):
         """Compte le nombre de jours entre la date donnée et la date d'aujourd'hui
-        
         :param qdate: la date 
         :type qdate: QDate
         """
         date = qdate.toPyDate()
         dt = datetime.now().date()
-        cntDays = abs((dt - date).days)
-
+        cntDays = abs((dt-date).days)
         return cntDays
 
     def spinboxChanged(self):
