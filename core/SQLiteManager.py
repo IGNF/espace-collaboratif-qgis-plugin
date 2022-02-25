@@ -322,7 +322,7 @@ class SQLiteManager(object):
 
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
-        total = 0
+        totalRows = 0
 
         # Ajout de la colonne géométrie à la table en fonction de la dimension des coordonnées du 1er objet rencontré
         parameters_geometry_column = {}
@@ -337,11 +337,12 @@ class SQLiteManager(object):
             columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
             cur.execute(sql)
-            total += 1
-        print("SQLiteManager : {0} enregistrements pour la table {1}".format(total, parameters['tableName']))
+            totalRows += 1
+
         cur.close()
         connection.commit()
         connection.close()
+        return totalRows
 
     @staticmethod
     def selectRowsInTable(tableName, ids):

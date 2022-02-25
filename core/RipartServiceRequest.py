@@ -7,6 +7,7 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 """
 
+import json
 from .RipartLoggerCl import RipartLogger
 from . import requests
 from .requests.auth import HTTPBasicAuth
@@ -15,9 +16,29 @@ from .requests.auth import HTTPBasicAuth
 class RipartServiceRequest(object):
     """
     Classe pour les requêtes http vers le service ripart
+    Album Tutu Miles David
+    Album Stanley Clarke School days
     """
-
     logger = RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
+
+    @staticmethod
+    def nextRequest(url, authent=None, proxies=None, params=None):
+        try:
+            r = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
+                             params=params, verify=False)
+            if r.status_code == 200:
+                r.encoding = 'utf-8'
+                response = json.loads(r.text)
+                if len(response) == params['maxFeatures']:
+                    return {'status': 'ok', 'offset': params['offset'] + params['maxFeatures'], 'features': response,
+                            'stop': False}
+                elif len(response) < params['maxFeatures']:
+                    # le parametre offset est mis à 0 car la récupération des données est finie
+                    return {'status': 'ok', 'offset': 0, 'features': response, 'stop': True}
+            else:
+                return {'status': 'error'}
+        except Exception as e:
+            return {'status': 'error'}
 
     @staticmethod
     def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, files=None):
@@ -43,11 +64,10 @@ class RipartServiceRequest(object):
                 r = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
                                   data=data, files=files, verify=False)
 
-            #if not r.text.startswith("<?xml version='1.0' encoding='UTF-8'?>"):
             if r.status_code != 200:
                 RipartServiceRequest.logger.error(r.text)
                 raise Exception(r.reason)
-            
+
             r.encoding = 'utf-8'
             response = r.text
 
@@ -55,5 +75,5 @@ class RipartServiceRequest(object):
             RipartServiceRequest.logger.error(format(e))
             raise Exception(u"Connexion impossible.\nVeuillez vérifier les paramètres de connexion\n(Aide>Configurer "
                             u"le plugin.\nErreur : )" + format(e))
-        
+
         return response

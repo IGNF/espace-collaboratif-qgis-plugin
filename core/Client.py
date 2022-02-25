@@ -302,9 +302,6 @@ class Client(object):
         :rtype dictionary
         """
         pagination = parameters['pagination']
-        total = 0
-        dicoRems = {}
-
         try:
             data = RipartServiceRequest.makeHttpRequest(self.__url + "/api/georem/georems_get.xml",
                                                         authent=self.__auth,

@@ -657,7 +657,7 @@ class Contexte(object):
         parameters['sqliteManager'] = newVectorLayer.sqliteManager
         #parameters['sqliteManager'] = SQLiteManager()
         wfsGet = WfsGet(self, parameters)
-        wfsGet.gcms_get()
+        wfsGet.gcms_get_bis()
 
         # On stocke le srid de la layer pour pouvoir traiter le post
         newVectorLayer.srid = parameters['sridLayer']

@@ -1,7 +1,7 @@
 import json
+import time
 
 from .RipartServiceRequest import RipartServiceRequest
-from .SQLiteManager import SQLiteManager
 
 
 class WfsGet(object):
@@ -47,6 +47,7 @@ class WfsGet(object):
     # &offset=0
     # &maxFeatures=200
     # &version=1.1.0
+    # http://gitlab.dockerforge.ign.fr/rpg/oukile_v2/blob/master/assets/js/oukile/saisie_controle/services/layer-service.js
     def gcms_get(self):
         offset = 0
         maxFeatures = 5000
@@ -67,13 +68,47 @@ class WfsGet(object):
         data = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                     params=self.parametersGcmsGet)
         # Remplissage de la table avec les objets de la couche
-        parametersForInsertsInTable = {}
-        parametersForInsertsInTable['tableName'] = self.layerName
-        parametersForInsertsInTable['geometryName'] = self.geometryName
-        parametersForInsertsInTable['sridProject'] = self.sridProject
-        parametersForInsertsInTable['sridLayer'] = self.sridLayer
-        parametersForInsertsInTable['role'] = self.layerRole
+        parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
+                                       'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
+                                       'role': self.layerRole}
         self.sqliteManager.insertRowsInTable(parametersForInsertsInTable, json.loads(data))
+
+    def gcms_get_bis(self):
+        # Remplissage de la table avec les objets de la couche
+        parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
+                                       'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
+                                       'role': self.layerRole}
+        offset = 0
+        maxFeatures = 5000
+        # Passage des paramètres pour l'url
+        self.setService()
+        self.setRequest()
+        # GeoJSON | JSON | CSV | GML (par défaut)
+        self.setOutputFormat('JSON')
+        self.setTypeName()
+        if self.bbox is not None:
+            self.setBBox(self.bbox)
+        self.setFilter()
+        self.setOffset(offset)
+        self.setMaxFeatures(maxFeatures)
+        self.setVersion('1.0.0')
+        start = time.time()
+        totalRows = 0
+        while True:
+            response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
+                                                        params=self.parametersGcmsGet)
+            if response['status'] == 'error':
+                break
+            totalRows += self.sqliteManager.insertRowsInTable(parametersForInsertsInTable, response['features'])
+            self.setOffset(response['offset'])
+            if response['stop']:
+                break
+        end = time.time()
+        timeResult = end - start
+        if timeResult > 60:
+            print("{0} objets, extraits en : {1} minutes".format(totalRows, timeResult/60))
+        else:
+            print("{0} objets, extraits en : {1} secondes".format(totalRows, timeResult))
 
     def setService(self):
         self.parametersGcmsGet['service'] = 'WFS'
