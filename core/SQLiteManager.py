@@ -53,42 +53,25 @@ class SQLiteManager(object):
         self.geometryType = typeGeometrie
         return sqlAttributes, typeGeometrie, columnDetruitExist
 
-    def setFirstAddGeometryColumn(self, parameters):
+    def addGeometryColumn(self, parameters):
         # Paramétrage de la colonne géométrie en 2D par défaut
-        sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XY')".format(parameters['tableName'],
-                                                                                parameters['geometryName'],
-                                                                                parameters['crs'],
-                                                                                parameters['geometryType'])
+        if parameters['is3D']:
+            sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XYZ')".format(parameters['tableName'],
+                                                                                    parameters['geometryName'],
+                                                                                    parameters['crs'],
+                                                                                    parameters['geometryType'])
+        else:
+            sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XY')".format(parameters['tableName'],
+                                                                                    parameters['geometryName'],
+                                                                                    parameters['crs'],
+                                                                                    parameters['geometryType'])
         return sql
 
-    def setAfterAddGeometryColumn(self, parameters, firstRow, cursor):
-        # On détermine si les coordonnées de la géométrie de la 1ère ligne sont en 2D ou 3D
-        for column, value in firstRow.items():
-            # si la couche est en visualisation, la table sqlite ne contient pas la colonne gcms_fingerprint
-            if column != parameters['geometryName']:
-                continue
-            coordinates = value.split(',')
-            xyz = coordinates[0].lstrip().split(' ')
-            if len(xyz) == 3:
-                self.is3D = True
-                break
-            else:
-                self.is3D = False
-                break
-
-        if self.is3D:
-            sql = "SELECT DiscardGeometryColumn('{0}', '{1}');" .format(parameters['tableName'],
-                                                                        parameters['geometryName'])
-            cursor.execute(sql)
-            sql = "SELECT RecoverGeometryColumn('{0}', '{1}', {2}, '{3}', 'XYZ')".format(parameters['tableName'],
-                                                                                         parameters['geometryName'],
-                                                                                         parameters['crs'],
-                                                                                         parameters['geometryType'])
-            cursor.execute(sql)
 
     def createTableFromLayer(self, tableName, tableStructure):
         # Stockage du nom du champ contenant la géométrie
         self.geometryName = tableStructure['geometryName']
+        self.is3D = tableStructure['attributes'][self.geometryName]['is3d']
 
         # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
@@ -110,7 +93,8 @@ class SQLiteManager(object):
         parameters_geometry_column['geometryName'] = tableStructure['geometryName']
         parameters_geometry_column['crs'] = cst.EPSGCRS
         parameters_geometry_column['geometryType'] = self.geometryType
-        sqlGeometryColumn = self.setFirstAddGeometryColumn(parameters_geometry_column)
+        parameters_geometry_column['is3D'] = self.is3D
+        sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
         cur.execute(sqlGeometryColumn)
 
         if len(cur.fetchall()) == 0:
@@ -273,15 +257,9 @@ class SQLiteManager(object):
     def formatAndTransformGeometry(value, source_crs, destination_crs, is3d):
         transformer = SQLiteManager.getTransformer(source_crs, destination_crs)
         if 'MULTI' in value:
-            if not is3d:
-                geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, False)
-            else:
-                geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, True)
+            geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, is3d)
         else:
-            if not is3d:
-                geomFromText = SQLiteManager.setGeomFromText(value, transformer, False)
-            else:
-                geomFromText = SQLiteManager.setGeomFromText(value, transformer, True)
+            geomFromText = SQLiteManager.setGeomFromText(value, transformer, is3d)
         return geomFromText
 
     def setColumnsValuesForInsert(self, attributesRow, parameters):
@@ -323,14 +301,6 @@ class SQLiteManager(object):
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         totalRows = 0
-
-        # Ajout de la colonne géométrie à la table en fonction de la dimension des coordonnées du 1er objet rencontré
-        parameters_geometry_column = {}
-        parameters_geometry_column['tableName'] = parameters['tableName']
-        parameters_geometry_column['geometryName'] = parameters['geometryName']
-        parameters_geometry_column['crs'] = cst.EPSGCRS
-        parameters_geometry_column['geometryType'] = self.geometryType
-        self.setAfterAddGeometryColumn(parameters_geometry_column, attributesRows[0], cur)
 
         # Insertion des lignes dans la table
         for attributesRow in attributesRows:

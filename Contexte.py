@@ -601,10 +601,11 @@ class Contexte(object):
                     # Récupération de la structure de la future table
                     structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
                     sourceLayer = self.importWFS(layer, structure)
-                    if not sourceLayer[0].isValid():
+                    newVectorLayer = sourceLayer[0]
+                    if not newVectorLayer.isValid():
                         print("Layer {} failed to load !".format(layer.nom))
                         continue
-                    self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
+                    self.formatLayer(layer, newVectorLayer, nodeGroup, structure, bbox, sourceLayer[1])
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
@@ -635,14 +636,6 @@ class Contexte(object):
             print(str(e))
 
     def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
-        # Ajout de la couche dans la carte
-        QgsProject.instance().addMapLayer(newVectorLayer, False)
-        nodeGroup.addLayer(newVectorLayer)
-        self.guichetLayers.append(newVectorLayer)
-        self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
-        print("Layer {} added to map".format(newVectorLayer.name()))
-        print("Layer {} contains {} objects".format(newVectorLayer.name(), len(list(newVectorLayer.getFeatures()))))
-
         # Remplissage de la table SQLite liée à la couche
         parameters = {}
         parameters['databasename'] = layer.databasename
@@ -680,9 +673,13 @@ class Contexte(object):
         if layer.role == 'visu' or layer.role == 'ref':
             newVectorLayer.setReadOnly()
 
-        # Rechargement de la couche pour que la visualisation dans la fenêtre carto courante
-        # soit réellement prise en compte
-        newVectorLayer.reload()
+        # Ajout de la couche dans la carte
+        QgsProject.instance().addMapLayer(newVectorLayer, False)
+        nodeGroup.addLayer(newVectorLayer)
+        self.guichetLayers.append(newVectorLayer)
+        self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
+        print("Layer {} added to map".format(newVectorLayer.name()))
+        print("Layer {} contains {} objects".format(newVectorLayer.name(), len(list(newVectorLayer.getFeatures()))))
 
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)
