@@ -32,6 +32,7 @@ import os.path
 
 from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
+from .core.SQLiteManager import SQLiteManager
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
 from qgis.PyQt import QtGui, uic

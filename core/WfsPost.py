@@ -14,6 +14,7 @@ class WfsPost(object):
     identification = None
     proxy = None
     actions = None
+    isTableStandard = True
 
     def __init__(self, context):
         self.context = context
@@ -22,6 +23,18 @@ class WfsPost(object):
         self.identification = self.context.client.getAuth()
         self.proxy = self.context.client.getProxies()
         self.actions = []
+        '''
+        il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
+        que l'on peut stocker dans une table sqlite
+        '''
+        result = SQLiteManager.selectRowsInTableOfTables(self.layer.name())
+        for r in result:
+            if r[0] == 'database':
+                self.layer.databasename = r[1]
+            elif r[0] == 'standard':
+                self.isTableStandard = r[1]
+            elif r[0] == 'srid':
+                self.layer.srid = r[1]
 
     def formatItemActions(self):
         res = '['
@@ -47,23 +60,50 @@ class WfsPost(object):
             geometries[featureId] = self.setGeometry(geometry)
         return geometries
 
-    def setCleabs(self, cleabs):
-        return '"cleabs": "{0}"'.format(cleabs)
+    def setKey(self, key):
+        if not self.isTableStandard:
+            keyValue = '"cleabs": "{0}"'.format(key)
+        else:
+            keyValue = '"id": "{0}"'.format(key)
+        return keyValue
 
     def setFingerPrint(self, fingerprint):
-        return '"gcms_fingerprint": "{0}", '.format(fingerprint)
+        return '"{0}": "{1}", '.format(cst.FINGERPRINT, fingerprint)
+
+    def setIsFingerPrint(self, addedFeatures):
+        for feature in addedFeatures:
+            if self.isTableStandard:
+                feature.setAttribute(cst.IS_FINGERPRINT, 0)
+            else:
+                feature.setAttribute(cst.IS_FINGERPRINT, 1)
+
+    def setFieldsNameValueWithAttributes(self, feature, attributesChanged):
+        fieldsNameValue = ""
+        if not self.isTableStandard:
+            for field in feature.fields():
+                fieldName = field.name()
+                if fieldName == 'cleabs' or fieldName == cst.FINGERPRINT:
+                    fieldsNameValue += '"{0}": "{1}", '.format(fieldName, feature.attribute(fieldName))
+        else:
+            fieldsNameValue += '"id": "{0}", '.format(feature.id())
+        for key, value in attributesChanged.items():
+            fieldsNameValue += '"{0}": "{1}", '.format(feature.fields()[key].name(), value)
+        # il faut enlever à la fin de la chaine la virgule et l'espace ', ' car c'est un update
+        pos = len(fieldsNameValue)
+        return fieldsNameValue[0:pos - 2]
 
     def setFieldsNameValue(self, feature):
         fieldsNameValue = ""
         for field in feature.fields():
             fieldName = field.name()
-            if fieldName == cst.ID_SQLITE:
+            if fieldName == cst.ID_SQLITE or fieldName == cst.IS_FINGERPRINT:
                 continue
-            fieldValue = feature.attribute(field.name())
+            fieldValue = feature.attribute(fieldName)
             if fieldValue is None or str(fieldValue) == "NULL":
-                continue
-                #fieldValue = ""
+                 continue
             fieldsNameValue += '"{0}": "{1}", '.format(fieldName, fieldValue)
+        # il faut garder la virgule et l'espace en fin de chaine car l'action est à "insert"
+        # et il y a la géométrie de l'objet à concaténer
         return fieldsNameValue
 
     def setStateAndLayerName(self, state):
@@ -79,11 +119,12 @@ class WfsPost(object):
         message = xmlResponse.checkResponseWfsTransactions()
         if message['status'] == 'SUCCESS':
             self.showMessage(message['message'])
-            self.layer.commitChanges(False)
-            #self.layer.reload() - semble inutile pour la couche sqlite, les données enregistrées sont directement affichées
+            res = self.layer.commitChanges()
+            if res:
+                self.layer.startEditing()
+            self.layer.reload()
         else:
             self.showMessage('Transaction interrompue : {}'.format(message['message']))
-            #raise Exception(message['message'])
 
     def commitLayer(self):
         self.actions.clear()
@@ -96,6 +137,7 @@ class WfsPost(object):
         addedFeatures = editBuffer.addedFeatures().values()
         if len(addedFeatures) != 0:
             self.pushAddedFeatures(addedFeatures)
+            self.setIsFingerPrint(addedFeatures)
         # géométrie modifiée
         changedGeometries = editBuffer.changedGeometries()
         # attributs modifiés
@@ -134,8 +176,9 @@ class WfsPost(object):
             feature = self.layer.getFeature(featureId)
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValue(feature)
-            strFeature += self.setFingerPrint(feature.attribute('gcms_fingerprint'))
-            strFeature += self.setCleabs(feature.attribute('cleabs'))
+            #if not self.isTableStandard:
+             #   strFeature += self.setFingerPrint(feature.attribute(cst.FINGERPRINT))
+              #  strFeature += self.setCleabs(feature.attribute('cleabs'))
             strFeature += geometries[featureId]
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Update')
@@ -144,10 +187,7 @@ class WfsPost(object):
 
     def pushChangedGeometries(self, changedGeometries):
         for featureId, geometry in changedGeometries.items():
-            feature = self.layer.getFeature(featureId)
             strFeature = self.setHeader()
-            strFeature += self.setFingerPrint(feature.attribute('gcms_fingerprint'))
-            strFeature += self.setCleabs(feature.attribute('cleabs'))
             strFeature += ', {0}'.format(self.setGeometry(geometry))
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Update')
@@ -156,11 +196,10 @@ class WfsPost(object):
 
     def pushChangedAttributeValues(self, changedAttributeValues):
         for featureId, attributes in changedAttributeValues.items():
+            print(attributes)
             feature = self.layer.getFeature(featureId)
             strFeature = self.setHeader()
-            strFeature += self.setFieldsNameValue(feature)
-            strFeature += self.setFingerPrint(feature.attribute('gcms_fingerprint'))
-            strFeature += self.setCleabs(feature.attribute('cleabs'))
+            strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Update')
             strFeature += '}'
@@ -170,8 +209,12 @@ class WfsPost(object):
         result = SQLiteManager.selectRowsInTable(self.layer.name(), deletedFeatures)
         for r in result:
             strFeature = self.setHeader()
-            strFeature += self.setFingerPrint(r[1])
-            strFeature += self.setCleabs(r[0])
+            if not self.isTableStandard:
+                # Attention, ne pas changer l'ordre d'insertion
+                strFeature += self.setFingerPrint(r[1])
+                strFeature += self.setKey(r[0])
+            else:
+                strFeature += self.setKey(r[0])
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Delete')
             strFeature += '}'
@@ -182,5 +225,4 @@ class WfsPost(object):
         msgBox.setWindowTitle("IGN Espace Collaboratif")
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setText(message)
-        ret = msgBox.exec_()
-
+        msgBox.exec_()

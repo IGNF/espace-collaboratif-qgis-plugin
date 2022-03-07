@@ -46,8 +46,6 @@ class EditFormFieldFromAttributes(object):
         # Correspondance nom du champ/type du champ
         linkFieldType = {}
         valeurs = self.data['attributes']
-        idName = self.data['idName']
-
         for c, v in valeurs.items():
             self.name = v['name']
             self.index = self.layer.fields().indexOf(self.name)
@@ -63,7 +61,6 @@ class EditFormFieldFromAttributes(object):
             linkFieldType[v['name']] = v['type']
 
         return linkFieldType
-
 
     '''
     Formatage du champ en fonction du type collaboratif
@@ -160,9 +157,6 @@ class EditFormFieldFromAttributes(object):
             formConfig = self.layer.editFormConfig()
             formConfig.setReadOnly(self.index, True)
             self.layer.setEditFormConfig(formConfig)
-
-
-
 
     '''
     Contraintes > Expression (min_value/max_value)

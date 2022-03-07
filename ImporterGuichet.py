@@ -15,6 +15,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .core.Box import Box
 from .core.ClientHelper import ClientHelper
 from .core.NoProfileException import NoProfileException
+from .core.SQLiteManager import SQLiteManager
 from .Contexte import Contexte
 
 
@@ -92,6 +93,8 @@ class ImporterGuichet(object):
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             QApplication.setOverrideCursor(Qt.BusyCursor)
 
+            # création de la table des tables
+            SQLiteManager.createTableOfTables()
             # Import des couches du guichet sélectionnées par l'utilisateur
             self.context.addGuichetLayersToMap(guichet_layers, bbox, self.context.profil.geogroup.name)
 

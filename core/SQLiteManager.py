@@ -11,9 +11,11 @@ class SQLiteManager(object):
     is3D = None
     geometryType = None
     geometryName = None
+    isTableStandard = None
 
     def __init__(self):
         self.dbPath = SQLiteManager.getBaseSqlitePath()
+        self.isTableStandard = True
 
     @staticmethod
     def getBaseSqlitePath():
@@ -49,7 +51,9 @@ class SQLiteManager(object):
                 sqlAttributes += "{0} {1},".format(cst.ID_ORIGINAL, self.setSwitchType(value['type']))
             else:
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
-        # ordre d'insertion geometrie,gcms_fingerprint
+        # il faut ajouter une colonne "is_fingerprint" qui indiquera si c'est une table BDUni qui contient gcms_fingerprint
+        sqlAttributes += "{0} INTEGER".format(cst.IS_FINGERPRINT)
+        # ordre d'insertion geometrie, gcms_fingerprint
         self.geometryType = typeGeometrie
         return sqlAttributes, typeGeometrie, columnDetruitExist
 
@@ -67,11 +71,11 @@ class SQLiteManager(object):
                                                                                     parameters['geometryType'])
         return sql
 
-
-    def createTableFromLayer(self, tableName, tableStructure):
+    def createTableFromLayer(self, layer, tableStructure):
         # Stockage du nom du champ contenant la géométrie
         self.geometryName = tableStructure['geometryName']
         self.is3D = tableStructure['attributes'][self.geometryName]['is3d']
+        self.isTableStandard = layer.isStandard
 
         # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
@@ -80,28 +84,27 @@ class SQLiteManager(object):
             raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
 
         connection = spatialite_connect(self.dbPath)
-        tmp = u"CREATE TABLE {0} (".format(tableName)
-        tmp += t[0]
-        pos = len(tmp)
-        sql = tmp[0:pos - 1]
+        sql = u"CREATE TABLE {0} (".format(layer.nom)
+        sql += t[0]
         sql += ')'
         print(sql)
         cur = connection.cursor()
         cur.execute(sql)
         parameters_geometry_column = {}
-        parameters_geometry_column['tableName'] = tableName
+        parameters_geometry_column['tableName'] = layer.nom
         parameters_geometry_column['geometryName'] = tableStructure['geometryName']
         parameters_geometry_column['crs'] = cst.EPSGCRS
         parameters_geometry_column['geometryType'] = self.geometryType
         parameters_geometry_column['is3D'] = self.is3D
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
         cur.execute(sqlGeometryColumn)
-
         if len(cur.fetchall()) == 0:
-            print("SQLiteManager : création de la table {0} réussie".format(tableName))
+            print("SQLiteManager : création de la table {0} réussie".format(layer.nom))
         cur.close()
         connection.commit()
         connection.close()
+        # compactage de la base
+        self.vacuumDatabase()
         #retourne True si la colonne detruit existe dans la table
         return t[2]
 
@@ -152,7 +155,7 @@ class SQLiteManager(object):
 
     @staticmethod
     def setOpenBracket(value, pos, is3D):
-        ch = value[0:pos]
+        ch = value[0:pos].upper()
         if 'MULTIPOLYGON' in value or 'POLYGON' in value:
             if is3D:
                 ch += " Z(("
@@ -266,14 +269,11 @@ class SQLiteManager(object):
         tmpColumns = '('
         tmpValues = '('
         for column, value in attributesRow.items():
-            # si la couche est en visualisation, la table sqlite ne contient pas la colonne gcms_fingerprint
-            if column == 'gcms_fingerprint' and (parameters['role'] == 'visu' or parameters['role'] == 'ref'):
-                continue
-            elif column == parameters['geometryName']:
+            if column == parameters['geometryName']:
                 tmpColumns += '{0},'.format(column)
                 geomFromTextTmp = self.formatAndTransformGeometry(value, parameters['sridLayer'],
-                                                                           parameters['sridProject'],
-                                                                           self.is3D)
+                                                                  parameters['sridProject'],
+                                                                  self.is3D)
                 tmpValues += "GeomFromText('{0}', {1}),".format(geomFromTextTmp, parameters['sridProject'])
                 continue
             elif column == cst.ID_SQLITE:
@@ -286,13 +286,17 @@ class SQLiteManager(object):
                 if type(value) == str:
                     value = value.replace("'", "''")
                 tmpValues += "'{}',".format(value)
-        pos = len(tmpColumns)
-        strColumns = tmpColumns[0:pos - 1]
-        strColumns += ')'
-        pos = len(tmpValues)
-        strValues = tmpValues[0:pos - 1]
-        strValues += ')'
-        return strColumns, strValues
+        # si la table sqlite contient :
+        # la colonne gcms_fingerprint
+        # et "isTableStandard" est à False
+        # alors la colonne 'is_fingerprint' est remplie à 1
+        # dans les autres cas à 0
+        tmpColumns += '{0})'.format(cst.IS_FINGERPRINT)
+        if self.isTableStandard:
+            tmpValues += "'0')"
+        else:
+            tmpValues += "'1')"
+        return tmpColumns, tmpValues
 
     def insertRowsInTable(self, parameters, attributesRows):
         if len(attributesRows) == 0:
@@ -322,9 +326,13 @@ class SQLiteManager(object):
         pos = len(tmp)
         listId = tmp[0:pos-1]
         listId += ')'
+        result = SQLiteManager.isColumnExist(tableName, cst.FINGERPRINT)
+        if result[0] == 1:
+            sql = "SELECT cleabs, {0} FROM {1} WHERE {2} IN {3}".format(cst.FINGERPRINT, tableName, cst.ID_SQLITE, listId)
+        else:
+            sql = "SELECT id FROM {0} WHERE {1} IN {2}".format(tableName, cst.ID_SQLITE, listId)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
-        sql = "SELECT cleabs, gcms_fingerprint FROM {0} WHERE {1} IN {2}".format(tableName, cst.ID_SQLITE, listId)
         cur.execute(sql)
         result = cur.fetchall()
         cur.close()
@@ -341,7 +349,7 @@ class SQLiteManager(object):
         if len(cursor.fetchall()) == 0:
             print("SQLiteManager : table {0} vidée".format(tableName))
         cursor.close()
-        connection.commit()
+        connection.close()
 
     def deleteTable(self, tableName):
         connection = spatialite_connect(self.dbPath)
@@ -350,4 +358,74 @@ class SQLiteManager(object):
         cursor.execute(sql)
         print("SQLiteManager : table {0} détruite".format(tableName))
         cursor.close()
+        connection.close()
+
+    @staticmethod
+    def isColumnExist(tableName, columnName):
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cursor = connection.cursor()
+        sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
+        cursor.execute(sql)
+        result = cursor.fetchone()
+        cursor.close()
+        connection.close()
+        return result
+
+    # Indispensable après le chargement d'une nouvelle couche
+    def vacuumDatabase(self):
+        connection = spatialite_connect(self.dbPath)
+        cursor = connection.cursor()
+        sql = u"VACUUM"
+        cursor.execute(sql)
+        cursor.close()
+        connection.close()
+
+    @staticmethod
+    def createTableOfTables():
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cur = connection.cursor()
+        sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, standard INTEGER, " \
+              u"database TEXT, srid TEXT)".format(cst.TABLEOFTABLES)
+        cur.execute(sql)
+        cur.close()
+        connection.close()
+
+    @staticmethod
+    def InsertIntoTableOfTables(parameters):
+        # TODO
+        # Si l'enregistrement existe déjà, on sort ou on update ?
+        result = SQLiteManager.selectRowsInTableOfTables(parameters['layer'])
+        if len(result) == 1:
+            return
+
+        columns = ''
+        values = ''
+        for col, val in parameters.items():
+            columns += "'{0}',".format(col)
+            if val == 0 or val == 1:
+                values += "{0},".format(val)
+            else:
+                values += "'{0}',".format(val)
+        posC = len(columns)
+        posV = len(values)
+        sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(cst.TABLEOFTABLES, columns[0:posC-1], values[0:posV-1])
+        print(sql)
+
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cur = connection.cursor()
+        cur.execute(sql)
+        cur.close()
         connection.commit()
+        connection.close()
+
+    @staticmethod
+    def selectRowsInTableOfTables(tableName):
+        # select * from tableoftables where layer = 'Surfaces'
+        sql = "SELECT * FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, tableName)
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cur = connection.cursor()
+        cur.execute(sql)
+        result = cur.fetchall()
+        cur.close()
+        connection.close()
+        return result

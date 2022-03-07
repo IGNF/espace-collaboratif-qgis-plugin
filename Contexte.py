@@ -164,8 +164,9 @@ class Contexte(object):
         Retourne l'instance du Contexte
         """
         if not Contexte.instance or (Contexte.instance.projectDir != QgsProject.instance().homePath() or
-              ntpath.basename(QgsProject.instance().fileName()) not in [Contexte.instance.projectFileName + ".qgs",
-                                                                        Contexte.instance.projectFileName + ".qgz"]):
+                                     ntpath.basename(QgsProject.instance().fileName()) not in [
+                                         Contexte.instance.projectFileName + ".qgs",
+                                         Contexte.instance.projectFileName + ".qgz"]):
             Contexte.instance = Contexte._createInstance(QObject, QgsProject)
         return Contexte.instance
 
@@ -534,7 +535,7 @@ class Contexte(object):
         if sqliteManager.isTableExist(layer.nom):
             sqliteManager.emptyTable(layer.nom)
             sqliteManager.deleteTable(layer.nom)
-        bColumnDetruitExist = sqliteManager.createTableFromLayer(layer.nom, structure)
+        bColumnDetruitExist = sqliteManager.createTableFromLayer(layer, structure)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
@@ -545,7 +546,7 @@ class Contexte(object):
         parameters = {'uri': uri.uri(), 'name': layer.nom, 'genre': 'spatialite', 'databasename': layer.databasename,
                       'sqliteManager': sqliteManager}
         vlayer = GuichetVectorLayer(parameters)
-        #vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
+        # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
         return vlayer, bColumnDetruitExist
 
@@ -584,28 +585,34 @@ class Contexte(object):
             if nodeGroup is not None:
                 if nodeGroup.name() != nameGroup and (len(nodesGroup) == 1):
                     QMessageBox.warning(None, "Charger les couches de mon groupe",
-                                    u"Votre projet QGIS contient des couches d'un autre groupe Espace collaboratif (" + nodeGroup.name() +
-                                    "). \nPour pouvoir charger les données du groupe " + nameGroup +
-                                    ", veuillez supprimer les couches existantes de votre projet QGIS ou travailler dans un nouveau projet." +
-                                    "\n\nNB : ces couches seront simplement supprimées de la carte QGIS en cours, elles resteront disponibles sur l'Espace collaboratif.")
+                                        u"Votre projet QGIS contient des couches d'un autre groupe Espace "
+                                        u"collaboratif (" + nodeGroup.name() + "). \nPour pouvoir charger les données "
+                                                                               "du groupe " + nameGroup + ", veuillez supprimer les couches existantes de "
+                                                                                                          "votre projet QGIS ou travailler dans un nouveau projet." + "\n\nNB : "
+                                                                                                                                                                      "ces couches seront simplement supprimées de la carte QGIS en cours, "
+                                                                                                                                                                      "elles resteront disponibles sur l'Espace collaboratif.")
                     return
 
             for layer in guichet_layers:
-                if layer.nom in maplayers or layer.description in maplayers:
-                    print("Layer {} already exists !".format(layer.nom))
-                    continue
+                if layer.nom in maplayers:
+                    message = "La couche {} existe déjà, voulez-vous continuer ?".format(layer.nom)
+                    reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                                                 QMessageBox.No)
+                    if reply == QMessageBox.No:
+                        continue
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WFS:
                     # Récupération de la structure de la future table
                     structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
+                    if structure['database_type'] == 'bduni' and structure['database_versioning'] == True:
+                        layer.isStandard = False
                     sourceLayer = self.importWFS(layer, structure)
-                    newVectorLayer = sourceLayer[0]
-                    if not newVectorLayer.isValid():
+                    if not sourceLayer[0].isValid():
                         print("Layer {} failed to load !".format(layer.nom))
                         continue
-                    self.formatLayer(layer, newVectorLayer, nodeGroup, structure, bbox, sourceLayer[1])
+                    self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
@@ -636,21 +643,23 @@ class Contexte(object):
             print(str(e))
 
     def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
+        newVectorLayer.isStandard = layer.isStandard
+
         # Remplissage de la table SQLite liée à la couche
-        parameters = {}
-        parameters['databasename'] = layer.databasename
-        parameters['layerName'] = layer.nom
-        parameters['role'] = layer.role
         geometryName = structure['geometryName']
-        parameters['geometryName'] = geometryName
-        parameters['sridProject'] = cst.EPSGCRS
-        parameters['sridLayer'] = int(structure['attributes'][geometryName]['srid'])
-        parameters['bbox'] = bbox
-        parameters['detruit'] = bColumnDetruitExist
-        parameters['sqliteManager'] = newVectorLayer.sqliteManager
-        #parameters['sqliteManager'] = SQLiteManager()
+        parameters = {'databasename': layer.databasename, 'layerName': layer.nom, 'role': layer.role,
+                      'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
+                      'sridLayer': int(structure['attributes'][geometryName]['srid']), 'bbox': bbox,
+                      'detruit': bColumnDetruitExist, 'sqliteManager': newVectorLayer.sqliteManager}
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get_bis()
+
+        # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
+        valStandard = 1
+        if not layer.isStandard:
+            valStandard = 0
+        parametersForTableOfTables = {'layer': layer.nom, 'standard': valStandard, 'database': layer.databasename, 'srid':parameters['sridLayer']}
+        SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
         # On stocke le srid de la layer pour pouvoir traiter le post
         newVectorLayer.srid = parameters['sridLayer']
@@ -719,12 +728,10 @@ class Contexte(object):
         :rtype dictionary
         """
         layers = QgsProject.instance().mapLayers()
-        layerNames = []
         maplayers = {}
         for key in layers:
-            l = layers[key]
-            layerNames.append(l.name())
-            maplayers[l.name()] = l.id()
+            layer = layers[key]
+            maplayers[layer.name()] = layer
         return maplayers
 
     def getMapPolygonLayers(self):
@@ -737,7 +744,8 @@ class Contexte(object):
         layers = QgsProject.instance().mapLayers()
         for key in layers:
             layer = layers[key]
-            if type(layer) is QgsVectorLayer and layer.geometryType() is not None and layer.geometryType() == QgsWkbTypes.PolygonGeometry:
+            if type(layer) is QgsVectorLayer and layer.geometryType() is not None and layer.geometryType() == \
+                    QgsWkbTypes.PolygonGeometry:
                 polylayers[layer.id()] = layer.name()
         return polylayers
 
@@ -860,11 +868,13 @@ class Contexte(object):
                 if isMultipart and ftype == QgsWkbTypes.PolygonGeometry:
                     for poly in geom.asMultiPolygon():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPolygonXY(poly), QgsWkbTypes.PolygonGeometry, lay.crs(), f[0]))
+                            self.makeCroquis(QgsGeometry.fromPolygonXY(poly), QgsWkbTypes.PolygonGeometry, lay.crs(),
+                                             f[0]))
                 elif isMultipart and ftype == QgsWkbTypes.LineGeometry:
                     for line in geom.asMultiPolyline():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPolylineXY(line), QgsWkbTypes.LineGeometry, lay.crs(), f[0]))
+                            self.makeCroquis(QgsGeometry.fromPolylineXY(line), QgsWkbTypes.LineGeometry, lay.crs(),
+                                             f[0]))
                 elif isMultipart and ftype == QgsWkbTypes.PointGeometry:
                     for pt in geom.asMultiPoint():
                         croquiss.append(
@@ -1010,7 +1020,7 @@ class Contexte(object):
                     allCroquisPoints.append(pt)
 
                 textGeom = textGeom[:-1] + textGeomEnd
-                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," +\
+                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," + \
                       "AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
                 cur.execute(sql)
 
@@ -1062,6 +1072,7 @@ class Contexte(object):
         return barycentre
 
     '''magicwand'''
+
     def selectRemarkByNo(self, noSignalements):
         """
         Sélection des remarques données par leur no

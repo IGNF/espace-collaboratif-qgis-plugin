@@ -283,9 +283,7 @@ class XMLResponse(object):
                     layer_id = nodelayer.find('LAYER')
                     if layer_id is not None:
                         layer.layer_id = layer_id.text
-
                     infosgeogroup.layers.append(layer)
-
                 try:
                     # Récupération des thèmes du groupe
                     themesAttDict = self.get_themes_attributes(nodegr.findall('THEMES/ATTRIBUT'))

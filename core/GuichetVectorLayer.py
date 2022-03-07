@@ -27,17 +27,19 @@ class GuichetVectorLayer(QgsVectorLayer):
     correspondanceChampType = None
     sqliteManager = None
     srid = None
+    # Juste pour savoir si cette couche est de type 'standard' ou 'bduni' avec gcms_fingerprint
+    isStandard = None
 
     def __init__(self, parameters):
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
         self.databasename = parameters['databasename']
         self.sqliteManager = parameters['sqliteManager']
         self.srid = -1
+        self.isStandard = True
 
     '''
     Connexion des signaux pour les évènements survenus sur la carte
     '''
-
     def connectSignals(self):
 
         # Connexion des signaux permettant le traitement de gcms_fingerprint pour les tables historisées
@@ -66,7 +68,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     Calcul d'une clé de hachage à partir des caractéristiques d'un objet
     # géométrie et valeurs de ses attributs
     '''
-
     def setMD5(self, feature):
         allAttributes = []
 
@@ -115,7 +116,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     sont stockées dans un fichier sous la forme d'une clé de hachage :
     id QGIS/clé de hachage
     '''
-
     def setMd5BeforeWorks(self):
         # il faut détruire le fichier afterWorks
         if os.path.exists(self.fileAfterWorks):
@@ -135,7 +135,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     id QGIS/clé de hachage
     Il doit y avoir des objets créés, modifiés, supprimés
     '''
-
     def setMd5AfterWorks(self):
         fichier = self.openFile(self.fileAfterWorks, "wt")
         features = self.getFeatures()
@@ -149,7 +148,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     L'utilisateur a mis fin à l'édition de la couche,
     les objets sont stockés dans un fichier
     '''
-
     def editing_stopped(self):
         self.setMd5AfterWorks()
         print("Rechargement de la couche")
@@ -172,7 +170,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     on simule une modification du champ gcms_fingerprint pour que celui-ci soit inclus dans la transaction.
     Sinon, la transaction est refusée par l'espace collaboratif.
     '''
-
     def include_fingerprint(self, fid, idx=None):
         if idx is not None and (idx == self.idxFingerprint or self.idxFingerprint == -1):
             return
@@ -187,7 +184,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     Interdiction de supprimer un attribut sinon la synchronisation au serveur est perdue
     '''
-
     def attribute_deleted(self, idx):
         fields = self.fields()
         raise Exception("Impossible de supprimer l'attribut {} car la synchronisation au serveur sera perdue.".format(
@@ -196,7 +192,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     Interdiction d'ajouter un attribut sinon la synchronisation au serveur est perdue
     '''
-
     def attribute_added(self, idx):
         fields = self.fields()
         raise Exception("Impossible d'ajouter l'attribut {} car la synchronisation au serveur sera perdue.".format(
@@ -206,7 +201,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     Comptage par différentiel des objets
     ajoutés, supprimés ou modifiés de la couche
     '''
-
     def doDifferentielAfterBeforeWorks(self):
         # Ajout
         self.stat.nfa = 0
@@ -261,7 +255,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     [Layer:Propriétés][Bouton:Formulaire d'attributs][Fenêtre:Contrôles disponibles][Onglet:Fields]
     Exemple : config = {'map': [{'':'', 'Zone1': 'Zone1'},{' Zone2': ' Zone2'}, {'Zone3': 'Zone3'}]}
     '''
-
     def setModifyFormAttributes(self, listOfValues):
         fields = self.fields()
         attribute_values = {}
@@ -295,7 +288,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         et doit se traduire dans QGIS par "zone" LIKE 'Zone1'
         TODO : manque le traitement du AND, OR, etc...
     '''
-
     def changeConditionToExpression(self, condition, bExpression):
         # Pas de style pour la couche, style QGIS par défaut
         if bExpression is False and condition is None or condition == '':
@@ -311,7 +303,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
         Récupère la couleur en fonction du type de géométrie
     '''
-
     def getColorFromType(self, data):
 
         if data['type'] == 'line':
@@ -337,7 +328,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
         Récupère l'opacité de la couche
     '''
-
     def getOpacity(self, data):
 
         if data['type'] == 'line':
@@ -355,7 +345,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
         Récupère la taille du symbole
     '''
-
     def getWidth(self, data):
 
         if data['type'] == 'line':
@@ -398,7 +387,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
         Symbologie extraite du style Collaboratif par défaut
     '''
-
     def setModifyWithQgsSingleDefaultSymbolRenderer(self):
         geomType = self.geometryType()
         symbol = None
@@ -554,7 +542,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
         Modification de la symbologie
     '''
-
     def setModifySymbols(self, listOfValues):
 
         # Pas de balise Style, Symbologie = Symbole QGIS par défaut
@@ -575,7 +562,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         Définition de l'échelle minimum et maximum de la couche
         Source : https://geoservices.ign.fr/documentation/geoservices/wmts.html#taille-des-tuiles-en-pixels
     '''
-
     def setDisplayScale(self, min, max):
         # Correspondance zoom des tuiles - échelle approximative
         scale = {

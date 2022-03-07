@@ -72,6 +72,7 @@ class WfsGet(object):
                                        'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
                                        'role': self.layerRole}
         self.sqliteManager.insertRowsInTable(parametersForInsertsInTable, json.loads(data))
+        self.sqliteManager.vacuumDatabase()
 
     def gcms_get_bis(self):
         # Remplissage de la table avec les objets de la couche
@@ -103,6 +104,7 @@ class WfsGet(object):
             self.setOffset(response['offset'])
             if response['stop']:
                 break
+        self.sqliteManager.vacuumDatabase()
         end = time.time()
         timeResult = end - start
         if timeResult > 60:
