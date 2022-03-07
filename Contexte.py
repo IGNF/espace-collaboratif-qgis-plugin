@@ -501,8 +501,6 @@ class Contexte(object):
     def appendUri_WFS(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
         uri.setConnection("", "", self.login, self.pwd)
-        # Patch pour pouvoir éditer les données avec QGIS 3.16
-        uri.setParam('version', '1.0.0')
         uri.setParam('request', 'GetFeature')
         if str(bbox) != "None":
             uri.setParam('bbox', bbox.boxToString())
