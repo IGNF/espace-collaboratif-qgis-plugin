@@ -155,8 +155,9 @@ class SQLiteManager(object):
 
     @staticmethod
     def setOpenBracket(value, pos, is3D):
+        valueUpper = value.upper()
         ch = value[0:pos].upper()
-        if 'MULTIPOLYGON' in value or 'POLYGON' in value:
+        if 'MULTIPOLYGON' in valueUpper or 'POLYGON' in valueUpper:
             if is3D:
                 ch += " Z(("
             else:
@@ -170,10 +171,11 @@ class SQLiteManager(object):
 
     @staticmethod
     def setCloseBracket(value, res):
+        valueUpper = value.upper()
         pos = res.rfind(',')
-        if 'MULTIPOLYGON' in value:
+        if 'MULTIPOLYGON' in valueUpper:
             ch = "{0})))".format(res[0:pos])
-        elif 'MULTILINESTRING' in value or "POLYGON" in value:
+        elif 'MULTILINESTRING' in valueUpper or "POLYGON" in valueUpper:
             ch = "{0}))".format(res[0:pos])
         else:
             ch = "{0})".format(res[0:pos])
@@ -181,13 +183,14 @@ class SQLiteManager(object):
 
     @staticmethod
     def setMultiGeomFromText(value, transformer, is3D):
+        valueUpper = value.upper()
         closeBracket = False
         pos = value.find('(')
         res = SQLiteManager.setOpenBracket(value, pos, is3D)
         erase = 0
-        if 'MULTILINESTRING' in value:
+        if 'MULTILINESTRING' in valueUpper:
             erase = 1
-        elif 'MULTIPOLYGON' in value:
+        elif 'MULTIPOLYGON' in valueUpper:
             erase = 2
         tmpValue = value[pos + erase:len(value) - erase]
         if erase == 2:
@@ -259,7 +262,7 @@ class SQLiteManager(object):
     @staticmethod
     def formatAndTransformGeometry(value, source_crs, destination_crs, is3d):
         transformer = SQLiteManager.getTransformer(source_crs, destination_crs)
-        if 'MULTI' in value:
+        if 'MULTI' in value.upper():
             geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, is3d)
         else:
             geomFromText = SQLiteManager.setGeomFromText(value, transformer, is3d)
