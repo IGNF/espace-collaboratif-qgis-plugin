@@ -585,10 +585,10 @@ class Contexte(object):
                     QMessageBox.warning(None, "Charger les couches de mon groupe",
                                         u"Votre projet QGIS contient des couches d'un autre groupe Espace "
                                         u"collaboratif (" + nodeGroup.name() + "). \nPour pouvoir charger les données "
-                                                                               "du groupe " + nameGroup + ", veuillez supprimer les couches existantes de "
-                                                                                                          "votre projet QGIS ou travailler dans un nouveau projet." + "\n\nNB : "
-                                                                                                                                                                      "ces couches seront simplement supprimées de la carte QGIS en cours, "
-                                                                                                                                                                      "elles resteront disponibles sur l'Espace collaboratif.")
+                                        "du groupe " + nameGroup + ", veuillez supprimer les couches existantes de "
+                                        "votre projet QGIS ou travailler dans un nouveau projet." + "\n\nNB : "
+                                        "ces couches seront simplement supprimées de la carte QGIS en cours, "
+                                        "elles resteront disponibles sur l'Espace collaboratif.")
                     return
 
             for layer in guichet_layers:

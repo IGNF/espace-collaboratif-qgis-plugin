@@ -285,6 +285,9 @@ class SQLiteManager(object):
             else:
                 if type(value) == str:
                     value = value.replace("'", "''")
+                if type(value) == list:
+                    tmpValues += '"{}",'.format(value)
+                    continue
                 tmpValues += "'{}',".format(value)
         # si la table sqlite contient :
         # la colonne gcms_fingerprint
@@ -310,6 +313,7 @@ class SQLiteManager(object):
         for attributesRow in attributesRows:
             columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
+            #print(sql)
             cur.execute(sql)
             totalRows += 1
 
@@ -330,7 +334,7 @@ class SQLiteManager(object):
         if result[0] == 1:
             sql = "SELECT cleabs, {0} FROM {1} WHERE {2} IN {3}".format(cst.FINGERPRINT, tableName, cst.ID_SQLITE, listId)
         else:
-            sql = "SELECT id FROM {0} WHERE {1} IN {2}".format(tableName, cst.ID_SQLITE, listId)
+            sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(cst.ID_SQLITE, tableName, cst.ID_SQLITE, listId)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         cur.execute(sql)
