@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QMessageBox
+from qgis.core import QgsMapLayerType
 
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
@@ -28,13 +29,16 @@ class WfsPost(object):
         que l'on peut stocker dans une table sqlite
         '''
         result = SQLiteManager.selectRowsInTableOfTables(self.layer.name())
-        for r in result:
-            if r[0] == 'database':
-                self.layer.databasename = r[1]
-            elif r[0] == 'standard':
-                self.isTableStandard = r[1]
-            elif r[0] == 'srid':
-                self.layer.srid = r[1]
+        if result is not None:
+            for r in result:
+                if r[0] == 'database':
+                    self.layer.databasename = r[1]
+                elif r[0] == 'standard':
+                    self.isTableStandard = r[1]
+                elif r[0] == 'srid':
+                    self.layer.srid = r[1]
+                elif r[0] == 'idName':
+                    self.layer.idName = r[1]
 
     def formatItemActions(self):
         res = '['
@@ -60,12 +64,13 @@ class WfsPost(object):
             geometries[featureId] = self.setGeometry(geometry)
         return geometries
 
-    def setKey(self, key):
-        if not self.isTableStandard:
-            keyValue = '"cleabs": "{0}"'.format(key)
-        else:
-            keyValue = '"id": "{0}"'.format(key)
-        return keyValue
+    def setKey(self, key, idName):
+        return '"{0}": "{1}"'.format(idName, key)
+        #if not self.isTableStandard:
+            #keyValue = '"cleabs": "{0}"'.format(key)
+        #else:
+            #keyValue = '"{0}": "{1}"'.format(idName, key)
+        #return keyValue
 
     def setFingerPrint(self, fingerprint):
         return '"{0}": "{1}", '.format(cst.FINGERPRINT, fingerprint)
@@ -128,6 +133,10 @@ class WfsPost(object):
 
     def commitLayer(self):
         self.actions.clear()
+
+        if self.layer.type() is not QgsMapLayerType.VectorLayer:
+            self.showMessage("La couche sélectionnée n'est pas synchronisable vers l'espace collaboratif")
+            return
 
         editBuffer = self.layer.editBuffer()
         if not editBuffer:
@@ -214,7 +223,7 @@ class WfsPost(object):
                 strFeature += self.setFingerPrint(r[1])
                 strFeature += self.setKey(r[0])
             else:
-                strFeature += self.setKey(r[0])
+                strFeature += self.setKey(self.layer.idName, r[0])
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Delete')
             strFeature += '}'

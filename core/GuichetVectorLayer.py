@@ -29,6 +29,7 @@ class GuichetVectorLayer(QgsVectorLayer):
     srid = None
     # Juste pour savoir si cette couche est de type 'standard' ou 'bduni' avec gcms_fingerprint
     isStandard = None
+    idNameForDatabase = None
 
     def __init__(self, parameters):
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
@@ -36,6 +37,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.sqliteManager = parameters['sqliteManager']
         self.srid = -1
         self.isStandard = True
+        self.idNameForDatabase = parameters['idName']
 
     '''
     Connexion des signaux pour les évènements survenus sur la carte

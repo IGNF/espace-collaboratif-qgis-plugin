@@ -530,7 +530,7 @@ class Contexte(object):
 
         # Si la table du nom de la couche existe,
         # elle est vidée, détruite et recréée
-        if sqliteManager.isTableExist(layer.nom):
+        if SQLiteManager.isTableExist(layer.nom):
             sqliteManager.emptyTable(layer.nom)
             sqliteManager.deleteTable(layer.nom)
         bColumnDetruitExist = sqliteManager.createTableFromLayer(layer, structure)
@@ -542,7 +542,7 @@ class Contexte(object):
         uri.setDataSource('', layer.nom, structure['geometryName'])
         uri.setSrid(str(cst.EPSGCRS))
         parameters = {'uri': uri.uri(), 'name': layer.nom, 'genre': 'spatialite', 'databasename': layer.databasename,
-                      'sqliteManager': sqliteManager}
+                      'sqliteManager': sqliteManager, 'idName': structure['idName']}
         vlayer = GuichetVectorLayer(parameters)
         # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
@@ -642,6 +642,8 @@ class Contexte(object):
 
     def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
         newVectorLayer.isStandard = layer.isStandard
+        idNameForDatabase = structure['idName']
+        newVectorLayer.idNameForDatabase = idNameForDatabase
 
         # Remplissage de la table SQLite liée à la couche
         geometryName = structure['geometryName']
@@ -656,7 +658,8 @@ class Contexte(object):
         valStandard = 1
         if not layer.isStandard:
             valStandard = 0
-        parametersForTableOfTables = {'layer': layer.nom, 'standard': valStandard, 'database': layer.databasename, 'srid':parameters['sridLayer']}
+        parametersForTableOfTables = {'layer': layer.nom, 'idName': idNameForDatabase, 'standard': valStandard,
+                                      'database': layer.databasename, 'srid':parameters['sridLayer']}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
         # On stocke le srid de la layer pour pouvoir traiter le post

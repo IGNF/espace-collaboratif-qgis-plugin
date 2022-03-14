@@ -11,6 +11,7 @@ class SQLiteManager(object):
     is3D = None
     geometryType = None
     geometryName = None
+    idName = None
     isTableStandard = None
 
     def __init__(self):
@@ -26,8 +27,9 @@ class SQLiteManager(object):
         dbPath = projectDir + "/" + dbName + ".sqlite"
         return dbPath
 
-    def isTableExist(self, tableName):
-        connection = spatialite_connect(self.dbPath)
+    @staticmethod
+    def isTableExist(tableName):
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         sql = u"SELECT name FROM sqlite_master WHERE type='table' AND name='{}'".format(tableName)
         cur = connection.cursor()
         cur.execute(sql)
@@ -76,6 +78,7 @@ class SQLiteManager(object):
         self.geometryName = tableStructure['geometryName']
         self.is3D = tableStructure['attributes'][self.geometryName]['is3d']
         self.isTableStandard = layer.isStandard
+        self.idName = tableStructure['idName']
 
         # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
@@ -291,6 +294,8 @@ class SQLiteManager(object):
                 if type(value) == list:
                     tmpValues += '"{}",'.format(value)
                     continue
+                    # pour l'attribut like de type str mais json
+                #tmpValues += '"{}",'.format(value)
                 tmpValues += "'{}',".format(value)
         # si la table sqlite contient :
         # la colonne gcms_fingerprint
@@ -391,8 +396,8 @@ class SQLiteManager(object):
     def createTableOfTables():
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
-        sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, standard INTEGER, " \
-              u"database TEXT, srid TEXT)".format(cst.TABLEOFTABLES)
+        sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
+              u"standard INTEGER, database TEXT, srid TEXT)".format(cst.TABLEOFTABLES)
         cur.execute(sql)
         cur.close()
         connection.close()
@@ -427,7 +432,11 @@ class SQLiteManager(object):
 
     @staticmethod
     def selectRowsInTableOfTables(tableName):
-        # select * from tableoftables where layer = 'Surfaces'
+        result = None
+        # Est-ce que la table existe ?
+        if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+            return result
+
         sql = "SELECT * FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, tableName)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
