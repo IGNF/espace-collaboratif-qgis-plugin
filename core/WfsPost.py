@@ -31,6 +31,14 @@ class WfsPost(object):
         result = SQLiteManager.selectRowsInTableOfTables(self.layer.name())
         if result is not None:
             for r in result:
+                self.layer.databasename = r[4]
+                self.isTableStandard = r[3]
+                self.layer.isStandard = r[3]
+                self.layer.srid = r[5]
+                self.layer.idNameForDatabase = r[2]
+                self.layer.geometryNameForDatabase = r[6]
+
+            '''for r in result: 
                 if r[0] == 'database':
                     self.layer.databasename = r[1]
                 elif r[0] == 'standard':
@@ -38,7 +46,7 @@ class WfsPost(object):
                 elif r[0] == 'srid':
                     self.layer.srid = r[1]
                 elif r[0] == 'idName':
-                    self.layer.idName = r[1]
+                    self.layer.idName = r[1]'''
 
     def formatItemActions(self):
         res = '['
@@ -55,8 +63,11 @@ class WfsPost(object):
         return '{"feature": {'
 
     def setGeometry(self, geometry):
-        wktGeometry = SQLiteManager.formatAndTransformGeometry(geometry.asWkt(), cst.EPSGCRS, self.layer.srid, self.layer.sqliteManager.is3D) #TO-DO
-        return '"{0}": "{1}"'.format(self.layer.sqliteManager.geometryName, wktGeometry)
+        is3D = False
+        if self.layer.isStandard == 0:
+            is3D = True
+        wktGeometry = SQLiteManager.formatAndTransformGeometry(geometry.asWkt(), cst.EPSGCRS, self.layer.srid, is3D) #TO-DO
+        return '"{0}": "{1}"'.format(self.layer.geometryNameForDatabase, wktGeometry)
 
     def setGeometries(self, changedGeometries):
         geometries = {}
@@ -215,15 +226,15 @@ class WfsPost(object):
             self.actions.append(strFeature)
 
     def pushDeletedFeatures(self, deletedFeatures):
-        result = SQLiteManager.selectRowsInTable(self.layer.name(), deletedFeatures)
+        result = SQLiteManager.selectRowsInTable(self.layer, deletedFeatures)
         for r in result:
             strFeature = self.setHeader()
             if not self.isTableStandard:
                 # Attention, ne pas changer l'ordre d'insertion
                 strFeature += self.setFingerPrint(r[1])
-                strFeature += self.setKey(r[0])
+                strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
             else:
-                strFeature += self.setKey(self.layer.idName, r[0])
+                strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Delete')
             strFeature += '}'

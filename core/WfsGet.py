@@ -2,6 +2,7 @@ import json
 import time
 
 from .RipartServiceRequest import RipartServiceRequest
+from .SQLiteManager import SQLiteManager
 
 
 class WfsGet(object):
@@ -19,7 +20,7 @@ class WfsGet(object):
     bbox = None
     parametersGcmsGet = None
     bDetruit = None
-    sqliteManager = None
+    isStandard = None
 
     def __init__(self, context, parameters):
         self.context = context
@@ -35,7 +36,7 @@ class WfsGet(object):
         self.bbox = parameters['bbox']
         self.parametersGcmsGet = {}
         self.bDetruit = parameters['detruit']
-        self.sqliteManager = parameters['sqliteManager']
+        self.isStandard = parameters['isStandard']
 
     # La requête doit être de type :
     # https://espacecollaboratif.ign.fr/gcms/wfs
@@ -48,7 +49,7 @@ class WfsGet(object):
     # &maxFeatures=200
     # &version=1.1.0
     # http://gitlab.dockerforge.ign.fr/rpg/oukile_v2/blob/master/assets/js/oukile/saisie_controle/services/layer-service.js
-    def gcms_get(self):
+    '''def gcms_get(self):
         offset = 0
         maxFeatures = 5000
 
@@ -64,21 +65,22 @@ class WfsGet(object):
         self.setOffset(offset.__str__())
         self.setMaxFeatures(maxFeatures.__str__())
         self.setVersion('1.0.0')
+        sqliteManager = SQLiteManager()
         # Lancement de la requête
         data = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                     params=self.parametersGcmsGet)
         # Remplissage de la table avec les objets de la couche
         parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                        'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
-                                       'role': self.layerRole}
-        self.sqliteManager.insertRowsInTable(parametersForInsertsInTable, json.loads(data))
-        self.sqliteManager.vacuumDatabase()
+                                       'role': self.layerRole, 'isStandard': self.isStandard}
+        sqliteManager.insertRowsInTable(parametersForInsertsInTable, json.loads(data))
+        sqliteManager.vacuumDatabase()'''
 
     def gcms_get_bis(self):
         # Remplissage de la table avec les objets de la couche
         parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                        'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
-                                       'role': self.layerRole}
+                                       'role': self.layerRole, 'isStandard': self.isStandard}
         offset = 0
         maxFeatures = 5000
         # Passage des paramètres pour l'url
@@ -95,16 +97,17 @@ class WfsGet(object):
         self.setVersion('1.0.0')
         start = time.time()
         totalRows = 0
+        sqliteManager = SQLiteManager()
         while True:
             response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 break
-            totalRows += self.sqliteManager.insertRowsInTable(parametersForInsertsInTable, response['features'])
+            totalRows += sqliteManager.insertRowsInTable(parametersForInsertsInTable, response['features'])
             self.setOffset(response['offset'])
             if response['stop']:
                 break
-        self.sqliteManager.vacuumDatabase()
+        sqliteManager.vacuumDatabase()
         end = time.time()
         timeResult = end - start
         if timeResult > 60:

@@ -10,13 +10,9 @@ class SQLiteManager(object):
     tableAttributes = None
     is3D = None
     geometryType = None
-    geometryName = None
-    idName = None
-    isTableStandard = None
 
     def __init__(self):
         self.dbPath = SQLiteManager.getBaseSqlitePath()
-        self.isTableStandard = True
 
     @staticmethod
     def getBaseSqlitePath():
@@ -75,10 +71,10 @@ class SQLiteManager(object):
 
     def createTableFromLayer(self, layer, tableStructure):
         # Stockage du nom du champ contenant la géométrie
-        self.geometryName = tableStructure['geometryName']
-        self.is3D = tableStructure['attributes'][self.geometryName]['is3d']
-        self.isTableStandard = layer.isStandard
-        self.idName = tableStructure['idName']
+        geometryName = tableStructure['geometryName']
+        self.is3D = tableStructure['attributes'][geometryName]['is3d']
+        #self.isTableStandard = layer.isStandard
+        #self.idName = tableStructure['idName']
 
         # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
@@ -166,10 +162,13 @@ class SQLiteManager(object):
             else:
                 ch += " (("
         else:
+            ch += "("
+            '''
             if is3D:
                 ch += " Z("
             else:
                 ch += "("
+            '''
         return ch
 
     @staticmethod
@@ -272,6 +271,7 @@ class SQLiteManager(object):
         return geomFromText
 
     def setColumnsValuesForInsert(self, attributesRow, parameters):
+        isTableStandard = True
         tmpColumns = '('
         tmpValues = '('
         for column, value in attributesRow.items():
@@ -303,7 +303,7 @@ class SQLiteManager(object):
         # alors la colonne 'is_fingerprint' est remplie à 1
         # dans les autres cas à 0
         tmpColumns += '{0})'.format(cst.IS_FINGERPRINT)
-        if self.isTableStandard:
+        if parameters['isStandard']:
             tmpValues += "'0')"
         else:
             tmpValues += "'1')"
@@ -313,7 +313,7 @@ class SQLiteManager(object):
         if len(attributesRows) == 0:
             raise Exception("Pas de données pour la table {0}".format(parameters['tableName']))
 
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = spatialite_connect(self.dbPath)
         cur = connection.cursor()
         totalRows = 0
 
@@ -331,18 +331,18 @@ class SQLiteManager(object):
         return totalRows
 
     @staticmethod
-    def selectRowsInTable(tableName, ids):
+    def selectRowsInTable(layer, ids):
         tmp = "("
         for idTmp in ids:
             tmp += "'{}',".format(idTmp)
         pos = len(tmp)
         listId = tmp[0:pos-1]
         listId += ')'
-        result = SQLiteManager.isColumnExist(tableName, cst.FINGERPRINT)
+        result = SQLiteManager.isColumnExist(layer.name(), cst.FINGERPRINT)
         if result[0] == 1:
-            sql = "SELECT cleabs, {0} FROM {1} WHERE {2} IN {3}".format(cst.FINGERPRINT, tableName, cst.ID_SQLITE, listId)
+            sql = "SELECT {0}, {1} FROM {2} WHERE {3} IN {4}".format(layer.idName, cst.FINGERPRINT, layer.name(), cst.ID_SQLITE, listId)
         else:
-            sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(cst.ID_SQLITE, tableName, cst.ID_SQLITE, listId)
+            sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idName, layer.name(), cst.ID_SQLITE, listId)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         cur.execute(sql)
@@ -397,7 +397,7 @@ class SQLiteManager(object):
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
-              u"standard INTEGER, database TEXT, srid TEXT)".format(cst.TABLEOFTABLES)
+              u"standard INTEGER, database TEXT, srid TEXT, geometryName TEXT)".format(cst.TABLEOFTABLES)
         cur.execute(sql)
         cur.close()
         connection.close()

@@ -22,7 +22,6 @@ from .SQLiteManager import SQLiteManager
 
 class GuichetVectorLayer(QgsVectorLayer):
     databasename = None
-    # Correspondance champ/type
     # TODO a quoi cela correspond, j'ai l'impression que cette variable n'est jamais remplie... même dans MongoDBtoQGIS.py
     correspondanceChampType = None
     sqliteManager = None
@@ -30,6 +29,7 @@ class GuichetVectorLayer(QgsVectorLayer):
     # Juste pour savoir si cette couche est de type 'standard' ou 'bduni' avec gcms_fingerprint
     isStandard = None
     idNameForDatabase = None
+    geometryNameForDatabase = None
 
     def __init__(self, parameters):
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
@@ -38,6 +38,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.srid = -1
         self.isStandard = True
         self.idNameForDatabase = parameters['idName']
+        self.geometryNameForDatabase = parameters['geometryname']
 
     '''
     Connexion des signaux pour les évènements survenus sur la carte

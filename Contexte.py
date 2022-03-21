@@ -542,7 +542,7 @@ class Contexte(object):
         uri.setDataSource('', layer.nom, structure['geometryName'])
         uri.setSrid(str(cst.EPSGCRS))
         parameters = {'uri': uri.uri(), 'name': layer.nom, 'genre': 'spatialite', 'databasename': layer.databasename,
-                      'sqliteManager': sqliteManager, 'idName': structure['idName']}
+                      'sqliteManager': sqliteManager, 'idName': structure['idName'], 'geometryname': structure['geometryName']}
         vlayer = GuichetVectorLayer(parameters)
         # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
@@ -641,16 +641,19 @@ class Contexte(object):
             print(str(e))
 
     def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
+        geometryName = structure['geometryName']
         newVectorLayer.isStandard = layer.isStandard
         idNameForDatabase = structure['idName']
         newVectorLayer.idNameForDatabase = idNameForDatabase
+        newVectorLayer.geometryNameForDatabase = geometryName
+        newVectorLayer.databasename = layer.databasename
+        newVectorLayer.srid = int(structure['attributes'][geometryName]['srid'])
 
         # Remplissage de la table SQLite liée à la couche
-        geometryName = structure['geometryName']
         parameters = {'databasename': layer.databasename, 'layerName': layer.nom, 'role': layer.role,
                       'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
                       'sridLayer': int(structure['attributes'][geometryName]['srid']), 'bbox': bbox,
-                      'detruit': bColumnDetruitExist, 'sqliteManager': newVectorLayer.sqliteManager}
+                      'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard}
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get_bis()
 
@@ -659,7 +662,8 @@ class Contexte(object):
         if not layer.isStandard:
             valStandard = 0
         parametersForTableOfTables = {'layer': layer.nom, 'idName': idNameForDatabase, 'standard': valStandard,
-                                      'database': layer.databasename, 'srid':parameters['sridLayer']}
+                                      'database': layer.databasename, 'srid': parameters['sridLayer'],
+                                      'geometryName': geometryName}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
         # On stocke le srid de la layer pour pouvoir traiter le post
