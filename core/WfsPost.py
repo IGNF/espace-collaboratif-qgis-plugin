@@ -34,7 +34,7 @@ class WfsPost(object):
                 self.layer.databasename = r[4]
                 self.isTableStandard = r[3]
                 self.layer.isStandard = r[3]
-                self.layer.srid = r[5]
+                self.layer.srid = int(r[5])
                 self.layer.idNameForDatabase = r[2]
                 self.layer.geometryNameForDatabase = r[6]
 

@@ -647,12 +647,13 @@ class Contexte(object):
         newVectorLayer.idNameForDatabase = idNameForDatabase
         newVectorLayer.geometryNameForDatabase = geometryName
         newVectorLayer.databasename = layer.databasename
-        newVectorLayer.srid = int(structure['attributes'][geometryName]['srid'])
+        sridLayer = int(structure['attributes'][geometryName]['srid'])
+        newVectorLayer.srid = sridLayer
 
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.nom, 'role': layer.role,
                       'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
-                      'sridLayer': int(structure['attributes'][geometryName]['srid']), 'bbox': bbox,
+                      'sridLayer': sridLayer, 'bbox': bbox,
                       'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard}
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get_bis()
