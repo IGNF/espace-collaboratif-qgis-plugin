@@ -30,6 +30,8 @@ class GuichetVectorLayer(QgsVectorLayer):
     isStandard = None
     idNameForDatabase = None
     geometryNameForDatabase = None
+    geometryDimensionForDatabase = None
+    geometryTypeForDatabase = None
 
     def __init__(self, parameters):
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
@@ -38,7 +40,9 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.srid = -1
         self.isStandard = True
         self.idNameForDatabase = parameters['idName']
-        self.geometryNameForDatabase = parameters['geometryname']
+        self.geometryNameForDatabase = parameters['geometryName']
+        self.geometryDimensionForDatabase = parameters['geometryDimension']
+        self.geometryTypeForDatabase = parameters['geometryType']
 
     '''
     Connexion des signaux pour les évènements survenus sur la carte

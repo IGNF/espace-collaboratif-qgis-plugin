@@ -16,11 +16,11 @@ class WfsGet(object):
     geometryName = None
     sridProject = None
     sridLayer = None
-    is3d = None
     bbox = None
     parametersGcmsGet = None
     bDetruit = None
     isStandard = None
+    is3D = None
 
     def __init__(self, context, parameters):
         self.context = context
@@ -37,6 +37,7 @@ class WfsGet(object):
         self.parametersGcmsGet = {}
         self.bDetruit = parameters['detruit']
         self.isStandard = parameters['isStandard']
+        self.is3D = parameters['is3D']
 
     # La requête doit être de type :
     # https://espacecollaboratif.ign.fr/gcms/wfs
@@ -80,7 +81,7 @@ class WfsGet(object):
         # Remplissage de la table avec les objets de la couche
         parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                        'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
-                                       'role': self.layerRole, 'isStandard': self.isStandard}
+                                       'role': self.layerRole, 'isStandard': self.isStandard, 'is3D': self.is3D}
         offset = 0
         maxFeatures = 5000
         # Passage des paramètres pour l'url

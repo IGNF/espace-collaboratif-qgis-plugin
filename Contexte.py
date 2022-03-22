@@ -539,10 +539,14 @@ class Contexte(object):
         uri = self.getUriDatabaseSqlite()
         self.logger.debug(uri.uri())
         print("url : {}".format(uri.uri()))
-        uri.setDataSource('', layer.nom, structure['geometryName'])
+        geometryName = structure['geometryName']
+        uri.setDataSource('', layer.nom, geometryName)
         uri.setSrid(str(cst.EPSGCRS))
         parameters = {'uri': uri.uri(), 'name': layer.nom, 'genre': 'spatialite', 'databasename': layer.databasename,
-                      'sqliteManager': sqliteManager, 'idName': structure['idName'], 'geometryname': structure['geometryName']}
+                      'sqliteManager': sqliteManager, 'idName': structure['idName'],
+                      'geometryName': geometryName, 'geometryDimension': structure['attributes'][geometryName]['is3d'],
+                      'geometryType': structure['attributes'][geometryName]['type']}
+
         vlayer = GuichetVectorLayer(parameters)
         # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
@@ -585,10 +589,10 @@ class Contexte(object):
                     QMessageBox.warning(None, "Charger les couches de mon groupe",
                                         u"Votre projet QGIS contient des couches d'un autre groupe Espace "
                                         u"collaboratif (" + nodeGroup.name() + "). \nPour pouvoir charger les données "
-                                        "du groupe " + nameGroup + ", veuillez supprimer les couches existantes de "
-                                        "votre projet QGIS ou travailler dans un nouveau projet." + "\n\nNB : "
-                                        "ces couches seront simplement supprimées de la carte QGIS en cours, "
-                                        "elles resteront disponibles sur l'Espace collaboratif.")
+                                                                               "du groupe " + nameGroup + ", veuillez supprimer les couches existantes de "
+                                                                                                          "votre projet QGIS ou travailler dans un nouveau projet." + "\n\nNB : "
+                                                                                                                                                                      "ces couches seront simplement supprimées de la carte QGIS en cours, "
+                                                                                                                                                                      "elles resteront disponibles sur l'Espace collaboratif.")
                     return
 
             for layer in guichet_layers:
@@ -604,7 +608,7 @@ class Contexte(object):
                 if layer.type == cst.WFS:
                     # Récupération de la structure de la future table
                     structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
-                    if structure['database_type'] == 'bduni' and structure['database_versioning'] == True:
+                    if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
                         layer.isStandard = False
                     sourceLayer = self.importWFS(layer, structure)
                     if not sourceLayer[0].isValid():
@@ -649,12 +653,15 @@ class Contexte(object):
         newVectorLayer.databasename = layer.databasename
         sridLayer = int(structure['attributes'][geometryName]['srid'])
         newVectorLayer.srid = sridLayer
+        newVectorLayer.geometryDimensionForDatabase = structure['attributes'][geometryName]['is3d']
+        newVectorLayer.geometryTypeForDatase = structure['attributes'][geometryName]['type']
 
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.nom, 'role': layer.role,
                       'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
                       'sridLayer': sridLayer, 'bbox': bbox,
-                      'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard}
+                      'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
+                      'is3D': structure['attributes'][geometryName]['is3d']}
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get_bis()
 
@@ -662,9 +669,14 @@ class Contexte(object):
         valStandard = 1
         if not layer.isStandard:
             valStandard = 0
+        dim = 0
+        if structure['attributes'][geometryName]['is3d']:
+            dim = 1
+
         parametersForTableOfTables = {'layer': layer.nom, 'idName': idNameForDatabase, 'standard': valStandard,
-                                      'database': layer.databasename, 'srid': parameters['sridLayer'],
-                                      'geometryName': geometryName}
+                                      'database': layer.databasename, 'srid': sridLayer,
+                                      'geometryName': geometryName, 'geometryDimension': dim,
+                                      'geometryType': structure['attributes'][geometryName]['type']}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
         # On stocke le srid de la layer pour pouvoir traiter le post

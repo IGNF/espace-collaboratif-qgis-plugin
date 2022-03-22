@@ -86,7 +86,7 @@ class SQLiteManager(object):
         sql = u"CREATE TABLE {0} (".format(layer.nom)
         sql += t[0]
         sql += ')'
-        print(sql)
+        #print(sql)
         cur = connection.cursor()
         cur.execute(sql)
         parameters_geometry_column = {}
@@ -162,13 +162,10 @@ class SQLiteManager(object):
             else:
                 ch += " (("
         else:
-            ch += "("
-            '''
             if is3D:
                 ch += " Z("
             else:
                 ch += "("
-            '''
         return ch
 
     @staticmethod
@@ -176,7 +173,8 @@ class SQLiteManager(object):
         valueUpper = value.upper()
         pos = res.rfind(',')
         if 'MULTIPOLYGON' in valueUpper:
-            ch = "{0})))".format(res[0:pos])
+            #ch = "{0})))".format(res[0:pos])
+            ch = "{0})".format(res[0:pos])
         elif 'MULTILINESTRING' in valueUpper or "POLYGON" in valueUpper:
             ch = "{0}))".format(res[0:pos])
         else:
@@ -271,7 +269,6 @@ class SQLiteManager(object):
         return geomFromText
 
     def setColumnsValuesForInsert(self, attributesRow, parameters):
-        isTableStandard = True
         tmpColumns = '('
         tmpValues = '('
         for column, value in attributesRow.items():
@@ -279,7 +276,7 @@ class SQLiteManager(object):
                 tmpColumns += '{0},'.format(column)
                 geomFromTextTmp = self.formatAndTransformGeometry(value, parameters['sridLayer'],
                                                                   parameters['sridProject'],
-                                                                  self.is3D)
+                                                                  parameters['is3D'])
                 tmpValues += "GeomFromText('{0}', {1}),".format(geomFromTextTmp, parameters['sridProject'])
                 continue
             elif column == cst.ID_SQLITE:
@@ -310,13 +307,13 @@ class SQLiteManager(object):
         return tmpColumns, tmpValues
 
     def insertRowsInTable(self, parameters, attributesRows):
+        totalRows = 0
         if len(attributesRows) == 0:
-            raise Exception("Pas de données pour la table {0}".format(parameters['tableName']))
+            print("Pas de données pour la table {0}".format(parameters['tableName']))
+            return totalRows
 
         connection = spatialite_connect(self.dbPath)
         cur = connection.cursor()
-        totalRows = 0
-
         # Insertion des lignes dans la table
         for attributesRow in attributesRows:
             columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters)
@@ -397,7 +394,8 @@ class SQLiteManager(object):
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
-              u"standard INTEGER, database TEXT, srid TEXT, geometryName TEXT)".format(cst.TABLEOFTABLES)
+              u"standard INTEGER, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
+              u"geometryType TEXT)".format(cst.TABLEOFTABLES)
         cur.execute(sql)
         cur.close()
         connection.close()
@@ -414,7 +412,7 @@ class SQLiteManager(object):
         values = ''
         for col, val in parameters.items():
             columns += "'{0}',".format(col)
-            if val == 0 or val == 1:
+            if type(val) == int:
                 values += "{0},".format(val)
             else:
                 values += "'{0}',".format(val)

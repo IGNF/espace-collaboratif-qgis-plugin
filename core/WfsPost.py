@@ -34,9 +34,11 @@ class WfsPost(object):
                 self.layer.databasename = r[4]
                 self.isTableStandard = r[3]
                 self.layer.isStandard = r[3]
-                self.layer.srid = int(r[5])
+                self.layer.srid = r[5]
                 self.layer.idNameForDatabase = r[2]
                 self.layer.geometryNameForDatabase = r[6]
+                self.layer.is3D = r[7]
+                self.layer.geometryType = r[8]
 
             '''for r in result: 
                 if r[0] == 'database':
@@ -64,7 +66,7 @@ class WfsPost(object):
 
     def setGeometry(self, geometry):
         is3D = False
-        if self.layer.isStandard == 0:
+        if self.layer.is3D == 1:
             is3D = True
         wktGeometry = SQLiteManager.formatAndTransformGeometry(geometry.asWkt(), cst.EPSGCRS, self.layer.srid, is3D) #TO-DO
         return '"{0}": "{1}"'.format(self.layer.geometryNameForDatabase, wktGeometry)
