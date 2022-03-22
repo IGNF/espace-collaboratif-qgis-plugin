@@ -173,10 +173,13 @@ class SQLiteManager(object):
         valueUpper = value.upper()
         pos = res.rfind(',')
         if 'MULTIPOLYGON' in valueUpper:
-            #ch = "{0})))".format(res[0:pos])
-            ch = "{0})".format(res[0:pos])
-        elif 'MULTILINESTRING' in valueUpper or "POLYGON" in valueUpper:
             ch = "{0}))".format(res[0:pos])
+        elif 'MULTILINESTRING' in valueUpper:
+            ch = "{0})".format(res[0:pos])
+        elif "POLYGON" in valueUpper:
+            ch = "{0}))".format(res[0:pos])
+        elif 'MULTIPOINT' in valueUpper:
+            ch = "{0}".format(res[0:pos])
         else:
             ch = "{0})".format(res[0:pos])
         return ch
