@@ -161,11 +161,13 @@ class SQLiteManager(object):
                 ch += " Z(("
             else:
                 ch += " (("
+        elif 'LINESTRINGZ' in valueUpper and is3D:
+            ch += " ("
         else:
             if is3D:
                 ch += " Z("
             else:
-                ch += "("
+                ch += " ("
         return ch
 
     @staticmethod
@@ -340,9 +342,9 @@ class SQLiteManager(object):
         listId += ')'
         result = SQLiteManager.isColumnExist(layer.name(), cst.FINGERPRINT)
         if result[0] == 1:
-            sql = "SELECT {0}, {1} FROM {2} WHERE {3} IN {4}".format(layer.idName, cst.FINGERPRINT, layer.name(), cst.ID_SQLITE, listId)
+            sql = "SELECT {0}, {1} FROM {2} WHERE {3} IN {4}".format(layer.idNameForDatabase, cst.FINGERPRINT, layer.name(), cst.ID_SQLITE, listId)
         else:
-            sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idName, layer.name(), cst.ID_SQLITE, listId)
+            sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idNameForDatabase, layer.name(), cst.ID_SQLITE, listId)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         cur.execute(sql)
