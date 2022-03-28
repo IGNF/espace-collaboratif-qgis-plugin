@@ -157,12 +157,16 @@ class SQLiteManager(object):
         valueUpper = value.upper()
         ch = value[0:pos].upper()
         if 'MULTIPOLYGON' in valueUpper or 'POLYGON' in valueUpper:
-            if is3D:
+            if 'POLYGONZ' in valueUpper and is3D:
+                ch += '((('
+            elif is3D:
                 ch += " Z(("
             else:
                 ch += " (("
         elif 'LINESTRINGZ' in valueUpper and is3D:
-            ch += " ("
+            ch += "("
+        elif 'POINTZ' in valueUpper and is3D:
+            ch += "("
         else:
             if is3D:
                 ch += " Z("
@@ -175,7 +179,10 @@ class SQLiteManager(object):
         valueUpper = value.upper()
         pos = res.rfind(',')
         if 'MULTIPOLYGON' in valueUpper:
-            ch = "{0}))".format(res[0:pos])
+            if ' Z' in res:
+                ch = "{0})".format(res[0:pos])
+            else:
+                ch = "{0}))".format(res[0:pos])
         elif 'MULTILINESTRING' in valueUpper:
             ch = "{0})".format(res[0:pos])
         elif "POLYGON" in valueUpper:
@@ -261,11 +268,12 @@ class SQLiteManager(object):
         # Patch
         if geom.startswith('LineStringZ  Z'):
             geom = geom.replace('LineStringZ  Z', 'LineStringZ')
-
         return geom
 
     @staticmethod
-    def formatAndTransformGeometry(value, source_crs, destination_crs, is3d):
+    def formatAndTransformGeometry(value, source_crs, destination_crs, is3d, typeGeometry):
+        if typeGeometry == "MultiPolygon" and is3d and 'PolygonZ' in value:
+            value = value.replace("PolygonZ", "MULTIPOLYGONZ")
         transformer = SQLiteManager.getTransformer(source_crs, destination_crs)
         if 'MULTI' in value.upper():
             geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, is3d)
@@ -281,7 +289,8 @@ class SQLiteManager(object):
                 tmpColumns += '{0},'.format(column)
                 geomFromTextTmp = self.formatAndTransformGeometry(value, parameters['sridLayer'],
                                                                   parameters['sridProject'],
-                                                                  parameters['is3D'])
+                                                                  parameters['is3D'],
+                                                                  parameters['geometryType'])
                 tmpValues += "GeomFromText('{0}', {1}),".format(geomFromTextTmp, parameters['sridProject'])
                 continue
             elif column == cst.ID_SQLITE:
@@ -323,7 +332,7 @@ class SQLiteManager(object):
         for attributesRow in attributesRows:
             columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
-            #print(sql)
+            print(sql)
             cur.execute(sql)
             totalRows += 1
 

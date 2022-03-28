@@ -81,7 +81,8 @@ class WfsGet(object):
         # Remplissage de la table avec les objets de la couche
         parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                        'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
-                                       'role': self.layerRole, 'isStandard': self.isStandard, 'is3D': self.is3D}
+                                       'role': self.layerRole, 'isStandard': self.isStandard, 'is3D': self.is3D,
+                                       'geometryType': ""}
         offset = 0
         maxFeatures = 5000
         # Passage des paramètres pour l'url
