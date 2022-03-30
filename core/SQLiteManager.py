@@ -3,6 +3,7 @@ import ntpath
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from . import ConstanteRipart as cst
+from .Wkt import Wkt
 
 
 class SQLiteManager(object):
@@ -73,9 +74,6 @@ class SQLiteManager(object):
         # Stockage du nom du champ contenant la géométrie
         geometryName = tableStructure['geometryName']
         self.is3D = tableStructure['attributes'][geometryName]['is3d']
-        #self.isTableStandard = layer.isStandard
-        #self.idName = tableStructure['idName']
-
         # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
         t = self.setAttributesTableToSql(tableStructure['geometryName'])
@@ -147,151 +145,14 @@ class SQLiteManager(object):
         else:
             return ''
 
-    def getTransformer(sridSource, sridTarget):
-        crsSource = QgsCoordinateReferenceSystem(sridSource)
-        crsTarget = QgsCoordinateReferenceSystem(sridTarget)
-        return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
-
-    @staticmethod
-    def setOpenBracket(value, pos, is3D):
-        valueUpper = value.upper()
-        ch = value[0:pos].upper()
-        if 'MULTIPOLYGON' in valueUpper or 'POLYGON' in valueUpper:
-            if 'POLYGONZ' in valueUpper and is3D:
-                ch += '((('
-            elif is3D:
-                ch += " Z(("
-            else:
-                ch += " (("
-        elif 'LINESTRINGZ' in valueUpper and is3D:
-            ch += "("
-        elif 'POINTZ' in valueUpper and is3D:
-            ch += "("
-        else:
-            if is3D:
-                ch += " Z("
-            else:
-                ch += " ("
-        return ch
-
-    @staticmethod
-    def setCloseBracket(value, res):
-        valueUpper = value.upper()
-        pos = res.rfind(',')
-        if 'MULTIPOLYGON' in valueUpper:
-            if ' Z' in res:
-                ch = "{0})".format(res[0:pos])
-            else:
-                ch = "{0}))".format(res[0:pos])
-        elif 'MULTILINESTRING' in valueUpper:
-            ch = "{0})".format(res[0:pos])
-        elif "POLYGON" in valueUpper:
-            ch = "{0}))".format(res[0:pos])
-        elif 'MULTIPOINT' in valueUpper:
-            ch = "{0}".format(res[0:pos])
-        else:
-            ch = "{0})".format(res[0:pos])
-        return ch
-
-    @staticmethod
-    def setMultiGeomFromText(value, transformer, is3D):
-        valueUpper = value.upper()
-        closeBracket = False
-        pos = value.find('(')
-        res = SQLiteManager.setOpenBracket(value, pos, is3D)
-        erase = 0
-        if 'MULTILINESTRING' in valueUpper:
-            erase = 1
-        elif 'MULTIPOLYGON' in valueUpper:
-            erase = 2
-        tmpValue = value[pos + erase:len(value) - erase]
-        if erase == 2:
-            tmps = tmpValue.split('),(')
-        else:
-            tmps = tmpValue.split('),')
-        for tmp in tmps:
-            if erase == 1 or erase == 2:
-                res += '('
-            coordinates = tmp.split(',')
-            for coordinate in coordinates:
-                closeBracket = False
-                xyz = coordinate.lstrip().split(' ')
-                X = xyz[0]
-                posX = xyz[0].find('(')
-                if posX != -1:
-                    X = xyz[0][posX + 1:len(xyz[0])]
-                Y = xyz[1]
-                posY = xyz[1].find(')')
-                if posY != -1:
-                    Y = xyz[1][0:posY]
-                pt = transformer.transform(float(X), float(Y))
-                if is3D:
-                    if closeBracket:
-                        res += "{0} {1} {2}), ".format(str(pt.x()), str(pt.y()), xyz[2])
-                    else:
-                        res += "{0} {1} {2}, ".format(str(pt.x()), str(pt.y()), xyz[2])
-                else:
-                    if closeBracket:
-                        res += "{0} {1}), ".format(str(pt.x()), str(pt.y()))
-                    else:
-                        res += "{0} {1}, ".format(str(pt.x()), str(pt.y()))
-            if not closeBracket:
-                ch = res[0:len(res) - 2]
-                res = ch + '),'
-            coordinates.clear()
-        geom = SQLiteManager.setCloseBracket(value, res)
-        return geom
-
-    @staticmethod
-    def setGeomFromText(value, transformer, is3D):
-        pos = value.find('(')
-        res = SQLiteManager.setOpenBracket(value, pos, is3D)
-        tmp = value[pos + 1:len(value) - 1]
-        coordinates = tmp.split(',')
-        for coordinate in coordinates:
-            xyz = coordinate.lstrip().split(' ')
-            posX = xyz[0].find('(')
-            x = xyz[0]
-            y = xyz[1]
-            if posX != -1:
-                x = xyz[0][posX + 1:len(xyz[0])]
-            posY = xyz[1].find(')')
-            if posY != -1:
-                y = xyz[1][0:posY]
-            pt = transformer.transform(float(x), float(y))
-            if is3D:
-                res += "{0} {1} {2}, ".format(str(pt.x()), str(pt.y()), xyz[2])
-            else:
-                res += "{0} {1}, ".format(str(pt.x()), str(pt.y()))
-        geom = SQLiteManager.setCloseBracket(value, res)
-
-        # Patch
-        if geom.startswith('LineStringZ  Z'):
-            geom = geom.replace('LineStringZ  Z', 'LineStringZ')
-        return geom
-
-    @staticmethod
-    def formatAndTransformGeometry(value, source_crs, destination_crs, is3d, typeGeometry):
-        if typeGeometry == "MultiPolygon" and is3d and 'PolygonZ' in value:
-            value = value.replace("PolygonZ", "MULTIPOLYGONZ")
-        transformer = SQLiteManager.getTransformer(source_crs, destination_crs)
-        if 'MULTI' in value.upper():
-            geomFromText = SQLiteManager.setMultiGeomFromText(value, transformer, is3d)
-        else:
-            geomFromText = SQLiteManager.setGeomFromText(value, transformer, is3d)
-        return geomFromText
-
     def setColumnsValuesForInsert(self, attributesRow, parameters):
         tmpColumns = '('
         tmpValues = '('
+        wkt = Wkt(parameters)
         for column, value in attributesRow.items():
             if column == parameters['geometryName']:
                 tmpColumns += '{0},'.format(column)
-                geomFromTextTmp = self.formatAndTransformGeometry(value, parameters['sridLayer'],
-                                                                  parameters['sridProject'],
-                                                                  parameters['is3D'],
-                                                                  parameters['geometryType'])
-                tmpValues += "GeomFromText('{0}', {1}),".format(geomFromTextTmp, parameters['sridProject'])
+                tmpValues += wkt.toGetGeometry(value)
                 continue
             elif column == cst.ID_SQLITE:
                 tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
@@ -332,7 +193,6 @@ class SQLiteManager(object):
         for attributesRow in attributesRows:
             columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
-            print(sql)
             cur.execute(sql)
             totalRows += 1
 

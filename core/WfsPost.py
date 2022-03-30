@@ -6,6 +6,7 @@ from .SQLiteManager import SQLiteManager
 from .XMLResponse import XMLResponse
 
 from . import ConstanteRipart as cst
+from .Wkt import Wkt
 
 
 class WfsPost(object):
@@ -40,16 +41,6 @@ class WfsPost(object):
                 self.layer.geometryDimensionForDatabase = r[7]
                 self.layer.geometryTypeForDatabase = r[8]
 
-            '''for r in result: 
-                if r[0] == 'database':
-                    self.layer.databasename = r[1]
-                elif r[0] == 'standard':
-                    self.isTableStandard = r[1]
-                elif r[0] == 'srid':
-                    self.layer.srid = r[1]
-                elif r[0] == 'idName':
-                    self.layer.idName = r[1]'''
-
     def formatItemActions(self):
         res = '['
         for action in self.actions:
@@ -65,12 +56,10 @@ class WfsPost(object):
         return '{"feature": {'
 
     def setGeometry(self, geometry):
-        is3D = False
-        if self.layer.geometryDimensionForDatabase == 1:
-            is3D = True
-        wktGeometry = SQLiteManager.formatAndTransformGeometry(geometry.asWkt(), cst.EPSGCRS, self.layer.srid, is3D,
-                                                               self.layer.geometryTypeForDatabase)
-        return '"{0}": "{1}"'.format(self.layer.geometryNameForDatabase, wktGeometry)
+        parameters = {'geometryName': self.layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS,
+                      'sridTarget': self.layer.srid}
+        wkt = Wkt(parameters)
+        return wkt.toPostGeometry(geometry)
 
     def setGeometries(self, changedGeometries):
         geometries = {}
@@ -80,11 +69,6 @@ class WfsPost(object):
 
     def setKey(self, key, idName):
         return '"{0}": "{1}"'.format(idName, key)
-        #if not self.isTableStandard:
-            #keyValue = '"cleabs": "{0}"'.format(key)
-        #else:
-            #keyValue = '"{0}": "{1}"'.format(idName, key)
-        #return keyValue
 
     def setFingerPrint(self, fingerprint):
         return '"{0}": "{1}", '.format(cst.FINGERPRINT, fingerprint)

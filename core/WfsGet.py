@@ -1,4 +1,3 @@
-import json
 import time
 
 from .RipartServiceRequest import RipartServiceRequest
@@ -50,37 +49,10 @@ class WfsGet(object):
     # &maxFeatures=200
     # &version=1.1.0
     # http://gitlab.dockerforge.ign.fr/rpg/oukile_v2/blob/master/assets/js/oukile/saisie_controle/services/layer-service.js
-    '''def gcms_get(self):
-        offset = 0
-        maxFeatures = 5000
-
-        # Passage des paramètres pour l'url
-        self.setService()
-        self.setRequest()
-        # GeoJSON | JSON | CSV | GML (par défaut)
-        self.setOutputFormat('JSON')
-        self.setTypeName()
-        if self.bbox is not None:
-            self.setBBox(self.bbox)
-        self.setFilter()
-        self.setOffset(offset.__str__())
-        self.setMaxFeatures(maxFeatures.__str__())
-        self.setVersion('1.0.0')
-        sqliteManager = SQLiteManager()
-        # Lancement de la requête
-        data = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
-                                                    params=self.parametersGcmsGet)
+    def gcms_get(self):
         # Remplissage de la table avec les objets de la couche
         parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
-                                       'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
-                                       'role': self.layerRole, 'isStandard': self.isStandard}
-        sqliteManager.insertRowsInTable(parametersForInsertsInTable, json.loads(data))
-        sqliteManager.vacuumDatabase()'''
-
-    def gcms_get_bis(self):
-        # Remplissage de la table avec les objets de la couche
-        parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
-                                       'sridProject': self.sridProject, 'sridLayer': self.sridLayer,
+                                       'sridSource': self.sridProject, 'sridTarget': self.sridLayer,
                                        'role': self.layerRole, 'isStandard': self.isStandard, 'is3D': self.is3D,
                                        'geometryType': ""}
         offset = 0

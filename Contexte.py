@@ -663,7 +663,7 @@ class Contexte(object):
                       'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
                       'is3D': structure['attributes'][geometryName]['is3d']}
         wfsGet = WfsGet(self, parameters)
-        wfsGet.gcms_get_bis()
+        wfsGet.gcms_get()
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1
