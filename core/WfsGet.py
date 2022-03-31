@@ -52,7 +52,7 @@ class WfsGet(object):
     def gcms_get(self):
         # Remplissage de la table avec les objets de la couche
         parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
-                                       'sridSource': self.sridProject, 'sridTarget': self.sridLayer,
+                                       'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
                                        'role': self.layerRole, 'isStandard': self.isStandard, 'is3D': self.is3D,
                                        'geometryType': ""}
         offset = 0
