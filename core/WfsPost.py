@@ -88,7 +88,7 @@ class WfsPost(object):
                 if fieldName == 'cleabs' or fieldName == cst.FINGERPRINT:
                     fieldsNameValue += '"{0}": "{1}", '.format(fieldName, feature.attribute(fieldName))
         else:
-            fieldsNameValue += '"id": "{0}", '.format(feature.id())
+            self.setKey(feature.id(), self.layer.idNameForDatabase)
         for key, value in attributesChanged.items():
             fieldsNameValue += '"{0}": "{1}", '.format(feature.fields()[key].name(), value)
         # il faut enlever à la fin de la chaine la virgule et l'espace ', ' car c'est un update
@@ -114,7 +114,6 @@ class WfsPost(object):
 
     def gcms_post(self, strActions):
         params = dict(actions=strActions, database=self.layer.databasename)
-        print(params)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
         print(response)
@@ -183,9 +182,6 @@ class WfsPost(object):
             feature = self.layer.getFeature(featureId)
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValue(feature)
-            #if not self.isTableStandard:
-             #   strFeature += self.setFingerPrint(feature.attribute(cst.FINGERPRINT))
-              #  strFeature += self.setCleabs(feature.attribute('cleabs'))
             strFeature += geometries[featureId]
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Update')
@@ -194,16 +190,23 @@ class WfsPost(object):
 
     def pushChangedGeometries(self, changedGeometries):
         for featureId, geometry in changedGeometries.items():
-            strFeature = self.setHeader()
-            strFeature += ', {0}'.format(self.setGeometry(geometry))
-            strFeature += '},'
-            strFeature += self.setStateAndLayerName('Update')
-            strFeature += '}'
-            self.actions.append(strFeature)
+            result = SQLiteManager.selectRowsInTable(self.layer, [featureId])
+            for r in result:
+                strFeature = self.setHeader()
+                if not self.isTableStandard:
+                    # Attention, ne pas changer l'ordre d'insertion
+                    strFeature += self.setFingerPrint(r[1])
+                    strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
+                else:
+                    strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
+                strFeature += ', {0}'.format(self.setGeometry(geometry))
+                strFeature += '},'
+                strFeature += self.setStateAndLayerName('Update')
+                strFeature += '}'
+                self.actions.append(strFeature)
 
     def pushChangedAttributeValues(self, changedAttributeValues):
         for featureId, attributes in changedAttributeValues.items():
-            print(attributes)
             feature = self.layer.getFeature(featureId)
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
