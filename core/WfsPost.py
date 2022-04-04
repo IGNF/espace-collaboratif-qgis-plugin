@@ -144,6 +144,7 @@ class WfsPost(object):
         if len(addedFeatures) != 0:
             self.pushAddedFeatures(addedFeatures)
             self.setIsFingerPrint(addedFeatures)
+
         # géométrie modifiée
         changedGeometries = editBuffer.changedGeometries()
         # attributs modifiés
@@ -154,6 +155,7 @@ class WfsPost(object):
             self.pushChangedGeometries(changedGeometries)
         elif len(changedAttributeValues) != 0:
             self.pushChangedAttributeValues(changedAttributeValues)
+
         # suppression
         deletedFeaturesId = editBuffer.deletedFeatureIds()
         if len(deletedFeaturesId) != 0:
@@ -175,18 +177,42 @@ class WfsPost(object):
             self.actions.append(strFeature)
 
     def pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries):
+        idsGeom = []
+        idsAtt = []
         # Récupération des géométries par identifiant d'objet
         geometries = self.setGeometries(changedGeometries)
-        # Récupération des attributs et ajout de la géométrie
+        # Traitement des actions doubles (ou simples) sur un objet (geometrie, attributs)
         for featureId, attributes in changedAttributeValues.items():
             feature = self.layer.getFeature(featureId)
-            strFeature = self.setHeader()
-            strFeature += self.setFieldsNameValue(feature)
-            strFeature += geometries[featureId]
-            strFeature += '},'
-            strFeature += self.setStateAndLayerName('Update')
-            strFeature += '}'
-            self.actions.append(strFeature)
+            result = SQLiteManager.selectRowsInTable(self.layer, [featureId])
+            for r in result:
+                strFeature = self.setHeader()
+                if not self.isTableStandard:
+                    # Attention, ne pas changer l'ordre d'insertion
+                    strFeature += self.setFingerPrint(r[1])
+                    strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
+                else:
+                    strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
+                strFeature += ', '
+                strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
+                if featureId in geometries:
+                    strFeature += ', {0}'.format(geometries[featureId])
+                    idsGeom.append(featureId)
+                strFeature += '},'
+                strFeature += self.setStateAndLayerName('Update')
+                strFeature += '}'
+                self.actions.append(strFeature)
+                idsAtt.append(featureId)
+        # Suppression des modifications déjà traitées
+        for idG in idsGeom:
+            del geometries[idG]
+        for idA in idsAtt:
+            del changedAttributeValues[idA]
+        # Il peut rester des modifications simples
+        if len(geometries) != 0:
+            self.pushChangedGeometryTransformed(geometries)
+        elif len(changedAttributeValues) != 0:
+            self.pushChangedAttributeValues(changedAttributeValues)
 
     def pushChangedGeometries(self, changedGeometries):
         for featureId, geometry in changedGeometries.items():
@@ -205,15 +231,41 @@ class WfsPost(object):
                 strFeature += '}'
                 self.actions.append(strFeature)
 
+    def pushChangedGeometryTransformed(self, geometryTransformed):
+        for featureId, geometry in geometryTransformed.items():
+            result = SQLiteManager.selectRowsInTable(self.layer, [featureId])
+            for r in result:
+                strFeature = self.setHeader()
+                if not self.isTableStandard:
+                    # Attention, ne pas changer l'ordre d'insertion
+                    strFeature += self.setFingerPrint(r[1])
+                    strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
+                else:
+                    strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
+                strFeature += ', {0}'.format(geometry)
+                strFeature += '},'
+                strFeature += self.setStateAndLayerName('Update')
+                strFeature += '}'
+                self.actions.append(strFeature)
+
     def pushChangedAttributeValues(self, changedAttributeValues):
         for featureId, attributes in changedAttributeValues.items():
-            feature = self.layer.getFeature(featureId)
-            strFeature = self.setHeader()
-            strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
-            strFeature += '},'
-            strFeature += self.setStateAndLayerName('Update')
-            strFeature += '}'
-            self.actions.append(strFeature)
+            result = SQLiteManager.selectRowsInTable(self.layer, [featureId])
+            for r in result:
+                feature = self.layer.getFeature(featureId)
+                strFeature = self.setHeader()
+                if not self.isTableStandard:
+                    # Attention, ne pas changer l'ordre d'insertion
+                    strFeature += self.setFingerPrint(r[1])
+                    strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
+                else:
+                    strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
+                strFeature += ', '
+                strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
+                strFeature += '},'
+                strFeature += self.setStateAndLayerName('Update')
+                strFeature += '}'
+                self.actions.append(strFeature)
 
     def pushDeletedFeatures(self, deletedFeatures):
         result = SQLiteManager.selectRowsInTable(self.layer, deletedFeatures)
