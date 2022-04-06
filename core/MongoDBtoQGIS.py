@@ -108,7 +108,7 @@ class MongoDBtoQGIS(object):
                 continue
             nbTwoPoints = self.numberOfOccurrences(':', part)
             if nbTwoPoints == 0:
-                if not part.startswith('(') :
+                if not part.startswith('('):
                     orAndNot = self.conversionConditions(part)
                 # Partie déjà transformée en SQL
                 else:

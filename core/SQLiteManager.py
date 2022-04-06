@@ -76,7 +76,7 @@ class SQLiteManager(object):
         self.is3D = tableStructure['attributes'][geometryName]['is3d']
         # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
-        t = self.setAttributesTableToSql(tableStructure['geometryName'])
+        t = self.setAttributesTableToSql(geometryName)
         if t[0] == "" and t[1] == "" and t[2] == "":
             raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
 

@@ -465,6 +465,10 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.bSend = True
         self.close()
 
+    def truncate(self, n, decimals=0):
+        multiplier = 10 ** decimals
+        return int(n * multiplier) / multiplier
+
     def openFileDialog(self):
         if self.checkBoxAttDoc.isChecked():
             filters = u"All files (*.*);;" + \
@@ -477,15 +481,16 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Document à joindre à la remarque', '.', filters)
             if filename != "":
                 extension = os.path.splitext(filename)[1]
+                sizeFilename = os.path.getsize(filename)
                 if extension[1:] not in self.context.formats:
                     message = u"Les fichiers de type '" + extension + u"' ne sont pas autorisés comme pièce-jointe " \
-                                                                      u"dans le service Ripart. "
+                                                                      u"pour l'Espace collaboratif. "
                     RipartHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.Unchecked)
 
-                elif os.path.getsize(filename) > self.docMaxSize:
+                elif sizeFilename > self.docMaxSize:
                     message = u"Le fichier \"" + filename + \
-                              u"\" ne peut être envoyé au service Ripart, car sa taille (" + \
+                              u"\" ne peut être envoyé à l'Espace collaboratif, car sa taille (" + \
                               str(os.path.getsize(filename) / 1000) + \
                               u" Ko) dépasse celle maximale autorisée (" + str(self.docMaxSize / 1000) + u" Ko)"
 
@@ -494,12 +499,13 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
                 else:
                     self.lblDoc.setProperty("visible", True)
-                    self.lblDoc.setText(filename)
+                    fileNameWithSize = "{0} ({1}Mo)".format(filename, self.truncate(sizeFilename / (1024 * 1024), 3))
+                    print(fileNameWithSize)
+                    self.lblDoc.setText(fileNameWithSize)
                     self.selFileName = filename
             else:
                 self.checkBoxAttDoc.setCheckState(Qt.Unchecked)
                 self.selFileName = None
-
         else:
             self.lblDoc.setProperty("visible", False)
             self.selFileName = None

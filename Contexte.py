@@ -120,6 +120,7 @@ class Contexte(object):
         self.ripClient = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
+        #self.connectSignals()
 
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata('general', 'version')
@@ -150,6 +151,18 @@ class Contexte(object):
         config = configparser.RawConfigParser()
         config.read(self.plugin_path + '\\metadata.txt')
         return config.get('general', 'version')
+
+    """
+    def connectSignals(self):
+        self.QgsProject.writeProject.connect(self.write_project)
+        self.QgsProject.writeMapLayer.connect(self.write_maplayer)
+
+    def write_project(self):
+        print("Sauvegarde du projet")
+
+    def write_maplayer(self):
+        print("Sauvegarde d'une couche")
+    """
 
     @staticmethod
     def IsLayerInMap(layerName):
@@ -298,12 +311,12 @@ class Contexte(object):
             self.loginWindow.exec_()
 
             while result < 0:
-                if self.loginWindow.cancel:
+                if self.loginWindow.bCancel:
                     # fix_print_with_import
                     print("rejected")
                     self.loginWindow = None
                     result = 0
-                elif self.loginWindow.connect:
+                elif self.loginWindow.bConnect:
                     # fix_print_with_import
                     print("connect")
                     self.login = self.loginWindow.getLogin()
@@ -407,8 +420,9 @@ class Contexte(object):
                             dlgInfo.textInfo.append("Groupe : {}".format(self.profil.title))
                             if self.profil.zone == cst.ZoneGeographique.UNDEFINED:
                                 zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
-                                if zoneExtraction == "" or zoneExtraction is None:
+                                if zoneExtraction == "" or zoneExtraction is None or len(self.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
                                     dlgInfo.textInfo.append("Zone : pas de zone définie")
+                                    RipartHelper.setXmlTagValue(self.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
                                 else:
                                     dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
                                 self.profil.zone = zoneExtraction
@@ -597,11 +611,18 @@ class Contexte(object):
 
             for layer in guichet_layers:
                 if layer.nom in maplayers:
-                    message = "La couche {} existe déjà, voulez-vous continuer ?".format(layer.nom)
+                    message = "La couche {} existe déjà, elle sera détruite si vous continuez ?".format(layer.nom)
                     reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
                                                  QMessageBox.No)
                     if reply == QMessageBox.No:
                         continue
+                    else:
+                        listLayers = self.QgsProject.instance().mapLayersByName(layer.nom)
+                        layerIds = []
+                        for lLayer in listLayers:
+                            layerIds.append(lLayer.id())
+                        self.QgsProject.instance().removeMapLayers(layerIds)
+
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
@@ -654,7 +675,7 @@ class Contexte(object):
         sridLayer = int(structure['attributes'][geometryName]['srid'])
         newVectorLayer.srid = sridLayer
         newVectorLayer.geometryDimensionForDatabase = structure['attributes'][geometryName]['is3d']
-        newVectorLayer.geometryTypeForDatase = structure['attributes'][geometryName]['type']
+        newVectorLayer.geometryTypeForDatabase = structure['attributes'][geometryName]['type']
 
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.nom, 'role': layer.role,

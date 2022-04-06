@@ -16,8 +16,6 @@ from .requests.auth import HTTPBasicAuth
 class RipartServiceRequest(object):
     """
     Classe pour les requêtes http vers le service ripart
-    Album Tutu Miles David
-    Album Stanley Clarke School days
     """
     logger = RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
 

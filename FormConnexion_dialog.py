@@ -27,8 +27,8 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
     """
     context = None
     urlhost = ""
-    connect = False
-    cancel = False
+    bConnect = False
+    bCancel = False
     
     #logger
     logger = RipartLogger("FormConnexionDialog").getRipartLogger()
@@ -45,7 +45,7 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.textError.setVisible(False)
         self.btnConnect.clicked.connect(self.connectToService)
-        self.btnCancel.clicked.connect(self.cancel)
+        self.btnCancel.clicked.connect(self.Cancel)
         font = QtGui.QFont()
         font.setPointSize(8)
         self.lblPwd.setFont(font)
@@ -68,14 +68,13 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
     def getEvent(self):
         """Retour de différents codes suivant l'action effectuée
         """
-        if self.cancel:
+        if self.bCancel:
             return 0
-        elif self.connect:
+        elif self.bConnect:
             return 1
         else:
             return -1    
-    
-    @pyqtSlot()
+
     def connectToService(self):
         """Connexion au service Ripart
         """
@@ -87,8 +86,8 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
         if len(login) == 0 or len(pwd) == 0:
             QMessageBox.information(self, "Ripart", "Veuillez saisir votre login et votre mot de passe")
         else:
-            self.cancel = False
-            self.connect = True
+            self.bCancel = False
+            self.bConnect = True
             self.close()
 
     def setContext(self, context):
@@ -104,8 +103,7 @@ class FormConnexionDialog(QtWidgets.QDialog, FORM_CLASS):
         """
         self.urlhost = urlhost
 
-    @pyqtSlot()
-    def cancel(self):
-        self.cancel = True
-        self.connect = False
+    def Cancel(self):
+        self.bCancel = True
+        self.bConnect = False
         self.close()

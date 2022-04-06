@@ -43,12 +43,15 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.geometryNameForDatabase = parameters['geometryName']
         self.geometryDimensionForDatabase = parameters['geometryDimension']
         self.geometryTypeForDatabase = parameters['geometryType']
+        self.connectSignals()
 
     '''
     Connexion des signaux pour les évènements survenus sur la carte
     '''
     def connectSignals(self):
-
+        self.editingStopped.connect(self.editing_stopped)
+        self.beforeRollBack.connect(self.before_rollback)
+        """
         # Connexion des signaux permettant le traitement de gcms_fingerprint pour les tables historisées
         if self.idxFingerprint != -1:
             # Signaux pour la modification d'objets
@@ -67,9 +70,19 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.attributeAdded.connect(self.attribute_added)
         self.attributeDeleted.connect(self.attribute_deleted)
         self.editingStopped.connect(self.editing_stopped)
+        """
 
-    # def print_list(self):
-    #    print(self.listUpdatedFeaturesIds)
+    '''
+    L'utilisateur a mis fin à l'édition de la couche
+    '''
+    def editing_stopped(self):
+        print("Fin édition de la couche")
+
+    '''
+    L'utilisateur a annulé toutes ses modifications
+    '''
+    def before_rollback(self):
+        print("Annulation des modifications dans la couche")
 
     '''
     Calcul d'une clé de hachage à partir des caractéristiques d'un objet
@@ -150,15 +163,6 @@ class GuichetVectorLayer(QgsVectorLayer):
             self.md5AfterWorks.append(id_cle)
             fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
         self.closeFile(fichier)
-
-    '''
-    L'utilisateur a mis fin à l'édition de la couche,
-    les objets sont stockés dans un fichier
-    '''
-    def editing_stopped(self):
-        self.setMd5AfterWorks()
-        print("Rechargement de la couche")
-        self.reload()
 
     def attribute_value_changed(self, fid, idx, value):
         self.include_fingerprint(fid, idx)
