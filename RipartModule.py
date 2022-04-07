@@ -40,7 +40,7 @@ from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QAppli
 from qgis.PyQt.QtGui import QIcon
 # from qgis.core import *
 from qgis.core import QgsProject, QgsMessageLog, QgsWkbTypes, QgsCoordinateReferenceSystem, \
-    QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer, QgsVectorLayerEditBuffer
+    QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer, QgsVectorLayerEditBuffer, QgsMapLayerType
 import configparser
 
 import urllib
@@ -347,10 +347,18 @@ class RipartPlugin:
             res = self.context.getConnexionRipart(newLogin=True)
             if not res:
                 return
-
-        # 'bduni_interne_qualif_fxx'
-        wfsPost = WfsPost(self.context)
-        wfsPost.commitLayer()
+        messages = []
+        for layer in QgsProject.instance().mapLayers().values():
+            if layer.type() is not QgsMapLayerType.VectorLayer:
+                continue
+            if layer.name() in RipartHelper.croquis_layers_name:
+                continue
+            editBuffer = layer.editBuffer()
+            if not editBuffer:
+                continue
+            wfsPost = WfsPost(self.context, layer)
+            messages.append("{0} : {1}\n".format(layer.name(), wfsPost.commitLayer(editBuffer)))
+        print(messages)
 
     def unload(self):
         log = logging.getLogger()

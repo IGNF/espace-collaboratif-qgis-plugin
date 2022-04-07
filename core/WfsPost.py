@@ -18,9 +18,9 @@ class WfsPost(object):
     actions = None
     isTableStandard = True
 
-    def __init__(self, context):
+    def __init__(self, context, layer):
         self.context = context
-        self.layer = self.context.iface.activeLayer()
+        self.layer = layer
         self.url = self.context.client.getUrl() + '/gcms/wfstransactions'
         self.identification = self.context.client.getAuth()
         self.proxy = self.context.client.getProxies()
@@ -116,28 +116,17 @@ class WfsPost(object):
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
-        print(response)
         xmlResponse = XMLResponse(response)
         message = xmlResponse.checkResponseWfsTransactions()
         if message['status'] == 'SUCCESS':
-            self.showMessage(message['message'])
             res = self.layer.commitChanges()
             if res:
                 self.layer.startEditing()
             self.layer.reload()
-        else:
-            self.showMessage('Transaction interrompue : {}'.format(message['message']))
+        return message['message']
 
-    def commitLayer(self):
+    def commitLayer(self, editBuffer):
         self.actions.clear()
-
-        if self.layer.type() is not QgsMapLayerType.VectorLayer:
-            self.showMessage("La couche sélectionnée n'est pas synchronisable vers l'espace collaboratif")
-            return
-
-        editBuffer = self.layer.editBuffer()
-        if not editBuffer:
-            return
 
         # ajout
         addedFeatures = editBuffer.addedFeatures().values()
@@ -163,8 +152,7 @@ class WfsPost(object):
 
         # Lancement de la transaction
         strActions = self.formatItemActions()
-        print(strActions)
-        self.gcms_post(strActions)
+        return self.gcms_post(strActions)
 
     def pushAddedFeatures(self, addedFeatures):
         for feature in addedFeatures:

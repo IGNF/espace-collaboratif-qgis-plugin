@@ -137,15 +137,10 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         maplayers = self.context.mapCan.layers()
 
-        ripartLayers = [RipartHelper.nom_Calque_Signalement,
-                        RipartHelper.nom_Calque_Croquis_Ligne,
-                        RipartHelper.nom_Calque_Croquis_Point,
-                        RipartHelper.nom_Calque_Croquis_Polygone]
-
         topItems = []
 
         for lay in maplayers:
-            if type(lay) is QgsVectorLayer and not lay.name() in ripartLayers:
+            if type(lay) is QgsVectorLayer and not lay.name() in RipartHelper.croquis_layers_name:
                 item = QTreeWidgetItem()
                 item.setText(0, str(lay.name()))
                 inConfig = lay.name() in attCroq
