@@ -165,7 +165,7 @@ class Contexte(object):
     """
 
     @staticmethod
-    def IsLayerInMap(layerName):
+    def IsLayerInMap(layerName, QgsProject):
         for layer in QgsProject.instance().mapLayers().values():
             if layer.name() == layerName:
                 return True
@@ -648,7 +648,7 @@ class Contexte(object):
                         print("Layer {} failed to load !".format(rlayer.name()))
                         continue
 
-                    QgsProject.instance().addMapLayer(rlayer, False)
+                    self.QgsProject.instance().addMapLayer(rlayer, False)
                     # Insertion à la fin avec -1
                     root.insertLayer(-1, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
@@ -722,7 +722,7 @@ class Contexte(object):
             newVectorLayer.setReadOnly()
 
         # Ajout de la couche dans la carte
-        QgsProject.instance().addMapLayer(newVectorLayer, False)
+        self.QgsProject.instance().addMapLayer(newVectorLayer, False)
         nodeGroup.addLayer(newVectorLayer)
         self.guichetLayers.append(newVectorLayer)
         self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
@@ -750,7 +750,7 @@ class Contexte(object):
                 uri.setSrid(str(cst.EPSGCRS))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
                 vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
-                QgsProject.instance().addMapLayer(vlayer, False)
+                self.QgsProject.instance().addMapLayer(vlayer, False)
                 root.insertLayer(0, vlayer)
                 self.logger.debug("Layer " + vlayer.name() + " added to map")
 
@@ -766,7 +766,7 @@ class Contexte(object):
         :return dictionnaire des couches chargées sur la carte (key: layer name, value: layer id)
         :rtype dictionary
         """
-        layers = QgsProject.instance().mapLayers()
+        layers = self.QgsProject.instance().mapLayers()
         maplayers = {}
         for key in layers:
             layer = layers[key]
@@ -780,7 +780,7 @@ class Contexte(object):
         :rtype dictionary
         """
         polylayers = {}
-        layers = QgsProject.instance().mapLayers()
+        layers = self.QgsProject.instance().mapLayers()
         for key in layers:
             layer = layers[key]
             if type(layer) is QgsVectorLayer and layer.geometryType() is not None and layer.geometryType() == \
@@ -797,7 +797,7 @@ class Contexte(object):
         :return: le premier calque ayant pour nom celui donné en paramètre
         :rtype: QgsVectorLayer
         """
-        mapByName = QgsProject.instance().mapLayersByName(layName)
+        mapByName = self.QgsProject.instance().mapLayersByName(layName)
         if len(mapByName) > 0:
             return mapByName[0]
         else:
@@ -959,7 +959,7 @@ class Contexte(object):
 
         try:
             destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
-            transformer = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
+            transformer = QgsCoordinateTransform(layerCrs, destCrs, self.QgsProject.instance())
             if ftype == QgsWkbTypes.PolygonGeometry:
                 geomPoints = geom.asPolygon()
                 if len(geomPoints) > 0:
