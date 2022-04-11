@@ -48,7 +48,7 @@ class WfsPost(object):
             res += ','
         pos = len(res)
         # Remplacement de la virgule de fin par un crochet fermant
-        strActions = res[0:pos-1]
+        strActions = res[0:pos - 1]
         strActions += ']'
         return strActions
 
@@ -103,7 +103,7 @@ class WfsPost(object):
                 continue
             fieldValue = feature.attribute(fieldName)
             if fieldValue is None or str(fieldValue) == "NULL":
-                 continue
+                continue
             fieldsNameValue += '"{0}": "{1}", '.format(fieldName, fieldValue)
         # il faut garder la virgule et l'espace en fin de chaine car l'action est à "insert"
         # et il y a la géométrie de l'objet à concaténer
@@ -111,6 +111,9 @@ class WfsPost(object):
 
     def setStateAndLayerName(self, state):
         return '"state": "{0}", "typeName": "{1}"'.format(state, self.layer.name())
+
+    def setClientId(self, clientFeatureId):
+        return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
     def gcms_post(self, strActions):
         params = dict(actions=strActions, database=self.layer.databasename)
@@ -128,16 +131,22 @@ class WfsPost(object):
     def commitLayer(self, editBuffer):
         self.actions.clear()
 
-        # ajout
         addedFeatures = editBuffer.addedFeatures().values()
+        changedGeometries = editBuffer.changedGeometries()
+        changedAttributeValues = editBuffer.changedAttributeValues()
+        deletedFeaturesId = editBuffer.deletedFeatureIds()
+        if len(addedFeatures) == 0 and \
+                len(changedGeometries) == 0 and \
+                len(changedAttributeValues) == 0 and \
+                len(deletedFeaturesId):
+            return "Rien à synchroniser"
+
+        # ajout
         if len(addedFeatures) != 0:
             self.pushAddedFeatures(addedFeatures)
             self.setIsFingerPrint(addedFeatures)
 
-        # géométrie modifiée
-        changedGeometries = editBuffer.changedGeometries()
-        # attributs modifiés
-        changedAttributeValues = editBuffer.changedAttributeValues()
+        # géométrie modifiée et/ou attributs modifiés
         if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
             self.pushChangedAttributesAndGeometries(changedAttributeValues, changedGeometries)
         elif len(changedGeometries) != 0:
@@ -146,19 +155,21 @@ class WfsPost(object):
             self.pushChangedAttributeValues(changedAttributeValues)
 
         # suppression
-        deletedFeaturesId = editBuffer.deletedFeatureIds()
         if len(deletedFeaturesId) != 0:
             self.pushDeletedFeatures(deletedFeaturesId)
 
         # Lancement de la transaction
         strActions = self.formatItemActions()
-        return self.gcms_post(strActions)
+        print(strActions)
+        information = "{0} []".format(self.gcms_post(strActions))
+        return information
 
     def pushAddedFeatures(self, addedFeatures):
         for feature in addedFeatures:
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValue(feature)
             strFeature += self.setGeometry(feature.geometry())
+            strFeature += self.setClientId(feature.attribute(cst.ID_SQLITE))
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Insert')
             strFeature += '}'
@@ -269,6 +280,14 @@ class WfsPost(object):
             strFeature += self.setStateAndLayerName('Delete')
             strFeature += '}'
             self.actions.append(strFeature)
+
+    def getDataFromTransaction(self, idTransaction):
+        # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281922.json
+        url = "{0}/gcms/database/{1}/transaction/{2}.json".format(self.context.client.getUrl(),
+                                                                  self.layer.idNameForDatabase,
+                                                                  idTransaction)
+        data = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        return XMLResponse(data)
 
     def showMessage(self, message):
         msgBox = QMessageBox()

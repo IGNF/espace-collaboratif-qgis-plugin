@@ -80,16 +80,22 @@ class XMLResponse(object):
         return errMessage
 
     def checkResponseWfsTransactions(self):
-        errMessage = {'message': '', 'status': 'SUCCESS'}
+        message = {'message': '', 'status': 'SUCCESS', 'fid': []}
         try:
+            fids = []
+            insertResult = self.root.find('{http://www.opengis.net/wfs}InsertResult')
+            featuresId = insertResult.findall('{http://www.opengis.net/ogc}FeatureId')
+            for featureId in featuresId:
+                fids.append(featureId.attrib['fid'])
+            message['fid'] = fids
             transactionResult = self.root.find('{http://www.opengis.net/wfs}TransactionResult')
             status = transactionResult.find('{http://www.opengis.net/wfs}Status')
             if status.find('{http://www.opengis.net/wfs}SUCCESS') is None:
-                errMessage['status'] = 'FAILED'
-            errMessage['message'] = transactionResult.find('{http://www.opengis.net/wfs}Message').text
+                message['status'] = 'FAILED'
+            message['message'] = transactionResult.find('{http://www.opengis.net/wfs}Message').text
         except Exception as e:
             self.logger.error(str(e))
-        return errMessage
+        return message
 
     def getAleas(self):
         """ Extraction des Aleas       

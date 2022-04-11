@@ -122,3 +122,4 @@ ID_SQLITE = 'id_sqlite_1gnQg1s'
 IS_FINGERPRINT = 'isFingerprint'
 FINGERPRINT = 'gcms_fingerprint'
 TABLEOFTABLES = 'tableoftables'
+CLIENTFEATUREID = "_client_feature_id"
