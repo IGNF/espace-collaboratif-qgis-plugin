@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
 from PyQt5.QtCore import Qt
 from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
-from .core.Box import Box
+from .core.BBox import BBox
 from .core.ClientHelper import ClientHelper
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
@@ -70,13 +70,13 @@ class ImporterGuichet(object):
                     "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
             # filtre spatial
-            # Non pris en compte en v4.0.1 car le filtrage par BBOX du WFS ne semble pas fonctionner
+            bbox = BBox(self.context)
+            box = bbox.getFromLayer(RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+            '''
             bbox = None
             filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
-
             if filtre is not None and len(filtre.strip()) > 0:
                 self.logger.debug("Spatial filter :" + filtre)
-
                 filtreLay = self.context.getLayerByName(filtre)
                 bbox = self.getSpatialFilterBbox(filtre, filtreLay)
                 if bbox == -999:
@@ -89,6 +89,7 @@ class ImporterGuichet(object):
                     bbox = None
                 else:
                     return
+            '''
 
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             QApplication.setOverrideCursor(Qt.BusyCursor)
@@ -96,12 +97,12 @@ class ImporterGuichet(object):
             # création de la table des tables
             SQLiteManager.createTableOfTables()
             # Import des couches du guichet sélectionnées par l'utilisateur
-            self.context.addGuichetLayersToMap(guichet_layers, bbox, self.context.profil.geogroup.name)
+            self.context.addGuichetLayersToMap(guichet_layers, box, self.context.profil.geogroup.name)
 
         finally:
             self.context.iface.messageBar().clearWidgets()
             QApplication.setOverrideCursor(Qt.ArrowCursor)
-
+    '''
     def getSpatialFilterBbox(self, filtre, filtreLay):
         """Retourne la boundingbox du filtre spatial
 
@@ -143,3 +144,4 @@ class ImporterGuichet(object):
             return True
         else:
             return False
+    '''

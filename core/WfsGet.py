@@ -20,6 +20,7 @@ class WfsGet(object):
     bDetruit = None
     isStandard = None
     is3D = None
+    numrec = None
 
     def __init__(self, context, parameters):
         self.context = context
@@ -37,6 +38,7 @@ class WfsGet(object):
         self.bDetruit = parameters['detruit']
         self.isStandard = parameters['isStandard']
         self.is3D = parameters['is3D']
+        self.numrec = parameters['numrec']
 
     # La requête doit être de type :
     # https://espacecollaboratif.ign.fr/gcms/wfs
@@ -63,8 +65,10 @@ class WfsGet(object):
         # GeoJSON | JSON | CSV | GML (par défaut)
         self.setOutputFormat('JSON')
         self.setTypeName()
+        if self.numrec != 0:
+            self.setNumrec()
         if self.bbox is not None:
-            self.setBBox(self.bbox)
+            self.setBBox()
         self.setFilter()
         self.setOffset(offset)
         self.setMaxFeatures(maxFeatures)
@@ -105,12 +109,15 @@ class WfsGet(object):
         typename = "{0}:{1}".format(self.databaseName, self.layerName)
         self.parametersGcmsGet['typename'] = typename
 
+    def setNumrec(self):
+        self.parametersGcmsGet['numrec'] = self.numrec
+
     def setFilter(self):
         if self.bDetruit:
             self.parametersGcmsGet['filter'] = '{"detruit":false}'
 
-    def setBBox(self, bbox):
-        self.parametersGcmsGet['bbox'] = bbox.boxToStringWithSrid(self.sridProject, self.sridLayer)
+    def setBBox(self):
+        self.parametersGcmsGet['bbox'] = self.bbox.boxToStringWithSrid(self.sridProject, self.sridLayer)
 
     def setOffset(self, offset):
         self.parametersGcmsGet['offset'] = offset

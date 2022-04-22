@@ -165,7 +165,7 @@ class Contexte(object):
     """
 
     @staticmethod
-    def IsLayerInMap(layerName, QgsProject):
+    def IsLayerInMap(layerName):
         for layer in QgsProject.instance().mapLayers().values():
             if layer.name() == layerName:
                 return True
@@ -513,12 +513,13 @@ class Contexte(object):
             curs.close()
             self.conn.close()
 
+    '''
     def appendUri_WFS(self, url, nomCouche, bbox):
         uri = QgsDataSourceUri()
         uri.setConnection("", "", self.login, self.pwd)
         uri.setParam('request', 'GetFeature')
         if str(bbox) != "None":
-            uri.setParam('bbox', bbox.boxToString())
+            uri.setParam('bbox', bbox.bboxToString())
 
         # Mon guichet
         if '&' in url:
@@ -537,6 +538,7 @@ class Contexte(object):
             uri.setParam('service', cst.WFS)
 
         return uri
+    '''
 
     def importWFS(self, layer, structure):
         # Création éventuelle de la table SQLite liée à la couche
@@ -682,7 +684,7 @@ class Contexte(object):
                       'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
                       'sridLayer': sridLayer, 'bbox': bbox,
                       'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
-                      'is3D': structure['attributes'][geometryName]['is3d']}
+                      'is3D': structure['attributes'][geometryName]['is3d'], 'numrec': 0}
         wfsGet = WfsGet(self, parameters)
         wfsGet.gcms_get()
 
@@ -715,7 +717,7 @@ class Contexte(object):
         newVectorLayer.setDisplayScale(layer.minzoom, layer.maxzoom)
 
         # Paramétrage de l'emprise
-        newVectorLayer.updateExtents(True)
+        #newVectorLayer.updateExtents(True)
 
         # Une couche en visualisation est non modifiable
         if layer.role == 'visu' or layer.role == 'ref':

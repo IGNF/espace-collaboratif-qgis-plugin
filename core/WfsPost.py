@@ -3,10 +3,12 @@ from qgis.core import QgsMapLayerType
 
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
+from .WfsGet import WfsGet
 from .XMLResponse import XMLResponse
 
 from . import ConstanteRipart as cst
 from .Wkt import Wkt
+from .BBox import BBox
 
 
 class WfsPost(object):
@@ -123,6 +125,16 @@ class WfsPost(object):
         message = xmlResponse.checkResponseWfsTransactions()
         if message['status'] == 'SUCCESS':
             res = self.layer.commitChanges()
+            # TODO arreter l'édition et faire un WFS_get pour récupérer les id des nouveaux objets
+            # et les modifs des autres utilisateurs
+            bbox = BBox(self.context)
+            parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.nom, 'role': self.layer.role,
+                          'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
+                          'sridLayer': self.layer.srid, 'bbox': bbox.getFromLayer(),
+                          'detruit': self.context.bColumnDetruitExist, 'isStandard': self.layer.isStandard,
+                          'is3D': self.layer.geometryDimensionForDatabase, 'numrec': message['numrec']}
+            wfsGet = WfsGet(self, parameters)
+            wfsGet.gcms_get()
             if res:
                 self.layer.startEditing()
             self.layer.reload()
@@ -138,7 +150,7 @@ class WfsPost(object):
         if len(addedFeatures) == 0 and \
                 len(changedGeometries) == 0 and \
                 len(changedAttributeValues) == 0 and \
-                len(deletedFeaturesId):
+                len(deletedFeaturesId) == 0:
             return "Rien à synchroniser"
 
         # ajout
@@ -283,6 +295,7 @@ class WfsPost(object):
 
     def getDataFromTransaction(self, idTransaction):
         # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281922.json
+        # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281927/action/1130961.json
         url = "{0}/gcms/database/{1}/transaction/{2}.json".format(self.context.client.getUrl(),
                                                                   self.layer.idNameForDatabase,
                                                                   idTransaction)

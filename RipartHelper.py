@@ -713,6 +713,7 @@ class RipartHelper:
 
         return isWithin
 
+    '''
     @staticmethod
     def getBboxFromLayer(filtreLay):
         """Retourne la bbox du calque donné en paramètre
@@ -727,6 +728,7 @@ class RipartHelper:
         bbox = xform.transform(filtreExtent)
 
         return bbox
+    '''
 
     @staticmethod
     def formatDate(sdate):

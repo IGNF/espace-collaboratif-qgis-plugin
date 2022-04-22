@@ -13,7 +13,7 @@ from PyQt5.QtCore import Qt
 from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsVectorLayer
 from qgis.utils import spatialite_connect
 from .RipartHelper import RipartHelper
-from .core.Box import Box
+from .core.BBox import BBox
 from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
@@ -76,12 +76,14 @@ class ImporterRipart(object):
         self.context.addRipartLayersToMap()
 
         # filtre spatial
+        filtreLay = None
         filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
-
         if filtre is not None and len(filtre.strip()) > 0:
             self.logger.debug("Spatial filter :" + filtre)
-
             filtreLay = self.context.getLayerByName(filtre)
+        bbox = BBox(self.context)
+        box = bbox.getFromLayer(filtre)
+        '''
             bbox = self.getSpatialFilterBbox(filtre, filtreLay)
             if bbox == -999:
                 return
@@ -94,7 +96,7 @@ class ImporterRipart(object):
                 bbox = None
             else:
                 return
-
+        '''
         QApplication.setOverrideCursor(Qt.BusyCursor)
 
         # vider les tables ripart
@@ -117,8 +119,8 @@ class ImporterRipart(object):
 
         self.context.client.setIface(self.context.iface)
 
-        if bbox is not None:
-            params['box'] = bbox.boxToString()
+        if box is not None:
+            params['box'] = box.boxToString()
 
         params['pagination'] = pagination
         params['updatingDate'] = date
@@ -128,7 +130,7 @@ class ImporterRipart(object):
         self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
 
         # Filtrage spatial affiné des remarques.
-        if bbox is not None:
+        if box is not None:
             remsToKeep = {}
 
             for key in rems:
@@ -190,6 +192,7 @@ class ImporterRipart(object):
             self.context.iface.messageBar().clearWidgets()
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
+    '''
     def getSpatialFilterBbox(self, filtre, filtreLay):
         """Retourne la boundingbox du filtre spatial
         
@@ -222,7 +225,9 @@ class ImporterRipart(object):
                        filtreExtent.yMaximum())
 
         return bbox
+    '''
 
+    '''
     def noFilterWarningDialog(self, message):
         """Avertissement si pas de filtre spatial
         """
@@ -232,6 +237,7 @@ class ImporterRipart(object):
             return True
         else:
             return False
+    '''
 
     def setMapExtent(self, box):
         """set de l'étendue de la carte
