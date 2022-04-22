@@ -889,6 +889,7 @@ class Contexte(object):
         Le système de référence spatial doit être celui du service Ripart(i.e. 4326), donc il faut transformer les
         coordonnées si la carte est dans un autre système de réf.
         """
+
         # dictionnaire : key: nom calque, value: liste des attributs
         attCroquis = RipartHelper.load_attCroquis(self.projectDir)
 
@@ -898,6 +899,15 @@ class Contexte(object):
         for lay in mapLayers:
             if type(lay) is not QgsVectorLayer:
                 continue
+
+            # Si le CRS de la couche n'est pas défini, on prévient l'utilisateur et on sort
+            if len(lay.selectedFeatures()) > 0 and not lay.sourceCrs().isValid():
+                nom = lay.name()
+                message = "La couche {0} ne peut pas être utilisée pour créer un signalement car son système de projection n'est pas défini. " \
+                          "Veuillez le définir avant de créer un signalement.".format(nom)
+                RipartHelper.showMessageBox(message)
+                return []
+
             for f in lay.selectedFeatures():
                 # la liste des croquis
                 croquiss = []
