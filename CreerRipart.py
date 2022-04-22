@@ -50,7 +50,10 @@ class CreerRipart(object):
 
             # Création des croquis à partir de la sélection de features
             croquisList = self.context.makeCroquisFromSelection()
-                       
+
+            # Il y a eu un problème à la génération des croquis, on sort
+            if len(croquisList) == 0:
+                return
             self.logger.debug(str(len(croquisList)) + u" croquis générés")
         
             # ouverture du formulaire de création de la remarque
