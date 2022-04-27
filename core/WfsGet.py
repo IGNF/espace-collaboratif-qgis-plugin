@@ -11,7 +11,6 @@ class WfsGet(object):
     proxy = None
     databaseName = None
     layerName = None
-    #layerRole = None
     geometryName = None
     sridProject = None
     sridLayer = None
@@ -115,8 +114,8 @@ class WfsGet(object):
     def setRequest(self):
         self.parametersGcmsGet['request'] = 'GetFeature'
 
-    def setOutputFormat(self, format):
-        self.parametersGcmsGet['outputFormat'] = format
+    def setOutputFormat(self, outputFormat):
+        self.parametersGcmsGet['outputFormat'] = outputFormat
 
     def setTypeName(self):
         typename = "{0}:{1}".format(self.databaseName, self.layerName)

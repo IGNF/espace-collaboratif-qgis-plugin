@@ -22,22 +22,5 @@ class CompterGuichet(object):
         self.title = "Comptage"
 
     def doCount(self):
-        # si pas de groupe : warning
-        if len(self.nodeGroups) == 0:
-            QMessageBox.warning(None, self.title, u"Pas de groupe actif")
-        else:
-            # indice 0 parce que le projet ne comporte qu'un seul groupe
-            layersId = self.nodeGroups[0].findLayerIds()
-            for layerId in layersId:
-                qgsmaplayer = QgsProject.instance().mapLayer(layerId)
-                print("Différentiel")
-                qgsmaplayer.doDifferentielAfterBeforeWorks()
-                layerName = qgsmaplayer.name()
-                print("Comptage : {}".format(layerName))
-                stat = qgsmaplayer.getStat()
-                stat.count()
-                self.message += "{}\n".format(layerName)
-                self.message += stat.countToDialog(layerName)
-
-            # Affichage du résultat
-            QMessageBox.information(None, self.title, self.message)
+        # Affichage du résultat
+        QMessageBox.information(None, self.title, "En travaux ;-)")

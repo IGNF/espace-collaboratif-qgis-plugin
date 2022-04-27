@@ -6,7 +6,6 @@ version 3.0.0, 26/11/2018
 
 @author: AChang-Wailing
 """
-
 from PyQt5.QtCore import QDate, QDateTime
 
 
@@ -22,11 +21,11 @@ class SketchAttributes(object):
         """
         Constructeur
         
-        :param nom: le nom de l'attribut
-        :type nom:string
+        :param name: le nom de l'attribut
+        :type name:string
         
-        :param valeur: la valeur de l'attribut
-        :type valeur:string
+        :param value: la valeur de l'attribut
+        :type value:string
         """
         self.name = name
 

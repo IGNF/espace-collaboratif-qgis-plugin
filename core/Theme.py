@@ -7,7 +7,6 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-
 from .Group import Group
 
 
@@ -15,17 +14,15 @@ class Theme(object):
     """
     Classe représentant un thème
     """
-    
     group = None
     
-    #liste d'attributs
+    # liste d'attributs
     attributes = []
 
-    def __init__(self, params=None):
+    def __init__(self):
         """
         Constructor
         """
         self.group = Group()
         self.attributes = []
         self.isFiltered = False
-

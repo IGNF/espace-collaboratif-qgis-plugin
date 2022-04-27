@@ -24,21 +24,7 @@ class Point(object):
         Constructeur à partir d'une longitude/latitude
         
         :param lon  La longitude (WGS84 en degrés décimaux) du point
-        :type float
         :param lat  La latitude (WGS84 en degrés décimaux) du point
-        :type float
         """
         self.longitude = lon
         self.latitude = lat
-
-    def isEmpty(self): 
-        """
-        Teste si le point est vide
-        """
-        return self.longitude is None or self.latitude is None
-    
-    def eq(self, b):
-        if self.longitude == b.longitude and self.latitude == b.latitude:
-            return True
-        else:
-            return False

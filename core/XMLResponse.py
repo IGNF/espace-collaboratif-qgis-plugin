@@ -7,7 +7,6 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-
 import xml.etree.ElementTree as ET
 from .Profil import Profil
 from . import ConstanteRipart as cst
@@ -27,6 +26,7 @@ from .RipartLoggerCl import RipartLogger
 from .Layer import Layer
 
 import re
+
 
 class XMLResponse(object):
     """
@@ -97,79 +97,6 @@ class XMLResponse(object):
         except Exception as e:
             self.logger.error(str(e))
         return message
-
-    def getAleas(self):
-        """ Extraction des Aleas       
-        :return une liste contenant les 2 aleas
-        """
-        aleas = list()
-
-        try:
-            alea1 = self.root.find('./REPONSE/ALEA1')
-            aleas.append(alea1.text)
-
-            alea2 = self.root.find('./REPONSE/ALEA2')
-            aleas.append(alea2.text)
-
-        except Exception as e:
-            self.logger.error(str(e))
-            raise Exception('Probleme de connexion')
-
-        return aleas
-
-    def getConnectValues(self):
-        """Extraction des paramètres de connexion
-        
-        :return: un dictionnaire contenant les paramètres de connexion (ID_AUTEUR, JETON, SITE)
-        """
-        connectValues = {'ID_AUTEUR': None, 'JETON': None, 'SITE': None}
-
-        try:
-            id_author = self.root.find('./REPONSE/ID_AUTEUR')
-            if id_author is not None:
-                connectValues['ID_AUTEUR'] = id_author.text
-            else:
-                raise Exception("ID_AUTEUR inexistant dans la réponse xml")
-
-            jeton = connectValues['JETON'] = self.root.find('./REPONSE/JETON')
-            if jeton is not None:
-                connectValues['JETON'] = jeton.text
-            else:
-                raise Exception("JETON inexistant dans la réponse xml")
-
-            site = connectValues['SITE'] = self.root.find('./REPONSE/SITE')
-            if site is not None:
-                connectValues['SITE'] = site.text
-            else:
-                raise Exception("SITE inexistant dans la réponse xml")
-
-        except Exception as e:
-            self.logger.error(str(e))
-            raise
-
-        return connectValues
-
-    def getCurrentJeton(self):
-        """Extraction du nouveau jeton
-           
-        :return le jeton
-        """
-
-        jeton = ""
-
-        try:
-            jetonNode = self.root.find('./REPONSE/JETON')
-
-            if jetonNode is not None:
-                jeton = jetonNode.text
-            else:
-                raise Exception('Pas de jeton')
-
-        except Exception as e:
-            self.logger.error('getCurrentJeton:' + str(e))
-            raise
-
-        return jeton
 
     def extractNomProfil(self):
         try:
@@ -615,12 +542,6 @@ class XMLResponse(object):
             raise Exception("Une erreur est survenue dans l'importation des remarques : {}".format(str(e)))
 
         return remarques
-
-    def getNodeText(self, node):
-        if node is not None:
-            return node.text
-        else:
-            return ""
 
     def getCroquisForRem(self, rem, node):
         """ Extrait les croquis d'une remarque et les ajoute dans l'objet Remarque (rem)

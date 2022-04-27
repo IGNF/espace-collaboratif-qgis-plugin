@@ -23,7 +23,7 @@ class InfosGeogroup(object):
     # Thèmes du groupe
     themes = []
 
-    def __init__(self, parent=None):
+    def __init__(self):
         """
         Constructor
         """

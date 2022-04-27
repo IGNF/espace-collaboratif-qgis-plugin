@@ -6,7 +6,6 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
-
 from .Enum import Enum
 import xml.etree.ElementTree as ET
 from .ClientHelper import ClientHelper
@@ -14,7 +13,7 @@ from .ClientHelper import ClientHelper
 
 class Sketch(object):
     """
-    Classe repésentant un croquis
+    Classe représentant un croquis
     """
     '''
     Vide : pas de croquis
@@ -58,12 +57,6 @@ class Sketch(object):
             self.points = list()
         else:
             self.points = points
-
-    def setType(self, typeSketch):
-        """
-        définit le type
-        """
-        self.type = typeSketch
 
     def addPoint(self, point):
         """
@@ -136,24 +129,11 @@ class Sketch(object):
         else:
             return None
 
-    def isEmpty(self):
-        """Contrôle si la liste de points est vide
-         :return true si la liste est vide, false sinon
-         :rtype boolean
-         """
-        return len(self.points) == 0
-
     def isClosed(self):
         """Contrôle si la géométrie est fermée
         rtype:boolean
         """
         return self.firstCoord() == self.lastCoord()
-                                                 
-    def isOpenLine(self):
-        """Contrôle si la ligne est ouverte
-        :rtype boolean
-        """      
-        return (self.type == self.sketchType.Fleche or self.type == self.sketchType.Ligne) and not self.isClosed()
 
     def isValid(self):
         """Contrôle la validité de la géométrie

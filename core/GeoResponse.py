@@ -6,7 +6,6 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
-
 from datetime import datetime
 import xml.etree.cElementTree as ET
 from .Group import Group

@@ -55,14 +55,14 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
         self.textOldRep.setHtml(ClientHelper.notNoneValue(remarque.concatenateResponseHTML()))
 
     def setStatut(self, statut):
-        st = [i for i in range(len(cst.statutLibelle)) if cst.statuts()[i] == statut]
+        st = [i for i in range(len(cst.statutLibelle)) if cst.getStatuts()[i] == statut]
         self.cboxStatut.setCurrentIndex(st[0])
 
     def sendResponse(self):
         self.cancel = False
         self.answer = True
         self.newRep = self.textNewRep.toPlainText()
-        self.newStat = cst.statuts()[self.cboxStatut.currentIndex()]
+        self.newStat = cst.getStatuts()[self.cboxStatut.currentIndex()]
         self.repTitle = self.textTitre.text()
         self.close()
 

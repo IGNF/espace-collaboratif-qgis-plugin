@@ -6,7 +6,6 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
-
 from .Point import Point
 from . import ConstanteRipart
 from .Group import Group
@@ -81,7 +80,6 @@ class Remarque(object):
     # thèmes attachés à la remarque  list(Theme)
     themes = []
 
-    #
     hash = ""
 
     source = ""
@@ -156,16 +154,6 @@ class Remarque(object):
         """
         return len(self.croquis) == 0
 
-    def getAuthorName(self):
-        """Retourne le  nom de l'auteur de la remarque
-        """
-        return self.author.name
-
-    def getAuthorId(self):
-        """Retourne l'id de l'auteur de la remarque
-        """
-        return self.author.id
-
     def getLongitude(self):
         """Retourne la longitude 
         """
@@ -175,14 +163,6 @@ class Remarque(object):
         """Retourne la latitude
         """
         return self.position.latitude
-
-    def getFirstDocument(self):
-        """Retourne le premier document attaché à la remarque (s'il y en a un)
-        """
-        if len(self.documents) == 0:
-            return ""
-        else:
-            return self.documents[0].text
 
     def getAllDocuments(self):
         """Retourne les documents attachés à la remarque (s'il y en a)
@@ -225,7 +205,7 @@ class Remarque(object):
                     concatenate += " le " + response.date.strftime("%Y-%m-%d %H:%M:%S")
                 if response.status is not None:
                     concatenate += ", " + ConstanteRipart.statutLibelle[
-                        ConstanteRipart.statuts().index(response.statut.__str__())]
+                        ConstanteRipart.getStatuts().index(response.statut.__str__())]
                 concatenate += ".</font></b><br/>"
 
                 if response.title() is not None and response.title() != "":
@@ -284,14 +264,6 @@ class Remarque(object):
         """
         self.documents.append(document)
 
-    # TODO voir si utile ???
-    def addDocumentList(self, docList):
-        """Ajoute une liste de documents à la remarque
-        :param docList : une liste de documents
-        :type docList: list (of string)
-        """
-        self.documents.extend(docList)
-
     def addCroquis(self, croquis):
         """ Ajoute un croquis à la liste de croquis de la remarque
         
@@ -320,14 +292,6 @@ class Remarque(object):
         """
         self.responses.append(response)
 
-    def addTheme(self, theme):
-        """Ajoute un thème
-        
-        :param theme: un Theme
-        :type theme : Theme
-        """
-        self.themes.append(theme)
-
     def addThemeList(self, listThemes):
         """Ajoute une liste de thèmes
         
@@ -335,6 +299,3 @@ class Remarque(object):
         :type listThemes : list (de Theme)
         """
         self.themes.extend(listThemes)
-
-    def clearThemes(self):
-        self.themes = []

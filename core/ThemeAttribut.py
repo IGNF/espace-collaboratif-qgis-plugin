@@ -41,9 +41,6 @@ class ThemeAttribut(object):
     def addValeur(self, key, value):
         self.valeurs[key] = value
 
-    def setDefaultVal(self, val):
-        self.defaultval = val
-
     def setType(self, attType):
         self.type = attType
 
@@ -52,6 +49,3 @@ class ThemeAttribut(object):
 
     def setTagDisplay(self, display):
         self.tagDisplay = display
-
-    def setNom(self, nom):
-        self.nom = nom

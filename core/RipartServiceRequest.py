@@ -6,7 +6,6 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
-
 import json
 from .RipartLoggerCl import RipartLogger
 from . import requests

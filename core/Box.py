@@ -45,13 +45,7 @@ class Box(object):
         crsProject = QgsCoordinateReferenceSystem(sridProject)
         crsLayer = QgsCoordinateReferenceSystem(sridLayer)
         transformer = QgsCoordinateTransform(crsProject, crsLayer, QgsProject.instance())
-        min = transformer.transform(self.XMin, self.YMin)
-        max = transformer.transform(self.XMax, self.YMax)
-        strBox = str(min.x()) + "," + str(min.y()) + "," + str(max.x()) + "," + str(max.y())
+        mini = transformer.transform(self.XMin, self.YMin)
+        maxi = transformer.transform(self.XMax, self.YMax)
+        strBox = str(mini.x()) + "," + str(mini.y()) + "," + str(maxi.x()) + "," + str(maxi.y())
         return strBox
-
-    def isEmpty(self):
-        """
-        Teste si la boite est vide
-        """
-        return self.XMin is None or self.YMin is None or self.XMax is None or self.YMax is None

@@ -60,9 +60,3 @@ class Layer(object):
         self.srid = -1
         self.layer_id = ""
         self.isStandard = True
-
-    def GetAllInfo(self):
-        infos = [self.type, self.nom, self.description, self.minzoom, self.maxzoom, self.extent, self.role,
-                 self.visibility, self.opacity, self.tilezoom, self.url, self.databasename, self.layer_id,
-                 self.isStandard]
-        return infos

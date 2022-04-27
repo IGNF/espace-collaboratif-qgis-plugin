@@ -120,7 +120,6 @@ class Contexte(object):
         self.ripClient = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
-        #self.connectSignals()
 
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata('general', 'version')
@@ -151,18 +150,6 @@ class Contexte(object):
         config = configparser.RawConfigParser()
         config.read(self.plugin_path + '\\metadata.txt')
         return config.get('general', 'version')
-
-    """
-    def connectSignals(self):
-        self.QgsProject.writeProject.connect(self.write_project)
-        self.QgsProject.writeMapLayer.connect(self.write_maplayer)
-
-    def write_project(self):
-        print("Sauvegarde du projet")
-
-    def write_maplayer(self):
-        print("Sauvegarde d'une couche")
-    """
 
     @staticmethod
     def IsLayerInMap(layerName):

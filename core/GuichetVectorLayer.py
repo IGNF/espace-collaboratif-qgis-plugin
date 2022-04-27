@@ -6,10 +6,7 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
 """
-
 import random
-import hashlib
-import os
 
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer, \
@@ -17,12 +14,10 @@ from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbo
     QgsDefaultValue
 
 from .MongoDBtoQGIS import MongoDBtoQGIS
-from .SQLiteManager import SQLiteManager
 
 
 class GuichetVectorLayer(QgsVectorLayer):
     databasename = None
-    # TODO a quoi cela correspond, j'ai l'impression que cette variable n'est jamais remplie... même dans MongoDBtoQGIS.py
     correspondanceChampType = None
     sqliteManager = None
     srid = None
@@ -51,26 +46,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     def connectSignals(self):
         self.editingStopped.connect(self.editing_stopped)
         self.beforeRollBack.connect(self.before_rollback)
-        """
-        # Connexion des signaux permettant le traitement de gcms_fingerprint pour les tables historisées
-        if self.idxFingerprint != -1:
-            # Signaux pour la modification d'objets
-            self.geometryChanged.connect(self.geometry_changed)
-            self.attributeValueChanged.connect(self.attribute_value_changed)
-            # self.featureAdded.connect(self.feature_added)
-            # self.featureDeleted.connect(self.feature_deleted)
-
-            # Signaux pour réinitialiser la liste des objets modifiés
-            # self.afterCommitChanges.connect(self.clear_features_list)
-            # self.afterRollBack.connect(self.clear_features_list)
-            # self.editingStarted.connect(self.clear_features_list)
-            # self.editingStopped.connect(self.clear_features_list)
-            self.beforeCommitChanges.connect(self.before_commit_changes)
-
-        self.attributeAdded.connect(self.attribute_added)
-        self.attributeDeleted.connect(self.attribute_deleted)
-        self.editingStopped.connect(self.editing_stopped)
-        """
 
     '''
     L'utilisateur a mis fin à l'édition de la couche
@@ -83,215 +58,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
     def before_rollback(self):
         print("Annulation des modifications dans la couche")
-
-    '''
-    Calcul d'une clé de hachage à partir des caractéristiques d'un objet
-    # géométrie et valeurs de ses attributs
-    '''
-    def setMD5(self, feature):
-        allAttributes = []
-
-        # Ajout de la géometrie
-        allAttributes.append("{}".format(feature.geometry().asJson()))
-
-        # Ajout de la liste des valeurs d'attributs
-        listValues = feature.attributes()
-        for value in listValues:
-            allAttributes.append("{}".format(value))
-
-        # Concaténation et encodage des valeurs d'attributs
-        tmp = "".join(allAttributes).encode('utf-8')
-
-        # Calcul de la clé
-        cle = hashlib.sha224(tmp).hexdigest()
-
-        # Retourne la référence par objet (idQGIS:MD5)
-        '''fields = self.fields()
-        id = None
-        for field in fields:
-            name = field.name()
-            if name != 'id':
-                continue
-
-            index = fields.indexOf(name)
-            if index == -1:
-                id = feature.id()
-            else:
-                value = feature.attribute(index)
-                # l'id est rempli
-                if value > 0:
-                    id = value
-                # l'id existe mais n'est pas remplie, valeur = NULL
-                else:
-                    id = feature.id()
-
-        # si l'objet n'a pas d'attribut id
-        if id is None:
-            id = feature.id()'''
-
-        return feature.id(), cle
-
-    '''
-    Au chargement de la couche dans QGIS, les caractéristiques des objets initiaux
-    sont stockées dans un fichier sous la forme d'une clé de hachage :
-    id QGIS/clé de hachage
-    '''
-    def setMd5BeforeWorks(self):
-        # il faut détruire le fichier afterWorks
-        if os.path.exists(self.fileAfterWorks):
-            os.remove(self.fileAfterWorks)
-
-        fichier = self.openFile(self.fileBeforeWorks, "wt")
-        features = self.getFeatures()
-        for feature in features:
-            id_cle = self.setMD5(feature)
-            self.md5BeforeWorks.append(id_cle)
-            fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
-        self.closeFile(fichier)
-
-    '''
-    Dès la fin de l'édition d'une couche, les caractéristiques des objets
-    sont stockées dans un fichier sous la forme d'une clé de hachage :
-    id QGIS/clé de hachage
-    Il doit y avoir des objets créés, modifiés, supprimés
-    '''
-    def setMd5AfterWorks(self):
-        fichier = self.openFile(self.fileAfterWorks, "wt")
-        features = self.getFeatures()
-        for feature in features:
-            id_cle = self.setMD5(feature)
-            self.md5AfterWorks.append(id_cle)
-            fichier.write("{}:{}{}".format(id_cle[0], id_cle[1], "\n"))
-        self.closeFile(fichier)
-
-    def attribute_value_changed(self, fid, idx, value):
-        self.include_fingerprint(fid, idx)
-
-    def geometry_changed(self, fid, geometry):
-        self.include_fingerprint(fid)
-
-    # def feature_deleted(self, fid):
-    #   self.include_fingerprint(fid)
-
-    def before_commit_changes(self):
-        print("Before commit changes")
-
-    '''
-    Lors de toute modification sur un objet d'une table historisée (table contenant le champ gcms_fingerprint),
-    on simule une modification du champ gcms_fingerprint pour que celui-ci soit inclus dans la transaction.
-    Sinon, la transaction est refusée par l'espace collaboratif.
-    '''
-    def include_fingerprint(self, fid, idx=None):
-        if idx is not None and (idx == self.idxFingerprint or self.idxFingerprint == -1):
-            return
-
-        # if fid in self.listUpdatedFeaturesIds:
-        #    return
-
-        feat = self.getFeature(fid)
-        valFingerPrint = feat[self.fingerprint]
-        self.changeAttributeValue(fid, self.idxFingerprint, valFingerPrint, valFingerPrint)
-
-    '''
-    Interdiction de supprimer un attribut sinon la synchronisation au serveur est perdue
-    '''
-    def attribute_deleted(self, idx):
-        fields = self.fields()
-        raise Exception("Impossible de supprimer l'attribut {} car la synchronisation au serveur sera perdue.".format(
-            fields[idx].name()))
-
-    '''
-    Interdiction d'ajouter un attribut sinon la synchronisation au serveur est perdue
-    '''
-    def attribute_added(self, idx):
-        fields = self.fields()
-        raise Exception("Impossible d'ajouter l'attribut {} car la synchronisation au serveur sera perdue.".format(
-            fields[idx].name()))
-
-    '''
-    Comptage par différentiel des objets
-    ajoutés, supprimés ou modifiés de la couche
-    '''
-    def doDifferentielAfterBeforeWorks(self):
-        # Ajout
-        self.stat.nfa = 0
-        # Suppression
-        self.stat.nfd = 0
-        # Modification
-        self.stat.nfc = 0
-
-        # Dictionnaire cle/valeur carte origine
-        before = self.openFile(self.fileBeforeWorks, "r")
-        lines = before.readlines()
-        dictBefore = {}
-        for line in lines:
-            tmp = line.split(":")
-            dictBefore[tmp[0]] = tmp[1]
-        self.closeFile(before)
-
-        # oublie de sauvegarder le projet : pas de fichier after
-        if not os.path.exists(self.fileAfterWorks):
-            return
-
-        # Dictionnaire cle/valeur carte après intervention utilisateur
-        after = self.openFile(self.fileAfterWorks, "r")
-        lines = after.readlines()
-        dictAfter = {}
-        for line in lines:
-            tmp = line.split(":")
-            dictAfter[tmp[0]] = tmp[1]
-        self.closeFile(after)
-
-        '''
-        Différentiel entre les deux dictionnaires
-        '''
-        # Ajout/modification d'éléments
-        for cle, md5 in dictAfter.items():
-            if cle not in dictBefore:
-                print("feature {} ajouté".format(cle))
-                self.stat.nfa += 1
-            else:
-                if md5 != dictBefore[cle]:
-                    print("feature {} : modifié".format(cle))
-                    self.stat.nfc += 1
-
-        # Suppression d'éléments
-        for cle, md5 in dictBefore.items():
-            if cle not in dictAfter:
-                print("feature {} : supprimé".format(cle))
-                self.stat.nfd += 1
-
-    '''
-    Modification du formulaire de saisie pour afficher la liste de valeurs de certains attributs "liste"
-    [Layer:Propriétés][Bouton:Formulaire d'attributs][Fenêtre:Contrôles disponibles][Onglet:Fields]
-    Exemple : config = {'map': [{'':'', 'Zone1': 'Zone1'},{' Zone2': ' Zone2'}, {'Zone3': 'Zone3'}]}
-    '''
-    def setModifyFormAttributes(self, listOfValues):
-        fields = self.fields()
-        attribute_values = {}
-        for attribute, values in listOfValues.items():
-            QgsEWS_type = 'ValueMap'
-            index = fields.indexOf(attribute)
-
-            if type(values) is list:
-                attribute_values.clear()
-                for value in values:
-                    attribute_values[value] = value
-
-            if type(values) is dict:
-                attribute_values.clear()
-                for cle, value in values.items():
-                    attribute_values[cle] = value
-
-            QgsEWS_config = {'map': attribute_values}
-            setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
-            self.setEditorWidgetSetup(index, setup)
-
-    def setModifyDefaultValue(self, listOfDefaultValues):
-        fields = self.fields()
-        for attribute, value in listOfDefaultValues.items():
-            index = fields.indexOf(attribute)
-            self.setDefaultValueDefinition(index, QgsDefaultValue(value))
 
     '''
         Transformation de la condition en expression QGIS
@@ -482,7 +248,8 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.triggerRepaint()
 
     def setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression):
-        # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor', 'opacity=fillOpacity/strokeOpacity' )
+        # class_rules = ('label=name', 'expression=condition', 'color=fillColor/strokeColor',
+        # 'opacity=fillOpacity/strokeOpacity' )
         class_rules = []
         for c, v in data.items():
             tmp = [v['name']]
@@ -528,28 +295,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         # Refresh layer
         self.triggerRepaint()
 
-    def appendClassRules(self, data, bExpression):
-        # class_rules = (
-        # 'label=name',
-        # 'expression=condition',
-        # 'color=fillColor/strokeColor',
-        # 'opacity=fillOpacity/strokeOpacity' )
-        class_rules = []
-        for c, v in data.items():
-            tmp = [v['name']]
-            expression = self.changeConditionToExpression(v['condition'], bExpression)
-            tmp.append(expression)
-            col = self.getColorFromType(v)
-            tmp.append(col)
-            opac = self.getOpacity(v)
-            tmp.append(opac)
-            width = self.getWidth(v)
-            tmp.append(width)
-            # Ajout de la symbologie 'Ensemble de règles' pour une couche
-            class_rules.append(tmp)
-
-        return class_rules
-
     '''
         Modification de la symbologie
     '''
@@ -564,16 +309,14 @@ class GuichetVectorLayer(QgsVectorLayer):
             self.setModifyWithQgsSingleSymbolRenderer(listOfValues)
 
         # Balise Style avec balise(s) Children, Symbologie = Ensemble de règles
-        bExpression = False
         if len(listOfValues) > 1:
-            bExpression = True
-            self.setModifyWithQgsRuleBasedSymbolRenderer(listOfValues, bExpression)
+            self.setModifyWithQgsRuleBasedSymbolRenderer(listOfValues, True)
 
     '''
         Définition de l'échelle minimum et maximum de la couche
         Source : https://geoservices.ign.fr/documentation/geoservices/wmts.html#taille-des-tuiles-en-pixels
     '''
-    def setDisplayScale(self, min, max):
+    def setDisplayScale(self, minS, maxS):
         # Correspondance zoom des tuiles - échelle approximative
         scale = {
             '0': 559082264,
@@ -599,6 +342,6 @@ class GuichetVectorLayer(QgsVectorLayer):
             '20': 533,
             '21': 267
         }
-        self.setMinimumScale(scale[min])
-        self.setMaximumScale(scale[max])
+        self.setMinimumScale(scale[minS])
+        self.setMaximumScale(scale[maxS])
         self.setScaleBasedVisibility(True)

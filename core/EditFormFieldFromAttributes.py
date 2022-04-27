@@ -6,16 +6,13 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
 """
-
-
 from qgis.core import QgsVectorLayer, QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue, QgsEditFormConfig
-
-'''
-Mise en forme des champs dans le formulaire d'attributs QGIS
-'''
 
 
 class EditFormFieldFromAttributes(object):
+    """
+    Mise en forme des champs dans le formulaire d'attributs QGIS
+    """
     # les données
     data = None
     # couche concernée
@@ -33,15 +30,13 @@ class EditFormFieldFromAttributes(object):
         self.data = data
         self.layer = layer
 
-    '''
-    Lecture des clé/valeurs de l'item 'attributes', par exemple
-    "commentaire_nom": {"crs": null, "default_value": null, "id": 30180, "target_type": null, "name": "commentaire_nom",
-    "short_name": "commentair", "title": "commentaire_nom", "description": "Ceci est un commentaire à remplir par l'utilisateur.",
-    "min_length": null, "max_length": 255, "nullable": true, "unique": false, "srid": null, "position": 3, "listOfValues": "",
-    "min_value": null, "max_value": null, "pattern": null, "is3d": false, "readOnly": false, "condition": null,
-    "condition_field": null, "computed": false, "automatic": false, "formula": null, "queryable": false,
-    "required": false, "mime_types": null, "type": "String"}
-    '''
+    '''Lecture des clé/valeurs de l'item 'attributes', par exemple "commentaire_nom": {"crs": null, "default_value": 
+    null, "id": 30180, "target_type": null, "name": "commentaire_nom", "short_name": "commentair", 
+    "title": "commentaire_nom", "description": "Ceci est un commentaire à remplir par l'utilisateur.", "min_length": 
+    null, "max_length": 255, "nullable": true, "unique": false, "srid": null, "position": 3, "listOfValues": "", 
+    "min_value": null, "max_value": null, "pattern": null, "is3d": false, "readOnly": false, "condition": null, 
+    "condition_field": null, "computed": false, "automatic": false, "formula": null, "queryable": false, "required": 
+    false, "mime_types": null, "type": "String"} '''
     def readData(self):
         # Correspondance nom du champ/type du champ
         linkFieldType = {}
@@ -53,7 +48,7 @@ class EditFormFieldFromAttributes(object):
             self.setFieldSwitchType(v['type'], v['default_value'])
             self.setFieldConstraintNotNull(v['nullable'])
             self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'], v['type'], v['nullable'])
-            self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type'], v['nullable'])
+            self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type'])
             self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
             self.setFieldListOfValues(v['listOfValues'], v['default_value'])
@@ -98,7 +93,6 @@ class EditFormFieldFromAttributes(object):
     Mise en forme du champ dans le formulaire d'attributs QGIS
     '''
     def setFormEditor(self, QgsEWS_type, QgsEWS_config):
-
         setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
         self.layer.setEditorWidgetSetup(self.index, setup)
 
@@ -172,9 +166,8 @@ class EditFormFieldFromAttributes(object):
     la contrainte ne fonctionne pas.
     Il faut avoir : "date_nom" >= '2020-06-01' and "date_nom" <= '2021-06-30' 
     '''
-    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, bNullable):
-
-        global expTmp
+    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType):
+        expTmp = None
         if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == self.data['idName']:
             return
 
@@ -182,12 +175,10 @@ class EditFormFieldFromAttributes(object):
             minValue = minValue.replace(' ', 'T')
             maxValue = maxValue.replace(' ', 'T')
 
-        expression = None
         listExpressions = []
 
         # minValue
         if minValue is not None and minValue != '':
-            expTmp = ""
             if vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
                 expTmp = "\"{}\" >= \'{}\'".format(self.name, minValue)
             else:
@@ -196,7 +187,6 @@ class EditFormFieldFromAttributes(object):
 
         # maxValue
         if maxValue is not None and maxValue != '':
-            expTmp = ""
             if vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
                 expTmp = "\"{}\" <= \'{}\'".format(self.name, maxValue)
             else:
@@ -224,7 +214,6 @@ class EditFormFieldFromAttributes(object):
         if (minLength is None and maxLength is None) or (minLength == '' and maxLength == '') or self.name == self.data['idName']:
             return
 
-        expression = None
         listExpressions = []
 
         # minLength

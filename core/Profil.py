@@ -18,37 +18,42 @@ class Profil(object):
     Classe représentant le profil de l'utilisateur
     """
 
-    #Nom de l'auteur   
+    # Nom de l'auteur
     author = Author()
                         
-    #Nom du Geogroupe    
+    # Nom du Geogroupe
     geogroup = Group()
         
-    #Titre du Geogroupe   
+    # Titre du Geogroupe
     title = ""
 
-    #Statut (privilèges) du profil        
+    # Statut (privilèges) du profil
     statut = ""
         
-    #Lien vers le logo du profil
+    # Lien vers le logo du profil
     logo = ""
 
-    #Filtre du profil       
+    # Filtre du profil
     filtre = ""
 
-    #La zone géographique de travail du profil        
+    # La zone géographique de travail du profil
     zone = ConstanteRipart.ZoneGeographique.UNDEFINED
 
-    #Indique si le profil a accès aux groupes privés
+    # Indique si le profil a accès aux groupes privés
     prive = False
 
-    #Les éventuels thèmes attachés au profil
-    themes = list()         # Liste des thèmes du profil actif
-    filteredThemes = list() # Liste des thèmes filtrés
-    allThemes = list()      # Liste de tous les thèmes du profil de l'utilsateur (issus de tous ses groupes)
+    # Les éventuels thèmes attachés au profil
+    # Liste des thèmes du profil actif
+    themes = list()
 
-    #identifiant geoprofil    
+    # Liste des thèmes filtrés
+    filteredThemes = list()
+
+    # Liste de tous les thèmes du profil de l'utilsateur (issus de tous ses groupes)
+    allThemes = list()
+
+    # identifiant geoprofil
     id_Geoprofil = ""
 
-    #Les différents groupes de l'utilisateur
+    # Les différents groupes de l'utilisateur
     infosGeogroups = list()

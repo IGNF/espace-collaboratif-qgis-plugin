@@ -117,7 +117,7 @@ class WfsPost(object):
     def setClientId(self, clientFeatureId):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
-    def gcms_post(self, strActions, filter):
+    def gcms_post(self, strActions, filterName):
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
@@ -125,7 +125,7 @@ class WfsPost(object):
         message = xmlResponse.checkResponseWfsTransactions()
         if message['status'] == 'SUCCESS':
             # mise à jour de la couche
-            self.getAfterPost(message, filter)
+            self.getAfterPost(message, filterName)
             numrec = self.getNumrecFromTransaction(message['urlTransaction'])
             # cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
@@ -145,7 +145,7 @@ class WfsPost(object):
         data = json.loads(response)
         return data['numrec']
 
-    def getAfterPost(self, message, filter):
+    def getAfterPost(self, message, filterName):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
@@ -155,14 +155,14 @@ class WfsPost(object):
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
-                      'sridLayer': self.layer.srid, 'bbox': bbox.getFromLayer(filter),
+                      'sridLayer': self.layer.srid, 'bbox': bbox.getFromLayer(filterName),
                       'detruit': bDetruit, 'isStandard': self.layer.isStandard,
                       'is3D': self.layer.geometryDimensionForDatabase, 'urlTransaction': message['urlTransaction'],
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)
         wfsGet.gcms_get()
 
-    def commitLayer(self, editBuffer, filter):
+    def commitLayer(self, editBuffer, filterLayer):
         self.actions.clear()
 
         addedFeatures = editBuffer.addedFeatures().values()
@@ -195,7 +195,7 @@ class WfsPost(object):
         # Lancement de la transaction
         strActions = self.formatItemActions()
         print(strActions)
-        information = "{0} []".format(self.gcms_post(strActions, filter))
+        information = "{0} []".format(self.gcms_post(strActions, filterLayer))
         return information
 
     def pushAddedFeatures(self, addedFeatures):
@@ -314,10 +314,3 @@ class WfsPost(object):
             strFeature += self.setStateAndLayerName('Delete')
             strFeature += '}'
             self.actions.append(strFeature)
-
-    def showMessage(self, message):
-        msgBox = QMessageBox()
-        msgBox.setWindowTitle("IGN Espace Collaboratif")
-        msgBox.setIcon(QMessageBox.Warning)
-        msgBox.setText(message)
-        msgBox.exec_()

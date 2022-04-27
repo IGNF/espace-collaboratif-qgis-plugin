@@ -46,11 +46,13 @@ class SQLiteManager(object):
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
             elif value['name'] == geometryName:
                 typeGeometrie = self.setSwitchType(value['type'])
-            elif value['name'] == cst.ID_SQLITE: # au cas où il y aurait déjà un attribut nommé id_sqlite
+            # au cas où il y aurait déjà un attribut nommé id_sqlite
+            elif value['name'] == cst.ID_SQLITE:
                 sqlAttributes += "{0} {1},".format(cst.ID_ORIGINAL, self.setSwitchType(value['type']))
             else:
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
-        # il faut ajouter une colonne "is_fingerprint" qui indiquera si c'est une table BDUni qui contient gcms_fingerprint
+        # il faut ajouter une colonne "is_fingerprint" qui indiquera si c'est une table BDUni qui contient
+        # gcms_fingerprint
         sqlAttributes += "{0} INTEGER".format(cst.IS_FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
         self.geometryType = typeGeometrie
@@ -60,9 +62,9 @@ class SQLiteManager(object):
         # Paramétrage de la colonne géométrie en 2D par défaut
         if parameters['is3D']:
             sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XYZ')".format(parameters['tableName'],
-                                                                                    parameters['geometryName'],
-                                                                                    parameters['crs'],
-                                                                                    parameters['geometryType'])
+                                                                                     parameters['geometryName'],
+                                                                                     parameters['crs'],
+                                                                                     parameters['geometryType'])
         else:
             sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XY')".format(parameters['tableName'],
                                                                                     parameters['geometryName'],
@@ -84,15 +86,10 @@ class SQLiteManager(object):
         sql = u"CREATE TABLE {0} (".format(layer.nom)
         sql += t[0]
         sql += ')'
-        #print(sql)
         cur = connection.cursor()
         cur.execute(sql)
-        parameters_geometry_column = {}
-        parameters_geometry_column['tableName'] = layer.nom
-        parameters_geometry_column['geometryName'] = tableStructure['geometryName']
-        parameters_geometry_column['crs'] = cst.EPSGCRS
-        parameters_geometry_column['geometryType'] = self.geometryType
-        parameters_geometry_column['is3D'] = self.is3D
+        parameters_geometry_column = {'tableName': layer.nom, 'geometryName': tableStructure['geometryName'],
+                                      'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
         cur.execute(sqlGeometryColumn)
         if len(cur.fetchall()) == 0:
@@ -102,7 +99,7 @@ class SQLiteManager(object):
         connection.close()
         # compactage de la base
         self.vacuumDatabase()
-        #retourne True si la colonne detruit existe dans la table
+        # retourne True si la colonne detruit existe dans la table
         return t[2]
 
     def setSwitchType(self, vType):
@@ -166,8 +163,6 @@ class SQLiteManager(object):
                 if type(value) == list:
                     tmpValues += '"{}",'.format(value)
                     continue
-                    # pour l'attribut like de type str mais json
-                #tmpValues += '"{}",'.format(value)
                 tmpValues += "'{}',".format(value)
         # si la table sqlite contient :
         # la colonne gcms_fingerprint
@@ -207,13 +202,15 @@ class SQLiteManager(object):
         for idTmp in ids:
             tmp += "'{}',".format(idTmp)
         pos = len(tmp)
-        listId = tmp[0:pos-1]
+        listId = tmp[0:pos - 1]
         listId += ')'
         result = SQLiteManager.isColumnExist(layer.name(), cst.FINGERPRINT)
         if result[0] == 1:
-            sql = "SELECT {0}, {1} FROM {2} WHERE {3} IN {4}".format(layer.idNameForDatabase, cst.FINGERPRINT, layer.name(), cst.ID_SQLITE, listId)
+            sql = "SELECT {0}, {1} FROM {2} WHERE {3} IN {4}".format(layer.idNameForDatabase, cst.FINGERPRINT,
+                                                                     layer.name(), cst.ID_SQLITE, listId)
         else:
-            sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idNameForDatabase, layer.name(), cst.ID_SQLITE, listId)
+            sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idNameForDatabase, layer.name(), cst.ID_SQLITE,
+                                                                listId)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         cur.execute(sql)
@@ -313,7 +310,7 @@ class SQLiteManager(object):
                 values += "'{0}',".format(val)
         posC = len(columns)
         posV = len(values)
-        sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(cst.TABLEOFTABLES, columns[0:posC-1], values[0:posV-1])
+        sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(cst.TABLEOFTABLES, columns[0:posC - 1], values[0:posV - 1])
         print(sql)
 
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
