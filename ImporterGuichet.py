@@ -72,76 +72,16 @@ class ImporterGuichet(object):
             # filtre spatial
             bbox = BBox(self.context)
             box = bbox.getFromLayer(RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
-            '''
-            bbox = None
-            filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
-            if filtre is not None and len(filtre.strip()) > 0:
-                self.logger.debug("Spatial filter :" + filtre)
-                filtreLay = self.context.getLayerByName(filtre)
-                bbox = self.getSpatialFilterBbox(filtre, filtreLay)
-                if bbox == -999:
-                    return
-            else:
-                message = "Impossible de déterminer dans le fichier de paramétrage de l'Espace Collaboratif, le nom du calque à utiliser pour le filtrage spatial.\n\n" + \
-                           "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
-                           "(Cela risque de prendre un certain temps)."
-                if self.noFilterWarningDialog(message):
-                    bbox = None
-                else:
-                    return
-            '''
 
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             QApplication.setOverrideCursor(Qt.BusyCursor)
 
             # création de la table des tables
             SQLiteManager.createTableOfTables()
+
             # Import des couches du guichet sélectionnées par l'utilisateur
             self.context.addGuichetLayersToMap(guichet_layers, box, self.context.profil.geogroup.name)
 
         finally:
             self.context.iface.messageBar().clearWidgets()
             QApplication.setOverrideCursor(Qt.ArrowCursor)
-    '''
-    def getSpatialFilterBbox(self, filtre, filtreLay):
-        """Retourne la boundingbox du filtre spatial
-
-        :param filtre: le nom du calque utilisé comme filtre
-        :type: string
-
-        :param filtreLay: le layer correspondant
-        :type filtreLay: QgsVectorLayer
-        """
-        bbox = None
-
-        if filtreLay is None:
-            message = "La carte en cours ne contient pas le calque '" + \
-                      filtre + \
-                      "' défini pour être le filtrage spatial (ou le calque n'est pas activé).\n\n" + \
-                      "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
-                      "(Cela risque de prendre un certain temps)."
-
-            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                bbox = None
-            else:
-                return -999
-
-        else:
-            # emprise=> getExtent + transform in 4326 crs
-            filtreExtent = RipartHelper.getBboxFromLayer(filtreLay)
-            bbox = Box(filtreExtent.xMinimum(), filtreExtent.yMinimum(), filtreExtent.xMaximum(),
-                       filtreExtent.yMaximum())
-
-        return bbox
-
-    def noFilterWarningDialog(self, message):
-        """Avertissement si pas de filtre spatial
-        """
-        message = ClientHelper.notNoneValue(message)
-        reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            return True
-        else:
-            return False
-    '''

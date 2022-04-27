@@ -357,7 +357,7 @@ class RipartPlugin:
             if not editBuffer:
                 continue
             wfsPost = WfsPost(self.context, layer)
-            messages.append("{0} : {1}\n".format(layer.name(), wfsPost.commitLayer(editBuffer)))
+            messages.append("{0} : {1}\n".format(layer.name(), wfsPost.commitLayer(editBuffer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)))
         print(messages)
 
     def unload(self):

@@ -1,5 +1,5 @@
 import time
-
+import json
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
 
@@ -11,7 +11,7 @@ class WfsGet(object):
     proxy = None
     databaseName = None
     layerName = None
-    layerRole = None
+    #layerRole = None
     geometryName = None
     sridProject = None
     sridLayer = None
@@ -21,6 +21,7 @@ class WfsGet(object):
     isStandard = None
     is3D = None
     numrec = None
+    urlTransaction = None
 
     def __init__(self, context, parameters):
         self.context = context
@@ -29,7 +30,6 @@ class WfsGet(object):
         self.proxy = self.context.client.getProxies()
         self.databaseName = parameters['databasename']
         self.layerName = parameters['layerName']
-        self.layerRole = parameters['role']
         self.geometryName = parameters['geometryName']
         self.sridProject = parameters['sridProject']
         self.sridLayer = parameters['sridLayer']
@@ -38,7 +38,8 @@ class WfsGet(object):
         self.bDetruit = parameters['detruit']
         self.isStandard = parameters['isStandard']
         self.is3D = parameters['is3D']
-        self.numrec = parameters['numrec']
+        self.numrec = int(parameters['numrec'])
+        self.urlTransaction = parameters['urlTransaction']
 
     # La requête doit être de type :
     # https://espacecollaboratif.ign.fr/gcms/wfs
@@ -55,7 +56,7 @@ class WfsGet(object):
         # Remplissage de la table avec les objets de la couche
         parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                        'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
-                                       'role': self.layerRole, 'isStandard': self.isStandard, 'is3D': self.is3D,
+                                       'isStandard': self.isStandard, 'is3D': self.is3D,
                                        'geometryType': ""}
         offset = 0
         maxFeatures = 5000
@@ -75,6 +76,10 @@ class WfsGet(object):
         self.setVersion('1.0.0')
         start = time.time()
         totalRows = 0
+        if self.isStandard:
+            maxNumrec = 0
+        else:
+            maxNumrec = self.getMaxNumrec()
         sqliteManager = SQLiteManager()
         while True:
             response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
@@ -92,6 +97,14 @@ class WfsGet(object):
             print("{0} objets, extraits en : {1} minutes".format(totalRows, timeResult/60))
         else:
             print("{0} objets, extraits en : {1} secondes".format(totalRows, timeResult))
+        return maxNumrec
+
+    def getMaxNumrec(self):
+        # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
+        url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.client.getUrl(), self.databaseName, self.layerName)
+        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        data = json.loads(response)
+        return data['numrec']
 
     def setService(self):
         self.parametersGcmsGet['service'] = 'WFS'

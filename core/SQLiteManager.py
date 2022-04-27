@@ -264,12 +264,33 @@ class SQLiteManager(object):
         connection.close()
 
     @staticmethod
+    def updateNumrecTableOfTables(layer, numrec):
+        sql = "UPDATE {0} SET numrec = {1} WHERE layer = '{2}'".format(cst.TABLEOFTABLES, numrec, layer)
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cur = connection.cursor()
+        cur.execute(sql)
+        cur.close()
+        connection.commit()
+        connection.close()
+
+    @staticmethod
+    def selectNumrecTableOfTables(layer):
+        sql = "SELECT numrec FROM {0} where layer = '{1}'".format(cst.TABLEOFTABLES, layer)
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cur = connection.cursor()
+        cur.execute(sql)
+        result = cur.fetchone()
+        cur.close()
+        connection.close()
+        return result[0]
+
+    @staticmethod
     def createTableOfTables():
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
               u"standard INTEGER, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
-              u"geometryType TEXT)".format(cst.TABLEOFTABLES)
+              u"geometryType TEXT, numrec INTEGER)".format(cst.TABLEOFTABLES)
         cur.execute(sql)
         cur.close()
         connection.close()

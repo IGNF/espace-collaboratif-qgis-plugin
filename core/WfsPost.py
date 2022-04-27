@@ -1,5 +1,5 @@
+import json
 from PyQt5.QtWidgets import QMessageBox
-from qgis.core import QgsMapLayerType
 
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
@@ -117,30 +117,52 @@ class WfsPost(object):
     def setClientId(self, clientFeatureId):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
-    def gcms_post(self, strActions):
+    def gcms_post(self, strActions, filter):
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
         xmlResponse = XMLResponse(response)
         message = xmlResponse.checkResponseWfsTransactions()
         if message['status'] == 'SUCCESS':
-            res = self.layer.commitChanges()
-            # TODO arreter l'édition et faire un WFS_get pour récupérer les id des nouveaux objets
-            # et les modifs des autres utilisateurs
-            bbox = BBox(self.context)
-            parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.nom, 'role': self.layer.role,
-                          'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
-                          'sridLayer': self.layer.srid, 'bbox': bbox.getFromLayer(),
-                          'detruit': self.context.bColumnDetruitExist, 'isStandard': self.layer.isStandard,
-                          'is3D': self.layer.geometryDimensionForDatabase, 'numrec': message['numrec']}
-            wfsGet = WfsGet(self, parameters)
-            wfsGet.gcms_get()
-            if res:
+            # mise à jour de la couche
+            self.getAfterPost(message, filter)
+            numrec = self.getNumrecFromTransaction(message['urlTransaction'])
+            # cas des couches standard, il faut mettre numrec à 0
+            if numrec is None:
+                numrec = 0
+            SQLiteManager.updateNumrecTableOfTables(self.layer.name(), numrec)
+            # sauvegarde de la couche, etc...
+            if self.layer.commitChanges():
                 self.layer.startEditing()
             self.layer.reload()
         return message['message']
 
-    def commitLayer(self, editBuffer):
+    def getNumrecFromTransaction(self, urlTransaction):
+        # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281922.json
+        # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281927/action/1130961.json
+        url = "{0}.json".format(urlTransaction)
+        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        data = json.loads(response)
+        return data['numrec']
+
+    def getAfterPost(self, message, filter):
+        # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
+        bDetruit = True
+        # si c'est une autre table donc standard alors la colonne n'existe pas
+        if self.layer.isStandard:
+            bDetruit = False
+        bbox = BBox(self.context)
+        numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
+        parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
+                      'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
+                      'sridLayer': self.layer.srid, 'bbox': bbox.getFromLayer(filter),
+                      'detruit': bDetruit, 'isStandard': self.layer.isStandard,
+                      'is3D': self.layer.geometryDimensionForDatabase, 'urlTransaction': message['urlTransaction'],
+                      'numrec': numrec}
+        wfsGet = WfsGet(self.context, parameters)
+        wfsGet.gcms_get()
+
+    def commitLayer(self, editBuffer, filter):
         self.actions.clear()
 
         addedFeatures = editBuffer.addedFeatures().values()
@@ -173,7 +195,7 @@ class WfsPost(object):
         # Lancement de la transaction
         strActions = self.formatItemActions()
         print(strActions)
-        information = "{0} []".format(self.gcms_post(strActions))
+        information = "{0} []".format(self.gcms_post(strActions, filter))
         return information
 
     def pushAddedFeatures(self, addedFeatures):
@@ -292,15 +314,6 @@ class WfsPost(object):
             strFeature += self.setStateAndLayerName('Delete')
             strFeature += '}'
             self.actions.append(strFeature)
-
-    def getDataFromTransaction(self, idTransaction):
-        # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281922.json
-        # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281927/action/1130961.json
-        url = "{0}/gcms/database/{1}/transaction/{2}.json".format(self.context.client.getUrl(),
-                                                                  self.layer.idNameForDatabase,
-                                                                  idTransaction)
-        data = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
-        return XMLResponse(data)
 
     def showMessage(self, message):
         msgBox = QMessageBox()

@@ -80,7 +80,7 @@ class XMLResponse(object):
         return errMessage
 
     def checkResponseWfsTransactions(self):
-        message = {'message': '', 'status': 'SUCCESS', 'fid': []}
+        message = {'message': '', 'status': 'SUCCESS', 'fid': [], 'urlTransaction': ''}
         try:
             fids = []
             insertResult = self.root.find('{http://www.opengis.net/wfs}InsertResult')
@@ -93,6 +93,7 @@ class XMLResponse(object):
             if status.find('{http://www.opengis.net/wfs}SUCCESS') is None:
                 message['status'] = 'FAILED'
             message['message'] = transactionResult.find('{http://www.opengis.net/wfs}Message').text
+            message['urlTransaction'] = transactionResult.find('{http://www.opengis.net/wfs}TransactionURL').text
         except Exception as e:
             self.logger.error(str(e))
         return message

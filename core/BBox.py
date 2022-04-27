@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+
 from . import ConstanteRipart as cst
 from .Box import Box
 

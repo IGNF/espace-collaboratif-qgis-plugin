@@ -333,7 +333,6 @@ class Contexte(object):
                             # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
                             # si l'utilisateur n'appartient à aucun groupe, un profil par défaut
                             # est attribué mais il ne contient pas d'infosgeogroupes
-
                             if len(profil.infosGeogroups) < 1:
                                 # le profil de l'utilisateur est déjà récupéré et reste actif (NB: a priori, il n'a pas de profil)
                                 result = 1
@@ -357,7 +356,6 @@ class Contexte(object):
                             # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
                             # afin qu'il puisse remplir sa clé Géoportail
                             else:
-
                                 dlgChoixGroupe = FormChoixGroupe(profil, self.groupeactif)
                                 dlgChoixGroupe.exec_()
                                 # bouton Valider
@@ -554,7 +552,6 @@ class Contexte(object):
         # Création de la source pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
         self.logger.debug(uri.uri())
-        print("url : {}".format(uri.uri()))
         geometryName = structure['geometryName']
         uri.setDataSource('', layer.nom, geometryName)
         uri.setSrid(str(cst.EPSGCRS))
@@ -605,10 +602,10 @@ class Contexte(object):
                     QMessageBox.warning(None, "Charger les couches de mon groupe",
                                         u"Votre projet QGIS contient des couches d'un autre groupe Espace "
                                         u"collaboratif (" + nodeGroup.name() + "). \nPour pouvoir charger les données "
-                                                                               "du groupe " + nameGroup + ", veuillez supprimer les couches existantes de "
-                                                                                                          "votre projet QGIS ou travailler dans un nouveau projet." + "\n\nNB : "
-                                                                                                                                                                      "ces couches seront simplement supprimées de la carte QGIS en cours, "
-                                                                                                                                                                      "elles resteront disponibles sur l'Espace collaboratif.")
+                                        u"du groupe " + nameGroup + ", veuillez supprimer les couches existantes de "
+                                        u"votre projet QGIS ou travailler dans un nouveau projet." + "\n\nNB : "
+                                        u"ces couches seront simplement supprimées de la carte QGIS en cours, "                                                                                                                                                                    
+                                        u"elles resteront disponibles sur l'Espace collaboratif.")
                     return
 
             for layer in guichet_layers:
@@ -684,9 +681,9 @@ class Contexte(object):
                       'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
                       'sridLayer': sridLayer, 'bbox': bbox,
                       'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
-                      'is3D': structure['attributes'][geometryName]['is3d'], 'numrec': 0}
+                      'is3D': structure['attributes'][geometryName]['is3d'], 'urlTransaction': None, 'numrec': "0"}
         wfsGet = WfsGet(self, parameters)
-        wfsGet.gcms_get()
+        maxNumrec = wfsGet.gcms_get()
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1
@@ -699,7 +696,8 @@ class Contexte(object):
         parametersForTableOfTables = {'layer': layer.nom, 'idName': idNameForDatabase, 'standard': valStandard,
                                       'database': layer.databasename, 'srid': sridLayer,
                                       'geometryName': geometryName, 'geometryDimension': dim,
-                                      'geometryType': structure['attributes'][geometryName]['type']}
+                                      'geometryType': structure['attributes'][geometryName]['type'],
+                                      'numrec': maxNumrec}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
         # On stocke le srid de la layer pour pouvoir traiter le post
@@ -715,9 +713,6 @@ class Contexte(object):
 
         # Affichage des données en fonction de l'échelle
         newVectorLayer.setDisplayScale(layer.minzoom, layer.maxzoom)
-
-        # Paramétrage de l'emprise
-        #newVectorLayer.updateExtents(True)
 
         # Une couche en visualisation est non modifiable
         if layer.role == 'visu' or layer.role == 'ref':
