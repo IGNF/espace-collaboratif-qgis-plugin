@@ -263,8 +263,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         georemComment = infosgeogroup.georemComment
         if georemComment != "":
             self.textEditMessage.setText(georemComment)
-
-        themes = []
         if nameGroup == self.context.groupeactif:
             themes = self.context.profil.themes
             filteredThemes = self.context.profil.filteredThemes

@@ -19,6 +19,8 @@ class WfsPost(object):
     proxy = None
     actions = None
     isTableStandard = True
+    endReport = None
+    transactionReport = None
 
     def __init__(self, context, layer):
         self.context = context
@@ -27,6 +29,8 @@ class WfsPost(object):
         self.identification = self.context.client.getAuth()
         self.proxy = self.context.client.getProxies()
         self.actions = []
+        self.endReport = ''
+        self.transactionReport = ''
         '''
         il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
         que l'on peut stocker dans une table sqlite
@@ -132,10 +136,9 @@ class WfsPost(object):
                 numrec = 0
             SQLiteManager.updateNumrecTableOfTables(self.layer.name(), numrec)
             # sauvegarde de la couche, etc...
-            if self.layer.commitChanges():
-                self.layer.startEditing()
-            self.layer.reload()
-        return message['message']
+            self.layer.rollBack()
+            self.layer.startEditing()
+        return message
 
     def getNumrecFromTransaction(self, urlTransaction):
         # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281922.json
@@ -173,12 +176,15 @@ class WfsPost(object):
                 len(changedGeometries) == 0 and \
                 len(changedAttributeValues) == 0 and \
                 len(deletedFeaturesId) == 0:
-            return "Rien à synchroniser"
+            self.transactionReport += "\tRien à synchroniser\n"
+            self.endReport += self.transactionReport
+            return self.endReport
 
         # ajout
         if len(addedFeatures) != 0:
             self.pushAddedFeatures(addedFeatures)
             self.setIsFingerPrint(addedFeatures)
+            self.transactionReport += "\tObjets créés : {0}\n".format(len(addedFeatures))
 
         # géométrie modifiée et/ou attributs modifiés
         if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
@@ -191,11 +197,29 @@ class WfsPost(object):
         # suppression
         if len(deletedFeaturesId) != 0:
             self.pushDeletedFeatures(deletedFeaturesId)
+            self.transactionReport += "\tObjets détruits : {0}\n".format(len(deletedFeaturesId))
 
         # Lancement de la transaction
+        nbObjModified = len(self.actions) - (len(deletedFeaturesId) + len(addedFeatures))
+        if nbObjModified >= 1:
+            self.transactionReport += "\tObjets modifiés : {0}\n".format(nbObjModified)
         strActions = self.formatItemActions()
-        print(strActions)
-        information = "{0} []".format(self.gcms_post(strActions, filterLayer))
+        self.endReport += self.transactionReport
+        endTransaction = self.gcms_post(strActions, filterLayer)
+        self.endReport += self.setEndReport(endTransaction)
+        return self.endReport
+
+    def setEndReport(self, endTransactionMessage):
+        information = ''
+        message = endTransactionMessage['message']
+        status = endTransactionMessage['status']
+        if status == 'FAILED':
+            tmp = message.replace('transaction', "<a href={0}>transaction</a>".format(endTransactionMessage['urlTransaction']))
+            information = "{0}".format(tmp)
+        elif status == 'SUCCESS':
+            tabInfo = message.split(' : ')
+            information = "{0} : <a href={1}>{2}</a>".format(tabInfo[0], endTransactionMessage['urlTransaction'],
+                                                         tabInfo[1])
         return information
 
     def pushAddedFeatures(self, addedFeatures):

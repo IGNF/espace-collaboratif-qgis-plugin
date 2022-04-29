@@ -339,6 +339,7 @@ class RipartPlugin:
         cptg.doCount()
 
     def synchroniserDonnees(self):
+        report = 'Contenu de la transaction\n'
         print("Synchroniser les données")
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
@@ -356,15 +357,15 @@ class RipartPlugin:
             editBuffer = layer.editBuffer()
             if not editBuffer:
                 continue
+            report += "Couche {0} :\n".format(layer.name())
             wfsPost = WfsPost(self.context, layer)
-            messages.append("{0} : {1}\n".format(layer.name(), wfsPost.commitLayer(editBuffer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)))
-        print(messages)
+            messages.append("{0}\n".format(wfsPost.commitLayer(editBuffer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)))
+        for message in messages:
+            report += message
+        print(report)
 
     def unload(self):
-        log = logging.getLogger()
         logs = logging.Logger.manager.loggerDict
-        cntLogs = len(logs)
-
         for lg in logs:
             logger = logs[lg]
             if isinstance(logger, logging.Logger):
