@@ -136,7 +136,8 @@ class WfsPost(object):
                 numrec = 0
             SQLiteManager.updateNumrecTableOfTables(self.layer.name(), numrec)
             # sauvegarde de la couche, etc...
-            self.layer.rollBack()
+            if not self.layer.isStandard:
+                self.layer.rollBack()
             self.layer.startEditing()
         return message
 
@@ -152,8 +153,12 @@ class WfsPost(object):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
+        # et il faut vider la table pour éviter de créer un objet à chaque Get
         if self.layer.isStandard:
             bDetruit = False
+            SQLiteManager.emptyTable(self.layer.name())
+            SQLiteManager.vacuumDatabase()
+
         bbox = BBox(self.context)
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
@@ -164,8 +169,10 @@ class WfsPost(object):
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)
         wfsGet.gcms_get()
+        self.layer.triggerRepaint()
 
-    def commitLayer(self, editBuffer, filterLayer):
+    def commitLayer(self, currentLayer, editBuffer, filterLayer):
+        self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
         self.actions.clear()
 
         addedFeatures = editBuffer.addedFeatures().values()
@@ -176,7 +183,7 @@ class WfsPost(object):
                 len(changedGeometries) == 0 and \
                 len(changedAttributeValues) == 0 and \
                 len(deletedFeaturesId) == 0:
-            self.transactionReport += "\tRien à synchroniser\n"
+            self.transactionReport += "<br/>Rien à synchroniser\n"
             self.endReport += self.transactionReport
             return self.endReport
 
@@ -184,7 +191,7 @@ class WfsPost(object):
         if len(addedFeatures) != 0:
             self.pushAddedFeatures(addedFeatures)
             self.setIsFingerPrint(addedFeatures)
-            self.transactionReport += "\tObjets créés : {0}\n".format(len(addedFeatures))
+            self.transactionReport += "<br/>Objets créés : {0}\n".format(len(addedFeatures))
 
         # géométrie modifiée et/ou attributs modifiés
         if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
@@ -197,12 +204,12 @@ class WfsPost(object):
         # suppression
         if len(deletedFeaturesId) != 0:
             self.pushDeletedFeatures(deletedFeaturesId)
-            self.transactionReport += "\tObjets détruits : {0}\n".format(len(deletedFeaturesId))
+            self.transactionReport += "<br/>Objets détruits : {0}\n".format(len(deletedFeaturesId))
 
         # Lancement de la transaction
         nbObjModified = len(self.actions) - (len(deletedFeaturesId) + len(addedFeatures))
         if nbObjModified >= 1:
-            self.transactionReport += "\tObjets modifiés : {0}\n".format(nbObjModified)
+            self.transactionReport += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
         strActions = self.formatItemActions()
         self.endReport += self.transactionReport
         endTransaction = self.gcms_post(strActions, filterLayer)
@@ -215,10 +222,10 @@ class WfsPost(object):
         status = endTransactionMessage['status']
         if status == 'FAILED':
             tmp = message.replace('transaction', "<a href={0}>transaction</a>".format(endTransactionMessage['urlTransaction']))
-            information = "{0}".format(tmp)
+            information = '<br/><font color="red">{0} : {1}</font>'.format(status, tmp)
         elif status == 'SUCCESS':
             tabInfo = message.split(' : ')
-            information = "{0} : <a href={1}>{2}</a>".format(tabInfo[0], endTransactionMessage['urlTransaction'],
+            information = "<br/>{0} : <a href={1}>{2}</a>".format(tabInfo[0], endTransactionMessage['urlTransaction'],
                                                          tabInfo[1])
         return information
 

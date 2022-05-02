@@ -339,7 +339,6 @@ class RipartPlugin:
         cptg.doCount()
 
     def synchroniserDonnees(self):
-        report = 'Contenu de la transaction\n'
         print("Synchroniser les données")
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
@@ -349,6 +348,7 @@ class RipartPlugin:
             if not res:
                 return
         messages = []
+        # Une transaction par couche modifiée
         for layer in QgsProject.instance().mapLayers().values():
             if layer.type() is not QgsMapLayerType.VectorLayer:
                 continue
@@ -357,12 +357,16 @@ class RipartPlugin:
             editBuffer = layer.editBuffer()
             if not editBuffer:
                 continue
-            report += "Couche {0} :\n".format(layer.name())
             wfsPost = WfsPost(self.context, layer)
-            messages.append("{0}\n".format(wfsPost.commitLayer(editBuffer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)))
+            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)))
+        # Message de fin de transaction
+        dlgInfo = FormInfo()
+        dlgInfo.textInfo.setText("<b>Contenu de la transaction</b>")
         for message in messages:
-            report += message
-        print(report)
+            dlgInfo.textInfo.append(message)
+            # report += message
+        dlgInfo.exec_()
+        # print(report)
 
     def unload(self):
         logs = logging.Logger.manager.loggerDict

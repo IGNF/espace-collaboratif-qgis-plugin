@@ -31,7 +31,7 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         self.textInfo.setGeometry(QtCore.QRect(150, 10, 341, 151))
 
         self.btnOK.clicked.connect(self.close)
-        self.btnOK.setGeometry(QtCore.QRect(420, 140, 75, 23))
+        self.btnOK.setGeometry(QtCore.QRect(420, 165, 75, 23))
         self.btnOK.setText('OK')
 
         self.resize(511, 200)

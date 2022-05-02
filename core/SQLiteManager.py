@@ -98,7 +98,7 @@ class SQLiteManager(object):
         connection.commit()
         connection.close()
         # compactage de la base
-        self.vacuumDatabase()
+        SQLiteManager.vacuumDatabase()
         # retourne True si la colonne detruit existe dans la table
         return t[2]
 
@@ -219,14 +219,16 @@ class SQLiteManager(object):
         connection.close()
         return result
 
-    def emptyTable(self, tableName):
-        connection = spatialite_connect(self.dbPath)
+    @staticmethod
+    def emptyTable(tableName):
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
         sql = u"DELETE FROM {0}".format(tableName)
         cursor.execute(sql)
         sql = u"SELECT count(*) FROM {0}".format(tableName)
         cursor.execute(sql)
-        if len(cursor.fetchall()) == 0:
+        res = cursor.fetchone()
+        if res[0] == 0:
             print("SQLiteManager : table {0} vidée".format(tableName))
         cursor.close()
         connection.close()
@@ -252,8 +254,9 @@ class SQLiteManager(object):
         return result
 
     # Indispensable après le chargement d'une nouvelle couche
-    def vacuumDatabase(self):
-        connection = spatialite_connect(self.dbPath)
+    @staticmethod
+    def vacuumDatabase():
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
         sql = u"VACUUM"
         cursor.execute(sql)

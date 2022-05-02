@@ -89,7 +89,7 @@ class WfsGet(object):
             self.setOffset(response['offset'])
             if response['stop']:
                 break
-        sqliteManager.vacuumDatabase()
+        SQLiteManager.vacuumDatabase()
         end = time.time()
         timeResult = end - start
         if timeResult > 60:

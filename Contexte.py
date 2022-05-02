@@ -532,7 +532,7 @@ class Contexte(object):
         # Si la table du nom de la couche existe,
         # elle est vidée, détruite et recréée
         if SQLiteManager.isTableExist(layer.nom):
-            sqliteManager.emptyTable(layer.nom)
+            SQLiteManager.emptyTable(layer.nom)
             sqliteManager.deleteTable(layer.nom)
         bColumnDetruitExist = sqliteManager.createTableFromLayer(layer, structure)
 
