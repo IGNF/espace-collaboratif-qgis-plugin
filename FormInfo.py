@@ -39,5 +39,5 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
         self.logo.setOpenExternalLinks(True)
-        self.logo.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-        self.logo.setStyleSheet("background-color: transparent")
+        #self.logo.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        #self.logo.setStyleSheet("background-color: transparent")

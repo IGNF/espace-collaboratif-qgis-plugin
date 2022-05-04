@@ -340,6 +340,7 @@ class RipartPlugin:
 
     def synchroniserDonnees(self):
         print("Synchroniser les données")
+        report = "<b>Contenu de la transaction</b>"
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
@@ -356,17 +357,18 @@ class RipartPlugin:
                 continue
             editBuffer = layer.editBuffer()
             if not editBuffer:
+                # report += "<br/>Rien à synchroniser, la couche {0} n'est pas en mode édition ;-)\n".format(layer.name())
                 continue
             wfsPost = WfsPost(self.context, layer)
             messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)))
         # Message de fin de transaction
         dlgInfo = FormInfo()
-        dlgInfo.textInfo.setText("<b>Contenu de la transaction</b>")
+        dlgInfo.textInfo.setText(report)
+        if len(messages) == 0:
+            dlgInfo.textInfo.append("<br/>Vide")
         for message in messages:
             dlgInfo.textInfo.append(message)
-            # report += message
         dlgInfo.exec_()
-        # print(report)
 
     def unload(self):
         logs = logging.Logger.manager.loggerDict

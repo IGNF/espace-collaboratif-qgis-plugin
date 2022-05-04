@@ -1,5 +1,4 @@
 import json
-from PyQt5.QtWidgets import QMessageBox
 
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
@@ -122,12 +121,17 @@ class WfsPost(object):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
     def gcms_post(self, strActions, filterName):
+        print(strActions)
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
         xmlResponse = XMLResponse(response)
         message = xmlResponse.checkResponseWfsTransactions()
         if message['status'] == 'SUCCESS':
+            # mise à jour de la base SQLite pour les objets détruits et modifiés
+            # d'une couche BDUni
+            if not self.layer.isStandard:
+                SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # mise à jour de la couche
             self.getAfterPost(message, filterName)
             numrec = self.getNumrecFromTransaction(message['urlTransaction'])
@@ -135,9 +139,9 @@ class WfsPost(object):
             if numrec is None:
                 numrec = 0
             SQLiteManager.updateNumrecTableOfTables(self.layer.name(), numrec)
-            # sauvegarde de la couche, etc...
-            if not self.layer.isStandard:
-                self.layer.rollBack()
+            SQLiteManager.vacuumDatabase()
+            # le buffer de la couche est vidée et elle est remise en édition
+            self.layer.rollBack()
             self.layer.startEditing()
         return message
 
@@ -158,6 +162,7 @@ class WfsPost(object):
             bDetruit = False
             SQLiteManager.emptyTable(self.layer.name())
             SQLiteManager.vacuumDatabase()
+            self.layer.triggerRepaint()
 
         bbox = BBox(self.context)
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
@@ -169,7 +174,6 @@ class WfsPost(object):
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)
         wfsGet.gcms_get()
-        self.layer.triggerRepaint()
 
     def commitLayer(self, currentLayer, editBuffer, filterLayer):
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
@@ -221,12 +225,12 @@ class WfsPost(object):
         message = endTransactionMessage['message']
         status = endTransactionMessage['status']
         if status == 'FAILED':
-            tmp = message.replace('transaction', "<a href={0}>transaction</a>".format(endTransactionMessage['urlTransaction']))
+            tmp = message.replace('transaction', '<a href="{0}" target="_blank">transaction</a>'.format(
+                endTransactionMessage['urlTransaction']))
             information = '<br/><font color="red">{0} : {1}</font>'.format(status, tmp)
         elif status == 'SUCCESS':
             tabInfo = message.split(' : ')
-            information = "<br/>{0} : <a href={1}>{2}</a>".format(tabInfo[0], endTransactionMessage['urlTransaction'],
-                                                         tabInfo[1])
+            information = '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
         return information
 
     def pushAddedFeatures(self, addedFeatures):

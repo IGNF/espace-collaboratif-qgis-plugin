@@ -1,4 +1,5 @@
 import ntpath
+import json
 
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
@@ -23,6 +24,15 @@ class SQLiteManager(object):
         dbName = projectFileName + "_espaceco"
         dbPath = projectDir + "/" + dbName + ".sqlite"
         return dbPath
+
+    @staticmethod
+    def executeSQL(sql):
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cur = connection.cursor()
+        cur.execute(sql)
+        cur.close()
+        connection.commit()
+        connection.close()
 
     @staticmethod
     def isTableExist(tableName):
@@ -176,21 +186,39 @@ class SQLiteManager(object):
             tmpValues += "'1')"
         return tmpColumns, tmpValues
 
+    @staticmethod
+    def deleteRowsInTable(tableName, keys):
+        tmp = ''
+        for key in keys:
+            tmp += '"{0}", '.format(key)
+        strCleabs = tmp[0:len(tmp)-2]
+        sql = 'DELETE FROM {0} WHERE cleabs IN ({1})'.format(tableName, strCleabs)
+        SQLiteManager.executeSQL(sql)
+
+    @staticmethod
+    def setActionsInTableBDUni(tableName, itemsTransaction):
+        cleabss = []
+        for item in itemsTransaction:
+            data = json.loads(item)
+            if data['state'] == 'Insert':
+                continue
+            if data['state'] == 'Update' or data['state'] == 'Delete':
+                cleabss.append(data['feature']['cleabs'])
+        SQLiteManager.deleteRowsInTable(tableName, cleabss)
+
     def insertRowsInTable(self, parameters, attributesRows):
         totalRows = 0
         if len(attributesRows) == 0:
             print("Pas de données pour la table {0}".format(parameters['tableName']))
             return totalRows
-
+        # Insertion des lignes dans la table
         connection = spatialite_connect(self.dbPath)
         cur = connection.cursor()
-        # Insertion des lignes dans la table
         for attributesRow in attributesRows:
             columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
             cur.execute(sql)
             totalRows += 1
-
         cur.close()
         connection.commit()
         connection.close()
@@ -221,26 +249,14 @@ class SQLiteManager(object):
 
     @staticmethod
     def emptyTable(tableName):
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
-        cursor = connection.cursor()
         sql = u"DELETE FROM {0}".format(tableName)
-        cursor.execute(sql)
-        sql = u"SELECT count(*) FROM {0}".format(tableName)
-        cursor.execute(sql)
-        res = cursor.fetchone()
-        if res[0] == 0:
-            print("SQLiteManager : table {0} vidée".format(tableName))
-        cursor.close()
-        connection.close()
+        SQLiteManager.executeSQL(sql)
+        print("SQLiteManager : table {0} vidée".format(tableName))
 
     def deleteTable(self, tableName):
-        connection = spatialite_connect(self.dbPath)
-        cursor = connection.cursor()
         sql = u"DROP TABLE {0}".format(tableName)
-        cursor.execute(sql)
+        SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} détruite".format(tableName))
-        cursor.close()
-        connection.close()
 
     @staticmethod
     def isColumnExist(tableName, columnName):
@@ -256,22 +272,13 @@ class SQLiteManager(object):
     # Indispensable après le chargement d'une nouvelle couche
     @staticmethod
     def vacuumDatabase():
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
-        cursor = connection.cursor()
         sql = u"VACUUM"
-        cursor.execute(sql)
-        cursor.close()
-        connection.close()
+        SQLiteManager.executeSQL(sql)
 
     @staticmethod
     def updateNumrecTableOfTables(layer, numrec):
         sql = "UPDATE {0} SET numrec = {1} WHERE layer = '{2}'".format(cst.TABLEOFTABLES, numrec, layer)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
-        cur = connection.cursor()
-        cur.execute(sql)
-        cur.close()
-        connection.commit()
-        connection.close()
+        SQLiteManager.executeSQL(sql)
 
     @staticmethod
     def selectNumrecTableOfTables(layer):
@@ -286,14 +293,10 @@ class SQLiteManager(object):
 
     @staticmethod
     def createTableOfTables():
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
-        cur = connection.cursor()
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
               u"standard INTEGER, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
               u"geometryType TEXT, numrec INTEGER)".format(cst.TABLEOFTABLES)
-        cur.execute(sql)
-        cur.close()
-        connection.close()
+        SQLiteManager.executeSQL(sql)
 
     @staticmethod
     def InsertIntoTableOfTables(parameters):
@@ -314,14 +317,7 @@ class SQLiteManager(object):
         posC = len(columns)
         posV = len(values)
         sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(cst.TABLEOFTABLES, columns[0:posC - 1], values[0:posV - 1])
-        print(sql)
-
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
-        cur = connection.cursor()
-        cur.execute(sql)
-        cur.close()
-        connection.commit()
-        connection.close()
+        SQLiteManager.executeSQL(sql)
 
     @staticmethod
     def selectRowsInTableOfTables(tableName):

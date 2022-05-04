@@ -396,6 +396,7 @@ class Contexte(object):
                             # Modification du logo en fonction du groupe
                             if profil.logo != "":
                                 dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
+                                print("{0}{1}".format(self.urlHostRipart, profil.logo))
                             elif profil.title == "Profil par défaut":
                                 dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
 
