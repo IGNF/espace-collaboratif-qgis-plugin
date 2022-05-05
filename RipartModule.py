@@ -60,7 +60,7 @@ from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
 from .core.NoProfileException import NoProfileException
-from .CompterGuichet import CompterGuichet
+from .RecordChanges import RecordChanges
 from .ReplyReport import ReplyReport
 
 import logging
@@ -265,12 +265,12 @@ class RipartPlugin:
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/compter.png'
+        icon_path = ':/plugins/RipartPlugin/images/register.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Compter les modifications'),
-            callback=self.compterModifications,
-            status_tip=self.tr(u'Compter les modifications'),
+            text=self.tr(u'Enregistrer les modifications'),
+            callback=self.registerChanges,
+            status_tip=self.tr(u'Enregistrer les modifications'),
             parent=self.iface.mainWindow())
 
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
@@ -333,10 +333,10 @@ class RipartPlugin:
                             level=1, duration=5)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
-    def compterModifications(self):
-        print("Compter les modifications")
-        cptg = CompterGuichet()
-        cptg.doCount()
+    def registerChanges(self):
+        print("Enregistrer les modifications")
+        cptg = RecordChanges()
+        cptg.doRecord()
 
     def synchroniserDonnees(self):
         print("Synchroniser les données")

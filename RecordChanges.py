@@ -12,15 +12,15 @@ from qgis.core import QgsProject
 from PyQt5.QtWidgets import QMessageBox
 
 
-class CompterGuichet(object):
+class RecordChanges(object):
 
     def __init__(self):
         self.nodeGroups = QgsProject.instance().layerTreeRoot().findGroups()
         if len(self.nodeGroups) != 0:
             self.message = "Groupe {}\n\n".format(self.nodeGroups[0].name())
 
-        self.title = "Comptage"
+        self.title = "Enregistrement des modifications"
 
-    def doCount(self):
+    def doRecord(self):
         # Affichage du résultat
         QMessageBox.information(None, self.title, "En travaux ;-)")
