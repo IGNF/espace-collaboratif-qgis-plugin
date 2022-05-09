@@ -276,9 +276,9 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Synchroniser'),
-            callback=self.synchroniserDonnees,
-            status_tip=self.tr(u'Synchroniser'),
+            text=self.tr(u'Synchroniser les données de toutes les couches'),
+            callback=self.sychronizeData,
+            status_tip=self.tr(u'Synchroniser les données de toutes les couches'),
             parent=self.iface.mainWindow())
 
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
@@ -334,11 +334,6 @@ class RipartPlugin:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
     def registerChanges(self):
-        print("Enregistrer les modifications")
-        cptg = RecordChanges()
-        cptg.doRecord()
-
-    def synchroniserDonnees(self):
         print("Synchroniser les données")
         report = "<b>Contenu de la transaction</b>"
         self.context = Contexte.getInstance(self, QgsProject)
@@ -360,7 +355,9 @@ class RipartPlugin:
                 # report += "<br/>Rien à synchroniser, la couche {0} n'est pas en mode édition ;-)\n".format(layer.name())
                 continue
             wfsPost = WfsPost(self.context, layer)
-            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)))
+            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer,
+                                                               RipartHelper.load_CalqueFiltrage(
+                                                                self.context.projectDir).text)))
         # Message de fin de transaction
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(report)
@@ -369,6 +366,9 @@ class RipartPlugin:
         for message in messages:
             dlgInfo.textInfo.append(message)
         dlgInfo.exec_()
+
+    def sychronizeData(self):
+        print("Synchroniser les données de toutes les couches")
 
     def unload(self):
         logs = logging.Logger.manager.loggerDict

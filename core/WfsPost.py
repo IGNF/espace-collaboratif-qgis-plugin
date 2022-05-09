@@ -62,9 +62,9 @@ class WfsPost(object):
 
     def setGeometry(self, geometry):
         parameters = {'geometryName': self.layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS,
-                      'sridTarget': self.layer.srid}
+                      'sridTarget': self.layer.srid, 'geometryType': self.layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
-        return wkt.toPostGeometry(geometry)
+        return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase)
 
     def setGeometries(self, changedGeometries):
         geometries = {}
