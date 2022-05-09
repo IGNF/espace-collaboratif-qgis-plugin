@@ -60,7 +60,6 @@ from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
 from .core.NoProfileException import NoProfileException
-from .RecordChanges import RecordChanges
 from .ReplyReport import ReplyReport
 
 import logging
