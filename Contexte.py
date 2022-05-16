@@ -396,7 +396,7 @@ class Contexte(object):
                             # Modification du logo en fonction du groupe
                             if profil.logo != "":
                                 dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
-                                print("{0}{1}".format(self.urlHostRipart, profil.logo))
+                                #print("{0}{1}".format(self.urlHostRipart, profil.logo))
                             elif profil.title == "Profil par défaut":
                                 dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
 
@@ -671,7 +671,7 @@ class Contexte(object):
                       'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
                       'is3D': structure['attributes'][geometryName]['is3d'], 'urlTransaction': None, 'numrec': "0"}
         wfsGet = WfsGet(self, parameters)
-        maxNumrec = wfsGet.gcms_get()
+        maxNumrecMessage = wfsGet.gcms_get()
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1
@@ -685,7 +685,7 @@ class Contexte(object):
                                       'database': layer.databasename, 'srid': sridLayer,
                                       'geometryName': geometryName, 'geometryDimension': dim,
                                       'geometryType': structure['attributes'][geometryName]['type'],
-                                      'numrec': maxNumrec}
+                                      'numrec': maxNumrecMessage[0]}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
         # On stocke le srid de la layer pour pouvoir traiter le post
@@ -712,7 +712,8 @@ class Contexte(object):
         self.guichetLayers.append(newVectorLayer)
         self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
         print("Layer {} added to map".format(newVectorLayer.name()))
-        print("Layer {} contains {} objects".format(newVectorLayer.name(), len(list(newVectorLayer.getFeatures()))))
+        print(maxNumrecMessage[1])
+        #print("Layer {} contains {} objects".format(newVectorLayer.name(), len(list(newVectorLayer.getFeatures()))))
 
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)

@@ -27,26 +27,21 @@
 # standard_library.install_aliases()
 from builtins import str
 from builtins import range
-# from builtins import object
 import os.path
-
+from .core import ConstanteRipart as cst
+from .core.SQLiteManager import SQLiteManager
+from .core.BBox import BBox
+from .core.WfsGet import WfsGet
 from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
-from .core.SQLiteManager import SQLiteManager
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
-from qgis.PyQt import QtGui, uic
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
 # from qgis.core import *
 from qgis.core import QgsProject, QgsMessageLog, QgsWkbTypes, QgsCoordinateReferenceSystem, \
     QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer, QgsVectorLayerEditBuffer, QgsMapLayerType
 import configparser
-
-import urllib
-
-# Initialize Qt resources from file resources.py
-from . import resources
 
 # modules ripart
 from .FormChargerGuichet import FormChargerGuichet
@@ -264,7 +259,7 @@ class RipartPlugin:
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/register.png'
+        icon_path = ':/plugins/RipartPlugin/images/compter.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Enregistrer les modifications'),
@@ -333,7 +328,7 @@ class RipartPlugin:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
     def registerChanges(self):
-        print("Synchroniser les données")
+        print("Enregistrer les données")
         report = "<b>Contenu de la transaction</b>"
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
@@ -344,10 +339,14 @@ class RipartPlugin:
                 return
         messages = []
         # Une transaction par couche modifiée
+        layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         for layer in QgsProject.instance().mapLayers().values():
-            if layer.type() is not QgsMapLayerType.VectorLayer:
-                continue
-            if layer.name() in RipartHelper.croquis_layers_name:
+            bRes = False
+            for layerTableOfTables in layersTableOfTables:
+                if layer.name() in layerTableOfTables[0]:
+                    bRes = True
+                    break
+            if not bRes:
                 continue
             editBuffer = layer.editBuffer()
             if not editBuffer:
@@ -367,7 +366,62 @@ class RipartPlugin:
         dlgInfo.exec_()
 
     def sychronizeData(self):
+        endMessage = '<b>Contenu de la synchronisation</b>'
         print("Synchroniser les données de toutes les couches")
+        self.context = Contexte.getInstance(self, QgsProject)
+        if self.context is None:
+            return
+        if self.context.client is None:
+            res = self.context.getConnexionRipart(newLogin=True)
+            if not res:
+                return
+        # Une synchronisation par couche
+        spatialFilterName = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
+        layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
+        for layer in QgsProject.instance().mapLayers().values():
+            bRes = False
+            for layerTableOfTables in layersTableOfTables:
+                if layer.name() in layerTableOfTables[0]:
+                    bRes = True
+                    break
+            if not bRes:
+                continue
+            endMessage += '<br/>{0}\n'.format(layer.name())
+            bbox = BBox(self.context)
+            numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
+            parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName), 'sridProject': cst.EPSGCRS,
+                          'numrec': numrec}
+            result = SQLiteManager.selectRowsInTableOfTables(layer.name())
+            if result is not None:
+                for r in result:
+                    parameters['databasename'] = layer.databasename = r[4]
+                    layer.isStandard = r[3]
+                    parameters['isStandard'] = r[3]
+                    parameters['sridLayer'] = r[5]
+                    layer.idNameForDatabase = r[2]
+                    parameters['geometryName'] = r[6]
+                    parameters['is3D'] = r[7]
+                    layer.geometryTypeForDatabase = r[8]
+
+            # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
+            bDetruit = True
+            # si c'est une autre table donc standard alors la colonne n'existe pas
+            # et il faut vider la table pour éviter de créer un objet à chaque Get
+            if layer.isStandard:
+                bDetruit = False
+                SQLiteManager.emptyTable(layer.name())
+                SQLiteManager.vacuumDatabase()
+                layer.triggerRepaint()
+            parameters['detruit'] = bDetruit
+            wfsGet = WfsGet(self.context, parameters)
+            maxNumRecMessage = wfsGet.gcms_get()
+            SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
+            SQLiteManager.vacuumDatabase()
+            endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])
+        # Message de fin de synchronisation
+        dlgInfo = FormInfo()
+        dlgInfo.textInfo.setText(endMessage)
+        dlgInfo.exec_()
 
     def unload(self):
         logs = logging.Logger.manager.loggerDict

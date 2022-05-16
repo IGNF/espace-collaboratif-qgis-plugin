@@ -20,7 +20,6 @@ class WfsGet(object):
     isStandard = None
     is3D = None
     numrec = None
-    urlTransaction = None
 
     def __init__(self, context, parameters):
         self.context = context
@@ -38,7 +37,6 @@ class WfsGet(object):
         self.isStandard = parameters['isStandard']
         self.is3D = parameters['is3D']
         self.numrec = int(parameters['numrec'])
-        self.urlTransaction = parameters['urlTransaction']
 
     # La requête doit être de type :
     # https://espacecollaboratif.ign.fr/gcms/wfs
@@ -93,10 +91,10 @@ class WfsGet(object):
         end = time.time()
         timeResult = end - start
         if timeResult > 60:
-            print("{0} objets, extraits en : {1} minutes".format(totalRows, timeResult/60))
+            message = "{0} objets, extraits en : {1} minutes".format(totalRows, timeResult/60)
         else:
-            print("{0} objets, extraits en : {1} secondes".format(totalRows, timeResult))
-        return maxNumrec
+            message = "{0} objets, extraits en : {1} secondes".format(totalRows, timeResult)
+        return maxNumrec, message
 
     def getMaxNumrec(self):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec

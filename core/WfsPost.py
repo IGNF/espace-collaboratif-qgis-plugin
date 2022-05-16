@@ -34,6 +34,9 @@ class WfsPost(object):
         il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
         que l'on peut stocker dans une table sqlite
         '''
+        self.initParametersLayer()
+
+    def initParametersLayer(self):
         result = SQLiteManager.selectRowsInTableOfTables(self.layer.name())
         if result is not None:
             for r in result:
@@ -133,7 +136,7 @@ class WfsPost(object):
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # mise à jour de la couche
-            self.getAfterPost(message, filterName)
+            self.sychronize(filterName)
             numrec = self.getNumrecFromTransaction(message['urlTransaction'])
             # cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
@@ -153,7 +156,7 @@ class WfsPost(object):
         data = json.loads(response)
         return data['numrec']
 
-    def getAfterPost(self, message, filterName):
+    def sychronize(self, filterName):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
@@ -170,7 +173,7 @@ class WfsPost(object):
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
                       'sridLayer': self.layer.srid, 'bbox': bbox.getFromLayer(filterName),
                       'detruit': bDetruit, 'isStandard': self.layer.isStandard,
-                      'is3D': self.layer.geometryDimensionForDatabase, 'urlTransaction': message['urlTransaction'],
+                      'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)
         wfsGet.gcms_get()

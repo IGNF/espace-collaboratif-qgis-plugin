@@ -209,7 +209,7 @@ class SQLiteManager(object):
     def insertRowsInTable(self, parameters, attributesRows):
         totalRows = 0
         if len(attributesRows) == 0:
-            print("Pas de données pour la table {0}".format(parameters['tableName']))
+            #print("Pas de données pour la table {0}".format(parameters['tableName']))
             return totalRows
         # Insertion des lignes dans la table
         connection = spatialite_connect(self.dbPath)
@@ -260,11 +260,22 @@ class SQLiteManager(object):
 
     @staticmethod
     def isColumnExist(tableName, columnName):
+        sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
-        sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
         cursor.execute(sql)
         result = cursor.fetchone()
+        cursor.close()
+        connection.close()
+        return result
+
+    @staticmethod
+    def selectColumnFromTable(tableName, columnName):
+        sql = u"SELECT {0} FROM {1}".format(columnName, tableName)
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        result = cursor.fetchall()
         cursor.close()
         connection.close()
         return result
