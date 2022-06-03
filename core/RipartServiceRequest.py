@@ -71,6 +71,5 @@ class RipartServiceRequest(object):
         except Exception as e:
             RipartServiceRequest.logger.error(format(e))
             raise Exception(u"Connexion impossible.\nVeuillez vérifier les paramètres de connexion\n(Aide>Configurer "
-                            u"le plugin.\nErreur : )" + format(e))
-
+                            u"le plugin.\nErreur : {0})".format(e))
         return response

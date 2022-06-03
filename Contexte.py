@@ -671,7 +671,7 @@ class Contexte(object):
                       'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
                       'is3D': structure['attributes'][geometryName]['is3d'], 'urlTransaction': None, 'numrec': "0"}
         wfsGet = WfsGet(self, parameters)
-        maxNumrecMessage = wfsGet.gcms_get()
+        maxNumrecMessage = wfsGet.gcms_get(True)
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1

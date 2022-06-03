@@ -30,10 +30,8 @@ class WfsPost(object):
         self.actions = []
         self.endReport = ''
         self.transactionReport = ''
-        '''
-        il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
-        que l'on peut stocker dans une table sqlite
-        '''
+        ''' Il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
+        que l'on peut stocker dans une table sqlite'''
         self.initParametersLayer()
 
     def initParametersLayer(self):
@@ -136,7 +134,7 @@ class WfsPost(object):
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # mise à jour de la couche
-            self.sychronize(filterName)
+            self.synchronize(filterName)
             numrec = self.getNumrecFromTransaction(message['urlTransaction'])
             # cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
@@ -156,7 +154,7 @@ class WfsPost(object):
         data = json.loads(response)
         return data['numrec']
 
-    def sychronize(self, filterName):
+    def synchronize(self, filterName):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas

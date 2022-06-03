@@ -21,7 +21,6 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
     Dialogue donnant des informations sur le résultat
     des actions effectuées par l'utilisateur
     """
-
     def __init__(self, parent=None):
         super(FormInfo, self).__init__(parent)
 
@@ -39,5 +38,3 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
         self.logo.setOpenExternalLinks(True)
-        #self.logo.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-        #self.logo.setStyleSheet("background-color: transparent")

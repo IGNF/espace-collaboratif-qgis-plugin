@@ -187,10 +187,10 @@ class SQLiteManager(object):
         return tmpColumns, tmpValues
 
     @staticmethod
-    def deleteRowsInTable(tableName, keys):
+    def deleteRowsInTableBDUni(tableName, keys):
         tmp = ''
         for key in keys:
-            tmp += '"{0}", '.format(key)
+            tmp += '"{0}", '.format(key[0])
         strCleabs = tmp[0:len(tmp)-2]
         sql = 'DELETE FROM {0} WHERE cleabs IN ({1})'.format(tableName, strCleabs)
         SQLiteManager.executeSQL(sql)
@@ -204,12 +204,11 @@ class SQLiteManager(object):
                 continue
             if data['state'] == 'Update' or data['state'] == 'Delete':
                 cleabss.append(data['feature']['cleabs'])
-        SQLiteManager.deleteRowsInTable(tableName, cleabss)
+        SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
     def insertRowsInTable(self, parameters, attributesRows):
         totalRows = 0
         if len(attributesRows) == 0:
-            #print("Pas de données pour la table {0}".format(parameters['tableName']))
             return totalRows
         # Insertion des lignes dans la table
         connection = spatialite_connect(self.dbPath)
@@ -276,6 +275,17 @@ class SQLiteManager(object):
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return result
+
+    @staticmethod
+    def selectColumnFromTableWithCondition(tableName, columnName, key):
+        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, columnName, key)
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        result = cursor.fetchone()
         cursor.close()
         connection.close()
         return result

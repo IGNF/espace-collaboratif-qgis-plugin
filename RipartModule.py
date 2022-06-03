@@ -38,7 +38,6 @@ from .core.RipartLoggerCl import RipartLogger
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
-# from qgis.core import *
 from qgis.core import QgsProject, QgsMessageLog, QgsWkbTypes, QgsCoordinateReferenceSystem, \
     QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer, QgsVectorLayerEditBuffer, QgsMapLayerType
 import configparser
@@ -271,7 +270,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Synchroniser les données de toutes les couches'),
-            callback=self.sychronizeData,
+            callback=self.synchronizeData,
             status_tip=self.tr(u'Synchroniser les données de toutes les couches'),
             parent=self.iface.mainWindow())
 
@@ -350,7 +349,6 @@ class RipartPlugin:
                 continue
             editBuffer = layer.editBuffer()
             if not editBuffer:
-                # report += "<br/>Rien à synchroniser, la couche {0} n'est pas en mode édition ;-)\n".format(layer.name())
                 continue
             wfsPost = WfsPost(self.context, layer)
             messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer,
@@ -365,7 +363,7 @@ class RipartPlugin:
             dlgInfo.textInfo.append(message)
         dlgInfo.exec_()
 
-    def sychronizeData(self):
+    def synchronizeData(self):
         endMessage = '<b>Contenu de la synchronisation</b>'
         print("Synchroniser les données de toutes les couches")
         self.context = Contexte.getInstance(self, QgsProject)
@@ -386,11 +384,9 @@ class RipartPlugin:
                     break
             if not bRes:
                 continue
-            endMessage += '<br/>{0}\n'.format(layer.name())
+            endMessage += "<br/>{0}\n".format(layer.name())
             bbox = BBox(self.context)
-            numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
-            parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName), 'sridProject': cst.EPSGCRS,
-                          'numrec': numrec}
+            parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName), 'sridProject': cst.EPSGCRS}
             result = SQLiteManager.selectRowsInTableOfTables(layer.name())
             if result is not None:
                 for r in result:
@@ -413,7 +409,16 @@ class RipartPlugin:
                 SQLiteManager.vacuumDatabase()
                 layer.triggerRepaint()
             parameters['detruit'] = bDetruit
+            numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
+            parameters['numrec'] = numrec
             wfsGet = WfsGet(self.context, parameters)
+            # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser
+            # Il faut aussi qu'il soit différent de 0, ce numrec correspondant à une table non BDUni
+            if not layer.isStandard:
+                maxNumrec = wfsGet.getMaxNumrec()
+                if numrec == maxNumrec:
+                    endMessage += "<br/>Pas de mise à jour\n"
+                    continue
             maxNumRecMessage = wfsGet.gcms_get()
             SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
             SQLiteManager.vacuumDatabase()
@@ -454,7 +459,6 @@ class RipartPlugin:
                 self.tr(u'&IGN_Espace_Collaboratif'),
                 action)
             self.iface.removeToolBarIcon(action)
-            # action.setVisible(False)
         del self.toolbar
 
     def run(self):
@@ -478,9 +482,6 @@ class RipartPlugin:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
                 return
-
-            # Les profils serveur/client se correspondent-ils ?
-            # self.context.checkProfilServeurClient()
 
             importRipart = ImporterRipart(self.context)
             result = importRipart.doImport()
@@ -525,9 +526,6 @@ class RipartPlugin:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
                 return
-
-            # Les profils serveur/client se correspondent-ils ?
-            # self.context.checkProfilServeurClient()
 
             create = CreerRipart(self.context)
             create.do()
