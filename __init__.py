@@ -28,8 +28,8 @@
 def classFactory(iface):  # pylint: disable=invalid-name
     """Load RipartPlugin class from file RipartPlugin.
 
-    :param iface: A QGIS interface instance.
-    :type iface: QgsInterface
+    param iface: A QGIS interface instance.
+    type iface: QgsInterface
     """
     #
     from .RipartModule import RipartPlugin

@@ -28,19 +28,19 @@
 from builtins import str
 from builtins import range
 import os.path
-from .core import ConstanteRipart as cst
-from .core.SQLiteManager import SQLiteManager
-from .core.BBox import BBox
-from .core.WfsGet import WfsGet
+
 from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
+from .core.SQLiteManager import SQLiteManager
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import QgsProject, QgsMessageLog, QgsWkbTypes, QgsCoordinateReferenceSystem, \
-    QgsVectorLayer, QgsDataSourceUri, QgsSymbol, QgsFeatureRenderer, QgsRuleBasedRenderer, QgsVectorLayerEditBuffer, QgsMapLayerType
+from qgis.core import QgsProject
 import configparser
+
+# Initialize Qt resources from file resources.py
+from . import resources
 
 # modules ripart
 from .FormChargerGuichet import FormChargerGuichet
@@ -57,6 +57,7 @@ from .core.NoProfileException import NoProfileException
 from .ReplyReport import ReplyReport
 
 import logging
+
 
 
 class RipartPlugin:
