@@ -9,7 +9,7 @@ version 4.0.1, 15/12/2020
 """
 Transformation d'une condition MongoDB en expression QGIS, exemples :
 
-"{\"$or\":[{\"$and\":[{\"choix\":\"choix 1\"},{\"entier\":{\"$lt\":5}}]},{\"double\":{\"$ne\":null}}]}"
+{\"$or\":[{\"$and\":[{\"choix\":\"choix 1\"},{\"entier\":{\"$lt\":5}}]},{\"double\":{\"$ne\":null}}]}
 ("choix" = 'choix 1' AND "entier" < 5) OR "double" is not null
 
 {\"$and\":[{\"string\":\"Cantine\"}]}
@@ -17,6 +17,9 @@ Transformation d'une condition MongoDB en expression QGIS, exemples :
 
 {\"$or\":[{\"date\":{\"$gt\":\"2020-09-01\"}},{\"boolean\":1}]}
 "date" > '2020-09-01' OR "boolean" = '1'
+
+{\"$and\":[{\"degats_scolytes\":{\"$in\":[\"S\",\"V\",\"I\"]}}]}
+degats_scolytes IN ('S','V','I')
 """
 
 
@@ -61,6 +64,8 @@ class MongoDBtoQGIS(object):
         return substring.count(searchTo)
 
     def conversionConditions(self, condition):
+        if condition not in self.conditions:
+            return self.conversionOperatorCondition(condition)
         return self.conditions[condition]
 
     def conversionOperatorCondition(self, operator):
@@ -142,12 +147,13 @@ class MongoDBtoQGIS(object):
         return expression
 
     def run(self):
+        print(self.condition)
+
         d = {'{': '', '}': '', '"': ''}
         chaine = self.replaceSomeCharacters(self.condition, d)
         dd = {' : ': ':'}
         chaine = self.replaceSomeCharacters(chaine, dd)
         nbCrochetOuvrant = self.numberOfOccurrences('[', chaine)
-
         if nbCrochetOuvrant == 1:
             return self.conversionToExpression(chaine)
         else:

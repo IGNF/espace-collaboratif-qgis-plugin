@@ -29,9 +29,13 @@ from builtins import str
 from builtins import range
 import os.path
 
+from .core.BBox import BBox
 from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
 from .core.SQLiteManager import SQLiteManager
+from .core import ConstanteRipart as cst
+from .core.NoProfileException import NoProfileException
+from .core.WfsGet import WfsGet
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
@@ -53,7 +57,6 @@ from .SeeReport import SeeReport
 from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
-from .core.NoProfileException import NoProfileException
 from .ReplyReport import ReplyReport
 
 import logging
@@ -303,6 +306,22 @@ class RipartPlugin:
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
+
+    def test(self):
+        layer = self.context.iface.activeLayer()
+        efc = layer.editFormConfig()
+        style = layer.style()
+        print(style.xmlData())
+        fields = layer.fields()
+        for field in fields:
+            name = field.name()
+            if name != 'type':
+                continue
+            index = fields.indexOf(name)
+            ews = layer.editorWidgetSetup(index)
+            print("Type:", ews.type())
+            print("???:", efc.widgetConfig(ews.type()))
+            print("Config:", ews.config())
 
     def chargerGuichet(self):
         try:

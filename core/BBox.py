@@ -25,7 +25,7 @@ class BBox(object):
         else:
             message = "Le fichier de paramétrage de l'Espace Collaboratif ne contient pas le nom du calque " \
                       "à utiliser pour le filtrage spatial.\n\n" + \
-                      "Souhaitez-vous poursuivre l'importation des signalements sur la France entière ? " + \
+                      "Souhaitez-vous poursuivre l'importation des objets sur la France entière ? " + \
                       "(Cela risque de prendre un certain temps)."
             reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:
