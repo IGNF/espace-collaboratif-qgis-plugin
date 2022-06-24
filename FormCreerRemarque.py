@@ -111,6 +111,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         # largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
         self.treeWidget.setColumnWidth(0, 160)
         self.treeWidget.setColumnWidth(1, 150)
+        self.treeWidget.itemChanged.connect(self.onItemChanged)
 
         # On modifie les thèmes proposés en fonction du groupe sélectionné
         if groupeActif != 'Aucun':
@@ -122,6 +123,26 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.profilThemesList = profil.allThemes
 
         self.docMaxSize = self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
+
+    def onItemChanged(self, item, column):
+        if column != 0:
+            return
+        self.toggle(item)
+        state = item.checkState(column)
+        if state == Qt.Checked:
+            self.treeWidget.expandItem(item)
+        else:
+            self.treeWidget.collapseItem(item)
+
+    def toggle(self, item):
+        state = item.checkState(0)
+        if state == Qt.Unchecked:
+            return
+        numChildren = self.treeWidget.topLevelItemCount()
+        for c in range(numChildren):
+            tlItem = self.treeWidget.topLevelItem(c)
+            if tlItem != item:
+                tlItem.setCheckState(0, Qt.Unchecked)
 
     def displayThemes(self, filteredThemes, themes):
         """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
