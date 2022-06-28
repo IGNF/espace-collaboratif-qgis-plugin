@@ -262,7 +262,7 @@ class RipartPlugin:
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/compter.png'
+        icon_path = ':/plugins/RipartPlugin/images/save.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Enregistrer les modifications'),
@@ -396,6 +396,11 @@ class RipartPlugin:
         # Une synchronisation par couche
         spatialFilterName = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
+
+        # On vérifie d'abord que les couches à synchroniser ne contiennent pas de données non enregistrées
+        listLayersUnsaved = []
+        listEditBuffers = []
+        messageLayers = ""
         for layer in QgsProject.instance().mapLayers().values():
             bRes = False
             for layerTableOfTables in layersTableOfTables:
@@ -404,6 +409,41 @@ class RipartPlugin:
                     break
             if not bRes:
                 continue
+
+            # Si la couche contient des modifications non enregistrées, on interrompt la synchronisation
+            layerEditBuffer = layer.editBuffer()
+            if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
+                                                or len(layerEditBuffer.deletedFeatureIds()) > 0):
+                listEditBuffers.append(layerEditBuffer)
+                messageLayers += "{0}, ".format(layer.name())
+
+        if len(listEditBuffers) > 0:
+            if len(listEditBuffers) == 1:
+                message0 = u"La couche {0} contient".format(messageLayers[0:len(messageLayers)-2])
+            else:
+                message0 = u"Les couches {0} contiennent".format(messageLayers[0:len(messageLayers)-2])
+
+            message = "{0} des modifications non enregistrées. Si vous poursuivez la synchronisation, vos modifications seront perdues. \nVoulez-vous continuer ?".format(
+                message0)
+            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                                         QMessageBox.No)
+
+            if reply == QMessageBox.No:  # On sort
+                return
+            else: # On supprime les modifications et on poursuit
+                for editBuffer in listEditBuffers:
+                    editBuffer.rollBack()
+
+        # Synchronisation des couches
+        for layer in QgsProject.instance().mapLayers().values():
+            bRes = False
+            for layerTableOfTables in layersTableOfTables:
+                if layer.name() in layerTableOfTables[0]:
+                    bRes = True
+                    break
+            if not bRes:
+                continue
+
             endMessage += "<br/>{0}\n".format(layer.name())
             bbox = BBox(self.context)
             parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName), 'sridProject': cst.EPSGCRS}
@@ -437,7 +477,7 @@ class RipartPlugin:
             if not layer.isStandard:
                 maxNumrec = wfsGet.getMaxNumrec()
                 if numrec == maxNumrec:
-                    endMessage += "<br/>Pas de mise à jour\n"
+                    endMessage += "<br/>Pas de mise à jour\n\n"
                     continue
             maxNumRecMessage = wfsGet.gcms_get()
             SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
