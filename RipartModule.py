@@ -266,7 +266,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Enregistrer les modifications'),
-            callback=self.registerChanges,
+            callback=self.saveChanges,
             status_tip=self.tr(u'Enregistrer les modifications'),
             parent=self.iface.mainWindow())
 
@@ -346,7 +346,7 @@ class RipartPlugin:
                             level=1, duration=5)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
 
-    def registerChanges(self):
+    def saveChanges(self):
         print("Enregistrer les données")
         report = "<b>Contenu de la transaction</b>"
         self.context = Contexte.getInstance(self, QgsProject)
