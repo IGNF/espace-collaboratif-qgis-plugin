@@ -343,7 +343,7 @@ class Contexte(object):
                             # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
                             # afin qu'il puisse remplir sa clé Géoportail
                             else:
-                                dlgChoixGroupe = FormChoixGroupe(profil, self.groupeactif)
+                                dlgChoixGroupe = FormChoixGroupe(self, profil, self.groupeactif)
                                 dlgChoixGroupe.exec_()
                                 # bouton Valider
                                 if not dlgChoixGroupe.bCancel:
@@ -769,9 +769,14 @@ class Contexte(object):
         layers = self.QgsProject.instance().mapLayers()
         for key in layers:
             layer = layers[key]
-            if type(layer) is QgsVectorLayer and layer.geometryType() is not None and layer.geometryType() == \
-                    QgsWkbTypes.PolygonGeometry:
-                polylayers[layer.id()] = layer.name()
+            layerType = type(layer)
+            if layerType is not QgsVectorLayer:
+                continue
+            geometryType = layer.geometryType()
+            if geometryType is not None and geometryType != QgsWkbTypes.PolygonGeometry:
+                continue
+            print("{0} {1}".format(layer.name(), geometryType))
+            polylayers[layer.id()] = layer.name()
         return polylayers
 
     def getLayerByName(self, layName):

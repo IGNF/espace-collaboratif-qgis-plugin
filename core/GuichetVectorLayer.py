@@ -38,29 +38,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.geometryNameForDatabase = parameters['geometryName']
         self.geometryDimensionForDatabase = parameters['geometryDimension']
         self.geometryTypeForDatabase = parameters['geometryType']
-        self.connectSignals()
-
-    '''
-    Connexion des signaux pour les évènements survenus sur la carte
-    '''
-
-    def connectSignals(self):
-        self.editingStopped.connect(self.editing_stopped)
-        self.beforeRollBack.connect(self.before_rollback)
-
-    '''
-    L'utilisateur a mis fin à l'édition de la couche
-    '''
-
-    def editing_stopped(self):
-        print("Fin édition de la couche")
-
-    '''
-    L'utilisateur a annulé toutes ses modifications
-    '''
-
-    def before_rollback(self):
-        print("Annulation des modifications dans la couche")
 
     '''
         Transformation de la condition en expression QGIS
@@ -263,7 +240,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             symbol.setColor(QColor('238,153,0,255'))
             symbol.setOpacity(1)
 
-        symbol.setOutputUnit(QgsUnitTypes.RenderPixels)
+        symbol.setOutputUnit(QgsUnitTypes.RenderUnit.RenderPixels)
         renderer = QgsSingleSymbolRenderer(symbol)
         # apply the renderer to the layer
         self.setRenderer(renderer)
@@ -295,7 +272,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             symbol.setColor(QColor('238,153,0,255'))
             symbol.setOpacity(1)
 
-        symbol.setOutputUnit(QgsUnitTypes.RenderPixels)
+        symbol.setOutputUnit(QgsUnitTypes.RenderUnit.RenderPixels)
         renderer = QgsSingleSymbolRenderer(symbol)
         # apply the renderer to the layer
         self.setRenderer(renderer)

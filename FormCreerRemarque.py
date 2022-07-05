@@ -440,7 +440,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 return th
         return None
 
-    def countSelectecTheme(self):
+    def countSelectedTheme(self):
         """Compte et retourne le nombre de thèmes sélectionnés
         
         :return le nombre de thèmes sélectionnés

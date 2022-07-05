@@ -62,7 +62,6 @@ from .ReplyReport import ReplyReport
 import logging
 
 
-
 class RipartPlugin:
     """QGIS Plugin Implementation."""
 
@@ -193,7 +192,6 @@ class RipartPlugin:
                 action)
 
         self.actions.append(action)
-
         return action
 
     def initGui(self):
@@ -306,22 +304,6 @@ class RipartPlugin:
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
-
-    def test(self):
-        layer = self.context.iface.activeLayer()
-        efc = layer.editFormConfig()
-        style = layer.style()
-        print(style.xmlData())
-        fields = layer.fields()
-        for field in fields:
-            name = field.name()
-            if name != 'type':
-                continue
-            index = fields.indexOf(name)
-            ews = layer.editorWidgetSetup(index)
-            print("Type:", ews.type())
-            print("???:", efc.widgetConfig(ews.type()))
-            print("Config:", ews.config())
 
     def chargerGuichet(self):
         try:
