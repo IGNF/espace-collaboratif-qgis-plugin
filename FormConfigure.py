@@ -92,7 +92,10 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.spinBox.setValue(cntDays)
         self.spinBox.valueChanged.connect(self.spinboxChanged)
 
-        self.setComboBoxFilter()
+        workArea = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
+        self.lineEditWorkArea.setText(workArea)
+
+        # self.setComboBoxFilter()
 
         groupFilter = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Group, "Map").text
         if groupFilter is not None and groupFilter == "true":
