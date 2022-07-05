@@ -46,11 +46,14 @@ class Profil(object):
     # Liste des thèmes du profil actif
     themes = list()
 
-    # Liste des thèmes filtrés
+    # Liste des noms des thèmes filtrés
     filteredThemes = list()
 
-    # Liste de tous les thèmes du profil de l'utilsateur (issus de tous ses groupes)
+    # Liste de tous les thèmes du profil de l'utilisateur (issus de tous ses groupes)
     allThemes = list()
+
+    # Liste des noms des thèmes globaux
+    globalThemes = list()
 
     # identifiant geoprofil
     id_Geoprofil = ""

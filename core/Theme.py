@@ -26,3 +26,4 @@ class Theme(object):
         self.group = Group()
         self.attributes = []
         self.isFiltered = False
+        self.isGlobal = False

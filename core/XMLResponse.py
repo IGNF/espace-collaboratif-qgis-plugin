@@ -153,6 +153,7 @@ class XMLResponse(object):
             themes = self.getThemes()
             profil.themes = themes[0]
             profil.filteredThemes = themes[1]
+            profil.globalThemes = themes[2]
 
             # va chercher les infos de tous les geogroupes de l'utilisateur
             infosgeogroups = self.getInfosGeogroup(profil)
@@ -350,6 +351,7 @@ class XMLResponse(object):
             # Récupération du filtre sur les thèmes
             filterDict = self.root.find('PROFIL/FILTRE').text
             filteredThemes = []
+            globalThemes = []
             if filterDict is not None:
                 groupFilters = re.findall('\{.*?\}', filterDict)
                 filteredThemes = self.getFilteredThemes(groupFilters, "")
@@ -365,6 +367,11 @@ class XMLResponse(object):
                 if name in filteredThemes or len(filteredThemes) == 0:
                     theme.isFiltered = True
 
+                isGlobal = (node.find('GLOBAL')).text
+                if isGlobal == '1':
+                    theme.isGlobal = True
+                    globalThemes.append(name)
+
                 theme.group.id = (node.find('ID_GEOGROUPE')).text
                 if ClientHelper.notNoneValue(theme.group.name) in themesAttDict:
                     theme.attributes.extend(themesAttDict[ClientHelper.notNoneValue(theme.group.name)])
@@ -374,7 +381,7 @@ class XMLResponse(object):
             self.logger.error(str(e))
             raise Exception("Erreur dans la récupération des thèmes du profil : {}".format(str(e)))
 
-        return [themes, filteredThemes]
+        return [themes, filteredThemes, globalThemes]
 
     def getVersion(self):
         """Retourne la version du service ripart    

@@ -102,10 +102,10 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         if preferredGroup in listeNamesGroups:
             self.comboBoxGroupe.setCurrentText(preferredGroup)
         else:
-            groupeActif = self.context.groupeactif
-            if groupeActif is not None and groupeActif != "":
+            if groupeActif is not None and groupeActif != "" and groupeActif in listeNamesGroups:
                 self.comboBoxGroupe.setCurrentText(groupeActif)
             else:
+                groupeActif = 'Aucun'
                 self.comboBoxGroupe.setCurrentText('Aucun')
 
         # largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
@@ -118,7 +118,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             self.comboBoxGroupe.currentIndexChanged.connect(self.groupIndexChanged)
             self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
         else:
-            self.displayThemes(profil.filteredThemes, profil.themes)
+            self.displayThemes(profil.globalThemes, profil.themes)
 
         self.profilThemesList = profil.allThemes
 
