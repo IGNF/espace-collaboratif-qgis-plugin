@@ -29,9 +29,12 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     activeGroup = None
     shapefileName = None
     nameLayerShapefile = None
+    idChosenGroup = None
+    nameChosenGroup = None
 
     def __init__(self, context, profile, activeGroup, parent=None):
         super(FormChoixGroupe, self).__init__(parent)
+        print ("init")
         self.setupUi(self)
         self.setFocus()
         self.context = context
@@ -48,6 +51,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setButtonsTextAndConnect()
 
     def setComboBoxGroup(self):
+        print ("setComboBoxGroup")
         self.infosgeogroups = self.profile.infosGeogroups
         for igg in self.infosgeogroups:
             self.comboBoxGroup.addItem(igg.group.name)
@@ -98,10 +102,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     def importShapefile(self):
         if self.shapefileName is not None:
-            layer = QgsVectorLayer(self.shapefileName, self.nameLayerShapefile, "ogr")
-            if not layer.isValid():
+            vlayer = QgsVectorLayer(self.shapefileName, self.nameLayerShapefile, "ogr")
+            if not vlayer.isValid():
                 print("Layer {0} failed to load!".format(self.nameLayerShapefile))
-            QgsProject.instance().addMapLayer(layer, False)
+            QgsProject.instance().addMapLayer(vlayer)
             QgsProject.instance().write()
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
@@ -113,17 +117,19 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # Création de la nouvelle couche shapefile
         self.importShapefile()
 
-        """
-        Retourne l'identifiant du groupe de l'utilisateur
-        en fonction de son choix
-        """
-        self.accept()
         index = self.comboBoxGroup.currentIndex()
-        idGroup = self.infosgeogroups[index].group.id
-        nameGroup = self.infosgeogroups[index].group.name
+        self.idChosenGroup = self.infosgeogroups[index].group.id
+        self.nameChosenGroup = self.infosgeogroups[index].group.name
+
+        self.accept()
         self.bCancel = False
 
-        return idGroup, nameGroup
+    """
+    Retourne l'identifiant du groupe de l'utilisateur
+    en fonction de son choix
+    """
+    def getChosenGroupInfo(self):
+        return self.idChosenGroup, self.nameChosenGroup
 
     # bouton Annuler
     def cancel(self):
