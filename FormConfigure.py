@@ -56,21 +56,19 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
 
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
-
         self.lineEditUrl.setText(RipartHelper.load_urlhost(context.projectDir).text)
 
         login = RipartHelper.load_login(context.projectDir).text
         self.lineEditLogin.setText(login)
-        if login != "" and login is not None:
-            self.checkBoxLogin.setChecked(True)
+        # if login != "" and login is not None:
+        #     self.checkBoxLogin.setChecked(True)
 
-        pagination = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Pagination, "Map").text
-        if pagination == "" or pagination is None:
-            pagination = 100
-        else:
-            self.checkBoxPagination.setChecked(True)
-        self.spinBoxPagination.setValue(int(pagination))
+        # pagination = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Pagination, "Map").text
+        # if pagination == "" or pagination is None:
+        #     pagination = 100
+        # else:
+        #     self.checkBoxPagination.setChecked(True)
+        # self.spinBoxPagination.setValue(int(pagination))
 
         date = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_DateExtraction, "Map").text
         if date is not None:
@@ -97,11 +95,11 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         # self.setComboBoxFilter()
 
-        groupFilter = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Group, "Map").text
-        if groupFilter is not None and groupFilter == "true":
-            self.checkBoxGroup.setChecked(True)
-        if self.context.profil is not None:
-            self.lblGroup.setText(self.context.profil.geogroup.name)
+        # groupFilter = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Group, "Map").text
+        # if groupFilter is not None and groupFilter == "true":
+        #     self.checkBoxGroup.setChecked(True)
+        # if self.context.profil is not None:
+        #     self.lblGroup.setText(self.context.profil.geogroup.name)
 
         self.setAttributCroquis()
 
@@ -111,6 +109,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
         self.lineEditGroupeActif.setText(groupeactif)
 
+
+    # INUTILE - A SUPPRIMER
     def setComboBoxFilter(self):
         """
         Set de la liste des couches de type "polygone" susceptibles d'être utilisées comme zone d'extraction

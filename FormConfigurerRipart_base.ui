@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>861</width>
-    <height>753</height>
+    <height>693</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -35,7 +35,7 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>710</y>
+     <y>650</y>
      <width>861</width>
      <height>32</height>
     </rect>
@@ -116,6 +116,9 @@
     </property>
    </widget>
    <widget class="QLineEdit" name="lineEditLogin">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>210</x>
@@ -132,47 +135,9 @@
      </font>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBoxLogin">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>130</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>0</width>
-      <height>0</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
-    </property>
-    <property name="text">
-     <string>Login par défaut</string>
-    </property>
-   </widget>
    <widget class="QLineEdit" name="lineEditGroupeActif">
     <property name="enabled">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="geometry">
      <rect>
@@ -223,6 +188,9 @@
     </property>
    </widget>
    <widget class="QLineEdit" name="lineEditWorkArea">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>210</x>
@@ -297,6 +265,26 @@
      <bool>true</bool>
     </property>
    </widget>
+   <widget class="QLabel" name="lblLogin">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>121</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Login par défaut</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QCheckBox" name="checkBoxProxy">
    <property name="geometry">
@@ -342,7 +330,7 @@
      <x>20</x>
      <y>220</y>
      <width>821</width>
-     <height>481</height>
+     <height>421</height>
     </rect>
    </property>
    <property name="font">
@@ -355,54 +343,11 @@
    <property name="title">
     <string>Signalements</string>
    </property>
-   <widget class="QSpinBox" name="spinBoxPagination">
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>30</y>
-      <width>121</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="minimum">
-     <number>10</number>
-    </property>
-    <property name="maximum">
-     <number>2147483647</number>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBoxPagination">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>91</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Pagination</string>
-    </property>
-   </widget>
    <widget class="QCheckBox" name="checkBoxDate">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>60</y>
+      <y>30</y>
       <width>137</width>
       <height>20</height>
      </rect>
@@ -436,69 +381,11 @@
      <string>Date d'extraction</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBoxGroup">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>240</y>
-      <width>201</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>0</width>
-      <height>0</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
-    </property>
-    <property name="text">
-     <string>Extraction pour groupe</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lblGroup">
-    <property name="geometry">
-     <rect>
-      <x>278</x>
-      <y>240</y>
-      <width>531</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
    <widget class="QTreeWidget" name="treeWidget">
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>270</y>
+      <y>210</y>
       <width>531</width>
       <height>192</height>
      </rect>
@@ -528,7 +415,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>270</y>
+      <y>210</y>
       <width>268</width>
       <height>36</height>
      </rect>
@@ -567,7 +454,7 @@ en attribut pour les nouveaux croquis</string>
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>60</y>
+      <y>30</y>
       <width>281</width>
       <height>161</height>
      </rect>
@@ -593,7 +480,7 @@ en attribut pour les nouveaux croquis</string>
     <property name="geometry">
      <rect>
       <x>570</x>
-      <y>120</y>
+      <y>90</y>
       <width>111</width>
       <height>22</height>
      </rect>
@@ -613,7 +500,7 @@ en attribut pour les nouveaux croquis</string>
     <property name="geometry">
      <rect>
       <x>690</x>
-      <y>110</y>
+      <y>80</y>
       <width>111</width>
       <height>41</height>
      </rect>

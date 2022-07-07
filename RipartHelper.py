@@ -52,29 +52,6 @@ class RipartHelper:
 
     calque_Signalement_Lyr = "Signalement.lyr"
 
-    """nom_Champ_IdSignalement = u"N°signalement"
-    nom_Champ_Auteur = "Auteur"
-    nom_Champ_Commune = "Commune"
-    nom_Champ_Insee = "Insee"
-    nom_Champ_Departement = u"Département"
-    nom_Champ_IDDepartement = "Département_ID"
-    nom_Champ_DateCreation = "Date_de_création"
-    nom_Champ_DateMAJ = "Date_MAJ"
-    nom_Champ_DateValidation = "Date_de_validation"
-    nom_Champ_Themes = "Thèmes"
-    nom_Champ_Statut = "Statut"
-    nom_Champ_Message = "Message"
-    nom_Champ_Reponse = "Réponses"
-    nom_Champ_Url = "URL"
-    nom_Champ_UrlPrive = "URL_privé"
-    nom_Champ_Document = "Document"
-    nom_Champ_Autorisation = "Autorisation"
-
-    nom_Champ_LienSignalement = "Lien_signalement"
-    nom_Champ_NomCroquis = "Nom"
-    nom_Champ_Attributs = "Attributs_croquis"
-    nom_Champ_LienBDuni = "Lien_object_BDUni"""
-
     xmlServeur = "Serveur"
     xmlMap = "Map"
 
