@@ -8,9 +8,10 @@ version 4.0.1, 15/12/2020
 """
 import os
 
-from PyQt5.QtWidgets import QDialogButtonBox
+from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from qgis.PyQt import uic, QtWidgets
 from PyQt5.QtCore import Qt
+from qgis._core import QgsWkbTypes
 from qgis.core import QgsProject, QgsVectorLayer
 from .RipartHelper import RipartHelper
 
@@ -93,6 +94,17 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 parts = self.shapefileName.split('/')
                 nameShapefile = parts[len(parts)-1]
                 self.nameLayerShapefile = nameShapefile[0:len(nameShapefile)-4]
+
+                # On vérifie que le shapefile est surfacique
+                vlayer = QgsVectorLayer(self.shapefileName, self.nameLayerShapefile, "ogr")
+                geomType = vlayer.geometryType()
+                if vlayer.geometryType() != QgsWkbTypes.PolygonGeometry:
+                    QMessageBox.warning(None, "IGN Espace collaboratif", "La zone de travail ne peut être définie qu'à partir d'une couche d'objets surfaciques.")
+                    # On vide self.shapefileName et self.nameLayerShapefile pour que la couche ne soit pas chargée
+                    self.shapefileName = None
+                    self.nameLayerShapefile = None
+                    return
+
                 self.comboBoxWorkZone.addItem(self.nameLayerShapefile)
                 self.comboBoxWorkZone.setCurrentText(self.nameLayerShapefile)
                 # nbItems = self.comboBoxWorkZone.count()
