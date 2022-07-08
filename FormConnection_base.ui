@@ -231,6 +231,9 @@
      <bold>true</bold>
     </font>
    </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
    <property name="frameShape">
     <enum>QFrame::NoFrame</enum>
    </property>

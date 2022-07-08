@@ -88,6 +88,7 @@ class Ui_ConnectionDialog(object):
         font.setBold(True)
         font.setWeight(75)
         self.textError.setFont(font)
+        self.textError.setAutoFillBackground(False)
         self.textError.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.textError.setLineWidth(0)
         self.textError.setReadOnly(True)

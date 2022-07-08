@@ -48,7 +48,7 @@ from . import resources
 
 # modules ripart
 from .FormChargerGuichet import FormChargerGuichet
-from .FormConnexion_dialog import FormConnexionDialog
+from .FormConnection import FormConnectionDialog
 from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
 from .Contexte import Contexte
@@ -99,7 +99,7 @@ class RipartPlugin:
                 QCoreApplication.installTranslator(self.translator)
 
         # Create the dialog (after translation) and keep reference
-        self.dlgConnexion = FormConnexionDialog()
+        self.dlgConnexion = FormConnectionDialog()
 
         # La toolbar du plugin
         self.actions = []

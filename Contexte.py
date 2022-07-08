@@ -9,6 +9,7 @@ version 4.0.1, 15/12/2020
 """
 
 from PyQt5 import QtGui
+from PyQt5.QtGui import QImage
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
@@ -20,6 +21,9 @@ import shutil
 import ntpath
 import configparser
 
+import sys
+import requests
+
 from .RipartException import RipartException
 from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
@@ -28,7 +32,7 @@ from .core.ClientHelper import ClientHelper
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
 from .core.Sketch import Sketch
-from .FormConnexion_dialog import FormConnexionDialog
+from .FormConnection import FormConnectionDialog
 from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
 from .core import ConstanteRipart as cst
@@ -272,7 +276,7 @@ class Contexte(object):
                                         u"...)")
             return
 
-        self.loginWindow = FormConnexionDialog()
+        self.loginWindow = FormConnectionDialog()
         self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostRipart))
         loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")
         if loginXmlNode is None:
@@ -400,10 +404,15 @@ class Contexte(object):
 
                     # Modification du logo en fonction du groupe
                     if profil.logo != "":
-                        dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
+                        logoPath = "{0}{1}".format(self.urlHostRipart, profil.logo)
+                        image = QImage()
+                        image.loadFromData(requests.get(logoPath).content)
+                        dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
+                        #dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
                         #print("{0}{1}".format(self.urlHostRipart, profil.logo))
                     elif profil.title == "Profil par défaut":
                         dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
+
 
                     dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
                     dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
