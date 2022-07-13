@@ -35,7 +35,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     def __init__(self, context, profile, activeGroup, parent=None):
         super(FormChoixGroupe, self).__init__(parent)
-        print ("init")
+        print("init")
         self.setupUi(self)
         self.setFocus()
         self.context = context
@@ -84,7 +84,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def openShapeFile(self):
         formats = ["shp", "SHP"]
         filters = u"ESRI Shapefile (*.shp; *.SHP);;"
-        self.shapefileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.', filters)
+        self.shapefileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.',
+                                                                      filters)
         if self.shapefileName != "":
             extension = os.path.splitext(self.shapefileName)[1]
             if extension[1:] not in formats:
@@ -97,9 +98,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
                 # On vérifie que le shapefile est surfacique
                 vlayer = QgsVectorLayer(self.shapefileName, self.nameLayerShapefile, "ogr")
-                geomType = vlayer.geometryType()
-                if vlayer.geometryType() != QgsWkbTypes.PolygonGeometry:
-                    QMessageBox.warning(None, "IGN Espace collaboratif", "La zone de travail ne peut être définie qu'à partir d'une couche d'objets surfaciques.")
+                if vlayer.geometryType() != QgsWkbTypes.GeometryType.PolygonGeometry:
+                    QMessageBox.warning(self, "IGN Espace collaboratif", "La zone de travail ne peut être définie "
+                                                                         "qu'à partir d'une couche d'objets "
+                                                                         "surfaciques.")
                     # On vide self.shapefileName et self.nameLayerShapefile pour que la couche ne soit pas chargée
                     self.shapefileName = None
                     self.nameLayerShapefile = None
@@ -107,8 +109,6 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
                 self.comboBoxWorkZone.addItem(self.nameLayerShapefile)
                 self.comboBoxWorkZone.setCurrentText(self.nameLayerShapefile)
-                # nbItems = self.comboBoxWorkZone.count()
-                # self.comboBoxWorkZone.setCurrentIndex(nbItems-1)
         else:
             self.comboBoxWorkZone.setCurrentIndex(0)
 

@@ -215,7 +215,7 @@ class Client(object):
             "Téléchargement des signalements depuis le serveur ...")
         self.progress = QProgressBar()
         self.progress.setMaximum(200)
-        self.progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.progress.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.progressMessageBar.layout().addWidget(self.progress)
         self.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
         self.iface.mainWindow().repaint()

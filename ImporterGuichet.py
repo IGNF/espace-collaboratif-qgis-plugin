@@ -8,12 +8,11 @@ version 4.0.1, 15/12/2020
 @author: EPeyrouse, NGremeaux
 """
 
-from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
+from PyQt5.QtWidgets import QProgressBar, QApplication
 from PyQt5.QtCore import Qt
 from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.BBox import BBox
-from .core.ClientHelper import ClientHelper
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .Contexte import Contexte
@@ -44,7 +43,7 @@ class ImporterGuichet(object):
             "Chargement des couches du guichet...")
         self.progress = QProgressBar()
         self.progress.setMaximum(200)
-        self.progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.progress.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.progressMessageBar.layout().addWidget(self.progress)
 
     def doImport(self, guichet_layers):
@@ -74,7 +73,7 @@ class ImporterGuichet(object):
             box = bbox.getFromLayer(RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
 
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
-            QApplication.setOverrideCursor(Qt.BusyCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
             # création de la table des tables
             SQLiteManager.createTableOfTables()
@@ -84,4 +83,4 @@ class ImporterGuichet(object):
 
         finally:
             self.context.iface.messageBar().clearWidgets()
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)

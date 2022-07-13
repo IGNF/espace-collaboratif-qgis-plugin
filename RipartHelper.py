@@ -677,7 +677,7 @@ class RipartHelper:
         :param geomLayer: QgsVectorlayer
         """
         layerCrs = geomLayer.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         xform = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
         featsPoly = geomLayer.getFeatures()
         isWithin = False
@@ -689,23 +689,6 @@ class RipartHelper:
                 isWithin = True
 
         return isWithin
-
-    '''
-    @staticmethod
-    def getBboxFromLayer(filtreLay):
-        """Retourne la bbox du calque donné en paramètre
-        
-        :param filtreLay: le calque
-        :type filtreLay: QgsVectorlayer
-        """
-        filtreExtent = filtreLay.extent()
-        filtCrs = filtreLay.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
-        xform = QgsCoordinateTransform(filtCrs, destCrs, QgsProject.instance())
-        bbox = xform.transform(filtreExtent)
-
-        return bbox
-    '''
 
     @staticmethod
     def formatDate(sdate):

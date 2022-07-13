@@ -10,10 +10,10 @@ version 4.0.1, 15/12/2020
 
 import os
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtGui, QtWidgets, uic
 from .core.RipartLoggerCl import RipartLogger
 
-from PyQt5.QtCore import Qt, QDate, QDateTime, QTime, pyqtSlot
+from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 
 from .core.ClientHelper import ClientHelper
@@ -129,20 +129,20 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             return
         self.toggle(item)
         state = item.checkState(column)
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             self.treeWidget.expandItem(item)
         else:
             self.treeWidget.collapseItem(item)
 
     def toggle(self, item):
         state = item.checkState(0)
-        if state == Qt.Unchecked:
+        if state == Qt.CheckState.Unchecked:
             return
         numChildren = self.treeWidget.topLevelItemCount()
         for c in range(numChildren):
             tlItem = self.treeWidget.topLevelItem(c)
             if tlItem != item:
-                tlItem.setCheckState(0, Qt.Unchecked)
+                tlItem.setCheckState(0, Qt.CheckState.Unchecked)
 
     def displayThemes(self, filteredThemes, themes):
         """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
@@ -177,13 +177,13 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             self.treeWidget.addTopLevelItem(thItem)
 
             # Pour masquer la 2ème colonne (qui contient le groupe id)
-            thItem.setForeground(1, QtGui.QBrush(Qt.white))
+            thItem.setForeground(1, QtGui.QBrush(Qt.GlobalColor.white))
 
             if ClientHelper.notNoneValue(th.group.name) in preferredThemes:
-                thItem.setCheckState(0, Qt.Checked)
+                thItem.setCheckState(0, Qt.CheckState.Checked)
                 thItem.setExpanded(True)
             else:
-                thItem.setCheckState(0, Qt.Unchecked)
+                thItem.setCheckState(0, Qt.CheckState.Unchecked)
 
             # Affichage des attributs du thème et des modules d'aide à la saisie associés
             for att in th.attributes:
@@ -315,7 +315,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         for i in range(root.childCount()):
             thItem = root.child(i)
 
-            if thItem.checkState(0) != Qt.Checked:
+            if thItem.checkState(0) != Qt.CheckState.Checked:
                 continue
 
             theme = Theme()
@@ -505,7 +505,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     message = u"Les fichiers de type '" + extension + u"' ne sont pas autorisés comme pièce-jointe " \
                                                                       u"pour l'Espace collaboratif. "
                     RipartHelper.showMessageBox(message)
-                    self.checkBoxAttDoc.setCheckState(Qt.Unchecked)
+                    self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
 
                 elif sizeFilename > self.docMaxSize:
                     message = u"Le fichier \"" + filename + \
@@ -514,7 +514,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                               u" Ko) dépasse celle maximale autorisée (" + str(self.docMaxSize / 1000) + u" Ko)"
 
                     RipartHelper.showMessageBox(message)
-                    self.checkBoxAttDoc.setCheckState(Qt.Unchecked)
+                    self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
 
                 else:
                     self.lblDoc.setProperty("visible", True)
@@ -523,7 +523,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     self.lblDoc.setText(fileNameWithSize)
                     self.selFileName = filename
             else:
-                self.checkBoxAttDoc.setCheckState(Qt.Unchecked)
+                self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
                 self.selFileName = None
         else:
             self.lblDoc.setProperty("visible", False)

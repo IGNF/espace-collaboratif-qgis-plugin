@@ -6,7 +6,7 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
 """
-from qgis.core import QgsVectorLayer, QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue, QgsEditFormConfig
+from qgis.core import QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue
 
 
 class EditFormFieldFromAttributes(object):

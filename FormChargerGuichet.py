@@ -12,7 +12,7 @@ import os
 from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5 import QtCore
 
-from qgis.PyQt import QtGui, uic, QtWidgets
+from qgis.PyQt import uic, QtWidgets
 
 from .ImporterGuichet import ImporterGuichet
 from .core import ConstanteRipart as cst
@@ -101,9 +101,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     def setColonneCharger(self, tableWidget, row, column):
         itemCheckBox = QtWidgets.QTableWidgetItem()
-        itemCheckBox.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-        # itemCheckBox.setCheckState(QtCore.Qt.Checked)
-        itemCheckBox.setCheckState(QtCore.Qt.Unchecked)
+        itemCheckBox.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
+        itemCheckBox.setCheckState(QtCore.Qt.CheckState.Unchecked)
         tableWidget.setItem(row, column, itemCheckBox)
 
     def setTableWidgetMonGuichet(self):
@@ -211,7 +210,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         checked_list = []
         for i in range(tableWidget.rowCount()):
             item = tableWidget.item(i, numCol)
-            if item.checkState() == QtCore.Qt.Checked:
+            if item.checkState() == QtCore.Qt.CheckState.Checked:
                 itemCouche = tableWidget.item(i, 0)
                 checked_list.append(itemCouche.text())
         return checked_list

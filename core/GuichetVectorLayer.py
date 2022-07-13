@@ -9,9 +9,7 @@ version 4.0.1, 15/12/2020
 import random
 
 from PyQt5.QtGui import QColor
-from qgis.core import QgsVectorLayer, QgsProject, QgsEditorWidgetSetup, QgsSymbol, QgsFeatureRenderer, \
-    QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes, \
-    QgsDefaultValue
+from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes
 
 from .MongoDBtoQGIS import MongoDBtoQGIS
 
@@ -197,14 +195,12 @@ class GuichetVectorLayer(QgsVectorLayer):
         if strokeColor is None:
             strokeColor = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
         pointSymbol = self.setPointStyle(fillColor, strokeColor)
-        print(pointSymbol)
         symbol = QgsMarkerSymbol().createSimple(pointSymbol)
         symbol.setOpacity(opacity)
         return symbol
 
     def setSymbolLine(self, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity):
         lineSymbol = self.setLineStyle(strokeLinecap, strokeDashstyle, strokeColor, strokeWidth)
-        print(lineSymbol)
         symbol = QgsLineSymbol().createSimple(lineSymbol)
         symbol.setOpacity(strokeOpacity)
         return symbol

@@ -5,7 +5,7 @@ from PyQt5 import QtCore
 from numpy import double
 
 from .core.RipartLoggerCl import RipartLogger
-from qgis.PyQt import QtGui, uic, QtWidgets
+from qgis.PyQt import uic, QtWidgets
 from .core import ConstanteRipart as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'SeeReportView_base.ui'))
@@ -112,6 +112,5 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         allDocuments = self.report.getAllDocumentsForDisplay()
         for document in allDocuments:
             self.lbl_displayDocuments.setText('<a href={0}>{1}</a>'.format(document, document))
-            self.lbl_displayDocuments.setTextFormat(QtCore.Qt.RichText)
-            self.lbl_displayDocuments.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
-
+            self.lbl_displayDocuments.setTextFormat(QtCore.Qt.TextFormat.RichText)
+            self.lbl_displayDocuments.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextBrowserInteraction)

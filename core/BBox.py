@@ -45,7 +45,7 @@ class BBox(object):
         else:
             layerFilterExtent = self.layerFilter.extent()
             layerFilterCrs = self.layerFilter.crs()
-            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
+            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
             coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
             newLayerFilterExtent = coordTransform.transform(layerFilterExtent)
             return Box(newLayerFilterExtent.xMinimum(), newLayerFilterExtent.yMinimum(), newLayerFilterExtent.xMaximum()

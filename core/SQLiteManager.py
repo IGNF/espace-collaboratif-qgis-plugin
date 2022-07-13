@@ -2,7 +2,7 @@ import ntpath
 import json
 
 from qgis.utils import spatialite_connect
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+from qgis.core import QgsProject
 from . import ConstanteRipart as cst
 from .Wkt import Wkt
 

@@ -12,10 +12,10 @@ import os.path
 from datetime import datetime, timedelta
 import calendar
 
-from PyQt5 import QtGui, uic, QtWidgets
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, Qt, QDate
+from PyQt5 import uic, QtWidgets
+from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
-from qgis.core import QgsProject, QgsMessageLog, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsVectorLayer
 from .RipartHelper import RipartHelper
 from .Contexte import Contexte
 
@@ -123,7 +123,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         zone = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
 
-        index = self.comboBoxFiltre.findText(zone, Qt.MatchCaseSensitive)
+        index = self.comboBoxFiltre.findText(zone, Qt.MatchFlag.MatchCaseSensitive)
         if index >= 0:
             self.comboBoxFiltre.setCurrentIndex(index)
             self.checkBoxFiltre.setChecked(True)
@@ -148,11 +148,11 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                 item.setText(0, str(lay.name()))
                 inConfig = lay.name() in attCroq
                 if inConfig:
-                    state = Qt.Checked
+                    state = Qt.CheckState.Checked
                 else:
-                    state = Qt.Unchecked
+                    state = Qt.CheckState.Unchecked
                 item.setCheckState(0, state) # Qt.Unchecked/Qt.Checked
-                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 topItems.append(item)
 
                 if inConfig:
@@ -191,9 +191,9 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             subItem.setText(0, str(f))
 
             if attList is not None and f in attList:
-                subItem.setCheckState(0, Qt.Checked)
+                subItem.setCheckState(0, Qt.CheckState.Checked)
             else:
-                subItem.setCheckState(0, Qt.Unchecked)
+                subItem.setCheckState(0, Qt.CheckState.Unchecked)
             item.addChild(subItem)
 
     def onClickItem(self, item, column):
@@ -206,7 +206,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         :type column: int 
         """
         state = item.checkState(column)
-        if state == Qt.Checked:
+        if state == Qt.CheckState.Checked:
             self.checkBoxAttributs.setChecked(True)
         if item.parent() is None:
             childCount = item.childCount()
@@ -226,18 +226,18 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         parent = item.parent()
         childCount = parent.childCount()
         pstate = item.checkState(0)
-        if pstate == Qt.Checked:
-            pstate = Qt.Checked
+        if pstate == Qt.CheckState.Checked:
+            pstate = Qt.CheckState.Checked
             for i in range(0, childCount):
-                if parent.child(i).checkState(0) == Qt.Unchecked:
-                    pstate = Qt.PartiallyChecked
+                if parent.child(i).checkState(0) == Qt.CheckState.Unchecked:
+                    pstate = Qt.CheckState.PartiallyChecked
                     break
         else:  
-            pstate = Qt.Unchecked
+            pstate = Qt.CheckState.Unchecked
             for i in range(0, childCount):
                 child = parent.child(i)
-                if child.checkState(0) == Qt.Checked:
-                    pstate = Qt.PartiallyChecked
+                if child.checkState(0) == Qt.CheckState.Checked:
+                    pstate = Qt.CheckState.PartiallyChecked
                     break
 
         return pstate
@@ -320,7 +320,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         Pour désactiver la fermeture de la fenêtre lors d'un clic sur "Enter"
         """
         key = event.key()
-        if key == Qt.Key_Return or key == Qt.Key_Enter:
+        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             pass
 
     def dateChanged(self):

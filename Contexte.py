@@ -123,7 +123,7 @@ class Contexte(object):
         self.profil = None
         self.ripClient = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
-        self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId)
+        self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
 
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata('general', 'version')
@@ -566,7 +566,7 @@ class Contexte(object):
 
         vlayer = GuichetVectorLayer(parameters)
         # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
-        vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
+        vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
@@ -751,7 +751,7 @@ class Contexte(object):
                 uri.setDataSource('', table, 'geom')
                 uri.setSrid(str(cst.EPSGCRS))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.EpsgCrsId))
+                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
                 self.QgsProject.instance().addMapLayer(vlayer, False)
                 root.insertLayer(0, vlayer)
                 self.logger.debug("Layer " + vlayer.name() + " added to map")
@@ -789,7 +789,7 @@ class Contexte(object):
             if layerType is not QgsVectorLayer:
                 continue
             geometryType = layer.geometryType()
-            if geometryType is not None and geometryType != QgsWkbTypes.PolygonGeometry:
+            if geometryType is not None and geometryType != QgsWkbTypes.GeometryType.PolygonGeometry:
                 continue
             print("{0} {1}".format(layer.name(), geometryType))
             polylayers[layer.id()] = layer.name()
@@ -921,20 +921,20 @@ class Contexte(object):
                 geom = f.geometry()
                 isMultipart = geom.isMultipart()
                 # if geom.isMultipart() => explode to single parts
-                if isMultipart and ftype == QgsWkbTypes.PolygonGeometry:
+                if isMultipart and ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
                     for poly in geom.asMultiPolygon():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPolygonXY(poly), QgsWkbTypes.PolygonGeometry, lay.crs(),
+                            self.makeCroquis(QgsGeometry.fromPolygonXY(poly), ftype, lay.crs(),
                                              f[0]))
-                elif isMultipart and ftype == QgsWkbTypes.LineGeometry:
+                elif isMultipart and ftype == QgsWkbTypes.GeometryType.LineGeometry:
                     for line in geom.asMultiPolyline():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPolylineXY(line), QgsWkbTypes.LineGeometry, lay.crs(),
+                            self.makeCroquis(QgsGeometry.fromPolylineXY(line), ftype, lay.crs(),
                                              f[0]))
-                elif isMultipart and ftype == QgsWkbTypes.PointGeometry:
+                elif isMultipart and ftype == QgsWkbTypes.GeometryType.PointGeometry:
                     for pt in geom.asMultiPoint():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPointXY(pt), QgsWkbTypes.PointGeometry, lay.crs(), f[0]))
+                            self.makeCroquis(QgsGeometry.fromPointXY(pt), ftype, lay.crs(), f[0]))
                 else:
                     croquiss.append(self.makeCroquis(geom, ftype, lay.crs(), f[0]))
 
@@ -977,17 +977,17 @@ class Contexte(object):
         try:
             destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
             transformer = QgsCoordinateTransform(layerCrs, destCrs, self.QgsProject.instance())
-            if ftype == QgsWkbTypes.PolygonGeometry:
+            if ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
                 geomPoints = geom.asPolygon()
                 if len(geomPoints) > 0:
                     geomPoints = geomPoints[0]  # les points du polygone
                 else:
                     self.logger.debug(u"geomPoints problem " + str(fId))
                 newCroquis.type = newCroquis.sketchType.Polygone
-            elif ftype == QgsWkbTypes.LineGeometry:
+            elif ftype == QgsWkbTypes.GeometryType.LineGeometry:
                 geomPoints = geom.asPolyline()
                 newCroquis.type = newCroquis.sketchType.Ligne
-            elif ftype == QgsWkbTypes.PointGeometry:
+            elif ftype == QgsWkbTypes.GeometryType.PointGeometry:
                 geomPoints = [geom.asPoint()]
                 newCroquis.type = newCroquis.sketchType.Point
             else:

@@ -11,14 +11,10 @@ version 4.0.1, 15/12/2020
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox
-from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt import uic
 from qgis.PyQt.QtWidgets import QMessageBox
-from PyQt5.QtCore import *
-from qgis.core import QgsProject
-
 from .core.RipartLoggerCl import RipartLogger
 from PyQt5 import QtGui, QtWidgets
-from .RipartHelper import RipartHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnection_base.ui'))
 

@@ -8,13 +8,12 @@ version 3.0.0 , 26/11/2018
 """
 
 from .core.RipartLoggerCl import RipartLogger
-from PyQt5.QtWidgets import QMessageBox, QProgressBar, QApplication
+from PyQt5.QtWidgets import QProgressBar, QApplication
 from PyQt5.QtCore import Qt
-from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsVectorLayer
+from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from qgis.utils import spatialite_connect
 from .RipartHelper import RipartHelper
 from .core.BBox import BBox
-from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .Contexte import Contexte
@@ -47,7 +46,7 @@ class ImporterRipart(object):
             "Placement des signalements sur la carte...")
         self.progress = QProgressBar()
         self.progress.setMaximum(200)
-        self.progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.progress.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.progressMessageBar.layout().addWidget(self.progress)
 
     def doImport(self):
@@ -84,7 +83,7 @@ class ImporterRipart(object):
             self.logger.debug("Spatial filter :" + filtre)
             filtreLay = self.context.getLayerByName(filtre)
 
-        QApplication.setOverrideCursor(Qt.BusyCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
         # vider les tables ripart
         self.context.emptyAllRipartLayers()
@@ -177,7 +176,7 @@ class ImporterRipart(object):
 
         finally:
             self.context.iface.messageBar().clearWidgets()
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def setMapExtent(self, box):
         """set de l'étendue de la carte
@@ -205,7 +204,7 @@ class ImporterRipart(object):
         """
 
         self.context.iface.messageBar().clearWidgets()
-        QApplication.setOverrideCursor(Qt.ArrowCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
         submit = self.context.countRemarqueByStatut(cst.STATUT.submit.__str__())
         pending = self.context.countRemarqueByStatut(cst.STATUT.pending.__str__()) + \

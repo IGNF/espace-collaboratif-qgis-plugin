@@ -536,14 +536,14 @@ class RipartPlugin:
                 pushMessage("Remarque",
                             format(e),
                             level=2, duration=5)
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"Un problème est survenu dans le téléchargement des signalements",
                             level=2, duration=5)
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def answerToReport(self):
         """

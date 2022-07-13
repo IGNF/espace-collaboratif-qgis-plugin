@@ -12,7 +12,7 @@ version 4.0.1, 15/12/2020
 import urllib
 from urllib.parse import urlparse
 from .core import ConstanteRipart as cst
-from qgis.core import QgsDataSourceUri, QgsProject
+from qgis.core import QgsDataSourceUri
 
 try:
     from owslib.wmts import WebMapTileService

@@ -9,7 +9,6 @@ version 3.0.0 , 26/11/2018
 from .SeeReportView import SeeReportView
 from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
-from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
 from .ReplyReportView import ReplyReportView
 
@@ -87,12 +86,6 @@ class RepondreRipart(object):
                 return
 
             if isView:
-                '''self.logger.debug("view remark")
-                formView = FormView(self.context)
-                formView.setRemarque(remarque)
-                formView.setWindowFlags(Qt.WindowStaysOnTopHint)
-                formView.show()
-                return formView'''
                 self.logger.debug("view report")
                 seeReportView = SeeReportView(self.context, remarque)
                 seeReportView.setReport()
@@ -102,23 +95,6 @@ class RepondreRipart(object):
                 self.logger.debug("view reply report")
                 replyReport = ReplyReportView(selFeats)
                 replyReport.exec_()
-                '''formReponse = FormRepondreDialog()
-                formReponse.setRemarque(remarque)
-                formReponse.exec_()
-                if formReponse.answer:
-                    remarque.statut = formReponse.newStat
-                    remMaj = client.addResponse(remarque, ClientHelper.notNoneValue(formReponse.newRep),
-                                               ClientHelper.notNoneValue(formReponse.repTitre))
-
-                    self.context.updateRemarqueInSqlite(remMaj)
-                    mess = "de l'ajout d'une réponse au signalement n°" + str(remId)
-
-                    if hasattr(activeLayer, "setCacheImage"):
-                        activeLayer.setCacheImage(None)
-                    activeLayer.triggerRepaint()
-                    activeLayer.removeSelection()
-
-                    self.context.iface.messageBar().pushMessage("Succès", mess, level=0, duration=15)'''
 
         except Exception as e:
             self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))

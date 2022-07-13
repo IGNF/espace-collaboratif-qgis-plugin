@@ -11,7 +11,7 @@ version 4.0.6, 30/12/2021
 import os
 
 from PyQt5 import QtCore
-from qgis.PyQt import QtGui, uic, QtWidgets
+from qgis.PyQt import uic, QtWidgets
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo_base.ui'))
 
