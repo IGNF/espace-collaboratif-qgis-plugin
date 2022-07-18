@@ -39,7 +39,7 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-         
+        self.setFixedSize(self.width(), self.height())
         self.btnSend.clicked.connect(self.sendResponse)
         self.btnCancel.clicked.connect(self.cancel)
         self.btnCancel.button(QtWidgets.QDialogButtonBox.Cancel).setText("Annuler")

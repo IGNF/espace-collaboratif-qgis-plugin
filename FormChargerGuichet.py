@@ -43,6 +43,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         super(FormChargerGuichet, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
+        self.setFixedSize(self.width(), self.height())
 
         self.context = context
         self.listLayers.clear()

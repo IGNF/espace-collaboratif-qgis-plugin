@@ -26,6 +26,8 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
 
         self.setupUi(self)
 
+        self.setFixedSize(self.width(), self.height())
+
         self.textInfo.setText("")
         self.textInfo.setGeometry(QtCore.QRect(150, 10, 341, 151))
 

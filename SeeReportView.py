@@ -25,6 +25,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         """
         super(SeeReportView, self).__init__(None)
         self.setupUi(self)
+        self.setFixedSize(self.width(), self.height())
         self.context = context
         self.report = report
 

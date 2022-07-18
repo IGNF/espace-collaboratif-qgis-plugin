@@ -50,6 +50,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
         self.setFocus()
 
+        self.setFixedSize(self.width(), self.height())
+
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")

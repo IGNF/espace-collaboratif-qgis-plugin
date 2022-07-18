@@ -38,6 +38,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         print("init")
         self.setupUi(self)
         self.setFocus()
+        self.setFixedSize(self.width(), self.height())
         self.context = context
         self.profile = profile
         self.activeGroup = activeGroup

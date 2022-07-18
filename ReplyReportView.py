@@ -17,6 +17,7 @@ class ReplyReportView(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, reports):
         super(ReplyReportView, self).__init__(None)
         self.setupUi(self)
+        self.setFixedSize(self.width(), self.height())
         self.reports = reports
         self.btn_sendResponse.clicked.connect(self.onSend)
         self.InitializeReplyReportView()
