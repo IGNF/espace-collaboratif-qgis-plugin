@@ -71,6 +71,11 @@ class ImporterGuichet(object):
             # filtre spatial
             bbox = BBox(self.context)
             box = bbox.getFromLayer(RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+            # si la box est à None alors, l'utilisateur veut extraire France entière
+            # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
+            # ne souhaite pas extraire les données France entière
+            if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
+                return
 
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
