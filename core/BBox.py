@@ -29,7 +29,7 @@ class BBox(object):
                       "(Cela risque de prendre un certain temps)."
             reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:
-                return
+                return Box(0.0, 0.0, 0.0, 0.0)
         return box
 
     def getSpatialFilter(self):
