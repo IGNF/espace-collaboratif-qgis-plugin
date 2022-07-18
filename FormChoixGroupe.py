@@ -28,8 +28,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     context = None
     profile = None
     activeGroup = None
-    shapefileName = None
-    nameLayerShapefile = None
+    newShapefilesDict = {}
     idChosenGroup = None
     nameChosenGroup = None
 
@@ -85,50 +84,50 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def openShapeFile(self):
         formats = ["shp", "SHP"]
         filters = u"ESRI Shapefile (*.shp; *.SHP);;"
-        self.shapefileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.',
+        shapefilePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.',
                                                                       filters)
-        if self.shapefileName != "":
-            extension = os.path.splitext(self.shapefileName)[1]
+        if shapefilePath != "":
+            extension = os.path.splitext(shapefilePath)[1]
             if extension[1:] not in formats:
                 message = u"Le fichier de type '" + extension + u"' n'est pas un fichier Shapefile."
                 RipartHelper.showMessageBox(message)
             else:
-                parts = self.shapefileName.split('/')
-                nameShapefile = parts[len(parts)-1]
-                self.nameLayerShapefile = nameShapefile[0:len(nameShapefile)-4]
+                parts = shapefilePath.split('/')
+                shapefileName = parts[len(parts)-1]
+                shapefileLayerName = shapefileName[0:len(shapefileName)-4] # Nom du shapefile sans extension
 
                 # On vérifie que le shapefile est surfacique
-                vlayer = QgsVectorLayer(self.shapefileName, self.nameLayerShapefile, "ogr")
+                vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
                 if vlayer.geometryType() != QgsWkbTypes.GeometryType.PolygonGeometry:
                     QMessageBox.warning(self, "IGN Espace collaboratif", "La zone de travail ne peut être définie "
                                                                          "qu'à partir d'une couche d'objets "
                                                                          "surfaciques.")
-                    # On vide self.shapefileName et self.nameLayerShapefile pour que la couche ne soit pas chargée
-                    self.shapefileName = None
-                    self.nameLayerShapefile = None
                     return
 
-                self.comboBoxWorkZone.addItem(self.nameLayerShapefile)
-                self.comboBoxWorkZone.setCurrentText(self.nameLayerShapefile)
+                self.newShapefilesDict[shapefileLayerName] = shapefilePath
+                self.comboBoxWorkZone.addItem(shapefileLayerName)
+                self.comboBoxWorkZone.setCurrentText(shapefileLayerName)
         else:
             self.comboBoxWorkZone.setCurrentIndex(0)
 
-    def importShapefile(self):
-        if self.shapefileName is not None:
-            vlayer = QgsVectorLayer(self.shapefileName, self.nameLayerShapefile, "ogr")
+    def importShapefile(self, shapefileLayerName):
+        shapefilePath = self.newShapefilesDict[shapefileLayerName]
+        if shapefilePath is not None:
+            vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
             if not vlayer.isValid():
-                print("Layer {0} failed to load!".format(self.nameLayerShapefile))
+                print("Layer {0} failed to load!".format(shapefileLayerName))
             QgsProject.instance().addMapLayer(vlayer)
             QgsProject.instance().write()
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
     def save(self):
         # Sauvegarde du nom de la zone de travail
-        spatialFilter = self.comboBoxWorkZone.currentText()
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, spatialFilter, "Map")
+        spatialFilterLayerName = self.comboBoxWorkZone.currentText()
+        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, spatialFilterLayerName, "Map")
 
         # Création de la nouvelle couche shapefile
-        self.importShapefile()
+        if spatialFilterLayerName in self.newShapefilesDict:
+            self.importShapefile(spatialFilterLayerName)
 
         index = self.comboBoxGroup.currentIndex()
         self.idChosenGroup = self.infosgeogroups[index].group.id
