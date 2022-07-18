@@ -26,7 +26,8 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
 
         self.setupUi(self)
 
-        self.setFixedSize(self.width(), self.height())
+        # +20 en hauteur sinon le bouton OK est coupé
+        self.setFixedSize(self.width(), self.height()+20)
 
         self.textInfo.setText("")
         self.textInfo.setGeometry(QtCore.QRect(150, 10, 341, 151))
