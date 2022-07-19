@@ -121,7 +121,7 @@ class Remarque(object):
         else:
             return ClientHelper.getValForDB(att)
 
-    def concatenateThemes(self):
+    def concatenateThemes(self, bDoubleQuote=True):
         """Concatène les noms de tous les thèmes de la remarque
         
         :return:  concaténation des noms de tous les thèmes de la remarque 
@@ -141,7 +141,11 @@ class Remarque(object):
                         z += 1
                     if att.valeur is None:
                         att.valeur = ""
-                    result += ClientHelper.getValForDB(att.nom + "=" + att.valeur + ",")
+                    if bDoubleQuote:
+                        result += ClientHelper.getValForDB(att.nom + "=" + att.valeur + ",")
+                    else:
+                        tmp = att.nom + "=" + att.valeur + ","
+                        result += tmp
                 if z > 0:
                     result = result[:-1]
                     result += ")"

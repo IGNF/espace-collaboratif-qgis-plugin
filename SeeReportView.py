@@ -98,7 +98,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
 
     def DisplayThemes(self):
         displayThemes = ''
-        themes = self.report.concatenateThemes()
+        themes = self.report.concatenateThemes(False)
         for theme in themes:
             firstSeparator = {"|", ")"}
             for ch in firstSeparator:
