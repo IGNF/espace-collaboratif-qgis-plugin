@@ -188,9 +188,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             # Affichage des attributs du thème et des modules d'aide à la saisie associés
             for att in th.attributes:
                 attLabel = att.tagDisplay
-                attType = att.type
-                attDefaultval = att.defaultval
-
                 label = QtWidgets.QLabel(attLabel, self.treeWidget)
                 # Les attributs obligatoires sont en gras
                 if att.obligatoire is True:
@@ -199,7 +196,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                     label.setFont(myFont)
 
                 item_value = self.get_item_value_from_type(att)
-
                 attItem = QtWidgets.QTreeWidgetItem()
                 thItem.addChild(attItem)
                 self.treeWidget.setItemWidget(attItem, 0, label)
@@ -321,22 +317,37 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             theme = Theme()
             theme.group.name = thItem.text(0)
             theme.group.id = thItem.text(1)
-
+            errorMessage = ''
             for j in range(thItem.childCount()):
                 att = thItem.child(j)
                 label = self.treeWidget.itemWidget(att, 0).text()
                 key = self.get_key_from_attribute_value(label, thItem.text(0))
                 widg = self.treeWidget.itemWidget(att, 1)
-
                 val = self.get_value_from_widget(widg, label, theme.group.name)
-
+                errorMessage += self.correctValue(theme.group.name, theme.group.id, key, val)
                 attribut = ThemeAttribut(theme.group.name, ClientHelper.notNoneValue(key),
                                          ClientHelper.notNoneValue(val))
                 theme.attributes.append(attribut)
-
+            if errorMessage != '':
+                raise Exception(errorMessage)
             selectedThemes.append(theme)
-
         return selectedThemes
+
+    def correctValue(self, groupName, groupID, attributeName, value):
+        errorMessage = ''
+        for theme in self.profilThemesList:
+            if theme.group.name != groupName and theme.group.id != groupID:
+                continue
+            for attribute in theme.attributes:
+                if attribute.nom != attributeName:
+                    continue
+                if attribute.type == 'integer' or attribute.type == 'double':
+                    if value != '' and not value.isdigit():
+                        errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
+                if attribute.obligatoire is True:
+                    if value == '' or value is None:
+                        errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
+        return errorMessage
 
     def get_value_from_widget(self, widg, widg_label, theme_name):
         """

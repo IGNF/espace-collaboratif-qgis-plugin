@@ -131,7 +131,7 @@ class CreerRipart(object):
             RipartHelper.showMessageBox(message)
 
         except Exception as e:
-            self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=15)
+            self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=5)
             self.logger.error("in _createNewReport " + format(e))
 
         finally:
