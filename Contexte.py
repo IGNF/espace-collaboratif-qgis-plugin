@@ -21,7 +21,6 @@ import shutil
 import ntpath
 import configparser
 
-import sys
 import requests
 
 from .RipartException import RipartException
@@ -126,7 +125,7 @@ class Contexte(object):
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
 
         # version in metadata
-        cst.RIPART_CLIENT_VERSION = self.getMetadata('general', 'version')
+        cst.RIPART_CLIENT_VERSION = self.getMetadata()
 
         try:
             # set du répertoire et fichier du projet qgis
@@ -150,7 +149,7 @@ class Contexte(object):
             self.logger.error("init contexte:" + format(e))
             raise
 
-    def getMetadata(self, category, param):
+    def getMetadata(self):
         config = configparser.RawConfigParser()
         config.read(self.plugin_path + '\\metadata.txt')
         return config.get('general', 'version')
@@ -302,7 +301,7 @@ class Contexte(object):
 
         self.loginWindow.exec_()
 
-        #while result < 0:
+        # while result < 0:
 
         if self.loginWindow.bCancel:
             # fix_print_with_import
@@ -322,7 +321,6 @@ class Contexte(object):
                 profil = client.getProfil()
 
                 if profil is not None:
-                    dlgInfoToScreen = True
                     self.saveLogin(self.login)
 
                     # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
@@ -393,7 +391,6 @@ class Contexte(object):
 
                         # Bouton Annuler
                         elif dlgChoixGroupe.cancel:
-                            result = -1
                             print("rejected")
                             self.loginWindow.close()
                             self.loginWindow = None
@@ -408,11 +405,10 @@ class Contexte(object):
                         image = QImage()
                         image.loadFromData(requests.get(logoPath).content)
                         dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-                        #dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
-                        #print("{0}{1}".format(self.urlHostRipart, profil.logo))
+                        # dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
+                        # print("{0}{1}".format(self.urlHostRipart, profil.logo))
                     elif profil.title == "Profil par défaut":
                         dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
-
 
                     dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
                     dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
@@ -729,7 +725,6 @@ class Contexte(object):
         self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
         print("Layer {} added to map".format(newVectorLayer.name()))
         print(maxNumrecMessage[1])
-        #print("Layer {} contains {} objects".format(newVectorLayer.name(), len(list(newVectorLayer.getFeatures()))))
 
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)
@@ -1101,7 +1096,6 @@ class Contexte(object):
         """
         barycentre = None
         tmpTable = "tmpTable"
-        point = None
         try:
             dbName = self.projectFileName + "_espaceco"
             self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
@@ -1123,7 +1117,6 @@ class Contexte(object):
 
         except Exception as e:
             self.logger.error("getBarycentre " + format(e))
-            point = None
 
         return barycentre
 

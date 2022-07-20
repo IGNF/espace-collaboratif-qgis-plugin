@@ -56,8 +56,6 @@ class ImporterRipart(object):
 
         params = {}  # paramètres pour la requête au service Ripart
 
-        filtreLay = None
-
         if self.context.ripClient is None:
             connResult = self.context.getConnexionRipart()
             if not connResult:
@@ -142,7 +140,6 @@ class ImporterRipart(object):
 
                     if remId == '618195' or remId == '618197':
                         debug = True
-                        #continue
 
                     RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
                     i += 1

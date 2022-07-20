@@ -51,8 +51,6 @@ class ImporterGuichet(object):
         """
         try:
             self.logger.debug("doImport")
-            params = {}  # paramètres pour la requête au service Ripart
-            filtreLay = None
 
             if self.context.ripClient is None:
                 connResult = self.context.getConnexionRipart()

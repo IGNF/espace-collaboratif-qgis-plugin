@@ -27,7 +27,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     bConnect = False
     bCancel = True
     
-    #logger
+    # logger
     logger = RipartLogger("FormConnexionDialog").getRipartLogger()
     
     def __init__(self, parent=None):
@@ -108,6 +108,4 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.urlhost = urlhost
 
     def Cancel(self):
-        #self.bCancel = True
-        #self.bConnect = False
         self.close()

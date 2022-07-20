@@ -26,7 +26,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     """
     Dialogue pour la configuration des préférences de téléchargement des remarques
     """
-    #le contexte
+    # le contexte
     context = None
 
     def __init__(self, context, parent=None):
@@ -111,7 +111,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
         self.lineEditGroupeActif.setText(groupeactif)
 
-
     # INUTILE - A SUPPRIMER
     def setComboBoxFilter(self):
         """
@@ -153,7 +152,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                     state = Qt.CheckState.Checked
                 else:
                     state = Qt.CheckState.Unchecked
-                item.setCheckState(0, state) # Qt.Unchecked/Qt.Checked
+                item.setCheckState(0, state)
                 item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 topItems.append(item)
 

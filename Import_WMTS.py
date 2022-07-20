@@ -170,7 +170,7 @@ class importWMTS:
         if not idGuichetLayerWmts:
             raise Exception("Import_WMTS.py::getWtmsUrlParams : le nom de la couche geoportail est vide")
         if self.getLayer(idGuichetLayerWmts) is None:
-           raise Exception("Import_WMTS.py::getWtmsUrlParams : impossible de récupérer la couche Geoportail")
+            raise Exception("Import_WMTS.py::getWtmsUrlParams : impossible de récupérer la couche Geoportail")
         self.getTileMatrixSet()
         wmts_url_params = {
             "crs": self.crs,

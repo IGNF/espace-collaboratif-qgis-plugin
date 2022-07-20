@@ -52,7 +52,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setButtonsTextAndConnect()
 
     def setComboBoxGroup(self):
-        print ("setComboBoxGroup")
+        print("setComboBoxGroup")
         self.infosgeogroups = self.profile.infosGeogroups
         for igg in self.infosgeogroups:
             self.comboBoxGroup.addItem(igg.group.name)
@@ -84,8 +84,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def openShapeFile(self):
         formats = ["shp", "SHP"]
         filters = u"ESRI Shapefile (*.shp; *.SHP);;"
-        shapefilePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.',
-                                                                      filters)
+        shapefilePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.', filters)
         if shapefilePath != "":
             extension = os.path.splitext(shapefilePath)[1]
             if extension[1:] not in formats:
@@ -94,7 +93,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             else:
                 parts = shapefilePath.split('/')
                 shapefileName = parts[len(parts)-1]
-                shapefileLayerName = shapefileName[0:len(shapefileName)-4] # Nom du shapefile sans extension
+                # Nom du shapefile sans extension
+                shapefileLayerName = shapefileName[0:len(shapefileName)-4]
 
                 # On vérifie que le shapefile est surfacique
                 vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")

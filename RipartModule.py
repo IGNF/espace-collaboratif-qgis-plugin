@@ -300,7 +300,7 @@ class RipartPlugin:
         self.toolButton2 = QToolButton()
         self.toolButton2.setMenu(self.helpMenu)
         self.toolButton2.setPopupMode(QToolButton.InstantPopup)
-        self.toolButton2.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        self.toolButton2.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
@@ -326,7 +326,7 @@ class RipartPlugin:
                 pushMessage("Remarque",
                             str(e),
                             level=1, duration=5)
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def saveChanges(self):
         print("Enregistrer les données")
@@ -479,7 +479,7 @@ class RipartPlugin:
                 cntHandlers = len(logger.handlers)
                 for i in range(cntHandlers - 1, -1, -1):
                     try:
-                        if os.path.basename(handlers[i].baseFilename)[-10:] == u"plugin_espaceco.log":
+                        if os.path.basename(handlers[i].name.baseFilename)[-10:] == u"plugin_espaceco.log":
                             handlers[i].close()
                             logger.removeHandler(handlers[i])
                     except AttributeError as e:

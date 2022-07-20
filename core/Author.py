@@ -23,7 +23,7 @@ class Author(object):
         """
         Constructeur
   
-        :param id_author: identifiant de l'auteu r
+        :param id_author: identifiant de l'auteur
         :type id_author: string
         
         :param name: nom de l'auteur

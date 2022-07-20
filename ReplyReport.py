@@ -36,7 +36,7 @@ class ReplyReport(object):
                                                                 level=2, duration=5)
                     return
 
-            #Est-ce que la couche Signalement existe dans la carte ?
+            # Est-ce que la couche Signalement existe dans la carte ?
             bExist = self.context.IsLayerInMap(RipartHelper.nom_Calque_Signalement)
             if not bExist:
                 mess = "Pas de couche 'Signalement' dans la carte.\nIl est donc impossible de répondre à un signalement.\nIl faut se connecter à l'Espace collaboratif et télécharger les signalements."
@@ -59,7 +59,7 @@ class ReplyReport(object):
                     # Le statut du signalement est-il cloturé ?
                     pos = 0
                     if report.statut.__str__() not in cst.openStatut:
-                        messageReportNoValid += "Impossible de répondre au signalement n°{0}, car il est clôturé depuis le {1}\n".format(idReport, report.DateValidation);
+                        messageReportNoValid += "Impossible de répondre au signalement n°{0}, car il est clôturé depuis le {1}\n".format(idReport, report.DateValidation)
                         pos = -1
                     # Les autorisations sont-elles suffisantes pour modifier le signalement par une réponse
                     bAuthorisation = True

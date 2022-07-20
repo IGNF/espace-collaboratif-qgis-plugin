@@ -45,7 +45,8 @@ class CreerRipart(object):
                 # la connexion a échoué, on ne fait rien
                 if self.context.ripClient is None:
                     self.context.iface.messageBar().pushMessage("", u"Un problème de connexion avec le service est "
-                                                                   u"survenu.Veuillez rééssayer", level=2, duration=5)
+                                                                    u"survenu. Veuillez rééssayer", level=2,
+                                                                duration=5)
                     return
 
             # Création des croquis à partir de la sélection de features
@@ -103,7 +104,7 @@ class CreerRipart(object):
                 newReport = self._prepareAndSendReport(tmpRem, croquisList, formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
                 if newReport is None:
                     self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création du "
-                                                                    u"signalement ",level=2, duration =15)
+                                                                    u"signalement ", level=2, duration=15)
                      
                 listNewReportIds.append(newReport.id)
             
@@ -115,7 +116,7 @@ class CreerRipart(object):
                     newReport = self._prepareAndSendReport(tmpRem, [cr], formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
                     if newReport is None:
                         self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création "
-                                                                        u"d'un signalement",level=2, duration =15)
+                                                                        u"d'un signalement", level=2, duration=15)
                         continue
                     listNewReportIds.append(newReport.id)
    
@@ -127,7 +128,7 @@ class CreerRipart(object):
                 message += ": création d'un nouveau signalement n°{0}".format(listNewReportIds[0])
             else:
                 message += "de la création de {0} nouveaux signalements pour l'espace collaboratif.\n".format(nbReports)
-                message += "Les identifiants vont de {0} à {1}.".format(listNewReportIds[0], listNewReportIds[nbReports - 1]);
+                message += "Les identifiants vont de {0} à {1}.".format(listNewReportIds[0], listNewReportIds[nbReports-1])
             RipartHelper.showMessageBox(message)
 
         except Exception as e:

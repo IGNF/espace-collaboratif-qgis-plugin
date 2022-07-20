@@ -12,6 +12,7 @@ from .RipartHelper import RipartHelper
 from .core import ConstanteRipart as cst
 from .ReplyReportView import ReplyReportView
 
+
 class RepondreRipart(object):
     """"Classe pour les réponses Ripart
     """

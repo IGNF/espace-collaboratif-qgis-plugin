@@ -176,8 +176,8 @@ class RipartHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         
-        :param login: le login
-        :type login: string
+        :param proxy: le proxy
+        :type proxy: string
         """
         try:
             tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
@@ -323,17 +323,6 @@ class RipartHelper:
 
     @staticmethod
     def addXmlElement(projectDir, elem, parentElem, value=None):
-        """Ajoute un élément xml "elem", avec comme élémént paren "parentElem"
-        
-        :param elem: le nom de l'élément(tag) à ajouter
-        :type elem: string
-        
-        :param parentElem: le nom de l'élément parent
-        :type parentElem: string
-        
-        :return l'élément xml créé
-        :rtype: Element
-        """
         tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
         xmlroot = tree.getroot()
         if parentElem != "root":
@@ -635,7 +624,6 @@ class RipartHelper:
 
             if len(rem.croquis) > 0:
                 croquis = rem.croquis
-                geom = None
                 for cr in croquis:
                     sql = "INSERT INTO %s (NoSignalement, Nom, Attributs_croquis, geom) VALUES "
                     if len(cr.points) == 0:
@@ -661,8 +649,7 @@ class RipartHelper:
                     cur.execute(sql)
 
         except Exception as e:
-            # RipartHelper.logger.error(format(e))
-            raise
+            raise e
         finally:
             cur.close()
 
@@ -733,7 +720,7 @@ class RipartHelper:
         msgBox.setWindowTitle("IGN Espace Collaboratif")
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setText(message)
-        ret = msgBox.exec_()
+        msgBox.exec_()
 
     @staticmethod
     def copy(src, dest):

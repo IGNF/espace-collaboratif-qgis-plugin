@@ -6,6 +6,7 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 """
 
+
 class RipartException (Exception):
     """
     classdocs
