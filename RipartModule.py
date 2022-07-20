@@ -263,17 +263,17 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/save.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Enregistrer les modifications'),
+            text=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
             callback=self.saveChanges,
-            status_tip=self.tr(u'Enregistrer les modifications'),
+            status_tip=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
             parent=self.iface.mainWindow())
 
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Synchroniser les données de toutes les couches'),
+            text=self.tr(u'Mettre à jour les couches Espace collaboratif'),
             callback=self.synchronizeData,
-            status_tip=self.tr(u'Synchroniser les données de toutes les couches'),
+            status_tip=self.tr(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
 
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",

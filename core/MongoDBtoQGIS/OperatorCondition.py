@@ -59,18 +59,18 @@ class OperatorCondition(AbstractCondition):
                 self.KEY_EQUAL,
                 self.KEY_NOT_EQUAL):
             if sql_value is not None:
-                sql = "{} {} {}".format(self.quote(self._key), sql_operator, self.quote(sql_value))
+                sql = "\"{}\" {} {}".format(self._key, sql_operator, self.quote(sql_value))
             elif operator == self.KEY_EQUAL:
-                sql = "'{}' IS NULL".format(self._key)
+                sql = "\"{}\" IS NULL".format(self._key)
             elif operator == self.KEY_NOT_EQUAL:
-                sql = "'{}' IS NOT NULL".format(self._key)
+                sql = "\"{}\" IS NOT NULL".format(self._key)
         elif operator in (self.KEY_IN, self.KEY_NOT_IN):
             if type(sql_value) is not list:
                 return None
 
             iterator = map(self.quote, sql_value)
             values = ",".join(list(iterator))
-            sql = "{} {} ({})".format(self.quote(self._key), sql_operator, values)
+            sql = "\"{}\" {} ({})".format(self._key, sql_operator, values)
         elif operator == self.KEY_REGEX:
             sql = self.get_sql_from_regex(sql_value, option)
 
@@ -80,45 +80,45 @@ class OperatorCondition(AbstractCondition):
         match = re.search(r"\^([\w -\']+)\$", regex_str)
         if match:
             operator = "LIKE" if option is None else "ILIKE"
-            return "{} {} {}".format(self.quote(self._key), operator, self.quote(match.group(1)))
+            return "\"{}\" {} {}".format(self._key, operator, self.quote(match.group(1)))
 
         operator = "NOT LIKE" if option is None else "NOT ILIKE"
 
         # pas egal
         match = re.search(r"\^\(\?\!([\w -\']+)\$\)\.\*\$", regex_str)
         if match:
-            return "{} {} {}".format(self.quote(self._key), operator, self.quote(match.group(1)))
+            return "\"{}\" {} {}".format(self._key, operator, self.quote(match.group(1)))
 
         # ne contient pas
         match = re.search(r"\^\(\(\?\!([\w -\']+)\)\.\)\*\$", regex_str)
         if match:
-            return "{} {} {}".format(self.quote(self._key), operator, self.quote(match.group(1)))
+            return "\"{}\" {} {}".format(self._key, operator, self.quote(match.group(1)))
 
         # ne finit pas par
         match = re.search(r"\(\?\<\!([\w -\']+)\)\$", regex_str)
         if match:
-            return "{} {} {}".format(self.quote(self._key), operator, self.quote("%{}".format(match.group(1))))
+            return "\"{}\" {} {}".format(self._key, operator, self.quote("%{}".format(match.group(1))))
 
         # finit par
         match = re.search(r"([\w -\']+)\$", regex_str)
         if match:
             operator = "LIKE" if option is None else "ILIKE"
-            return "{} {} {}".format(self.quote(self._key), operator, self.quote("%{}".format(match.group(1))))
+            return "\"{}\" {} {}".format(self._key, operator, self.quote("%{}".format(match.group(1))))
 
         # ne commence pas par
         match = re.search(r"\^\(\?\!([\w -\']+)\)", regex_str)
         if match:
             operator = "NOT LIKE" if option is None else "NOT ILIKE"
-            return "{} {} {}".format(self.quote(self._key), operator, self.quote("{}%".format(match.group(1))))
+            return "\"{}\" {} {}".format(self._key, operator, self.quote("{}%".format(match.group(1))))
 
         # commence par
         match = re.search(r"\^([\w -\']+)", regex_str)
         if match:
             operator = "LIKE" if option is None else "ILIKE"
-            return "{} {} {}".format(self.quote(self._key), operator, self.quote("{}%".format(match.group(1))))
+            return "\"{}\" {} {}".format(self._key, operator, self.quote("{}%".format(match.group(1))))
 
         operator = "LIKE" if option is None else "ILIKE"
-        return "{} {} {}".format(self.quote(self._key), operator, self.quote("%{}%".format(match.group(1))))
+        return "\"{}\" {} {}".format(self._key, operator, self.quote("%{}%".format(match.group(1))))
 
     @staticmethod
     def key_list():
