@@ -211,14 +211,16 @@ class Contexte(object):
         """
         Contrôle de l'existence du fichier de configuration
         """
-        ripartxml = self.projectDir + os.path.sep + RipartHelper.nom_Fichier_Parametres_Ripart
+        ripartxml = self.projectDir + os.path.sep + RipartHelper.getConfigFile()
         if not os.path.isfile(ripartxml):
             try:
                 shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
                             RipartHelper.nom_Fichier_Parametres_Ripart, ripartxml)
-                self.logger.debug("Copy espaceco.xml")
+                self.logger.debug("Copy {}".format(RipartHelper.nom_Fichier_Parametres_Ripart))
+                new_file = os.path.join(self.projectDir, RipartHelper.getConfigFile())
+                os.rename(ripartxml, new_file)
             except Exception as e:
-                self.logger.error("No espaceco.xml found in plugin directory" + format(e))
+                self.logger.error("No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
                 raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
                                 " n'a pas été trouvé.")
 

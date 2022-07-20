@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+import ntpath
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from qgis.PyQt.QtWidgets import QMessageBox
@@ -82,6 +83,12 @@ class RipartHelper:
     logger = RipartLogger("RipartHelper").getRipartLogger()
 
     @staticmethod
+    def getConfigFile():
+        fname = ntpath.basename(QgsProject.instance().fileName())
+        projectFileName = fname[:fname.find(".")]
+        return "{}_espaceco.xml".format(projectFileName)
+
+    @staticmethod
     def getXPath(tagName, parentName):
         """Construction du xpath
         """
@@ -97,7 +104,7 @@ class RipartHelper:
         """
         urlhost = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             urlhost = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_UrlHost, "Serveur"))
             if urlhost is None:
@@ -117,7 +124,7 @@ class RipartHelper:
         """
         login = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             login = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Login, "Serveur"))
             if login is None:
@@ -139,12 +146,12 @@ class RipartHelper:
         :type login: string
         """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             xlogin = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Login, "Serveur"))
             xlogin.text = login
 
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
             RipartHelper.logger.error(format(e))
@@ -158,7 +165,7 @@ class RipartHelper:
         """
         proxy = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             proxy = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_proxy, "Serveur"))
             if proxy is None:
@@ -180,12 +187,12 @@ class RipartHelper:
         :type proxy: string
         """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             xproxy = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_proxy, "Serveur"))
             xproxy.text = proxy
 
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
             RipartHelper.logger.error(format(e))
@@ -199,7 +206,7 @@ class RipartHelper:
                 """
         groupeactif = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             groupeactif = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupeActif, "Serveur"))
             if groupeactif is None:
@@ -221,12 +228,12 @@ class RipartHelper:
                 :type groupeactif: string
                 """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             xgroupeactif = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupeActif, "Serveur"))
             xgroupeactif.text = groupeactif
 
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
             RipartHelper.logger.error(format(e))
@@ -240,7 +247,7 @@ class RipartHelper:
                 """
         groupePrefere = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             groupePrefere = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupePrefere, "Serveur"))
             if groupePrefere is None:
@@ -262,12 +269,12 @@ class RipartHelper:
                 :type preferredGroup: string
                 """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             xgroupePrefere = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupePrefere, "Serveur"))
             xgroupePrefere.text = preferredGroup
 
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
             RipartHelper.logger.error(format(e))
@@ -281,7 +288,7 @@ class RipartHelper:
         """
         calque = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             calque = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Zone_extraction, "Map"))
 
@@ -309,7 +316,7 @@ class RipartHelper:
         """
         node = None
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             node = xmlroot.find(RipartHelper.getXPath(tag, parent))
 
@@ -323,7 +330,7 @@ class RipartHelper:
 
     @staticmethod
     def addXmlElement(projectDir, elem, parentElem, value=None):
-        tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+        tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
         xmlroot = tree.getroot()
         if parentElem != "root":
             parentNode = xmlroot.find(parentElem)
@@ -337,7 +344,7 @@ class RipartHelper:
         if value is not None:
             elementNode.text = value
 
-        tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+        tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
         return elementNode
 
@@ -350,7 +357,7 @@ class RipartHelper:
         """
         attCroquis = {}
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             nodes = xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_AttributsCroquis, "Map"))
 
@@ -375,8 +382,8 @@ class RipartHelper:
         """
         prefThemes = []
         try:
-            print(RipartHelper.nom_Fichier_Parametres_Ripart)
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            print(RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
 
             prefThs = xmlroot.findall(
@@ -411,7 +418,7 @@ class RipartHelper:
     @staticmethod
     def addNode(projectDir, tag, value, parentTag=None):
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             if parentTag is None:
                 parentNode = xmlroot
@@ -421,7 +428,7 @@ class RipartHelper:
             newTag = ET.SubElement(parentNode, tag)
             newTag.text = value
 
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
             RipartHelper.logger.error(format(e))
@@ -429,7 +436,7 @@ class RipartHelper:
     @staticmethod
     def removeNode(projectDir, tag, parentTag=None):
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             if parentTag is None:
                 parentNode = xmlroot
@@ -439,7 +446,7 @@ class RipartHelper:
             for c in parentNode.findall(tag):
                 parentNode.remove(c)
 
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
             RipartHelper.logger.error(format(e))
@@ -449,12 +456,12 @@ class RipartHelper:
         """Donne une valeur à un tag du fichier de config
         """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             node = xmlroot.find(RipartHelper.getXPath(tag, parent))
             node.text = value
 
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
             RipartHelper.logger.error(format(e))
@@ -462,7 +469,7 @@ class RipartHelper:
     @staticmethod
     def setAttributsCroquis(projectDir, calqueName, values):
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
             xmlroot = tree.getroot()
             mapNode = xmlroot.find(RipartHelper.xml_Map)
 
@@ -473,19 +480,19 @@ class RipartHelper:
                 field = ET.SubElement(nodeAtributsCroquis, 'Calque_Champ')
                 field.text = val
 
-            tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
         except Exception as e:
             # fix_print_with_import
             print(format(e))
 
     @staticmethod
     def removeAttCroquis(projectDir):
-        tree = ET.parse(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart)
+        tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
         xmlroot = tree.getroot()
         maptag = xmlroot.find('Map')
         for c in maptag.findall('Attributs_croquis'):
             maptag.remove(c)
-        tree.write(projectDir + "/" + RipartHelper.nom_Fichier_Parametres_Ripart, encoding="utf-8")
+        tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
 
     @staticmethod
     def createRemarqueTable(conn):

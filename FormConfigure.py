@@ -263,23 +263,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         Sauvegarde la configuration des différents paramètres dans le fichier xml
         """
-        
         # Url
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, self.lineEditUrl.text(), "Serveur")
-        
-        # login
-        if self.checkBoxLogin.isChecked():
-            login = self.lineEditLogin.text()
-        else:
-            login = ""
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Login, login, "Serveur")
-
-        # pagination
-        if self.checkBoxPagination.isChecked():
-            pag = str(self.spinBoxPagination.value())
-        else:
-            pag = ""
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Pagination, pag, "Map")
 
         # date
         if self.checkBoxDate.isChecked():
@@ -287,24 +272,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             sdate = d.toString('dd/MM/yyyy') + " 00:00:00"
         else:
             sdate = ""
-
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_DateExtraction, sdate, "Map")
-
-        # zone de filtrage
-        if self.checkBoxFiltre.isChecked():
-            filtre = self.comboBoxFiltre.currentText()
-        else:
-            filtre = ""
-        
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, filtre, "Map")
-
-        # filtre groupe
-        if self.checkBoxGroup.isChecked():
-            groupFilter = "true"
-        else:
-            groupFilter = ""
-
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Group, groupFilter, "Map")
 
         # attributs croquis
         RipartHelper.removeAttCroquis(self.context.projectDir)
@@ -312,9 +280,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             checkedItems = self.getCheckedTreeItems()
             for calque in checkedItems:
                 RipartHelper.setAttributsCroquis(self.context.projectDir, calque, checkedItems[calque])
-
-        # Groupe actif
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.lineEditGroupeActif.text(), "Serveur")
     
     def keyPressEvent(self, event):
         """
