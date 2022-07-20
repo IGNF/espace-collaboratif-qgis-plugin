@@ -11,7 +11,7 @@ import random
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes
 
-from .MongoDBtoQGIS import MongoDBtoQGIS
+from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
 
 
 class GuichetVectorLayer(QgsVectorLayer):
@@ -26,6 +26,7 @@ class GuichetVectorLayer(QgsVectorLayer):
     geometryDimensionForDatabase = None
     geometryTypeForDatabase = None
 
+
     def __init__(self, parameters):
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
         self.databasename = parameters['databasename']
@@ -36,6 +37,8 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.geometryNameForDatabase = parameters['geometryName']
         self.geometryDimensionForDatabase = parameters['geometryDimension']
         self.geometryTypeForDatabase = parameters['geometryType']
+        self.conditionFactory = ConditionFactory()
+
 
     '''
         Transformation de la condition en expression QGIS
@@ -51,8 +54,8 @@ class GuichetVectorLayer(QgsVectorLayer):
         # Pas de rule style, capture de toutes les autres entités
         if bExpression is True and condition is None:
             return "ELSE"
-        mongo = MongoDBtoQGIS(condition, self.correspondanceChampType)
-        return mongo.run()
+        expression = self.conditionFactory.create_condition(condition)
+        return expression.toSQL()
 
     '''
         Récupère la couleur en fonction du type de géométrie
