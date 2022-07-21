@@ -31,12 +31,13 @@ class Wkt(object):
         # Comme par exemple les équipements de transport qui sont de type géométrique
         # MULTIPOLYGON Z alors que QGIS renvoie du POLYGON Z
         serverGeometryType = self.geometryType
+        serverGeometryTypePost = serverGeometryType
         # couches BDUni
         if is3D == 1:
-            serverGeometryType += 'Z'
+            serverGeometryTypePost += 'Z'
         objectWkbTypeGeometry = qgsGeometry.wkbType()
         strObjectWkbTypeGeometry = QgsWkbTypes.displayString(objectWkbTypeGeometry)
-        if strObjectWkbTypeGeometry != serverGeometryType:
+        if strObjectWkbTypeGeometry != serverGeometryTypePost and not(strObjectWkbTypeGeometry.startswith(serverGeometryType)):
             qgsGeometry.convertToMultiType()
         qgsGeometry.transform(self.crsTransform)
         return '"{0}": "{1}"'.format(self.geometryName, qgsGeometry.asWkt())
