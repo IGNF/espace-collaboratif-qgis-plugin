@@ -62,15 +62,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         login = RipartHelper.load_login(context.projectDir).text
         self.lineEditLogin.setText(login)
-        # if login != "" and login is not None:
-        #     self.checkBoxLogin.setChecked(True)
-
-        # pagination = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Pagination, "Map").text
-        # if pagination == "" or pagination is None:
-        #     pagination = 100
-        # else:
-        #     self.checkBoxPagination.setChecked(True)
-        # self.spinBoxPagination.setValue(int(pagination))
 
         date = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_DateExtraction, "Map").text
         if date is not None:
@@ -94,14 +85,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         workArea = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
         self.lineEditWorkArea.setText(workArea)
-
-        # self.setComboBoxFilter()
-
-        # groupFilter = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_Group, "Map").text
-        # if groupFilter is not None and groupFilter == "true":
-        #     self.checkBoxGroup.setChecked(True)
-        # if self.context.profil is not None:
-        #     self.lblGroup.setText(self.context.profil.geogroup.name)
 
         self.setAttributCroquis()
 
@@ -265,6 +248,13 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         # Url
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, self.lineEditUrl.text(), "Serveur")
+
+        # Proxy
+        if self.checkBoxProxy.isChecked():
+            proxy = self.lineEditProxy.text()
+        else:
+            proxy = ""
+        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_proxy, proxy, "Serveur")
 
         # date
         if self.checkBoxDate.isChecked():
