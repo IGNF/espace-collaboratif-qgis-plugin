@@ -143,6 +143,7 @@ class WfsPost(object):
             SQLiteManager.vacuumDatabase()
             # le buffer de la couche est vidée et elle est remise en édition
             self.layer.rollBack()
+            self.layer.reload()
             self.layer.startEditing()
         return message
 
@@ -163,7 +164,7 @@ class WfsPost(object):
             bDetruit = False
             SQLiteManager.emptyTable(self.layer.name())
             SQLiteManager.vacuumDatabase()
-            self.layer.triggerRepaint()
+            self.layer.reload()
 
         bbox = BBox(self.context)
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
