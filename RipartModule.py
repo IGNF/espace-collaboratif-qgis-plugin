@@ -352,10 +352,9 @@ class RipartPlugin:
             editBuffer = layer.editBuffer()
             if not editBuffer:
                 continue
-            wfsPost = WfsPost(self.context, layer)
-            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer,
-                                                               RipartHelper.load_CalqueFiltrage(
-                                                                self.context.projectDir).text)))
+            wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer)))
+
         # Message de fin de transaction
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(report)
@@ -380,7 +379,6 @@ class RipartPlugin:
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
 
         # On vérifie d'abord que les couches à synchroniser ne contiennent pas de données non enregistrées
-        listLayersUnsaved = []
         listEditBuffers = []
         messageLayers = ""
         for layer in QgsProject.instance().mapLayers().values():

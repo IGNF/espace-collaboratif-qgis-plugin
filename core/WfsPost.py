@@ -20,8 +20,10 @@ class WfsPost(object):
     isTableStandard = True
     endReport = None
     transactionReport = None
+    bbox = None
+    filterName = None
 
-    def __init__(self, context, layer):
+    def __init__(self, context, layer, filterName):
         self.context = context
         self.layer = layer
         self.url = self.context.client.getUrl() + '/gcms/wfstransactions'
@@ -33,6 +35,8 @@ class WfsPost(object):
         ''' Il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
         que l'on peut stocker dans une table sqlite'''
         self.initParametersLayer()
+        self.bbox = BBox(self.context)
+        self.filterName = filterName
 
     def initParametersLayer(self):
         result = SQLiteManager.selectRowsInTableOfTables(self.layer.name())
@@ -65,12 +69,19 @@ class WfsPost(object):
         parameters = {'geometryName': self.layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS,
                       'sridTarget': self.layer.srid, 'geometryType': self.layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
+        # Est-ce que la géométrie de l'objet intersecte la bounding box de la zone de travail
+        if not wkt.isBoundingBoxIntersectGeometryObject(self.bbox.getBBoxAsWkt(self.filterName), geometry):
+            return None
         return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase)
 
     def setGeometries(self, changedGeometries):
         geometries = {}
         for featureId, geometry in changedGeometries.items():
-            geometries[featureId] = self.setGeometry(geometry)
+            postGeometry = self.setGeometry(geometry)
+            if postGeometry is None:
+                raise Exception("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le "
+                                "déplacer ou le supprimer.")
+            geometries[featureId] = postGeometry
         return geometries
 
     def setKey(self, key, idName):
@@ -121,7 +132,7 @@ class WfsPost(object):
     def setClientId(self, clientFeatureId):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
-    def gcms_post(self, strActions, filterName):
+    def gcms_post(self, strActions):
         print(strActions)
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
@@ -134,7 +145,7 @@ class WfsPost(object):
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # mise à jour de la couche
-            self.synchronize(filterName)
+            self.synchronize()
             numrec = self.getNumrecFromTransaction(message['urlTransaction'])
             # cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
@@ -155,7 +166,7 @@ class WfsPost(object):
         data = json.loads(response)
         return data['numrec']
 
-    def synchronize(self, filterName):
+    def synchronize(self):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
@@ -166,18 +177,17 @@ class WfsPost(object):
             SQLiteManager.vacuumDatabase()
             self.layer.reload()
 
-        bbox = BBox(self.context)
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
-                      'sridLayer': self.layer.srid, 'bbox': bbox.getFromLayer(filterName),
+                      'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName),
                       'detruit': bDetruit, 'isStandard': self.layer.isStandard,
                       'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)
         wfsGet.gcms_get()
 
-    def commitLayer(self, currentLayer, editBuffer, filterLayer):
+    def commitLayer(self, currentLayer, editBuffer):
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
         self.actions.clear()
 
@@ -218,7 +228,7 @@ class WfsPost(object):
             self.transactionReport += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
         strActions = self.formatItemActions()
         self.endReport += self.transactionReport
-        endTransaction = self.gcms_post(strActions, filterLayer)
+        endTransaction = self.gcms_post(strActions)
         self.endReport += self.setEndReport(endTransaction)
         return self.endReport
 
@@ -239,7 +249,11 @@ class WfsPost(object):
         for feature in addedFeatures:
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValue(feature)
-            strFeature += self.setGeometry(feature.geometry())
+            postGeometry = self.setGeometry(feature.geometry())
+            if postGeometry is None:
+                raise Exception ("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le déplacer "
+                                 "ou le supprimer.")
+            strFeature += postGeometry
             strFeature += self.setClientId(feature.attribute(cst.ID_SQLITE))
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Insert')
@@ -295,7 +309,11 @@ class WfsPost(object):
                     strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
                 else:
                     strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
-                strFeature += ', {0}'.format(self.setGeometry(geometry))
+                postGeometry = self.setGeometry(geometry)
+                if postGeometry is None:
+                    raise Exception("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le "
+                                    "déplacer ou le supprimer.")
+                strFeature += ', {0}'.format(postGeometry)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
