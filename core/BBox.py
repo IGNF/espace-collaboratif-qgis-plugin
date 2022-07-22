@@ -50,3 +50,14 @@ class BBox(object):
             newLayerFilterExtent = coordTransform.transform(layerFilterExtent)
             return Box(newLayerFilterExtent.xMinimum(), newLayerFilterExtent.yMinimum(), newLayerFilterExtent.xMaximum()
                        , newLayerFilterExtent.yMaximum())
+
+    def getBBoxAsWkt(self, filterName):
+        if filterName is None or len(filterName) == 0 or filterName == '':
+            raise Exception ("La zone de travail est absente, veuillez en importer une.")
+        self.layerFilter = self.context.getLayerByName(filterName)
+        qgsRectangle = self.layerFilter.extent()
+        layerFilterCrs = self.layerFilter.crs()
+        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
+        newQgsRectangle = coordTransform.transform(qgsRectangle)
+        return newQgsRectangle.asWktPolygon()

@@ -41,3 +41,11 @@ class Wkt(object):
             qgsGeometry.convertToMultiType()
         qgsGeometry.transform(self.crsTransform)
         return '"{0}": "{1}"'.format(self.geometryName, qgsGeometry.asWkt())
+
+    def isBoundingBoxIntersectGeometryObject(self, boundingBoxSpatialFilter, qgsGeometryObject):
+        boundingBoxGeometry = QgsGeometry.fromWkt(boundingBoxSpatialFilter)
+        boundingBoxGeometryEngine = QgsGeometry.createGeometryEngine(boundingBoxGeometry.constGet())
+        boundingBoxGeometryEngine.prepareGeometry()
+        if boundingBoxGeometryEngine.intersects(qgsGeometryObject.constGet()):
+            return True
+        return False
