@@ -59,12 +59,12 @@ class RepondreRipart(object):
                                                                 u'Plusieurs signalements sélectionnés. Un seul sera pris en compte (signalement n°='
                                                                 + str(remIds[0]) + ')', level=1, duration=10)
 
-            if self.context.ripClient is None:
+            if self.context.client is None:
                 connResult = self.context.getConnexionRipart()
                 if not connResult:
                     return 0
                 # la connexion a échoué, on ne fait rien
-                if self.context.ripClient is None:
+                if self.context.client is None:
                     self.context.iface.messageBar().pushMessage("",
                                                                 u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer",
                                                                 level=2, duration=5)

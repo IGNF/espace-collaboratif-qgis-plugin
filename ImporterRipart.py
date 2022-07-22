@@ -56,13 +56,13 @@ class ImporterRipart(object):
 
         params = {}  # paramètres pour la requête au service Ripart
 
-        if self.context.ripClient is None:
+        if self.context.client is None:
             connResult = self.context.getConnexionRipart()
             if not connResult:
                 return 0
-            if self.context.ripClient is None:  # la connexion a échoué, on ne fait rien
+            if self.context.client is None:  # la connexion a échoué, on ne fait rien
                 self.context.iface.messageBar().pushMessage("",
-                                                            "Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer",
+                                                            "Un problème de connexion avec l'Espace collaboratif est survenu. Veuillez vous reconnecter.",
                                                             level=2, duration=5)
                 return
 

@@ -52,11 +52,11 @@ class ImporterGuichet(object):
         try:
             self.logger.debug("doImport")
 
-            if self.context.ripClient is None:
+            if self.context.client is None:
                 connResult = self.context.getConnexionRipart()
                 if not connResult:
                     return 0
-                if self.context.ripClient is None:  # la connexion a échoué, on ne fait rien
+                if self.context.client is None:  # la connexion a échoué, on ne fait rien
                     self.context.iface.messageBar().pushMessage("",
                                                                 "Un problème de connexion avec le service Espace collaboratif est survenu. Veuillez rééssayer",
                                                                 level=2, duration=5)

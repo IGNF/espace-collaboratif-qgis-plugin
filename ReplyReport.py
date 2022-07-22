@@ -25,12 +25,12 @@ class ReplyReport(object):
         Affichage de la fenêtre de réponse à un signalement
         """
         try:
-            if self.context.ripClient is None:
+            if self.context.client is None:
                 connResult = self.context.getConnexionRipart()
                 if not connResult:
                     return 0
                 # la connexion a échoué, on ne fait rien
-                if self.context.ripClient is None:
+                if self.context.client is None:
                     self.context.iface.messageBar().pushMessage("",
                                                                 u"Un problème de connexion avec avec l'Espace Collaboratif est survenu. Veuillez rééssayer",
                                                                 level=2, duration=5)

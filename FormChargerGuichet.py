@@ -73,7 +73,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     def getInfosLayers(self):
         infosLayers = []
 
-        if self.context.ripClient is None:
+        if self.context.client is None:
             connResult = self.context.getConnexionRipart()
             if not connResult:
                 # la connexion a échoué ou l'utilisateur a cliqué sur Annuler

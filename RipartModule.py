@@ -99,7 +99,7 @@ class RipartPlugin:
                 QCoreApplication.installTranslator(self.translator)
 
         # Create the dialog (after translation) and keep reference
-        self.dlgConnexion = FormConnectionDialog()
+#        self.dlgConnexion = FormConnectionDialog()
 
         # La toolbar du plugin
         self.actions = []

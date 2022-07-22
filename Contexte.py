@@ -120,7 +120,6 @@ class Contexte(object):
         self.urlHostRipart = ""
         self.groupeactif = ""
         self.profil = None
-        self.ripClient = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
 
@@ -270,6 +269,7 @@ class Contexte(object):
             self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
                                                                 "Serveur").text
             self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
+
         except Exception as e:
             self.logger.error("URLHOST inexistant dans fichier configuration")
             RipartHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
@@ -277,7 +277,7 @@ class Contexte(object):
                                         u"...)")
             return
 
-        self.loginWindow = FormConnectionDialog()
+        self.loginWindow = FormConnectionDialog(self)
         self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostRipart))
         loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")
         if loginXmlNode is None:
@@ -301,175 +301,17 @@ class Contexte(object):
         if self.login == "" or self.pwd == "" or newLogin:
             self.loginWindow.setLogin(self.login)
 
-        self.loginWindow.exec_()
+        # Le résultat de la connexion est initialisé à -1.
+        # Tant qu'il reste à -1, c'est que le formulaire de connexion a renvoyé une exception (mauvais mot de passe, pb
+        # de proxy etc.). Dans ce cas-là, on rouvre le formulaire pour que l'utilisateur essaie de se reconnecter.
+        connectionResult = -1
 
-        # while result < 0:
-
-        if self.loginWindow.bCancel:
-            # fix_print_with_import
-            print("rejected")
-            self.loginWindow = None
-            result = 0
-
-        elif self.loginWindow.bConnect:
-            # fix_print_with_import
-            print("connect")
-            self.login = self.loginWindow.getLogin()
-            self.pwd = self.loginWindow.getPwd()
-            print("login " + self.login)
-
-            try:
-                client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
-                profil = client.getProfil()
-
-                if profil is not None:
-                    self.saveLogin(self.login)
-
-                    # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
-                    # si l'utilisateur n'appartient à aucun groupe, un profil par défaut
-                    # est attribué mais il ne contient pas d'infosgeogroupes
-                    if len(profil.infosGeogroups) < 1:
-                        # le profil de l'utilisateur est déjà récupéré et reste actif (NB: a priori, il n'a pas de profil)
-                        result = 1
-                        self.profil = profil
-
-                        # si l'utilisateur n'a pas de profil, il faut indiquer que le groupe actif est vide
-                        if "défaut" in profil.title:
-                            RipartHelper.save_groupeactif(self.projectDir, "Aucun")
-                        else:
-                            RipartHelper.save_groupeactif(self.projectDir, profil.geogroup.name)
-
-                            # On enregistre le groupe comme groupe préféré (par défaut) pour la création de signalement
-                            # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-                            preferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
-                            if preferredGroup != profil.geogroup.name:
-                                RipartHelper.save_preferredThemes(self.projectDir, [])
-
-                            RipartHelper.save_preferredGroup(self.projectDir, profil.geogroup.name)
-
-                    # sinon le choix d'un autre groupe est présenté à l'utilisateur
-                    # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
-                    # afin qu'il puisse remplir sa clé Géoportail
-                    else:
-                        dlgChoixGroupe = FormChoixGroupe(self, profil, self.groupeactif)
-                        dlgChoixGroupe.exec_()
-
-                        # bouton Valider
-                        if not dlgChoixGroupe.bCancel:
-                            result = 1
-
-                            # le choix du nouveau profil est validé
-                            # le nouvel id et nom du groupe sont retournés dans un tuple
-                            idNomGroupe = dlgChoixGroupe.getChosenGroupInfo()
-
-                            # si l'utilisateur n'appartient qu'à un seul gorupe, le profil chargé reste actif
-                            if len(profil.infosGeogroups) == 1:
-                                self.profil = profil
-                            else:
-                                # récupère le profil et un message dans un tuple
-                                profilMessage = client.setChangeUserProfil(idNomGroupe[0])
-                                messTmp = profilMessage[1]
-
-                                # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
-                                if messTmp.find('actif') != -1:
-                                    # le profil chargé reste actif
-                                    self.profil = profil
-                                else:
-                                    # setChangeUserProfil retourne un message vide
-                                    # le nouveau profil devient actif
-                                    self.profil = profilMessage[0]
-
-                            # Sauvegarde du groupe actif
-                            # dans le xml du projet utilisateur
-                            RipartHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
-                            self.groupeactif = idNomGroupe[1]
-
-                            # On enregistre le groupe comme groupe préféré pour la création de signalement
-                            # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-                            formPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
-                            if formPreferredGroup != profil.geogroup.name:
-                                RipartHelper.save_preferredThemes(self.projectDir, [])
-                            RipartHelper.save_preferredGroup(self.projectDir, profil.geogroup.name)
-
-                        # Bouton Annuler
-                        elif dlgChoixGroupe.cancel:
-                            print("rejected")
-                            self.loginWindow.close()
-                            self.loginWindow = None
-                            return
-
-                    # les infos de connexion présentée à l'utilisateur
-                    dlgInfo = FormInfo()
-
-                    # Modification du logo en fonction du groupe
-                    if profil.logo != "":
-                        logoPath = "{0}{1}".format(self.urlHostRipart, profil.logo)
-                        image = QImage()
-                        image.loadFromData(requests.get(logoPath).content)
-                        dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-                        # dlgInfo.logo.setPixmap(QtGui.QPixmap("{0}{1}".format(self.urlHostRipart, profil.logo)))
-                        # print("{0}{1}".format(self.urlHostRipart, profil.logo))
-                    elif profil.title == "Profil par défaut":
-                        dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
-
-                    dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
-                    dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostRipart))
-                    dlgInfo.textInfo.append("Login : {}".format(self.login))
-                    dlgInfo.textInfo.append("Groupe : {}".format(self.profil.title))
-                    if self.profil.zone == cst.ZoneGeographique.UNDEFINED:
-                        zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
-                        if zoneExtraction == "" or zoneExtraction is None or len(self.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
-                            dlgInfo.textInfo.append("Zone : pas de zone définie")
-                            RipartHelper.setXmlTagValue(self.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
-                        else:
-                            dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
-                        self.profil.zone = zoneExtraction
-                    else:
-                        dlgInfo.textInfo.append("Zone : {}".format(self.profil.zone.__str__()))
-
-                    dlgInfo.exec_()
-                    if dlgInfo.Accepted:
-                        self.client = client
-                        result = 1
-                        self.logger.debug("result 1")
-                else:
-                    # fix_print_with_import
-                    print("error")
-            except Exception as e:
-                result = -1
-                self.pwd = ""
-                self.logger.error(format(e))
-
-                try:
-                    self.loginWindow.setErreur(ClientHelper.notNoneValue(format(e)))
-                except Exception as e2:
-                    self.loginWindow.setErreur("La connexion a échoué")
-                self.loginWindow.exec_()
-
-        # ElSE : on réutilise le login enregistré dans le fichier de config
-        # else:
-        #     try:
-        #         client = Client(self.urlHostRipart, self.login, self.pwd, self.proxy)
-        #         result = 1
-        #         self.logger.debug("result =" + str(result))
-        #         self.client = client
-        #     except RipartException as e:
-        #         # fix_print_with_import
-        #         print(format(e))
-        #         result = -1
-
-        if result == 1:
-            self.ripClient = client
-            self.logger.debug("ripclient")
+        while connectionResult < 0:
+            self.loginWindow.exec_()
+            connectionResult = self.loginWindow.connectionResult
 
         return result
 
-    def saveLogin(self, login):
-        """
-        Sauvegarde du login dans le contexte et dans le fichier ripart.xml
-        """
-        self.login = login
-        RipartHelper.save_login(self.projectDir, login)
 
     def getOrCreateDatabase(self):
         """

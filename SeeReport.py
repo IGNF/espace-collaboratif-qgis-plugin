@@ -24,7 +24,7 @@ class SeeReport(object):
         Affichage de la fenêtre de visualisation d'un signalement
         """
         try:
-            if self.context.ripClient is None:
+            if self.context.client is None:
                 connResult = self.context.getConnexionRipart()
                 if not connResult:
                     return 0
