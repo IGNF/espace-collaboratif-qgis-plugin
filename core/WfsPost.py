@@ -77,7 +77,11 @@ class WfsPost(object):
     def setGeometries(self, changedGeometries):
         geometries = {}
         for featureId, geometry in changedGeometries.items():
-            geometries[featureId] = self.setGeometry(geometry)
+            postGeometry = self.setGeometry(geometry)
+            if postGeometry is None:
+                raise Exception("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le "
+                                "déplacer ou le supprimer.")
+            geometries[featureId] = postGeometry
         return geometries
 
     def setKey(self, key, idName):
@@ -247,7 +251,8 @@ class WfsPost(object):
             strFeature += self.setFieldsNameValue(feature)
             postGeometry = self.setGeometry(feature.geometry())
             if postGeometry is None:
-                raise Exception ("La géométrie de l'objet {} est en dehors de la zone de travail. Veuillez le déplacer ou le supprimer.".format(feature.attribute(cst.ID_SQLITE)))
+                raise Exception ("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le déplacer "
+                                 "ou le supprimer.")
             strFeature += postGeometry
             strFeature += self.setClientId(feature.attribute(cst.ID_SQLITE))
             strFeature += '},'
@@ -304,7 +309,11 @@ class WfsPost(object):
                     strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
                 else:
                     strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
-                strFeature += ', {0}'.format(self.setGeometry(geometry))
+                postGeometry = self.setGeometry(geometry)
+                if postGeometry is None:
+                    raise Exception("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le "
+                                    "déplacer ou le supprimer.")
+                strFeature += ', {0}'.format(postGeometry)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
