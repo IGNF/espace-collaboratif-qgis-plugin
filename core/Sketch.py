@@ -195,7 +195,10 @@ class Sketch(object):
         """
         satt = ""
         for att in self.attributes:
-            satt += ClientHelper.notNoneValue(att.name) + "='" + ClientHelper.notNoneValue(att.value) + "'|"
+            # Anomalie Redmine #14757 : le SQL n'aime pas les %
+            attributeName = att.name.replace('%', 'pourcent')
+            attributeValue = att.value.replace('%', 'pourcent')
+            satt += ClientHelper.notNoneValue(attributeName) + "='" + ClientHelper.notNoneValue(attributeValue) + "'|"
        
         if len(satt) > 0:
             satt = satt[:-1]

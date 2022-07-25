@@ -12,7 +12,6 @@ import os
 
 from PyQt5.QtWidgets import QDialogButtonBox
 from qgis.PyQt import uic
-from qgis.PyQt.QtWidgets import QMessageBox
 from .core.RipartLoggerCl import RipartLogger
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtGui import QImage
@@ -55,7 +54,6 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setContext(context)
         self.connectionResult = 0
-#        self.textError.setVisible(False)
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Connecter")
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.connectToService)
@@ -79,7 +77,6 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     
     def getPwd(self):
         return self.lineEditPwd.text()
-
 
     def connectToService(self):
         """Connexion au service Espace collaboratif
