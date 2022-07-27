@@ -567,8 +567,9 @@ class Contexte(object):
         nodeGroup.addLayer(newVectorLayer)
         self.guichetLayers.append(newVectorLayer)
         self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
-        print("Layer {} added to map".format(newVectorLayer.name()))
-        print(maxNumrecMessage[1])
+        message = "Couche {0} ajoutée à la carte.\n{1}".format(newVectorLayer.name(), maxNumrecMessage[1])
+        print(message)
+        QMessageBox.information(None, "IGN Espace collaboratif", message)
 
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)

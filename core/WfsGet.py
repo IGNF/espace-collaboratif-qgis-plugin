@@ -146,12 +146,12 @@ class WfsGet(object):
         end = time.time()
         timeResult = end - start
         if timeResult > 60:
-            message = "{0} objet(s), extrait(s) en : {1} minute(s)".format(totalRows, timeResult / 60)
+            message = "{0} objet(s), extrait(s) en : {1} minute(s)".format(totalRows, round(timeResult / 60, 1))
         else:
             if totalRows == 0:
                 message = "Pas d'objets extraits"
             else:
-                message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, timeResult)
+                message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
         return maxNumrec, message
 
     def getMaxNumrec(self):
