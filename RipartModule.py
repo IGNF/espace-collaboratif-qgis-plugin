@@ -276,6 +276,14 @@ class RipartPlugin:
             status_tip=self.tr(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
 
+        icon_path = ':/plugins/RipartPlugin/images/compter.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Test'),
+            callback=self.test,
+            status_tip=self.tr(u'Test'),
+            parent=self.iface.mainWindow())
+
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
                               self.iface.mainWindow())
         self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin",
@@ -304,6 +312,17 @@ class RipartPlugin:
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
+
+    def test(self):
+        # Voir les données du formulaire pour chaque attribut
+        layer = self.context.iface.activeLayer()
+        for f in layer.selectedFeatures():
+            fields = f.fields()
+            for field in fields:
+                name = field.name()
+                index = fields.indexOf(name)
+                ews = layer.editorWidgetSetup(index)
+                print("Name:{0}, Type:{1}, Config:{2}".format(name, ews.type(), ews.config()))
 
     def chargerGuichet(self):
         try:
@@ -527,6 +546,7 @@ class RipartPlugin:
             result = importRipart.doImport()
             if result == 0:
                 return
+
         except NoProfileException as e:
             self.context.iface.messageBar().clearWidgets()
             self.logger.error(format(e))

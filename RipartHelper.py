@@ -615,7 +615,9 @@ class RipartHelper:
             sql += rem.dateCreation + "', '"
             sql += rem.dateMiseAJour + "', '"
             sql += rem.dateValidation + "', '"
-            sql += rem.concatenateThemes() + "', '"
+            # TODO voir avec Noémie si on garde le code JSON
+            #sql += rem.concatenateThemes() + "', '"
+            sql += rem.themesToJson() + "', '"
             sql += rem.statut.__str__() + "', '"
             sql += rem.getAttribut("commentaire") + "', '"
             sql += ClientHelper.getValForDB(rem.concatenateResponse()) + "', '"

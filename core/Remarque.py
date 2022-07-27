@@ -121,6 +121,27 @@ class Remarque(object):
         else:
             return ClientHelper.getValForDB(att)
 
+    def themesToJson(self):
+        result = ''
+        res = ''
+        for t in self.themes:
+            i = 0
+            tmp = ''
+            for att in t.attributes:
+                if i == 0:
+                    result += '{'
+                    result += '"{0}":'.format(att.theme)
+                    result += '{'
+                tmp += '"{0}": {1},'.format(att.nom, att.valeur)
+                i = i+1
+            if tmp != '':
+                res = tmp[:-1] + '}'
+            if len(self.themes) > 1:
+                res = tmp[:-1] + ','
+        if res != '':
+            result += res[:-1] + '}}'
+        return result
+
     def concatenateThemes(self, bDoubleQuote=True):
         """Concatène les noms de tous les thèmes de la remarque
         

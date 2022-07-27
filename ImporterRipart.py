@@ -10,7 +10,7 @@ version 3.0.0 , 26/11/2018
 from .core.RipartLoggerCl import RipartLogger
 from PyQt5.QtWidgets import QProgressBar, QApplication
 from PyQt5.QtCore import Qt
-from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsEditorWidgetSetup
 from qgis.utils import spatialite_connect
 from .RipartHelper import RipartHelper
 from .core.BBox import BBox
@@ -91,11 +91,9 @@ class ImporterRipart(object):
             pagination = RipartHelper.defaultPagination
 
         date = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_DateExtraction, "Map").text
-
         date = RipartHelper.formatDate(date)
 
         groupFilter = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Group, "Map").text
-
         if groupFilter == 'true':
             groupId = self.context.profil.geogroup.id
 
@@ -168,12 +166,48 @@ class ImporterRipart(object):
             # Résultat
             self.showImportResult(cnt)
 
+            # Modification du formulaire pour afficher l'attribut "Thèmes" sous forme de "Vue JSON"
+            # Vue par défaut : Arborescence
+            # Formater le JSON : Indenté
+            self.setFormAttributes()
+
         except Exception as e:
             raise
 
         finally:
             self.context.iface.messageBar().clearWidgets()
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+
+    def setFormAttributes(self):
+        listLayers = QgsProject.instance().mapLayersByName(RipartHelper.nom_Calque_Signalement)
+        if len(listLayers) == 0:
+            return
+        features = None
+        for layer in listLayers:
+            features = layer.getFeatures()
+            break
+        fields = None
+        for feature in features:
+            fields = feature.fields()
+            break
+        if fields is None or len(fields) == 0:
+            return
+        index = -1
+        for field in fields:
+            name = field.name()
+            if name == 'Thèmes':
+                index = fields.indexOf(name)
+                break
+        # Si l'attribut "Thèmes" n'existe pas, on ne fait rien, on laisse faire QGIS
+        if index == -1:
+            return
+        # modification du formulaire QGIS pour l'attribut "Thèmes"
+        # Type:JsonEdit
+        QgsEWS_type = 'JsonEdit'
+        # Config:{'DefaultView': 1, 'FormatJson': 0}
+        QgsEWS_config = {'DefaultView': 1, 'FormatJson': 0}
+        setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
+        listLayers[0].setEditorWidgetSetup(index, setup)
 
     def setMapExtent(self, box):
         """set de l'étendue de la carte
