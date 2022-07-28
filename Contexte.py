@@ -452,20 +452,11 @@ class Contexte(object):
                                         u"elles resteront disponibles sur l'Espace collaboratif.")
                     return
 
-            for layer in guichet_layers:
-                if layer.nom in maplayers:
-                    message = "La couche {} existe déjà, elle sera détruite si vous continuez ?".format(layer.nom)
-                    reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
-                                                 QMessageBox.No)
-                    if reply == QMessageBox.No:
-                        continue
-                    else:
-                        listLayers = self.QgsProject.instance().mapLayersByName(layer.nom)
-                        layerIds = []
-                        for lLayer in listLayers:
-                            layerIds.append(lLayer.id())
-                        self.QgsProject.instance().removeMapLayers(layerIds)
+            # Destruction de toutes les couches existantes si ce n'est pas fait en manuel par l'utilisateur
+            self.removeLayersFromProject(guichet_layers, maplayers)
 
+            endMessage = ''
+            for layer in guichet_layers:
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
@@ -478,7 +469,8 @@ class Contexte(object):
                     if not sourceLayer[0].isValid():
                         print("Layer {} failed to load !".format(layer.nom))
                         continue
-                    self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
+                    endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
+                    endMessage += "\n"
 
                 '''
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
@@ -495,10 +487,13 @@ class Contexte(object):
                     # Insertion à la fin avec -1
                     root.insertLayer(-1, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
-                    print("Layer {} added to map".format(rlayer.name()))
+                    message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
+                    print(message)
+                    endMessage += message
 
             # Refraichissement de la carte
             self.mapCan.refresh()
+            QMessageBox.information(None, "IGN Espace collaboratif", endMessage)
 
         except Exception as e:
             self.logger.error(format(e))
@@ -507,6 +502,31 @@ class Contexte(object):
                             str(e),
                             level=1, duration=10)
             print(str(e))
+
+    def removeLayersFromProject(self, guichet_layers, maplayers):
+        tmp = ''
+        removeLayers = []
+        for layer in guichet_layers:
+            if layer.nom in maplayers:
+                removeLayers.append(layer.nom)
+                tmp += "{}, ".format(layer.nom)
+
+        if len(removeLayers) == 1:
+            message = "La couche [{}] existe déjà, elle sera détruite si vous continuez ?".format(tmp[:-2])
+        else:
+            message = "Les couches [{}] existent déjà, elles seront détruites si vous continuez ?".format(tmp[:-2])
+        reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                                     QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+
+        layerIds = []
+        for removeLayer in removeLayers:
+            listLayers = self.QgsProject.instance().mapLayersByName(removeLayer)
+            for lLayer in listLayers:
+                layerIds.append(lLayer.id())
+
+        self.QgsProject.instance().removeMapLayers(layerIds)
 
     def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
         geometryName = structure['geometryName']
@@ -567,9 +587,9 @@ class Contexte(object):
         nodeGroup.addLayer(newVectorLayer)
         self.guichetLayers.append(newVectorLayer)
         self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
-        message = "Couche {0} ajoutée à la carte.\n{1}".format(newVectorLayer.name(), maxNumrecMessage[1])
+        message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
         print(message)
-        QMessageBox.information(None, "IGN Espace collaboratif", message)
+        return message
 
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)

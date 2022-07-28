@@ -60,7 +60,6 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             self.comboBoxGroup.setCurrentText(self.activeGroup)
 
     def setComboBoxWorkZone(self):
-        QgsProject.instance().write()
         polyLayers = self.context.getMapPolygonLayers()
         polyList = [val for key, val in polyLayers.items() if val != RipartHelper.nom_Calque_Croquis_Polygone]
         self.comboBoxWorkZone.clear()
@@ -117,7 +116,6 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             if not vlayer.isValid():
                 print("Layer {0} failed to load!".format(shapefileLayerName))
             QgsProject.instance().addMapLayer(vlayer)
-            QgsProject.instance().write()
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
     def save(self):
