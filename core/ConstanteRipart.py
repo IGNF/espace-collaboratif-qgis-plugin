@@ -123,5 +123,6 @@ ID_ORIGINAL = 'id_original'
 ID_SQLITE = 'id_sqlite_1gnQg1s'
 IS_FINGERPRINT = 'isFingerprint'
 FINGERPRINT = 'gcms_fingerprint'
+NUMREC = 'gcms_numrec'
 TABLEOFTABLES = 'tableoftables'
 CLIENTFEATUREID = "_client_feature_id"

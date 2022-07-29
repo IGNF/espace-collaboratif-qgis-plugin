@@ -452,8 +452,10 @@ class Contexte(object):
                                         u"elles resteront disponibles sur l'Espace collaboratif.")
                     return
 
-            # Destruction de toutes les couches existantes si ce n'est pas fait en manuel par l'utilisateur
-            self.removeLayersFromProject(guichet_layers, maplayers)
+            # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
+            # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
+            if not self.removeLayersFromProject(guichet_layers, maplayers):
+                return
 
             endMessage = ''
             for layer in guichet_layers:
@@ -511,6 +513,9 @@ class Contexte(object):
                 removeLayers.append(layer.nom)
                 tmp += "{}, ".format(layer.nom)
 
+        if len(removeLayers) == 0:
+            return True
+
         if len(removeLayers) == 1:
             message = "La couche [{}] existe déjà, elle sera détruite si vous continuez ?".format(tmp[:-2])
         else:
@@ -518,7 +523,7 @@ class Contexte(object):
         reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
                                      QMessageBox.No)
         if reply == QMessageBox.No:
-            return
+            return False
 
         layerIds = []
         for removeLayer in removeLayers:
@@ -527,6 +532,7 @@ class Contexte(object):
                 layerIds.append(lLayer.id())
 
         self.QgsProject.instance().removeMapLayers(layerIds)
+        return True
 
     def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
         geometryName = structure['geometryName']

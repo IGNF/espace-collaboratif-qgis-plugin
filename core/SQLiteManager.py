@@ -44,7 +44,7 @@ class SQLiteManager(object):
             return False
         return True
 
-    def setAttributesTableToSql(self, geometryName):
+    def setAttributesTableToSql(self, geometryName, tableStandard):
         columnDetruitExist = False
         typeGeometrie = ''
         sqlAttributes = "{0} INTEGER PRIMARY KEY AUTOINCREMENT,".format(cst.ID_SQLITE)
@@ -59,10 +59,18 @@ class SQLiteManager(object):
             # au cas où il y aurait déjà un attribut nommé id_sqlite
             elif value['name'] == cst.ID_SQLITE:
                 sqlAttributes += "{0} {1},".format(cst.ID_ORIGINAL, self.setSwitchType(value['type']))
+            # TODO Noémie : 29/7/22 Arnaud m'a indiqué que gcms_fingerprint et gcms_numrec ne doivent pas apparaitre
+            # TODO comme attributs cachés vis à vis de l'extérieur, cf les urls suivantes
+            # TODO (BIEN) https://qlf-collaboratif.ign.fr/collaboratif-3.4/gcms/database/bduni_recette_test/feature-type/equipement_de_transport.json
+            # TODO (PAS BIEN) https://espacecollaboratif.ign.fr/gcms/database/bduni_interne_qualif_fxx/feature-type/equipement_de_transport.json
+            elif value['name'] == cst.FINGERPRINT or value['name'] == cst.NUMREC:
+                continue
             else:
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
         # il faut ajouter une colonne "is_fingerprint" qui indiquera si c'est une table BDUni qui contient
         # gcms_fingerprint
+        if not tableStandard :
+            sqlAttributes += "{0} INTEGER,{1} TEXT,".format(cst.NUMREC, cst.FINGERPRINT)
         sqlAttributes += "{0} INTEGER".format(cst.IS_FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
         self.geometryType = typeGeometrie
@@ -88,7 +96,7 @@ class SQLiteManager(object):
         self.is3D = tableStructure['attributes'][geometryName]['is3d']
         # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
-        t = self.setAttributesTableToSql(geometryName)
+        t = self.setAttributesTableToSql(geometryName, layer.isStandard)
         if t[0] == "" and t[1] == "" and t[2] == "":
             raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
 
