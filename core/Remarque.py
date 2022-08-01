@@ -15,6 +15,8 @@ from datetime import datetime
 from .ClientHelper import ClientHelper
 from .RipartLoggerCl import RipartLogger
 
+import json
+
 
 class Remarque(object):
     """
@@ -123,24 +125,22 @@ class Remarque(object):
 
     def themesToJson(self):
         result = ''
-        res = ''
         for t in self.themes:
-            i = 0
-            tmp = ''
+            theme = ''
+            attributes = {}
+            tmp_dict = {}
             for att in t.attributes:
-                if i == 0:
-                    result += '{'
-                    result += '"{0}":'.format(att.theme)
-                    result += '{'
-                tmp += '"{0}": {1},'.format(att.nom, att.valeur)
-                i = i+1
-            if tmp != '':
-                res = tmp[:-1] + '}'
-            if len(self.themes) > 1:
-                res = tmp[:-1] + ','
-        if res != '':
-            result += res[:-1] + '}}'
-        return result
+                if theme == '':
+                    theme = att.theme
+                    attributes[theme] = {}
+                tmp_dict[att.nom] = att.valeur
+            attributes[theme] = tmp_dict
+            result += json.dumps(attributes, indent=4)
+            result += ','
+        # si plusieurs thèmes
+        endResult = result[:-1].replace('},{', ',')
+        # l'apostrophe est doublée
+        return endResult.replace("'", "''")
 
     def concatenateThemes(self, bDoubleQuote=True):
         """Concatène les noms de tous les thèmes de la remarque

@@ -179,7 +179,12 @@ class SQLiteManager(object):
                 if type(value) == str:
                     value = value.replace("'", "''")
                 if type(value) == list:
-                    tmpValues += '"{}",'.format(value)
+                    listToStr = '"{'
+                    for lv in value:
+                        for k, v in lv.items():
+                            listToStr += "'{}': '{}',".format(k.replace("'", "''"), v.replace("'", "''"))
+                    res = listToStr[:-1] + '}",'
+                    tmpValues += res
                     continue
                 tmpValues += "'{}',".format(value)
         # si la table sqlite contient :
