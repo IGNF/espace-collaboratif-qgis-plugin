@@ -135,7 +135,7 @@ class Remarque(object):
                     attributes[theme] = {}
                 tmp_dict[att.nom] = att.valeur
             attributes[theme] = tmp_dict
-            result += json.dumps(attributes, indent=4)
+            result += json.dumps(attributes, sort_keys=True, indent=2)
             result += ','
         # si plusieurs thèmes
         endResult = result[:-1].replace('},{', ',')

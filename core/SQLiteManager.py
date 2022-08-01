@@ -69,7 +69,7 @@ class SQLiteManager(object):
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
         # il faut ajouter une colonne "is_fingerprint" qui indiquera si c'est une table BDUni qui contient
         # gcms_fingerprint
-        if not tableStandard :
+        if not tableStandard:
             sqlAttributes += "{0} INTEGER,{1} TEXT,".format(cst.NUMREC, cst.FINGERPRINT)
         sqlAttributes += "{0} INTEGER".format(cst.IS_FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
@@ -179,12 +179,13 @@ class SQLiteManager(object):
                 if type(value) == str:
                     value = value.replace("'", "''")
                 if type(value) == list:
-                    listToStr = '"{'
+                    listToJson = ''
+                    dict_object = {}
                     for lv in value:
                         for k, v in lv.items():
-                            listToStr += "'{}': '{}',".format(k.replace("'", "''"), v.replace("'", "''"))
-                    res = listToStr[:-1] + '}",'
-                    tmpValues += res
+                            dict_object[k] = v.replace("'", "''")
+                        listToJson = "'{}',".format(json.dumps(dict_object, sort_keys=True, indent=2))
+                    tmpValues += listToJson
                     continue
                 tmpValues += "'{}',".format(value)
         # si la table sqlite contient :
@@ -204,7 +205,7 @@ class SQLiteManager(object):
         tmp = ''
         for key in keys:
             tmp += '"{0}", '.format(key[0])
-        strCleabs = tmp[0:len(tmp)-2]
+        strCleabs = tmp[0:len(tmp) - 2]
         sql = 'DELETE FROM {0} WHERE cleabs IN ({1})'.format(tableName, strCleabs)
         SQLiteManager.executeSQL(sql)
 

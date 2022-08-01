@@ -86,6 +86,9 @@ class EditFormFieldFromAttributes(object):
         elif vType == 'Year':
             self.setFieldYear(default_value)
 
+        elif vType == 'JsonValue':
+            self.setJsonValue()
+
         else:
             return
 
@@ -373,6 +376,14 @@ class EditFormFieldFromAttributes(object):
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('now()'))
         else:
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDateTime)))
+
+    '''Représentation du type Vue JSON'''
+    def setJsonValue(self):
+        # Type:JsonEdit
+        QgsEWS_type = 'JsonEdit'
+        # Config:{'DefaultView': 1, 'FormatJson': 0} arborescence/indenté
+        QgsEWS_config = {'DefaultView': 1, 'FormatJson': 0}
+        self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
     '''
     Représentation du type d'outils : Date/Heure
