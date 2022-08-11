@@ -158,11 +158,11 @@ class Client(object):
         if '&' not in layerUrl:
             raise Exception(ClientHelper.notNoneValue(
                 "{} : l'url fournie ({}) ne permet pas de déterminer le nom de la base données".format(
-                    "getListOfValuesAttributeFromLayerInDatabase", layerUrl)))
+                    "connexionFeatureTypeJson", layerUrl)))
 
         tmp = layerUrl.split('&')
         dbName = tmp[1].split('=')
-        url = "{}/{}/{}/feature-type/{}.json".format(self.__url, "gcms/database", dbName[1], layerName)
+        url = "{}/gcms/database/{}/feature-type/{}.json".format(self.__url, dbName[1], layerName)
         self.logger.debug("{0} {1}".format("connexionFeatureTypeJson : ", url))
 
         featuretypeResponse = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password),

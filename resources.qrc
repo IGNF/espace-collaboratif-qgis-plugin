@@ -16,6 +16,7 @@
 		<file>images/charger.png</file>
 		<file>images/save.png</file>
 		<file>images/synchroniser.png</file>
+		<file>images/modifyFieldJson.png</file>
 		<file>images/no_logo.png</file>
     </qresource>
 </RCC>

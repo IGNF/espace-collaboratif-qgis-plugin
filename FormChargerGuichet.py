@@ -26,7 +26,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     et récupération du choix de l'utilisateur
     """
     context = None
-    profilUser = None
 
     # La liste des couches du profil utilisateur
     listLayers = []
@@ -48,10 +47,12 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
         self.listLayers.clear()
         # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
-        connexionLayers = self.getInfosLayers()
+        connexionLayers = context.getInfosLayers()
 
         if connexionLayers[0] == "Rejected":
             raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
+
+        profilUser = connexionLayers[2]
 
         if connexionLayers[0] == "Accepted":
             self.listLayers = connexionLayers[1]
@@ -62,43 +63,13 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Remplissage des différentes tables de couches
         self.setTableWidgetMonGuichet()
         self.setTableWidgetFondsGeoportail()
-        #self.setTableWidgetAutresGeoservices()
+        # self.setTableWidgetAutresGeoservices()
 
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
-        self.labelGroupeActif.setText("Groupe actif : {}".format(self.profilUser.geogroup.name))
+        self.labelGroupeActif.setText("Groupe actif : {}".format(profilUser.geogroup.name))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  ##ff0000
-
-    def getInfosLayers(self):
-        infosLayers = []
-
-        if self.context.client is None:
-            connResult = self.context.getConnexionRipart()
-            if not connResult:
-                # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
-                return "Rejected", infosLayers
-
-        if self.context.client is None:
-            return "Rejected", infosLayers
-
-        self.profilUser = self.context.client.getProfil()
-        print("Profil : {0}, {1}".format(self.profilUser.geogroup.id,
-                                         self.profilUser.geogroup.name))
-
-        if len(self.profilUser.infosGeogroups) == 0:
-            return "Rejected", infosLayers
-
-        for infoGeogroup in self.profilUser.infosGeogroups:
-            if infoGeogroup.group.id != self.profilUser.geogroup.id:
-                continue
-
-            print("Liste des couches du profil utilisateur")
-            for layersAll in infoGeogroup.layers:
-                print(layersAll.nom)
-                infosLayers.append(layersAll)
-
-        return "Accepted", infosLayers
 
     def setColonneCharger(self, tableWidget, row, column):
         itemCheckBox = QtWidgets.QTableWidgetItem()
@@ -228,7 +199,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 # tmp est sous la forme 'troncon_de_voie_ferree' ou 'Cartes IGN (GEOGRAPHICALGRIDSYSTEMS.MAPS)'
                 if '(' in tmp:
                     tmpName = tmp.split('(')
-                    name = tmpName[0].rstrip() # pour supprimer l'espace final
+                    name = tmpName[0].rstrip()  # pour supprimer l'espace final
                 else:
                     name = tmp
                 for layer in self.listLayers:

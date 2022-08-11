@@ -58,6 +58,7 @@ from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
 from .ReplyReport import ReplyReport
+from.FieldsJsonView import FieldsJsonView
 
 import logging
 
@@ -276,12 +277,12 @@ class RipartPlugin:
             status_tip=self.tr(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/compter.png'
+        icon_path = ':/plugins/RipartPlugin/images/modifyFieldJson.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Test'),
-            callback=self.test,
-            status_tip=self.tr(u'Test'),
+            text=self.tr(u'Modifier un champ JSON'),
+            callback=self.modifyFieldJson,
+            status_tip=self.tr(u'Modifier un champ JSON'),
             parent=self.iface.mainWindow())
 
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
@@ -313,6 +314,19 @@ class RipartPlugin:
 
         self.toolbar.addWidget(self.toolButton2)
 
+    def modifyFieldJson(self):
+        self.context = Contexte.getInstance(self, QgsProject)
+        if self.context is None:
+            return
+        if self.context.client is None:
+            res = self.context.getConnexionRipart(newLogin=True)
+            if not res:
+                return
+        layer = self.iface.activeLayer()
+        dlgModifyFieldJson = FieldsJsonView(self.context, layer)
+        dlgModifyFieldJson.exec_()
+
+    '''
     def test(self):
         # Voir les données du formulaire pour chaque attribut
         layer = self.context.iface.activeLayer()
@@ -323,6 +337,7 @@ class RipartPlugin:
                 index = fields.indexOf(name)
                 ews = layer.editorWidgetSetup(index)
                 print("Name:{0}, Type:{1}, Config:{2}".format(name, ews.type(), ews.config()))
+    '''
 
     def chargerGuichet(self):
         try:

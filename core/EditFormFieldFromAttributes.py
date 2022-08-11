@@ -6,7 +6,8 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
 """
-from qgis.core import QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue
+from qgis.core import QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue, QgsAction
+from .Action import *
 
 
 class EditFormFieldFromAttributes(object):
@@ -21,6 +22,7 @@ class EditFormFieldFromAttributes(object):
     name = None
     # n° du champ dans la liste des champs de l'objet
     index = None
+    action = None
 
     '''
     Initialisation de la classe avec la couche active (layer) et les données récupérées (data)
@@ -29,6 +31,16 @@ class EditFormFieldFromAttributes(object):
     def __init__(self, layer, data):
         self.data = data
         self.layer = layer
+        self.action = Action(layer)
+
+    # si le champ est de type 'JsonValue' alors on ajoute une action pour pour pourvoir le modifier
+    def setAction(self, attributeType, attributeName):
+        if attributeType != 'JsonValue':
+            return
+        actionDescription = "Modifier un champ JSON par l'intermédiaire d'une boite de saisie"
+        actionShortName = "Modifier {0}".format(attributeName)
+        actionCode = self.action.defineActionPython(attributeName)
+        self.action.do(QgsAction.ActionType.GenericPython, actionDescription, actionShortName, actionCode)
 
     '''Lecture des clé/valeurs de l'item 'attributes', par exemple "commentaire_nom": {"crs": null, "default_value": 
     null, "id": 30180, "target_type": null, "name": "commentaire_nom", "short_name": "commentair", 
@@ -46,6 +58,7 @@ class EditFormFieldFromAttributes(object):
             self.index = self.layer.fields().indexOf(self.name)
             self.setFieldTitle(v['title'])
             self.setFieldSwitchType(v['type'], v['default_value'])
+            self.setAction(v['type'], v['name'])
             self.setFieldConstraintNotNull(v['nullable'])
             self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'], v['type'], v['nullable'])
             self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type'])

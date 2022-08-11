@@ -44,7 +44,7 @@ class SQLiteManager(object):
             return False
         return True
 
-    def setAttributesTableToSql(self, geometryName, tableStandard):
+    def setAttributesTableToSql(self, geometryName, layer):
         columnDetruitExist = False
         typeGeometrie = ''
         sqlAttributes = "{0} INTEGER PRIMARY KEY AUTOINCREMENT,".format(cst.ID_SQLITE)
@@ -69,7 +69,7 @@ class SQLiteManager(object):
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
         # il faut ajouter une colonne "is_fingerprint" qui indiquera si c'est une table BDUni qui contient
         # gcms_fingerprint
-        if not tableStandard:
+        if not layer.isStandard:
             sqlAttributes += "{0} INTEGER,{1} TEXT,".format(cst.NUMREC, cst.FINGERPRINT)
         sqlAttributes += "{0} INTEGER".format(cst.IS_FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
@@ -96,7 +96,7 @@ class SQLiteManager(object):
         self.is3D = tableStructure['attributes'][geometryName]['is3d']
         # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
-        t = self.setAttributesTableToSql(geometryName, layer.isStandard)
+        t = self.setAttributesTableToSql(geometryName, layer)
         if t[0] == "" and t[1] == "" and t[2] == "":
             raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
 

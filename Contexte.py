@@ -405,6 +405,7 @@ class Contexte(object):
                       'geometryType': structure['attributes'][geometryName]['type']}
 
         vlayer = GuichetVectorLayer(parameters)
+        #plugin_layer = PluginGuichetLayer()
         # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
@@ -1053,3 +1054,33 @@ class Contexte(object):
                           "créer un autre projet QGIS.".format(self.profil.title, nomProfilServeur)
                 RipartHelper.showMessageBox(message)
                 raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")
+
+    def getInfosLayers(self):
+        infosLayers = []
+
+        if self.client is None:
+            connResult = self.getConnexionRipart()
+            if not connResult:
+                # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
+                return "Rejected", infosLayers
+
+        if self.client is None:
+            return "Rejected", infosLayers
+
+        profilUser = self.client.getProfil()
+        print("Profil : {0}, {1}".format(profilUser.geogroup.id,
+                                         profilUser.geogroup.name))
+
+        if len(profilUser.infosGeogroups) == 0:
+            return "Rejected", infosLayers
+
+        for infoGeogroup in profilUser.infosGeogroups:
+            if infoGeogroup.group.id != profilUser.geogroup.id:
+                continue
+
+            print("Liste des couches du profil utilisateur")
+            for layersAll in infoGeogroup.layers:
+                print(layersAll.nom)
+                infosLayers.append(layersAll)
+
+        return "Accepted", infosLayers, profilUser
