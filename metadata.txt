@@ -10,7 +10,7 @@
 name=IGN_Espace_Collaboratif_DEV
 qgisMinimumVersion=3.0
 description=Service de signalement et contribution de l'IGN, plugin QGIS3
-version=4.1.x
+version=4.2.x
 author=IGN
 email=service-client@ign.fr
 
@@ -29,6 +29,7 @@ date=
 changelog=
 	4.1.1 - Installation avec compte Espace collaboratif
     4.1.0 - Adaptation géoservices
+	4.2.x - TO-DO
 
 # Tags are comma separated with spaces allowed
 tags=python
