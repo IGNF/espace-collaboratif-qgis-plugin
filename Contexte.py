@@ -14,7 +14,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
     QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
-    QgsWkbTypes, QgsLayerTreeGroup
+    QgsWkbTypes, QgsLayerTreeGroup, QgsEditorWidgetSetup
 
 import os.path
 import shutil
@@ -506,6 +506,17 @@ class Contexte(object):
                             level=1, duration=10)
             print(str(e))
 
+    def hideColumn(self, layer, columnName):
+        config = layer.attributeTableConfig()
+        columns = config.columns()
+        for column in columns:
+            if column.name == columnName:
+                column.hidden = True
+                break
+        config.setColumns(columns)
+        layer.setAttributeTableConfig(config)
+
+
     def removeLayersFromProject(self, guichet_layers, maplayers):
         tmp = ''
         removeLayers = []
@@ -593,6 +604,16 @@ class Contexte(object):
         self.QgsProject.instance().addMapLayer(newVectorLayer, False)
         nodeGroup.addLayer(newVectorLayer)
         self.guichetLayers.append(newVectorLayer)
+
+        # On masque les champs de travail et champs internes
+        fields = newVectorLayer.fields()
+        for i in range(0, fields.count()):
+            f = fields.field(i)
+            if f.name() == cst.ID_SQLITE or f.name() == cst.IS_FINGERPRINT or f.name() == cst.FINGERPRINT:
+                self.hideColumn(newVectorLayer, f.name())
+                hidden_setup = QgsEditorWidgetSetup('Hidden', f.editorWidgetSetup().config())
+                newVectorLayer.setEditorWidgetSetup(i, hidden_setup)
+
         self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
         message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
         print(message)
