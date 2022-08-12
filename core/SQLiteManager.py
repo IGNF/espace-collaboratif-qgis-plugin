@@ -70,7 +70,8 @@ class SQLiteManager(object):
         # il faut ajouter une colonne "is_fingerprint" qui indiquera si c'est une table BDUni qui contient
         # gcms_fingerprint
         if not layer.isStandard:
-            sqlAttributes += "{0} INTEGER,{1} TEXT,".format(cst.NUMREC, cst.FINGERPRINT)
+            #sqlAttributes += "{0} INTEGER,{1} TEXT,".format(cst.NUMREC, cst.FINGERPRINT)
+            sqlAttributes += "{0} TEXT,".format(cst.FINGERPRINT)
         sqlAttributes += "{0} INTEGER".format(cst.IS_FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
         self.geometryType = typeGeometrie

@@ -1,5 +1,7 @@
 import json
 
+import qgis.core
+
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
@@ -107,6 +109,8 @@ class WfsPost(object):
         else:
             self.setKey(feature.id(), self.layer.idNameForDatabase)
         for key, value in attributesChanged.items():
+            if value == "NULL" or value is None or value == qgis.core.NULL: #Remplacement par QGIS d'une valeur vide, on n'envoie pas
+                continue
             fieldsNameValue += '"{0}": "{1}", '.format(feature.fields()[key].name(), value)
         # il faut enlever à la fin de la chaine la virgule et l'espace ', ' car c'est un update
         pos = len(fieldsNameValue)
