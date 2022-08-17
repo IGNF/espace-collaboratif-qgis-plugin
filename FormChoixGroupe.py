@@ -103,9 +103,18 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                                                                          "surfaciques.")
                     return
 
-                self.newShapefilesDict[shapefileLayerName] = shapefilePath
-                self.comboBoxWorkZone.addItem(shapefileLayerName)
-                self.comboBoxWorkZone.setCurrentText(shapefileLayerName)
+                # On vérifie que le shapefile n'est pas déjà dans la liste des zones
+                bAddItem = True
+                allItems = [self.comboBoxWorkZone.itemText(i) for i in range(self.comboBoxWorkZone.count())]
+                for item in allItems:
+                    if item == shapefileLayerName:
+                        bAddItem = False
+                        break
+
+                if bAddItem:
+                    self.newShapefilesDict[shapefileLayerName] = shapefilePath
+                    self.comboBoxWorkZone.addItem(shapefileLayerName)
+                    self.comboBoxWorkZone.setCurrentText(shapefileLayerName)
         else:
             self.comboBoxWorkZone.setCurrentIndex(0)
 
@@ -123,13 +132,19 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         spatialFilterLayerName = self.comboBoxWorkZone.currentText()
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, spatialFilterLayerName, "Map")
 
+        print(self.newShapefilesDict)
+
         # Création de la nouvelle couche shapefile
         if spatialFilterLayerName in self.newShapefilesDict:
             self.importShapefile(spatialFilterLayerName)
 
+
         index = self.comboBoxGroup.currentIndex()
         self.idChosenGroup = self.infosgeogroups[index].group.id
         self.nameChosenGroup = self.infosgeogroups[index].group.name
+
+        self.newShapefilesDict.clear()
+
 
         self.accept()
         self.bCancel = False
