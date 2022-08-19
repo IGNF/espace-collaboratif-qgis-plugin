@@ -40,7 +40,7 @@ from .core.WfsGet import WfsGet
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import QgsProject
+from qgis.core import QgsProject, QgsMapLayerType
 import configparser
 
 # Initialize Qt resources from file resources.py
@@ -83,6 +83,7 @@ class RipartPlugin:
 
         # Save reference to the QGIS interface
         self.iface = iface
+
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
@@ -108,6 +109,20 @@ class RipartPlugin:
 
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
+        # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
+        self.connectSignals()
+
+    def connectSignals(self):
+        self.iface.projectRead.connect(self.project_read)
+
+    def project_read(self):
+        for layer in QgsProject.instance().mapLayers().values():
+            if layer.type() != QgsMapLayerType.VectorLayer or layer.providerType() != 'spatialite':
+                continue
+            layer.layerModified.connect(self.enabledActionSaveActiveLayerEdits)
+
+    def enabledActionSaveActiveLayerEdits(self):
+        self.iface.actionSaveActiveLayerEdits().setEnabled(False)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
