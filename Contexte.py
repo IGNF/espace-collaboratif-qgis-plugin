@@ -605,6 +605,9 @@ class Contexte(object):
         nodeGroup.addLayer(newVectorLayer)
         self.guichetLayers.append(newVectorLayer)
 
+        # Connexion des signaux
+        newVectorLayer.layerModified.connect(self.enabledActionSaveActiveLayerEdits)
+
         # On masque les champs de travail et champs internes
         fields = newVectorLayer.fields()
         for i in range(0, fields.count()):
@@ -618,6 +621,10 @@ class Contexte(object):
         message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
         print(message)
         return message
+
+    def enabledActionSaveActiveLayerEdits(self):
+        print("Signal nouvelle couche")
+        self.iface.actionSaveActiveLayerEdits().setEnabled(False)
 
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)
