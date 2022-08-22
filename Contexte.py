@@ -8,8 +8,6 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 
-from PyQt5 import QtGui
-from PyQt5.QtGui import QImage
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
@@ -21,19 +19,14 @@ import shutil
 import ntpath
 import configparser
 
-import requests
-
 from .RipartException import RipartException
 from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
-from .core.Client import Client
 from .core.ClientHelper import ClientHelper
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
 from .core.Sketch import Sketch
 from .FormConnection import FormConnectionDialog
-from .FormInfo import FormInfo
-from .FormChoixGroupe import FormChoixGroupe
 from .core import ConstanteRipart as cst
 from .Import_WMTS import importWMTS
 from .core.GuichetVectorLayer import GuichetVectorLayer
@@ -128,7 +121,7 @@ class Contexte(object):
 
         try:
             # set du répertoire et fichier du projet qgis
-            self.setProjectParams(QgsProject)
+            self.setProjectParams()
 
             # contrôle l'existence du fichier de configuration
             self.checkConfigFile()
@@ -185,7 +178,7 @@ class Contexte(object):
             return None
         return Contexte.instance
 
-    def setProjectParams(self, QgsProject):
+    def setProjectParams(self):
         """set des paramètres du projet
         """
         self.projectDir = QgsProject.instance().homePath()
@@ -261,7 +254,6 @@ class Contexte(object):
         :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
         :rtype int
         """
-        client = None
         self.logger.debug("GetConnexionRipart")
         result = -1
 
@@ -311,7 +303,6 @@ class Contexte(object):
             connectionResult = self.loginWindow.connectionResult
 
         return result
-
 
     def getOrCreateDatabase(self):
         """
@@ -405,7 +396,7 @@ class Contexte(object):
                       'geometryType': structure['attributes'][geometryName]['type']}
 
         vlayer = GuichetVectorLayer(parameters)
-        #plugin_layer = PluginGuichetLayer()
+        # plugin_layer = PluginGuichetLayer()
         # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
@@ -515,7 +506,6 @@ class Contexte(object):
                 break
         config.setColumns(columns)
         layer.setAttributeTableConfig(config)
-
 
     def removeLayersFromProject(self, guichet_layers, maplayers):
         tmp = ''

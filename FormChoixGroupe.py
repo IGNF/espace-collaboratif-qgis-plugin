@@ -83,7 +83,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def openShapeFile(self):
         formats = ["shp", "SHP"]
         filters = u"ESRI Shapefile (*.shp; *.SHP);;"
-        shapefilePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.', filters)
+        shapefilePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.',
+                                                                 filters)
         if shapefilePath != "":
             extension = os.path.splitext(shapefilePath)[1]
             if extension[1:] not in formats:
@@ -130,22 +131,25 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def save(self):
         # Sauvegarde du nom de la zone de travail
         spatialFilterLayerName = self.comboBoxWorkZone.currentText()
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, spatialFilterLayerName, "Map")
+        if spatialFilterLayerName == '':
+            message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou les " \
+                      "données de votre groupe, le chargement se fera sur la totalité du territoire et sera " \
+                      "probablement long. Voulez-vous continuer ?"
+            reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.No:
+                return
+            self.bCancel = False
 
+        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, spatialFilterLayerName,
+                                    "Map")
         print(self.newShapefilesDict)
-
         # Création de la nouvelle couche shapefile
         if spatialFilterLayerName in self.newShapefilesDict:
             self.importShapefile(spatialFilterLayerName)
-
-
         index = self.comboBoxGroup.currentIndex()
         self.idChosenGroup = self.infosgeogroups[index].group.id
         self.nameChosenGroup = self.infosgeogroups[index].group.name
-
         self.newShapefilesDict.clear()
-
-
         self.accept()
         self.bCancel = False
 
