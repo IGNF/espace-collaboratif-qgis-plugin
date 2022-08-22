@@ -110,10 +110,12 @@ class RipartPlugin:
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
         # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
+        # et envoyer les modifs sur le serveur
         self.connectSignals()
 
     def connectSignals(self):
         self.iface.projectRead.connect(self.project_read)
+        self.iface.currentLayerChanged.connect(self.current_layer_changed)
 
     def project_read(self):
         for layer in QgsProject.instance().mapLayers().values():
@@ -125,8 +127,39 @@ class RipartPlugin:
                 continue
             layer.layerModified.connect(self.enabledActionSaveActiveLayerEdits)
 
+    def current_layer_changed(self):
+        editableLayers = self.iface.editableLayers()
+        bFind = False
+        for editableLayer in editableLayers:
+            if not self.searchSpecificLayer(editableLayer.name()):
+                continue
+            layerEditBuffer = editableLayer.editBuffer()
+            if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
+                                                or len(layerEditBuffer.deletedFeatureIds()) > 0):
+                bFind = True
+
+        if bFind:
+            self.actionSaveChanges()
+
+    def actionSaveChanges(self):
+        self.enabledActionSaveActiveLayerEdits()
+        self.enabledActionSaveAllEdits()
+        self.enabledActionSaveEdits()
+        reply = QMessageBox.question(None, 'IGN Espace Collaboratif', "La couche a été modifiée, les modifications "
+                                                                      "vont être envoyées sur le serveur.",
+                                     QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+        self.saveChanges()
+
     def enabledActionSaveActiveLayerEdits(self):
         self.iface.actionSaveActiveLayerEdits().setEnabled(False)
+
+    def enabledActionSaveAllEdits(self):
+        self.iface.actionSaveAllEdits().setEnabled(False)
+
+    def enabledActionSaveEdits (self):
+        self.iface.actionSaveEdits().setEnabled(False)
 
     def searchSpecificLayer(self, layerName):
         if SQLiteManager.isTableExist(cst.TABLEOFTABLES):

@@ -36,13 +36,17 @@ class SQLiteManager(object):
 
     @staticmethod
     def isTableExist(tableName):
+        bFind = True
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         sql = u"SELECT name FROM sqlite_master WHERE type='table' AND name='{}'".format(tableName)
         cur = connection.cursor()
         cur.execute(sql)
         if cur.fetchone() is None:
-            return False
-        return True
+            bFind = False
+        cur.close()
+        connection.commit()
+        connection.close()
+        return bFind
 
     def setAttributesTableToSql(self, geometryName, layer):
         columnDetruitExist = False
