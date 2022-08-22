@@ -117,12 +117,22 @@ class RipartPlugin:
 
     def project_read(self):
         for layer in QgsProject.instance().mapLayers().values():
+            # La désactivation du bouton de sauvegarde n'est valable que sur les couches qui se trouvent
+            # dans la table des tables de la base SQLite, qui sont de type VectorLayer et de connexion avec SQLite
             if layer.type() != QgsMapLayerType.VectorLayer or layer.providerType() != 'spatialite':
+                continue
+            if not self.searchSpecificLayer(layer.name()):
                 continue
             layer.layerModified.connect(self.enabledActionSaveActiveLayerEdits)
 
     def enabledActionSaveActiveLayerEdits(self):
         self.iface.actionSaveActiveLayerEdits().setEnabled(False)
+
+    def searchSpecificLayer(self, layerName):
+        if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+            if SQLiteManager.selectColumnFromTableWithCondition(cst.TABLEOFTABLES, "layer", layerName) is not None:
+                return True
+        return False
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
