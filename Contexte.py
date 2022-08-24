@@ -445,7 +445,6 @@ class Contexte(object):
                                         u"elles resteront disponibles sur l'Espace collaboratif.")
                     return
             """
-
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
             if not self.removeLayersFromProject(guichet_layers, maplayers):
