@@ -433,6 +433,7 @@ class Contexte(object):
             # Il y a déjà un groupe dans le projet
             # Il faut indiquer à l'utilisateur que c'est impossible
             # d'ajouter un nouveau groupe dans le projet
+            """
             if nodeGroup is not None:
                 if nodeGroup.name() != nameGroup and (len(nodesGroup) == 1):
                     QMessageBox.warning(None, "Charger les couches de mon groupe",
@@ -443,6 +444,7 @@ class Contexte(object):
                                         u"ces couches seront simplement supprimées de la carte QGIS en cours, "                                                                                                                                                                    
                                         u"elles resteront disponibles sur l'Espace collaboratif.")
                     return
+            """
 
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
