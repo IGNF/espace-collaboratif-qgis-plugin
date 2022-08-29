@@ -499,6 +499,7 @@ class RipartHelper:
         """
         Création de la table Signalement
         """
+        cur = conn.cursor()
         sql = u"CREATE TABLE Signalement (" + \
               u"id INTEGER NOT NULL PRIMARY KEY," + \
               u"NoSignalement INTEGER," + \
@@ -518,13 +519,12 @@ class RipartHelper:
               u"URL_privé TEXT ," + \
               u"Document TEXT," + \
               u"Autorisation TEXT)"
-        cur = conn.cursor()
         cur.execute(sql)
-
+        conn.commit()
         # creating a POINT Geometry column
         sql = "SELECT AddGeometryColumn('Signalement','geom', " + str(cst.EPSGCRS) + ", 'POINT', 'XY')"
-        cur = conn.cursor()
         cur.execute(sql)
+        cur.close()
         conn.commit()
 
     @staticmethod
@@ -548,12 +548,14 @@ class RipartHelper:
               u"Attributs_croquis," + \
               u"Lien_objet_BDUNI TEXT) "
         cur.execute(sql)
-
+        cur.close()
         # creating a POINT Geometry column
+        cursor = conn.cursor()
         sql = "SELECT AddGeometryColumn('" + table + "',"
         sql += "'geom'," + str(cst.EPSGCRS) + ",'" + geomType + "', 'XY')"
-        cur.execute(sql)
-        cur.close()
+        cursor.execute(sql)
+        cursor.close()
+        conn.commit()
 
     @staticmethod
     def emptyTable(conn, table):

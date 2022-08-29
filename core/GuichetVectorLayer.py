@@ -221,22 +221,27 @@ class GuichetVectorLayer(QgsVectorLayer):
     def setModifyWithQgsSingleDefaultSymbolRenderer(self):
         geomType = self.geometryType()
         symbol = None
+        color = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
         # 'Point'
         if geomType == 0:
             # avant '238,153,0,255'
-            symbol = self.setSymbolPoint('238,153,0,255', '238,153,0,255', 0.5)
+            # symbol = self.setSymbolPoint('238,153,0,255', '238,153,0,255', 0.5)
+            symbol = self.setSymbolPoint(color, color, 0.5)
 
         # 'Polygon'
         if geomType == 2:
-            symbol = self.setSymbolPolygon('238,153,0,255', '238,153,0,255', 'solid', '0', 0.5)
+            # symbol = self.setSymbolPolygon('238,153,0,255', '238,153,0,255', 'solid', '0', 0.5)
+            symbol = self.setSymbolPolygon(color, color, 'solid', '0', 0.5)
 
         # 'LineString'
         if geomType == 1:
-            symbol = self.setSymbolLine('238,153,0,255', 'solid', '238,153,0,255', '2', 1)
+            # symbol = self.setSymbolLine('238,153,0,255', 'solid', '238,153,0,255', '2', 1)
+            symbol = self.setSymbolLine(color, 'solid', color, '2', 1)
 
         if symbol is None:
             symbol = QgsSymbol.defaultSymbol(geomType)
-            symbol.setColor(QColor('238,153,0,255'))
+            # symbol.setColor(QColor('238,153,0,255'))
+            symbol.setColor(color)
             symbol.setOpacity(1)
 
         symbol.setOutputUnit(QgsUnitTypes.RenderUnit.RenderPixels)

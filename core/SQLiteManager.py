@@ -44,7 +44,6 @@ class SQLiteManager(object):
         if cur.fetchone() is None:
             bFind = False
         cur.close()
-        connection.commit()
         connection.close()
         return bFind
 
@@ -110,10 +109,15 @@ class SQLiteManager(object):
         sql += t[0]
         sql += ')'
         cur = connection.cursor()
+        print(sql)
         cur.execute(sql)
+        '''sqlSpatial = 'SELECT InitSpatialMetaData()'
+        print(sqlSpatial)
+        cur.execute(sqlSpatial)'''
         parameters_geometry_column = {'tableName': layer.nom, 'geometryName': tableStructure['geometryName'],
                                       'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
+        print(sqlGeometryColumn)
         cur.execute(sqlGeometryColumn)
         if len(cur.fetchall()) == 0:
             print("SQLiteManager : création de la table {0} réussie".format(layer.nom))
@@ -271,7 +275,8 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} vidée".format(tableName))
 
-    def deleteTable(self, tableName):
+    @staticmethod
+    def deleteTable(tableName):
         sql = u"DROP TABLE {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} détruite".format(tableName))

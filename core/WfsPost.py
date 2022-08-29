@@ -101,12 +101,14 @@ class WfsPost(object):
 
     def setFieldsNameValueWithAttributes(self, feature, attributesChanged):
         fieldsNameValue = ""
-        if not self.isTableStandard:
+        '''if not self.isTableStandard:
             for field in feature.fields():
                 fieldName = field.name()
                 if fieldName == 'cleabs' or fieldName == cst.FINGERPRINT:
                     fieldsNameValue += '"{0}": "{1}", '.format(fieldName, feature.attribute(fieldName))
         else:
+            self.setKey(feature.id(), self.layer.idNameForDatabase)'''
+        if self.isTableStandard:
             self.setKey(feature.id(), self.layer.idNameForDatabase)
         for key, value in attributesChanged.items():
             if value == "NULL" or value is None or value == qgis.core.NULL: #Remplacement par QGIS d'une valeur vide, on n'envoie pas
@@ -137,7 +139,7 @@ class WfsPost(object):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
     def gcms_post(self, strActions):
-        print(strActions)
+        print("Post_action : {}".format(strActions))
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)

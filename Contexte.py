@@ -322,21 +322,25 @@ class Contexte(object):
                 self.logger.error("no espaceco.sqlite found in plugin directory" + format(e))
                 raise e
         try:
-            self.conn = spatialite_connect(self.dbPath)
-
             # creating a Cursor
+            self.conn = spatialite_connect(self.dbPath)
             curs = self.conn.cursor()
+            # create layer Signalement
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
             curs.execute(sql)
+            '''if curs.fetchone() is not None:
+                SQLiteManager.deleteTable('Signalement')
+            SQLiteManager.vacuumDatabase()'''
             if curs.fetchone() is None:
-                # create layer Signalement
                 RipartHelper.createRemarqueTable(self.conn)
-
+            # create layer Croquis
             for lay in RipartHelper.croquis_layers:
                 sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + lay + "'"
                 curs.execute(sql)
+                '''if curs.fetchone() is not None:
+                    SQLiteManager.deleteTable(lay)
+                    SQLiteManager.vacuumDatabase()'''
                 if curs.fetchone() is None:
-                    # create layer
                     RipartHelper.createCroquisTable(self.conn, lay, RipartHelper.croquis_layers[lay])
 
         except RipartException as e:
@@ -381,7 +385,7 @@ class Contexte(object):
         # elle est vidée, détruite et recréée
         if SQLiteManager.isTableExist(layer.nom):
             SQLiteManager.emptyTable(layer.nom)
-            sqliteManager.deleteTable(layer.nom)
+            SQLiteManager.deleteTable(layer.nom)
         bColumnDetruitExist = sqliteManager.createTableFromLayer(layer, structure)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
@@ -425,6 +429,7 @@ class Contexte(object):
                 if layer.type == cst.WFS:
                     nbLayersWFS += 1
 
+            """
             if nodeGroup is None and len(nodesGroup) == 0 and nbLayersWFS != 0:
                 newNode = QgsLayerTreeGroup(nameGroup)
                 root.insertChildNode(0, newNode)
@@ -433,7 +438,6 @@ class Contexte(object):
             # Il y a déjà un groupe dans le projet
             # Il faut indiquer à l'utilisateur que c'est impossible
             # d'ajouter un nouveau groupe dans le projet
-            """
             if nodeGroup is not None:
                 if nodeGroup.name() != nameGroup and (len(nodesGroup) == 1):
                     QMessageBox.warning(None, "Charger les couches de mon groupe",
@@ -445,12 +449,19 @@ class Contexte(object):
                                         u"elles resteront disponibles sur l'Espace collaboratif.")
                     return
             """
+            newNode = QgsLayerTreeGroup(nameGroup)
+            root.insertChildNode(0, newNode)
+            nodeGroup = root.findGroup(nameGroup)
+
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
             if not self.removeLayersFromProject(guichet_layers, maplayers):
                 return
 
             endMessage = ''
+            if len(guichet_layers) == 0:
+                endMessage = 'Pas de couches sélectionnées, fin du chargement\n'
+
             for layer in guichet_layers:
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
@@ -462,7 +473,7 @@ class Contexte(object):
                         layer.isStandard = False
                     sourceLayer = self.importWFS(layer, structure)
                     if not sourceLayer[0].isValid():
-                        print("Layer {} failed to load !".format(layer.nom))
+                        endMessage += "Layer {} failed to load !\n".format(layer.nom)
                         continue
                     endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
                     endMessage += "\n"
@@ -515,7 +526,9 @@ class Contexte(object):
             if layer.nom in maplayers:
                 removeLayers.append(layer.nom)
                 tmp += "{}, ".format(layer.nom)
+        return self.removeLayersById(removeLayers, tmp)
 
+    def removeLayersById(self, removeLayers, tmp):
         if len(removeLayers) == 0:
             return True
 
@@ -632,6 +645,16 @@ class Contexte(object):
 
         maplayers = self.getAllMapLayers()
         root = self.QgsProject.instance().layerTreeRoot()
+
+        '''
+        removeLayers = []
+        tmp = ''
+        for table in RipartHelper.croquis_layers_name:
+            if table in maplayers:
+                removeLayers.append(table)
+                tmp += "{}, ".format(table)
+        self.removeLayersById(removeLayers, tmp)
+        '''
         for table in RipartHelper.croquis_layers_name:
             if table not in maplayers:
                 uri.setDataSource('', table, 'geom')
