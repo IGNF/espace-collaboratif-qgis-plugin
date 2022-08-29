@@ -417,9 +417,10 @@ class Contexte(object):
             # Le groupe existe t-il dans le projet
             nodeGroup = None
             nodesGroup = root.findGroups()
-            for nodeGroup in nodesGroup:
+            for ng in nodesGroup:
                 # Si le groupe existe déjà, on sort
-                if nodeGroup.name() == nameGroup:
+                if ng.name() == nameGroup:
+                    nodeGroup = ng
                     break
 
             # Si le groupe n'existe pas et que des couches doivent être chargées
@@ -428,6 +429,10 @@ class Contexte(object):
             for layer in guichet_layers:
                 if layer.type == cst.WFS:
                     nbLayersWFS += 1
+            if nodeGroup is None and nbLayersWFS != 0:
+                newNode = QgsLayerTreeGroup(nameGroup)
+                root.insertChildNode(0, newNode)
+                nodeGroup = root.findGroup(nameGroup)
 
             """
             if nodeGroup is None and len(nodesGroup) == 0 and nbLayersWFS != 0:
@@ -449,9 +454,6 @@ class Contexte(object):
                                         u"elles resteront disponibles sur l'Espace collaboratif.")
                     return
             """
-            newNode = QgsLayerTreeGroup(nameGroup)
-            root.insertChildNode(0, newNode)
-            nodeGroup = root.findGroup(nameGroup)
 
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
@@ -460,7 +462,7 @@ class Contexte(object):
 
             endMessage = ''
             if len(guichet_layers) == 0:
-                endMessage = 'Pas de couches sélectionnées, fin du chargement\n'
+                endMessage = 'Pas de couches sélectionnées, fin du chargement.\n'
 
             for layer in guichet_layers:
                 '''
@@ -535,7 +537,7 @@ class Contexte(object):
         if len(removeLayers) == 1:
             message = "La couche [{}] existe déjà, elle sera détruite si vous continuez ?".format(tmp[:-2])
         else:
-            message = "Les couches [{}] existent déjà, elles seront détruites si vous continuez ?".format(tmp[:-2])
+            message = "Les couches [{}] existent déjà, elles seront supprimées si vous continuez ?".format(tmp[:-2])
         reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
                                      QMessageBox.No)
         if reply == QMessageBox.No:
@@ -646,15 +648,6 @@ class Contexte(object):
         maplayers = self.getAllMapLayers()
         root = self.QgsProject.instance().layerTreeRoot()
 
-        '''
-        removeLayers = []
-        tmp = ''
-        for table in RipartHelper.croquis_layers_name:
-            if table in maplayers:
-                removeLayers.append(table)
-                tmp += "{}, ".format(table)
-        self.removeLayersById(removeLayers, tmp)
-        '''
         for table in RipartHelper.croquis_layers_name:
             if table not in maplayers:
                 uri.setDataSource('', table, 'geom')

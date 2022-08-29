@@ -83,8 +83,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.spinBox.setValue(cntDays)
         self.spinBox.valueChanged.connect(self.spinboxChanged)
 
-        workArea = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
-        self.lineEditWorkArea.setText(workArea)
+        self.setWorkArea()
 
         self.setAttributCroquis()
 
@@ -94,25 +93,18 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
         self.lineEditGroupeActif.setText(groupeactif)
 
-    # INUTILE - A SUPPRIMER
-    def setComboBoxFilter(self):
-        """
-        Set de la liste des couches de type "polygone" susceptibles d'être utilisées comme zone d'extraction
-        """
-        polyLayers = self.context.getMapPolygonLayers()
-
-        polyList = [val for key, val in polyLayers.items() if val != RipartHelper.nom_Calque_Croquis_Polygone]
-        self.comboBoxFiltre.clear()
-        self.comboBoxFiltre.addItems(polyList)
-
-        zone = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
-
-        index = self.comboBoxFiltre.findText(zone, Qt.MatchFlag.MatchCaseSensitive)
-        if index >= 0:
-            self.comboBoxFiltre.setCurrentIndex(index)
-            self.checkBoxFiltre.setChecked(True)
-        else:
-            self.checkBoxFiltre.setChecked(False)
+    def setWorkArea(self):
+        # Par défaut l'item Zone de travail est vidée
+        self.lineEditWorkArea.setText('')
+        workArea = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
+        layersName = self.context.getAllMapLayers()
+        bFind = False
+        for layerName in layersName:
+            if layerName == workArea:
+                bFind = True
+        # Si la couche existe toujours dans le projet, la ligne Zone de travail est mise à jour du nom de la couche
+        if bFind:
+            self.lineEditWorkArea.setText(workArea)
 
     def setAttributCroquis(self):
         """

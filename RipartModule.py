@@ -699,7 +699,6 @@ class RipartPlugin:
 
             self.context.checkConfigFile()
             self.dlgConfigure = FormConfigure(context=self.context)
-
             self.dlgConfigure.exec_()
 
         except (Exception) as e:
