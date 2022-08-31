@@ -373,16 +373,18 @@ class RipartPlugin:
         self.toolbar.addWidget(self.toolButton2)
 
     def modifyFieldJson(self):
+        QMessageBox.information(None, 'IGN Espace Collaboratif', "En travaux")
+        """
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
         if self.context.client is None:
-            res = self.context.getConnexionRipart(newLogin=True)
-            if not res:
+            if not self.context.getConnexionRipart(newLogin=True):
                 return
         layer = self.iface.activeLayer()
         dlgModifyFieldJson = FieldsJsonView(self.context, layer)
         dlgModifyFieldJson.exec_()
+        """
 
     '''
     def test(self):
