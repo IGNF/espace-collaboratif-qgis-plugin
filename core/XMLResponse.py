@@ -211,10 +211,11 @@ class XMLResponse(object):
                     if tilezoom is not None:
                         layer.tilezoom = tilezoom.text
                     url = nodelayer.find('URL')
-                    if url is not None:
-                        layer.url = url.text
-                        layer.databasename = self.findDatabaseName(url.text)
-                        print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.name, layer.nom, layer.databasename))
+                    if url is None or url.text is None:
+                        continue
+                    layer.url = url.text
+                    layer.databasename = self.findDatabaseName(url.text)
+                    print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.name, layer.nom, layer.databasename))
                     layer_id = nodelayer.find('LAYER')
                     if layer_id is not None:
                         layer.layer_id = layer_id.text
@@ -258,7 +259,7 @@ class XMLResponse(object):
 
         except Exception as e:
             self.logger.error(str(e))
-            raise Exception("Erreur dans la récupération des informations sur le GEOGROUPE")
+            raise Exception("Erreur dans la récupération des informations du groupe " + infosgeogroup.group.name)
 
         return infosgeogroups
 
