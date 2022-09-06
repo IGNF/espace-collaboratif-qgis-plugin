@@ -16,29 +16,27 @@ class BBox(object):
     def __init__(self, context):
         self.context = context
 
-    def getFromLayer(self, filterName):
+    def getFromLayer(self, filterName, bAskConfirmation=True):
         box = None
         self.filterName = filterName
         if self.filterName is not None and len(self.filterName.strip()) > 0:
             self.layerFilter = self.context.getLayerByName(self.filterName)
             box = self.getSpatialFilter()
         else:
-            message = "Le fichier de paramétrage de l'Espace Collaboratif ne contient pas le nom du calque " \
-                      "à utiliser pour le filtrage spatial.\n\n" + \
-                      "Souhaitez-vous poursuivre l'importation des objets sur la France entière ? " + \
-                      "(Cela risque de prendre un certain temps)."
-            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.No:
-                return Box(0.0, 0.0, 0.0, 0.0)
+            if bAskConfirmation:
+                message = "Vous n'avez pas spécifié de zone de travail. \n\n" \
+                          "Souhaitez-vous poursuivre l'import des objets sur la totalité du territoire ? "
+                reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    return Box(0.0, 0.0, 0.0, 0.0)
         return box
 
     def getSpatialFilter(self):
         if self.layerFilter is None:
-            message = "La carte en cours ne contient pas le calque '" + \
+            message = "La carte en cours ne contient pas la couche '" + \
                       self.filterName + \
-                      "' défini pour être le filtrage spatial (ou le calque n'est pas activé).\n\n" + \
-                      "Souhaitez-vous poursuivre le chargement des couches du guichet sur la France entière ? " + \
-                      "(Cela risque de prendre un certain temps)."
+                      "' définie comme zone de travail ou celle-ci n'est pas activée.\n\n" + \
+                      "Souhaitez-vous poursuivre l'import sur la totalité du territoire ? "
             reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:
                 return
@@ -53,7 +51,8 @@ class BBox(object):
 
     def getBBoxAsWkt(self, filterName):
         if filterName is None or len(filterName) == 0 or filterName == '':
-            raise Exception ("La zone de travail est absente, veuillez en importer une.")
+            return None
+            #raise Exception ("La zone de travail est absente, veuillez en importer une.")
         self.layerFilter = self.context.getLayerByName(filterName)
         qgsRectangle = self.layerFilter.extent()
         layerFilterCrs = self.layerFilter.crs()

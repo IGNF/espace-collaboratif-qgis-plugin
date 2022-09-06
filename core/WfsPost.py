@@ -72,7 +72,8 @@ class WfsPost(object):
                       'sridTarget': self.layer.srid, 'geometryType': self.layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
         # Est-ce que la géométrie de l'objet intersecte la bounding box de la zone de travail
-        if not wkt.isBoundingBoxIntersectGeometryObject(self.bbox.getBBoxAsWkt(self.filterName), geometry):
+        bboxWorkingArea = self.bbox.getBBoxAsWkt(self.filterName)
+        if bboxWorkingArea is not None and not wkt.isBoundingBoxIntersectGeometryObject(bboxWorkingArea, geometry):
             return None
         return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase)
 
@@ -186,7 +187,7 @@ class WfsPost(object):
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
-                      'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName),
+                      'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName, False),
                       'detruit': bDetruit, 'isStandard': self.layer.isStandard,
                       'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec}
