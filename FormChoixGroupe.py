@@ -11,7 +11,7 @@ import os
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from qgis.PyQt import uic, QtWidgets
 from PyQt5.QtCore import Qt
-from qgis._core import QgsWkbTypes
+from qgis._core import QgsWkbTypes, QgsLayerTree, QgsLayerTreeLayer
 from qgis.core import QgsProject, QgsVectorLayer
 from .RipartHelper import RipartHelper
 
@@ -125,7 +125,16 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
             if not vlayer.isValid():
                 print("Layer {0} failed to load!".format(shapefileLayerName))
-            QgsProject.instance().addMapLayer(vlayer)
+
+            root = QgsProject.instance().layerTreeRoot()
+            QgsProject.instance().addMapLayer(vlayer, False)
+            #root.insertLayer(len(root.children()), vlayer)
+            root.insertLayer(-1, vlayer)
+
+            #root.setHasCustomLayerOrder(True)
+            #root.setCustomLayerOrder(layerOrder)
+
+
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
     def save(self):
