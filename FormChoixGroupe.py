@@ -127,12 +127,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 print("Layer {0} failed to load!".format(shapefileLayerName))
 
             root = QgsProject.instance().layerTreeRoot()
-            QgsProject.instance().addMapLayer(vlayer, False)
-            #root.insertLayer(len(root.children()), vlayer)
+            QgsProject.instance().addMapLayer(vlayer, False) # False pour que la couche ne soit pas immédiatement ajoutée au gestionnaire de couches
             root.insertLayer(-1, vlayer)
 
-            #root.setHasCustomLayerOrder(True)
-            #root.setCustomLayerOrder(layerOrder)
 
 
 
