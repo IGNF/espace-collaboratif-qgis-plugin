@@ -192,7 +192,10 @@ class SQLiteManager(object):
                     dict_object = {}
                     for lv in value:
                         for k, v in lv.items():
-                            dict_object[k] = v.replace("'", "''")
+                            if v is None:
+                                dict_object[k] = v
+                            else:
+                                dict_object[k] = v.replace("'", "''")
                         listToJson = "'{}',".format(json.dumps(dict_object, sort_keys=True, indent=2))
                     tmpValues += listToJson
                     continue
