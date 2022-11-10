@@ -6,7 +6,7 @@ from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
 from .XMLResponse import XMLResponse
-
+from RipartHelper import RipartHelper
 from . import ConstanteRipart as cst
 from .Wkt import Wkt
 from .BBox import BBox
@@ -102,13 +102,6 @@ class WfsPost(object):
 
     def setFieldsNameValueWithAttributes(self, feature, attributesChanged):
         fieldsNameValue = ""
-        '''if not self.isTableStandard:
-            for field in feature.fields():
-                fieldName = field.name()
-                if fieldName == 'cleabs' or fieldName == cst.FINGERPRINT:
-                    fieldsNameValue += '"{0}": "{1}", '.format(fieldName, feature.attribute(fieldName))
-        else:
-            self.setKey(feature.id(), self.layer.idNameForDatabase)'''
         if self.isTableStandard:
             self.setKey(feature.id(), self.layer.idNameForDatabase)
         for key, value in attributesChanged.items():
@@ -184,10 +177,16 @@ class WfsPost(object):
             SQLiteManager.vacuumDatabase()
             self.layer.reload()
 
+        # Zone de travail pour filtrer plus finement les objets extraits avec la box
+        workZone = RipartHelper.getGeometryWorkZone(self.context.projectDir)
+        if workZone is None:
+            return
+
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
                       'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName, False),
+                      'spatialFilter': workZone,
                       'detruit': bDetruit, 'isStandard': self.layer.isStandard,
                       'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec}

@@ -762,3 +762,29 @@ class RipartHelper:
         else:
             opener = "open" if sys.platform == "darwin" else "xdg-open"
             subprocess.call([opener, filename])
+
+    @staticmethod
+    def getGeometryWorkZone(projectDir):
+        geometryWorkZone = None
+        nameWorkZone = RipartHelper.load_CalqueFiltrage(projectDir).text
+        layerWorkZone = QgsProject.instance().mapLayersByName(nameWorkZone)
+        if len(layerWorkZone) > 1:
+            return geometryWorkZone
+        layerWorkZone[0].startEditing()
+        layerWorkZone[0].selectAll()
+        feats = layerWorkZone[0].selectedFeatures()
+        nb = len(list(feats))
+        if nb > 1:
+            message = "Le filtrage des objets sera impossible car la couche {0} contient plusieurs objets." \
+                      "Il faut une seule zone de travail pour filtrer les objets après extraction des données.".format(nameWorkZone)
+            QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=5)
+            return geometryWorkZone
+        for feat in feats:
+            geometryWorkZone = feat.geometry()
+        if len(list(geometryWorkZone.parts())) > 1:
+             message = "Le filtrage des objets sera impossible car la zone de travail est une surface multiple." \
+                      "Il faut une surface simple pour filtrer les objets après extraction des données.".format(nameWorkZone)
+             QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=5)
+             return geometryWorkZone
+        layerWorkZone[0].rollBack()
+        return geometryWorkZone

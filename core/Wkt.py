@@ -49,3 +49,10 @@ class Wkt(object):
         if boundingBoxGeometryEngine.intersects(qgsGeometryObject.constGet()):
             return True
         return False
+
+    def isGeometryObjectIntersectSpatialFilter(self, spatialFilterGeometry, qgsGeometryObject):
+        objectGeometryEngine = QgsGeometry.createGeometryEngine(qgsGeometryObject.constGet())
+        objectGeometryEngine.prepareGeometry()
+        if objectGeometryEngine.intersects(spatialFilterGeometry.constGet()):
+            return True
+        return False

@@ -2,7 +2,7 @@ import ntpath
 import json
 
 from qgis.utils import spatialite_connect
-from qgis.core import QgsProject
+from qgis.core import QgsProject, QgsGeometry
 from . import ConstanteRipart as cst
 from .Wkt import Wkt
 
@@ -169,10 +169,53 @@ class SQLiteManager(object):
         else:
             return ''
 
-    def setColumnsValuesForInsert(self, attributesRow, parameters):
+    def setColumnsValuesForInsertWithSpatialFilter(self, attributesRow, parameters, bboxWorkingArea, wkt):
         tmpColumns = '('
         tmpValues = '('
-        wkt = Wkt(parameters)
+        for column, value in attributesRow.items():
+            if column == parameters['geometryName']:
+                # si la géometrie n'est pas dans la zone de travail alors on renvoie un tuple avec du vide
+                geom = QgsGeometry.fromWkt(value)
+                if not wkt.isGeometryObjectIntersectSpatialFilter(bboxWorkingArea, geom):
+                    return "", ""
+                tmpColumns += '{0},'.format(column)
+                tmpValues += wkt.toGetGeometry(value)
+                continue
+            elif column == cst.ID_SQLITE:
+                tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
+            else:
+                tmpColumns += '{0},'.format(column)
+            if value is None:
+                tmpValues += "'',"
+            else:
+                if type(value) == str:
+                    value = value.replace("'", "''")
+                if type(value) == list:
+                    listToJson = ''
+                    dict_object = {}
+                    for lv in value:
+                        for k, v in lv.items():
+                            if v is None:
+                                dict_object[k] = v
+                            else:
+                                dict_object[k] = v.replace("'", "''")
+                        listToJson = "'{}',".format(json.dumps(dict_object, sort_keys=True, indent=2))
+                    tmpValues += listToJson
+                    continue
+                tmpValues += "'{}',".format(value)
+        # si la table sqlite contient la colonne gcms_fingerprint et "isTableStandard" est à False
+        # alors la colonne 'is_fingerprint' est remplie à 1 dans les autres cas à 0
+        tmpColumns += '{0})'.format(cst.IS_FINGERPRINT)
+        if parameters['isStandard']:
+            tmpValues += "'0')"
+        else:
+            tmpValues += "'1')"
+        # sinon on renvoie un tuple contenant l'ensemble des colonnes et valeurs pour l'insertion dans la table
+        return tmpColumns, tmpValues
+
+    def setColumnsValuesForInsert(self, attributesRow, parameters, wkt):
+        tmpColumns = '('
+        tmpValues = '('
         for column, value in attributesRow.items():
             if column == parameters['geometryName']:
                 tmpColumns += '{0},'.format(column)
@@ -200,11 +243,8 @@ class SQLiteManager(object):
                     tmpValues += listToJson
                     continue
                 tmpValues += "'{}',".format(value)
-        # si la table sqlite contient :
-        # la colonne gcms_fingerprint
-        # et "isTableStandard" est à False
-        # alors la colonne 'is_fingerprint' est remplie à 1
-        # dans les autres cas à 0
+        # si la table sqlite contient la colonne gcms_fingerprint et "isTableStandard" est à False
+        # alors la colonne 'is_fingerprint' est remplie à 1 dans les autres cas à 0
         tmpColumns += '{0})'.format(cst.IS_FINGERPRINT)
         if parameters['isStandard']:
             tmpValues += "'0')"
@@ -232,15 +272,37 @@ class SQLiteManager(object):
                 cleabss.append(data['feature']['cleabs'])
         SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
-    def insertRowsInTable(self, parameters, attributesRows):
+    def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, bboxWorkingArea):
         totalRows = 0
         if len(attributesRows) == 0:
             return totalRows
+        wkt = Wkt(parameters)
         # Insertion des lignes dans la table
         connection = spatialite_connect(self.dbPath)
         cur = connection.cursor()
         for attributesRow in attributesRows:
-            columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters)
+            columnsValues = self.setColumnsValuesForInsertWithSpatialFilter(attributesRow, parameters, bboxWorkingArea, wkt)
+            # si le tuple est vide alors l'objet est en dehors de la zone de travail
+            if columnsValues[0] == '' and columnsValues[1] == '':
+                continue
+            sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
+            cur.execute(sql)
+            totalRows += 1
+        cur.close()
+        connection.commit()
+        connection.close()
+        return totalRows
+
+    def insertRowsInTable(self, parameters, attributesRows):
+        totalRows = 0
+        if len(attributesRows) == 0:
+            return totalRows
+        wkt = Wkt(parameters)
+        # Insertion des lignes dans la table
+        connection = spatialite_connect(self.dbPath)
+        cur = connection.cursor()
+        for attributesRow in attributesRows:
+            columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters, wkt)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
             cur.execute(sql)
             totalRows += 1

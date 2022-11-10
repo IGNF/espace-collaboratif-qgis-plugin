@@ -328,18 +328,12 @@ class Contexte(object):
             # create layer Signalement
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
             curs.execute(sql)
-            '''if curs.fetchone() is not None:
-                SQLiteManager.deleteTable('Signalement')
-            SQLiteManager.vacuumDatabase()'''
             if curs.fetchone() is None:
                 RipartHelper.createRemarqueTable(self.conn)
             # create layer Croquis
             for lay in RipartHelper.croquis_layers:
                 sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + lay + "'"
                 curs.execute(sql)
-                '''if curs.fetchone() is not None:
-                    SQLiteManager.deleteTable(lay)
-                    SQLiteManager.vacuumDatabase()'''
                 if curs.fetchone() is None:
                     RipartHelper.createCroquisTable(self.conn, lay, RipartHelper.croquis_layers[lay])
 
@@ -349,33 +343,6 @@ class Contexte(object):
         finally:
             curs.close()
             self.conn.close()
-
-    '''
-    def appendUri_WFS(self, url, nomCouche, bbox):
-        uri = QgsDataSourceUri()
-        uri.setConnection("", "", self.login, self.pwd)
-        uri.setParam('request', 'GetFeature')
-        if str(bbox) != "None":
-            uri.setParam('bbox', bbox.bboxToString())
-
-        # Mon guichet
-        if '&' in url:
-            tmp = url.split('&')
-            database = tmp[1].split('=')
-            typeName = "{}:{}".format(database[1], nomCouche)
-            uri.setParam('url', tmp[0])
-            uri.setParam('typename', typeName)
-            uri.setParam('filter', 'detruit:false')
-            uri.setParam('maxNumFeatures', '5000')
-            uri.setParam('pagingEnabled', 'true')
-            uri.setParam('restrictToRequestBBOX', '1')
-        # Autres Geoservices
-        else:
-            uri.setParam('url', url)
-            uri.setParam('service', cst.WFS)
-
-        return uri
-    '''
 
     def importWFS(self, layer, structure):
         # Création éventuelle de la table SQLite liée à la couche
@@ -405,7 +372,7 @@ class Contexte(object):
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
 
-    def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
+    def addGuichetLayersToMap(self, guichet_layers, bbox, workZone, nameGroup, progress):
         """
         Add guichet layers to the current map
         """
@@ -434,27 +401,6 @@ class Contexte(object):
                 root.insertChildNode(0, newNode)
                 nodeGroup = root.findGroup(nameGroup)
 
-            """
-            if nodeGroup is None and len(nodesGroup) == 0 and nbLayersWFS != 0:
-                newNode = QgsLayerTreeGroup(nameGroup)
-                root.insertChildNode(0, newNode)
-                nodeGroup = root.findGroup(nameGroup)
-
-            # Il y a déjà un groupe dans le projet
-            # Il faut indiquer à l'utilisateur que c'est impossible
-            # d'ajouter un nouveau groupe dans le projet
-            if nodeGroup is not None:
-                if nodeGroup.name() != nameGroup and (len(nodesGroup) == 1):
-                    QMessageBox.warning(None, "Charger les couches de mon groupe",
-                                        u"Votre projet QGIS contient des couches d'un autre groupe Espace "
-                                        u"collaboratif (" + nodeGroup.name() + "). \nPour pouvoir charger les données "
-                                        u"du groupe " + nameGroup + ", veuillez supprimer les couches existantes de "
-                                        u"votre projet QGIS ou travailler dans un nouveau projet." + "\n\nNB : "
-                                        u"ces couches seront simplement supprimées de la carte QGIS en cours, "                                                                                                                                                                    
-                                        u"elles resteront disponibles sur l'Espace collaboratif.")
-                    return
-            """
-
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
             if not self.removeLayersFromProject(guichet_layers, maplayers):
@@ -464,7 +410,11 @@ class Contexte(object):
             if len(guichet_layers) == 0:
                 endMessage = 'Pas de couches sélectionnées, fin du chargement.\n'
 
+            progress.setMaximum(len(guichet_layers))
+            i = 0
             for layer in guichet_layers:
+                i += 1
+                progress.setValue(i)
                 '''
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
@@ -477,7 +427,8 @@ class Contexte(object):
                     if not sourceLayer[0].isValid():
                         endMessage += "Layer {} failed to load !\n".format(layer.nom)
                         continue
-                    endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
+                    endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, workZone,
+                                                   sourceLayer[1])
                     endMessage += "\n"
 
                 '''
@@ -552,7 +503,7 @@ class Contexte(object):
         self.QgsProject.instance().removeMapLayers(layerIds)
         return True
 
-    def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
+    def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, workZone, bColumnDetruitExist):
         geometryName = structure['geometryName']
         newVectorLayer.isStandard = layer.isStandard
         idNameForDatabase = structure['idName']
@@ -567,7 +518,7 @@ class Contexte(object):
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.nom, 'role': layer.role,
                       'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
-                      'sridLayer': sridLayer, 'bbox': bbox,
+                      'sridLayer': sridLayer, 'bbox': bbox, 'workZone': workZone,
                       'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
                       'is3D': structure['attributes'][geometryName]['is3d'], 'urlTransaction': None, 'numrec': "0"}
         wfsGet = WfsGet(self, parameters)
