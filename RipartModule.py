@@ -429,11 +429,14 @@ class RipartPlugin:
         if self.context is None:
             return
         if self.context.client is None:
-            res = self.context.getConnexionRipart(newLogin=True)
-            if not res:
+            if not self.context.getConnexionRipart(newLogin=True):
                 return
         messages = []
         # Une transaction par couche modifiée
+        # Zone de travail pour filtrer plus finement les objets extraits avec la box
+        workZone = RipartHelper.getGeometryWorkZone(self.context.projectDir)
+        if workZone is None:
+            return
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         for layer in QgsProject.instance().mapLayers().values():
             bRes = False
@@ -447,7 +450,7 @@ class RipartPlugin:
             if not editBuffer:
                 continue
             wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
-            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer)))
+            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, workZone)))
 
         # Message de fin de transaction
         dlgInfo = FormInfo()
@@ -468,6 +471,12 @@ class RipartPlugin:
             res = self.context.getConnexionRipart(newLogin=True)
             if not res:
                 return
+
+        # Zone de travail pour filtrer plus finement les objets extraits avec la box
+        workZone = RipartHelper.getGeometryWorkZone(self.context.projectDir)
+        if workZone is None:
+            return
+
         # Une synchronisation par couche
         spatialFilterName = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
@@ -545,6 +554,7 @@ class RipartPlugin:
             parameters['detruit'] = bDetruit
             numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
             parameters['numrec'] = numrec
+            parameters['workZone'] = workZone
             wfsGet = WfsGet(self.context, parameters)
             # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser
             # Il faut aussi qu'il soit différent de 0, ce numrec correspondant à une table non BDUni

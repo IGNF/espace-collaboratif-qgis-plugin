@@ -169,14 +169,15 @@ class SQLiteManager(object):
         else:
             return ''
 
-    def setColumnsValuesForInsertWithSpatialFilter(self, attributesRow, parameters, bboxWorkingArea, wkt):
+    def setColumnsValuesForInsertWithSpatialFilter(self, attributesRow, parameters, geomWorkingArea, wkt):
         tmpColumns = '('
         tmpValues = '('
         for column, value in attributesRow.items():
             if column == parameters['geometryName']:
                 # si la géometrie n'est pas dans la zone de travail alors on renvoie un tuple avec du vide
                 geom = QgsGeometry.fromWkt(value)
-                if not wkt.isGeometryObjectIntersectSpatialFilter(bboxWorkingArea, geom):
+                newGeom = wkt.transformGeometry(geom)
+                if not wkt.isGeometryObjectIntersectSpatialFilter(geomWorkingArea, newGeom):
                     return "", ""
                 tmpColumns += '{0},'.format(column)
                 tmpValues += wkt.toGetGeometry(value)
@@ -272,7 +273,7 @@ class SQLiteManager(object):
                 cleabss.append(data['feature']['cleabs'])
         SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
-    def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, bboxWorkingArea):
+    def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, geomWorkingArea):
         totalRows = 0
         if len(attributesRows) == 0:
             return totalRows
@@ -281,7 +282,7 @@ class SQLiteManager(object):
         connection = spatialite_connect(self.dbPath)
         cur = connection.cursor()
         for attributesRow in attributesRows:
-            columnsValues = self.setColumnsValuesForInsertWithSpatialFilter(attributesRow, parameters, bboxWorkingArea, wkt)
+            columnsValues = self.setColumnsValuesForInsertWithSpatialFilter(attributesRow, parameters, geomWorkingArea, wkt)
             # si le tuple est vide alors l'objet est en dehors de la zone de travail
             if columnsValues[0] == '' and columnsValues[1] == '':
                 continue

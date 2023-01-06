@@ -449,8 +449,7 @@ class Contexte(object):
                     message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
                     print(message)
                     endMessage += message
-
-            # Refraichissement de la carte
+            # Rafraichissement de la carte
             self.mapCan.refresh()
             QMessageBox.information(None, "IGN Espace collaboratif", endMessage)
 

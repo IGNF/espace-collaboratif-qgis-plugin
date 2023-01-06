@@ -6,11 +6,10 @@ from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
 from .XMLResponse import XMLResponse
-from RipartHelper import RipartHelper
 from . import ConstanteRipart as cst
 from .Wkt import Wkt
 from .BBox import BBox
-
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 
 class WfsPost(object):
     context = None
@@ -67,13 +66,27 @@ class WfsPost(object):
     def setHeader(self):
         return '{"feature": {'
 
+    def getGeometryWorkingArea(self):
+        self.layerWorkingArea = self.context.getLayerByName(self.filterName)
+        layerWorkingAreaCrs = self.layerWorkingArea.crs()
+        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        coordTransform = QgsCoordinateTransform(layerWorkingAreaCrs, destCrs, QgsProject.instance())
+        featureIds = self.layerWorkingArea.selectedFeatureIds()
+        geomWorkingArea = self.layerWorkingArea.getGeometry(featureIds[0])
+        if destCrs != layerWorkingAreaCrs:
+            geomWorkingArea.transform(coordTransform)
+        return geomWorkingArea
+
     def setGeometry(self, geometry):
         parameters = {'geometryName': self.layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS,
                       'sridTarget': self.layer.srid, 'geometryType': self.layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
         # Est-ce que la géométrie de l'objet intersecte la bounding box de la zone de travail
-        bboxWorkingArea = self.bbox.getBBoxAsWkt(self.filterName)
-        if bboxWorkingArea is not None and not wkt.isBoundingBoxIntersectGeometryObject(bboxWorkingArea, geometry):
+        # bboxWorkingArea = self.bbox.getBBoxAsWkt(self.filterName)
+        # if bboxWorkingArea is not None and not wkt.isBoundingBoxIntersectGeometryObject(bboxWorkingArea, geometry):
+        #     return None
+        # Est-ce que la géométrie de l'objet intersecte la zone de travail
+        if not wkt.isGeometryObjectIntersectSpatialFilter(self.getGeometryWorkingArea(), geometry):
             return None
         return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase)
 
@@ -132,7 +145,7 @@ class WfsPost(object):
     def setClientId(self, clientFeatureId):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
-    def gcms_post(self, strActions):
+    def gcms_post(self, strActions, workZone):
         print("Post_action : {}".format(strActions))
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
@@ -145,7 +158,7 @@ class WfsPost(object):
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # mise à jour de la couche
-            self.synchronize()
+            self.synchronize(workZone)
             numrec = self.getNumrecFromTransaction(message['urlTransaction'])
             # cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
@@ -166,7 +179,7 @@ class WfsPost(object):
         data = json.loads(response)
         return data['numrec']
 
-    def synchronize(self):
+    def synchronize(self, workZone):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
@@ -177,23 +190,18 @@ class WfsPost(object):
             SQLiteManager.vacuumDatabase()
             self.layer.reload()
 
-        # Zone de travail pour filtrer plus finement les objets extraits avec la box
-        workZone = RipartHelper.getGeometryWorkZone(self.context.projectDir)
-        if workZone is None:
-            return
-
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
                       'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName, False),
-                      'spatialFilter': workZone,
+                      'workZone': workZone,
                       'detruit': bDetruit, 'isStandard': self.layer.isStandard,
                       'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)
         wfsGet.gcms_get()
 
-    def commitLayer(self, currentLayer, editBuffer):
+    def commitLayer(self, currentLayer, editBuffer, workZone):
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
         self.actions.clear()
 
@@ -234,7 +242,7 @@ class WfsPost(object):
             self.transactionReport += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
         strActions = self.formatItemActions()
         self.endReport += self.transactionReport
-        endTransaction = self.gcms_post(strActions)
+        endTransaction = self.gcms_post(strActions, workZone)
         self.endReport += self.setEndReport(endTransaction)
         return self.endReport
 

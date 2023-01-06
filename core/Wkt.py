@@ -20,6 +20,11 @@ class Wkt(object):
         crsTarget = QgsCoordinateReferenceSystem(self.sridTarget)
         return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
 
+    def transformGeometry(self, geom):
+        tr = self.setCoordinateTransform()
+        geom.transform(tr)
+        return geom
+
     def toGetGeometry(self, txtGeometry):
         geometry = QgsGeometry.fromWkt(txtGeometry)
         geometry.transform(self.crsTransform)

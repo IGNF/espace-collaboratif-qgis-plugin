@@ -122,7 +122,6 @@ class WfsGet(object):
             # si c'est une table non BDUni ou une extraction,
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
             if self.isStandard or bExtraction:
-                #totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
                 totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
                                                                               response['features'], self.spatialFilter)
             # sinon c'est une synchronisation (maj) de toutes les couches
@@ -133,15 +132,13 @@ class WfsGet(object):
                     cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
                     if len(cleabs) == 0:
                         # création d'un nouvel objet
-                        #totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
                         totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
-                                                                         [feature], self.spatialFilter)
+                                                                                      [feature], self.spatialFilter)
                     else:
                         # modification d'un objet
                         # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
                         # l'ancien enregistrement et en insérer un nouveau
                         SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
-                        #totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
                         totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
                                                                                       [feature], self.spatialFilter)
             self.setOffset(response['offset'])
