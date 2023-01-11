@@ -579,7 +579,6 @@ class Contexte(object):
         return message
 
     def enabledActionSaveActiveLayerEdits(self):
-        print("Signal nouvelle couche")
         self.iface.actionSaveActiveLayerEdits().setEnabled(False)
 
     def getUriDatabaseSqlite(self):

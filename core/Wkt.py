@@ -1,4 +1,5 @@
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes,\
+    QgsPoint, QgsAbstractGeometry
 
 
 class Wkt(object):
@@ -30,7 +31,8 @@ class Wkt(object):
         geometry.transform(self.crsTransform)
         return "GeomFromText('{0}', {1}),".format(geometry.asWkt(), self.sridTarget)
 
-    def toPostGeometry(self, qgsGeometry, is3D):
+    # TODO ajouter un parametre pour distinguer une géométrie BDUNI
+    def toPostGeometry(self, qgsGeometryObject, is3D, bBDUni):
         # Vérification du type géométrique entre QGIS et le serveur
         # et transformation du type le cas échéant
         # Comme par exemple les équipements de transport qui sont de type géométrique
@@ -40,12 +42,20 @@ class Wkt(object):
         # couches BDUni
         if is3D == 1:
             serverGeometryTypePost += 'Z'
-        objectWkbTypeGeometry = qgsGeometry.wkbType()
+        objectWkbTypeGeometry = qgsGeometryObject.wkbType()
         strObjectWkbTypeGeometry = QgsWkbTypes.displayString(objectWkbTypeGeometry)
         if strObjectWkbTypeGeometry != serverGeometryTypePost and not(strObjectWkbTypeGeometry.startswith(serverGeometryType)):
-            qgsGeometry.convertToMultiType()
-        qgsGeometry.transform(self.crsTransform)
-        return '"{0}": "{1}"'.format(self.geometryName, qgsGeometry.asWkt())
+            qgsGeometryObject.convertToMultiType()
+        qgsGeometryObject.transform(self.crsTransform)
+
+        # Cas particulier de la BDUni, voir ticket http://sd-redmine.ign.fr/issues/15746
+        if bBDUni is True:
+            geometryWithModifiedZ = qgsGeometryObject.get()
+            geometryWithModifiedZ.dropZValue()
+            geometryWithModifiedZ.addZValue(-1000.)
+            qgsGeometryObject.set(geometryWithModifiedZ)
+
+        return '"{0}": "{1}"'.format(self.geometryName, qgsGeometryObject.asWkt())
 
     def isBoundingBoxIntersectGeometryObject(self, boundingBoxSpatialFilter, qgsGeometryObject):
         boundingBoxGeometry = QgsGeometry.fromWkt(boundingBoxSpatialFilter)

@@ -77,7 +77,7 @@ class WfsPost(object):
             geomWorkingArea.transform(coordTransform)
         return geomWorkingArea
 
-    def setGeometry(self, geometry):
+    def setGeometry(self, geometry, bBDUni):
         parameters = {'geometryName': self.layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS,
                       'sridTarget': self.layer.srid, 'geometryType': self.layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
@@ -88,12 +88,12 @@ class WfsPost(object):
         # Est-ce que la géométrie de l'objet intersecte la zone de travail
         if not wkt.isGeometryObjectIntersectSpatialFilter(self.getGeometryWorkingArea(), geometry):
             return None
-        return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase)
+        return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase, bBDUni)
 
-    def setGeometries(self, changedGeometries):
+    def setGeometries(self, changedGeometries, bBDUni):
         geometries = {}
         for featureId, geometry in changedGeometries.items():
-            postGeometry = self.setGeometry(geometry)
+            postGeometry = self.setGeometry(geometry, bBDUni)
             if postGeometry is None:
                 raise Exception("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le "
                                 "déplacer ou le supprimer.")
@@ -217,17 +217,23 @@ class WfsPost(object):
             self.endReport += self.transactionReport
             return self.endReport
 
+        # Est-ce une table BDUni
+        result = SQLiteManager.isColumnExist(currentLayer, cst.FINGERPRINT)
+        bBDUni = False
+        if result[0] == 1:
+            bBDUni = True
+
         # ajout
         if len(addedFeatures) != 0:
-            self.pushAddedFeatures(addedFeatures)
+            self.pushAddedFeatures(addedFeatures, bBDUni)
             self.setIsFingerPrint(addedFeatures)
             self.transactionReport += "<br/>Objets créés : {0}\n".format(len(addedFeatures))
 
         # géométrie modifiée et/ou attributs modifiés
         if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
-            self.pushChangedAttributesAndGeometries(changedAttributeValues, changedGeometries)
+            self.pushChangedAttributesAndGeometries(changedAttributeValues, changedGeometries, bBDUni)
         elif len(changedGeometries) != 0:
-            self.pushChangedGeometries(changedGeometries)
+            self.pushChangedGeometries(changedGeometries, bBDUni)
         elif len(changedAttributeValues) != 0:
             self.pushChangedAttributeValues(changedAttributeValues)
 
@@ -259,11 +265,11 @@ class WfsPost(object):
             information = '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
         return information
 
-    def pushAddedFeatures(self, addedFeatures):
+    def pushAddedFeatures(self, addedFeatures, bBDUni):
         for feature in addedFeatures:
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValue(feature)
-            postGeometry = self.setGeometry(feature.geometry())
+            postGeometry = self.setGeometry(feature.geometry(), bBDUni)
             if postGeometry is None:
                 raise Exception ("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le déplacer "
                                  "ou le supprimer.")
@@ -274,11 +280,11 @@ class WfsPost(object):
             strFeature += '}'
             self.actions.append(strFeature)
 
-    def pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries):
+    def pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
         idsGeom = []
         idsAtt = []
         # Récupération des géométries par identifiant d'objet
-        geometries = self.setGeometries(changedGeometries)
+        geometries = self.setGeometries(changedGeometries, bBDUni)
         # Traitement des actions doubles (ou simples) sur un objet (geometrie, attributs)
         for featureId, attributes in changedAttributeValues.items():
             feature = self.layer.getFeature(featureId)
@@ -312,7 +318,7 @@ class WfsPost(object):
         elif len(changedAttributeValues) != 0:
             self.pushChangedAttributeValues(changedAttributeValues)
 
-    def pushChangedGeometries(self, changedGeometries):
+    def pushChangedGeometries(self, changedGeometries, bBDUni):
         for featureId, geometry in changedGeometries.items():
             result = SQLiteManager.selectRowsInTable(self.layer, [featureId])
             for r in result:
@@ -323,7 +329,7 @@ class WfsPost(object):
                     strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
                 else:
                     strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
-                postGeometry = self.setGeometry(geometry)
+                postGeometry = self.setGeometry(geometry, bBDUni)
                 if postGeometry is None:
                     raise Exception("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le "
                                     "déplacer ou le supprimer.")
