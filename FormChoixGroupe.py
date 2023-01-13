@@ -121,17 +121,23 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     def importShapefile(self, shapefileLayerName):
         shapefilePath = self.newShapefilesDict[shapefileLayerName]
-        if shapefilePath is not None:
-            vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
-            if not vlayer.isValid():
-                print("Layer {0} failed to load!".format(shapefileLayerName))
+        if shapefilePath is None:
+            return "Impossible d'importer le fichier {0}".format(shapefilePath)
 
-            root = QgsProject.instance().layerTreeRoot()
-            QgsProject.instance().addMapLayer(vlayer, False) # False pour que la couche ne soit pas immédiatement ajoutée au gestionnaire de couches
-            root.insertLayer(-1, vlayer)
+        vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
+        if not vlayer.isValid():
+            return "Layer {0} failed to load!".format(shapefileLayerName)
 
-
-
+        root = QgsProject.instance().layerTreeRoot()
+        # False pour que la couche ne soit pas immédiatement ajoutée au gestionnaire de couches
+        QgsProject.instance().addMapLayer(vlayer, False)
+        root.insertLayer(-1, vlayer)
+        # si le système de coordonnées de référence assigné (SCR) est vide, il faut le signaler à l'utilisateur
+        sourcecrs = vlayer.sourceCrs()
+        if sourcecrs.isValid() is False:
+            return "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez le " \
+                   "renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence assigné]".format(vlayer.name())
+        return ""
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
     def save(self):
@@ -148,16 +154,20 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, spatialFilterLayerName,
                                     "Map")
-        print(self.newShapefilesDict)
+
         # Création de la nouvelle couche shapefile
+        message = ""
         if spatialFilterLayerName in self.newShapefilesDict:
-            self.importShapefile(spatialFilterLayerName)
+            message = self.importShapefile(spatialFilterLayerName)
         index = self.comboBoxGroup.currentIndex()
         self.idChosenGroup = self.infosgeogroups[index].group.id
         self.nameChosenGroup = self.infosgeogroups[index].group.name
         self.newShapefilesDict.clear()
         self.accept()
         self.bCancel = False
+        if message != "":
+            print(message)
+            raise Exception(message)
 
     """
     Retourne l'identifiant du groupe de l'utilisateur
