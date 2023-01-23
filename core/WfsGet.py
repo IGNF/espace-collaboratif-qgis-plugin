@@ -135,7 +135,7 @@ class WfsGet(object):
                     cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
                     if len(cleabs) == 0:
                         # création d'un nouvel objet
-                        totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response[feature])
+                        totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
                         # totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
                         #                                                               [feature], self.spatialFilter)
                     else:
