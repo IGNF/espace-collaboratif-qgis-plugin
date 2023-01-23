@@ -1,3 +1,4 @@
+# coding=utf-8
 from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 
@@ -43,6 +44,14 @@ class BBox(object):
         else:
             layerFilterExtent = self.layerFilter.extent()
             layerFilterCrs = self.layerFilter.crs()
+
+            if layerFilterCrs.isValid() is False:
+                message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez le " \
+                          "renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence assigné]".format(
+                    self.filterName)
+                QMessageBox.information(None, "IGN Espace collaboratif", message)
+                return Box(0.0, 0.0, 0.0, 0.0)
+
             destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
             coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
             newLayerFilterExtent = coordTransform.transform(layerFilterExtent)

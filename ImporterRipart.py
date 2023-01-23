@@ -70,16 +70,25 @@ class ImporterRipart(object):
             raise NoProfileException(
                 "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
-        self.context.addRipartLayersToMap()
+
 
         # filtre spatial
         bbox = BBox(self.context)
         box = bbox.getFromLayer(RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+
+        # si la box est à None alors, l'utilisateur veut extraire France entière
+        # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
+        # ne souhaite pas extraire les données France entière et on sort
+        if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
+            return
+
         filtreLay = None
         filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
         if filtre is not None and len(filtre.strip()) > 0:
             self.logger.debug("Spatial filter :" + filtre)
             filtreLay = self.context.getLayerByName(filtre)
+
+        self.context.addRipartLayersToMap()
 
         QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
 

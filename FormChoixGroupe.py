@@ -135,8 +135,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # si le système de coordonnées de référence assigné (SCR) est vide, il faut le signaler à l'utilisateur
         sourcecrs = vlayer.sourceCrs()
         if sourcecrs.isValid() is False:
-            return "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez le " \
+            message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez le " \
                    "renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence assigné]".format(vlayer.name())
+            RipartHelper.showMessageBox(message)
         return ""
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
