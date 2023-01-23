@@ -103,6 +103,7 @@ class WfsGet(object):
     # &version=1.1.0
     # http://gitlab.dockerforge.ign.fr/rpg/oukile_v2/blob/master/assets/js/oukile/saisie_controle/services/layer-service.js
     def gcms_get(self, bExtraction=False):
+        message = ""
         self.initParametersGcmsGet()
         start = time.time()
         totalRows = 0
@@ -115,6 +116,7 @@ class WfsGet(object):
             response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         params=self.parametersGcmsGet)
             if response['status'] == 'error':
+                message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
                 break
 
             if len(response['features']) == 0 and response['stop']:
@@ -122,8 +124,9 @@ class WfsGet(object):
             # si c'est une table non BDUni ou une extraction,
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
             if self.isStandard or bExtraction:
-                totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
-                                                                              response['features'], self.spatialFilter)
+                totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
+                # totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
+                #                                                               response['features'], self.spatialFilter)
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
             else:
@@ -132,15 +135,17 @@ class WfsGet(object):
                     cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
                     if len(cleabs) == 0:
                         # création d'un nouvel objet
-                        totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
-                                                                                      [feature], self.spatialFilter)
+                        totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response[feature])
+                        # totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
+                        #                                                               [feature], self.spatialFilter)
                     else:
                         # modification d'un objet
                         # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
                         # l'ancien enregistrement et en insérer un nouveau
                         SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
-                        totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
-                                                                                      [feature], self.spatialFilter)
+                        totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
+                        # totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
+                        #                                                               [feature], self.spatialFilter)
             self.setOffset(response['offset'])
             if response['stop']:
                 break
@@ -152,18 +157,21 @@ class WfsGet(object):
         end = time.time()
         timeResult = end - start
         if timeResult > 60:
-            message = "{0} objet(s), extrait(s) en : {1} minute(s)".format(totalRows, round(timeResult / 60, 1))
+            if message == '':
+                message = "{0} objet(s), extrait(s) en : {1} minute(s)".format(totalRows, round(timeResult / 60, 1))
         else:
             if totalRows == 0:
-                message = "Pas d'objets extraits"
+                message += "\nPas d'objets extraits"
             else:
-                message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
+                if message == '':
+                    message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
         return maxNumrec, message
 
     def getMaxNumrec(self):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
         url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.client.getUrl(),
                                                                          self.databaseName, self.layerName)
+        print('GetMaxNumrec url : {}'.format(url))
         response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
         data = json.loads(response)
         return data['numrec']

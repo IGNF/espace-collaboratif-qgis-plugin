@@ -33,7 +33,7 @@ class RipartServiceRequest(object):
                     # le parametre offset est mis à 0 car la récupération des données est finie
                     return {'status': 'ok', 'offset': 0, 'features': response, 'stop': True}
             else:
-                return {'status': 'error'}
+                return {'status': 'error', 'reason': r.reason, 'url': r.url}
         except Exception as e:
             return {'status': 'error'}
 
