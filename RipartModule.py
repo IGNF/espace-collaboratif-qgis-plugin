@@ -561,19 +561,16 @@ class RipartPlugin:
             parameters['detruit'] = bDetruit
             numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
             parameters['numrec'] = numrec
-            print(" Table des tables Numrec : {}".format(numrec))
             parameters['workZone'] = workZone
             wfsGet = WfsGet(self.context, parameters)
             # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser
             # Il faut aussi qu'il soit différent de 0, ce numrec correspondant à une table non BDUni
             if not layer.isStandard:
                 maxNumrec = wfsGet.getMaxNumrec()
-                print('getMaxNumrec maxNumrec : {}'.format(maxNumrec))
                 if numrec == maxNumrec:
                     endMessage += "<br/>Pas de mise à jour\n\n"
                     continue
             maxNumRecMessage = wfsGet.gcms_get()
-            print('gcms_get maxNumrec : {}'.format(maxNumRecMessage[0]))
             SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
             SQLiteManager.vacuumDatabase()
             endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])

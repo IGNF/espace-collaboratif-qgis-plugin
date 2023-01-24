@@ -10,7 +10,6 @@ from . import ConstanteRipart as cst
 from .Wkt import Wkt
 from .BBox import BBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
-from PyQt5.QtWidgets import QMessageBox
 
 class WfsPost(object):
     context = None
@@ -93,7 +92,6 @@ class WfsPost(object):
             return None
         return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase, bBDUni)
 
-
     def setGeometries(self, changedGeometries, bBDUni):
         geometries = {}
         for featureId, geometry in changedGeometries.items():
@@ -152,15 +150,15 @@ class WfsPost(object):
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
         xmlResponse = XMLResponse(response)
-        message = xmlResponse.checkResponseWfsTransactions()
-        if message['status'] == 'SUCCESS':
+        responseWfs = xmlResponse.checkResponseWfsTransactions()
+        if responseWfs['status'] == 'SUCCESS':
             # mise à jour de la base SQLite pour les objets détruits et modifiés
             # d'une couche BDUni
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # mise à jour de la couche
             self.synchronize(workZone)
-            numrec = self.getNumrecFromTransaction(message['urlTransaction'])
+            numrec = self.getNumrecFromTransaction(responseWfs['urlTransaction'])
             # cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
                 numrec = 0
@@ -170,7 +168,12 @@ class WfsPost(object):
             self.layer.rollBack()
             self.layer.reload()
             self.layer.startEditing()
-        return message
+        return responseWfs
+
+    def getJsonTransaction(self, urlTransaction):
+        url = "{0}.json".format(urlTransaction)
+        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        return json.loads(response)
 
     def getNumrecFromTransaction(self, urlTransaction):
         # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281922.json
@@ -203,10 +206,8 @@ class WfsPost(object):
         wfsGet.gcms_get()
 
     def commitLayer(self, currentLayer, editBuffer, workZone):
-
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
         self.actions.clear()
-
         addedFeatures = editBuffer.addedFeatures().values()
         changedGeometries = editBuffer.changedGeometries()
         changedAttributeValues = editBuffer.changedAttributeValues()
@@ -254,7 +255,6 @@ class WfsPost(object):
         self.endReport += self.setEndReport(endTransaction)
         return self.endReport
 
-
     def setEndReport(self, endTransactionMessage):
         information = ''
         message = endTransactionMessage['message']
@@ -269,7 +269,6 @@ class WfsPost(object):
         return information
 
     def pushAddedFeatures(self, addedFeatures, bBDUni):
-
         for feature in addedFeatures:
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValue(feature)
@@ -280,8 +279,6 @@ class WfsPost(object):
             strFeature += self.setStateAndLayerName('Insert')
             strFeature += '}'
             self.actions.append(strFeature)
-
-
 
     def pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
         idsGeom = []
@@ -338,7 +335,6 @@ class WfsPost(object):
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
                 self.actions.append(strFeature)
-
 
     def pushChangedGeometryTransformed(self, geometryTransformed):
         for featureId, geometry in geometryTransformed.items():

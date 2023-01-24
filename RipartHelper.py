@@ -787,4 +787,5 @@ class RipartHelper:
              QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=5)
              return geometryWorkZone
         layerWorkZone[0].rollBack()
+        layerWorkZone[0].removeSelection()
         return geometryWorkZone

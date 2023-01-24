@@ -125,8 +125,6 @@ class WfsGet(object):
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
             if self.isStandard or bExtraction:
                 totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
-                # totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
-                #                                                               response['features'], self.spatialFilter)
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
             else:
@@ -136,16 +134,12 @@ class WfsGet(object):
                     if len(cleabs) == 0:
                         # création d'un nouvel objet
                         totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
-                        # totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
-                        #                                                               [feature], self.spatialFilter)
                     else:
                         # modification d'un objet
                         # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
                         # l'ancien enregistrement et en insérer un nouveau
                         SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
                         totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
-                        # totalRows += sqliteManager.insertRowsInTableWithSpatialFilter(self.parametersForInsertsInTable,
-                        #                                                               [feature], self.spatialFilter)
             self.setOffset(response['offset'])
             if response['stop']:
                 break
@@ -171,7 +165,6 @@ class WfsGet(object):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
         url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.client.getUrl(),
                                                                          self.databaseName, self.layerName)
-        print('GetMaxNumrec url : {}'.format(url))
         response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
         data = json.loads(response)
         return data['numrec']
