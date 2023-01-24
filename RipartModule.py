@@ -460,6 +460,7 @@ class RipartPlugin:
         # Message de fin de transaction
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(report)
+        dlgInfo.textInfo.setOpenExternalLinks(True);
         if len(messages) == 0:
             dlgInfo.textInfo.append("<br/>Vide")
         for message in messages:
