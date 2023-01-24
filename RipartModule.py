@@ -449,8 +449,13 @@ class RipartPlugin:
             editBuffer = layer.editBuffer()
             if not editBuffer:
                 continue
-            wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
-            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, workZone)))
+
+            try:
+                wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+                messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, workZone)))
+
+            except Exception as e:
+                messages.append('<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e))
 
         # Message de fin de transaction
         dlgInfo = FormInfo()

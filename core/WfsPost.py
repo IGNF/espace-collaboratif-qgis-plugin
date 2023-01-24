@@ -10,6 +10,7 @@ from . import ConstanteRipart as cst
 from .Wkt import Wkt
 from .BBox import BBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+from PyQt5.QtWidgets import QMessageBox
 
 class WfsPost(object):
     context = None
@@ -85,18 +86,18 @@ class WfsPost(object):
         # bboxWorkingArea = self.bbox.getBBoxAsWkt(self.filterName)
         # if bboxWorkingArea is not None and not wkt.isBoundingBoxIntersectGeometryObject(bboxWorkingArea, geometry):
         #     return None
-        # Est-ce que la géométrie de l'objet intersecte la zone de travail
+        # Est-ce que la géométrie de l'objet intersecte la zone de travail ?
         if not wkt.isGeometryObjectIntersectSpatialFilter(self.getGeometryWorkingArea(), geometry):
+            raise Exception("Un objet au moins se situe en dehors de votre zone de travail. Veuillez le(s) "
+                            "déplacer ou le(s) supprimer.")
             return None
         return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase, bBDUni)
+
 
     def setGeometries(self, changedGeometries, bBDUni):
         geometries = {}
         for featureId, geometry in changedGeometries.items():
             postGeometry = self.setGeometry(geometry, bBDUni)
-            if postGeometry is None:
-                raise Exception("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le "
-                                "déplacer ou le supprimer.")
             geometries[featureId] = postGeometry
         return geometries
 
@@ -202,6 +203,7 @@ class WfsPost(object):
         wfsGet.gcms_get()
 
     def commitLayer(self, currentLayer, editBuffer, workZone):
+
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
         self.actions.clear()
 
@@ -252,6 +254,7 @@ class WfsPost(object):
         self.endReport += self.setEndReport(endTransaction)
         return self.endReport
 
+
     def setEndReport(self, endTransactionMessage):
         information = ''
         message = endTransactionMessage['message']
@@ -266,19 +269,19 @@ class WfsPost(object):
         return information
 
     def pushAddedFeatures(self, addedFeatures, bBDUni):
+
         for feature in addedFeatures:
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValue(feature)
             postGeometry = self.setGeometry(feature.geometry(), bBDUni)
-            if postGeometry is None:
-                raise Exception ("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le déplacer "
-                                 "ou le supprimer.")
             strFeature += postGeometry
             strFeature += self.setClientId(feature.attribute(cst.ID_SQLITE))
             strFeature += '},'
             strFeature += self.setStateAndLayerName('Insert')
             strFeature += '}'
             self.actions.append(strFeature)
+
+
 
     def pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
         idsGeom = []
@@ -330,14 +333,12 @@ class WfsPost(object):
                 else:
                     strFeature += self.setKey(r[0], self.layer.idNameForDatabase)
                 postGeometry = self.setGeometry(geometry, bBDUni)
-                if postGeometry is None:
-                    raise Exception("La géométrie de l'objet est en dehors de la zone de travail. Veuillez le "
-                                    "déplacer ou le supprimer.")
                 strFeature += ', {0}'.format(postGeometry)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
                 self.actions.append(strFeature)
+
 
     def pushChangedGeometryTransformed(self, geometryTransformed):
         for featureId, geometry in geometryTransformed.items():
