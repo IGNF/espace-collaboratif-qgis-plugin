@@ -74,11 +74,6 @@ class ImporterGuichet(object):
             if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
                 return
 
-            # Zone de travail pour filtrer plus finement les objets extraits avec la box
-            workZone = RipartHelper.getGeometryWorkZone(self.context.projectDir)
-            if workZone is None:
-                return
-
             self.progressMessageBar.layout().addWidget(self.progress)
             self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
             self.context.iface.mainWindow().repaint()
@@ -89,7 +84,7 @@ class ImporterGuichet(object):
             SQLiteManager.createTableOfTables()
 
             # Import des couches du guichet sélectionnées par l'utilisateur
-            self.context.addGuichetLayersToMap(guichet_layers, box, workZone, self.context.profil.geogroup.name, self.progress)
+            self.context.addGuichetLayersToMap(guichet_layers, box, self.context.profil.geogroup.name, self.progress)
 
         finally:
             self.context.iface.messageBar().clearWidgets()

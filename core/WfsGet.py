@@ -15,7 +15,6 @@ class WfsGet(object):
     sridProject = None
     sridLayer = None
     bbox = None
-    spatialFilter = None
     parametersGcmsGet = None
     bDetruit = None
     isStandard = None
@@ -34,7 +33,6 @@ class WfsGet(object):
         self.sridProject = parameters['sridProject']
         self.sridLayer = parameters['sridLayer']
         self.bbox = parameters['bbox']
-        self.spatialFilter = parameters['workZone']
         self.parametersGcmsGet = {}
         self.bDetruit = parameters['detruit']
         self.isStandard = parameters['isStandard']

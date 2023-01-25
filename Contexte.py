@@ -372,7 +372,7 @@ class Contexte(object):
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
 
-    def addGuichetLayersToMap(self, guichet_layers, bbox, workZone, nameGroup, progress):
+    def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup, progress):
         """
         Add guichet layers to the current map
         """
@@ -427,8 +427,7 @@ class Contexte(object):
                     if not sourceLayer[0].isValid():
                         endMessage += "Layer {} failed to load !\n".format(layer.nom)
                         continue
-                    endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, workZone,
-                                                   sourceLayer[1])
+                    endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
                     endMessage += "\n"
 
                 '''
@@ -502,7 +501,7 @@ class Contexte(object):
         self.QgsProject.instance().removeMapLayers(layerIds)
         return True
 
-    def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, workZone, bColumnDetruitExist):
+    def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
         geometryName = structure['geometryName']
         newVectorLayer.isStandard = layer.isStandard
         idNameForDatabase = structure['idName']
@@ -517,7 +516,7 @@ class Contexte(object):
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.nom, 'role': layer.role,
                       'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
-                      'sridLayer': sridLayer, 'bbox': bbox, 'workZone': workZone,
+                      'sridLayer': sridLayer, 'bbox': bbox,
                       'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
                       'is3D': structure['attributes'][geometryName]['is3d'], 'urlTransaction': None, 'numrec': "0"}
         wfsGet = WfsGet(self, parameters)

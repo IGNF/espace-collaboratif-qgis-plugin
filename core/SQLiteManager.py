@@ -169,7 +169,7 @@ class SQLiteManager(object):
         else:
             return ''
 
-    def setColumnsValuesForInsertWithSpatialFilter(self, attributesRow, parameters, geomWorkingArea, wkt):
+    def setColumnsValuesForInsertWithSpatialFilter(self, attributesRow, parameters, bboxWorkingArea, wkt):
         tmpColumns = '('
         tmpValues = '('
         for column, value in attributesRow.items():
@@ -177,7 +177,7 @@ class SQLiteManager(object):
                 # si la géometrie n'est pas dans la zone de travail alors on renvoie un tuple avec du vide
                 geom = QgsGeometry.fromWkt(value)
                 newGeom = wkt.transformGeometry(geom)
-                if not wkt.isGeometryObjectIntersectSpatialFilter(geomWorkingArea, newGeom):
+                if not wkt.isGeometryObjectIntersectSpatialFilter(bboxWorkingArea, newGeom):
                     return "", ""
                 tmpColumns += '{0},'.format(column)
                 tmpValues += wkt.toGetGeometry(value)
@@ -273,7 +273,7 @@ class SQLiteManager(object):
                 cleabss.append(data['feature']['cleabs'])
         SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
-    def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, geomWorkingArea):
+    def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, bboxWorkingArea):
         totalRows = 0
         if len(attributesRows) == 0:
             return totalRows
@@ -282,7 +282,7 @@ class SQLiteManager(object):
         connection = spatialite_connect(self.dbPath)
         cur = connection.cursor()
         for attributesRow in attributesRows:
-            columnsValues = self.setColumnsValuesForInsertWithSpatialFilter(attributesRow, parameters, geomWorkingArea, wkt)
+            columnsValues = self.setColumnsValuesForInsertWithSpatialFilter(attributesRow, parameters, bboxWorkingArea, wkt)
             # si le tuple est vide alors l'objet est en dehors de la zone de travail
             if columnsValues[0] == '' and columnsValues[1] == '':
                 continue

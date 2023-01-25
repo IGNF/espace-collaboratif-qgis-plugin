@@ -86,7 +86,8 @@ class WfsPost(object):
         # if bboxWorkingArea is not None and not wkt.isBoundingBoxIntersectGeometryObject(bboxWorkingArea, geometry):
         #     return None
         # Est-ce que la géométrie de l'objet intersecte la zone de travail ?
-        if not wkt.isGeometryObjectIntersectSpatialFilter(self.getGeometryWorkingArea(), geometry):
+        bboxWorkingArea = self.bbox.getBBoxAsWkt(self.filterName)
+        if bboxWorkingArea is not None and not wkt.isBoundingBoxIntersectGeometryObject(bboxWorkingArea, geometry):
             raise Exception("Un objet au moins se situe en dehors de votre zone de travail. Veuillez le(s) "
                             "déplacer ou le(s) supprimer.")
             return None
@@ -144,7 +145,7 @@ class WfsPost(object):
     def setClientId(self, clientFeatureId):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
-    def gcms_post(self, strActions, workZone):
+    def gcms_post(self, strActions):
         print("Post_action : {}".format(strActions))
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
@@ -157,7 +158,7 @@ class WfsPost(object):
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # mise à jour de la couche
-            self.synchronize(workZone)
+            self.synchronize()
             numrec = self.getNumrecFromTransaction(responseWfs['urlTransaction'])
             # cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
@@ -183,7 +184,7 @@ class WfsPost(object):
         data = json.loads(response)
         return data['numrec']
 
-    def synchronize(self, workZone):
+    def synchronize(self):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
@@ -198,14 +199,13 @@ class WfsPost(object):
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
                       'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName, False),
-                      'workZone': workZone,
                       'detruit': bDetruit, 'isStandard': self.layer.isStandard,
                       'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)
         wfsGet.gcms_get()
 
-    def commitLayer(self, currentLayer, editBuffer, workZone):
+    def commitLayer(self, currentLayer, editBuffer):
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
         self.actions.clear()
         addedFeatures = editBuffer.addedFeatures().values()
@@ -250,8 +250,7 @@ class WfsPost(object):
         if nbObjModified >= 1:
             self.transactionReport += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
         strActions = self.formatItemActions()
-        self.endReport += self.transactionReport
-        endTransaction = self.gcms_post(strActions, workZone)
+        endTransaction = self.gcms_post(strActions)
         self.endReport += self.setEndReport(endTransaction)
         return self.endReport
 
@@ -264,8 +263,9 @@ class WfsPost(object):
                 endTransactionMessage['urlTransaction']))
             information = '<br/><font color="red">{0} : {1}</font>'.format(status, tmp)
         elif status == 'SUCCESS':
+            information = self.transactionReport
             tabInfo = message.split(' : ')
-            information = '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
+            information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
         return information
 
     def pushAddedFeatures(self, addedFeatures, bBDUni):
