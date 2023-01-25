@@ -294,15 +294,29 @@ class EditFormFieldFromAttributes(object):
     Représentation du type d'outils : Case à cocher
     '''
     def setFieldBoolean(self, defaultState):
-        # Type: CheckBox
-        QgsEWS_type = 'CheckBox'
-        # Config: {'CheckedState': '1', 'UncheckedState': '0'}
-        QgsEWS_config = {'CheckedState': '1', 'UncheckedState': '0'}
+        # # Type: CheckBox
+        # QgsEWS_type = 'CheckBox'
+        # # Config: {'CheckedState': '1', 'UncheckedState': '0'}
+        # QgsEWS_config = {'CheckedState': '1', 'UncheckedState': '0'}
+        # self.setFormEditor(QgsEWS_type, QgsEWS_config)
+        #
+        # if defaultState is None or defaultState == '':
+        #     return
+        # self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultState))
+
+        # Type: ValueMap
+        QgsEWS_type = 'ValueMap'
+        attribute_values = {}
+
+        attribute_values["Oui"] = "True"
+        attribute_values["Non"] = "False"
+        attribute_values[""] = ""
+
+        # Config: {'map': {'A compléter': 'NR', 'Coupe rase': 'C', 'Peuplement sain': 'S'}}
+        QgsEWS_config = {'map': attribute_values}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-        if defaultState is None or defaultState == '':
-            return
-        self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultState))
+
 
     '''
     Représentation du type d'outils : Plage
