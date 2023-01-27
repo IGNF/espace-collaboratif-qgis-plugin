@@ -322,44 +322,69 @@ class EditFormFieldFromAttributes(object):
     Représentation du type d'outils : Plage
     '''
     def setFieldInteger(self, defaultInteger):
-        # Type: Range
-        QgsEWS_type = 'Range'
-        # Config: {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0, 'Step': 1,
-        # 'Style': 'SpinBox'}
-
-        # [NG] On autorise NULL pour l'identifiant car il sera en réalité rempli par l'Espace co en cas de création
-        # if self.name == 'id':
-        #     QgsEWS_config = {'AllowNull': False, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
-        #                      'Step': 1, 'Style': 'SpinBox'}
-        # else:
-        #     QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
-        #                      'Step': 1, 'Style': 'SpinBox'}
+        # # Type: Range
+        # QgsEWS_type = 'Range'
+        # # Config: {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0, 'Step': 1,
+        # # 'Style': 'SpinBox'}
+        #
+        # QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
+        #                  'Step': 1, 'Style': 'SpinBox'}
         # self.setFormEditor(QgsEWS_type, QgsEWS_config)
+        #
+        # if defaultInteger is None or defaultInteger == '':
+        #     return
+        # self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultInteger))
 
-        QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
-                         'Step': 1, 'Style': 'SpinBox'}
+        # Il vaut mieux utiliser un TextEdit contraint par regex pour pouvoir gérer les valeurs null car le
+        # type Range ne les accepte pas.
+        # Type: TextEdit
+        QgsEWS_type = 'TextEdit'
+        # Config: {'IsMultiline': False, 'UseHtml': False}
+        QgsEWS_config = {'IsMultiline': False, 'UseHtml': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
         if defaultInteger is None or defaultInteger == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultInteger))
 
+        # Vérification que la chaine ne contient que des nombres
+        expression = "regexp_match([0-9]+) != 0"
+        self.layer.setConstraintExpression(self.index, expression)
+
     '''
     Représentation du type d'outils : Plage
     '''
     def setFieldDouble(self, defaultDouble):
-        # Type: Range
-        QgsEWS_type = 'Range'
-        # Config: {'AllowNull': True, 'Max': 1.7976931348623157e+308, 'Min': -1.7976931348623157e+308,
-        # 'Precision': 6, 'Step': 1.0, 'Style': 'SpinBox'}
-        QgsEWS_config = {'AllowNull': True, 'Max': 1.7976931348623157e+308,
-                         'Min': -1.7976931348623157e+308, 'Precision': 6, 'Step': 1.0,
-                         'Style': 'SpinBox'}
+        # # Type: Range
+        # QgsEWS_type = 'Range'
+        # # Config: {'AllowNull': True, 'Max': 1.7976931348623157e+308, 'Min': -1.7976931348623157e+308,
+        # # 'Precision': 6, 'Step': 1.0, 'Style': 'SpinBox'}
+        # QgsEWS_config = {'AllowNull': True, 'Max': 1.7976931348623157e+308,
+        #                  'Min': -1.7976931348623157e+308, 'Precision': 6, 'Step': 1.0,
+        #                  'Style': 'SpinBox'}
+        # self.setFormEditor(QgsEWS_type, QgsEWS_config)
+        #
+        # if defaultDouble is None or defaultDouble == '':
+        #     return
+        # self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDouble))
+
+        # Il vaut mieux utiliser un TextEdit contraint par regex pour pouvoir gérer les valeurs null car le
+        # type Range ne les accepte pas.
+        # Type: TextEdit
+        QgsEWS_type = 'TextEdit'
+        # Config: {'IsMultiline': False, 'UseHtml': False}
+        QgsEWS_config = {'IsMultiline': False, 'UseHtml': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
         if defaultDouble is None or defaultDouble == '':
             return
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDouble))
+
+        # Vérification que la chaine ne contient que des nombres
+        expression = "regexp_match([0-9]+(\\.[0-9]+)) != 0"
+        self.layer.setConstraintExpression(self.index, expression)
+
+
 
     '''
     Représentation du type d'outils : Date/Heure
@@ -466,10 +491,16 @@ class EditFormFieldFromAttributes(object):
 
         if type(listOfValues) is list:
             for value in listOfValues:
+                if value is None:
+                    attribute_values[""] = ""
+                    continue
                 attribute_values[value] = value
 
         if type(listOfValues) is dict:
             for attribute, value in listOfValues.items():
+                if attribute is None:
+                    attribute_values[""] = ""
+                    continue
                 attribute_values[attribute] = value
 
         # Config: {'map': {'A compléter': 'NR', 'Coupe rase': 'C', 'Peuplement sain': 'S'}}
