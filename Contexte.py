@@ -1043,7 +1043,7 @@ class Contexte(object):
 
         if self.client is None:
             connResult = self.getConnexionRipart()
-            if not connResult:
+            if not connResult or connResult == -1:
                 # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
                 return "Rejected", infosLayers
 

@@ -142,9 +142,11 @@ class RipartPlugin:
             self.actionSaveChanges()
 
     def actionSaveChanges(self):
+        self.enabledActionToggleEditing()
         self.enabledActionSaveActiveLayerEdits()
         self.enabledActionSaveAllEdits()
         self.enabledActionSaveEdits()
+        self.enabledActionSaveProject()
         reply = QMessageBox.question(None, 'IGN Espace Collaboratif', "La couche a été modifiée, les modifications "
                                                                       "vont être envoyées sur le serveur.",
                                      QMessageBox.Yes, QMessageBox.No)
@@ -160,6 +162,12 @@ class RipartPlugin:
 
     def enabledActionSaveEdits (self):
         self.iface.actionSaveEdits().setEnabled(False)
+
+    def enabledActionSaveProject(self):
+        self.iface.actionSaveProject().setEnabled(False)
+
+    def enabledActionToggleEditing(self):
+        self.iface.actionToggleEditing().setEnabled(False)
 
     def searchSpecificLayer(self, layerName):
         if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
@@ -407,6 +415,9 @@ class RipartPlugin:
                 return
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
+            # L'utilisateur a cliqué sur le bouton Annuler ou la croix de du dialogue  de la fenetre de connexion
+            if dlgChargerGuichet.bRejected:
+                return
             if dlgChargerGuichet.context.profil is not None:
                 if len(dlgChargerGuichet.context.profil.infosGeogroups) == 1 and \
                         len(dlgChargerGuichet.context.profil.infosGeogroups[0].layers) == 0:

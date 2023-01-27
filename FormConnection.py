@@ -164,8 +164,9 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                     # Bouton Annuler
                     elif dlgChoixGroupe.cancel:
                         print("rejected")
-                        self.close()
-                        self = None
+                        dlgChoixGroupe.close()
+                        #self.close()
+                        #self = None
                         return
 
                 # les infos de connexion présentée à l'utilisateur

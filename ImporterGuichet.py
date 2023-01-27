@@ -61,6 +61,10 @@ class ImporterGuichet(object):
                                                                 level=2, duration=5)
                     return
 
+            if self.context.profil is None:
+                raise NoProfileException(
+                    "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
+
             if self.context.profil.geogroup.name is None:
                 raise NoProfileException(
                     "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
@@ -85,6 +89,9 @@ class ImporterGuichet(object):
 
             # Import des couches du guichet sélectionnées par l'utilisateur
             self.context.addGuichetLayersToMap(guichet_layers, box, self.context.profil.geogroup.name, self.progress)
+
+        except Exception as e:
+            RipartHelper.showMessageBox('{}'.format(e))
 
         finally:
             self.context.iface.messageBar().clearWidgets()

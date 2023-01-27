@@ -38,6 +38,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     # "clé xml":"valeur affichage boite"
     roleCleVal = {"edit": "Edition", "ref-edit": "Edition", "visu": "Visualisation", "ref": "Visualisation"}
 
+    bRejected = False
+
     def __init__(self, context, parent=None):
         super(FormChargerGuichet, self).__init__(parent)
         self.setupUi(self)
@@ -50,7 +52,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         connexionLayers = context.getInfosLayers()
 
         if connexionLayers[0] == "Rejected":
-            raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
+            self.bRejected = True
+            return
+            #raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
 
         profilUser = connexionLayers[2]
 
