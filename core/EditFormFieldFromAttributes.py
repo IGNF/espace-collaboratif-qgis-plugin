@@ -316,8 +316,6 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_config = {'map': attribute_values}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
-
-
     '''
     Représentation du type d'outils : Plage
     '''
@@ -383,8 +381,6 @@ class EditFormFieldFromAttributes(object):
         # Vérification que la chaine ne contient que des nombres
         expression = "regexp_match([0-9]+(\\.[0-9]+)) != 0"
         self.layer.setConstraintExpression(self.index, expression)
-
-
 
     '''
     Représentation du type d'outils : Date/Heure

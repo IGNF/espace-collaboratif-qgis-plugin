@@ -255,8 +255,6 @@ class Contexte(object):
         :rtype int
         """
         self.logger.debug("GetConnexionRipart")
-        result = -1
-
         try:
             self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
                                                                 "Serveur").text
@@ -297,12 +295,11 @@ class Contexte(object):
         # Tant qu'il reste à -1, c'est que le formulaire de connexion a renvoyé une exception (mauvais mot de passe, pb
         # de proxy etc.). Dans ce cas-là, on rouvre le formulaire pour que l'utilisateur essaie de se reconnecter.
         connectionResult = -1
-
         while connectionResult < 0:
             self.loginWindow.exec_()
             connectionResult = self.loginWindow.connectionResult
 
-        return result
+        return connectionResult
 
     def getOrCreateDatabase(self):
         """

@@ -392,6 +392,17 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
+    def selectLayersFromTableOfTables():
+        sql = "SELECT layer FROM {0}".format(cst.TABLEOFTABLES)
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        cur = connection.cursor()
+        cur.execute(sql)
+        result = cur.fetchall()
+        cur.close()
+        connection.close()
+        return result
+
+    @staticmethod
     def selectNumrecTableOfTables(layer):
         sql = "SELECT numrec FROM {0} where layer = '{1}'".format(cst.TABLEOFTABLES, layer)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())

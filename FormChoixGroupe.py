@@ -14,6 +14,7 @@ from PyQt5.QtCore import Qt
 from qgis._core import QgsWkbTypes, QgsLayerTree, QgsLayerTreeLayer
 from qgis.core import QgsProject, QgsVectorLayer
 from .RipartHelper import RipartHelper
+from core.SQLiteManager import SQLiteManager
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 
@@ -142,7 +143,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
     def save(self):
-        # Sauvegarde du nom de la zone de travail
+        # Si le nom de la zone de travail est vide
         spatialFilterLayerName = self.comboBoxWorkZone.currentText()
         if spatialFilterLayerName == '':
             message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou les " \
@@ -153,6 +154,16 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 return
             self.bCancel = False
 
+        index = self.comboBoxGroup.currentIndex()
+        self.idChosenGroup = self.infosgeogroups[index].group.id
+        self.nameChosenGroup = self.infosgeogroups[index].group.name
+        self.newShapefilesDict.clear()
+        self.accept()
+        self.bCancel = False
+
+        #self.deleteLayersAndGroupMaybe(spatialFilterLayerName)
+
+        # Sauvegarde du nom de de la zone de travail
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, spatialFilterLayerName,
                                     "Map")
 
@@ -160,12 +171,6 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         message = ""
         if spatialFilterLayerName in self.newShapefilesDict:
             message = self.importShapefile(spatialFilterLayerName)
-        index = self.comboBoxGroup.currentIndex()
-        self.idChosenGroup = self.infosgeogroups[index].group.id
-        self.nameChosenGroup = self.infosgeogroups[index].group.name
-        self.newShapefilesDict.clear()
-        self.accept()
-        self.bCancel = False
         if message != "":
             print(message)
             raise Exception(message)
@@ -181,3 +186,23 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def cancel(self):
         self.bCancel = True
         self.reject()
+
+    def deleteLayersAndGroupMaybe(self, userWorkZone):
+        storedZone = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
+        if self.activeGroup == self.nameChosenGroup and storedZone == userWorkZone:
+            return
+
+        # Quelles sont les cartes chargées dans le projet QGIS courant
+        projectLayers = self.getAllMapLayers()
+
+        # Quelles sont les couches chargées dans la table des tables ?
+        layers = SQLiteManager.selectLayersFromTableOfTables()
+
+        # si l'utilisateur a changé de groupe
+        if self.activeGroup != self.nameChosenGroup:
+            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.nameChosenGroup, "Serveur")
+        else:
+            if storedZone != userWorkZone:
+                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone, "Map")
+                if not self.removeLayersFromProject(layers, projectLayers):
+                    return
