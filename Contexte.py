@@ -561,13 +561,13 @@ class Contexte(object):
         newVectorLayer.layerModified.connect(self.enabledActionSaveActiveLayerEdits)
 
         # On masque les champs de travail et champs internes
-        fields = newVectorLayer.fields()
-        for i in range(0, fields.count()):
-            f = fields.field(i)
-            if f.name() == cst.ID_SQLITE or f.name() == cst.IS_FINGERPRINT or f.name() == cst.FINGERPRINT:
-                self.hideColumn(newVectorLayer, f.name())
-                hidden_setup = QgsEditorWidgetSetup('Hidden', f.editorWidgetSetup().config())
-                newVectorLayer.setEditorWidgetSetup(i, hidden_setup)
+        # fields = newVectorLayer.fields()
+        # for i in range(0, fields.count()):
+        #     f = fields.field(i)
+        #     if f.name() == cst.ID_SQLITE or f.name() == cst.IS_FINGERPRINT or f.name() == cst.FINGERPRINT:
+        #         self.hideColumn(newVectorLayer, f.name())
+        #         hidden_setup = QgsEditorWidgetSetup('Hidden', f.editorWidgetSetup().config())
+        #         newVectorLayer.setEditorWidgetSetup(i, hidden_setup)
 
         self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
         message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
