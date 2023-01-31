@@ -16,6 +16,7 @@ from .core.BBox import BBox
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .Contexte import Contexte
+from .core import ConstanteRipart as cst
 
 
 class ImporterGuichet(object):
@@ -39,8 +40,7 @@ class ImporterGuichet(object):
         :type context: Contexte
         """
         self.context = context
-        self.progressMessageBar = self.context.iface.messageBar().createMessage(
-            "Chargement des couches du guichet...")
+        self.progressMessageBar = self.context.iface.messageBar().createMessage(cst.GENERALTEXTPROGRESS)
         self.progress = QProgressBar()
         self.progress.setValue(0)
         self.progress.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
