@@ -15,6 +15,7 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
 from .RipartHelper import RipartHelper
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
+from .core import ConstanteRipart as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 
@@ -230,9 +231,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             root = QgsProject.instance().layerTreeRoot()
             nodesGroup = root.findGroups()
             for ng in nodesGroup:
-                if ng.name() == self.activeGroup:
-                    message = "Le groupe [{0}] va être supprimé du projet ainsi que toutes ses couches liées, " \
-                              "voulez-vous continuez ?".format(self.activeGroup)
+                tmp = ng.name().removeprefix(cst.ESPACECO)
+                if tmp == self.activeGroup:
+                    message = "Le groupe {0}{1} va être supprimé du projet ainsi que toutes ses couches liées, " \
+                              "voulez-vous continuez ?".format(cst.ESPACECO, self.activeGroup)
                     reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
                     if reply == QMessageBox.Yes:
                         root.removeChildNode(ng)

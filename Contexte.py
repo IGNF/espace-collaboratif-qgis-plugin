@@ -383,7 +383,8 @@ class Contexte(object):
             nodesGroup = root.findGroups()
             for ng in nodesGroup:
                 # Si le groupe existe déjà, on sort
-                if ng.name() == nameGroup:
+                tmp = ng.name().removeprefix(cst.ESPACECO)
+                if tmp == nameGroup:
                     nodeGroup = ng
                     break
 
@@ -395,8 +396,10 @@ class Contexte(object):
                     nbLayersWFS += 1
             if nodeGroup is None and nbLayersWFS != 0:
                 newNode = QgsLayerTreeGroup(nameGroup)
+                # Ajout d'un préfixe pour distinguer les groupes collaboratifs
+                newNode.setName("{0}{1}".format(cst.ESPACECO, newNode.name()))
                 root.insertChildNode(0, newNode)
-                nodeGroup = root.findGroup(nameGroup)
+                nodeGroup = root.findGroup("{0}{1}".format(cst.ESPACECO, nameGroup))
 
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
