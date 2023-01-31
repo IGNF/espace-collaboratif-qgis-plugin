@@ -14,7 +14,7 @@ from PyQt5.QtCore import Qt
 from qgis._core import QgsWkbTypes, QgsLayerTree, QgsLayerTreeLayer
 from qgis.core import QgsProject, QgsVectorLayer
 from .RipartHelper import RipartHelper
-from core.SQLiteManager import SQLiteManager
+from .core.SQLiteManager import SQLiteManager
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 

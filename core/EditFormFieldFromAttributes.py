@@ -308,9 +308,9 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_type = 'ValueMap'
         attribute_values = {}
 
-        attribute_values["Oui"] = "True"
-        attribute_values["Non"] = "False"
-        attribute_values[""] = ""
+        attribute_values["Oui"] = '1'
+        attribute_values["Non"] = '0'
+        attribute_values[""] = 'NULL'
 
         # Config: {'map': {'A compléter': 'NR', 'Coupe rase': 'C', 'Peuplement sain': 'S'}}
         QgsEWS_config = {'map': attribute_values}
@@ -488,14 +488,14 @@ class EditFormFieldFromAttributes(object):
         if type(listOfValues) is list:
             for value in listOfValues:
                 if value is None:
-                    attribute_values[""] = ""
+                    attribute_values[""] = 'NULL'
                     continue
                 attribute_values[value] = value
 
         if type(listOfValues) is dict:
             for attribute, value in listOfValues.items():
                 if attribute is None:
-                    attribute_values[""] = ""
+                    attribute_values[""] = 'NULL'
                     continue
                 attribute_values[attribute] = value
 

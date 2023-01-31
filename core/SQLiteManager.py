@@ -227,10 +227,15 @@ class SQLiteManager(object):
             else:
                 tmpColumns += '{0},'.format(column)
             if value is None:
-                tmpValues += "'',"
+                tmpValues += "NULL,"
             else:
                 if type(value) == str:
                     value = value.replace("'", "''")
+                if type(value) == bool:
+                    if value == True:
+                        value = 1
+                    elif value == False:
+                        value = 0
                 if type(value) == list:
                     listToJson = ''
                     dict_object = {}
