@@ -13,8 +13,6 @@ from collections import OrderedDict
 import os.path
 import json
 
-from qgis.PyQt.QtWidgets import QProgressBar
-from PyQt5.QtCore import Qt
 from . import ConstanteRipart
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
@@ -25,6 +23,7 @@ from .RipartLoggerCl import RipartLogger
 from . import requests
 from .requests.auth import HTTPBasicAuth
 import os
+from .ProgressBar import ProgressBar
 
 
 class Client(object):
@@ -43,7 +42,6 @@ class Client(object):
     # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
     message = ""
     iface = None
-    progressMessageBar = None
     progress = None
     logger = RipartLogger("ripart.client").getRipartLogger()
 
@@ -211,16 +209,8 @@ class Client(object):
         :type parameters : dictionary
         """
         # progressbar pour le chargement des remarques
-        self.progressMessageBar = self.iface.messageBar().createMessage(
-            "Téléchargement des signalements depuis le serveur ...")
-        self.progress = QProgressBar()
-        self.progress.setMaximum(200)
-        self.progress.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.progressMessageBar.layout().addWidget(self.progress)
-        self.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
-        self.iface.mainWindow().repaint()
-        self.progress.setValue(0)
-
+        mess = "Téléchargement des signalements depuis le serveur"
+        self.progress = ProgressBar(200, mess)
         result = self.__getGeoRemsTotal(parameters)
         total = int(result["total"])  # nb de remarques récupérées
         sdate = result["sdate"]  # date de la réponse du serveur
@@ -231,7 +221,7 @@ class Client(object):
             total = tmp['total']
             sdate = tmp["sdate"]
             self.logger.debug("loop on total result " + " total=" + str(result['total']) + ",datetime=" + sdate)
-
+        self.progress.close()
         # tri des remarques par ordre décroissant d'id
         dicoRems = OrderedDict(sorted(list(result['dicoRems'].items()), key=lambda t: t[0], reverse=True))
         return dicoRems

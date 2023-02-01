@@ -10,13 +10,15 @@ version 3.0.0 , 26/11/2018
 from .core.RipartLoggerCl import RipartLogger
 from PyQt5.QtWidgets import QProgressBar, QApplication
 from PyQt5.QtCore import Qt
-from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsEditorWidgetSetup
+from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, \
+    QgsEditorWidgetSetup
 from qgis.utils import spatialite_connect
 from .RipartHelper import RipartHelper
 from .core.BBox import BBox
 from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .Contexte import Contexte
+from .core.ProgressBar import ProgressBar
 
 
 class ImporterRipart(object):
@@ -28,7 +30,6 @@ class ImporterRipart(object):
     context = None
 
     # barre de progression (des remarques importées)
-    progressMessageBar = None
     progress = None
     progressVal = 0
 
@@ -41,13 +42,6 @@ class ImporterRipart(object):
         :type context: Contexte
         """
         self.context = context
-
-        self.progressMessageBar = self.context.iface.messageBar().createMessage(
-            "Placement des signalements sur la carte...")
-        self.progress = QProgressBar()
-        self.progress.setMaximum(200)
-        self.progress.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.progressMessageBar.layout().addWidget(self.progress)
 
     def doImport(self):
         """Téléchargement et import des remarques sur la carte   
@@ -70,8 +64,6 @@ class ImporterRipart(object):
             raise NoProfileException(
                 "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
-
-
         # filtre spatial
         bbox = BBox(self.context)
         box = bbox.getFromLayer(RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
@@ -88,9 +80,10 @@ class ImporterRipart(object):
             self.logger.debug("Spatial filter :" + filtre)
             filtreLay = self.context.getLayerByName(filtre)
 
-        self.context.addRipartLayersToMap()
+        message = "Placement des signalements sur la carte"
+        self.progress = ProgressBar(200, message)
 
-        QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
+        self.context.addRipartLayersToMap()
 
         # vider les tables ripart
         self.context.emptyAllRipartLayers()
@@ -117,8 +110,6 @@ class ImporterRipart(object):
         params['updatingDate'] = date
 
         rems = self.context.client.getGeoRems(params)
-
-        self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
 
         # Filtrage spatial affiné des remarques.
         if box is not None:
@@ -179,13 +170,13 @@ class ImporterRipart(object):
             # Vue par défaut : Arborescence
             # Formater le JSON : Indenté
             self.setFormAttributes()
+            self.progress.close()
 
         except Exception as e:
             raise
 
         finally:
-            self.context.iface.messageBar().clearWidgets()
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            self.progress.close()
 
     def setFormAttributes(self):
         listLayers = QgsProject.instance().mapLayersByName(RipartHelper.nom_Calque_Signalement)
@@ -242,10 +233,6 @@ class ImporterRipart(object):
         :param cnt: le nombre de remarques importées
         :type cnt: int
         """
-
-        self.context.iface.messageBar().clearWidgets()
-        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-
         submit = self.context.countRemarqueByStatut(cst.STATUT.submit.__str__())
         pending = self.context.countRemarqueByStatut(cst.STATUT.pending.__str__()) + \
                   self.context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) + \

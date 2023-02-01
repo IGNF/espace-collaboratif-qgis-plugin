@@ -33,6 +33,7 @@ from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 from .core.WfsGet import WfsGet
 from .core.SQLiteManager import SQLiteManager
+from .core.ProgressBar import ProgressBar
 
 
 class Contexte(object):
@@ -369,7 +370,7 @@ class Contexte(object):
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
 
-    def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup, progress):
+    def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
         """
         Add guichet layers to the current map
         """
@@ -410,7 +411,7 @@ class Contexte(object):
             if len(guichet_layers) == 0:
                 endMessage = 'Pas de couches sélectionnées, fin du chargement.\n'
 
-            progress.setMaximum(len(guichet_layers))
+            progress = ProgressBar(len(guichet_layers), cst.LOADINGTEXTPROGRESS)
             i = 0
             for layer in guichet_layers:
                 i += 1
@@ -448,6 +449,8 @@ class Contexte(object):
                     message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
                     print(message)
                     endMessage += message
+            progress.close()
+
             # Rafraichissement de la carte
             self.mapCan.refresh()
             QMessageBox.information(None, "IGN Espace collaboratif", endMessage)

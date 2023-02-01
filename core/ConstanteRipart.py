@@ -126,5 +126,6 @@ FINGERPRINT = 'gcms_fingerprint'
 NUMREC = 'gcms_numrec'
 TABLEOFTABLES = 'tableoftables'
 CLIENTFEATUREID = "_client_feature_id"
-GENERALTEXTPROGRESS = "Chargement des couches du guichet"
+LOADINGTEXTPROGRESS = "Chargement des couches du guichet"
+UPDATETEXTPROGRESS = "Mise à jour des couches du guichet"
 ESPACECO = "[ESPACE CO]"

@@ -36,6 +36,7 @@ from .core.SQLiteManager import SQLiteManager
 from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .core.WfsGet import WfsGet
+from .core.ProgressBar import ProgressBar
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
@@ -58,14 +59,13 @@ from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
 from .ReplyReport import ReplyReport
-from.FieldsJsonView import FieldsJsonView
+from .FieldsJsonView import FieldsJsonView
 
 import logging
 
 
 class RipartPlugin:
     """QGIS Plugin Implementation."""
-
     context = None
     logger = None
     ripartLogger = None
@@ -101,7 +101,7 @@ class RipartPlugin:
                 QCoreApplication.installTranslator(self.translator)
 
         # Create the dialog (after translation) and keep reference
-#        self.dlgConnexion = FormConnectionDialog()
+        #        self.dlgConnexion = FormConnectionDialog()
 
         # La toolbar du plugin
         self.actions = []
@@ -160,7 +160,7 @@ class RipartPlugin:
     def enabledActionSaveAllEdits(self):
         self.iface.actionSaveAllEdits().setEnabled(False)
 
-    def enabledActionSaveEdits (self):
+    def enabledActionSaveEdits(self):
         self.iface.actionSaveEdits().setEnabled(False)
 
     def enabledActionSaveProject(self):
@@ -481,8 +481,8 @@ class RipartPlugin:
         if self.context is None:
             return
         if self.context.client is None:
-            res = self.context.getConnexionRipart(newLogin=True)
-            if not res:
+            resCo = self.context.getConnexionRipart(newLogin=True)
+            if not resCo:
                 return
 
         # Une synchronisation par couche
@@ -511,23 +511,27 @@ class RipartPlugin:
 
         if len(listEditBuffers) > 0:
             if len(listEditBuffers) == 1:
-                message0 = u"La couche {0} contient".format(messageLayers[0:len(messageLayers)-2])
+                startMessage = u"La couche {0} contient".format(messageLayers[0:len(messageLayers) - 2])
             else:
-                message0 = u"Les couches {0} contiennent".format(messageLayers[0:len(messageLayers)-2])
+                startMessage = u"Les couches {0} contiennent".format(messageLayers[0:len(messageLayers) - 2])
 
-            message = "{0} des modifications non enregistrées. Si vous poursuivez la synchronisation, vos modifications seront perdues. \nVoulez-vous continuer ?".format(
-                message0)
+            message = "{0} des modifications non enregistrées. Si vous poursuivez la synchronisation, " \
+                      "vos modifications seront perdues. \nVoulez-vous continuer ?".format(startMessage)
             reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
                                          QMessageBox.No)
 
             if reply == QMessageBox.No:  # On sort
                 return
-            else: # On supprime les modifications et on poursuit
+            else:  # On supprime les modifications et on poursuit
                 for editBuffer in listEditBuffers:
                     editBuffer.rollBack()
 
         # Synchronisation des couches
+        progress = ProgressBar(len(QgsProject.instance().mapLayers()), cst.UPDATETEXTPROGRESS)
+        i = 0
         for layer in QgsProject.instance().mapLayers().values():
+            i += 1
+            progress.setValue(i)
             bRes = False
             for layerTableOfTables in layersTableOfTables:
                 if layer.name() in layerTableOfTables[0]:
@@ -538,7 +542,8 @@ class RipartPlugin:
 
             endMessage += "<br/>{0}\n".format(layer.name())
             bbox = BBox(self.context)
-            parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName), 'sridProject': cst.EPSGCRS}
+            parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName),
+                          'sridProject': cst.EPSGCRS}
             result = SQLiteManager.selectRowsInTableOfTables(layer.name())
             if result is not None:
                 for r in result:
@@ -575,6 +580,8 @@ class RipartPlugin:
             SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
             SQLiteManager.vacuumDatabase()
             endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])
+        progress.close()
+
         # Message de fin de synchronisation
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(endMessage)

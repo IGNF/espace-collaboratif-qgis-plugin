@@ -7,16 +7,12 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
 """
-
-from PyQt5.QtWidgets import QProgressBar, QApplication
-from PyQt5.QtCore import Qt
 from .RipartHelper import RipartHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.BBox import BBox
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .Contexte import Contexte
-from .core import ConstanteRipart as cst
 
 
 class ImporterGuichet(object):
@@ -27,23 +23,15 @@ class ImporterGuichet(object):
     # le contexte de la carte
     context = None
 
-    # barre de progression (des remarques importées)
-    progressMessageBar = None
-    progress = None
-
     def __init__(self, context):
         """
         Constructor
-        Initialisation du contexte et de la progressbar
+        Initialisation du contexte
 
         :param context: le contexte de la carte actuelle
         :type context: Contexte
         """
         self.context = context
-        self.progressMessageBar = self.context.iface.messageBar().createMessage(cst.GENERALTEXTPROGRESS)
-        self.progress = QProgressBar()
-        self.progress.setValue(0)
-        self.progress.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
     def doImport(self, guichet_layers):
         """Téléchargement et import des couches du guichet sur la carte
@@ -78,21 +66,11 @@ class ImporterGuichet(object):
             if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
                 return
 
-            self.progressMessageBar.layout().addWidget(self.progress)
-            self.context.iface.messageBar().pushWidget(self.progressMessageBar, level=0)
-            self.context.iface.mainWindow().repaint()
-
-            QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
-
             # création de la table des tables
             SQLiteManager.createTableOfTables()
 
             # Import des couches du guichet sélectionnées par l'utilisateur
-            self.context.addGuichetLayersToMap(guichet_layers, box, self.context.profil.geogroup.name, self.progress)
+            self.context.addGuichetLayersToMap(guichet_layers, box, self.context.profil.geogroup.name)
 
         except Exception as e:
             RipartHelper.showMessageBox('{}'.format(e))
-
-        finally:
-            self.context.iface.messageBar().clearWidgets()
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)

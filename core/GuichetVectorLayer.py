@@ -9,7 +9,8 @@ version 4.0.1, 15/12/2020
 import random
 
 from PyQt5.QtGui import QColor
-from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes
+from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, \
+    QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes
 
 from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
 
@@ -26,7 +27,6 @@ class GuichetVectorLayer(QgsVectorLayer):
     geometryDimensionForDatabase = None
     geometryTypeForDatabase = None
 
-
     def __init__(self, parameters):
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
         self.databasename = parameters['databasename']
@@ -38,7 +38,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.geometryDimensionForDatabase = parameters['geometryDimension']
         self.geometryTypeForDatabase = parameters['geometryType']
         self.conditionFactory = ConditionFactory()
-
 
     '''
         Transformation de la condition en expression QGIS
@@ -181,14 +180,15 @@ class GuichetVectorLayer(QgsVectorLayer):
                         'offset': '0,0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'Pixel',
                         'outline_color': '0,0,0,255', 'outline_style': 'dash dot', 'outline_width': '0',
                         'outline_width_unit': 'Pixel', 'style': 'solid'},
-            'longdashdot': {'border_width_map_unit_scale': '3x:0,0,0,0,0,0', 'color': '238,153,0,255', 'joinstyle': 'miter',
+            'longdashdot': {'border_width_map_unit_scale': '3x:0,0,0,0,0,0', 'color': '238,153,0,255',
+                            'joinstyle': 'miter',
                             'offset': '0,0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'Pixel',
                             'outline_color': '0,0,0,255', 'outline_style': 'dash dot dot', 'outline_width': '0',
                             'outline_width_unit': 'Pixel', 'style': 'solid'},
             'longdash': {'border_width_map_unit_scale': '3x:0,0,0,0,0,0', 'color': fillColor, 'joinstyle': 'miter',
-                     'offset': '0,0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'Pixel',
-                     'outline_color': strokeColor, 'outline_style': 'dash', 'outline_width': strokeWidth,
-                     'outline_width_unit': 'Pixel', 'style': 'solid'}
+                         'offset': '0,0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'Pixel',
+                         'outline_color': strokeColor, 'outline_style': 'dash', 'outline_width': strokeWidth,
+                         'outline_width_unit': 'Pixel', 'style': 'solid'}
         }
         return polygonStyles[strokeDashstyle]
 
