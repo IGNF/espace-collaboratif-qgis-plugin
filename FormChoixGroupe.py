@@ -214,6 +214,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.reject()
 
     def deleteLayersAndGroup(self, userWorkZone):
+        # Si c'est un projet nouvellement créé, il faut vérifier si la table des tables existe
+        if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+            return
+
         # Le nom de la zone stockée dans le xml .../xxx_espaceco.xml
         storedWorkZone = RipartHelper.load_ripartXmlTag(self.context.projectDir,
                                                         RipartHelper.xml_Zone_extraction,
@@ -250,7 +254,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if bNewZone:
             # Récupération de l'ensemble des noms des couches chargées dans le projet QGIS
             projectLayers = self.context.getAllMapLayers()
-            # Récupération de l'ensemble des noms des couches chargées dans la table des tables ?
+            # Récupération de l'ensemble des noms des couches chargées dans la table des tables
             layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
             layersInTT = []
             for lftot in layersFromTableOfTables:
