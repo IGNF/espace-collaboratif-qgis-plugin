@@ -219,30 +219,35 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                                                         RipartHelper.xml_Zone_extraction,
                                                         "Map").text
 
+        bNewGroup = self.activeGroup != self.nameChosenGroup
+        bNewZone = storedWorkZone != userWorkZone
         # Si rien n'a changé, on sort
-        if self.activeGroup == self.nameChosenGroup and storedWorkZone == userWorkZone:
+        if not bNewGroup and not bNewZone:
             return
 
         # Si l'utilisateur a changé de groupe, on supprime l'ancien
-        if self.activeGroup != self.nameChosenGroup:
-            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.nameChosenGroup,
-                                        "Serveur")
+        if bNewGroup:
             # Quels sont les groupes du project ?
             root = QgsProject.instance().layerTreeRoot()
             nodesGroup = root.findGroups()
             for ng in nodesGroup:
                 tmp = ng.name().removeprefix(cst.ESPACECO)
                 if tmp == self.activeGroup:
-                    message = "Le groupe {0}{1} va être supprimé du projet ainsi que toutes ses couches liées, " \
-                              "voulez-vous continuez ?".format(cst.ESPACECO, self.activeGroup)
+                    message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0}{1} vont être supprimées. " \
+                              "Voulez-vous continuer ?".format(cst.ESPACECO, self.activeGroup)
                     reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
                     if reply == QMessageBox.Yes:
                         root.removeChildNode(ng)
                         QgsProject.instance().write()
+                    else:
+                        self.bCancel = True
                     break
+            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif,
+                                        self.nameChosenGroup,
+                                        "Serveur")
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
-        if storedWorkZone != userWorkZone:
+        if bNewZone:
             # Récupération de l'ensemble des noms des couches chargées dans le projet QGIS
             projectLayers = self.context.getAllMapLayers()
             # Récupération de l'ensemble des noms des couches chargées dans la table des tables ?
@@ -255,5 +260,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 tmp = Layer()
                 tmp.nom = lp
                 layersInProject.append(tmp)
-            self.context.removeLayersFromProject(layersInProject, layersInTT)
-            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone, "Map")
+
+            #Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe, on l'informe
+            if not bNewGroup:
+                message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif déjà chargées " \
+                            "dans votre projet vont être supprimées. Voulez-vous continuer ?"
+                reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    self.context.removeLayersFromProject(layersInProject, layersInTT, False)
+                    RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone, "Map")
+
+                else:
+                    self.bCancel = True

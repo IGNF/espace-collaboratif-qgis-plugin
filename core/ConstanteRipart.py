@@ -128,4 +128,4 @@ TABLEOFTABLES = 'tableoftables'
 CLIENTFEATUREID = "_client_feature_id"
 LOADINGTEXTPROGRESS = "Chargement des couches du guichet"
 UPDATETEXTPROGRESS = "Mise à jour des couches du guichet"
-ESPACECO = "[ESPACE CO]"
+ESPACECO = "[ESPACE CO] "

@@ -473,27 +473,28 @@ class Contexte(object):
         config.setColumns(columns)
         layer.setAttributeTableConfig(config)
 
-    def removeLayersFromProject(self, guichet_layers, maplayers):
+    def removeLayersFromProject(self, guichet_layers, maplayers, bAskForConfirmation=True):
         tmp = ''
         removeLayers = []
         for layer in guichet_layers:
             if layer.nom in maplayers:
                 removeLayers.append(layer.nom)
                 tmp += "{}, ".format(layer.nom)
-        return self.removeLayersById(removeLayers, tmp)
+        return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 
-    def removeLayersById(self, removeLayers, tmp):
+    def removeLayersById(self, removeLayers, tmp, bAskForConfirmation):
         if len(removeLayers) == 0:
             return True
 
-        if len(removeLayers) == 1:
-            message = "La couche [{}] existe déjà, elle sera détruite si vous continuez ?".format(tmp[:-2])
-        else:
-            message = "Les couches [{}] existent déjà, elles seront supprimées si vous continuez ?".format(tmp[:-2])
-        reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
-                                     QMessageBox.No)
-        if reply == QMessageBox.No:
-            return False
+        if bAskForConfirmation:
+            if len(removeLayers) == 1:
+                message = "La couche [{}] existe déjà, elle sera détruite si vous continuez ?".format(tmp[:-2])
+            else:
+                message = "Les couches [{}] existent déjà, elles seront supprimées si vous continuez.".format(tmp[:-2])
+            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                                         QMessageBox.No)
+            if reply == QMessageBox.No:
+                return False
 
         layerIds = []
         for removeLayer in removeLayers:
