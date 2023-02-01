@@ -477,6 +477,8 @@ class RipartPlugin:
     def synchronizeData(self):
         endMessage = '<b>Contenu de la synchronisation</b>'
         print("Synchroniser les données de toutes les couches")
+
+        # Connexion
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
@@ -485,61 +487,56 @@ class RipartPlugin:
             if not resCo:
                 return
 
-        # Une synchronisation par couche
-        spatialFilterName = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
+        # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
+        layersToSynchronize = []
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
-
-        # On vérifie d'abord que les couches à synchroniser ne contiennent pas de données non enregistrées
-        listEditBuffers = []
-        messageLayers = ""
         for layer in QgsProject.instance().mapLayers().values():
-            bRes = False
             for layerTableOfTables in layersTableOfTables:
                 if layer.name() in layerTableOfTables[0]:
                     print('synchronizeData couche : {}'.format(layer.name()))
-                    bRes = True
+                    layersToSynchronize.append(layer)
                     break
-            if not bRes:
-                continue
 
-            # Si la couche contient des modifications non enregistrées, on interrompt la synchronisation
-            layerEditBuffer = layer.editBuffer()
-            if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
-                                                or len(layerEditBuffer.deletedFeatureIds()) > 0):
-                listEditBuffers.append(layerEditBuffer)
-                messageLayers += "{0}, ".format(layer.name())
+        # S'il n'y a pas de couches, la synchronisation est vide
+        if len(layersToSynchronize) == 0:
+                endMessage += "<br/>Vide\n"
+        else:
+            # Les couches à synchroniser contiennent-elles des données non enregistrées ?
+            listEditBuffers = []
+            messageLayers = ""
+            for layer in layersToSynchronize:
+                layerEditBuffer = layer.editBuffer()
+                if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
+                                                    or len(layerEditBuffer.deletedFeatureIds()) > 0):
+                    listEditBuffers.append(layerEditBuffer)
+                    messageLayers += "{0}, ".format(layer.name())
 
-        if len(listEditBuffers) > 0:
-            if len(listEditBuffers) == 1:
-                startMessage = u"La couche {0} contient".format(messageLayers[0:len(messageLayers) - 2])
-            else:
-                startMessage = u"Les couches {0} contiennent".format(messageLayers[0:len(messageLayers) - 2])
+            # Si oui envoi d'un message à l'utilisateur pour qu'il décide de la suite à donner
+            if len(listEditBuffers) > 0:
+                if len(listEditBuffers) == 1:
+                    startMessage = u"La couche {0} contient".format(messageLayers[0:len(messageLayers) - 2])
+                else:
+                    startMessage = u"Les couches {0} contiennent".format(messageLayers[0:len(messageLayers) - 2])
 
-            message = "{0} des modifications non enregistrées. Si vous poursuivez la synchronisation, " \
-                      "vos modifications seront perdues. \nVoulez-vous continuer ?".format(startMessage)
-            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
-                                         QMessageBox.No)
+                message = "{0} des modifications non enregistrées. Si vous poursuivez la synchronisation, " \
+                          "vos modifications seront perdues. \nVoulez-vous continuer ?".format(startMessage)
+                reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                                             QMessageBox.No)
+                # On sort
+                if reply == QMessageBox.No:
+                    return
+                else:
+                    # On supprime les modifications et on poursuit
+                    for editBuffer in listEditBuffers:
+                        editBuffer.rollBack()
 
-            if reply == QMessageBox.No:  # On sort
-                return
-            else:  # On supprime les modifications et on poursuit
-                for editBuffer in listEditBuffers:
-                    editBuffer.rollBack()
-
-        # Synchronisation des couches
+        # Synchronisation des couches une par une
+        spatialFilterName = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
         progress = ProgressBar(len(QgsProject.instance().mapLayers()), cst.UPDATETEXTPROGRESS)
         i = 0
-        for layer in QgsProject.instance().mapLayers().values():
+        for layer in layersToSynchronize:
             i += 1
             progress.setValue(i)
-            bRes = False
-            for layerTableOfTables in layersTableOfTables:
-                if layer.name() in layerTableOfTables[0]:
-                    bRes = True
-                    break
-            if not bRes:
-                continue
-
             endMessage += "<br/>{0}\n".format(layer.name())
             bbox = BBox(self.context)
             parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName),
