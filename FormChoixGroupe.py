@@ -229,43 +229,50 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if not bNewGroup and not bNewZone:
             return
 
+        # Récupération de l'ensemble des noms des couches chargées dans le projet QGIS
+        projectLayers = self.context.getAllMapLayers()
+        layersInProject = []
+        for lp in projectLayers:
+            tmp = Layer()
+            tmp.nom = lp
+            layersInProject.append(tmp)
+
         # Si l'utilisateur a changé de groupe, on supprime l'ancien
+        # et toutes les couches associées. On supprime la base sqlite et on la recréée
         if bNewGroup:
             # Quels sont les groupes du project ?
             root = QgsProject.instance().layerTreeRoot()
             nodesGroup = root.findGroups()
             for ng in nodesGroup:
-                tmp = ng.name().removeprefix(cst.ESPACECO)
-                if tmp == self.activeGroup:
-                    message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0}{1} vont être supprimées. " \
-                              "Voulez-vous continuer ?".format(cst.ESPACECO, self.activeGroup)
-                    reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+                # Dans le cas ou le nom du groupe actif, du groupe dans le carte et celui stocké dans le xml sont tous
+                # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
+                # est de chercher le prefixe
+                if ng.name().find(cst.ESPACECO):
+                    message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
+                              "supprimées. Voulez-vous continuer ?".format(ng.name())
+                    reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                                                 QMessageBox.No)
                     if reply == QMessageBox.Yes:
                         root.removeChildNode(ng)
+                        self.removeTablesSQLite(layersInProject)
                         QgsProject.instance().write()
                     else:
                         self.bCancel = True
                     break
-            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif,
-                                        self.nameChosenGroup,
+            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.nameChosenGroup,
                                         "Serveur")
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
         if bNewZone:
-            # Récupération de l'ensemble des noms des couches chargées dans le projet QGIS
-            projectLayers = self.context.getAllMapLayers()
+
             # Récupération de l'ensemble des noms des couches chargées dans la table des tables
             layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
             layersInTT = []
             for lftot in layersFromTableOfTables:
                 layersInTT.append(lftot[0])
-            layersInProject = []
-            for lp in projectLayers:
-                tmp = Layer()
-                tmp.nom = lp
-                layersInProject.append(tmp)
 
-            #Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe, on l'informe
+            # Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe,
+            # on l'informe
             if not bNewGroup:
                 message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif déjà chargées " \
                             "dans votre projet vont être supprimées. Voulez-vous continuer ?"
@@ -273,6 +280,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 if reply == QMessageBox.Yes:
                     self.context.removeLayersFromProject(layersInProject, layersInTT, False)
                     RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone, "Map")
-
+                    self.removeTablesSQLite(layersInProject)
                 else:
                     self.bCancel = True
+
+    def removeTablesSQLite(self, layers):
+        for layer in layers:
+            if SQLiteManager.isTableExist(layer.nom):
+                SQLiteManager.emptyTable(layer.nom)
+                SQLiteManager.deleteTable(layer.nom)
+        if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+            SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+        SQLiteManager.vacuumDatabase()
