@@ -70,12 +70,8 @@ class SQLiteManager(object):
                 continue
             else:
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
-        # il faut ajouter une colonne "is_fingerprint" qui indiquera si c'est une table BDUni qui contient
-        # gcms_fingerprint
         if not layer.isStandard:
-            #sqlAttributes += "{0} INTEGER,{1} TEXT,".format(cst.NUMREC, cst.FINGERPRINT)
-            sqlAttributes += "{0} TEXT,".format(cst.FINGERPRINT)
-        sqlAttributes += "{0} INTEGER".format(cst.IS_FINGERPRINT)
+            sqlAttributes += "{0} TEXT".format(cst.FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
         self.geometryType = typeGeometrie
         return sqlAttributes, typeGeometrie, columnDetruitExist
@@ -204,15 +200,14 @@ class SQLiteManager(object):
                     tmpValues += listToJson
                     continue
                 tmpValues += "'{}',".format(value)
-        # si la table sqlite contient la colonne gcms_fingerprint et "isTableStandard" est à False
-        # alors la colonne 'is_fingerprint' est remplie à 1 dans les autres cas à 0
-        tmpColumns += '{0})'.format(cst.IS_FINGERPRINT)
-        if parameters['isStandard']:
-            tmpValues += "'0')"
-        else:
-            tmpValues += "'1')"
+        pos = len(tmpColumns)
+        strColumns = tmpColumns[0:pos - 1]
+        strColumns += ')'
+        pos = len(tmpValues)
+        strValues = tmpValues[0:pos - 1]
+        strValues += ')'
         # sinon on renvoie un tuple contenant l'ensemble des colonnes et valeurs pour l'insertion dans la table
-        return tmpColumns, tmpValues
+        return strColumns, strValues
 
     def setColumnsValuesForInsert(self, attributesRow, parameters, wkt):
         tmpColumns = '('
@@ -249,14 +244,13 @@ class SQLiteManager(object):
                     tmpValues += listToJson
                     continue
                 tmpValues += "'{}',".format(value)
-        # si la table sqlite contient la colonne gcms_fingerprint et "isTableStandard" est à False
-        # alors la colonne 'is_fingerprint' est remplie à 1 dans les autres cas à 0
-        tmpColumns += '{0})'.format(cst.IS_FINGERPRINT)
-        if parameters['isStandard']:
-            tmpValues += "'0')"
-        else:
-            tmpValues += "'1')"
-        return tmpColumns, tmpValues
+        pos = len(tmpColumns)
+        strColumns = tmpColumns[0:pos - 1]
+        strColumns += ')'
+        pos = len(tmpValues)
+        strValues = tmpValues[0:pos - 1]
+        strValues += ')'
+        return strColumns, strValues
 
     @staticmethod
     def deleteRowsInTableBDUni(tableName, keys):

@@ -274,12 +274,13 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             # Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe,
             # on l'informe
             if not bNewGroup:
-                message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif déjà chargées " \
-                            "dans votre projet vont être supprimées. Voulez-vous continuer ?"
+                message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif " \
+                            " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
                 reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     self.context.removeLayersFromProject(layersInProject, layersInTT, False)
-                    RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone, "Map")
+                    RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone,
+                                                "Map")
                     self.removeTablesSQLite(layersInProject)
                 else:
                     self.bCancel = True

@@ -106,13 +106,6 @@ class WfsPost(object):
     def setFingerPrint(self, fingerprint):
         return '"{0}": "{1}", '.format(cst.FINGERPRINT, fingerprint)
 
-    def setIsFingerPrint(self, addedFeatures):
-        for feature in addedFeatures:
-            if self.isTableStandard:
-                feature.setAttribute(cst.IS_FINGERPRINT, 0)
-            else:
-                feature.setAttribute(cst.IS_FINGERPRINT, 1)
-
     def setFieldsNameValueWithAttributes(self, feature, attributesChanged):
         fieldsNameValue = ""
         if self.isTableStandard:
@@ -130,7 +123,7 @@ class WfsPost(object):
         fieldsNameValue = ""
         for field in feature.fields():
             fieldName = field.name()
-            if fieldName == cst.ID_SQLITE or fieldName == cst.IS_FINGERPRINT:
+            if fieldName == cst.ID_SQLITE:
                 continue
             fieldValue = feature.attribute(fieldName)
             if fieldValue is None or str(fieldValue) == "NULL":
@@ -230,7 +223,6 @@ class WfsPost(object):
         # ajout
         if len(addedFeatures) != 0:
             self.pushAddedFeatures(addedFeatures, bBDUni)
-            self.setIsFingerPrint(addedFeatures)
             self.transactionReport += "<br/>Objets créés : {0}\n".format(len(addedFeatures))
 
         # géométrie modifiée et/ou attributs modifiés
