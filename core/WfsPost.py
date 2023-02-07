@@ -10,6 +10,7 @@ from . import ConstanteRipart as cst
 from .Wkt import Wkt
 from .BBox import BBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+from qgis.PyQt.QtWidgets import QMessageBox
 
 class WfsPost(object):
     context = None
@@ -147,19 +148,32 @@ class WfsPost(object):
         xmlResponse = XMLResponse(response)
         responseWfs = xmlResponse.checkResponseWfsTransactions()
         if responseWfs['status'] == 'SUCCESS':
-            # mise à jour de la base SQLite pour les objets détruits et modifiés
+            # Mise à jour de la base SQLite pour les objets détruits et modifiés
             # d'une couche BDUni
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
-            # mise à jour de la couche
-            self.synchronize()
+            # Mise à jour de la couche
+            try:
+                self.synchronize()
+            except Exception as e:
+                QMessageBox.information(None, "IGN Espace collaboratif", format(e))
+                # Suppression de la couche dans la carte. Virer la table dans SQLite
+                layersID = [self.layer.id()]
+                QgsProject.instance().removeMapLayers(layersID)
+                if SQLiteManager.isTableExist(self.layer.nom):
+                    SQLiteManager.emptyTable(self.layer.nom)
+                    SQLiteManager.deleteTable(self.layer.nom)
+                if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+                    SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+                SQLiteManager.vacuumDatabase()
+                return
             numrec = self.getNumrecFromTransaction(responseWfs['urlTransaction'])
-            # cas des couches standard, il faut mettre numrec à 0
+            # Cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
                 numrec = 0
             SQLiteManager.updateNumrecTableOfTables(self.layer.name(), numrec)
             SQLiteManager.vacuumDatabase()
-            # le buffer de la couche est vidée et elle est remise en édition
+            # Le buffer de la couche est vidée et elle est remise en édition
             self.layer.rollBack()
             self.layer.reload()
             self.layer.startEditing()
@@ -197,7 +211,12 @@ class WfsPost(object):
                       'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)
-        wfsGet.gcms_get()
+        numrecmessage = wfsGet.gcms_get()
+        if 'error' in numrecmessage[1]:
+            message = "Vos modifications ont bien été prises en compte mais la couche n'a pas pu être rechargée " \
+                      "dans QGIS. Il faut la ré-importer. En cas de problème, veuillez contacter le gestionnaire " \
+                      "de votre groupe."
+            raise Exception(message)
 
     def commitLayer(self, currentLayer, editBuffer):
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)

@@ -273,7 +273,9 @@ class SQLiteManager(object):
                 continue
             if data['state'] == 'Update' or data['state'] == 'Delete':
                 cleabss.append(data['feature']['cleabs'])
-        SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
+        # Si la transaction ne contient que des créations, il n'y a pas d'enregistrements à détruire
+        if len(cleabss) > 0:
+            SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
     def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, bboxWorkingArea):
         totalRows = 0
