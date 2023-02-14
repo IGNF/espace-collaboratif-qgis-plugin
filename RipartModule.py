@@ -37,7 +37,6 @@ from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .core.WfsGet import WfsGet
 from .core.ProgressBar import ProgressBar
-from .core.ConnectSignals import ConnectSignals
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
@@ -111,13 +110,7 @@ class RipartPlugin:
         self.toolbar.setObjectName(u'RipartPlugin')
         # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
         # et envoyer les modifs sur le serveur
-        # self.iface.projectRead.connect(self.projRead)
         self.iface.projectRead.connect(self.connectAllSignals)
-
-    # def projRead(self):
-    #     print("projRead")
-    #     cs = ConnectSignals(self.iface)
-    #     cs.connectAllSignals()
 
     def connectAllSignals(self):
         for layer in QgsProject.instance().mapLayers().values():
