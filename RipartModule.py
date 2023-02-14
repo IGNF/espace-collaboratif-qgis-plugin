@@ -37,6 +37,7 @@ from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .core.WfsGet import WfsGet
 from .core.ProgressBar import ProgressBar
+from .core.ConnectSignals import ConnectSignals
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
@@ -49,7 +50,6 @@ from . import resources
 
 # modules ripart
 from .FormChargerGuichet import FormChargerGuichet
-from .FormConnection import FormConnectionDialog
 from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
 from .Contexte import Contexte
@@ -111,13 +111,15 @@ class RipartPlugin:
         self.toolbar.setObjectName(u'RipartPlugin')
         # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
         # et envoyer les modifs sur le serveur
-        self.connectSignals()
+        # self.iface.projectRead.connect(self.projRead)
+        self.iface.projectRead.connect(self.connectAllSignals)
 
-    def connectSignals(self):
-        self.iface.projectRead.connect(self.project_read)
-        self.iface.currentLayerChanged.connect(self.current_layer_changed)
+    # def projRead(self):
+    #     print("projRead")
+    #     cs = ConnectSignals(self.iface)
+    #     cs.connectAllSignals()
 
-    def project_read(self):
+    def connectAllSignals(self):
         for layer in QgsProject.instance().mapLayers().values():
             # La désactivation du bouton de sauvegarde n'est valable que sur les couches qui se trouvent
             # dans la table des tables de la base SQLite, qui sont de type VectorLayer et de connexion avec SQLite
@@ -125,55 +127,182 @@ class RipartPlugin:
                 continue
             if not self.searchSpecificLayer(layer.name()):
                 continue
-            layer.layerModified.connect(self.enabledActionSaveActiveLayerEdits)
+            print(layer.name())
+            layer.layerModified.connect(self.disabledActionAllSave)
+            layer.editingStarted.connect(self.connectEditing)
+            layer.editingStopped.connect(self.connectEditing)
+            layer.nameChanged.connect(self.connectNameChanged)
 
-    def current_layer_changed(self):
+    def disabledActionAllSave(self):
+        self.iface.actionSaveActiveLayerEdits().setEnabled(False)
+        self.iface.actionSaveProject().setEnabled(False)
+        self.iface.actionSaveProjectAs().setEnabled(False)
+        self.iface.actionSaveAllEdits().setEnabled(False)
+        self.iface.actionSaveEdits().setEnabled(False)
+        self.iface.actionRollbackEdits().setEnabled(False)
+
+    def enabledActionAllSave(self):
+        self.iface.actionSaveActiveLayerEdits().setEnabled(True)
+        self.iface.actionSaveProject().setEnabled(True)
+        self.iface.actionSaveProjectAs().setEnabled(True)
+        self.iface.actionSaveAllEdits().setEnabled(True)
+        self.iface.actionSaveEdits().setEnabled(True)
+        self.iface.actionRollbackEdits().setEnabled(True)
+
+    def connectEditing(self):
+        editLayers = []
         editableLayers = self.iface.editableLayers()
         bFind = False
         for editableLayer in editableLayers:
             if not self.searchSpecificLayer(editableLayer.name()):
                 continue
-            layerEditBuffer = editableLayer.editBuffer()
-            if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
-                                                or len(layerEditBuffer.deletedFeatureIds()) > 0):
-                bFind = True
-
-        if bFind:
-            self.actionSaveChanges()
-
-    def actionSaveChanges(self):
-        self.enabledActionToggleEditing()
-        self.enabledActionSaveActiveLayerEdits()
-        self.enabledActionSaveAllEdits()
-        self.enabledActionSaveEdits()
-        self.enabledActionSaveProject()
-        reply = QMessageBox.question(None, 'IGN Espace Collaboratif', "La couche a été modifiée, les modifications "
-                                                                      "vont être envoyées sur le serveur.",
-                                     QMessageBox.Yes, QMessageBox.No)
-        if reply == QMessageBox.No:
-            return
-        self.saveChanges()
-
-    def enabledActionSaveActiveLayerEdits(self):
-        self.iface.actionSaveActiveLayerEdits().setEnabled(False)
-
-    def enabledActionSaveAllEdits(self):
-        self.iface.actionSaveAllEdits().setEnabled(False)
-
-    def enabledActionSaveEdits(self):
-        self.iface.actionSaveEdits().setEnabled(False)
-
-    def enabledActionSaveProject(self):
-        self.iface.actionSaveProject().setEnabled(False)
-
-    def enabledActionToggleEditing(self):
-        self.iface.actionToggleEditing().setEnabled(False)
+            bFind = self.isLayerEditBuffered(editableLayer)
+            if bFind:
+                editLayers.append(editableLayer)
+        if len(editLayers) >= 1:
+            self.saveEdits(editLayers)
 
     def searchSpecificLayer(self, layerName):
         if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             if SQLiteManager.selectColumnFromTableWithCondition(cst.TABLEOFTABLES, "layer", layerName) is not None:
                 return True
         return False
+
+    def isLayerEditBuffered(self, layer):
+        layerEditBuffer = layer.editBuffer()
+        if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
+                                            or len(layerEditBuffer.deletedFeatureIds()) > 0):
+            return True
+        return False
+
+    def saveEdits(self, layers):
+        if len(layers) == 1:
+            message = "La couche {} a été modifiée, les modifications vont être envoyées sur le serveur.".format(layers[0].name())
+        else:
+            tmp = "Les couches ["
+            for layer in layers:
+                tmp += "{},".format(layer.name())
+            messageTmp = tmp[0:len(tmp)-1]
+            messageTmp += "] ont été modifiées, les modifications vont être envoyées sur le serveur."
+            message = messageTmp
+        reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                                     QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            for layer in layers:
+                messageProgress = "Synchronisation de la couche {}".format(layer.name())
+                progress = ProgressBar(len(layers), messageProgress)
+                progress.setValue(1)
+                self.saveChangesForOneLayer(layer)
+                progress.close()
+            self.enabledActionAllSave()
+        elif reply == QMessageBox.No:
+            self.disabledActionAllSave()
+            return
+
+    def saveChangesForOneLayer(self, layer):
+        report = "<b>Contenu de la transaction</b>"
+        self.context = Contexte.getInstance(self, QgsProject)
+        if self.context is None:
+            return
+        if self.context.client is None:
+            if not self.context.getConnexionRipart(newLogin=True):
+                return
+        messages = []
+        layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
+        bRes = False
+        for layerTableOfTables in layersTableOfTables:
+            if layer.name() in layerTableOfTables[0]:
+                bRes = True
+                break
+        if not bRes:
+            return
+        editBuffer = layer.editBuffer()
+        if not editBuffer:
+            return
+        try:
+            wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer)))
+        except Exception as e:
+            messages.append('<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e))
+        # Message de fin de transaction
+        dlgInfo = FormInfo()
+        dlgInfo.textInfo.setText(report)
+        dlgInfo.textInfo.setOpenExternalLinks(True)
+        if len(messages) == 0:
+            dlgInfo.textInfo.append("<br/>Vide")
+        for message in messages:
+            dlgInfo.textInfo.append(message)
+        dlgInfo.exec_()
+
+    def connectNameChanged(self):
+        activeLayer = self.iface.activeLayer()
+        if not self.searchSpecificLayer(activeLayer.name()):
+            QMessageBox.warning(self.iface.mainWindow(), "IGN Espace collaboratif", "Action interdite ! Veuillez "
+                                                                                    "renommer la couche de son nom "
+                                                                                    "initial.")
+        return
+
+    # def current_layer_changed(self, layer):
+    #     global editableLayer
+    #     editableLayers = self.iface.editableLayers()
+    #     bFind = False
+    #     for editableLayer in editableLayers:
+    #         if not self.searchSpecificLayer(editableLayer.name()):
+    #             continue
+    #         layerEditBuffer = editableLayer.editBuffer()
+    #         if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
+    #                                             or len(layerEditBuffer.deletedFeatureIds()) > 0):
+    #             bFind = True
+    #             break
+    #     if bFind:
+    #         self.saveEdits(editableLayer)
+    #         layer.startEditing()
+    #         self.actionSaveChanges()
+
+    # def actionSaveChanges(self):
+    #     self.enabledActionToggleEditing(False)
+    #     self.enabledActionSaveActiveLayerEdits()
+    #     self.enabledActionSaveAllEdits(False)
+    #     self.enabledActionSaveEdits(False)
+    #     self.enabledActionSaveProject(False)
+    #     self.enabledActionSaveProjectAs(False)
+    #     self.enabledActionCancelEdits(False)
+    #     self.enabledActionExit(False)
+    #     self.enabledActionRollbackEdits(False)
+    #     reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', "La couche a été modifiée, "
+    #                                                                                      "les modifications vont être"
+    #                                                                                      " envoyées sur le serveur.",
+    #                                  QMessageBox.Yes, QMessageBox.No)
+    #     if reply == QMessageBox.No:
+    #         self.enabledActionSaveProject(True)
+    #         self.enabledActionSaveProjectAs(True)
+    #         self.enabledActionExit(True)
+    #         return
+    #     self.saveChangesForAllLayers()
+
+    # def enabledActionRollbackEdits(self, bEnable):
+    #     self.iface.actionRollbackEdits().setEnabled(bEnable)
+    #
+    # def enabledActionExit(self, bEnable):
+    #     self.iface.actionExit().setEnabled(bEnable)
+    #
+    # def enabledActionSaveAllEdits(self, bEnable):
+    #     self.iface.actionSaveAllEdits().setEnabled(bEnable)
+    #
+    # def enabledActionSaveEdits(self, bEnable):
+    #     self.iface.actionSaveEdits().setEnabled(bEnable)
+    #
+    # def enabledActionSaveProject(self, bEnable):
+    #     self.iface.actionSaveProject().setEnabled(bEnable)
+    #
+    # def enabledActionToggleEditing(self, bEnable):
+    #     self.iface.actionToggleEditing().setEnabled(bEnable)
+    #
+    # def enabledActionSaveProjectAs(self, bEnable):
+    #     self.iface.actionSaveProjectAs().setEnabled(bEnable)
+    #
+    # def enabledActionCancelEdits(self, bEnable):
+    #     self.iface.actionCancelEdits().setEnabled(bEnable)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -331,7 +460,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
-            callback=self.saveChanges,
+            callback=self.saveChangesForAllLayers,
             status_tip=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
             parent=self.iface.mainWindow())
 
@@ -381,7 +510,7 @@ class RipartPlugin:
         self.toolbar.addWidget(self.toolButton2)
 
     def modifyFieldJson(self):
-        QMessageBox.information(None, 'IGN Espace Collaboratif', "En travaux")
+        QMessageBox.information(self.iface.mainWindow(), 'IGN Espace Collaboratif', "En travaux")
         """
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
@@ -433,8 +562,7 @@ class RipartPlugin:
                             level=1, duration=5)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
-    def saveChanges(self):
-        print("Enregistrer les données")
+    def saveChangesForAllLayers(self):
         report = "<b>Contenu de la transaction</b>"
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
@@ -520,7 +648,7 @@ class RipartPlugin:
 
                 message = "{0} des modifications non enregistrées. Si vous poursuivez la synchronisation, " \
                           "vos modifications seront perdues. \nVoulez-vous continuer ?".format(startMessage)
-                reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', message, QMessageBox.Yes,
                                              QMessageBox.No)
                 # On sort
                 if reply == QMessageBox.No:
@@ -701,7 +829,7 @@ class RipartPlugin:
             if self.context is None:
                 return
             message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
-            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+            reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.context.emptyAllRipartLayers()
             else:
@@ -725,7 +853,7 @@ class RipartPlugin:
             self.dlgConfigure = FormConfigure(context=self.context)
             self.dlgConfigure.exec_()
 
-        except (Exception) as e:
+        except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",

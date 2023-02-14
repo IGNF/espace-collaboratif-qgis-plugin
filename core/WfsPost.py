@@ -91,7 +91,6 @@ class WfsPost(object):
         if bboxWorkingArea is not None and not wkt.isBoundingBoxIntersectGeometryObject(bboxWorkingArea, geometry):
             raise Exception("Un objet au moins se situe en dehors de votre zone de travail. Veuillez le(s) "
                             "déplacer ou le(s) supprimer.")
-            return None
         return wkt.toPostGeometry(geometry, self.layer.geometryDimensionForDatabase, bBDUni)
 
     def setGeometries(self, changedGeometries, bBDUni):
@@ -176,7 +175,7 @@ class WfsPost(object):
             # Le buffer de la couche est vidée et elle est remise en édition
             self.layer.rollBack()
             self.layer.reload()
-            self.layer.startEditing()
+            # self.layer.startEditing()
         return responseWfs
 
     def getJsonTransaction(self, urlTransaction):

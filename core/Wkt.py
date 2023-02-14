@@ -49,7 +49,7 @@ class Wkt(object):
         qgsGeometryObject.transform(self.crsTransform)
 
         # Cas particulier de la BDUni, voir ticket http://sd-redmine.ign.fr/issues/15746
-        if bBDUni is True:
+        if bBDUni is True and is3D == 1:
             geometryWithModifiedZ = qgsGeometryObject.get()
             geometryWithModifiedZ.dropZValue()
             geometryWithModifiedZ.addZValue(-1000.)
