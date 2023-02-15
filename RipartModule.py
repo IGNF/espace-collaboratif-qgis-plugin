@@ -110,29 +110,39 @@ class RipartPlugin:
         self.toolbar.setObjectName(u'RipartPlugin')
         # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
         # et envoyer les modifs sur le serveur
-        self.iface.projectRead.connect(self.connectAllSignals)
+        #self.iface.projectRead.connect(self.connectAllSignals)
         QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
+        self.iface.layerTreeView().currentLayerChanged.connect(self.connectCurrentLayerChanged)
+
+    def connectCurrentLayerChanged(self, layer):
+        if self.isLayerEditBuffered(layer):
+            self.disabledActionAllSave()
 
     def connectLayerWasAdded(self, layer):
+        print("Connect because layer added: " + layer.name())
         if not self.searchSpecificLayer(layer.name()):
             return
         self.connectSpecificSignals(layer)
 
     def connectSpecificSignals(self, layer):
+        print ("ConnectSpecificSignals for " + layer.name())
         layer.layerModified.connect(self.disabledActionAllSave)
         layer.editingStarted.connect(self.connectEditing)
-        layer.editingStopped.connect(self.connectEditing)
+        #layer.editingStopped.connect(self.connectEditing)
         layer.nameChanged.connect(self.connectNameChanged)
+        layer.beforeCommitChanges.connect(self.connectEditing)
 
-    def connectAllSignals(self):
-        for layer in QgsProject.instance().mapLayers().values():
-            # La désactivation du bouton de sauvegarde n'est valable que sur les couches qui se trouvent
-            # dans la table des tables de la base SQLite, qui sont de type VectorLayer et de connexion avec SQLite
-            if layer.type() != QgsMapLayerType.VectorLayer or layer.providerType() != 'spatialite':
-                continue
-            if not self.searchSpecificLayer(layer.name()):
-                continue
-            self.connectSpecificSignals(layer)
+
+    # def connectAllSignals(self):
+    #     print ("connectAllSignals")
+    #     for layer in QgsProject.instance().mapLayers().values():
+    #         # La désactivation du bouton de sauvegarde n'est valable que sur les couches qui se trouvent
+    #         # dans la table des tables de la base SQLite, qui sont de type VectorLayer et de connexion avec SQLite
+    #         if layer.type() != QgsMapLayerType.VectorLayer or layer.providerType() != 'spatialite':
+    #             continue
+    #         if not self.searchSpecificLayer(layer.name()):
+    #             continue
+    #         self.connectSpecificSignals(layer)
 
     def disabledActionAllSave(self):
         self.iface.actionSaveActiveLayerEdits().setEnabled(False)
@@ -151,6 +161,7 @@ class RipartPlugin:
         self.iface.actionRollbackEdits().setEnabled(True)
 
     def connectEditing(self):
+        print ("connectEditing")
         editLayers = []
         editableLayers = self.iface.editableLayers()
         bFind = False
