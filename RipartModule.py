@@ -111,6 +111,18 @@ class RipartPlugin:
         # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
         # et envoyer les modifs sur le serveur
         self.iface.projectRead.connect(self.connectAllSignals)
+        QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
+
+    def connectLayerWasAdded(self, layer):
+        if not self.searchSpecificLayer(layer.name()):
+            return
+        self.connectSpecificSignals(layer)
+
+    def connectSpecificSignals(self, layer):
+        layer.layerModified.connect(self.disabledActionAllSave)
+        layer.editingStarted.connect(self.connectEditing)
+        layer.editingStopped.connect(self.connectEditing)
+        layer.nameChanged.connect(self.connectNameChanged)
 
     def connectAllSignals(self):
         for layer in QgsProject.instance().mapLayers().values():
@@ -120,11 +132,7 @@ class RipartPlugin:
                 continue
             if not self.searchSpecificLayer(layer.name()):
                 continue
-            print(layer.name())
-            layer.layerModified.connect(self.disabledActionAllSave)
-            layer.editingStarted.connect(self.connectEditing)
-            layer.editingStopped.connect(self.connectEditing)
-            layer.nameChanged.connect(self.connectNameChanged)
+            self.connectSpecificSignals(layer)
 
     def disabledActionAllSave(self):
         self.iface.actionSaveActiveLayerEdits().setEnabled(False)
