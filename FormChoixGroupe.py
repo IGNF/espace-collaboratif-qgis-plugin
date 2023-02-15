@@ -42,6 +42,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
         self.profile = profile
         self.activeGroup = activeGroup
+        self.newShapefilesDict.clear()
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
         self.setComboBoxGroup()
@@ -237,34 +238,36 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             tmp.nom = lp
             layersInProject.append(tmp)
 
+        # On regarde si le projet QGIS contient des couches Espace co
+        bEspaceCoLayersInProject = False
+        root = QgsProject.instance().layerTreeRoot()
+        nodesGroup = root.findGroups()
+        for ng in nodesGroup:
+            # Dans le cas ou le nom du groupe actif, du groupe dans le carte et celui stocké dans le xml sont tous
+            # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
+            # est de chercher le prefixe
+            if ng.name().find(cst.ESPACECO) != -1:
+                bEspaceCoLayersInProject = True
+                break
+
         # Si l'utilisateur a changé de groupe, on supprime l'ancien
         # et toutes les couches associées. On supprime la base sqlite et on la recréée
         if bNewGroup:
-            # Quels sont les groupes du project ?
-            root = QgsProject.instance().layerTreeRoot()
-            nodesGroup = root.findGroups()
-            for ng in nodesGroup:
-                # Dans le cas ou le nom du groupe actif, du groupe dans le carte et celui stocké dans le xml sont tous
-                # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
-                # est de chercher le prefixe
-                if ng.name().find(cst.ESPACECO):
-                    message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
-                              "supprimées. Voulez-vous continuer ?".format(ng.name())
-                    reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
-                                                 QMessageBox.No)
-                    if reply == QMessageBox.Yes:
-                        root.removeChildNode(ng)
-                        self.removeTablesSQLite(layersInProject)
-                        QgsProject.instance().write()
-                    else:
-                        self.bCancel = True
-                    break
+            message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
+                      "supprimées. Voulez-vous continuer ?".format(ng.name())
+            reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                                         QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                root.removeChildNode(ng)
+                self.removeTablesSQLite(layersInProject)
+                QgsProject.instance().write()
+            else:
+                self.bCancel = True
             RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.nameChosenGroup,
                                         "Serveur")
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
         if bNewZone:
-
             # Récupération de l'ensemble des noms des couches chargées dans la table des tables
             layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
             layersInTT = []
@@ -273,7 +276,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
             # Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe,
             # on l'informe
-            if not bNewGroup:
+            if not bNewGroup and bEspaceCoLayersInProject:
                 message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif " \
                             " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
                 reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
