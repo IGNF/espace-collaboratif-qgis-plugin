@@ -37,11 +37,12 @@ from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .core.WfsGet import WfsGet
 from .core.ProgressBar import ProgressBar
+from .core.Layer import Layer
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import QgsProject, QgsMapLayerType
+from qgis.core import QgsProject, QgsVectorLayer
 import configparser
 
 # Initialize Qt resources from file resources.py
@@ -105,33 +106,69 @@ class RipartPlugin:
         # La toolbar du plugin
         self.actions = []
         self.menu = self.tr(u'&IGN_Espace_Collaboratif')
-
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
         # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
         # et envoyer les modifs sur le serveur
-        #self.iface.projectRead.connect(self.connectAllSignals)
+        self.iface.projectRead.connect(self.connectProjectRead)
         QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
         self.iface.layerTreeView().currentLayerChanged.connect(self.connectCurrentLayerChanged)
 
+    def connectProjectRead(self):
+        # S'il n'a y pas de table des tables, on sort
+        if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+            return
+        root = QgsProject.instance().layerTreeRoot()
+        nodesGroup = root.findGroups()
+        for ng in nodesGroup:
+            # Dans le cas ou le nom du groupe actif, du groupe dans le carte et celui stocké dans le xml sont tous
+            # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
+            # est de chercher le prefixe
+            if ng.name().find(cst.ESPACECO) != -1:
+                message = "Votre projet contient des couches de l'Espace collaboratif IGN. Pour continuer à les " \
+                          "utiliser, nous vous conseillons de vous y connecter.\nVoulez-vous vous connecter " \
+                          "à l'Espace collaboratif ? "
+                reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', message,
+                                             QMessageBox.Yes,
+                                             QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    self.context = Contexte.getInstance(self, QgsProject)
+                    if self.context is None:
+                        return
+                    if self.context.client is None:
+                        if not self.context.getConnexionRipart(newLogin=True):
+                            return
+                elif reply == QMessageBox.No:
+                    projectLayers = QgsProject.instance().mapLayers()
+                    for pL in projectLayers:
+                        if not self.searchSpecificLayer(pL):
+                            continue
+                        self.connectSpecificSignals(pL)
+            break
+
     def connectCurrentLayerChanged(self, layer):
+        if layer is None:
+            return
         if self.isLayerEditBuffered(layer):
             self.disabledActionAllSave()
 
     def connectLayerWasAdded(self, layer):
+        if layer is None:
+            return
         print("Connect because layer added: " + layer.name())
         if not self.searchSpecificLayer(layer.name()):
             return
         self.connectSpecificSignals(layer)
 
     def connectSpecificSignals(self, layer):
-        print ("ConnectSpecificSignals for " + layer.name())
+        if layer is None:
+            return
+        print("ConnectSpecificSignals for " + layer.name())
         layer.layerModified.connect(self.disabledActionAllSave)
         layer.editingStarted.connect(self.connectEditing)
-        #layer.editingStopped.connect(self.connectEditing)
+        # layer.editingStopped.connect(self.connectEditing)
         layer.nameChanged.connect(self.connectNameChanged)
         layer.beforeCommitChanges.connect(self.connectEditing)
-
 
     # def connectAllSignals(self):
     #     print ("connectAllSignals")
@@ -161,7 +198,7 @@ class RipartPlugin:
         self.iface.actionRollbackEdits().setEnabled(True)
 
     def connectEditing(self):
-        print ("connectEditing")
+        print("connectEditing")
         editLayers = []
         editableLayers = self.iface.editableLayers()
         bFind = False
@@ -181,6 +218,8 @@ class RipartPlugin:
         return False
 
     def isLayerEditBuffered(self, layer):
+        if layer is None:
+            return
         layerEditBuffer = layer.editBuffer()
         if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
                                             or len(layerEditBuffer.deletedFeatureIds()) > 0):
@@ -212,6 +251,8 @@ class RipartPlugin:
             return
 
     def saveChangesForOneLayer(self, layer):
+        if layer is None:
+            return
         report = "<b>Contenu de la transaction</b>"
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
