@@ -99,16 +99,16 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 RipartHelper.showMessageBox(message)
             else:
                 parts = shapefilePath.split('/')
-                shapefileName = parts[len(parts)-1]
+                shapefileName = parts[len(parts) - 1]
                 # Nom du shapefile sans extension
-                shapefileLayerName = shapefileName[0:len(shapefileName)-4]
+                shapefileLayerName = shapefileName[0:len(shapefileName) - 4]
 
                 # On vérifie que le shapefile est surfacique
                 vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
                 if vlayer.geometryType() != QgsWkbTypes.GeometryType.PolygonGeometry:
-                    QMessageBox.warning(self, "IGN Espace collaboratif", "La zone de travail ne peut être définie "
-                                                                         "qu'à partir d'une couche d'objets "
-                                                                         "surfaciques.")
+                    QMessageBox.warning(self, cst.IGNESPACECO, "La zone de travail ne peut être définie "
+                                                               "qu'à partir d'une couche d'objets "
+                                                               "surfaciques.")
                     return
 
                 # On vérifie que le shapefile n'est pas déjà dans la liste des zones
@@ -121,7 +121,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                         self.comboBoxWorkZone.setCurrentIndex(index)
                         message = "La zone de travail [{}] existe déjà dans la carte. Voulez-vous la supprimer ?\n" \
                                   "Le nouveau fichier shape sera importé.".format(shapefileLayerName)
-                        reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                        reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes,
                                                      QMessageBox.No)
                         if reply == QMessageBox.Yes:
                             removeLayers = QgsProject.instance().mapLayersByName(shapefileLayerName)
@@ -171,7 +171,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou les " \
                       "données de votre groupe, le chargement se fera sur la totalité du territoire et sera " \
                       "probablement long. Voulez-vous continuer ?"
-            reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+            reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:
                 return
             self.bCancel = False
@@ -206,6 +206,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     Retourne l'identifiant du groupe de l'utilisateur
     en fonction de son choix
     """
+
     def getChosenGroupInfo(self):
         return self.idChosenGroup, self.nameChosenGroup
 
@@ -255,7 +256,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if bNewGroup:
             message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
                       "supprimées. Voulez-vous continuer ?".format(ng.name())
-            reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+            reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.Yes:
                 root.removeChildNode(ng)
@@ -278,8 +279,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             # on l'informe
             if not bNewGroup and bEspaceCoLayersInProject:
                 message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif " \
-                            " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
-                reply = QMessageBox.question(self, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+                          " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     self.context.removeLayersFromProject(layersInProject, layersInTT, False)
                     RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone,

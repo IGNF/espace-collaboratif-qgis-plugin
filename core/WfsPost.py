@@ -1,6 +1,7 @@
 import json
 
 import qgis.core
+from qgis._gui import QgisInterface
 
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
@@ -139,7 +140,7 @@ class WfsPost(object):
     def setClientId(self, clientFeatureId):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
-    def gcms_post(self, strActions):
+    def gcms_post(self, strActions, bNormalWfsPost):
         print("Post_action : {}".format(strActions))
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
@@ -155,7 +156,7 @@ class WfsPost(object):
             try:
                 self.synchronize()
             except Exception as e:
-                QMessageBox.information(None, "IGN Espace collaboratif", format(e))
+                QMessageBox.information(QgisInterface().mainWindow(), cst.IGNESPACECO, format(e))
                 # Suppression de la couche dans la carte. Virer la table dans SQLite
                 layersID = [self.layer.id()]
                 QgsProject.instance().removeMapLayers(layersID)
@@ -172,8 +173,9 @@ class WfsPost(object):
                 numrec = 0
             SQLiteManager.updateNumrecTableOfTables(self.layer.name(), numrec)
             SQLiteManager.vacuumDatabase()
-            # Le buffer de la couche est vidée et elle est remise en édition
-            self.layer.rollBack()
+            # Le buffer de la couche est vidée et elle est rechargée
+            if bNormalWfsPost:
+                self.layer.rollBack()
             self.layer.reload()
             # self.layer.startEditing()
         return responseWfs
@@ -217,7 +219,7 @@ class WfsPost(object):
                       "de votre groupe."
             raise Exception(message)
 
-    def commitLayer(self, currentLayer, editBuffer):
+    def commitLayer(self, currentLayer, editBuffer, bNormalWfsPost):
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
         self.actions.clear()
         addedFeatures = editBuffer.addedFeatures().values()
@@ -261,7 +263,7 @@ class WfsPost(object):
         if nbObjModified >= 1:
             self.transactionReport += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
         strActions = self.formatItemActions()
-        endTransaction = self.gcms_post(strActions)
+        endTransaction = self.gcms_post(strActions, bNormalWfsPost)
         self.endReport += self.setEndReport(endTransaction)
         return self.endReport
 

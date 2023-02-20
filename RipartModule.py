@@ -37,12 +37,11 @@ from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .core.WfsGet import WfsGet
 from .core.ProgressBar import ProgressBar
-from .core.Layer import Layer
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import QgsProject, QgsVectorLayer
+from qgis.core import QgsProject
 import configparser
 
 # Initialize Qt resources from file resources.py
@@ -84,6 +83,15 @@ class RipartPlugin:
         # Save reference to the QGIS interface
         self.iface = iface
 
+        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
+                              self.iface.mainWindow())
+        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin",
+                            self.iface.mainWindow())
+        self.log = QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin",
+                           self.iface.mainWindow())
+        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin",
+                             self.iface.mainWindow())
+
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
@@ -115,7 +123,15 @@ class RipartPlugin:
         self.iface.layerTreeView().currentLayerChanged.connect(self.connectCurrentLayerChanged)
 
     def connectProjectRead(self):
-        # S'il n'a y pas de table des tables, on sort
+        # si le contexte n'est pas encore initialisé
+        if self.context is None:
+            self.context = Contexte.getInstance(self, QgsProject)
+
+        # S'il n'a y pas de base SQLite
+        uri = self.context.getUriDatabaseSqlite()
+        if uri is None:
+            return
+        # S'il n'a y pas de table des tables
         if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             return
         root = QgsProject.instance().layerTreeRoot()
@@ -128,8 +144,7 @@ class RipartPlugin:
                 message = "Votre projet contient des couches de l'Espace collaboratif IGN. Pour continuer à les " \
                           "utiliser, nous vous conseillons de vous y connecter.\nVoulez-vous vous connecter " \
                           "à l'Espace collaboratif ? "
-                reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', message,
-                                             QMessageBox.Yes,
+                reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                              QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     self.context = Contexte.getInstance(self, QgsProject)
@@ -155,7 +170,6 @@ class RipartPlugin:
     def connectLayerWasAdded(self, layer):
         if layer is None:
             return
-        print("Connect because layer added: " + layer.name())
         if not self.searchSpecificLayer(layer.name()):
             return
         self.connectSpecificSignals(layer)
@@ -163,23 +177,10 @@ class RipartPlugin:
     def connectSpecificSignals(self, layer):
         if layer is None:
             return
-        print("ConnectSpecificSignals for " + layer.name())
         layer.layerModified.connect(self.disabledActionAllSave)
         layer.editingStarted.connect(self.connectEditing)
-        # layer.editingStopped.connect(self.connectEditing)
         layer.nameChanged.connect(self.connectNameChanged)
         layer.beforeCommitChanges.connect(self.connectEditing)
-
-    # def connectAllSignals(self):
-    #     print ("connectAllSignals")
-    #     for layer in QgsProject.instance().mapLayers().values():
-    #         # La désactivation du bouton de sauvegarde n'est valable que sur les couches qui se trouvent
-    #         # dans la table des tables de la base SQLite, qui sont de type VectorLayer et de connexion avec SQLite
-    #         if layer.type() != QgsMapLayerType.VectorLayer or layer.providerType() != 'spatialite':
-    #             continue
-    #         if not self.searchSpecificLayer(layer.name()):
-    #             continue
-    #         self.connectSpecificSignals(layer)
 
     def disabledActionAllSave(self):
         self.iface.actionSaveActiveLayerEdits().setEnabled(False)
@@ -198,15 +199,12 @@ class RipartPlugin:
         self.iface.actionRollbackEdits().setEnabled(True)
 
     def connectEditing(self):
-        print("connectEditing")
         editLayers = []
         editableLayers = self.iface.editableLayers()
-        bFind = False
         for editableLayer in editableLayers:
             if not self.searchSpecificLayer(editableLayer.name()):
                 continue
-            bFind = self.isLayerEditBuffered(editableLayer)
-            if bFind:
+            if self.isLayerEditBuffered(editableLayer) is True:
                 editLayers.append(editableLayer)
         if len(editLayers) >= 1:
             self.saveEdits(editLayers)
@@ -228,7 +226,8 @@ class RipartPlugin:
 
     def saveEdits(self, layers):
         if len(layers) == 1:
-            message = "La couche {} a été modifiée, les modifications vont être envoyées sur le serveur.".format(layers[0].name())
+            message = "La couche {} a été modifiée, les modifications vont être envoyées sur le serveur."\
+                        .format(layers[0].name())
         else:
             tmp = "Les couches ["
             for layer in layers:
@@ -236,7 +235,7 @@ class RipartPlugin:
             messageTmp = tmp[0:len(tmp)-1]
             messageTmp += "] ont été modifiées, les modifications vont être envoyées sur le serveur."
             message = messageTmp
-        reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+        reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                      QMessageBox.No)
         if reply == QMessageBox.Yes:
             for layer in layers:
@@ -274,9 +273,13 @@ class RipartPlugin:
             return
         try:
             wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
-            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer)))
+            # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
+            # le buffer est vidé, il ne faut laisser QGIS vider le buffer une 2ème fois sinon plantage
+            bNormalWfsPost = False
+            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)))
         except Exception as e:
             messages.append('<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e))
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         # Message de fin de transaction
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText(report)
@@ -286,76 +289,14 @@ class RipartPlugin:
         for message in messages:
             dlgInfo.textInfo.append(message)
         dlgInfo.exec_()
+        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def connectNameChanged(self):
         activeLayer = self.iface.activeLayer()
         if not self.searchSpecificLayer(activeLayer.name()):
-            QMessageBox.warning(self.iface.mainWindow(), "IGN Espace collaboratif", "Action interdite ! Veuillez "
-                                                                                    "renommer la couche de son nom "
-                                                                                    "initial.")
+            QMessageBox.warning(self.iface.mainWindow(), cst.IGNESPACECO, "Action interdite ! Veuillez renommer la "
+                                                                          "couche de son nom initial.")
         return
-
-    # def current_layer_changed(self, layer):
-    #     global editableLayer
-    #     editableLayers = self.iface.editableLayers()
-    #     bFind = False
-    #     for editableLayer in editableLayers:
-    #         if not self.searchSpecificLayer(editableLayer.name()):
-    #             continue
-    #         layerEditBuffer = editableLayer.editBuffer()
-    #         if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
-    #                                             or len(layerEditBuffer.deletedFeatureIds()) > 0):
-    #             bFind = True
-    #             break
-    #     if bFind:
-    #         self.saveEdits(editableLayer)
-    #         layer.startEditing()
-    #         self.actionSaveChanges()
-
-    # def actionSaveChanges(self):
-    #     self.enabledActionToggleEditing(False)
-    #     self.enabledActionSaveActiveLayerEdits()
-    #     self.enabledActionSaveAllEdits(False)
-    #     self.enabledActionSaveEdits(False)
-    #     self.enabledActionSaveProject(False)
-    #     self.enabledActionSaveProjectAs(False)
-    #     self.enabledActionCancelEdits(False)
-    #     self.enabledActionExit(False)
-    #     self.enabledActionRollbackEdits(False)
-    #     reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', "La couche a été modifiée, "
-    #                                                                                      "les modifications vont être"
-    #                                                                                      " envoyées sur le serveur.",
-    #                                  QMessageBox.Yes, QMessageBox.No)
-    #     if reply == QMessageBox.No:
-    #         self.enabledActionSaveProject(True)
-    #         self.enabledActionSaveProjectAs(True)
-    #         self.enabledActionExit(True)
-    #         return
-    #     self.saveChangesForAllLayers()
-
-    # def enabledActionRollbackEdits(self, bEnable):
-    #     self.iface.actionRollbackEdits().setEnabled(bEnable)
-    #
-    # def enabledActionExit(self, bEnable):
-    #     self.iface.actionExit().setEnabled(bEnable)
-    #
-    # def enabledActionSaveAllEdits(self, bEnable):
-    #     self.iface.actionSaveAllEdits().setEnabled(bEnable)
-    #
-    # def enabledActionSaveEdits(self, bEnable):
-    #     self.iface.actionSaveEdits().setEnabled(bEnable)
-    #
-    # def enabledActionSaveProject(self, bEnable):
-    #     self.iface.actionSaveProject().setEnabled(bEnable)
-    #
-    # def enabledActionToggleEditing(self, bEnable):
-    #     self.iface.actionToggleEditing().setEnabled(bEnable)
-    #
-    # def enabledActionSaveProjectAs(self, bEnable):
-    #     self.iface.actionSaveProjectAs().setEnabled(bEnable)
-    #
-    # def enabledActionCancelEdits(self, bEnable):
-    #     self.iface.actionCancelEdits().setEnabled(bEnable)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -533,15 +474,6 @@ class RipartPlugin:
             status_tip=self.tr(u'Modifier un champ JSON'),
             parent=self.iface.mainWindow())
 
-        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
-                              self.iface.mainWindow())
-        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin",
-                            self.iface.mainWindow())
-        self.log = QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin",
-                           self.iface.mainWindow())
-        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin",
-                             self.iface.mainWindow())
-
         self.config.triggered.connect(self.configurePref)
         self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration du plugin."))
 
@@ -563,7 +495,7 @@ class RipartPlugin:
         self.toolbar.addWidget(self.toolButton2)
 
     def modifyFieldJson(self):
-        QMessageBox.information(self.iface.mainWindow(), 'IGN Espace Collaboratif', "En travaux")
+        QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, "En travaux")
         """
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
@@ -639,8 +571,15 @@ class RipartPlugin:
                 continue
 
             try:
+                messageProgress = "Synchronisation de la couche {}".format(layer.name())
+                progress = ProgressBar(1, messageProgress)
                 wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
-                messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer)))
+                # Les modifications d'une couche sont envoyées au serveur, il faut donc vider le buffer de la couche
+                # ou sont stockés les changements, c'est un post normal
+                bNormalWfsPost = True
+                progress.setValue(1)
+                messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)))
+                progress.close()
 
             except Exception as e:
                 messages.append('<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e))
@@ -680,7 +619,7 @@ class RipartPlugin:
 
         # S'il n'y a pas de couches, la synchronisation est vide
         if len(layersToSynchronize) == 0:
-                endMessage += "<br/>Vide\n"
+            endMessage += "<br/>Vide\n"
         else:
             # Les couches à synchroniser contiennent-elles des données non enregistrées ?
             listEditBuffers = []
@@ -701,7 +640,7 @@ class RipartPlugin:
 
                 message = "{0} des modifications non enregistrées. Si vous poursuivez la synchronisation, " \
                           "vos modifications seront perdues. \nVoulez-vous continuer ?".format(startMessage)
-                reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+                reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                              QMessageBox.No)
                 # On sort
                 if reply == QMessageBox.No:
@@ -801,7 +740,7 @@ class RipartPlugin:
     def run(self):
         """Fenêtre de connexion"""
 
-        global res
+        res = -1
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
@@ -833,6 +772,7 @@ class RipartPlugin:
                             format(e),
                             level=2, duration=5)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+
         except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
@@ -882,7 +822,8 @@ class RipartPlugin:
             if self.context is None:
                 return
             message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
-            reply = QMessageBox.question(self.iface.mainWindow(), 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                         QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.context.emptyAllRipartLayers()
             else:

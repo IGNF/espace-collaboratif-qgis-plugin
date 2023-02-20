@@ -453,7 +453,7 @@ class Contexte(object):
 
             # Rafraichissement de la carte
             self.mapCan.refresh()
-            QMessageBox.information(None, "IGN Espace collaboratif", endMessage)
+            QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, endMessage)
 
         except Exception as e:
             self.logger.error(format(e))
@@ -491,7 +491,7 @@ class Contexte(object):
                 message = "La couche [{}] existe déjà, elle sera détruite si vous continuez ?".format(tmp[:-2])
             else:
                 message = "Les couches [{}] existent déjà, elles seront supprimées si vous continuez.".format(tmp[:-2])
-            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes,
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:
                 return False

@@ -1,5 +1,6 @@
 # coding=utf-8
 from PyQt5.QtWidgets import QMessageBox
+from qgis._gui import QgisInterface
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 
 from . import ConstanteRipart as cst
@@ -27,7 +28,8 @@ class BBox(object):
             if bAskConfirmation:
                 message = "Vous n'avez pas spécifié de zone de travail. \n\n" \
                           "Souhaitez-vous poursuivre l'import des objets sur la totalité du territoire ? "
-                reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+                reply = QMessageBox.question(QgisInterface().mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                             QMessageBox.No)
                 if reply == QMessageBox.No:
                     return Box(0.0, 0.0, 0.0, 0.0)
         return box
@@ -38,7 +40,8 @@ class BBox(object):
                       self.filterName + \
                       "' définie comme zone de travail ou celle-ci n'est pas activée.\n\n" + \
                       "Souhaitez-vous poursuivre l'import sur la totalité du territoire ? "
-            reply = QMessageBox.question(None, 'IGN Espace Collaboratif', message, QMessageBox.Yes, QMessageBox.No)
+            reply = QMessageBox.question(QgisInterface().mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                         QMessageBox.No)
             if reply == QMessageBox.No:
                 return
         else:
@@ -46,10 +49,11 @@ class BBox(object):
             layerFilterCrs = self.layerFilter.crs()
 
             if layerFilterCrs.isValid() is False:
-                message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez le " \
-                          "renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence assigné]".format(
+                message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. " \
+                          "Veuillez le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
+                          "assigné]".format(
                     self.filterName)
-                QMessageBox.information(None, "IGN Espace collaboratif", message)
+                QMessageBox.information(QgisInterface().mainWindow(), cst.IGNESPACECO, message)
                 return Box(0.0, 0.0, 0.0, 0.0)
 
             destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
