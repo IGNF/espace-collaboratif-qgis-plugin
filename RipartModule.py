@@ -140,7 +140,7 @@ class RipartPlugin:
             # Dans le cas ou le nom du groupe actif, du groupe dans le carte et celui stocké dans le xml sont tous
             # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
             # est de chercher le prefixe
-            if ng.name().find(cst.ESPACECO) != -1:
+            if ng.name().find(cst.ESPACECO) != -1 and self.context.client is None:
                 message = "Votre projet contient des couches de l'Espace collaboratif IGN. Pour continuer à les " \
                           "utiliser, nous vous conseillons de vous y connecter.\nVoulez-vous vous connecter " \
                           "à l'Espace collaboratif ? "
@@ -184,16 +184,16 @@ class RipartPlugin:
 
     def disabledActionAllSave(self):
         self.iface.actionSaveActiveLayerEdits().setEnabled(False)
-        self.iface.actionSaveProject().setEnabled(False)
-        self.iface.actionSaveProjectAs().setEnabled(False)
+        # self.iface.actionSaveProject().setEnabled(False)
+        # self.iface.actionSaveProjectAs().setEnabled(False)
         self.iface.actionSaveAllEdits().setEnabled(False)
         self.iface.actionSaveEdits().setEnabled(False)
         self.iface.actionRollbackEdits().setEnabled(False)
 
     def enabledActionAllSave(self):
         self.iface.actionSaveActiveLayerEdits().setEnabled(True)
-        self.iface.actionSaveProject().setEnabled(True)
-        self.iface.actionSaveProjectAs().setEnabled(True)
+        # self.iface.actionSaveProject().setEnabled(True)
+        # self.iface.actionSaveProjectAs().setEnabled(True)
         self.iface.actionSaveAllEdits().setEnabled(True)
         self.iface.actionSaveEdits().setEnabled(True)
         self.iface.actionRollbackEdits().setEnabled(True)
@@ -274,7 +274,7 @@ class RipartPlugin:
         try:
             wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
             # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
-            # le buffer est vidé, il ne faut laisser QGIS vider le buffer une 2ème fois sinon plantage
+            # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
             bNormalWfsPost = False
             messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)))
         except Exception as e:
@@ -496,6 +496,18 @@ class RipartPlugin:
 
     def modifyFieldJson(self):
         QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, "En travaux")
+        layer = self.context.iface.activeLayer()
+        fields = layer.fields()
+        for field in fields:
+            name = field.name()
+            if name != 'sens_de_circulation':
+                continue
+
+            index = fields.indexOf(name)
+            ews = layer.editorWidgetSetup(index)
+            print("Type:", ews.type())
+            print("Config:", ews.config())
+
         """
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
