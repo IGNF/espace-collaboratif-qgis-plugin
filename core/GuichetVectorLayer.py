@@ -7,10 +7,12 @@ version 4.0.1, 15/12/2020
 @author: EPeyrouse, NGremeaux
 """
 import random
+import json
 
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, \
-    QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes
+    QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes, QgsMarkerLineSymbolLayer, QgsSimpleLineSymbolLayer, \
+    QgsFontMarkerSymbolLayer, QgsSymbolLayer, QgsProperty
 
 from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
 
@@ -114,6 +116,16 @@ class GuichetVectorLayer(QgsVectorLayer):
                 'vertical_anchor_point': '1'}
 
     def setLineStyle(self, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth):
+        # {'align_dash_pattern': '0', 'capstyle': 'square', 'customdash': '5;2',
+        #  'customdash_map_unit_scale': '3x:0,0,0,0,0,0', 'customdash_unit': 'Pixel', 'dash_pattern_offset': '0',
+        #  'dash_pattern_offset_map_unit_scale': '3x:0,0,0,0,0,0', 'dash_pattern_offset_unit': 'MM',
+        #  'draw_inside_polygon': '0', 'joinstyle': 'round', 'line_color': '128,128,128,255', 'line_style': 'solid',
+        #  'line_width': '2', 'line_width_unit': 'Pixel', 'offset': '0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0',
+        #  'offset_unit': 'Pixel', 'ring_filter': '0', 'trim_distance_end': '0',
+        #  'trim_distance_end_map_unit_scale': '3x:0,0,0,0,0,0', 'trim_distance_end_unit': 'MM',
+        #  'trim_distance_start': '0', 'trim_distance_start_map_unit_scale': '3x:0,0,0,0,0,0',
+        #  'trim_distance_start_unit': 'MM', 'tweak_dash_pattern_on_corners': '0', 'use_custom_dash': '0',
+        #  'width_map_unit_scale': '3x:0,0,0,0,0,0'}
         # Correspondance entre un style de l'espace collaboratif et le style QGis
         lineStyles = {
             # Ligne continu -> trait continu
@@ -208,11 +220,35 @@ class GuichetVectorLayer(QgsVectorLayer):
         symbol.setOpacity(strokeOpacity)
         return symbol
 
+    def setSymbolLineBis(self, symbolLine, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity):
+        lineSymbol = self.setLineStyle(strokeLinecap, strokeDashstyle, strokeColor, strokeWidth)
+        symbol = symbolLine.createSimple(lineSymbol)
+        symbol.setOpacity(strokeOpacity)
+        return symbol
+
     def setSymbolPolygon(self, fillColor, strokeColor, strokeDashstyle, strokeWidth, fillOpacity):
         polygonSymbol = self.setPolygonStyle(fillColor, strokeColor, strokeDashstyle, strokeWidth)
         symbol = QgsFillSymbol().createSimple(polygonSymbol)
         symbol.setOpacity(fillOpacity)
         return symbol
+
+    def setSimpleLineSymbolLayer(self):
+        return {'average_angle_length': '4', 'average_angle_map_unit_scale': '3x:0,0,0,0,0,0',
+                'average_angle_unit': 'MM',
+                'interval': '3', 'interval_map_unit_scale': '3x:0,0,0,0,0,0', 'interval_unit': 'MM', 'offset': '0',
+                'offset_along_line': '0', 'offset_along_line_map_unit_scale': '3x:0,0,0,0,0,0',
+                'offset_along_line_unit': 'MM',
+                'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'MM', 'placement': 'centralpoint',
+                'ring_filter': '0',
+                'rotate': '1'}
+
+    def setMarkerLineSymbolLayer(self):
+        return {'angle': '0', 'chr': '>', 'color': '0,0,0,255', 'font': 'Arial', 'font_style': 'Normal',
+                'horizontal_anchor_point': '1', 'joinstyle': 'bevel', 'offset': '0,-0.40000000000000002',
+                'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'MM', 'outline_color': '35,35,35,255',
+                'outline_width': '0', 'outline_width_map_unit_scale': '3x:0,0,0,0,0,0', 'outline_width_unit': 'MM',
+                'size': '4',
+                'size_map_unit_scale': '3x:0,0,0,0,0,0', 'size_unit': 'MM', 'vertical_anchor_point': '1'}
 
     '''
         Symbologie par défaut extraite du style Collaboratif
@@ -284,29 +320,84 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.triggerRepaint()
 
     '''
+    Pour appliquer le style collaboratif et les sens de circulation sur les tronçons de route, il faut combiner
+    - Ligne
+        - Ligne simple
+        - Ligne de symboles
+            - Symbole
+                - Symbole de police
+    '''
+
+    def setLineRule(self, expression, valeurs):
+        # Ligne
+        lineSymbol = QgsLineSymbol()
+
+        # Ligne simple (avec la symbologie issue du collaboratif)
+        simpleLineSymbol = QgsSimpleLineSymbolLayer.create(self.setLineStyle(valeurs['strokeLinecap'],
+                                                                             valeurs['strokeDashstyle'],
+                                                                             valeurs['strokeColor'],
+                                                                             valeurs['strokeWidth']))
+
+        # Ligne de symboles (le symbole est appliqué sur le point central du tronçon)
+        markerLineSymbol = QgsMarkerLineSymbolLayer.create(self.setSimpleLineSymbolLayer())
+
+        # Symbole
+        markerSymlbol = QgsMarkerSymbol()
+
+        # Symbole de police (le caractère >)
+        # (appliqué pour un champ, expression appliquée sur le caractère choisi < sens inverse ou sens direct >
+        fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.setMarkerLineSymbolLayer())
+        qgsProperty = QgsProperty()
+        qgsProperty.setField("sens_de_circulation")
+        qgsProperty.setExpressionString('CASE WHEN "sens_de_circulation" = \'Sens direct\' THEN \'>\' WHEN '
+                                        '"sens_de_circulation" = \'Sens inverse\' THEN \'<\' ELSE \'\' END')
+        fontMarkerSymbol.setDataDefinedProperty(QgsSymbolLayer.Property.PropertyCharacter, qgsProperty)
+
+        # Remplacement du symbole par défaut
+        markerSymlbol.changeSymbolLayer(0, fontMarkerSymbol)
+        # Application du symbole caractère sur la ligne de symboles
+        markerLineSymbol.setSubSymbol(markerSymlbol)
+        # Il faut enlever la ligne simple par défaut
+        lineSymbol.deleteSymbolLayer(0)
+        # Combinaison ligne simple/ligne de symboles à la ligne
+        lineSymbol.appendSymbolLayer(markerLineSymbol)
+        lineSymbol.appendSymbolLayer(simpleLineSymbol)
+        # Le tout est mis dans une règle nommée contenue dans la variable expression
+        ruleBasedRendererLine = QgsRuleBasedRenderer.Rule(lineSymbol, 0, 0, expression, valeurs['name'])
+        return ruleBasedRendererLine
+
+    def setPolygonRule(self, expression, valeurs):
+        symbolPolygon = self.setSymbolPolygon(valeurs["fillColor"], valeurs['strokeColor'], valeurs['strokeDashstyle'],
+                                              str(valeurs['strokeWidth']), valeurs['fillOpacity'])
+        ruleBasedRendererPolygon = QgsRuleBasedRenderer.Rule(symbolPolygon, 0, 0, expression, valeurs['name'])
+        return ruleBasedRendererPolygon
+
+    def setPointRule(self, expression, valeurs):
+        symbolPoint = self.setSymbolPoint(valeurs["fillColor"], valeurs['strokeColor'], 1)
+        ruleBasedRendererPoint = QgsRuleBasedRenderer.Rule(symbolPoint, 0, 0, expression, valeurs['name'])
+        return ruleBasedRendererPoint
+
+    '''
         Symbologie avec règles extraite du style Collaboratif
     '''
 
     def setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression):
         # Rule (QgsSymbol *symbol, int maximumScale=0, int minimumScale=0, const QString &filterExp=QString(),
         # const QString &label=QString(), const QString &description=QString(), bool elseRule=false)
+        if 'default' in data:
+            strDirectionField = data['default']['directionField']
         rules = []
         for c, v in data.items():
             expression = self.changeConditionToExpression(v['condition'], bExpression)
             if v['type'] == 'line':
-                symbolLine = self.setSymbolLine(v["strokeLinecap"], v["strokeDashstyle"], v["strokeColor"],
-                                                str(v["strokeWidth"]), v['strokeOpacity'])
-                qrbr = QgsRuleBasedRenderer.Rule(symbolLine, 0, 0, expression, v['name'])
-                rules.append(qrbr)
+                lineRule = self.setLineRule(expression, v)
+                rules.append(lineRule)
             if v['type'] == 'polygon':
-                symbolPolygon = self.setSymbolPolygon(v["fillColor"], v['strokeColor'], v['strokeDashstyle'],
-                                                      str(v['strokeWidth']), v['fillOpacity'])
-                qrbr = QgsRuleBasedRenderer.Rule(symbolPolygon, 0, 0, expression, v['name'])
-                rules.append(qrbr)
+                polygonRule = self.setPolygonRule(expression, v)
+                rules.append(polygonRule)
             if v['type'] == 'point':
-                symbolPoint = self.setSymbolPoint(v["fillColor"], v['strokeColor'], 1)
-                qrbr = QgsRuleBasedRenderer.Rule(symbolPoint, 0, 0, expression, v['name'])
-                rules.append(qrbr)
+                pointRule = self.setPointRule(expression, v)
+                rules.append(pointRule)
 
         # create a new rule-based renderer
         symbol = QgsSymbol.defaultSymbol(self.geometryType())
@@ -322,6 +413,7 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         # apply the renderer to the layer
         self.setRenderer(renderer)
+
         # Refresh layer
         self.triggerRepaint()
 

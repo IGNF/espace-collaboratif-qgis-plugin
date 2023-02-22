@@ -177,6 +177,7 @@ class XMLResponse(object):
         """Extraction des infos utilisateur sur ses geogroupes
         :return les infos
         """
+        global infosgeogroup
         infosgeogroups = []
 
         try:
