@@ -251,7 +251,7 @@ class EditFormFieldFromAttributes(object):
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
 
         # Cas particulier des string nullable
-        if vType == 'String' and bNullable is True:
+        if bNullable is True:
             expression = "\"{}\" is null or ({})".format(self.name, expression)
 
         self.layer.setConstraintExpression(self.index, expression)

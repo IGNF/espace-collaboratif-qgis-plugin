@@ -224,6 +224,7 @@ class SQLiteManager(object):
                 tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
             else:
                 tmpColumns += '{0},'.format(column)
+
             if value is None:
                 tmpValues += "NULL,"
             else:
@@ -277,26 +278,27 @@ class SQLiteManager(object):
         if len(cleabss) > 0:
             SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
-    def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, bboxWorkingArea):
-        totalRows = 0
-        if len(attributesRows) == 0:
-            return totalRows
-        wkt = Wkt(parameters)
-        # Insertion des lignes dans la table
-        connection = spatialite_connect(self.dbPath)
-        cur = connection.cursor()
-        for attributesRow in attributesRows:
-            columnsValues = self.setColumnsValuesForInsertWithSpatialFilter(attributesRow, parameters, bboxWorkingArea, wkt)
-            # si le tuple est vide alors l'objet est en dehors de la zone de travail
-            if columnsValues[0] == '' and columnsValues[1] == '':
-                continue
-            sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
-            cur.execute(sql)
-            totalRows += 1
-        cur.close()
-        connection.commit()
-        connection.close()
-        return totalRows
+    # Non utilisé et pas mis à jour
+    # def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, bboxWorkingArea):
+    #     totalRows = 0
+    #     if len(attributesRows) == 0:
+    #         return totalRows
+    #     wkt = Wkt(parameters)
+    #     # Insertion des lignes dans la table
+    #     connection = spatialite_connect(self.dbPath)
+    #     cur = connection.cursor()
+    #     for attributesRow in attributesRows:
+    #         columnsValues = self.setColumnsValuesForInsertWithSpatialFilter(attributesRow, parameters, bboxWorkingArea, wkt)
+    #         # si le tuple est vide alors l'objet est en dehors de la zone de travail
+    #         if columnsValues[0] == '' and columnsValues[1] == '':
+    #             continue
+    #         sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
+    #         cur.execute(sql)
+    #         totalRows += 1
+    #     cur.close()
+    #     connection.commit()
+    #     connection.close()
+    #     return totalRows
 
     def insertRowsInTable(self, parameters, attributesRows):
         totalRows = 0
