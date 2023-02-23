@@ -8,7 +8,6 @@ version 4.0.1, 15/12/2020
 """
 import random
 import json
-
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, \
     QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes, QgsMarkerLineSymbolLayer, QgsSimpleLineSymbolLayer, \
@@ -220,12 +219,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         symbol.setOpacity(strokeOpacity)
         return symbol
 
-    def setSymbolLineBis(self, symbolLine, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity):
-        lineSymbol = self.setLineStyle(strokeLinecap, strokeDashstyle, strokeColor, strokeWidth)
-        symbol = symbolLine.createSimple(lineSymbol)
-        symbol.setOpacity(strokeOpacity)
-        return symbol
-
     def setSymbolPolygon(self, fillColor, strokeColor, strokeDashstyle, strokeWidth, fillOpacity):
         polygonSymbol = self.setPolygonStyle(fillColor, strokeColor, strokeDashstyle, strokeWidth)
         symbol = QgsFillSymbol().createSimple(polygonSymbol)
@@ -260,23 +253,18 @@ class GuichetVectorLayer(QgsVectorLayer):
         color = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
         # 'Point'
         if geomType == 0:
-            # avant '238,153,0,255'
-            # symbol = self.setSymbolPoint('238,153,0,255', '238,153,0,255', 0.5)
             symbol = self.setSymbolPoint(color, color, 0.5)
 
         # 'Polygon'
         if geomType == 2:
-            # symbol = self.setSymbolPolygon('238,153,0,255', '238,153,0,255', 'solid', '0', 0.5)
             symbol = self.setSymbolPolygon(color, color, 'solid', '0', 0.5)
 
         # 'LineString'
         if geomType == 1:
-            # symbol = self.setSymbolLine('238,153,0,255', 'solid', '238,153,0,255', '2', 1)
             symbol = self.setSymbolLine(color, 'solid', color, '2', 1)
 
         if symbol is None:
             symbol = QgsSymbol.defaultSymbol(geomType)
-            # symbol.setColor(QColor('238,153,0,255'))
             symbol.setColor(color)
             symbol.setOpacity(1)
 
@@ -320,6 +308,34 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.triggerRepaint()
 
     '''
+        Définir la représentation et la direction du symbole en fonction du champ
+        strFieldDirection est du genre :
+        {"attribute":"sens_de_circulation","sensDirect":"Sens direct","sensInverse":"Sens inverse"}
+    '''
+
+    def setPropertySymbol(self, strFieldDirection):
+        if strFieldDirection == '':
+            return None
+        jsonElements = json.loads(strFieldDirection)
+        if len(jsonElements) > 3:
+            return None
+        nameField = jsonElements['attribute']
+        qgsProperty = QgsProperty()
+        qgsProperty.setField(nameField)
+        expression = 'CASE WHEN "{}" ='.format(nameField)
+        for element in jsonElements:
+            if 'attribute' in element:
+                continue
+            if 'sensDirect' in element:
+                expression += '\'Sens direct\' THEN \'>\' WHEN "{}" = '.format(nameField)
+            if 'sensInverse' in element:
+                expression += "'Sens inverse' THEN '<' ELSE '' END"
+        if 'END' not in expression:
+            return None
+        qgsProperty.setExpressionString(expression)
+        return qgsProperty
+
+    '''
     Pour appliquer le style collaboratif et les sens de circulation sur les tronçons de route, il faut combiner
     - Ligne
         - Ligne simple
@@ -328,40 +344,43 @@ class GuichetVectorLayer(QgsVectorLayer):
                 - Symbole de police
     '''
 
-    def setLineRule(self, expression, valeurs):
-        # Ligne
-        lineSymbol = QgsLineSymbol()
+    def setLineRule(self, expression, valeurs, strFieldDirection):
+        if strFieldDirection is None:
+            lineSymbol = self.setSymbolLine(valeurs["strokeLinecap"], valeurs["strokeDashstyle"],
+                                            valeurs["strokeColor"], str(valeurs["strokeWidth"]),
+                                            valeurs['strokeOpacity'])
+        else:
+            # Ligne
+            lineSymbol = QgsLineSymbol()
 
-        # Ligne simple (avec la symbologie issue du collaboratif)
-        simpleLineSymbol = QgsSimpleLineSymbolLayer.create(self.setLineStyle(valeurs['strokeLinecap'],
-                                                                             valeurs['strokeDashstyle'],
-                                                                             valeurs['strokeColor'],
-                                                                             valeurs['strokeWidth']))
+            # Ligne simple (avec la symbologie issue du collaboratif)
+            simpleLineSymbol = QgsSimpleLineSymbolLayer.create(self.setLineStyle(valeurs['strokeLinecap'],
+                                                                                 valeurs['strokeDashstyle'],
+                                                                                 valeurs['strokeColor'],
+                                                                                 valeurs['strokeWidth']))
 
-        # Ligne de symboles (le symbole est appliqué sur le point central du tronçon)
-        markerLineSymbol = QgsMarkerLineSymbolLayer.create(self.setSimpleLineSymbolLayer())
+            # Ligne de symboles (le symbole est appliqué sur le point central du tronçon)
+            markerLineSymbol = QgsMarkerLineSymbolLayer.create(self.setSimpleLineSymbolLayer())
 
-        # Symbole
-        markerSymlbol = QgsMarkerSymbol()
+            # Symbole
+            markerSymlbol = QgsMarkerSymbol()
 
-        # Symbole de police (le caractère >)
-        # (appliqué pour un champ, expression appliquée sur le caractère choisi < sens inverse ou sens direct >
-        fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.setMarkerLineSymbolLayer())
-        qgsProperty = QgsProperty()
-        qgsProperty.setField("sens_de_circulation")
-        qgsProperty.setExpressionString('CASE WHEN "sens_de_circulation" = \'Sens direct\' THEN \'>\' WHEN '
-                                        '"sens_de_circulation" = \'Sens inverse\' THEN \'<\' ELSE \'\' END')
-        fontMarkerSymbol.setDataDefinedProperty(QgsSymbolLayer.Property.PropertyCharacter, qgsProperty)
+            # Symbole de police (le caractère >)
+            # (appliqué pour un champ, expression appliquée sur le caractère choisi < sens inverse ou sens direct >
+            fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.setMarkerLineSymbolLayer())
+            qgsProperty = self.setPropertySymbol(strFieldDirection)
+            if qgsProperty is not None:
+                fontMarkerSymbol.setDataDefinedProperty(QgsSymbolLayer.Property.PropertyCharacter, qgsProperty)
 
-        # Remplacement du symbole par défaut
-        markerSymlbol.changeSymbolLayer(0, fontMarkerSymbol)
-        # Application du symbole caractère sur la ligne de symboles
-        markerLineSymbol.setSubSymbol(markerSymlbol)
-        # Il faut enlever la ligne simple par défaut
-        lineSymbol.deleteSymbolLayer(0)
-        # Combinaison ligne simple/ligne de symboles à la ligne
-        lineSymbol.appendSymbolLayer(markerLineSymbol)
-        lineSymbol.appendSymbolLayer(simpleLineSymbol)
+            # Remplacement du symbole par défaut
+            markerSymlbol.changeSymbolLayer(0, fontMarkerSymbol)
+            # Application du symbole caractère sur la ligne de symboles
+            markerLineSymbol.setSubSymbol(markerSymlbol)
+            # Il faut enlever la ligne simple par défaut
+            lineSymbol.deleteSymbolLayer(0)
+            # Combinaison ligne simple/ligne de symboles à la ligne
+            lineSymbol.appendSymbolLayer(simpleLineSymbol)
+            lineSymbol.appendSymbolLayer(markerLineSymbol)
         # Le tout est mis dans une règle nommée contenue dans la variable expression
         ruleBasedRendererLine = QgsRuleBasedRenderer.Rule(lineSymbol, 0, 0, expression, valeurs['name'])
         return ruleBasedRendererLine
@@ -384,13 +403,14 @@ class GuichetVectorLayer(QgsVectorLayer):
     def setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression):
         # Rule (QgsSymbol *symbol, int maximumScale=0, int minimumScale=0, const QString &filterExp=QString(),
         # const QString &label=QString(), const QString &description=QString(), bool elseRule=false)
+        strDirectionField = None
         if 'default' in data:
             strDirectionField = data['default']['directionField']
         rules = []
         for c, v in data.items():
             expression = self.changeConditionToExpression(v['condition'], bExpression)
             if v['type'] == 'line':
-                lineRule = self.setLineRule(expression, v)
+                lineRule = self.setLineRule(expression, v, strDirectionField)
                 rules.append(lineRule)
             if v['type'] == 'polygon':
                 polygonRule = self.setPolygonRule(expression, v)
