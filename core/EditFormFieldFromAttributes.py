@@ -33,7 +33,7 @@ class EditFormFieldFromAttributes(object):
         self.layer = layer
         self.action = Action(layer)
 
-    # si le champ est de type 'JsonValue' alors on ajoute une action pour pour pourvoir le modifier
+    # si le champ est de type 'JsonValue' alors on ajoute une action pour pourvoir le modifier
     def setAction(self, attributeType, attributeName):
         if attributeType != 'JsonValue':
             return

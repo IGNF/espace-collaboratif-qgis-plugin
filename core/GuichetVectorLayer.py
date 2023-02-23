@@ -320,6 +320,8 @@ class GuichetVectorLayer(QgsVectorLayer):
         if len(jsonElements) > 3:
             return None
         nameField = jsonElements['attribute']
+        direct = jsonElements['sensDirect']
+        inverse = jsonElements['sensInverse']
         qgsProperty = QgsProperty()
         qgsProperty.setField(nameField)
         expression = 'CASE WHEN "{}" ='.format(nameField)
@@ -327,9 +329,9 @@ class GuichetVectorLayer(QgsVectorLayer):
             if 'attribute' in element:
                 continue
             if 'sensDirect' in element:
-                expression += '\'Sens direct\' THEN \'>\' WHEN "{}" = '.format(nameField)
+                expression += '\'{0}\' THEN \'>\' WHEN "{1}" = '.format(direct, nameField)
             if 'sensInverse' in element:
-                expression += "'Sens inverse' THEN '<' ELSE '' END"
+                expression += "'{0}' THEN '<' ELSE '' END".format(inverse)
         if 'END' not in expression:
             return None
         qgsProperty.setExpressionString(expression)
