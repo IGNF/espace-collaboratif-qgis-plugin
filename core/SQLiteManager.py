@@ -37,6 +37,11 @@ class SQLiteManager(object):
     @staticmethod
     def isTableExist(tableName):
         bFind = True
+        dbPath = SQLiteManager.getBaseSqlitePath()
+        # si la base SQLite n'existe pas, dbPath contient '/_espaceco.sqlite'
+        # Par exemple un projet vierge dans lequel on ajoute une couche
+        if dbPath == '/_espaceco.sqlite':
+            return False
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         sql = u"SELECT name FROM sqlite_master WHERE type='table' AND name='{}'".format(tableName)
         cur = connection.cursor()

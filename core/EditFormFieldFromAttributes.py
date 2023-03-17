@@ -28,6 +28,7 @@ class EditFormFieldFromAttributes(object):
     Initialisation de la classe avec la couche active (layer) et les données récupérées (data)
     au format json par la fonction core.client.py/connexionFeatureTypeJson
     '''
+
     def __init__(self, layer, data):
         self.data = data
         self.layer = layer
@@ -49,6 +50,7 @@ class EditFormFieldFromAttributes(object):
     "min_value": null, "max_value": null, "pattern": null, "is3d": false, "readOnly": false, "condition": null, 
     "condition_field": null, "computed": false, "automatic": false, "formula": null, "queryable": false, "required": 
     false, "mime_types": null, "type": "String"} '''
+
     def readData(self):
         # Correspondance nom du champ/type du champ
         linkFieldType = {}
@@ -60,19 +62,32 @@ class EditFormFieldFromAttributes(object):
             self.setFieldSwitchType(v['type'], v['default_value'])
             self.setAction(v['type'], v['name'])
             self.setFieldConstraintNotNull(v['nullable'])
-            self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'], v['type'], v['nullable'])
-            self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type'])
-            self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
+            constraints = [self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'],
+                                                                         v['type'], v['nullable']),
+                           self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type']),
+                           self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable']),
+                           self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'])]
+            self.setFieldAllConstraints(constraints)
             self.setFieldListOfValues(v['listOfValues'], v['default_value'])
             self.setFieldReadOnly(v['readOnly'], v['computed'])
             linkFieldType[v['name']] = v['type']
-
         return linkFieldType
+
+    def setFieldAllConstraints(self, constraints):
+        expressionAllConstraints = ''
+        for c in constraints:
+            if c is None:
+                continue
+            expressionAllConstraints += "{} AND ".format(c)
+        if expressionAllConstraints == '':
+            return
+        self.layer.setConstraintExpression(self.index, expressionAllConstraints[0:len(expressionAllConstraints) - 5])
 
     '''
     Formatage du champ en fonction du type collaboratif
     '''
+
     def setFieldSwitchType(self, vType, default_value):
 
         if vType == 'Boolean':
@@ -108,6 +123,7 @@ class EditFormFieldFromAttributes(object):
     '''
     Mise en forme du champ dans le formulaire d'attributs QGIS
     '''
+
     def setFormEditor(self, QgsEWS_type, QgsEWS_config):
         setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
         self.layer.setEditorWidgetSetup(self.index, setup)
@@ -117,6 +133,7 @@ class EditFormFieldFromAttributes(object):
     
     L'item "title" du collaboratif devient dans le formulaire d'attributs QGIS l'Alias
     '''
+
     def setFieldTitle(self, title):
 
         if title is None or title == '':
@@ -131,11 +148,11 @@ class EditFormFieldFromAttributes(object):
     Nullable True --> case décochée
     Nullable False --> case cochée (ConstraintNotNull = 1)
     '''
+
     def setFieldConstraintNotNull(self, bNullable):
 
         if bNullable is None or bNullable is True or bNullable == '' or self.name == self.data['idName']:
             return
-
         self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintNotNull)
 
     '''
@@ -143,11 +160,11 @@ class EditFormFieldFromAttributes(object):
     
     - bUnique = True
     '''
+
     def setFieldConstraintUnique(self, bUnique):
 
         if bUnique is None or bUnique is False or bUnique == '':
             return
-
         self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
 
     '''
@@ -161,6 +178,7 @@ class EditFormFieldFromAttributes(object):
       
       Contrairement à ce que dit l'aide de QGIS, setReadOnly doit être mis à True pour que le champ ne soit pas éditable
     '''
+
     def setFieldReadOnly(self, readOnly, computed):
 
         if self.name == self.data['idName'] or readOnly or computed:
@@ -182,10 +200,12 @@ class EditFormFieldFromAttributes(object):
     la contrainte ne fonctionne pas.
     Il faut avoir : "date_nom" >= '2020-06-01' and "date_nom" <= '2021-06-30' 
     '''
+
     def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType):
         expTmp = None
-        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == self.data['idName']:
-            return
+        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == self.data[
+            'idName']:
+            return None
 
         if vType == 'DateTime':
             minValue = minValue.replace(' ', 'T')
@@ -210,13 +230,55 @@ class EditFormFieldFromAttributes(object):
         listExpressions.append(expTmp)
 
         if len(listExpressions) == 0:
-            return
+            return None
         elif len(listExpressions) == 1:
             expression = listExpressions[0]
         else:
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
+        return expression
 
-        self.layer.setConstraintExpression(self.index, expression)
+    '''
+        Ajout d'une contrainte qui vérifie que pour la valeur d'un champ correspond
+        un ou plusieurs valeurs d'un autre champ.
+        Exemple si le champ "nature" est égal à 'Carrefour' alors le champ "nature_detaillee" doit être rempli
+        par une des valeurs suivantes 'Echangeur', 'Rond-point', 'Echangeur complet', 'Echangeur partiel'
+        La contrainte est de type
+        CASE
+            WHEN "nature" = 'Aérogare' THEN array_contains(array('NULL'),"nature_detaillee")
+            WHEN "nature" = 'Aire de repos ou de service' THEN array_contains(array('Aire de repos','Aire de service'),
+            "nature_detaillee")
+            WHEN "nature" = 'Aire de triage' THEN ''
+            WHEN "nature" = 'Carrefour' THEN array_contains(array('Echangeur','Rond-point','Echangeur complet',
+            'Echangeur partiel'),"nature_detaillee")
+            WHEN "nature" = 'Arrêt voyageurs' THEN array_contains(array('Arrêt touristique saisonnier',
+            'Arrêt routier ferroviaire'),"nature_detaillee")
+        END
+    '''
+
+    def setFieldExpressionConstraintMapping(self, constraintField, conditionField):
+        if constraintField is None and conditionField is None:
+            return None
+        if constraintField['type'] != 'mapping':
+            return None
+        expression = 'CASE'
+        for k, v in constraintField['mapping'].items():
+            # le caractère apostrophe est doublé
+            nameField = conditionField.replace("'", "''")
+            valueField = k.replace("'", "''")
+            expression += ' WHEN "{}"=\'{}\''.format(nameField, valueField)
+            if len(v) == 0:
+                # le champ à valider peut-être vide
+                expression += ' THEN array_contains(array(\'NULL\'),"{}")'.format(self.name)
+            else:
+                values = ''
+                for tmp in v:
+                    # Le caractère apostrophe est doublé
+                    val = tmp.replace("'", "''")
+                    values += "'{}',".format(val)
+                # si array_contains retourne true, alors la valeur affectée au champ est bien contenue dans le tableau
+                expression += ' THEN array_contains(array({}),"{}")'.format(values[0:len(values) - 1], self.name)
+        expression += " END"
+        return expression
 
     '''
     Contraintes > Expression (minLength/maxLength)
@@ -225,10 +287,13 @@ class EditFormFieldFromAttributes(object):
     de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
     Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
     '''
+
     def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, vType, bNullable):
 
-        if (minLength is None and maxLength is None) or (minLength == '' and maxLength == '') or self.name == self.data['idName']:
-            return
+        if (minLength is None and maxLength is None) or \
+                (minLength == '' and maxLength == '') or \
+                self.name == self.data['idName']:
+            return None
 
         listExpressions = []
 
@@ -244,7 +309,7 @@ class EditFormFieldFromAttributes(object):
 
         # Expression
         if len(listExpressions) == 0:
-            return
+            return None
         elif len(listExpressions) == 1:
             expression = listExpressions[0]
         else:
@@ -253,8 +318,7 @@ class EditFormFieldFromAttributes(object):
         # Cas particulier des string nullable
         if bNullable is True:
             expression = "\"{}\" is null or ({})".format(self.name, expression)
-
-        self.layer.setConstraintExpression(self.index, expression)
+        return expression
 
     '''
     Contraintes > Expression
@@ -263,22 +327,23 @@ class EditFormFieldFromAttributes(object):
     de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
     Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
     '''
+
     def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
 
         if pattern is None or pattern == '' or self.name == self.data['idName']:
-            return
+            return None
 
         newPattern = pattern.replace('\\', '\\\\')
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
 
         if vType == 'String' and bNullable is True:
             expression = "\"{}\" is null or {}".format(self.name, expression)
-
-        self.layer.setConstraintExpression(self.index, expression)
+        return expression
 
     '''
     Représentation du type d'outils : Edition de texte
     '''
+
     def setFieldString(self, defaultString):
         # Type: TextEdit
         QgsEWS_type = 'TextEdit'
@@ -293,6 +358,7 @@ class EditFormFieldFromAttributes(object):
     '''
     Représentation du type d'outils : Case à cocher
     '''
+
     def setFieldBoolean(self, defaultState):
         # # Type: CheckBox
         # QgsEWS_type = 'CheckBox'
@@ -319,6 +385,7 @@ class EditFormFieldFromAttributes(object):
     '''
     Représentation du type d'outils : Plage
     '''
+
     def setFieldInteger(self, defaultInteger):
         # # Type: Range
         # QgsEWS_type = 'Range'
@@ -352,6 +419,7 @@ class EditFormFieldFromAttributes(object):
     '''
     Représentation du type d'outils : Plage
     '''
+
     def setFieldDouble(self, defaultDouble):
         # # Type: Range
         # QgsEWS_type = 'Range'
@@ -387,6 +455,7 @@ class EditFormFieldFromAttributes(object):
     
     defaultDate peut prendre les valeurs : NULL, '2020-10-01', 'CURRENT_DATE' ou ''
     '''
+
     def setFieldDate(self, defaultDate):
         # Type: DateTime
         QgsEWS_type = 'DateTime'
@@ -408,6 +477,7 @@ class EditFormFieldFromAttributes(object):
     
     defaultDateTime peut prendre les valeurs : NULL, '2020-10-01 00:00:00', 'CURRENT_DATE' ou ''
     '''
+
     def setFieldDateTime(self, defaultDateTime):
         # Type: DateTime
         QgsEWS_type = 'DateTime'
@@ -426,6 +496,7 @@ class EditFormFieldFromAttributes(object):
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDateTime)))
 
     '''Représentation du type Vue JSON'''
+
     def setJsonValue(self):
         # Type:JsonEdit
         QgsEWS_type = 'JsonEdit'
@@ -436,6 +507,7 @@ class EditFormFieldFromAttributes(object):
     '''
     Représentation du type d'outils : Date/Heure
     '''
+
     def setFieldYear(self, defaultYear):
         # Type: DateTime
         QgsEWS_type = 'DateTime'
@@ -454,6 +526,7 @@ class EditFormFieldFromAttributes(object):
     
     ex defaultYearMonth : "2020-10"
     '''
+
     def setFieldYearMonth(self, defaultYearMonth):
         # Type: DateTime
         QgsEWS_type = 'DateTime'
@@ -477,6 +550,7 @@ class EditFormFieldFromAttributes(object):
     
     - defaultListValue : une des valeurs de liste
     '''
+
     def setFieldListOfValues(self, listOfValues, defaultListValue):
         if listOfValues is None or listOfValues == '':
             return

@@ -343,7 +343,7 @@ class XMLResponse(object):
         return filteredThemes
 
     def getThemes(self):
-        """Extraction des thèmes associés au profil     
+        """Extraction des thèmes associés au profil
         :return les thèmes et la liste des thèmes cochés dans le profil
         """
         themes = []

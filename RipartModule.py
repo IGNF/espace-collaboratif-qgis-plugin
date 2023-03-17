@@ -119,8 +119,8 @@ class RipartPlugin:
         # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
         # et envoyer les modifs sur le serveur
         self.iface.projectRead.connect(self.connectProjectRead)
+        # TODO voir si on peut déplacer ailleurs le signal
         QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
-        self.iface.layerTreeView().currentLayerChanged.connect(self.connectCurrentLayerChanged)
 
     def connectProjectRead(self):
         # si le contexte n'est pas encore initialisé
@@ -161,42 +161,21 @@ class RipartPlugin:
                         self.connectSpecificSignals(pL)
             break
 
-    def connectCurrentLayerChanged(self, layer):
-        if layer is None:
-            return
-        if self.isLayerEditBuffered(layer):
-            self.disabledActionAllSave()
-
     def connectLayerWasAdded(self, layer):
         if layer is None:
             return
         if not self.searchSpecificLayer(layer.name()):
             return
+        print("Connect because layer added: " + layer.name())
         self.connectSpecificSignals(layer)
 
     def connectSpecificSignals(self, layer):
         if layer is None:
             return
-        layer.layerModified.connect(self.disabledActionAllSave)
+        # layer.layerModified.connect(self.disabledActionAllSave)
         layer.editingStarted.connect(self.connectEditing)
         layer.nameChanged.connect(self.connectNameChanged)
         layer.beforeCommitChanges.connect(self.connectEditing)
-
-    def disabledActionAllSave(self):
-        self.iface.actionSaveActiveLayerEdits().setEnabled(False)
-        # self.iface.actionSaveProject().setEnabled(False)
-        # self.iface.actionSaveProjectAs().setEnabled(False)
-        self.iface.actionSaveAllEdits().setEnabled(False)
-        self.iface.actionSaveEdits().setEnabled(False)
-        self.iface.actionRollbackEdits().setEnabled(False)
-
-    def enabledActionAllSave(self):
-        self.iface.actionSaveActiveLayerEdits().setEnabled(True)
-        # self.iface.actionSaveProject().setEnabled(True)
-        # self.iface.actionSaveProjectAs().setEnabled(True)
-        self.iface.actionSaveAllEdits().setEnabled(True)
-        self.iface.actionSaveEdits().setEnabled(True)
-        self.iface.actionRollbackEdits().setEnabled(True)
 
     def connectEditing(self):
         editLayers = []
@@ -244,9 +223,7 @@ class RipartPlugin:
                 progress.setValue(1)
                 self.saveChangesForOneLayer(layer)
                 progress.close()
-            self.enabledActionAllSave()
         elif reply == QMessageBox.No:
-            self.disabledActionAllSave()
             return
 
     def saveChangesForOneLayer(self, layer):
