@@ -231,14 +231,14 @@ class SQLiteManager(object):
                 tmpColumns += '{0},'.format(column)
 
             if value is None:
-                tmpValues += "NULL,"
+                tmpValues += "'NULL',"
             else:
                 if type(value) == str:
                     value = value.replace("'", "''")
                 if type(value) == bool:
-                    if value == True:
+                    if value:
                         value = 1
-                    elif value == False:
+                    elif not value:
                         value = 0
                 if type(value) == list:
                     listToJson = ''

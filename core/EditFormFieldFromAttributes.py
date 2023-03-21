@@ -79,7 +79,7 @@ class EditFormFieldFromAttributes(object):
         for c in constraints:
             if c is None:
                 continue
-            expressionAllConstraints += "{} AND ".format(c)
+            expressionAllConstraints += "({}) AND ".format(c)
         if expressionAllConstraints == '':
             return
         self.layer.setConstraintExpression(self.index, expressionAllConstraints[0:len(expressionAllConstraints) - 5])
@@ -317,7 +317,7 @@ class EditFormFieldFromAttributes(object):
 
         # Cas particulier des string nullable
         if bNullable is True:
-            expression = "\"{}\" is null or ({})".format(self.name, expression)
+            expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name, expression)
         return expression
 
     '''
@@ -337,7 +337,7 @@ class EditFormFieldFromAttributes(object):
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
 
         if vType == 'String' and bNullable is True:
-            expression = "\"{}\" is null or {}".format(self.name, expression)
+            expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or {1}".format(self.name, expression)
         return expression
 
     '''

@@ -116,10 +116,11 @@ class RipartPlugin:
         self.menu = self.tr(u'&IGN_Espace_Collaboratif')
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
-        # Pour supprimer le bouton de sauvegarde dans la barre d'édition de QGIS
-        # et envoyer les modifs sur le serveur
+
+        # En fin de chargement du projet ou à l'ajout d'une couche, il y a connexion de signaux
+        # - quand le nom de la couche est changé
+        # - quand des mises à jour ont été effectuées sur la couche
         self.iface.projectRead.connect(self.connectProjectRead)
-        # TODO voir si on peut déplacer ailleurs le signal
         QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
 
     def connectProjectRead(self):
@@ -172,8 +173,6 @@ class RipartPlugin:
     def connectSpecificSignals(self, layer):
         if layer is None:
             return
-        # layer.layerModified.connect(self.disabledActionAllSave)
-        layer.editingStarted.connect(self.connectEditing)
         layer.nameChanged.connect(self.connectNameChanged)
         layer.beforeCommitChanges.connect(self.connectEditing)
 
@@ -217,26 +216,43 @@ class RipartPlugin:
         reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                      QMessageBox.No)
         if reply == QMessageBox.Yes:
+            allMessages = []
             for layer in layers:
                 messageProgress = "Synchronisation de la couche {}".format(layer.name())
                 progress = ProgressBar(len(layers), messageProgress)
                 progress.setValue(1)
-                self.saveChangesForOneLayer(layer)
+                allMessages.append(self.saveChangesForOneLayer(layer))
                 progress.close()
+            # Message de fin de transaction
+            dlgInfo = FormInfo()
+            dlgInfo.textInfo.setText("<b>Contenu de la transaction</b>")
+            dlgInfo.textInfo.setOpenExternalLinks(True)
+            if len(allMessages) == 0:
+                dlgInfo.textInfo.append("<br/>Vide")
+            messageInfo = ''
+            print(allMessages)
+            for messages in allMessages:
+                print(messages)
+                for mess in messages:
+                    print(mess)
+                    messageInfo += mess
+            print(messageInfo)
+            dlgInfo.textInfo.append(messageInfo)
+            dlgInfo.exec_()
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         elif reply == QMessageBox.No:
             return
 
     def saveChangesForOneLayer(self, layer):
         if layer is None:
             return
-        report = "<b>Contenu de la transaction</b>"
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
         if self.context.client is None:
             if not self.context.getConnexionRipart(newLogin=True):
                 return
-        messages = []
+        messages = ''
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
@@ -253,20 +269,11 @@ class RipartPlugin:
             # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
             # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
             bNormalWfsPost = False
-            messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)))
+            messages = "{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost))
         except Exception as e:
-            messages.append('<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e))
+            messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-        # Message de fin de transaction
-        dlgInfo = FormInfo()
-        dlgInfo.textInfo.setText(report)
-        dlgInfo.textInfo.setOpenExternalLinks(True)
-        if len(messages) == 0:
-            dlgInfo.textInfo.append("<br/>Vide")
-        for message in messages:
-            dlgInfo.textInfo.append(message)
-        dlgInfo.exec_()
-        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        return messages
 
     def connectNameChanged(self):
         activeLayer = self.iface.activeLayer()
