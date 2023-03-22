@@ -374,6 +374,7 @@ class Contexte(object):
         """
         Add guichet layers to the current map
         """
+        global progress
         try:
             # Quelles sont les cartes chargées dans le projet QGIS courant
             maplayers = self.getAllMapLayers()
@@ -456,6 +457,7 @@ class Contexte(object):
             QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, endMessage)
 
         except Exception as e:
+            progress.close()
             self.logger.error(format(e))
             self.iface.messageBar(). \
                 pushMessage("Remarque",

@@ -177,7 +177,6 @@ class WfsPost(object):
             if bNormalWfsPost:
                 self.layer.rollBack()
             self.layer.reload()
-            # self.layer.startEditing()
         return responseWfs
 
     def getJsonTransaction(self, urlTransaction):

@@ -68,6 +68,7 @@ class RipartPlugin:
     context = None
     logger = None
     ripartLogger = None
+    # La liste des couches qui ont été modifiées dont les mises à jour ont été synchronisées avec le serveur
 
     def __init__(self, iface):
         """Constructor.
@@ -205,7 +206,7 @@ class RipartPlugin:
     def saveEdits(self, layers):
         if len(layers) == 1:
             message = "La couche {} a été modifiée, les modifications vont être envoyées sur le serveur."\
-                        .format(layers[0].name())
+                    .format(layers[0].name())
         else:
             tmp = "Les couches ["
             for layer in layers:
@@ -252,7 +253,6 @@ class RipartPlugin:
         if self.context.client is None:
             if not self.context.getConnexionRipart(newLogin=True):
                 return
-        messages = ''
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
