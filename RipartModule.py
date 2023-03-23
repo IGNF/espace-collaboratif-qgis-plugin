@@ -203,46 +203,74 @@ class RipartPlugin:
             return True
         return False
 
+    # def saveEdits(self, layers):
+    #     if len(layers) == 1:
+    #         message = "La couche {} a été modifiée, les modifications vont être envoyées sur le serveur."\
+    #                 .format(layers[0].name())
+    #     else:
+    #         tmp = "Les couches ["
+    #         for layer in layers:
+    #             tmp += "{},".format(layer.name())
+    #         messageTmp = tmp[0:len(tmp)-1]
+    #         messageTmp += "] ont été modifiées, les modifications vont être envoyées sur le serveur."
+    #         message = messageTmp
+    #     reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+    #                                  QMessageBox.No)
+    #     if reply == QMessageBox.Yes:
+    #         allMessages = []
+    #         for layer in layers:
+    #             messageProgress = "Synchronisation de la couche {}".format(layer.name())
+    #             progress = ProgressBar(len(layers), messageProgress)
+    #             progress.setValue(1)
+    #             allMessages.append(self.saveChangesForOneLayer(layer))
+    #             progress.close()
+    #         # Message de fin de transaction
+    #         dlgInfo = FormInfo()
+    #         dlgInfo.textInfo.setText("<b>Contenu de la transaction</b>")
+    #         dlgInfo.textInfo.setOpenExternalLinks(True)
+    #         if len(allMessages) == 0:
+    #             dlgInfo.textInfo.append("<br/>Vide")
+    #         messageInfo = ''
+    #         print(allMessages)
+    #         for messages in allMessages:
+    #             print(messages)
+    #             for mess in messages:
+    #                 print(mess)
+    #                 messageInfo += mess
+    #         print(messageInfo)
+    #         dlgInfo.textInfo.append(messageInfo)
+    #         dlgInfo.exec_()
+    #         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+    #     elif reply == QMessageBox.No:
+    #         return
+
+
     def saveEdits(self, layers):
-        if len(layers) == 1:
-            message = "La couche {} a été modifiée, les modifications vont être envoyées sur le serveur."\
-                    .format(layers[0].name())
-        else:
-            tmp = "Les couches ["
-            for layer in layers:
-                tmp += "{},".format(layer.name())
-            messageTmp = tmp[0:len(tmp)-1]
-            messageTmp += "] ont été modifiées, les modifications vont être envoyées sur le serveur."
-            message = messageTmp
-        reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                     QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            allMessages = []
-            for layer in layers:
-                messageProgress = "Synchronisation de la couche {}".format(layer.name())
-                progress = ProgressBar(len(layers), messageProgress)
-                progress.setValue(1)
-                allMessages.append(self.saveChangesForOneLayer(layer))
-                progress.close()
-            # Message de fin de transaction
-            dlgInfo = FormInfo()
-            dlgInfo.textInfo.setText("<b>Contenu de la transaction</b>")
-            dlgInfo.textInfo.setOpenExternalLinks(True)
-            if len(allMessages) == 0:
-                dlgInfo.textInfo.append("<br/>Vide")
-            messageInfo = ''
-            print(allMessages)
-            for messages in allMessages:
-                print(messages)
-                for mess in messages:
-                    print(mess)
-                    messageInfo += mess
-            print(messageInfo)
-            dlgInfo.textInfo.append(messageInfo)
-            dlgInfo.exec_()
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-        elif reply == QMessageBox.No:
-            return
+        allMessages = []
+        for layer in layers:
+            messageProgress = "Synchronisation de la couche {}".format(layer.name())
+            progress = ProgressBar(len(layers), messageProgress)
+            progress.setValue(1)
+            allMessages.append(self.saveChangesForOneLayer(layer))
+            progress.close()
+        # Message de fin de transaction
+        dlgInfo = FormInfo()
+        dlgInfo.textInfo.setText("<b>Contenu de la transaction</b>")
+        dlgInfo.textInfo.setOpenExternalLinks(True)
+        if len(allMessages) == 0:
+            dlgInfo.textInfo.append("<br/>Vide")
+        messageInfo = ''
+        print(allMessages)
+        for messages in allMessages:
+            print(messages)
+            for mess in messages:
+                print(mess)
+                messageInfo += mess
+        print(messageInfo)
+        dlgInfo.textInfo.append(messageInfo)
+        dlgInfo.exec_()
+        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+
 
     def saveChangesForOneLayer(self, layer):
         bException = False
