@@ -245,6 +245,7 @@ class RipartPlugin:
             return
 
     def saveChangesForOneLayer(self, layer):
+        bException = False
         if layer is None:
             return
         self.context = Contexte.getInstance(self, QgsProject)
@@ -270,12 +271,17 @@ class RipartPlugin:
             # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
             bNormalWfsPost = False
             messages = "{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost))
-            # Pour la couche synchronisée, il faut vider le buffer en mémoire sinon l'outil
-            # redemande une synchronisation
-            editBuffer.rollBack()
+
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            bException = True
+
+        # Pour la couche synchronisée, il faut vider le buffer en mémoire sinon l'outil
+        # redemande une synchronisation
+        if not bException:
+            editBuffer.rollBack()
+
         return messages
 
     def connectNameChanged(self):
