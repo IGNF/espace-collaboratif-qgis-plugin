@@ -123,6 +123,8 @@ class RipartPlugin:
         # - quand des mises à jour ont été effectuées sur la couche
         self.iface.projectRead.connect(self.connectProjectRead)
         QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
+        # Est-ce que le système de coordonnées de référence pour l'ensemble des couches du projet est assigné
+        QgsProject.instance().layersAdded.connect(self.connectLayersAdded)
 
     def connectProjectRead(self):
         # si le contexte n'est pas encore initialisé
@@ -133,9 +135,11 @@ class RipartPlugin:
         uri = self.context.getUriDatabaseSqlite()
         if uri is None:
             return
+
         # S'il n'a y pas de table des tables
         if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             return
+
         root = QgsProject.instance().layerTreeRoot()
         nodesGroup = root.findGroups()
         for ng in nodesGroup:
@@ -162,6 +166,19 @@ class RipartPlugin:
                             continue
                         self.connectSpecificSignals(pL)
             break
+
+    @staticmethod
+    def connectLayersAdded(allLayersInProject):
+        layersWithNoCrs = ''
+        for layer in allLayersInProject:
+            if layer.sourceCrs().isValid() is False:
+                layersWithNoCrs += layer.name()
+                layersWithNoCrs += ','
+        listLayersWithNoCrs = layersWithNoCrs[0:len(layersWithNoCrs) - 1]
+        message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la (les) couche(s) [{0}]. " \
+                  "Veuillez le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
+                  "assigné]".format(listLayersWithNoCrs)
+        RipartHelper.showMessageBox(message)
 
     def connectLayerWasAdded(self, layer):
         if layer is None:
@@ -203,48 +220,6 @@ class RipartPlugin:
             return True
         return False
 
-    # def saveEdits(self, layers):
-    #     if len(layers) == 1:
-    #         message = "La couche {} a été modifiée, les modifications vont être envoyées sur le serveur."\
-    #                 .format(layers[0].name())
-    #     else:
-    #         tmp = "Les couches ["
-    #         for layer in layers:
-    #             tmp += "{},".format(layer.name())
-    #         messageTmp = tmp[0:len(tmp)-1]
-    #         messageTmp += "] ont été modifiées, les modifications vont être envoyées sur le serveur."
-    #         message = messageTmp
-    #     reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-    #                                  QMessageBox.No)
-    #     if reply == QMessageBox.Yes:
-    #         allMessages = []
-    #         for layer in layers:
-    #             messageProgress = "Synchronisation de la couche {}".format(layer.name())
-    #             progress = ProgressBar(len(layers), messageProgress)
-    #             progress.setValue(1)
-    #             allMessages.append(self.saveChangesForOneLayer(layer))
-    #             progress.close()
-    #         # Message de fin de transaction
-    #         dlgInfo = FormInfo()
-    #         dlgInfo.textInfo.setText("<b>Contenu de la transaction</b>")
-    #         dlgInfo.textInfo.setOpenExternalLinks(True)
-    #         if len(allMessages) == 0:
-    #             dlgInfo.textInfo.append("<br/>Vide")
-    #         messageInfo = ''
-    #         print(allMessages)
-    #         for messages in allMessages:
-    #             print(messages)
-    #             for mess in messages:
-    #                 print(mess)
-    #                 messageInfo += mess
-    #         print(messageInfo)
-    #         dlgInfo.textInfo.append(messageInfo)
-    #         dlgInfo.exec_()
-    #         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-    #     elif reply == QMessageBox.No:
-    #         return
-
-
     def saveEdits(self, layers):
         allMessages = []
         for layer in layers:
@@ -270,7 +245,6 @@ class RipartPlugin:
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-
 
     def saveChangesForOneLayer(self, layer):
         bException = False
@@ -305,8 +279,8 @@ class RipartPlugin:
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
             bException = True
 
-        # Pour la couche synchronisée, il faut vider le buffer en mémoire sinon l'outil
-        # redemande une synchronisation
+        # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction commitLayer
+        # n'envoie pas d'exception sinon les modifs sont perdues et l'outil redemande une synchronisation
         if not bException:
             editBuffer.rollBack()
 

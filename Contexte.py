@@ -758,8 +758,9 @@ class Contexte(object):
             # Si le CRS de la couche n'est pas défini, on prévient l'utilisateur et on sort
             if len(lay.selectedFeatures()) > 0 and not lay.sourceCrs().isValid():
                 nom = lay.name()
-                message = "La couche {0} ne peut pas être utilisée pour créer un signalement car son système de projection n'est pas défini. " \
-                          "Veuillez le définir avant de créer un signalement.".format(nom)
+                message = "La couche {0} ne peut pas être utilisée pour créer un signalement car son système " \
+                          "de projection n'est pas défini. Veuillez le définir avant de créer " \
+                          "un signalement.".format(nom)
                 RipartHelper.showMessageBox(message)
                 return []
 
