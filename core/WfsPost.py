@@ -1,7 +1,6 @@
 import json
 
 import qgis.core
-from qgis._gui import QgisInterface
 
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
@@ -12,6 +11,7 @@ from .Wkt import Wkt
 from .BBox import BBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from qgis.PyQt.QtWidgets import QMessageBox
+
 
 class WfsPost(object):
     context = None
@@ -156,7 +156,7 @@ class WfsPost(object):
             try:
                 self.synchronize()
             except Exception as e:
-                QMessageBox.information(QgisInterface().mainWindow(), cst.IGNESPACECO, format(e))
+                QMessageBox.information(self.context.iface.mainWindow(), cst.IGNESPACECO, format(e))
                 # Suppression de la couche dans la carte. Virer la table dans SQLite
                 layersID = [self.layer.id()]
                 QgsProject.instance().removeMapLayers(layersID)

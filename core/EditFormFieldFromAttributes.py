@@ -353,6 +353,7 @@ class EditFormFieldFromAttributes(object):
 
         if defaultString is None or defaultString == '':
             return
+
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultString)))
 
     '''

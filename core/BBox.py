@@ -1,6 +1,5 @@
 # coding=utf-8
 from PyQt5.QtWidgets import QMessageBox
-from qgis._gui import QgisInterface
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 
 from . import ConstanteRipart as cst
@@ -28,7 +27,7 @@ class BBox(object):
             if bAskConfirmation:
                 message = "Vous n'avez pas spécifié de zone de travail. \n\n" \
                           "Souhaitez-vous poursuivre l'import des objets sur la totalité du territoire ? "
-                reply = QMessageBox.question(QgisInterface().mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                reply = QMessageBox.question(self.context.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                              QMessageBox.No)
                 if reply == QMessageBox.No:
                     return Box(0.0, 0.0, 0.0, 0.0)
@@ -40,7 +39,7 @@ class BBox(object):
                       self.filterName + \
                       "' définie comme zone de travail ou celle-ci n'est pas activée.\n\n" + \
                       "Souhaitez-vous poursuivre l'import sur la totalité du territoire ? "
-            reply = QMessageBox.question(QgisInterface().mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+            reply = QMessageBox.question(self.context.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:
                 return
@@ -51,21 +50,21 @@ class BBox(object):
             if layerFilterCrs.isValid() is False:
                 message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. " \
                           "Veuillez le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
-                          "assigné]".format(
-                    self.filterName)
-                QMessageBox.information(QgisInterface().mainWindow(), cst.IGNESPACECO, message)
+                          "assigné]".format(self.filterName)
+                QMessageBox.information(self.context.iface.mainWindow(), cst.IGNESPACECO, message)
                 return Box(0.0, 0.0, 0.0, 0.0)
 
             destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
             coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
             newLayerFilterExtent = coordTransform.transform(layerFilterExtent)
-            return Box(newLayerFilterExtent.xMinimum(), newLayerFilterExtent.yMinimum(), newLayerFilterExtent.xMaximum(),
+            return Box(newLayerFilterExtent.xMinimum(), newLayerFilterExtent.yMinimum(),
+                       newLayerFilterExtent.xMaximum(),
                        newLayerFilterExtent.yMaximum())
 
     def getBBoxAsWkt(self, filterName):
         if filterName is None or len(filterName) == 0 or filterName == '':
             return None
-            #raise Exception ("La zone de travail est absente, veuillez en importer une.")
+            # raise Exception ("La zone de travail est absente, veuillez en importer une.")
         self.layerFilter = self.context.getLayerByName(filterName)
         qgsRectangle = self.layerFilter.extent()
         layerFilterCrs = self.layerFilter.crs()

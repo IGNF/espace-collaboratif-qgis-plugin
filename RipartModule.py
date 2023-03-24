@@ -123,8 +123,6 @@ class RipartPlugin:
         # - quand des mises à jour ont été effectuées sur la couche
         self.iface.projectRead.connect(self.connectProjectRead)
         QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
-        # Est-ce que le système de coordonnées de référence pour l'ensemble des couches du projet est assigné
-        QgsProject.instance().layersAdded.connect(self.connectLayersAdded)
 
     def connectProjectRead(self):
         # si le contexte n'est pas encore initialisé
@@ -166,19 +164,6 @@ class RipartPlugin:
                             continue
                         self.connectSpecificSignals(pL)
             break
-
-    @staticmethod
-    def connectLayersAdded(allLayersInProject):
-        layersWithNoCrs = ''
-        for layer in allLayersInProject:
-            if layer.sourceCrs().isValid() is False:
-                layersWithNoCrs += layer.name()
-                layersWithNoCrs += ','
-        listLayersWithNoCrs = layersWithNoCrs[0:len(layersWithNoCrs) - 1]
-        message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la (les) couche(s) [{0}]. " \
-                  "Veuillez le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
-                  "assigné]".format(listLayersWithNoCrs)
-        RipartHelper.showMessageBox(message)
 
     def connectLayerWasAdded(self, layer):
         if layer is None:

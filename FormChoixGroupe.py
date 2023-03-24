@@ -165,7 +165,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
     def save(self):
-        # Si le nom de la zone de travail est vide --> extraction complete
+        # Si le nom de la zone de travail est vide → extraction complete
         spatialFilterLayerName = self.comboBoxWorkZone.currentText()
         if spatialFilterLayerName == '':
             message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou les " \
@@ -193,6 +193,11 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if spatialFilterLayerName in self.newShapefilesDict:
             message = self.importShapefile(spatialFilterLayerName)
             # Sauvegarde du nom de la nouvelle zone de travail
+            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
+                                        spatialFilterLayerName,
+                                        "Map")
+        # si spatialFilterLayerName est rempli, la zone existe déjà
+        elif spatialFilterLayerName != '':
             RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
                                         spatialFilterLayerName,
                                         "Map")
