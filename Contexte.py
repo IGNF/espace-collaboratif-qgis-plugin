@@ -490,9 +490,9 @@ class Contexte(object):
 
         if bAskForConfirmation:
             if len(removeLayers) == 1:
-                message = "La couche [{}] existe déjà, elle sera détruite si vous continuez ?".format(tmp[:-2])
+                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(tmp[:-2])
             else:
-                message = "Les couches [{}] existent déjà, elles seront supprimées si vous continuez.".format(tmp[:-2])
+                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?".format(tmp[:-2])
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:

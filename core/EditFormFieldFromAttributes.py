@@ -68,21 +68,29 @@ class EditFormFieldFromAttributes(object):
                            self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type']),
                            self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable']),
                            self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'])]
-            self.setFieldAllConstraints(constraints)
+            self.setFieldAllConstraints(constraints, v['nullable'])
             self.setFieldListOfValues(v['listOfValues'], v['default_value'])
             self.setFieldReadOnly(v['readOnly'], v['computed'])
             linkFieldType[v['name']] = v['type']
         return linkFieldType
 
-    def setFieldAllConstraints(self, constraints):
+    def setFieldAllConstraints(self, constraints, bNullable):
         expressionAllConstraints = ''
         for c in constraints:
             if c is None:
                 continue
             expressionAllConstraints += "({}) AND ".format(c)
+
         if expressionAllConstraints == '':
             return
-        self.layer.setConstraintExpression(self.index, expressionAllConstraints[0:len(expressionAllConstraints) - 5])
+
+        # Suppression du dernier AND inutile
+        expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 5]
+
+        if bNullable:
+            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name, expressionAllConstraints)
+
+        self.layer.setConstraintExpression(self.index, expressionAllConstraints)
 
     '''
     Formatage du champ en fonction du type collaboratif
@@ -579,5 +587,5 @@ class EditFormFieldFromAttributes(object):
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
         if defaultListValue is None or defaultListValue == '':
-            return
+            defaultListValue = 'NULL'
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultListValue)))
