@@ -430,6 +430,7 @@ class RipartPlugin:
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
+        '''
         icon_path = ':/plugins/RipartPlugin/images/save.png'
         self.add_action(
             icon_path,
@@ -437,6 +438,7 @@ class RipartPlugin:
             callback=self.saveChangesForAllLayers,
             status_tip=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
             parent=self.iface.mainWindow())
+        '''
 
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
         self.add_action(
@@ -446,6 +448,7 @@ class RipartPlugin:
             status_tip=self.tr(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
 
+        '''
         icon_path = ':/plugins/RipartPlugin/images/modifyFieldJson.png'
         self.add_action(
             icon_path,
@@ -453,6 +456,7 @@ class RipartPlugin:
             callback=self.modifyFieldJson,
             status_tip=self.tr(u'Modifier un champ JSON'),
             parent=self.iface.mainWindow())
+        '''
 
         self.config.triggered.connect(self.configurePref)
         self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration du plugin."))
@@ -474,6 +478,7 @@ class RipartPlugin:
 
         self.toolbar.addWidget(self.toolButton2)
 
+    '''
     def modifyFieldJson(self):
         QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, "En travaux")
         layer = self.context.iface.activeLayer()
@@ -487,8 +492,6 @@ class RipartPlugin:
             ews = layer.editorWidgetSetup(index)
             print("Type:", ews.type())
             print("Config:", ews.config())
-
-        """
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
@@ -498,7 +501,7 @@ class RipartPlugin:
         layer = self.iface.activeLayer()
         dlgModifyFieldJson = FieldsJsonView(self.context, layer)
         dlgModifyFieldJson.exec_()
-        """
+    '''
 
     '''
     def test(self):
@@ -539,6 +542,7 @@ class RipartPlugin:
                             level=1, duration=5)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
+    '''
     def saveChangesForAllLayers(self):
         report = "<b>Contenu de la transaction</b>"
         self.context = Contexte.getInstance(self, QgsProject)
@@ -585,6 +589,7 @@ class RipartPlugin:
         for message in messages:
             dlgInfo.textInfo.append(message)
         dlgInfo.exec_()
+    '''
 
     def synchronizeData(self):
         endMessage = '<b>Contenu de la synchronisation</b>'
