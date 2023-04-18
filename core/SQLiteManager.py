@@ -77,9 +77,9 @@ class SQLiteManager(object):
             else:
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
         # Anomalie 17196, l'identifiant ID_SQLITE et FINGERPRINT sont positionnés en dernier dans le formulaire
-        sqlAttributes += "{0} INTEGER PRIMARY KEY AUTOINCREMENT,".format(cst.ID_SQLITE)
+        sqlAttributes += "{0} INTEGER PRIMARY KEY AUTOINCREMENT".format(cst.ID_SQLITE)
         if not layer.isStandard:
-            sqlAttributes += "{0} TEXT".format(cst.FINGERPRINT)
+            sqlAttributes += ",{0} TEXT".format(cst.FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
         self.geometryType = typeGeometrie
         return sqlAttributes, typeGeometrie, columnDetruitExist
