@@ -1,5 +1,6 @@
 import ntpath
 import json
+import os.path
 
 from qgis.utils import spatialite_connect
 from qgis.core import QgsProject, QgsGeometry
@@ -38,9 +39,8 @@ class SQLiteManager(object):
     def isTableExist(tableName):
         bFind = True
         dbPath = SQLiteManager.getBaseSqlitePath()
-        # si la base SQLite n'existe pas, dbPath contient '/_espaceco.sqlite'
-        # Par exemple un projet vierge dans lequel on ajoute une couche
-        if dbPath == '/_espaceco.sqlite':
+        # Si la base SQLite n'existe pas, on passe
+        if not os.path.isfile(dbPath):
             return False
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         sql = u"SELECT name FROM sqlite_master WHERE type='table' AND name='{}'".format(tableName)

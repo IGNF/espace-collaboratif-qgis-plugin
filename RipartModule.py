@@ -257,16 +257,16 @@ class RipartPlugin:
             # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
             # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
             bNormalWfsPost = False
-            messages = "{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost))
+            commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
+            messages = "{0}\n".format(commitLayerResult['report'])
 
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-            bException = True
 
         # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction commitLayer
         # n'envoie pas d'exception sinon les modifs sont perdues et l'outil redemande une synchronisation
-        if not bException:
+        if commitLayerResult['status'] == "SUCCESS":
             editBuffer.rollBack()
 
         return messages

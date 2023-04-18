@@ -268,6 +268,10 @@ class Contexte(object):
                                         u"...)")
             return
 
+        # Si des couches Espace Co sont en édition, on sort du mode édition avant la connexion,
+        # sinon les signaux ne se connectent pas correctement.
+        # TO-DO
+
         self.loginWindow = FormConnectionDialog(self)
         self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostRipart))
         loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")

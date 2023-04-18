@@ -231,7 +231,7 @@ class WfsPost(object):
                 len(deletedFeaturesId) == 0:
             self.transactionReport += "<br/>Rien à synchroniser\n"
             self.endReport += self.transactionReport
-            return self.endReport
+            return dict(status="SUCCESS", report=self.endReport)
 
         # Est-ce une table BDUni
         result = SQLiteManager.isColumnExist(currentLayer, cst.FINGERPRINT)
@@ -264,7 +264,7 @@ class WfsPost(object):
         strActions = self.formatItemActions()
         endTransaction = self.gcms_post(strActions, bNormalWfsPost)
         self.endReport += self.setEndReport(endTransaction)
-        return self.endReport
+        return dict(status=endTransaction['status'], report=self.endReport)
 
     def setEndReport(self, endTransactionMessage):
         information = ''
