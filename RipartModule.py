@@ -159,10 +159,10 @@ class RipartPlugin:
                             return
                 elif reply == QMessageBox.No:
                     projectLayers = QgsProject.instance().mapLayers()
-                    for pL in projectLayers:
-                        if not self.searchSpecificLayer(pL):
+                    for k,v in projectLayers.items():
+                        if not self.searchSpecificLayer(v.name()):
                             continue
-                        self.connectSpecificSignals(pL)
+                        self.connectSpecificSignals(v)
             break
 
     def connectLayerWasAdded(self, layer):
