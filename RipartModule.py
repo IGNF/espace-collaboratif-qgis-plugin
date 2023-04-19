@@ -260,14 +260,16 @@ class RipartPlugin:
             commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
             messages = "{0}\n".format(commitLayerResult['report'])
 
+            if commitLayerResult['status'] == "FAILED":
+                layer.destroyEditCommand()
+            else:
+                # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction commitLayer
+                # n'envoie pas d'exception sinon les modifs sont perdues et l'outil redemande une synchronisation
+                editBuffer.rollBack()
+
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-
-        # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction commitLayer
-        # n'envoie pas d'exception sinon les modifs sont perdues et l'outil redemande une synchronisation
-        if commitLayerResult['status'] == "SUCCESS":
-            editBuffer.rollBack()
 
         return messages
 
