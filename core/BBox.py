@@ -51,8 +51,7 @@ class BBox(object):
                 message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. " \
                           "Veuillez le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
                           "assigné]".format(self.filterName)
-                QMessageBox.information(self.context.iface.mainWindow(), cst.IGNESPACECO, message)
-                return Box(0.0, 0.0, 0.0, 0.0)
+                raise Exception(message)
 
             destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
             coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
