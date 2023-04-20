@@ -222,17 +222,14 @@ class RipartPlugin:
         messageInfo = ''
         print(allMessages)
         for messages in allMessages:
-            print(messages)
-            for mess in messages:
-                print(mess)
-                messageInfo += mess
+            messageInfo += messages
         print(messageInfo)
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def saveChangesForOneLayer(self, layer):
-        bException = False
+        global commitLayerResult
         if layer is None:
             return
         self.context = Contexte.getInstance(self, QgsProject)

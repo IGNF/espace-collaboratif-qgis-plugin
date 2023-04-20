@@ -383,6 +383,10 @@ class EditFormFieldFromAttributes(object):
 
         if defaultState is None or defaultState == '':
             defaultState = 'NULL'
+        elif defaultState == 'true':
+            defaultState = '1'
+        elif defaultState == 'false':
+            defaultState = '0'
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultState)))
 
     '''
