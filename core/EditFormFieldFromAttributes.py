@@ -373,6 +373,7 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_type = 'ValueMap'
         attribute_values = {}
 
+        # Cas BDUNi
         attribute_values["Oui"] = '1'
         attribute_values["Non"] = '0'
         attribute_values[""] = 'NULL'

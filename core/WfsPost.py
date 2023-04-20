@@ -112,10 +112,15 @@ class WfsPost(object):
         if self.isTableStandard:
             self.setKey(feature.id(), self.layer.idNameForDatabase)
         for key, value in attributesChanged.items():
-            if value == "NULL" or value is None or value == qgis.core.NULL: #Remplacement par QGIS d'une valeur vide, on n'envoie pas
-                fieldsNameValue += '"{0}": null, '.format(feature.fields()[key].name())
+            # if value == "NULL" or value is None or value == qgis.core.NULL: #Remplacement par QGIS d'une valeur vide, on n'envoie pas
+            #     fieldsNameValue += '"{0}": null, '.format(feature.fields()[key].name())
+            if value is None or value == qgis.core.NULL: #Remplacement par QGIS d'une valeur vide, on n'envoie pas
+                continue
             else:
-                fieldsNameValue += '"{0}": "{1}", '.format(feature.fields()[key].name(), value)
+                if value == "NULL":
+                    fieldsNameValue += '"{0}": null, '.format(feature.fields()[key].name())
+                else:
+                    fieldsNameValue += '"{0}": "{1}", '.format(feature.fields()[key].name(), value)
         # il faut enlever à la fin de la chaine la virgule et l'espace ', ' car c'est un update
         pos = len(fieldsNameValue)
         return fieldsNameValue[0:pos - 2]
