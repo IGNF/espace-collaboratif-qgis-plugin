@@ -42,7 +42,7 @@ class BBox(object):
             reply = QMessageBox.question(self.context.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:
-                return
+                raise Exception("Arrêt demandé")
         else:
             layerFilterExtent = self.layerFilter.extent()
             layerFilterCrs = self.layerFilter.crs()
