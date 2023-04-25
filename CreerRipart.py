@@ -39,7 +39,7 @@ class CreerRipart(object):
                 return    # si pas d'objet sélectionné, on arrête le processus
 
             if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
+                connResult = self.context.getConnexionEspaceCollaboratif()
                 if not connResult:
                     return 0
                 # la connexion a échoué, on ne fait rien

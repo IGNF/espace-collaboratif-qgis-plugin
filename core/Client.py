@@ -17,6 +17,7 @@ from . import ConstanteRipart
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
 from .XMLResponse import XMLResponse
+from .JsonResponse import JsonResponse
 from .ClientHelper import ClientHelper
 from .NoProfileException import NoProfileException
 from .RipartLoggerCl import RipartLogger
@@ -117,31 +118,35 @@ class Client(object):
         Requête au service pour le profil utilisateur
         :return: le profil de l'utilisateur
         """
-        url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
+        # url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
+        url = "{}/{}".format(self.__url, "gcms/api/users/me")
         self.logger.debug(url)
 
         # Ne pas vérifier le certificat en localhost
         if url.find("localhost.ign.fr") != -1:
-            data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
+            response = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
                                 verify=False)
         else:
-            data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
+            response = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
 
         self.logger.debug("data auth ")
-        xml = XMLResponse(data.text)
-
-        errMessage = xml.checkResponseValidity()
-        if errMessage['code'] == 'OK':
-            profil = xml.extractProfil()
-        else:
-            if errMessage['message'] != "":
-                result = errMessage['message']
-            elif errMessage['code'] != "":
-                result = ClientHelper.getErrorMessage(errMessage['code'])
-            else:
-                result = ClientHelper.getErrorMessage(data.status_code)
-
-            raise Exception(ClientHelper.notNoneValue(result))
+        jsonResponse = JsonResponse(response)
+        jsonResponse.checkResponseValidity()
+        jsonResponse.readData()
+        profil = jsonResponse.extractProfile()
+        # xml = XMLResponse(data.text)
+        # errMessage = xml.checkResponseValidity()
+        # if errMessage['code'] == 'OK':
+        #     profil = xml.extractProfil()
+        # else:
+        #     if errMessage['message'] != "":
+        #         result = errMessage['message']
+        #     elif errMessage['code'] != "":
+        #         result = ClientHelper.getErrorMessage(errMessage['code'])
+        #     else:
+        #         result = ClientHelper.getErrorMessage(data.status_code)
+        #
+        #     raise Exception(ClientHelper.notNoneValue(result))
 
         return profil
 

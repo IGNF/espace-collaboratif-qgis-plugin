@@ -155,7 +155,7 @@ class RipartPlugin:
                     if self.context is None:
                         return
                     if self.context.client is None:
-                        if not self.context.getConnexionRipart(newLogin=True):
+                        if not self.context.getConnexionEspaceCollaboratif(newLogin=True):
                             return
                 elif reply == QMessageBox.No:
                     projectLayers = QgsProject.instance().mapLayers()
@@ -236,7 +236,7 @@ class RipartPlugin:
         if self.context is None:
             return
         if self.context.client is None:
-            if not self.context.getConnexionRipart(newLogin=True):
+            if not self.context.getConnexionEspaceCollaboratif(newLogin=True):
                 return
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
@@ -495,7 +495,7 @@ class RipartPlugin:
         if self.context is None:
             return
         if self.context.client is None:
-            if not self.context.getConnexionRipart(newLogin=True):
+            if not self.context.getConnexionEspaceCollaboratif(newLogin=True):
                 return
         layer = self.iface.activeLayer()
         dlgModifyFieldJson = FieldsJsonView(self.context, layer)
@@ -548,7 +548,7 @@ class RipartPlugin:
         if self.context is None:
             return
         if self.context.client is None:
-            if not self.context.getConnexionRipart(newLogin=True):
+            if not self.context.getConnexionEspaceCollaboratif(newLogin=True):
                 return
         messages = []
         # Une transaction par couche modifiée
@@ -599,7 +599,7 @@ class RipartPlugin:
         if self.context is None:
             return
         if self.context.client is None:
-            resCo = self.context.getConnexionRipart(newLogin=True)
+            resCo = self.context.getConnexionEspaceCollaboratif(newLogin=True)
             if not resCo:
                 return
 
@@ -742,7 +742,7 @@ class RipartPlugin:
             return
 
         if self.context:
-            res = self.context.getConnexionRipart(newLogin=True)
+            res = self.context.getConnexionEspaceCollaboratif(newLogin=True)
 
         if not res:
             self.logger.debug("cancel")

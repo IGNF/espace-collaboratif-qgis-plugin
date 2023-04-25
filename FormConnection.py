@@ -79,7 +79,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         return self.lineEditPwd.text()
 
     def connectToService(self):
-        """Connexion au service Espace collaboratif
+        """Connexion à l'Espace collaboratif
 
         :return 1 si la connexion a réussi, 0 si elle a été annulée, -1 s'il y a eu une erreur (Exception)
         :rtype int

@@ -40,7 +40,7 @@ class ImporterGuichet(object):
             self.logger.debug("doImport")
 
             if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
+                connResult = self.context.getConnexionEspaceCollaboratif()
                 if not connResult:
                     return 0
                 if self.context.client is None:  # la connexion a échoué, on ne fait rien

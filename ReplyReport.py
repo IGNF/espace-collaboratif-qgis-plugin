@@ -26,7 +26,7 @@ class ReplyReport(object):
         """
         try:
             if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
+                connResult = self.context.getConnexionEspaceCollaboratif()
                 if not connResult:
                     return 0
                 # la connexion a échoué, on ne fait rien

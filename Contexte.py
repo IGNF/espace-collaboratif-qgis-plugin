@@ -246,16 +246,16 @@ class Contexte(object):
                     return True
         return False
 
-    def getConnexionRipart(self, newLogin=False):
-        """Connexion au service ripart
+    def getConnexionEspaceCollaboratif(self, newLogin=False):
+        """Connexion à l'espace collaboratif
 
-        :param newLogin: booléen indiquant si on fait un nouveau login (fonctionnalité "Connexion au service Ripart")
+        :param newLogin: booléen indiquant si on fait un nouveau login (fonctionnalité "Connexion à l'espace collaboratif")
         :type newLogin: boolean
 
         :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
         :rtype int
         """
-        self.logger.debug("GetConnexionRipart")
+        self.logger.debug("getConnexionEspaceCollaboratif")
         try:
             self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
                                                                 "Serveur").text
@@ -1043,7 +1043,7 @@ class Contexte(object):
         infosLayers = []
 
         if self.client is None:
-            connResult = self.getConnexionRipart()
+            connResult = self.getConnexionEspaceCollaboratif()
             if not connResult or connResult == -1:
                 # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
                 return "Rejected", infosLayers

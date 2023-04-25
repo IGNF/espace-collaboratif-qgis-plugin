@@ -60,7 +60,7 @@ class RepondreRipart(object):
                                                                 + str(remIds[0]) + ')', level=1, duration=10)
 
             if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
+                connResult = self.context.getConnexionEspaceCollaboratif()
                 if not connResult:
                     return 0
                 # la connexion a échoué, on ne fait rien
