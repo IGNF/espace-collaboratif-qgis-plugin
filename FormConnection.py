@@ -102,6 +102,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 # si l'utilisateur n'appartient à aucun groupe, un profil par défaut
                 # est attribué mais il ne contient pas d'infosgeogroupes
                 if len(profil.infosGeogroups) < 1:
+
                     # le profil de l'utilisateur est déjà récupéré et reste actif (NB: a priori, il n'a pas de profil)
                     self.context.profil = profil
 
