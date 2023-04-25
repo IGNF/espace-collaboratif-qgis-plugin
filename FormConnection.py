@@ -133,7 +133,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                         # le nouvel id et nom du groupe sont retournés dans un tuple
                         idNomGroupe = dlgChoixGroupe.getChosenGroupInfo()
 
-                        # si l'utilisateur n'appartient qu'à un seul gorupe, le profil chargé reste actif
+                        # si l'utilisateur n'appartient qu'à un seul groupe, le profil chargé reste actif
                         if len(profil.infosGeogroups) == 1:
                             self.context.profil = profil
                         else:

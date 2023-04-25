@@ -67,6 +67,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
         self.context = context
+        self.context.groupeactif = RipartHelper.load_groupeactif(self.context.projectDir).text
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.onSend)
@@ -280,6 +281,15 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         georemComment = infosgeogroup.georemComment
         if georemComment != "":
             self.textEditMessage.setText(georemComment)
+
+        # Mise à jour des thèmes en fonction du filtre pour le groupe actif
+        # if self.context.groupeactif is None:
+        #     themes = self.context.profil.themes
+        #     filteredThemes = self.context.profil.filteredThemes
+        # elif nameGroup is None or nameGroup == 'Aucun':
+        #     themes = self.context.profil.themes
+        #     filteredThemes = self.context.profil.filteredThemes
+        # elif nameGroup == self.context.groupeactif:
         if nameGroup == self.context.groupeactif:
             themes = self.context.profil.themes
             filteredThemes = self.context.profil.filteredThemes
@@ -288,7 +298,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             filteredThemes = infosgeogroup.filteredThemes
 
         self.preferredGroup = nameGroup
-
         self.displayThemes(filteredThemes, themes)
 
     def isSingleRemark(self):

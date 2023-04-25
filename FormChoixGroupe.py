@@ -174,12 +174,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:
                 return
+            else:
+                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
             self.bCancel = False
 
         # Récupération du nom du groupe que l'utilisateur a choisi
         index = self.comboBoxGroup.currentIndex()
         self.idChosenGroup = self.infosgeogroups[index].group.id
         self.nameChosenGroup = self.infosgeogroups[index].group.name
+        RipartHelper.save_groupeactif(self.context.projectDir, self.nameChosenGroup)
         self.accept()
         self.bCancel = False
 
