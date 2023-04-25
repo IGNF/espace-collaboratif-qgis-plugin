@@ -605,6 +605,9 @@ class RipartPlugin:
 
         # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
         layersToSynchronize = []
+        # est-ce que la table des tables existe ?
+        if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+            return
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         for layer in QgsProject.instance().mapLayers().values():
             for layerTableOfTables in layersTableOfTables:
