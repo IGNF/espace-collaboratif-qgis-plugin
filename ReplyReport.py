@@ -59,7 +59,8 @@ class ReplyReport(object):
                     # Le statut du signalement est-il cloturé ?
                     pos = 0
                     if report.statut.__str__() not in cst.openStatut:
-                        messageReportNoValid += "Impossible de répondre au signalement n°{0}, car il est clôturé depuis le {1}\n".format(idReport, report.DateValidation)
+                        messageReportNoValid += "Impossible de répondre au signalement n°{0}, car il est clôturé " \
+                                                "depuis le {1}\n".format(idReport, report.dateValidation)
                         pos = -1
                     # Les autorisations sont-elles suffisantes pour modifier le signalement par une réponse
                     bAuthorisation = True
