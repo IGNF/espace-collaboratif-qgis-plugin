@@ -238,7 +238,8 @@ class ImporterRipart(object):
                   self.context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) + \
                   self.context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) + \
                   self.context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
-        reject = self.context.countRemarqueByStatut(cst.STATUT.reject.__str__())
+        reject = self.context.countRemarqueByStatut(cst.STATUT.reject.__str__()) + \
+                 self.context.countRemarqueByStatut(cst.STATUT.reject0.__str__())
         valid = self.context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.context.countRemarqueByStatut(
             cst.STATUT.valid0.__str__())
 
