@@ -20,7 +20,7 @@ from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
 from .core.Theme import Theme
 from .RipartHelper import RipartHelper
-from .core.ThemeAttribut import ThemeAttribut
+from .core.ThemeAttributepy import ThemeAttribut
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
 
@@ -277,7 +277,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.idSelectedGeogroup = infosgeogroup.group.id
 
         # Affichage du commentaire par défaut dans la fenêtre message
-        georemComment = infosgeogroup.georemComment
+        georemComment = infosgeogroup.reportDefaultComment
         if georemComment != "":
             self.textEditMessage.setText(georemComment)
         if nameGroup == self.context.groupeactif:

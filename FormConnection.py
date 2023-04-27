@@ -137,18 +137,20 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                         if len(profil.infosGeogroups) == 1:
                             self.context.profil = profil
                         else:
+                            profil = client.setChangeUserProfil(idNomGroupe[0])
+                            self.context.profil = profil
                             # récupère le profil et un message dans un tuple
-                            profilMessage = client.setChangeUserProfil(idNomGroupe[0])
-                            messTmp = profilMessage[1]
-
-                            # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
-                            if messTmp.find('actif') != -1:
-                                # le profil chargé reste actif
-                                self.context.profil = profil
-                            else:
-                                # setChangeUserProfil retourne un message vide
-                                # le nouveau profil devient actif
-                                self.context.profil = profilMessage[0]
+                            # profilMessage = client.setChangeUserProfil(idNomGroupe[0])
+                            # messTmp = profilMessage[1]
+                            #
+                            # # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
+                            # if messTmp.find('actif') != -1:
+                            #     # le profil chargé reste actif
+                            #     self.context.profil = profil
+                            # else:
+                            #     # setChangeUserProfil retourne un message vide
+                            #     # le nouveau profil devient actif
+                            #     self.context.profil = profilMessage[0]
 
                         # Sauvegarde du groupe actif dans le xml du projet utilisateur
                         RipartHelper.save_groupeactif(self.projectDir, idNomGroupe[1])

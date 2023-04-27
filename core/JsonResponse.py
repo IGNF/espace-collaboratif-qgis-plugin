@@ -1,93 +1,124 @@
 from .NoProfileException import NoProfileException
 from .Profil import Profil
-from .Group import Group
+from .InfosGeogroup import InfosGeogroup
+from .Layer import Layer
+from .ThemeAttributes import ThemeAttributes
 
 
 class JsonResponse(object):
     # Python requests.Response Object
-    response = ""
+    __response = None
     # Python requests.Response.text (les données recherchées par la requête)
-    data = ""
+    __data = None
 
     def __init__(self, response):
-        self.response = response
+        self.__response = response
 
     def readData(self):
-        self.data = self.response.json()
+        self.__data = self.__response.json()
 
     def checkResponseValidity(self):
-        if not self.response.ok:
-            err = "code : {0}, message : {1}".format(self.response.status_code, self.response.reason)
+        if not self.__response.ok:
+            err = "code : {0}, message : {1}".format(self.__response.status_code, self.__response.reason)
             raise NoProfileException(err)
 
     def activeProfile(self):
-        for cm in self.data['communities_member']:
+        if self.__data is None:
+            return "", "", ""
+        for cm in self.__data['communities_member']:
             if not cm['active']:
                 continue
-            return cm['community_name'], cm['community_id']
+            return cm['community_name'], cm['community_id'], cm['profile']
+
+    def getUserName(self):
+        return self.__data['username']
+
+    def getAttributes(self):
+        themesAttDict = {}
+        thAttributes = []
+        for attribute in self.__data['attributes']:
+            for attributes in attribute:
+                th = ThemeAttributes(attribute['theme'], attributes['name'], '')
+                if 'type' in attributes:
+                    th.setType(attributes['type'])
+                if 'mandatory' in attributes:
+                    th.setMandatory()
+                if 'default' in attributes:
+                    th.setDefaultValue(attributes['default'])
+                if 'values' in attributes:
+                    th.setValues(attributes['values'])
+                if 'autofill' in attributes:
+                    a = 2
+                thAttributes.append(th)
+        return themesAttDict
+
+
+
+
+
+
+
+
+        for attNode in thAttNodes:
+
+            nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
+            attNodeATT = attNode.find('ATT')
+            nomAtt = attNodeATT.text
+            thAttribut = ThemeAttribut(nomTh, nomAtt, "")
+            thAttribut.setTagDisplay(nomAtt)
+            display_tag = attNodeATT.get('display')
+            if display_tag is not None:
+                thAttribut.setTagDisplay(display_tag)
+
+            attType = attNode.find('TYPE').text
+            thAttribut.setType(attType)
+
+            attObligatoire = attNode.find('OBLIGATOIRE')
+            if attObligatoire is not None:
+                thAttribut.setObligatoire()
+
+            for val in attNode.findall('VALEURS/VAL'):
+                valDisplay = val.get('display')
+                if valDisplay is not None:
+                    thAttribut.addValeur(val.text, valDisplay)
+                else:
+                    thAttribut.addValeur(val.text, "")
+
+            for val in attNode.findall('VALEURS/DEFAULTVAL'):
+                thAttribut.defaultval = val.text
+
+            thAttributs.append(thAttribut)
+            if nomTh not in themesAttDict:
+                themesAttDict[nomTh] = []
+            themesAttDict[nomTh].append(thAttribut)
+
+        return themesAttDict
+
+
 
     def extractProfile(self):
-        profil = Profil()
-        profil.author.name = self.data['username']
-        # profil.id_Geoprofil = self.data[''] pas l'info
-        profil.title = self.activeProfile()[0]
-        profil.geogroup.name = self.activeProfile()[0]
-        profil.geogroup.id = self.activeProfile()[1]
-        # profil.logo = self.data[''] pas l'info
-        # profil.filtre = self.data[''] pas l'info
-        # profil.prive = self.data[''] pas l'info
-        profil.themes = self.getThemes()
-        profil.infosGeogroups = self.getInfosGeogroup(profil)
+        profil.globalThemes = None
+        profil.infosGeogroups = self.getInfosGeogroup(self.data['communities_member'], profil)
         return profil
 
-    def getThemes(self):
-        themes = []
-        # try:
-        #     themesAttDict = self.get_themes_attributes(self.root.findall('THEMES/ATTRIBUT'))
-        #
-        #     # Récupération du filtre sur les thèmes
-        #     filterDict = self.root.find('PROFIL/FILTRE').text
-        #     filteredThemes = []
-        #     globalThemes = []
-        #     if filterDict is not None:
-        #         groupFilters = re.findall('\{.*?\}', filterDict)
-        #         filteredThemes = self.getFilteredThemes(groupFilters, "")
-        #
-        #     nodes = self.root.findall('THEMES/THEME')
-        #
-        #     for node in nodes:
-        #         theme = Theme()
-        #         theme.group = Group()
-        #
-        #         name = (node.find('NOM')).text
-        #         theme.group.name = name
-        #         if name in filteredThemes or len(filteredThemes) == 0:
-        #             theme.isFiltered = True
-        #
-        #         isGlobal = (node.find('GLOBAL')).text
-        #         if isGlobal == '1':
-        #             theme.isGlobal = True
-        #             globalThemes.append(name)
-        #
-        #         theme.group.id = (node.find('ID_GEOGROUPE')).text
-        #         if ClientHelper.notNoneValue(theme.group.name) in themesAttDict:
-        #             theme.attributes.extend(themesAttDict[ClientHelper.notNoneValue(theme.group.name)])
-        #         themes.append(theme)
-        #
-        # except Exception as e:
-        #     self.logger.error(str(e))
-        #     raise Exception("Erreur dans la récupération des thèmes du profil : {}".format(str(e)))
-        #
-        # return [themes, filteredThemes, globalThemes]
-        return themes
-
-    def getInfosGeogroup(self, profil):
+    def getInfosGeogroup(self, communities_member, profil):
         """Extraction des infos utilisateur sur ses geogroupes
         :return les infos
         """
         global infosgeogroup
         infosgeogroups = []
-
+        for cm in communities_member:
+            infosgeogroup = InfosGeogroup()
+            infosgeogroup.group.name = cm['community_name']
+            infosgeogroup.group.id = cm['community_id']
+            #infosgeogroup.georemComment = ''  # TODO trouver l'info
+            th = self.getThemesFromUsers(cm['profile'])
+            infosgeogroup.themes = th[0]
+            profil.allThemes.append(th[0])
+            infosgeogroup.filteredThemes = th[1]
+            layer = Layer()
+            infosgeogroup.layers.append(layer)
+            infosgeogroups.append(infosgeogroup)
         # try:
         #     # informations sur le geogroupe
         #     nodesGr = self.root.findall('GEOGROUPE')
@@ -170,3 +201,25 @@ class JsonResponse(object):
         #     self.logger.error(str(e))
         #     raise Exception("Erreur dans la récupération des informations du groupe " + infosgeogroup.group.name)
         return infosgeogroups
+
+    def extractProfileFromCommunities(self):
+        profil = Profil()
+        #profil.author.name = ''
+        # profil.id_Geoprofil = ''  # TODO trouver l'info
+        #ap = self.activeProfile()
+        profil.title = self.data['name']
+        profil.geogroup.name = self.data['name']
+        profil.geogroup.id = self.data['id']
+        profil.logo = self.data['logo_url']
+        # profil.filtre = ''  # TODO trouver l'info
+        # profil.prive = ''  # TODO trouver l'info
+        th = self.getThemesFromCommunities(self.data['attributes'])
+        profil.themes = th[0]
+        profil.filteredThemes = th[1]
+        profil.globalThemes = None
+        #profil.infosGeogroups = self.getInfosGeogroup(self.data['communities_member'], profil)
+        return profil
+
+    def getThemesFromCommunities(self, communitiesAttributes):
+        themes = []
+        return themes

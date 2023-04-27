@@ -12,7 +12,7 @@ from .Profil import Profil
 from . import ConstanteRipart as cst
 from .Remarque import Remarque
 from .Theme import Theme
-from .ThemeAttribut import ThemeAttribut
+from .ThemeAttributepy import ThemeAttribut
 from .Point import Point
 from .Author import Author
 from .Sketch import Sketch
@@ -190,7 +190,7 @@ class XMLResponse(object):
                 infosgeogroup.group.id = (nodegr.find('ID_GEOGROUPE')).text
 
                 # Récupération du commentaire par défaut des signalements
-                infosgeogroup.georemComment = nodegr.find('COMMENTAIRE_GEOREM').text
+                infosgeogroup.reportDefaultComment = nodegr.find('COMMENTAIRE_GEOREM').text
 
                 # Récupération des layers du groupe
                 for nodelayer in nodegr.findall('LAYERS/LAYER'):

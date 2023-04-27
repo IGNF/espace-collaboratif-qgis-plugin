@@ -14,16 +14,12 @@ class Theme(object):
     """
     Classe représentant un thème
     """
-    group = None
-    
-    # liste d'attributs
-    attributes = []
-
     def __init__(self):
         """
         Constructor
         """
         self.group = Group()
+        self.group.name = ''
         self.attributes = []
         self.isFiltered = False
         self.isGlobal = False

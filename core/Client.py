@@ -25,6 +25,7 @@ from . import requests
 from .requests.auth import HTTPBasicAuth
 import os
 from .ProgressBar import ProgressBar
+from .Community import Community
 
 
 class Client(object):
@@ -118,22 +119,26 @@ class Client(object):
         Requête au service pour le profil utilisateur
         :return: le profil de l'utilisateur
         """
+        community = Community(self.__url, self.__login, self.__password, self.__proxies)
+        profil = community.getProfil()
         # url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
-        url = "{}/{}".format(self.__url, "gcms/api/users/me")
-        self.logger.debug(url)
-
-        # Ne pas vérifier le certificat en localhost
-        if url.find("localhost.ign.fr") != -1:
-            response = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
-                                verify=False)
-        else:
-            response = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
-
-        self.logger.debug("data auth ")
-        jsonResponse = JsonResponse(response)
-        jsonResponse.checkResponseValidity()
-        jsonResponse.readData()
-        profil = jsonResponse.extractProfile()
+        # url = "{}/{}".format(self.__url, "gcms/api/users/me")
+        # self.logger.debug(url)
+        #
+        # # Ne pas vérifier le certificat en localhost
+        # if url.find("localhost.ign.fr") != -1:
+        #     response = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
+        #                             verify=False)
+        # else:
+        #     response = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
+        #
+        # self.logger.debug("data auth ")
+        # httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxies)
+        # response = httpRequest.getResponse("gcms/api/users/me")
+        # jsonResponse = JsonResponse(response, self.__url, self.__login, self.__password, self.__proxies)
+        # jsonResponse.checkResponseValidity()
+        # jsonResponse.readData()
+        # profil = jsonResponse.extractProfile()
         # xml = XMLResponse(data.text)
         # errMessage = xml.checkResponseValidity()
         # if errMessage['code'] == 'OK':
@@ -147,7 +152,6 @@ class Client(object):
         #         result = ClientHelper.getErrorMessage(data.status_code)
         #
         #     raise Exception(ClientHelper.notNoneValue(result))
-
         return profil
 
     '''
@@ -157,6 +161,7 @@ class Client(object):
         La réponse transformée en json est sous forme de dictionnaire par exemple :
         ...'attributes': 'zone': {...,'listOfValues': [None, 'Zone1', ' Zone2', 'Zone3'],...}...
     '''
+
     def connexionFeatureTypeJson(self, layerUrl, layerName):
         if '&' not in layerUrl:
             raise Exception(ClientHelper.notNoneValue(
@@ -180,6 +185,7 @@ class Client(object):
     '''
         Pour l'item 'style', récupération de la symbologie d'une couche
     '''
+
     def getListOfValuesFromItemStyle(self, dataFeaturetype):
         listOfValues = {}
         tmp = {'children': []}
@@ -314,18 +320,26 @@ class Client(object):
     def setChangeUserProfil(self, idProfil):
         profil = None
         message = ""
-        uri = self.__url + "/api/georem/geoaut_switch_profile/" + idProfil
-        data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
-        xmlResponse = XMLResponse(data)
-        errMessage = xmlResponse.checkResponseValidity()
-
-        if errMessage['code'] == 'OK':
-            profil = xmlResponse.extractProfil()
-            self.__profil = profil
-        elif errMessage['message'] != "":
-            message = errMessage['message']
-
-        return profil, message
+        # uri = self.__url + "/api/georem/geoaut_switch_profile/" + idProfil
+        # https://espacecollaboratif.ign.fr/gcms/api/communities/375
+        uri = "{0}/gcms/api/communities/{1}".format(self.__url, idProfil)
+        print(uri)
+        response = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
+        jsonResponse = JsonResponse(response)
+        jsonResponse.checkResponseValidity()
+        jsonResponse.readData()
+        profil = jsonResponse.extractProfileFromCommunities()
+        # xmlResponse = XMLResponse(data)
+        # errMessage = xmlResponse.checkResponseValidity()
+        #
+        # if errMessage['code'] == 'OK':
+        #     profil = xmlResponse.extractProfil()
+        #     self.__profil = profil
+        # elif errMessage['message'] != "":
+        #     message = errMessage['message']
+        #
+        # return profil, message
+        return profil
 
     def addResponse(self, report, response, titleResponse):
         """Ajoute une réponse à une remarque
