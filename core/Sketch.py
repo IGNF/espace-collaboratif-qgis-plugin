@@ -184,8 +184,8 @@ class Sketch(object):
         # les attributs
         xattributs = ET.SubElement(objet, 'attributs')
         for att in self.attributes:
-            xatt = ET.SubElement(xattributs, 'attribut', {'name': ClientHelper.notNoneValue(att.nom)})
-            xatt.text = ClientHelper.notNoneValue(att.valeur)
+            xatt = ET.SubElement(xattributs, 'attribut', {'name': ClientHelper.notNoneValue(att.name)})
+            xatt.text = ClientHelper.notNoneValue(att.value)
             
         xmlDoc.append(objet)
         return xmlDoc
