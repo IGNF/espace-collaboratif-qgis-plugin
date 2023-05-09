@@ -344,8 +344,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 if attribute.nom != attributeName:
                     continue
                 if attribute.type == 'integer' or attribute.type == 'double':
-                    if value != '' and not value.isdigit():
-                        errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
+                    if value != '':
+                        try:
+                            float(value)
+                        except ValueError:
+                            errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
                 if attribute.obligatoire is True:
                     if value == '' or value is None:
                         errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)

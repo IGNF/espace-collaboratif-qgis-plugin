@@ -223,7 +223,9 @@ class EditFormFieldFromAttributes(object):
 
         # minValue
         if minValue is not None and minValue != '':
-            if vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
+            if vType == 'DateTime':
+                expTmp = "to_datetime(\"{}\") >= \'{}\'".format(self.name, minValue)
+            elif vType == 'Date' or vType == 'YearMonth':
                 expTmp = "\"{}\" >= \'{}\'".format(self.name, minValue)
             else:
                 expTmp = "\"{}\" >= {}".format(self.name, minValue)
@@ -231,7 +233,9 @@ class EditFormFieldFromAttributes(object):
 
         # maxValue
         if maxValue is not None and maxValue != '':
-            if vType == 'Date' or vType == 'DateTime' or vType == 'YearMonth':
+            if vType == 'DateTime':
+                expTmp = "to_datetime(\"{}\") <= \'{}\'".format(self.name, maxValue)
+            elif vType == 'Date' or vType == 'YearMonth':
                 expTmp = "\"{}\" <= \'{}\'".format(self.name, maxValue)
             else:
                 expTmp = "\"{}\" <= {}".format(self.name, maxValue)
