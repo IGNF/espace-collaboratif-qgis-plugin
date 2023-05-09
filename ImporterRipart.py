@@ -169,7 +169,7 @@ class ImporterRipart(object):
             # Modification du formulaire pour afficher l'attribut "Thèmes" sous forme de "Vue JSON"
             # Vue par défaut : Arborescence
             # Formater le JSON : Indenté
-            self.setFormAttributes()
+            # self.setFormAttributes()
             self.progress.close()
 
         except Exception as e:
@@ -192,6 +192,7 @@ class ImporterRipart(object):
             break
         if fields is None or len(fields) == 0:
             return
+
         index = -1
         for field in fields:
             name = field.name()
