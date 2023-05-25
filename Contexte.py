@@ -800,6 +800,8 @@ class Contexte(object):
                             croquisTemp.addAttribut(attribut)
                     listCroquis.append(croquisTemp)
 
+            lay.removeSelection()
+
         return listCroquis
 
     def makeCroquis(self, geom, ftype, layerCrs, fId):
