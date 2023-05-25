@@ -76,8 +76,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         self.lblDoc.setProperty("visible", False)
         if NbSketch >= 2:
-            self.radioBtnUnique.setChecked(False)
-            self.radioBtnMultiple.setChecked(True)
+            self.radioBtnUnique.setChecked(True)
+            self.radioBtnMultiple.setChecked(False)
             self.radioBtnMultiple.setText(u"Créer {0} signalements".format(NbSketch))
 
         profil = self.context.client.getProfil()
