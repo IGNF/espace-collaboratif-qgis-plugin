@@ -523,10 +523,13 @@ class RipartPlugin:
                 return
 
             dlgChargerGuichet = FormChargerGuichet(self.context)
-            # L'utilisateur a cliqué sur le bouton Annuler ou la croix de du dialogue  de la fenetre de connexion
+            # L'utilisateur a cliqué sur le bouton Annuler ou la croix de du dialogue de la fenêtre de connexion
             if dlgChargerGuichet.bRejected:
+                if len(dlgChargerGuichet.listLayers) == 0:
+                    QMessageBox.warning(self.iface.mainWindow(), cst.IGNESPACECO, "Vous n'appartenez à aucun groupe, "
+                                                                                  "il n'y a pas de données à charger.")
                 return
-            if dlgChargerGuichet.context.profil is not None:
+            elif dlgChargerGuichet.context.profil is not None:
                 if len(dlgChargerGuichet.context.profil.infosGeogroups) == 1 and \
                         len(dlgChargerGuichet.context.profil.infosGeogroups[0].layers) == 0:
                     raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
