@@ -15,6 +15,7 @@ from .core.RipartLoggerCl import RipartLogger
 
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
+from qgis.PyQt.QtWidgets import QMessageBox
 
 from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
@@ -54,6 +55,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
     # taille maximale du document joint
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
+
+    selectedThemes = []
 
     def __init__(self, context, NbSketch, parent=None):
         """Constructor."""
@@ -208,9 +211,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     '''
 
     def get_item_value_from_type(self, att):
-
-        item_value = ""
-
         attType = att.type
         attDefaultval = att.defaultval
 
@@ -307,8 +307,9 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         """Retourne la liste des thèmes (objets de type THEME) sélectionnés
         dans le formulaire de création du signalement
         """
-        selectedThemes = []
+        return self.selectedThemes
 
+    def checkSelectedThemes(self):
         root = self.treeWidget.invisibleRootItem()
         for i in range(root.childCount()):
             thItem = root.child(i)
@@ -331,9 +332,11 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                                          ClientHelper.notNoneValue(val))
                 theme.attributes.append(attribut)
             if errorMessage != '':
-                raise Exception(errorMessage)
-            selectedThemes.append(theme)
-        return selectedThemes
+                QMessageBox.warning(self, cst.IGNESPACECO, errorMessage)
+                self.bSend = False
+                return
+            self.bSend = True
+            self.selectedThemes.append(theme)
 
     def correctValue(self, groupName, groupID, attributeName, value):
         errorMessage = ''
@@ -456,14 +459,6 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 return th
         return None
 
-    def countSelectedTheme(self):
-        """Compte et retourne le nombre de thèmes sélectionnés
-        
-        :return le nombre de thèmes sélectionnés
-        :rtype: int
-        """
-        return len(self.getSelectedThemes())
-
     def getAttachedDoc(self):
         """Retourne le nom du fichier sélectionné 
         
@@ -497,8 +492,9 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                                                         duration=10)
             return
 
-        self.bSend = True
-        self.close()
+        self.checkSelectedThemes()
+        if self.bSend:
+            self.close()
 
     def truncate(self, n, decimals=0):
         multiplier = 10 ** decimals

@@ -81,14 +81,10 @@ class CreerRipart(object):
         """
         try:
             tmpRem = Remarque()
-                
             tmpRem.setCommentaire(formCreate.textEditMessage.toPlainText())
-            
             selectedThemes = formCreate.getSelectedThemes()
             RipartHelper.save_preferredThemes(self.context.projectDir, selectedThemes)
-
             RipartHelper.save_preferredGroup(self.context.projectDir, formCreate.preferredGroup)
-            
             tmpRem.addThemeList(selectedThemes)  
             
             # liste contenant les identifiants des nouvelles remarques créées
@@ -153,7 +149,6 @@ class CreerRipart(object):
         :return: La Remarque créée
         :rtype: Remarque
         """
-        
         client = self.context.client
         
         positionRemarque = self.context.getPositionRemarque(croquisList)
