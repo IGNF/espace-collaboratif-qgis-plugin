@@ -54,7 +54,12 @@ class Wkt(object):
             geometryWithModifiedZ.addZValue(-1000.)
             qgsGeometryObject.set(geometryWithModifiedZ)
 
-        return '"{0}": "{1}"'.format(self.geometryName, qgsGeometryObject.asWkt())
+        geomAsWkt = qgsGeometryObject.asWkt()
+        #CompoundCurve (
+        if geomAsWkt.find("CompoundCurve (") != -1:
+            tmp = geomAsWkt.replace("CompoundCurve (", " ")
+            geomAsWkt = tmp[0:len(tmp) - 1]
+        return '"{0}": "{1}"'.format(self.geometryName, geomAsWkt)
 
     def isBoundingBoxIntersectGeometryObject(self, boundingBoxSpatialFilter, qgsGeometryObject):
         boundingBoxGeometry = QgsGeometry.fromWkt(boundingBoxSpatialFilter)
