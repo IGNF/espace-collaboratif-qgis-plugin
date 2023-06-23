@@ -170,7 +170,6 @@ class RipartPlugin:
             return
         if not self.searchSpecificLayer(layer.name()):
             return
-        print("Connect because layer added: " + layer.name())
         self.connectSpecificSignals(layer)
 
     def connectSpecificSignals(self, layer):
@@ -538,10 +537,7 @@ class RipartPlugin:
 
         except Exception as e:
             self.logger.error(format(e))
-            self.context.iface.messageBar(). \
-                pushMessage("Remarque",
-                            str(e),
-                            level=1, duration=5)
+            self.context.iface.messageBar().pushMessage("Remarque", str(e), level=1, duration=5)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     '''

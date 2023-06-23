@@ -157,58 +157,60 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # si le système de coordonnées de référence assigné (SCR) est vide, il faut le signaler à l'utilisateur
         sourcecrs = vlayer.sourceCrs()
         if sourcecrs.isValid() is False:
-            message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez " \
+            return "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez " \
                       "le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
                       "assigné]".format(vlayer.name())
-            RipartHelper.showMessageBox(message)
         return ""
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
     def save(self):
-        # Si le nom de la zone de travail est vide → extraction complete
-        spatialFilterLayerName = self.comboBoxWorkZone.currentText()
-        if spatialFilterLayerName == '':
-            message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou les " \
-                      "données de votre groupe, le chargement se fera sur la totalité du territoire et sera " \
-                      "probablement long. Voulez-vous continuer ?"
-            reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.No:
-                return
-            else:
-                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
+        try:
+            # Si le nom de la zone de travail est vide → extraction complete
+            spatialFilterLayerName = self.comboBoxWorkZone.currentText()
+            if spatialFilterLayerName == '':
+                message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou " \
+                          "les données de votre groupe, le chargement se fera sur la totalité du territoire et sera " \
+                          "probablement long. Voulez-vous continuer ?"
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    return
+                else:
+                    RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
+                self.bCancel = False
+
+            # Récupération du nom du groupe que l'utilisateur a choisi
+            index = self.comboBoxGroup.currentIndex()
+            self.idChosenGroup = self.infosgeogroups[index].group.id
+            self.nameChosenGroup = self.infosgeogroups[index].group.name
+            RipartHelper.save_groupeactif(self.context.projectDir, self.nameChosenGroup)
+            self.accept()
             self.bCancel = False
 
-        # Récupération du nom du groupe que l'utilisateur a choisi
-        index = self.comboBoxGroup.currentIndex()
-        self.idChosenGroup = self.infosgeogroups[index].group.id
-        self.nameChosenGroup = self.infosgeogroups[index].group.name
-        RipartHelper.save_groupeactif(self.context.projectDir, self.nameChosenGroup)
-        self.accept()
-        self.bCancel = False
+            # Est-ce qu'un changement de groupe ou de zone de travail est intervenu au moment de la sauvegarde ?
+            # Si oui, il faut supprimer l'ensemble des couches et le groupe
+            self.deleteLayersAndGroup(spatialFilterLayerName)
 
-        # Est-ce qu'un changement de groupe ou de zone de travail est intervenu au moment de la sauvegarde ?
-        # Si oui, il faut supprimer l'ensemble des couches et le groupe
-        self.deleteLayersAndGroup(spatialFilterLayerName)
+            # Création d'une nouvelle zone de travail si le dictionnaire est rempli avec un shape
+            # que l'utilisateur a chargé avec le bouton 'Parcourir'
+            message = ""
+            if spatialFilterLayerName in self.newShapefilesDict:
+                message = self.importShapefile(spatialFilterLayerName)
+                # Sauvegarde du nom de la nouvelle zone de travail
+                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
+                                            spatialFilterLayerName,
+                                            "Map")
+            # si spatialFilterLayerName est rempli, la zone existe déjà
+            elif spatialFilterLayerName != '':
+                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
+                                            spatialFilterLayerName,
+                                            "Map")
 
-        # Création d'une nouvelle zone de travail si le dictionnaire est rempli avec un shape
-        # que l'utilisateur a chargé avec le bouton 'Parcourir'
-        message = ""
-        if spatialFilterLayerName in self.newShapefilesDict:
-            message = self.importShapefile(spatialFilterLayerName)
-            # Sauvegarde du nom de la nouvelle zone de travail
-            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
-                                        spatialFilterLayerName,
-                                        "Map")
-        # si spatialFilterLayerName est rempli, la zone existe déjà
-        elif spatialFilterLayerName != '':
-            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
-                                        spatialFilterLayerName,
-                                        "Map")
-
-        # si l'import s'est mal passé, envoi d'une exception
-        if message != "":
-            print(message)
-            raise Exception(message)
+            # si l'import s'est mal passé, on sort
+            if message != "":
+                raise Exception(message)
+        except Exception as e:
+            RipartHelper.showMessageBox('{}'.format(e))
+            return
 
     """
     Retourne l'identifiant du groupe de l'utilisateur

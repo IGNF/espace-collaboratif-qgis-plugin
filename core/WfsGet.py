@@ -114,7 +114,7 @@ class WfsGet(object):
             response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         params=self.parametersGcmsGet)
             if response['status'] == 'error':
-                message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
+                message += "[[WfsGet.py::gcms_get::nextRequest] {0} : {1}\n".format(response['status'], response['reason'])
                 break
 
             if len(response['features']) == 0 and response['stop']:
@@ -153,7 +153,7 @@ class WfsGet(object):
                 message = "{0} objet(s), extrait(s) en : {1} minute(s)".format(totalRows, round(timeResult / 60, 1))
         else:
             if totalRows == 0:
-                message += "\nPas d'objets extraits"
+                message += "Pas d'objets extraits"
             else:
                 if message == '':
                     message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
