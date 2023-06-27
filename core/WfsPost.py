@@ -183,9 +183,11 @@ class WfsPost(object):
                 self.layer.rollBack()
             self.layer.reload()
         if responseWfs['status'] == 'FAILED':
-            responseWfs['message'] = "Attention, les modifications sur la couche {0} ont été refusées par le serveur, les données sont " \
-                   "corrompues. Veuillez télécharger de nouveau cette couche pour pouvoir continuer à la modifier. En " \
-                   "cas de besoin, vous pouvez contacter le gestionnaire de votre groupe.\n{1}".format(self.layer.name(), responseWfs['message'])
+            responseWfs['message'] = "<br\>Attention, les modifications sur la couche {0} ont été refusées par le " \
+                                     "serveur, les données sont corrompues. Veuillez télécharger de nouveau cette " \
+                                      "couche pour pouvoir continuer à la modifier. En cas de besoin, vous pouvez " \
+                                      "contacter le gestionnaire de votre groupe.<br><br>{1}".format(self.layer.name(),
+                                                                                                 responseWfs['message'])
         return responseWfs
 
     def getJsonTransaction(self, urlTransaction):
@@ -286,7 +288,7 @@ class WfsPost(object):
         elif status == 'SUCCESS':
             information = self.transactionReport
             tabInfo = message.split(' : ')
-            information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
+            information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a><br>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
         return information
 
     def pushAddedFeatures(self, addedFeatures, bBDUni):

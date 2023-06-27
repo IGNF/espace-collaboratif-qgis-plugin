@@ -254,7 +254,7 @@ class RipartPlugin:
             # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
             bNormalWfsPost = False
             commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
-            messages = "{0}\n".format(commitLayerResult['report'])
+            messages = "{0}<br\>".format(commitLayerResult['report'])
 
             if commitLayerResult['status'] == "FAILED":
                 layer.destroyEditCommand()
