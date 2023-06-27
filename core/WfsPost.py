@@ -183,7 +183,7 @@ class WfsPost(object):
                 self.layer.rollBack()
             self.layer.reload()
         if responseWfs['status'] == 'FAILED':
-            responseWfs['message'] = "<br\>Attention, les modifications sur la couche {0} ont été refusées par le " \
+            responseWfs['message'] = "<br/>Attention, les modifications sur la couche {0} ont été refusées par le " \
                                      "serveur, les données sont corrompues. Veuillez télécharger de nouveau cette " \
                                       "couche pour pouvoir continuer à la modifier. En cas de besoin, vous pouvez " \
                                       "contacter le gestionnaire de votre groupe.<br><br>{1}".format(self.layer.name(),
