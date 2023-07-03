@@ -94,6 +94,9 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
         preferredGroup = RipartHelper.load_preferredGroup(self.context.projectDir)
 
+        # On vide les thèmes sélectionnés
+        self.selectedThemes = []
+
         # Ajout des noms de groupes trouvés pour l'utilisateur
         self.infosgeogroups = profil.infosGeogroups
         listeNamesGroups = []

@@ -734,8 +734,9 @@ class Contexte(object):
         """
         mapLayers = self.mapCan.layers()
         for layer in mapLayers:
-            if type(layer) is QgsVectorLayer and len(layer.selectedFeatures()) > 0:
-                return True
+            if type(layer) is QgsVectorLayer or type(layer) is GuichetVectorLayer:
+                if len(layer.selectedFeatures()) > 0:
+                    return True
         return False
 
     def makeCroquisFromSelection(self):

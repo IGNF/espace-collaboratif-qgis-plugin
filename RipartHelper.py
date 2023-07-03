@@ -505,7 +505,6 @@ class RipartHelper:
               u"NoSignalement INTEGER," + \
               u"Auteur TEXT, " + \
               u"Commune TEXT, " + \
-              u"Insee TEXT, " + \
               u"Département TEXT, " + \
               u"Département_id  TEXT," + \
               u"Date_création TEXT," + \
@@ -605,13 +604,13 @@ class RipartHelper:
             geom = " GeomFromText('POINT(" + str(ptx) + " " + str(pty) + ")', {})".format(cst.EPSGCRS)
 
             sql = u"INSERT INTO " + RipartHelper.nom_Calque_Signalement
-            sql += u" (NoSignalement, Auteur, Commune, Insee, Département, Département_id, Date_création, Date_MAJ, "
+            sql += u" (NoSignalement, Auteur, Commune, Département, Département_id, Date_création, Date_MAJ, "
             sql += u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document, Autorisation, geom) "
             sql += u"VALUES ("
             sql += str(rem.id) + ", '"
             sql += ClientHelper.getValForDB(rem.author.name) + "', '"
             sql += rem.getAttribut("commune") + "', '"
-            sql += rem.getAttribut("insee") + "', '"
+            #sql += rem.getAttribut("insee") + "', '" - ajouté en v4.2.0 puis supprimé en v4.2.1 car crée des problèmes dans les projets existants
             sql += rem.getAttribut("departement", "name") + "', '"
             sql += rem.getAttribut("departement", "id") + "', '"
             sql += rem.dateCreation + "', '"

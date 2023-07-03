@@ -27,7 +27,8 @@ date=
 
 # Uncomment the following line and add your changelog:
 changelog=
-    4.2.x
+    4.2.0 - Contribution directe à la BDTOPO pour les utilisateurs autorisés
+    4.1.2 - Correction version WFS
 	4.1.1 - Installation avec compte Espace collaboratif
     4.1.0 - Adaptation géoservices
 
