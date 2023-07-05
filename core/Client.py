@@ -1,13 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-Created on 22 janv. 2015
-Updated on 15 dec. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: AChang-Wailing, EPeyrouse, NGremeaux
-"""
+# Cette classe sert de client pour le service de l'espace collaboratif
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 import os.path
@@ -29,24 +20,6 @@ from .Community import Community
 
 
 class Client(object):
-    """"
-    Cette classe sert de client pour le service RIPart
-    """
-    __url = None
-    __login = None
-    __password = None
-    __author = None
-    __version = None
-    __profil = None
-    __auth = None
-    __proxies = None
-
-    # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
-    message = ""
-    iface = None
-    progress = None
-    logger = RipartLogger("ripart.client").getRipartLogger()
-
     def __init__(self, url, login, pwd, proxies):
         """
         Initialisation du client et connexion au service ripart
@@ -56,6 +29,14 @@ class Client(object):
         self.__password = pwd
         self.__auth = {'login': self.__login, 'password': self.__password}
         self.__proxies = proxies
+        self.__author = None
+        self.__version = None
+        self.__profile = None
+        # message d'erreur lors de la connexion ou d'un appel au service ("OK" ou message d'erreur)
+        self.message = ""
+        self.iface = None
+        self.progress = None
+        self.logger = RipartLogger("Client").getRipartLogger()
 
     def getUrl(self):
         return self.__url
@@ -71,26 +52,32 @@ class Client(object):
         """
         self.iface = iface
 
-    def connect(self):
-        """
-        Connexion d'un utilisateur par son login et mot de passe
-        :return: Si la connexion se fait, retourne l'id de l'auteur; sinon retour du message d'erreur
-        """
-        try:
-            self.logger.debug("tentative de connexion; " + self.__url + ' connect ' + self.__login)
-            requests.get(self.__url, proxies=self.__proxies, auth=HTTPBasicAuth(self.__login, self.__password))
-        except Exception as e:
-            self.logger.error(format(e))
-            raise Exception(format(e))
-        return self
+    # def connect(self):
+    #     """
+    #     Connexion d'un utilisateur par son login et mot de passe
+    #     :return: Si la connexion se fait, retourne l'id de l'auteur; sinon retour du message d'erreur
+    #     """
+    #     try:
+    #         self.logger.debug("tentative de connexion; " + self.__url + ' connect ' + self.__login)
+    #         requests.get(self.__url, proxies=self.__proxies, auth=HTTPBasicAuth(self.__login, self.__password))
+    #     except Exception as e:
+    #         self.logger.error(format(e))
+    #         raise Exception(format(e))
+    #     return self
 
-    def getProfil(self):
-        """Retourne le profil de l'utilisateur
-        :return: le profil
+    def getProfile(self):
+        if self.__profile is None:
+            self.__profile = self.getProfilFromService()
+        return self.__profile
+
+    def getProfilFromService(self):
         """
-        if self.__profil is None:
-            self.__profil = self.getProfilFromService()
-        return self.__profil
+        Requête au service pour le profil utilisateur
+        :return: le profil de l'utilisateur
+        """
+        community = Community(self.__url, self.__login, self.__password, self.__proxies)
+        profile = community.getProfile()
+        return profile
 
     def getNomProfil(self):
         url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
@@ -113,46 +100,6 @@ class Client(object):
             raise Exception(ClientHelper.notNoneValue(result))
 
         return nomProfil
-
-    def getProfilFromService(self):
-        """
-        Requête au service pour le profil utilisateur
-        :return: le profil de l'utilisateur
-        """
-        community = Community(self.__url, self.__login, self.__password, self.__proxies)
-        profil = community.getProfil()
-        # url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
-        # url = "{}/{}".format(self.__url, "gcms/api/users/me")
-        # self.logger.debug(url)
-        #
-        # # Ne pas vérifier le certificat en localhost
-        # if url.find("localhost.ign.fr") != -1:
-        #     response = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
-        #                             verify=False)
-        # else:
-        #     response = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
-        #
-        # self.logger.debug("data auth ")
-        # httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxies)
-        # response = httpRequest.getResponse("gcms/api/users/me")
-        # jsonResponse = JsonResponse(response, self.__url, self.__login, self.__password, self.__proxies)
-        # jsonResponse.checkResponseValidity()
-        # jsonResponse.readData()
-        # profil = jsonResponse.extractProfile()
-        # xml = XMLResponse(data.text)
-        # errMessage = xml.checkResponseValidity()
-        # if errMessage['code'] == 'OK':
-        #     profil = xml.extractProfil()
-        # else:
-        #     if errMessage['message'] != "":
-        #         result = errMessage['message']
-        #     elif errMessage['code'] != "":
-        #         result = ClientHelper.getErrorMessage(errMessage['code'])
-        #     else:
-        #         result = ClientHelper.getErrorMessage(data.status_code)
-        #
-        #     raise Exception(ClientHelper.notNoneValue(result))
-        return profil
 
     '''
         Connexion à une base de données et une couche donnée
@@ -317,29 +264,18 @@ class Client(object):
 
         return rem
 
-    def setChangeUserProfil(self, idProfil):
-        profil = None
-        message = ""
-        # uri = self.__url + "/api/georem/geoaut_switch_profile/" + idProfil
-        # https://espacecollaboratif.ign.fr/gcms/api/communities/375
-        uri = "{0}/gcms/api/communities/{1}".format(self.__url, idProfil)
-        print(uri)
-        response = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
-        jsonResponse = JsonResponse(response)
-        jsonResponse.checkResponseValidity()
-        jsonResponse.readData()
-        profil = jsonResponse.extractProfileFromCommunities()
-        # xmlResponse = XMLResponse(data)
-        # errMessage = xmlResponse.checkResponseValidity()
-        #
-        # if errMessage['code'] == 'OK':
-        #     profil = xmlResponse.extractProfil()
-        #     self.__profil = profil
-        # elif errMessage['message'] != "":
-        #     message = errMessage['message']
-        #
-        # return profil, message
-        return profil
+    # def setChangeUserProfil(self, idProfil):
+    #     message = ""
+    #     # uri = self.__url + "/api/georem/geoaut_switch_profile/" + idProfil
+    #     # https://espacecollaboratif.ign.fr/gcms/api/communities/375
+    #     uri = "{0}/gcms/api/communities/{1}".format(self.__url, idProfil)
+    #     print(uri)
+    #     response = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
+    #     jsonResponse = JsonResponse(response)
+    #     jsonResponse.checkResponseValidity()
+    #     jsonResponse.readData()
+    #     profil = jsonResponse.extractProfileFromCommunities()
+    #     return profil
 
     def addResponse(self, report, response, titleResponse):
         """Ajoute une réponse à une remarque
@@ -385,7 +321,7 @@ class Client(object):
                       'comment': ClientHelper.notNoneValue(remarque.commentaire)}
             geometry = "POINT(" + str(remarque.getLongitude()) + " " + str(remarque.getLatitude()) + ")"
             params['geometry'] = geometry
-            params['territory'] = self.getProfil().zone.__str__()
+            params['territory'] = self.getProfile().zone.__str__()
             params['group'] = idSelectedGeogroup
 
             # Ajout des thèmes selectionnés

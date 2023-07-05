@@ -25,24 +25,21 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     Dialogue pour le choix du groupe après la connexion au serveur
     et récupération du profil utilisateur
     """
-    infosgeogroups = None
-    bCancel = True
-    context = None
-    profile = None
-    activeGroup = None
-    newShapefilesDict = {}
-    idChosenGroup = None
-    nameChosenGroup = None
 
-    def __init__(self, context, profile, activeGroup, parent=None):
+    def __init__(self, context, listGroups, activeGroup, parent=None):
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
         self.context = context
-        self.profile = profile
+        # self.profile = profile
+        self.listGroups = listGroups
         self.activeGroup = activeGroup
-        self.newShapefilesDict.clear()
+        self.newShapefilesDict = {}
+        #self.infosgeogroups = None
+        self.bCancel = True
+        self.idChosenGroup = None
+        self.nameChosenGroup = None
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
         self.setComboBoxGroup()
@@ -54,9 +51,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setButtonsTextAndConnect()
 
     def setComboBoxGroup(self):
-        self.infosgeogroups = self.profile.infosGeogroups
-        for igg in self.infosgeogroups:
-            self.comboBoxGroup.addItem(igg.group.name)
+        for listGroup in self.listGroups:
+            self.comboBoxGroup.addItem(listGroup.getName())
         if self.activeGroup is not None and self.activeGroup != "":
             self.comboBoxGroup.setCurrentText(self.activeGroup)
 
@@ -177,9 +173,11 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             self.bCancel = False
 
         # Récupération du nom du groupe que l'utilisateur a choisi
-        index = self.comboBoxGroup.currentIndex()
-        self.idChosenGroup = self.infosgeogroups[index].group.id
-        self.nameChosenGroup = self.infosgeogroups[index].group.name
+        for lg in self.listGroups:
+            if lg.getName() == self.comboBoxGroup.currentText():
+                self.idChosenGroup = lg.getId()
+                break
+        self.nameChosenGroup = self.comboBoxGroup.currentText()
         self.accept()
         self.bCancel = False
 

@@ -49,7 +49,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
         self.listLayers.clear()
         # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
-        connexionLayers = context.getInfosLayers()
+        #connexionLayers = context.getInfosLayers()
+        connexionLayers = context.getLayers()
 
         if connexionLayers[0] == "Rejected":
             self.bRejected = True

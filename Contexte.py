@@ -46,7 +46,7 @@ class Contexte(object):
     # identifiants de connexion
     login = ""
     pwd = ""
-    urlHostRipart = ""
+    urlHostEspaceCo = ""
     profil = None
 
     # groupe actif
@@ -111,7 +111,7 @@ class Contexte(object):
         self.iface = QObject.iface
         self.login = ""
         self.pwd = ""
-        self.urlHostRipart = ""
+        self.urlHostEspaceCo = ""
         self.groupeactif = ""
         self.profil = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
@@ -213,7 +213,8 @@ class Contexte(object):
                 new_file = os.path.join(self.projectDir, RipartHelper.getConfigFile())
                 os.rename(ripartxml, new_file)
             except Exception as e:
-                self.logger.error("No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
+                self.logger.error(
+                    "No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
                 raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
                                 " n'a pas été trouvé.")
 
@@ -257,9 +258,9 @@ class Contexte(object):
         """
         self.logger.debug("getConnexionEspaceCollaboratif")
         try:
-            self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
-                                                                "Serveur").text
-            self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
+            self.urlHostEspaceCo = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
+                                                                  "Serveur").text
+            self.logger.debug("this.urlHostEspaceCo " + self.urlHostEspaceCo)
 
         except Exception as e:
             self.logger.error("URLHOST inexistant dans fichier configuration")
@@ -269,7 +270,7 @@ class Contexte(object):
             return
 
         self.loginWindow = FormConnectionDialog(self)
-        self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostRipart))
+        self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostEspaceCo))
         loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")
         if loginXmlNode is None:
             self.login = ""
@@ -299,7 +300,6 @@ class Contexte(object):
         while connectionResult < 0:
             self.loginWindow.exec_()
             connectionResult = self.loginWindow.connectionResult
-
         return connectionResult
 
     def getOrCreateDatabase(self):
@@ -490,9 +490,11 @@ class Contexte(object):
 
         if bAskForConfirmation:
             if len(removeLayers) == 1:
-                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(tmp[:-2])
+                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(
+                    tmp[:-2])
             else:
-                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?".format(tmp[:-2])
+                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?".format(
+                    tmp[:-2])
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:
@@ -1038,6 +1040,28 @@ class Contexte(object):
                           "créer un autre projet QGIS.".format(self.profil.title, nomProfilServeur)
                 RipartHelper.showMessageBox(message)
                 raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")
+
+    def getLayers(self) -> (str, [], object):
+        # La liste des couches et non la liste de courses ;-)
+        infosLayers = []
+        # Si le client n'existe pas, il faut demander à l'utilisateur de se connecter
+        if self.client is None:
+            connResult = self.getConnexionEspaceCollaboratif()
+            if not connResult or connResult == -1:
+                # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
+                return "Rejected", infosLayers
+        # Si malgré la demande de connexion le client n'est toujours pas déterminé
+        if self.client is None:
+            return "Rejected", infosLayers
+        # Récupération du profil lié à l'utilisateur
+        profilUser = self.client.getProfil()
+        print("Profil : {0}, {1}".format(profilUser.geogroup.id,
+                                         profilUser.geogroup.name))
+
+        if len(profilUser.infosGeogroups) == 0:
+            return "Rejected", infosLayers, profilUser
+        # https://espacecollaboratif.ign.fr/gcms/api/communities/375/layers
+        return "Accepted", infosLayers, profilUser
 
     def getInfosLayers(self):
         infosLayers = []

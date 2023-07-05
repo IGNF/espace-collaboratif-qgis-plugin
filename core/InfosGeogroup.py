@@ -18,8 +18,6 @@ class InfosGeogroup(object):
     def __init__(self):
         # ID & Nom du Geogroupe
         self.group = Group()
-        # Le nom est mis vide par défaut
-        self.group.name = ''
         # La liste des couches visibles sur les cartes de ce groupe (dans l'ordre dans lequel les superposer)
         self.layers = []
         # Les thèmes particuliers appartenant au groupe pour faciliter la saisie des thèmes d'un signalement

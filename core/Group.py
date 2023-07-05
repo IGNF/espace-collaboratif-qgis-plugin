@@ -1,32 +1,38 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 23 janv. 2015
-
-version 3.0.0 , 26/11/2018
-
-@author: AChang-Wailing
-"""
+# Classe représentant un groupe de l'espace collaboratif
 
 
 class Group(object):
-    """
-    Classe représentant un groupe de l'espace collaboratif
-    """
-    
-    # identifiant du groupe
-    id = ""
-    
-    # nom du groupe 
-    name = ""
+    def __init__(self, id_group="", name="", emprises=None, active=False):
+        # L'identifiant du groupe
+        if emprises is None:
+            emprises = []
+        self.__id = id_group
+        # Le nom du groupe
+        self.__name = name
+        # Indique si le groupe est celui sur lequel l'utilisateur travaille
+        self.__active = active
+        self.__emprises = emprises
 
-    def __init__(self, id_group="", name=""):
-        """
-        Constructor
-        
-        :param id_group identifiant du groupe
-        :type string       
-        :param name le nom du groupe
-        :type string  
-        """
-        self.id = id_group
-        self.name = name
+    def getId(self):
+        return self.__id
+
+    def getName(self):
+        return self.__name
+
+    def getActive(self):
+        return self.__active
+
+    def getEmprise(self):
+        return self.__emprises
+
+    def setId(self, id):
+        self.__id = id
+
+    def setName(self, name):
+        self.__name = name
+
+    def setActive(self, active):
+        self.__active = active
+
+    def setEmprise(self, emprises):
+        self.__emprises = emprises

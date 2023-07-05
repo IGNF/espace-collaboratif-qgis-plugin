@@ -20,7 +20,7 @@ from .core.ClientHelper import ClientHelper
 from .core import ConstanteRipart as cst
 from .core.Theme import Theme
 from .RipartHelper import RipartHelper
-from .core.ThemeAttributepy import ThemeAttribut
+from .core.ThemeAttributes import ThemeAttributes
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
 
@@ -325,7 +325,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 widg = self.treeWidget.itemWidget(att, 1)
                 val = self.get_value_from_widget(widg, label, theme.group.name)
                 errorMessage += self.correctValue(theme.group.name, theme.group.id, key, val)
-                attribut = ThemeAttribut(theme.group.name, ClientHelper.notNoneValue(key),
+                attribut = ThemeAttributes(theme.group.name, ClientHelper.notNoneValue(key),
                                          ClientHelper.notNoneValue(val))
                 theme.attributes.append(attribut)
             if errorMessage != '':

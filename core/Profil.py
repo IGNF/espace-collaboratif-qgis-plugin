@@ -60,3 +60,6 @@ class Profil(object):
 
     # Les différents groupes de l'utilisateur
     infosGeogroups = list()
+
+    # La liste des groupes de l'utilisateur
+    listGroup = list()

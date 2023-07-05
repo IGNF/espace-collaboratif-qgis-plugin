@@ -19,7 +19,6 @@ class Theme(object):
         Constructor
         """
         self.group = Group()
-        self.group.name = ''
         self.attributes = []
         self.isFiltered = False
         self.isGlobal = False

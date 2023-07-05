@@ -18,5 +18,6 @@ class HttpRequest(object):
             response = requests.get(uri, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
                                     verify=False)
         else:
+            #TODO comment implanter le '_next' dans la réponse si différent de 'None'
             response = requests.get(uri, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
         return response

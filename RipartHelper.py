@@ -410,7 +410,6 @@ class RipartHelper:
         # first load Themes_prefs tag (create the tag if the tag doesn't exist yet)
         themesNode = RipartHelper.load_ripartXmlTag(projectDir, RipartHelper.xml_Themes, "Map")
         RipartHelper.removeNode(projectDir, RipartHelper.xml_Theme, "Map/" + RipartHelper.xml_Themes)
-
         for th in prefThemes:
             RipartHelper.addXmlElement(projectDir, RipartHelper.xml_Theme, "Map/" + RipartHelper.xml_Themes,
                                        th.group.name)

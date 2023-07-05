@@ -1,6 +1,7 @@
 from .NoProfileException import NoProfileException
 from .Profil import Profil
 from .InfosGeogroup import InfosGeogroup
+from .Group import Group
 from .Layer import Layer
 from .ThemeAttributes import ThemeAttributes
 
@@ -17,10 +18,23 @@ class JsonResponse(object):
     def readData(self):
         self.__data = self.__response.json()
 
+
     def checkResponseValidity(self):
-        if not self.__response.ok:
+        if self.__response.status_code != 200:
             err = "code : {0}, message : {1}".format(self.__response.status_code, self.__response.reason)
             raise NoProfileException(err)
+
+    def getCommunities(self) -> []:
+        communities = []
+        if self.__data is None:
+            return communities
+        for cm in self.__data['communities_member']:
+            communitie = Group(cm['community_id'], cm['community_name'], cm['emprises'])
+            if cm['active']:
+                communitie.setActive(True)
+            communities.append(communitie)
+            # TODO getProfile(cm['profile'] + getThemes)
+        return communities
 
     def activeProfile(self):
         if self.__data is None:
@@ -36,6 +50,8 @@ class JsonResponse(object):
     def getAttributes(self):
         themesAttDict = {}
         thAttributes = []
+        if 'attributes' not in self.__data:
+            return themesAttDict
         for attribute in self.__data['attributes']:
             for attributes in attribute:
                 th = ThemeAttributes(attribute['theme'], attributes['name'], '')
@@ -52,54 +68,45 @@ class JsonResponse(object):
                 thAttributes.append(th)
         return themesAttDict
 
+        # for attNode in thAttNodes:
+        #
+        #     nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
+        #     attNodeATT = attNode.find('ATT')
+        #     nomAtt = attNodeATT.text
+        #     thAttribut = ThemeAttributes(nomTh, nomAtt, "")
+        #     thAttribut.setTagDisplay(nomAtt)
+        #     display_tag = attNodeATT.get('display')
+        #     if display_tag is not None:
+        #         thAttribut.setTagDisplay(display_tag)
+        #
+        #     attType = attNode.find('TYPE').text
+        #     thAttribut.setType(attType)
+        #
+        #     attObligatoire = attNode.find('OBLIGATOIRE')
+        #     if attObligatoire is not None:
+        #         thAttribut.setObligatoire()
+        #
+        #     for val in attNode.findall('VALEURS/VAL'):
+        #         valDisplay = val.get('display')
+        #         if valDisplay is not None:
+        #             thAttribut.addValeur(val.text, valDisplay)
+        #         else:
+        #             thAttribut.addValeur(val.text, "")
+        #
+        #     for val in attNode.findall('VALEURS/DEFAULTVAL'):
+        #         thAttribut.defaultval = val.text
+        #
+        #     thAttributs.append(thAttribut)
+        #     if nomTh not in themesAttDict:
+        #         themesAttDict[nomTh] = []
+        #     themesAttDict[nomTh].append(thAttribut)
+        #
+        # return themesAttDict
 
-
-
-
-
-
-
-        for attNode in thAttNodes:
-
-            nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
-            attNodeATT = attNode.find('ATT')
-            nomAtt = attNodeATT.text
-            thAttribut = ThemeAttribut(nomTh, nomAtt, "")
-            thAttribut.setTagDisplay(nomAtt)
-            display_tag = attNodeATT.get('display')
-            if display_tag is not None:
-                thAttribut.setTagDisplay(display_tag)
-
-            attType = attNode.find('TYPE').text
-            thAttribut.setType(attType)
-
-            attObligatoire = attNode.find('OBLIGATOIRE')
-            if attObligatoire is not None:
-                thAttribut.setObligatoire()
-
-            for val in attNode.findall('VALEURS/VAL'):
-                valDisplay = val.get('display')
-                if valDisplay is not None:
-                    thAttribut.addValeur(val.text, valDisplay)
-                else:
-                    thAttribut.addValeur(val.text, "")
-
-            for val in attNode.findall('VALEURS/DEFAULTVAL'):
-                thAttribut.defaultval = val.text
-
-            thAttributs.append(thAttribut)
-            if nomTh not in themesAttDict:
-                themesAttDict[nomTh] = []
-            themesAttDict[nomTh].append(thAttribut)
-
-        return themesAttDict
-
-
-
-    def extractProfile(self):
-        profil.globalThemes = None
-        profil.infosGeogroups = self.getInfosGeogroup(self.data['communities_member'], profil)
-        return profil
+    # def extractProfile(self):
+    #     profil.globalThemes = None
+    #     profil.infosGeogroups = self.getInfosGeogroup(self.__data['communities_member'], profil)
+    #     return profil
 
     def getInfosGeogroup(self, communities_member, profil):
         """Extraction des infos utilisateur sur ses geogroupes
@@ -111,8 +118,8 @@ class JsonResponse(object):
             infosgeogroup = InfosGeogroup()
             infosgeogroup.group.name = cm['community_name']
             infosgeogroup.group.id = cm['community_id']
-            #infosgeogroup.georemComment = ''  # TODO trouver l'info
-            th = self.getThemesFromUsers(cm['profile'])
+            # infosgeogroup.georemComment = ''  # TODO trouver l'info
+            th = self.getThemesFromCommunities(cm['profile'])
             infosgeogroup.themes = th[0]
             profil.allThemes.append(th[0])
             infosgeogroup.filteredThemes = th[1]
@@ -204,22 +211,40 @@ class JsonResponse(object):
 
     def extractProfileFromCommunities(self):
         profil = Profil()
-        #profil.author.name = ''
+        # profil.author.name = ''
         # profil.id_Geoprofil = ''  # TODO trouver l'info
-        #ap = self.activeProfile()
-        profil.title = self.data['name']
-        profil.geogroup.name = self.data['name']
-        profil.geogroup.id = self.data['id']
-        profil.logo = self.data['logo_url']
+        # ap = self.activeProfile()
+        profil.title = self.__data['name']
+        profil.geogroup.name = self.__data['name']
+        profil.geogroup.id = self.__data['id']
+        profil.logo = self.__data['logo_url']
         # profil.filtre = ''  # TODO trouver l'info
         # profil.prive = ''  # TODO trouver l'info
-        th = self.getThemesFromCommunities(self.data['attributes'])
-        profil.themes = th[0]
-        profil.filteredThemes = th[1]
-        profil.globalThemes = None
-        #profil.infosGeogroups = self.getInfosGeogroup(self.data['communities_member'], profil)
+        # th = self.getThemesFromCommunities(self.__data['attributes'])
+        # profil.themes = th[0]
+        # profil.filteredThemes = th[1]
+        # profil.globalThemes = None
+        # profil.infosGeogroups = self.getInfosGeogroup(self.data['communities_member'], profil)
         return profil
 
     def getThemesFromCommunities(self, communitiesAttributes):
         themes = []
         return themes
+
+    def getLayers(self) -> []:
+        layers = []
+        if self.__data is None:
+            return layers
+        for data in self.__data:
+            if data['type'] == 'geoservice':
+                continue
+            tmp = {"database": data['database'], "table": data['table'], "opacity": data['opacity'],
+                   "visibility": data['visibility'], "role": data['role'], "preferred_style": data['preferred_style']}
+            layers.append(tmp)
+        return layers
+
+    def getDataLayersFromTables(self, datalayers):
+        data = []
+        if self.__data is None:
+            return data
+        return data

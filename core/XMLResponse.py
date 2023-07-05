@@ -12,7 +12,7 @@ from .Profil import Profil
 from . import ConstanteRipart as cst
 from .Remarque import Remarque
 from .Theme import Theme
-from .ThemeAttributepy import ThemeAttribut
+from .ThemeAttributes import ThemeAttributes
 from .Point import Point
 from .Author import Author
 from .Sketch import Sketch
@@ -276,7 +276,7 @@ class XMLResponse(object):
             nomTh = ClientHelper.notNoneValue(attNode.find('NOM').text)
             attNodeATT = attNode.find('ATT')
             nomAtt = attNodeATT.text
-            thAttribut = ThemeAttribut(nomTh, nomAtt, "")
+            thAttribut = ThemeAttributes(nomTh, nomAtt, "")
             thAttribut.setTagDisplay(nomAtt)
             display_tag = attNodeATT.get('display')
             if display_tag is not None:
@@ -454,7 +454,7 @@ class XMLResponse(object):
                     for att in th.findall('ATTRIBUT'):
                         nomAtt = att.attrib["nom"]
                         valAtt = att.text
-                        attribut = ThemeAttribut(nameGroup, nomAtt, valAtt)
+                        attribut = ThemeAttributes(nameGroup, nomAtt, valAtt)
                         theme.attributes.append(attribut)
 
                     themes.append(theme)

@@ -6,36 +6,39 @@ from .Theme import Theme
 
 class Community(object):
 
-    def __init__(self, url, login, pwd, proxies):
+    def __init__(self, url, login, pwd, proxies) -> None:
         self.__url = url
         self.__login = login
         self.__password = pwd
         self.__proxies = proxies
         self.__profile = Profil()
 
-    def getProfil(self):
-        self.__extractProfile()
-        return self.__profile
-
-    def __extractProfile(self):
+    def query(self, strQuery) -> JsonResponse:
         httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxies)
-        response = httpRequest.getResponse("gcms/api/users/me")
+        response = httpRequest.getResponse(strQuery)
         jsonResponse = JsonResponse(response)
         jsonResponse.checkResponseValidity()
         jsonResponse.readData()
-        ap = jsonResponse.activeProfile()
-        self.__profile.title = ap[0]
-        self.__profile.geogroup.name = ap[0]
-        self.__profile.geogroup.id = ap[1]
-        # self.__profile.id_Geoprofil = ''  # TODO trouver l'info
-        # self.__profile.logo = ''   # TODO trouver l'info
-        # self.__profile.filtre = ''  # TODO trouver l'info
-        # self.__profile.prive = ''  # TODO trouver l'info
-        th = self.__extractThemes(ap[2])
-        self.__profile.themes = th[0]
-        self.__profile.filteredThemes = th[1]
+        return jsonResponse
 
-    def __extractThemes(self, community_member_profile):
+    def getUserProfil(self, community_id):
+        jsonResponse = self.query("gcms/api/communities/{}".format(community_id))
+        profil = jsonResponse.extractProfileFromCommunities()
+        return profil
+
+    def extractCommunities(self) -> []:
+        jsonResponse = self.query("gcms/api/users/me")
+        return jsonResponse.getCommunities()
+
+    def getProfile(self):
+        self.__profile.listGroup = self.extractProfile()
+        return self.__profile
+
+    def extractProfile(self) -> []:
+        jsonResponse = self.query("gcms/api/users/me")
+        return jsonResponse.getCommunities()
+
+    def __extractThemes(self, community_member_profile) -> ([], []):
         themes = []
         theme = Theme()
         filteredThemes = []
@@ -50,15 +53,25 @@ class Community(object):
                 filteredThemes.append(nameTheme)
         return themes.append(theme), filteredThemes
 
-    def __extractAttributes(self, groupId):
+    def __extractAttributes(self, communityId) -> []:
         nameThemes = []
         httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxies)
-        response = httpRequest.getResponse("gcms/api/communities/{}".format(groupId))
+        response = httpRequest.getResponse("gcms/api/communities/{}".format(communityId))
         jsonResponse = JsonResponse(response)
         jsonResponse.checkResponseValidity()
         jsonResponse.readData()
         jsonResponse.getAttributes()
         return nameThemes
 
-    def __extractLayers(self):
-        a = 1
+    def __extractLayers(self, communityId) -> None:
+        httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxies)
+        response = httpRequest.getResponse("gcms/api/communities/{}/layers".format(communityId))
+        jsonResponse = JsonResponse(response)
+        jsonResponse.checkResponseValidity()
+        jsonResponse.readData()
+        dataLayers = jsonResponse.getLayers()
+        for dl in dataLayers:
+            response = httpRequest.getResponse("gcms/api/databases/{}/tables/{}".format(dl['database'], dl['table']))
+            jsonResponse = JsonResponse(response)
+            jsonResponse.checkResponseValidity()
+            jsonResponse.readData()
