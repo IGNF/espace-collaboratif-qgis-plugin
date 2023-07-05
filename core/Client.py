@@ -145,6 +145,25 @@ class Client(object):
 
         return profil
 
+
+    def getLogoFromService(self, logoPath):
+        """
+        Requête au service pour le logo du groupe
+        :return: le logo du groupe
+        """
+        url = "{}{}".format(self.__url, logoPath)
+        self.logger.debug(url)
+
+        # Ne pas vérifier le certificat en localhost
+        if url.find("localhost.ign.fr") != -1:
+            data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
+                                verify=False)
+        else:
+            data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
+
+        return data.content
+
+
     '''
         Connexion à une base de données et une couche donnée
         La requête est par exemple :

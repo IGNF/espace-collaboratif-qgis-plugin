@@ -70,6 +70,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             self.checkBoxDate.setChecked(True)
         else:
             dt = datetime.now()
+            self.checkBoxDate.setChecked(False)
 
         qdate = QDate(dt.year, dt.month, dt.day)
         self.calendarWidget.setSelectedDate(qdate)
@@ -88,7 +89,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.setAttributCroquis()
 
         proxy = RipartHelper.load_proxy(context.projectDir).text
-        self.lineEditProxy.setText(proxy)
+        if proxy is not None:
+            self.lineEditProxy.setText(proxy)
 
         groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
         self.lineEditGroupeActif.setText(groupeactif)
@@ -242,11 +244,9 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, self.lineEditUrl.text(), "Serveur")
 
         # Proxy
-        if self.checkBoxProxy.isChecked():
-            proxy = self.lineEditProxy.text()
-        else:
-            proxy = ""
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_proxy, proxy, "Serveur")
+        proxy = self.lineEditProxy.text()
+        if proxy is not None and proxy.strip() != '':
+            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_proxy, proxy, "Serveur")
 
         # date
         if self.checkBoxDate.isChecked():

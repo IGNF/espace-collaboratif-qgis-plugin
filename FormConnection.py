@@ -175,9 +175,10 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
 
                 # Modification du logo en fonction du groupe
                 if profil.logo != "":
-                    logoPath = "{0}{1}".format(self.urlhost, profil.logo)
+                    #logoPath = "{0}{1}".format(self.urlhost, profil.logo)
                     image = QImage()
-                    image.loadFromData(requests.get(logoPath).content)
+                    #image.loadFromData(requests.get(logoPath).content)
+                    image.loadFromData(client.getLogoFromService(profil.logo))
                     dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
                 elif profil.title == "Profil par défaut":
                     dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))

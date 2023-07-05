@@ -278,6 +278,9 @@ class Contexte(object):
 
         xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
         if xmlproxy is not None and str(xmlproxy).strip() != '':
+            if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
+                RipartHelper.showMessageBox(u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
+                return
             self.proxy = {'https': str(xmlproxy).strip()}
         else:
             self.proxy = None
