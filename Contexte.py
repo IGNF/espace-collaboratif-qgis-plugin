@@ -754,9 +754,10 @@ class Contexte(object):
 
         # Recherche tous les features sélectionnés sur la carte (pour les transformer en croquis)
         listCroquis = []
+        listLayersUsedAsCroquis = []
         mapLayers = self.mapCan.layers()
         for lay in mapLayers:
-            if type(lay) is not QgsVectorLayer:
+            if type(lay) is not QgsVectorLayer and type(lay) is not GuichetVectorLayer:
                 continue
 
             # Si le CRS de la couche n'est pas défini, on prévient l'utilisateur et on sort
@@ -767,6 +768,8 @@ class Contexte(object):
                           "un signalement.".format(nom)
                 RipartHelper.showMessageBox(message)
                 return []
+
+            listLayersUsedAsCroquis.append(lay)
 
             for f in lay.selectedFeatures():
                 # la liste des croquis
@@ -804,9 +807,7 @@ class Contexte(object):
                             croquisTemp.addAttribut(attribut)
                     listCroquis.append(croquisTemp)
 
-            lay.removeSelection()
-
-        return listCroquis
+        return [listCroquis, listLayersUsedAsCroquis]
 
     def makeCroquis(self, geom, ftype, layerCrs, fId):
         """

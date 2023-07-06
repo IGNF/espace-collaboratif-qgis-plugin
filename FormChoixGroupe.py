@@ -236,7 +236,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                                                         "Map").text
 
         bNewGroup = self.activeGroup != self.nameChosenGroup
-        bNewZone = storedWorkZone != userWorkZone
+        bNewZone = (storedWorkZone != userWorkZone and not (storedWorkZone is None and userWorkZone == ""))
         # Si rien n'a changé, on sort
         if not bNewGroup and not bNewZone:
             return

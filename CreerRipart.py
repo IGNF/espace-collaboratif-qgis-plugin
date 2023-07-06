@@ -50,7 +50,9 @@ class CreerRipart(object):
                     return
 
             # Création des croquis à partir de la sélection de features
-            croquisList = self.context.makeCroquisFromSelection()
+            listCroquisAndLayers = self.context.makeCroquisFromSelection()
+            croquisList = listCroquisAndLayers[0]
+            listLayersUsedAsCroquis = listCroquisAndLayers[1]
 
             # Il y a eu un problème à la génération des croquis, on sort
             if len(croquisList) == 0:
@@ -64,6 +66,8 @@ class CreerRipart(object):
             # création de la remarque
             if formCreate.bSend:
                 self._createNewReport(formCreate, croquisList)
+                for lay in listLayersUsedAsCroquis:
+                    lay.removeSelection()
               
         except Exception as e:
             self.logger.error(format(e))
