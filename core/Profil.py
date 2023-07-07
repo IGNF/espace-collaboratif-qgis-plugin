@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-
-"""
-Created on 23 janv. 2015
-Updated on 9 sept. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: AChang-Wailing, EPeyrouse, NGremeaux
-"""
 from .Author import Author
 from .Group import Group
 from . import ConstanteRipart 
@@ -17,49 +7,49 @@ class Profil(object):
     """
     Classe représentant le profil de l'utilisateur
     """
+    def __init__(self):
+        # Nom de l'auteur
+        self.author = Author()
 
-    # Nom de l'auteur
-    author = Author()
-                        
-    # Nom du Geogroupe
-    geogroup = Group()
-        
-    # Titre du Geogroupe
-    title = ""
+        # Nom du Geogroupe
+        self.geogroup = Group()
 
-    # Statut (privilèges) du profil
-    statut = ""
-        
-    # Lien vers le logo du profil
-    logo = ""
+        # Titre du Geogroupe
+        self.title = ""
 
-    # Filtre du profil
-    filtre = ""
+        # Statut (privilèges) du profil
+        self.statut = ""
 
-    # La zone géographique de travail du profil
-    zone = ConstanteRipart.ZoneGeographique.UNDEFINED
+        # Lien vers le logo du profil
+        self.logo = ""
 
-    # Indique si le profil a accès aux groupes privés
-    prive = False
+        # Filtre du profil
+        self.filtre = ""
 
-    # Les éventuels thèmes attachés au profil
-    # Liste des thèmes du profil actif
-    themes = list()
+        # La zone géographique de travail du profil
+        self.zone = ConstanteRipart.ZoneGeographique.UNDEFINED
 
-    # Liste des noms des thèmes filtrés
-    filteredThemes = list()
+        # Indique si le profil a accès aux groupes privés
+        self.prive = False
 
-    # Liste de tous les thèmes du profil de l'utilisateur (issus de tous ses groupes)
-    allThemes = list()
+        # Les éventuels thèmes attachés au profil
+        # Liste des thèmes du profil actif
+        self.themes = list()
 
-    # Liste des noms des thèmes globaux
-    globalThemes = list()
+        # Liste des noms des thèmes filtrés
+        self.filteredThemes = list()
 
-    # identifiant geoprofil
-    id_Geoprofil = ""
+        # Liste de tous les thèmes du profil de l'utilisateur (issus de tous ses groupes)
+        self.allThemes = list()
 
-    # Les différents groupes de l'utilisateur
-    infosGeogroups = list()
+        # Liste des noms des thèmes globaux
+        self.globalThemes = list()
 
-    # La liste des groupes de l'utilisateur
-    listGroup = list()
+        # identifiant geoprofil
+        self.id_Geoprofil = ""
+
+        # Les différents groupes de l'utilisateur
+        self.infosGeogroups = list()
+
+        # La liste des groupes de l'utilisateur
+        self.listGroup = list()

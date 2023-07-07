@@ -9,26 +9,29 @@ from .ThemeAttributes import ThemeAttributes
 class JsonResponse(object):
     # Python requests.Response Object
     __response = None
-    # Python requests.Response.text (les données recherchées par la requête)
-    __data = None
 
     def __init__(self, response):
         self.__response = response
 
-    def readData(self):
-        self.__data = self.__response.json()
-
-
-    def checkResponseValidity(self):
-        if self.__response.status_code != 200:
+    def checkResponseValidity(self) -> (int, int):
+        # La requête n'a pas renvoyé l'intégralité des résultats, il faut donc requêter les pages suivantes
+        if self.__response.status_code == 206:
+            # retourne par exemple ('Content-Range', '1-10/16')
+            contentRange = self.__response.headers._store.content-range
+            tmp = contentRange[1].split("/")
+            tmpMin = tmp[0].split("-")
+            min = int(tmpMin[1])
+            max = int(tmp[1])
+            return min, max
+        elif self.__response.status_code != 200:
             err = "code : {0}, message : {1}".format(self.__response.status_code, self.__response.reason)
             raise NoProfileException(err)
 
     def getCommunities(self) -> []:
         communities = []
-        if self.__data is None:
+        if self.__response is None:
             return communities
-        for cm in self.__data['communities_member']:
+        for cm in self.__response['communities_member']:
             communitie = Group(cm['community_id'], cm['community_name'], cm['emprises'])
             if cm['active']:
                 communitie.setActive(True)
@@ -37,22 +40,22 @@ class JsonResponse(object):
         return communities
 
     def activeProfile(self):
-        if self.__data is None:
+        if self.__response is None:
             return "", "", ""
-        for cm in self.__data['communities_member']:
+        for cm in self.__response['communities_member']:
             if not cm['active']:
                 continue
             return cm['community_name'], cm['community_id'], cm['profile']
 
     def getUserName(self):
-        return self.__data['username']
+        return self.__response['username']
 
     def getAttributes(self):
         themesAttDict = {}
         thAttributes = []
-        if 'attributes' not in self.__data:
+        if 'attributes' not in self.__response:
             return themesAttDict
-        for attribute in self.__data['attributes']:
+        for attribute in self.__response['attributes']:
             for attributes in attribute:
                 th = ThemeAttributes(attribute['theme'], attributes['name'], '')
                 if 'type' in attributes:
@@ -214,10 +217,15 @@ class JsonResponse(object):
         # profil.author.name = ''
         # profil.id_Geoprofil = ''  # TODO trouver l'info
         # ap = self.activeProfile()
-        profil.title = self.__data['name']
-        profil.geogroup.name = self.__data['name']
-        profil.geogroup.id = self.__data['id']
-        profil.logo = self.__data['logo_url']
+        profil.title = self.__response['name']
+        # TODO revoir initialisation du geogroup
+        profil.geogroup.setName(self.__response['name'])
+        profil.geogroup.setId(self.__response['id'])
+        if 'logo_url' not in self.__response:
+            # TODO pourquoi la clé n'existe pas ? quel logo à la place ?
+            profil.logo = ""
+        else:
+            profil.logo = self.__response['logo_url']
         # profil.filtre = ''  # TODO trouver l'info
         # profil.prive = ''  # TODO trouver l'info
         # th = self.getThemesFromCommunities(self.__data['attributes'])
@@ -233,9 +241,9 @@ class JsonResponse(object):
 
     def getLayers(self) -> []:
         layers = []
-        if self.__data is None:
+        if self.__response is None:
             return layers
-        for data in self.__data:
+        for data in self.__response:
             if data['type'] == 'geoservice':
                 continue
             tmp = {"database": data['database'], "table": data['table'], "opacity": data['opacity'],
@@ -245,6 +253,6 @@ class JsonResponse(object):
 
     def getDataLayersFromTables(self, datalayers):
         data = []
-        if self.__data is None:
+        if self.__response is None:
             return data
         return data

@@ -25,10 +25,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     Dialogue pour afficher la liste des couches disponibles pour le profil utilisateur
     et récupération du choix de l'utilisateur
     """
-    context = None
-
-    # La liste des couches du profil utilisateur
-    listLayers = []
 
     # Balises <ROLE>
     # Role de la couche dans le cadre d'un guichet
@@ -40,14 +36,14 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     bRejected = False
 
-    def __init__(self, context, parent=None):
+    def __init__(self, context, listLayers, parent=None):
         super(FormChargerGuichet, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
 
         self.context = context
-        self.listLayers.clear()
+        self.listLayers = listLayers
         # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
         #connexionLayers = context.getInfosLayers()
         connexionLayers = context.getLayers()

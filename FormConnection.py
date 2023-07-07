@@ -65,17 +65,16 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     def getPwd(self):
         return self.lineEditPwd.text()
 
-    def setDisplayInformations(self, profile):
+    def setDisplayInformations(self):
         # Les infos de connexion présentée à l'utilisateur
         dlgInfo = FormInfo()
         # Modification du logo en fonction du groupe
-        if profile.logo != "":
-            logoPath = "{0}{1}".format(self.urlHost, profile.logo)
+        if self.context.profil.logo != "":
             image = QImage()
-            image.loadFromData(requests.get(logoPath).content)
+            image.loadFromData(requests.get(self.context.profil.logo).content)
             dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-        elif profile.title == "Profil par défaut":
-            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
+        elif self.context.profil.title == "Profil par défaut":
+            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHost))
         dlgInfo.textInfo.append("Login : {}".format(self.context.login))
@@ -103,10 +102,8 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
             RipartHelper.save_login(self.projectDir, self.getLogin())
             dlgChoixGroupe = FormChoixGroupe(self.context, listGroup, self.context.groupeactif)
             dlgChoixGroupe.exec_()
-            if dlgChoixGroupe.cancel:
-                dlgChoixGroupe.close()
-                return
-            else:
+            # bouton Continuer
+            if not dlgChoixGroupe.bCancel:
                 # Le choix du nouveau profil est validé
                 # Le nouvel id et nom du groupe sont retournés par un tuple
                 idNomGroupe = dlgChoixGroupe.getChosenGroupInfo()
@@ -120,10 +117,15 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
                 formPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
                 if formPreferredGroup != idNomGroupe[1]:
+                    # TODO compléter la liste des themes
                     RipartHelper.save_preferredThemes(self.projectDir, [])
                 RipartHelper.save_preferredGroup(self.projectDir, idNomGroupe[1])
-                # Les informations de connexion sont montrées à l'utilisateur
-                self.displayInformations()
+            # Bouton Annuler
+            elif dlgChoixGroupe.cancel:
+                dlgChoixGroupe.close()
+                return
+            # Les informations de connexion sont montrées à l'utilisateur
+            self.setDisplayInformations()
             self.connectionResult = 1
         except Exception as e:
             self.context.pwd = ""
@@ -132,7 +134,6 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
             self.context.profil = None
             self.connectionResult = -1
             RipartHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
-
         return self.connectionResult
 
     # def connectToService(self):

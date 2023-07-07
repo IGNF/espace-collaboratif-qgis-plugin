@@ -37,6 +37,7 @@ from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .core.WfsGet import WfsGet
 from .core.ProgressBar import ProgressBar
+from .core.Community import Community
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
@@ -228,16 +229,22 @@ class RipartPlugin:
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
-    def saveChangesForOneLayer(self, layer):
-        global commitLayerResult
-        if layer is None:
-            return
+    def doConnexion(self):
+        # Connexion
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
         if self.context.client is None:
-            if not self.context.getConnexionEspaceCollaboratif(newLogin=True):
+            resCo = self.context.getConnexionEspaceCollaboratif(newLogin=True)
+            if not resCo:
                 return
+
+    def saveChangesForOneLayer(self, layer):
+        global commitLayerResult
+        if layer is None:
+            return
+        # Connexion à l'Espace collaboratif
+        self.doConnexion()
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
@@ -517,20 +524,24 @@ class RipartPlugin:
 
     def chargerGuichet(self):
         try:
-            print("Chargement des couches du groupe utilisateur")
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
-                return
-
-            dlgChargerGuichet = FormChargerGuichet(self.context)
+            # Connexion à l'Espace collaboratif
+            #TODO retourner community plutot que de l'initialiser encore une fois
+            self.doConnexion()
+            # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
+            community = Community(self.context.urlHostEspaceCo, self.context.login, self.context.pwd,
+                                  self.context.proxy)
+            listLayers = community.extractLayers(self.context.profil.geogroup.getId())
+            # et les présenter à l'utilisateur pour qu'il fasse son choix de travail
+            dlgChargerGuichet = FormChargerGuichet(self.context, listLayers)
             # L'utilisateur a cliqué sur le bouton Annuler ou la croix de du dialogue  de la fenetre de connexion
             if dlgChargerGuichet.bRejected:
                 return
-            if dlgChargerGuichet.context.profil is not None:
-                if len(dlgChargerGuichet.context.profil.infosGeogroups) == 1 and \
-                        len(dlgChargerGuichet.context.profil.infosGeogroups[0].layers) == 0:
-                    raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
-
+            # TODO remettre ce bout de code en circulation
+            # if dlgChargerGuichet.context.profil is not None:
+            #     if len(dlgChargerGuichet.context.profil.infosGeogroups) == 1 and \
+            #             len(dlgChargerGuichet.context.profil.infosGeogroups[0].layers) == 0:
+            #         raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
+            # Affichage de la boite
             dlgChargerGuichet.exec_()
 
         except Exception as e:
@@ -594,14 +605,8 @@ class RipartPlugin:
         endMessage = '<b>Contenu de la synchronisation</b>'
         print("Synchroniser les données de toutes les couches")
 
-        # Connexion
-        self.context = Contexte.getInstance(self, QgsProject)
-        if self.context is None:
-            return
-        if self.context.client is None:
-            resCo = self.context.getConnexionEspaceCollaboratif(newLogin=True)
-            if not resCo:
-                return
+        # Connexion à l'Espace collaboratif
+        self.doConnexion()
 
         # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
         layersToSynchronize = []
@@ -735,17 +740,8 @@ class RipartPlugin:
 
     def run(self):
         """Fenêtre de connexion"""
-
-        res = -1
-        self.context = Contexte.getInstance(self, QgsProject)
-        if self.context is None:
-            return
-
-        if self.context:
-            res = self.context.getConnexionEspaceCollaboratif(newLogin=True)
-
-        if not res:
-            self.logger.debug("cancel")
+        # Connexion à l'Espace collaboratif
+        self.doConnexion()
 
     def downloadRemarks(self):
         """Downloads remarks
