@@ -45,21 +45,19 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
         self.listLayers = listLayers
         # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
-        #connexionLayers = context.getInfosLayers()
-        connexionLayers = context.getLayers()
-
-        if connexionLayers[0] == "Rejected":
-            self.bRejected = True
-            return
-            #raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
-
-        profilUser = connexionLayers[2]
-
-        if connexionLayers[0] == "Accepted":
-            self.listLayers = connexionLayers[1]
-            # Les couches sont chargées dans l'ordre renvoyé dans geoaut_get.
-            # Il faut donc inversé l'ordre pour retrouver le paramétrage de la carte du groupe
-            self.listLayers.reverse()
+        # connexionLayers = context.getLayers()
+        #
+        # if connexionLayers[0] == "Rejected":
+        #     self.bRejected = True
+        #     return
+        #
+        # profilUser = connexionLayers[2]
+        #
+        # if connexionLayers[0] == "Accepted":
+        #     self.listLayers = connexionLayers[1]
+        #     # Les couches sont chargées dans l'ordre renvoyé dans geoaut_get.
+        #     # Il faut donc inversé l'ordre pour retrouver le paramétrage de la carte du groupe
+        #     self.listLayers.reverse()
 
         # Remplissage des différentes tables de couches
         self.setTableWidgetMonGuichet()
@@ -69,7 +67,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
-        self.labelGroupeActif.setText("Groupe actif : {}".format(profilUser.geogroup.name))
+        #self.labelGroupeActif.setText("Groupe actif : {}".format(profilUser.geogroup.name))
+        self.labelGroupeActif.setText("Groupe actif : {}".format(self.context.groupeactif))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  ##ff0000
 
     def setColonneCharger(self, tableWidget, row, column):
@@ -89,17 +88,17 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.listLayers:
-            if layer.type != cst.WFS:
+            if layer.type != 'feature-type':
                 continue
 
-            if layer.url.find(cst.COLLABORATIF) == -1:
-                continue
+            # if layer.url.find(cst.COLLABORATIF) == -1:
+                # continue
 
             rowPosition = self.tableWidgetMonGuichet.rowCount()
             self.tableWidgetMonGuichet.insertRow(rowPosition)
 
             # Colonne "Nom de la couche"
-            item = QtWidgets.QTableWidgetItem(layer.nom)
+            item = QtWidgets.QTableWidgetItem(layer.name)
             self.tableWidgetMonGuichet.setItem(rowPosition, 0, item)
 
             # Colonne "Rôle"

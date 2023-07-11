@@ -6,6 +6,7 @@ from .Profil import Profil
 from .HttpRequest import HttpRequest
 from .JsonResponse import JsonResponse
 from .Theme import Theme
+from .Layer import Layer
 
 
 class Community(object):
@@ -27,7 +28,7 @@ class Community(object):
     def multiQuery(self, partOfUrl, params):
         message = ""
         httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxies)
-        data = {}
+        data = []
         while True:
             response = httpRequest.getNextResponse(partOfUrl, params)
 
@@ -36,17 +37,19 @@ class Community(object):
                                                                                      response['reason'])
                 break
 
-            if response['status'] == 'ok' and response['stop'] is True and response['page'] == 0:
-                return response['data']
-
             for dt in response['data']:
-                data.update(dt)
+                data.append(dt)
+
+            if response['status'] == 'ok' and response['stop'] is True and response['page'] == 0:
+                return data
 
             if len(data) != 0 and response['stop'] and response['page'] == 0:
-                return JsonResponse(data)
-            self.setPage(response['page'])
+                return data
+            # Il s'agit du nombre de pages et non d'un offset
+            self.setPage(params['page'] + 1)
             if response['stop']:
                 break
+
         if message != '':
             msgBox = QMessageBox()
             msgBox.setWindowTitle(cst.IGNESPACECO)
@@ -72,13 +75,42 @@ class Community(object):
             return
         return jsonResponse.getCommunities()
 
+    def getDataLayersFromTable(self, layer):
+        tmp = "gcms/api/databases/{0}/tables/{1}".format(layer.databaseId, layer.table)
+        jsonResponse = self.query(tmp)
+        if jsonResponse is None:
+            return
+        jsonResponse.getDataFromTable(layer)
+
+    def getLayers(self, data):
+        layers = []
+        for d in data:
+            layer = Layer()
+            if d['type'] == 'geoservice':
+                continue
+            layer.visibility = d['visibility']
+            layer.opacity = d['opacity']
+            layer.type = d['type']
+            layer.role = d['role']
+            layer.id = d['id']
+            layer.databaseId = d['database']
+            layer.geoservice = d['geoservice']
+            layer.order = d['order']
+            layer.preferred_style = d['preferred_style']
+            layer.snapto = d['snapto']
+            layer.table = d['table']
+            self.getDataLayersFromTable(layer)
+            layers.append(layer)
+        return layers
+
     def extractLayers(self, communityId) -> []:
         self.setLimit(10)
         self.setPage(1)
-        jsonResponse = self.multiQuery("gcms/api/communities/{}/layers".format(communityId), self.__params)
-        if jsonResponse is None:
+        data = self.multiQuery("gcms/api/communities/{}/layers".format(communityId), self.__params)
+        if len(data) == 0:
             return
-        return jsonResponse.getLayers()
+        layers = self.getLayers(data)
+        return layers
 
     def getProfile(self):
         self.__profile.listGroup = self.extractProfile()
@@ -89,28 +121,3 @@ class Community(object):
         if jsonResponse is None:
             return
         return jsonResponse.getCommunities()
-
-    def __extractThemes(self, community_member_profile) -> ([], []):
-        themes = []
-        theme = Theme()
-        filteredThemes = []
-        for cmp in community_member_profile:
-            groupId = cmp['group_id']
-            theme.group.id = groupId
-            if 'group_name' in cmp:
-                theme.group.name = cmp['group_name']
-            theme.isFiltered = True
-            nameThemes = self.__extractAttributes(groupId)
-            for nameTheme in nameThemes:
-                filteredThemes.append(nameTheme)
-        return themes.append(theme), filteredThemes
-
-    def __extractAttributes(self, communityId) -> []:
-        nameThemes = []
-        httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxies)
-        response = httpRequest.getResponse("gcms/api/communities/{}".format(communityId), None)
-        jsonResponse = JsonResponse(response)
-        jsonResponse.checkResponseValidity()
-        # jsonResponse.readData()
-        jsonResponse.getAttributes()
-        return nameThemes

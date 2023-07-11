@@ -229,12 +229,14 @@ class RipartPlugin:
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
-    def doConnexion(self):
-        # Connexion
+    def doConnexion(self, bButtonConnect):
+        #  bButtonConnect à True : connexion systématique
+        #  l'utilisateur a cliqué sur le bouton "Se connecter à l'Espace Collaboratif"
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return
-        if self.context.client is None:
+        if self.context.profil is None or bButtonConnect:
+         #if self.context.client is None:
             resCo = self.context.getConnexionEspaceCollaboratif(newLogin=True)
             if not resCo:
                 return
@@ -244,7 +246,7 @@ class RipartPlugin:
         if layer is None:
             return
         # Connexion à l'Espace collaboratif
-        self.doConnexion()
+        self.doConnexion(False)
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
@@ -526,7 +528,7 @@ class RipartPlugin:
         try:
             # Connexion à l'Espace collaboratif
             #TODO retourner community plutot que de l'initialiser encore une fois
-            self.doConnexion()
+            self.doConnexion(False)
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
             community = Community(self.context.urlHostEspaceCo, self.context.login, self.context.pwd,
                                   self.context.proxy)
@@ -606,7 +608,7 @@ class RipartPlugin:
         print("Synchroniser les données de toutes les couches")
 
         # Connexion à l'Espace collaboratif
-        self.doConnexion()
+        self.doConnexion(False)
 
         # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
         layersToSynchronize = []
@@ -741,7 +743,7 @@ class RipartPlugin:
     def run(self):
         """Fenêtre de connexion"""
         # Connexion à l'Espace collaboratif
-        self.doConnexion()
+        self.doConnexion(True)
 
     def downloadRemarks(self):
         """Downloads remarks

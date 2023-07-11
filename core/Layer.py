@@ -10,53 +10,36 @@ version 4.0.1, 15/12/2020
 
 class Layer(object):
     """
-    Classe représentant les caractéristiques d'une couche appartenant au <GEOGROUPE>
+    Classe représentant les caractéristiques d'une couche
     """
-    # <TYPE> GeoPortail </TYPE>
-    type = None
-    # <NOM> ORTHOIMAGERY.ORTHOPHOTOS </NOM>
-    nom = None
-    # <DESCRIPTION> Photographies aériennes </DESCRIPTION>
-    description = None
-    # <MINZOOM> 0 </MINZOOM>
-    minzoom = None
-    # <MAXZOOM> 20 </MAXZOOM>
-    maxzoom = None
-    # <EXTENT> -180, -86, 180, 84 </EXTENT>
-    extent = None
-    # <ROLE> Droit utilisateur sur la couche </ROLE>
-    role = None
-    # <VISIBILITY> 1 </VISIBILITY>
-    visibility = None
-    # <OPACITY> 1 </OPACITY>
-    opacity = None
-    # <TILEZOOM>
-    tilezoom = None
-    # <URL>
-    url = None
-    # Extraction du nom de la base de données à partir de l'url
-    databasename = None
-    # SRID
-    srid = None
-    # <LAYER>
-    layer_id = None
 
     def __init__(self):
-        """
-        Constructor
-        """
-        self.type = ""
-        self.nom = ""
+        # Attributs remplis avec gcms/api/communities/{community_id}/layers
+        self.databaseId = None
+        self.geoservice = {}
+        self.id = None
+        self.opacity = 1
+        self.order = 0
+        self.preferred_style = None
+        self.role = 'visu'
+        self.snapto = None
+        self.table = 0
+        self.type = 'feature-type'
+        self.visibility = True
+        # Attributs remplis avec gcms/api/databases/{database_id}/tables/{table_id}
+        self.name = ''
         self.description = ""
         self.minzoom = 0
         self.maxzoom = 20
-        self.extent = None
-        self.role = ""
-        self.visibility = 1
-        self.opacity = 1
-        self.tilezoom = ""
-        self.url = ""
-        self.databasename = ""
-        self.srid = -1
-        self.layer_id = ""
         self.isStandard = True
+        self.tileZoomLevel = 0
+        self.readOnly = False
+        self.geometryName = ''
+        self.databaseName = ''
+        self.wfs = ''
+        self.wfsTransaction = ''
+        # les attributs suivants sont-ils utiles ?
+        # self.extent = None
+        # self.url = ""
+        # self.srid = -1
+
