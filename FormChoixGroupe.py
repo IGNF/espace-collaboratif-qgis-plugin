@@ -15,7 +15,7 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
 from .RipartHelper import RipartHelper
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 
@@ -261,7 +261,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if bNewGroup:
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
-                      "supprimées. Voulez-vous continuer ?".format(newGroup.name())
+                      "supprimées. Voulez-vous continuer ?".format(newGroup.getName())
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     root.removeChildNode(newGroup)
@@ -296,9 +296,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     def removeTablesSQLite(self, layers):
         for layer in layers:
-            if SQLiteManager.isTableExist(layer.nom):
-                SQLiteManager.emptyTable(layer.nom)
-                SQLiteManager.deleteTable(layer.nom)
+            if SQLiteManager.isTableExist(layer.name):
+                SQLiteManager.emptyTable(layer.name)
+                SQLiteManager.deleteTable(layer.name)
         if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             SQLiteManager.emptyTable(cst.TABLEOFTABLES)
         SQLiteManager.vacuumDatabase()

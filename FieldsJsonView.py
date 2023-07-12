@@ -94,7 +94,7 @@ class FieldsJsonView(QtWidgets.QDialog, FORM_CLASS):
             listLayers = connexionLayers[1]
         url = ''
         for layer in listLayers:
-            if layer.nom == layerName:
+            if layer.name == layerName:
                 url = layer.url
         return self.context.client.connexionFeatureTypeJson(url, layerName)
 

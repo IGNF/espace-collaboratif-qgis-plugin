@@ -11,7 +11,7 @@ version 4.0.1, 15/12/2020
 # Imports
 import urllib
 from urllib.parse import urlparse
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from qgis.core import QgsDataSourceUri
 
 try:

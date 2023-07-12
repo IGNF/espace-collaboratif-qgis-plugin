@@ -15,7 +15,7 @@ from PyQt5 import QtCore
 from qgis.PyQt import uic, QtWidgets
 
 from .ImporterGuichet import ImporterGuichet
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChargerGuichet_base.ui'))
 
@@ -67,7 +67,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
-        #self.labelGroupeActif.setText("Groupe actif : {}".format(profilUser.geogroup.name))
+        #self.labelGroupeActif.setText("Groupe actif : {}".format(profilUser.geogroup.getName()))
         self.labelGroupeActif.setText("Groupe actif : {}".format(self.context.groupeactif))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  ##ff0000
 
@@ -88,11 +88,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.listLayers:
-            if layer.type != 'feature-type':
+            if layer.type != cst.WFS:
                 continue
-
-            # if layer.url.find(cst.COLLABORATIF) == -1:
-                # continue
 
             rowPosition = self.tableWidgetMonGuichet.rowCount()
             self.tableWidgetMonGuichet.insertRow(rowPosition)
@@ -132,7 +129,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             self.tableWidgetFondsGeoportail.insertRow(rowPosition)
 
             # Colonne "Nom de la couche"
-            layerComposed = "{} ({})".format(layer.nom, layer.layer_id)
+            layerComposed = "{} ({})".format(layer.name, layer.layer_id)
             item = QtWidgets.QTableWidgetItem(layerComposed)
             self.tableWidgetFondsGeoportail.setItem(rowPosition, 0, item)
 
@@ -166,7 +163,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             self.tableWidgetAutresGeoservices.insertRow(rowPosition)
 
             # Colonne "Nom de la couche"
-            item = QtWidgets.QTableWidgetItem(layer.nom)
+            item = QtWidgets.QTableWidgetItem(layer.name)
             self.tableWidgetAutresGeoservices.setItem(rowPosition, 0, item)
 
             # Colonne "Type"
@@ -203,7 +200,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 else:
                     name = tmp
                 for layer in self.listLayers:
-                    if name == layer.nom:
+                    if name == layer.name:
                         layersQGIS.append(layer)
                         break
 

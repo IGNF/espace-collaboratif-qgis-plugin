@@ -6,7 +6,7 @@ from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
 from .XMLResponse import XMLResponse
-from . import ConstanteRipart as cst
+from . import Constantes as cst
 from .Wkt import Wkt
 from .BBox import BBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
@@ -47,7 +47,7 @@ class WfsPost(object):
             for r in result:
                 self.layer.databasename = r[4]
                 self.isTableStandard = r[3]
-                self.layer.isStandard = r[3]
+                self.layer.isBduni = r[3]
                 self.layer.srid = r[5]
                 self.layer.idNameForDatabase = r[2]
                 self.layer.geometryNameForDatabase = r[6]
@@ -155,7 +155,7 @@ class WfsPost(object):
         if responseWfs['status'] == 'SUCCESS':
             # Mise à jour de la base SQLite pour les objets détruits et modifiés
             # d'une couche BDUni
-            if not self.layer.isStandard:
+            if self.layer.isBduni:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # Mise à jour de la couche
             try:
@@ -165,9 +165,9 @@ class WfsPost(object):
                 # Suppression de la couche dans la carte. Virer la table dans SQLite
                 layersID = [self.layer.id()]
                 QgsProject.instance().removeMapLayers(layersID)
-                if SQLiteManager.isTableExist(self.layer.nom):
-                    SQLiteManager.emptyTable(self.layer.nom)
-                    SQLiteManager.deleteTable(self.layer.nom)
+                if SQLiteManager.isTableExist(self.layer.name):
+                    SQLiteManager.emptyTable(self.layer.name)
+                    SQLiteManager.deleteTable(self.layer.name)
                 if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
                     SQLiteManager.emptyTable(cst.TABLEOFTABLES)
                 SQLiteManager.vacuumDatabase()
@@ -202,7 +202,7 @@ class WfsPost(object):
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
         # et il faut vider la table pour éviter de créer un objet à chaque Get
-        if self.layer.isStandard:
+        if not self.layer.isBduni:
             bDetruit = False
             SQLiteManager.emptyTable(self.layer.name())
             SQLiteManager.vacuumDatabase()
@@ -212,7 +212,7 @@ class WfsPost(object):
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
                       'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName, False),
-                      'detruit': bDetruit, 'isStandard': self.layer.isStandard,
+                      'detruit': bDetruit, 'isBduni': self.layer.isBduni,
                       'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec}
         wfsGet = WfsGet(self.context, parameters)

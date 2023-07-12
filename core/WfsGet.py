@@ -17,7 +17,7 @@ class WfsGet(object):
     bbox = None
     parametersGcmsGet = None
     bDetruit = None
-    isStandard = None
+    isBduni = None
     is3D = None
     numrec = None
     parametersForInsertsInTable = None
@@ -35,13 +35,13 @@ class WfsGet(object):
         self.bbox = parameters['bbox']
         self.parametersGcmsGet = {}
         self.bDetruit = parameters['detruit']
-        self.isStandard = parameters['isStandard']
+        self.isBduni = parameters['isBduni']
         self.is3D = parameters['is3D']
         self.numrec = int(parameters['numrec'])
         # Paramètres pour insérer un objet dans une table SQLite
         self.parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                             'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
-                                            'isStandard': self.isStandard, 'is3D': self.is3D,
+                                            'isBduni': self.isBduni, 'is3D': self.is3D,
                                             'geometryType': ""}
 
     def makeRequestDeletedObjects(self):
@@ -105,7 +105,7 @@ class WfsGet(object):
         self.initParametersGcmsGet()
         start = time.time()
         totalRows = 0
-        if self.isStandard:
+        if not self.isBduni:
             maxNumrec = 0
         else:
             maxNumrec = self.getMaxNumrec()
@@ -121,7 +121,7 @@ class WfsGet(object):
                 break
             # si c'est une table non BDUni ou une extraction,
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
-            if self.isStandard or bExtraction:
+            if not self.isBduni or bExtraction:
                 totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
@@ -142,7 +142,7 @@ class WfsGet(object):
             if response['stop']:
                 break
         # suppression des objets pour une table BDUni et différent d'une extraction
-        if self.isStandard != 1 and bExtraction is False:
+        if self.isBduni and bExtraction is False:
             self.makeRequestDeletedObjects()
         # nettoyage de la base SQLite
         SQLiteManager.vacuumDatabase()

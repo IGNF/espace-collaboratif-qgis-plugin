@@ -12,7 +12,7 @@ import os
 from PyQt5.QtCore import pyqtSlot
 from qgis.PyQt import uic, QtWidgets
 
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from .core.ClientHelper import ClientHelper
 
 

@@ -9,7 +9,7 @@ version 4.0.1, 15/12/2020
 """
 import xml.etree.ElementTree as ET
 from .Profil import Profil
-from . import ConstanteRipart as cst
+from . import Constantes as cst
 from .Remarque import Remarque
 from .Theme import Theme
 from .ThemeAttributes import ThemeAttributes
@@ -132,10 +132,10 @@ class XMLResponse(object):
             gr = node.text
 
             node = self.root.find('./PROFIL/GROUPE')
-            profil.geogroup.name = node.text
+            profil.geogroup.setName(node.text)
 
             node = self.root.find('./PROFIL/ID_GEOGROUPE')
-            profil.geogroup.id = node.text
+            profil.geogroup.setId(node.text)
 
             node = self.root.find('./PROFIL/LOGO')
             if node is not None and node.text:
@@ -186,8 +186,8 @@ class XMLResponse(object):
             for nodegr in nodesGr:
                 infosgeogroup = InfosGeogroup()
                 infosgeogroup.group = Group()
-                infosgeogroup.group.name = (nodegr.find('NOM')).text
-                infosgeogroup.group.id = (nodegr.find('ID_GEOGROUPE')).text
+                infosgeogroup.group.setName((nodegr.find('NOM')).text)
+                infosgeogroup.group.setId((nodegr.find('ID_GEOGROUPE')).text)
 
                 # Récupération du commentaire par défaut des signalements
                 infosgeogroup.reportDefaultComment = nodegr.find('COMMENTAIRE_GEOREM').text
@@ -196,7 +196,7 @@ class XMLResponse(object):
                 for nodelayer in nodegr.findall('LAYERS/LAYER'):
                     layer = Layer()
                     layer.type = nodelayer.find('TYPE').text
-                    layer.nom = nodelayer.find('NOM').text
+                    layer.name = nodelayer.find('NOM').text
                     layer.description = nodelayer.find('DESCRIPTION').text
                     layer.minzoom = nodelayer.find('MINZOOM').text
                     layer.maxzoom = nodelayer.find('MAXZOOM').text
@@ -216,7 +216,8 @@ class XMLResponse(object):
                         continue
                     layer.url = url.text
                     layer.databasename = self.findDatabaseName(url.text)
-                    print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.name, layer.nom, layer.databasename))
+                    print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.getName(),
+                                                                               layer.name, layer.databasename))
                     layer_id = nodelayer.find('LAYER')
                     if layer_id is not None:
                         layer.layer_id = layer_id.text
@@ -233,7 +234,7 @@ class XMLResponse(object):
 
                     filterDict = nodegr.find('FILTER').text
                     groupFilters = re.findall('\{.*?\}', filterDict)
-                    filteredThemes = self.getFilteredThemes(groupFilters, infosgeogroup.group.id)
+                    filteredThemes = self.getFilteredThemes(groupFilters, infosgeogroup.group.getId())
                     infosgeogroup.filteredThemes = filteredThemes
 
                     for node in nodes:
@@ -241,13 +242,13 @@ class XMLResponse(object):
                         theme.group = Group()
 
                         name = (node.find('NOM')).text
-                        theme.group.name = name
+                        theme.group.setName(name)
                         if name in filteredThemes:
                             theme.isFiltered = True
 
-                        theme.group.id = infosgeogroup.group.id
-                        if ClientHelper.notNoneValue(theme.group.name) in themesAttDict:
-                            theme.attributes.extend(themesAttDict[ClientHelper.notNoneValue(theme.group.name)])
+                        theme.group.setId(infosgeogroup.group.getId())
+                        if ClientHelper.notNoneValue(theme.group.getName()) in themesAttDict:
+                            theme.attributes.extend(themesAttDict[ClientHelper.notNoneValue(theme.group.getName())])
 
                         infosgeogroup.themes.append(theme)
                         profil.allThemes.append(theme)
@@ -260,7 +261,7 @@ class XMLResponse(object):
 
         except Exception as e:
             self.logger.error(str(e))
-            raise Exception("Erreur dans la récupération des informations du groupe " + infosgeogroup.group.name)
+            raise Exception("Erreur dans la récupération des informations du groupe " + infosgeogroup.group.getName())
 
         return infosgeogroups
 
@@ -365,7 +366,7 @@ class XMLResponse(object):
                 theme.group = Group()
 
                 name = (node.find('NOM')).text
-                theme.group.name = name
+                theme.group.setName(name)
                 if name in filteredThemes or len(filteredThemes) == 0:
                     theme.isFiltered = True
 
@@ -374,9 +375,9 @@ class XMLResponse(object):
                     theme.isGlobal = True
                     globalThemes.append(name)
 
-                theme.group.id = (node.find('ID_GEOGROUPE')).text
-                if ClientHelper.notNoneValue(theme.group.name) in themesAttDict:
-                    theme.attributes.extend(themesAttDict[ClientHelper.notNoneValue(theme.group.name)])
+                theme.group.setId((node.find('ID_GEOGROUPE')).text)
+                if ClientHelper.notNoneValue(theme.group.getName()) in themesAttDict:
+                    theme.attributes.extend(themesAttDict[ClientHelper.notNoneValue(theme.group.getName())])
                 themes.append(theme)
 
         except Exception as e:
@@ -523,11 +524,11 @@ class XMLResponse(object):
                 rem.group = Group()
                 nfind = node.find('ID_GEOGROUPE')
                 if nfind is not None:
-                    rem.group.id = nfind.text
+                    rem.group.setId(nfind.text)
 
                 nfind = node.find('GROUPE')
                 if nfind is not None:
-                    rem.group.name = nfind.text
+                    rem.group.setName(nfind.text)
 
                 nfind = node.find('ID_PARTITION')
                 if nfind is not None:

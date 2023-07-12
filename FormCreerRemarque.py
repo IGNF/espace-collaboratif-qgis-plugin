@@ -17,7 +17,7 @@ from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 
 from .core.ClientHelper import ClientHelper
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from .core.Theme import Theme
 from .RipartHelper import RipartHelper
 from .core.ThemeAttributes import ThemeAttributes
@@ -81,8 +81,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         profil = self.context.client.getProfil()
 
-        if profil.geogroup.name is not None:
-            self.groupBoxProfil.setTitle(profil.author.name + " (" + profil.geogroup.name + ")")
+        if profil.geogroup.getName() is not None:
+            self.groupBoxProfil.setTitle(profil.author.name + " (" + profil.geogroup.getName() + ")")
         else:
             self.groupBoxProfil.setTitle(profil.author.name + u" (Profil par défaut)")
 
@@ -94,8 +94,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.infosgeogroups = profil.infosGeogroups
         listeNamesGroups = []
         for igg in self.infosgeogroups:
-            self.comboBoxGroupe.addItem(igg.group.name)
-            listeNamesGroups.append(igg.group.name)
+            self.comboBoxGroupe.addItem(igg.group.getName())
+            listeNamesGroups.append(igg.group.getName())
 
         # Valeur par défaut : groupe actif
         groupeActif = self.context.groupeactif
@@ -159,7 +159,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             # On cherche l'objet theme correspondant dans la liste des themes
             foundTheme = False
             for th in themes:
-                if th.group.name == thName:
+                if th.group.getName() == thName:
                     foundTheme = True
                     break
 
@@ -172,14 +172,14 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
             # ajout du thème dans le treeview
             thItem = QTreeWidgetItem(self.treeWidget)
-            thItem.setText(0, th.group.name)
-            thItem.setText(1, th.group.id)
+            thItem.setText(0, th.group.getName())
+            thItem.setText(1, th.group.getId())
             self.treeWidget.addTopLevelItem(thItem)
 
             # Pour masquer la 2ème colonne (qui contient le groupe id)
             thItem.setForeground(1, QtGui.QBrush(Qt.GlobalColor.white))
 
-            if ClientHelper.notNoneValue(th.group.name) in preferredThemes:
+            if ClientHelper.notNoneValue(th.group.getName()) in preferredThemes:
                 thItem.setCheckState(0, Qt.CheckState.Checked)
                 thItem.setExpanded(True)
             else:
@@ -273,8 +273,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.clear()
 
         infosgeogroup = self.infosgeogroups[index]
-        nameGroup = infosgeogroup.group.name
-        self.idSelectedGeogroup = infosgeogroup.group.id
+        nameGroup = infosgeogroup.group.getName()
+        self.idSelectedGeogroup = infosgeogroup.group.getId()
 
         # Affichage du commentaire par défaut dans la fenêtre message
         georemComment = infosgeogroup.reportDefaultComment
@@ -315,17 +315,17 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 continue
 
             theme = Theme()
-            theme.group.name = thItem.text(0)
-            theme.group.id = thItem.text(1)
+            theme.group.setName(thItem.text(0))
+            theme.group.setId(thItem.text(1))
             errorMessage = ''
             for j in range(thItem.childCount()):
                 att = thItem.child(j)
                 label = self.treeWidget.itemWidget(att, 0).text()
                 key = self.get_key_from_attribute_value(label, thItem.text(0))
                 widg = self.treeWidget.itemWidget(att, 1)
-                val = self.get_value_from_widget(widg, label, theme.group.name)
-                errorMessage += self.correctValue(theme.group.name, theme.group.id, key, val)
-                attribut = ThemeAttributes(theme.group.name, ClientHelper.notNoneValue(key),
+                val = self.get_value_from_widget(widg, label, theme.group.getName())
+                errorMessage += self.correctValue(theme.group.getName(), theme.group.getId(), key, val)
+                attribut = ThemeAttributes(theme.group.getName(), ClientHelper.notNoneValue(key),
                                          ClientHelper.notNoneValue(val))
                 theme.attributes.append(attribut)
             if errorMessage != '':
@@ -336,7 +336,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     def correctValue(self, groupName, groupID, attributeName, value):
         errorMessage = ''
         for theme in self.profilThemesList:
-            if theme.group.name != groupName and theme.group.id != groupID:
+            if theme.group.getName() != groupName and theme.group.getId() != groupID:
                 continue
             for attribute in theme.attributes:
                 if attribute.nom != attributeName:
@@ -447,7 +447,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         :rtype: Theme
         """
         for th in self.profilThemesList:
-            if th.group.name == themeName:
+            if th.group.getName() == themeName:
                 return th
         return None
 

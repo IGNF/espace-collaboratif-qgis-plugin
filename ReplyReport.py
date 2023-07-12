@@ -5,7 +5,7 @@ Created on 20 déc. 2021
 """
 from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from .ReplyReportView import ReplyReportView
 from .core.ClientHelper import ClientHelper
 

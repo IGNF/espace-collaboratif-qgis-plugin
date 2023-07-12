@@ -4,7 +4,7 @@ from collections import OrderedDict
 import os.path
 import json
 
-from . import ConstanteRipart
+from . import Constantes
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
 from .XMLResponse import XMLResponse
@@ -316,8 +316,8 @@ class Client(object):
 
     def createRemarque(self, remarque, idSelectedGeogroup):
         try:
-            params = {'version': ConstanteRipart.RIPART_CLIENT_VERSION,
-                      'protocol': ConstanteRipart.RIPART_CLIENT_PROTOCOL,
+            params = {'version': Constantes.RIPART_CLIENT_VERSION,
+                      'protocol': Constantes.RIPART_CLIENT_PROTOCOL,
                       'comment': ClientHelper.notNoneValue(remarque.commentaire)}
             geometry = "POINT(" + str(remarque.getLongitude()) + " " + str(remarque.getLatitude()) + ")"
             params['geometry'] = geometry
@@ -329,7 +329,7 @@ class Client(object):
             if themes is not None and len(themes) > 0:
                 attributes = ""
                 for t in themes:
-                    groupeIdAndNom = ClientHelper.notNoneValue('"' + t.group.id + "::" + t.group.name)
+                    groupeIdAndNom = ClientHelper.notNoneValue('"' + t.group.getId() + "::" + t.group.getName())
                     attributes += ClientHelper.notNoneValue(groupeIdAndNom + "\"=>\"1\",")
                     for at in t.attributes:
                         attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
@@ -355,9 +355,9 @@ class Client(object):
             for document in documents:
                 if os.path.isfile(document):
                     docCnt += 1
-                    if os.path.getsize(document) > ConstanteRipart.MAX_TAILLE_UPLOAD_FILE:
+                    if os.path.getsize(document) > Constantes.MAX_TAILLE_UPLOAD_FILE:
                         raise Exception("Le fichier " + document + " est de taille supérieure à " +
-                                        str(ConstanteRipart.MAX_TAILLE_UPLOAD_FILE))
+                                        str(Constantes.MAX_TAILLE_UPLOAD_FILE))
 
                     files = {"upload" + str(docCnt): open(ClientHelper.notNoneValue(document), 'rb')}
 
@@ -387,4 +387,4 @@ class Client(object):
 
     @staticmethod
     def get_MAX_TAILLE_UPLOAD_FILE():
-        return ConstanteRipart.MAX_TAILLE_UPLOAD_FILE
+        return Constantes.MAX_TAILLE_UPLOAD_FILE

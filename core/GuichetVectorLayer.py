@@ -22,7 +22,7 @@ class GuichetVectorLayer(QgsVectorLayer):
     sqliteManager = None
     srid = None
     # Juste pour savoir si cette couche est de type 'standard' ou 'bduni' avec gcms_fingerprint
-    isStandard = None
+    isBduni = None
     idNameForDatabase = None
     geometryNameForDatabase = None
     geometryDimensionForDatabase = None
@@ -33,7 +33,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.databasename = parameters['databasename']
         self.sqliteManager = parameters['sqliteManager']
         self.srid = -1
-        self.isStandard = True
+        self.isBduni = False
         self.idNameForDatabase = parameters['idName']
         self.geometryNameForDatabase = parameters['geometryName']
         self.geometryDimensionForDatabase = parameters['geometryDimension']

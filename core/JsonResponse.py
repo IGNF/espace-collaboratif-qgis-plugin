@@ -21,13 +21,23 @@ class JsonResponse(object):
         layer.description = data['description']
         layer.minzoom = data['min_zoom_level']
         layer.maxzoom = data['max_zoom_level']
-        # layer.isStandard = True
+        layer.isBduni = data['database_versioning']
         layer.tileZoomLevel = data['tile_zoom_level']
         layer.readOnly = data['read_only']
         layer.geometryName = data['geometry_name']
         layer.databaseName = data['database']
         layer.wfs = data['wfs']
         layer.wfsTransaction = data['wfs_transactions']
+        layer.attributes = data['columns']
+        layer.idName = data['id_name']
+        for column in data['columns']:
+            if column['name'] != layer.geometryName:
+                continue
+            layer.is3d = column['is3d']
+            layer.geometryType = column['type']
+            layer.srid = column['srid']
+        layer.style = data['style']
+        # layer.styles = data['styles']
 
     def getCommunities(self) -> []:
         communities = []

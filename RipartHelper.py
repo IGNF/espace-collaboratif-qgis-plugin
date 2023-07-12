@@ -20,7 +20,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from .core.ClientHelper import ClientHelper
 from .core.RipartLoggerCl import RipartLogger
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 
 
 class RipartHelper:
@@ -412,7 +412,7 @@ class RipartHelper:
         RipartHelper.removeNode(projectDir, RipartHelper.xml_Theme, "Map/" + RipartHelper.xml_Themes)
         for th in prefThemes:
             RipartHelper.addXmlElement(projectDir, RipartHelper.xml_Theme, "Map/" + RipartHelper.xml_Themes,
-                                       th.group.name)
+                                       th.group.getName())
 
     @staticmethod
     def addNode(projectDir, tag, value, parentTag=None):

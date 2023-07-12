@@ -15,7 +15,7 @@ from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTr
 from qgis.utils import spatialite_connect
 from .RipartHelper import RipartHelper
 from .core.BBox import BBox
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from .core.NoProfileException import NoProfileException
 from .Contexte import Contexte
 from .core.ProgressBar import ProgressBar
@@ -60,7 +60,7 @@ class ImporterRipart(object):
                                                             level=2, duration=5)
                 return
 
-        if self.context.profil.geogroup.name is None:
+        if self.context.profil.geogroup.getName() is None:
             raise NoProfileException(
                 "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
@@ -97,7 +97,7 @@ class ImporterRipart(object):
 
         groupFilter = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Group, "Map").text
         if groupFilter == 'true':
-            groupId = self.context.profil.geogroup.id
+            groupId = self.context.profil.geogroup.getId()
 
             params['group'] = str(groupId)
 

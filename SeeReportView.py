@@ -6,7 +6,7 @@ from numpy import double
 
 from .core.RipartLoggerCl import RipartLogger
 from qgis.PyQt import uic, QtWidgets
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'SeeReportView_base.ui'))
 

@@ -27,7 +27,7 @@ from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
 from .core.Sketch import Sketch
 from .FormConnection import FormConnectionDialog
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from .Import_WMTS import importWMTS
 from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
@@ -239,7 +239,7 @@ class Contexte(object):
             return False
 
         for infoGeogroup in self.profil.infosGeogroups:
-            if infoGeogroup.group.name != self.groupeactif:
+            if infoGeogroup.getName() != self.groupeactif:
                 continue
 
             for layer in infoGeogroup.layers:
@@ -342,33 +342,67 @@ class Contexte(object):
             curs.close()
             self.conn.close()
 
-    def importWFS(self, layer, structure):
+    def importWFS(self, layer):
         # Création éventuelle de la table SQLite liée à la couche
         sqliteManager = SQLiteManager()
 
         # Si la table du nom de la couche existe,
         # elle est vidée, détruite et recréée
-        if SQLiteManager.isTableExist(layer.nom):
-            SQLiteManager.emptyTable(layer.nom)
-            SQLiteManager.deleteTable(layer.nom)
-        bColumnDetruitExist = sqliteManager.createTableFromLayer(layer, structure)
+        if SQLiteManager.isTableExist(layer.name):
+            SQLiteManager.emptyTable(layer.name)
+            SQLiteManager.deleteTable(layer.name)
+        bColumnDetruitExist = sqliteManager.createTableFromLayer(layer)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
         self.logger.debug(uri.uri())
-        geometryName = structure['geometryName']
-        uri.setDataSource('', layer.nom, geometryName)
+        # geometryName = layer.geometryName
+        # geometryName = structure['geometryName']
+        uri.setDataSource('', layer.name, layer.geometryName)
         uri.setSrid(str(cst.EPSGCRS))
-        parameters = {'uri': uri.uri(), 'name': layer.nom, 'genre': 'spatialite', 'databasename': layer.databasename,
-                      'sqliteManager': sqliteManager, 'idName': structure['idName'],
-                      'geometryName': geometryName, 'geometryDimension': structure['attributes'][geometryName]['is3d'],
-                      'geometryType': structure['attributes'][geometryName]['type']}
+        geomDim = ""
+        geomType = ""
+        for attribute in layer.attributes:
+            if attribute['name'] != layer.geometryName:
+                continue
+            geomDim = attribute['is3d']
+            geomType = attribute['type']
+        parameters = {'uri': uri.uri(), 'name': layer.name, 'genre': 'spatialite', 'databasename': layer.databaseName,
+                      'sqliteManager': sqliteManager, 'idName': layer.idName,
+                      'geometryName': layer.geometryName, 'geometryDimension': geomDim,
+                      'geometryType': geomType}
 
         vlayer = GuichetVectorLayer(parameters)
-        # plugin_layer = PluginGuichetLayer()
-        # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
+
+    # def importWFS(self, layer, structure):
+    #     # Création éventuelle de la table SQLite liée à la couche
+    #     sqliteManager = SQLiteManager()
+    #
+    #     # Si la table du nom de la couche existe,
+    #     # elle est vidée, détruite et recréée
+    #     if SQLiteManager.isTableExist(layer.name):
+    #         SQLiteManager.emptyTable(layer.name)
+    #         SQLiteManager.deleteTable(layer.name)
+    #     bColumnDetruitExist = sqliteManager.createTableFromLayer(layer, structure)
+    #
+    #     # Création de la source pour la couche dans la carte liée à la table SQLite
+    #     uri = self.getUriDatabaseSqlite()
+    #     self.logger.debug(uri.uri())
+    #     geometryName = structure['geometryName']
+    #     uri.setDataSource('', layer.name, geometryName)
+    #     uri.setSrid(str(cst.EPSGCRS))
+    #     parameters = {'uri': uri.uri(), 'name': layer.name, 'genre': 'spatialite', 'databasename': layer.databasename,
+    #                   'sqliteManager': sqliteManager, 'idName': structure['idName'],
+    #                   'geometryName': geometryName, 'geometryDimension': structure['attributes'][geometryName]['is3d'],
+    #                   'geometryType': structure['attributes'][geometryName]['type']}
+    #
+    #     vlayer = GuichetVectorLayer(parameters)
+    #     # plugin_layer = PluginGuichetLayer()
+    #     # vlayer = QgsVectorLayer(uri.uri(), layer.name, 'spatialite')
+    #     vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+    #     return vlayer, bColumnDetruitExist
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
         """
@@ -422,14 +456,15 @@ class Contexte(object):
                 '''
                 if layer.type == cst.WFS:
                     # Récupération de la structure de la future table
-                    structure = self.client.connexionFeatureTypeJson(layer.url, layer.nom)
-                    if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
-                        layer.isStandard = False
-                    sourceLayer = self.importWFS(layer, structure)
+                    # structure = self.client.connexionFeatureTypeJson(layer.url, layer.name)
+                    # if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
+                    #   layer.isStandard = False
+                    # sourceLayer = self.importWFS(layer, structure)
+                    sourceLayer = self.importWFS(layer)
                     if not sourceLayer[0].isValid():
-                        endMessage += "Layer {} failed to load !\n".format(layer.nom)
+                        endMessage += "Layer {} failed to load !\n".format(layer.name)
                         continue
-                    endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, structure, bbox, sourceLayer[1])
+                    endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, bbox, sourceLayer[1])
                     endMessage += "\n"
 
                 '''
@@ -479,9 +514,9 @@ class Contexte(object):
         tmp = ''
         removeLayers = []
         for layer in guichet_layers:
-            if layer.nom in maplayers:
-                removeLayers.append(layer.nom)
-                tmp += "{}, ".format(layer.nom)
+            if layer.name in maplayers:
+                removeLayers.append(layer.name)
+                tmp += "{}, ".format(layer.name)
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 
     def removeLayersById(self, removeLayers, tmp, bAskForConfirmation):
@@ -509,39 +544,38 @@ class Contexte(object):
         self.QgsProject.instance().removeMapLayers(layerIds)
         return True
 
-    def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
-        geometryName = structure['geometryName']
-        newVectorLayer.isStandard = layer.isStandard
-        idNameForDatabase = structure['idName']
+    def formatLayer(self, layer, newVectorLayer, nodeGroup, bbox, bColumnDetruitExist):
+        geometryName = layer.geometryName
+        newVectorLayer.isBduni = layer.isBduni
+        idNameForDatabase = layer.databaseId
         newVectorLayer.idNameForDatabase = idNameForDatabase
         newVectorLayer.geometryNameForDatabase = geometryName
         newVectorLayer.databasename = layer.databasename
-        sridLayer = int(structure['attributes'][geometryName]['srid'])
-        newVectorLayer.srid = sridLayer
-        newVectorLayer.geometryDimensionForDatabase = structure['attributes'][geometryName]['is3d']
-        newVectorLayer.geometryTypeForDatabase = structure['attributes'][geometryName]['type']
+        newVectorLayer.srid = layer.srid
+        newVectorLayer.geometryDimensionForDatabase = layer.is3d
+        newVectorLayer.geometryTypeForDatabase = layer.geometryType
 
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.nom, 'role': layer.role,
                       'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
-                      'sridLayer': sridLayer, 'bbox': bbox,
-                      'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
-                      'is3D': structure['attributes'][geometryName]['is3d'], 'urlTransaction': None, 'numrec': "0"}
+                      'sridLayer': layer.srid, 'bbox': bbox,
+                      'detruit': bColumnDetruitExist, 'isBduni': layer.isBduni,
+                      'is3D': layer.is3d, 'urlTransaction': None, 'numrec': "0"}
         wfsGet = WfsGet(self, parameters)
         maxNumrecMessage = wfsGet.gcms_get(True)
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1
-        if not layer.isStandard:
+        if layer.isBduni:
             valStandard = 0
         dim = 0
-        if structure['attributes'][geometryName]['is3d']:
+        if layer.is3d:
             dim = 1
 
         parametersForTableOfTables = {'layer': layer.nom, 'idName': idNameForDatabase, 'standard': valStandard,
-                                      'database': layer.databasename, 'srid': sridLayer,
+                                      'database': layer.databasename, 'srid': layer.srid,
                                       'geometryName': geometryName, 'geometryDimension': dim,
-                                      'geometryType': structure['attributes'][geometryName]['type'],
+                                      'geometryType': layer.geometryType,
                                       'numrec': maxNumrecMessage[0]}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
@@ -549,11 +583,11 @@ class Contexte(object):
         newVectorLayer.srid = parameters['sridLayer']
 
         # Modification du formulaire d'attributs
-        efffa = EditFormFieldFromAttributes(newVectorLayer, structure)
+        efffa = EditFormFieldFromAttributes(newVectorLayer, layer.attributes)
         newVectorLayer.correspondanceChampType = efffa.readData()
 
         # Modification de la symbologie de la couche
-        listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(structure)
+        listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(layer.style)
         newVectorLayer.setModifySymbols(listOfValuesFromItemStyle)
 
         # Affichage des données en fonction de l'échelle
@@ -581,6 +615,78 @@ class Contexte(object):
         message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
         print(message)
         return message
+    # def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
+    #     geometryName = structure['geometryName']
+    #     newVectorLayer.isStandard = layer.isStandard
+    #     idNameForDatabase = structure['idName']
+    #     newVectorLayer.idNameForDatabase = idNameForDatabase
+    #     newVectorLayer.geometryNameForDatabase = geometryName
+    #     newVectorLayer.databasename = layer.databasename
+    #     sridLayer = int(structure['attributes'][geometryName]['srid'])
+    #     newVectorLayer.srid = sridLayer
+    #     newVectorLayer.geometryDimensionForDatabase = structure['attributes'][geometryName]['is3d']
+    #     newVectorLayer.geometryTypeForDatabase = structure['attributes'][geometryName]['type']
+    #
+    #     # Remplissage de la table SQLite liée à la couche
+    #     parameters = {'databasename': layer.databasename, 'layerName': layer.name, 'role': layer.role,
+    #                   'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
+    #                   'sridLayer': sridLayer, 'bbox': bbox,
+    #                   'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
+    #                   'is3D': structure['attributes'][geometryName]['is3d'], 'urlTransaction': None, 'numrec': "0"}
+    #     wfsGet = WfsGet(self, parameters)
+    #     maxNumrecMessage = wfsGet.gcms_get(True)
+    #
+    #     # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
+    #     valStandard = 1
+    #     if not layer.isStandard:
+    #         valStandard = 0
+    #     dim = 0
+    #     if structure['attributes'][geometryName]['is3d']:
+    #         dim = 1
+    #
+    #     parametersForTableOfTables = {'layer': layer.name, 'idName': idNameForDatabase, 'standard': valStandard,
+    #                                   'database': layer.databasename, 'srid': sridLayer,
+    #                                   'geometryName': geometryName, 'geometryDimension': dim,
+    #                                   'geometryType': structure['attributes'][geometryName]['type'],
+    #                                   'numrec': maxNumrecMessage[0]}
+    #     SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
+    #
+    #     # On stocke le srid de la layer pour pouvoir traiter le post
+    #     newVectorLayer.srid = parameters['sridLayer']
+    #
+    #     # Modification du formulaire d'attributs
+    #     efffa = EditFormFieldFromAttributes(newVectorLayer, structure)
+    #     newVectorLayer.correspondanceChampType = efffa.readData()
+    #
+    #     # Modification de la symbologie de la couche
+    #     listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(structure)
+    #     newVectorLayer.setModifySymbols(listOfValuesFromItemStyle)
+    #
+    #     # Affichage des données en fonction de l'échelle
+    #     newVectorLayer.setDisplayScale(layer.minzoom, layer.maxzoom)
+    #
+    #     # Une couche en visualisation est non modifiable
+    #     if layer.role == 'visu' or layer.role == 'ref':
+    #         newVectorLayer.setReadOnly()
+    #
+    #     # Ajout de la couche dans la carte
+    #     self.QgsProject.instance().addMapLayer(newVectorLayer, False)
+    #     nodeGroup.addLayer(newVectorLayer)
+    #     self.guichetLayers.append(newVectorLayer)
+    #
+    #     # On masque les champs de travail et champs internes
+    #     # fields = newVectorLayer.fields()
+    #     # for i in range(0, fields.count()):
+    #     #     f = fields.field(i)
+    #     #     if f.name() == cst.ID_SQLITE or f.name() == cst.IS_FINGERPRINT or f.name() == cst.FINGERPRINT:
+    #     #         self.hideColumn(newVectorLayer, f.name())
+    #     #         hidden_setup = QgsEditorWidgetSetup('Hidden', f.editorWidgetSetup().config())
+    #     #         newVectorLayer.setEditorWidgetSetup(i, hidden_setup)
+    #
+    #     self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
+    #     message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
+    #     print(message)
+    #     return message
 
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)
@@ -1055,8 +1161,8 @@ class Contexte(object):
             return "Rejected", infosLayers
         # Récupération du profil lié à l'utilisateur
         profilUser = self.client.getProfil()
-        print("Profil : {0}, {1}".format(profilUser.geogroup.id,
-                                         profilUser.geogroup.name))
+        print("Profil : {0}, {1}".format(profilUser.geogroup.getId(),
+                                         profilUser.geogroup.getName))
 
         if len(profilUser.infosGeogroups) == 0:
             return "Rejected", infosLayers, profilUser
@@ -1076,14 +1182,14 @@ class Contexte(object):
             return "Rejected", infosLayers
 
         profilUser = self.client.getProfil()
-        print("Profil : {0}, {1}".format(profilUser.geogroup.id,
-                                         profilUser.geogroup.name))
+        print("Profil : {0}, {1}".format(profilUser.geogroup.getId(),
+                                         profilUser.geogroup.getName))
 
         if len(profilUser.infosGeogroups) == 0:
             return "Rejected", infosLayers
 
         for infoGeogroup in profilUser.infosGeogroups:
-            if infoGeogroup.group.id != profilUser.geogroup.id:
+            if infoGeogroup.group.getId() != profilUser.geogroup.getId():
                 continue
 
             print("Liste des couches du profil utilisateur")

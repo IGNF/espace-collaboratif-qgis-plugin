@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 23 janv. 2015
-Updated on 15 dec. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: AChang-Wailing, EPeyrouse
-"""
-
 from .Enum import Enum
 
 '''
@@ -108,8 +98,8 @@ namespace = {'gml': 'http://www.opengis.net/gml'}
 
 # Constantes pour le chargement des couches du guichet
 # Types de couches, balise <TYPE>
-WMS = "WMS"
-WFS = "WFS"
+WMS = "geoservice"
+WFS = "feature-type"
 WMTS = "WMTS"
 WCS = "WCS"
 COLLABORATIF = "collaboratif.ign.fr"

@@ -7,7 +7,7 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 """
 from .Point import Point
-from . import ConstanteRipart
+from . import Constantes
 from .Group import Group
 from .Author import Author
 from .Theme import Theme
@@ -45,7 +45,7 @@ class Remarque(object):
     position = Point()
 
     # statut de la remarque
-    statut = ConstanteRipart.STATUT.undefined
+    statut = Constantes.STATUT.undefined
 
     # Le département où est située la remarque (indicatif + nom)
     departement = None
@@ -98,7 +98,7 @@ class Remarque(object):
         self.dateMiseAJour = datetime.now()
         self.dateValidation = None
         self.position = Point()
-        self.statut = ConstanteRipart.STATUT.undefined
+        self.statut = Constantes.STATUT.undefined
         self.departement = Group()
         self.commune = ""
         self.insee = ""
@@ -152,7 +152,7 @@ class Remarque(object):
 
         for t in self.themes:
             if isinstance(t, Theme):
-                result += ClientHelper.getValForDB(t.group.name)
+                result += ClientHelper.getValForDB(t.group.getName())
 
                 # attributs du thème
                 z = 0
@@ -229,8 +229,8 @@ class Remarque(object):
                 if response.date is not None:
                     concatenate += " le " + response.date.strftime("%Y-%m-%d %H:%M:%S")
                 if response.status is not None:
-                    concatenate += ", " + ConstanteRipart.statutLibelle[
-                        ConstanteRipart.getStatuts().index(response.statut.__str__())]
+                    concatenate += ", " + Constantes.statutLibelle[
+                        Constantes.getStatuts().index(response.statut.__str__())]
                 concatenate += ".</font></b><br/>"
 
                 if response.title() is not None and response.title() != "":

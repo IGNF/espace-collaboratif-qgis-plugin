@@ -16,6 +16,7 @@ class Layer(object):
     def __init__(self):
         # Attributs remplis avec gcms/api/communities/{community_id}/layers
         self.databaseId = None
+        self.databaseName = ''
         self.geoservice = {}
         self.id = None
         self.opacity = 1
@@ -31,15 +32,20 @@ class Layer(object):
         self.description = ""
         self.minzoom = 0
         self.maxzoom = 20
-        self.isStandard = True
+        self.isBduni = False
         self.tileZoomLevel = 0
-        self.readOnly = False
+        self.readOnly = None
         self.geometryName = ''
-        self.databaseName = ''
+        self.geometryType = None
         self.wfs = ''
         self.wfsTransaction = ''
+        self.attributes = []
+        self.idName = None
+        self.is3d = None
+        self.style = {}
+        self.srid = -1
+        # self.styles = []
         # les attributs suivants sont-ils utiles ?
         # self.extent = None
         # self.url = ""
-        # self.srid = -1
 

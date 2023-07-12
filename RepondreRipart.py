@@ -9,7 +9,7 @@ version 3.0.0 , 26/11/2018
 from .SeeReportView import SeeReportView
 from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from .ReplyReportView import ReplyReportView
 
 

@@ -33,7 +33,7 @@ from .core.BBox import BBox
 from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
 from .core.SQLiteManager import SQLiteManager
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from .core.NoProfileException import NoProfileException
 from .core.WfsGet import WfsGet
 from .core.ProgressBar import ProgressBar
@@ -668,8 +668,8 @@ class RipartPlugin:
             if result is not None:
                 for r in result:
                     parameters['databasename'] = layer.databasename = r[4]
-                    layer.isStandard = r[3]
-                    parameters['isStandard'] = r[3]
+                    layer.isBduni = r[3]
+                    parameters['isBduni'] = r[3]
                     parameters['sridLayer'] = r[5]
                     layer.idNameForDatabase = r[2]
                     parameters['geometryName'] = r[6]
@@ -680,7 +680,7 @@ class RipartPlugin:
             bDetruit = True
             # si c'est une autre table donc standard alors la colonne n'existe pas
             # et il faut vider la table pour éviter de créer un objet à chaque Get
-            if layer.isStandard:
+            if not layer.isBduni:
                 bDetruit = False
                 SQLiteManager.emptyTable(layer.name())
                 SQLiteManager.vacuumDatabase()
@@ -691,7 +691,7 @@ class RipartPlugin:
             wfsGet = WfsGet(self.context, parameters)
             # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser
             # Il faut aussi qu'il soit différent de 0, ce numrec correspondant à une table non BDUni
-            if not layer.isStandard:
+            if layer.isBduni:
                 maxNumrec = wfsGet.getMaxNumrec()
                 if numrec == maxNumrec:
                     endMessage += "<br/>Pas de mise à jour\n\n"

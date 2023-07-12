@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsProject
 
-from . import ConstanteRipart as cst
+from . import Constantes as cst
 from .Profil import Profil
 from .HttpRequest import HttpRequest
 from .JsonResponse import JsonResponse

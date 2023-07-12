@@ -10,7 +10,7 @@ from datetime import datetime
 import xml.etree.cElementTree as ET
 from .Group import Group
 from .Author import Author
-from . import ConstanteRipart
+from . import Constantes
 
 
 class GeoResponse(object):
@@ -37,19 +37,19 @@ class GeoResponse(object):
         self.author = Author()
         self.response = ""
         self.date = datetime.now()
-        self.status = ConstanteRipart.STATUT.undefined
+        self.status = Constantes.STATUT.undefined
 
     def id(self):
         """
         Retourne l'id de la GeoResponse
         """
-        return self.group.id
+        return self.group.getId()
 
     def title(self):
         """
         Retourne le titre de la GeoResponse
         """
-        return self.group.name
+        return self.group.getName()
 
     def encodeToXML(self): 
         """

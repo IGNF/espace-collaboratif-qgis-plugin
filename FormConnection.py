@@ -23,7 +23,7 @@ from .core.ClientHelper import ClientHelper
 from .RipartHelper import RipartHelper
 from .FormChoixGroupe import FormChoixGroupe
 from .FormInfo import FormInfo
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
 from .core.Community import Community
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnection_base.ui'))
@@ -164,15 +164,15 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     #                 if "défaut" in profile.title:
     #                     RipartHelper.save_groupeactif(self.projectDir, "Aucun")
     #                 else:
-    #                     RipartHelper.save_groupeactif(self.projectDir, profile.geogroup.name)
+    #                     RipartHelper.save_groupeactif(self.projectDir, profile.geogroup.getName())
     #
     #                     # On enregistre le groupe comme groupe préféré (par défaut) pour la création de signalement
     #                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
     #                     preferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
-    #                     if preferredGroup != profile.geogroup.name:
+    #                     if preferredGroup != profile.geogroup.getName():
     #                         RipartHelper.save_preferredThemes(self.projectDir, [])
     #
-    #                     RipartHelper.save_preferredGroup(self.projectDir, profile.geogroup.name)
+    #                     RipartHelper.save_preferredGroup(self.projectDir, profile.geogroup.getName())
     #
     #             # sinon le choix d'un autre groupe est présenté à l'utilisateur
     #             # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
@@ -214,9 +214,9 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     #                     # On enregistre le groupe comme groupe préféré pour la création de signalement
     #                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
     #                     formPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
-    #                     if formPreferredGroup != profile.geogroup.name:
+    #                     if formPreferredGroup != profile.geogroup.getName():
     #                         RipartHelper.save_preferredThemes(self.projectDir, [])
-    #                     RipartHelper.save_preferredGroup(self.projectDir, profile.geogroup.name)
+    #                     RipartHelper.save_preferredGroup(self.projectDir, profile.geogroup.getName())
     #
     #                 # Bouton Annuler
     #                 elif dlgChoixGroupe.cancel:

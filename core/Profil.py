@@ -1,6 +1,6 @@
 from .Author import Author
 from .Group import Group
-from . import ConstanteRipart 
+from . import Constantes
 
 
 class Profil(object):
@@ -27,7 +27,7 @@ class Profil(object):
         self.filtre = ""
 
         # La zone géographique de travail du profil
-        self.zone = ConstanteRipart.ZoneGeographique.UNDEFINED
+        self.zone = Constantes.ZoneGeographique.UNDEFINED
 
         # Indique si le profil a accès aux groupes privés
         self.prive = False
