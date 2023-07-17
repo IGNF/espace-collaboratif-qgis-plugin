@@ -130,11 +130,11 @@ class SQLiteManager(object):
         return sql
 
     def createTableFromLayer(self, layer):
+        SQLiteManager.vacuumDatabase()
         self.tableAttributes = layer.attributes
         t = self.setAttributesTableToSql(layer)
         if t[0] == "" and t[1] == "" and t[2] == "":
             raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
-
         connection = spatialite_connect(self.dbPath)
         sql = u"CREATE TABLE {0} (".format(layer.name)
         sql += t[0]
@@ -142,22 +142,24 @@ class SQLiteManager(object):
         cur = connection.cursor()
         print(sql)
         cur.execute(sql)
-        '''sqlSpatial = 'SELECT InitSpatialMetaData()'
-        print(sqlSpatial)
-        cur.execute(sqlSpatial)'''
+        print('description : {}'.format(cur.description))
+        print('arraysize : {}'.format(cur.arraysize))
+        print('fetchone : {}'.format(cur.fetchone()))
+        print('fetchall : {}'.format(cur.fetchall()))
         parameters_geometry_column = {'tableName': layer.name, 'geometryName': layer.geometryName,
                                       'crs': layer.srid, 'geometryType': self.geometryType, 'is3D': self.is3D}
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
         print(sqlGeometryColumn)
         cur.execute(sqlGeometryColumn)
-        if len(cur.fetchall()) == 0:
-            print("SQLiteManager : création de la table {0} réussie".format(layer.name))
+        print('description : {}'.format(cur.description))
+        print('arraysize : {}'.format(cur.arraysize))
+        print('fetchone : {}'.format(cur.fetchone()))
+        print('fetchall : {}'.format(cur.fetchall()))
         cur.close()
         connection.commit()
         connection.close()
         # compactage de la base
         SQLiteManager.vacuumDatabase()
-        # retourne True si la colonne detruit existe dans la table
         return t[2]
 
     # def createTableFromLayer(self, layer, tableStructure):
