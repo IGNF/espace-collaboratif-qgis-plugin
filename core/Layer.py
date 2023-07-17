@@ -49,3 +49,26 @@ class Layer(object):
         # self.extent = None
         # self.url = ""
 
+    '''
+        Pour l'item 'style', récupération de la symbologie d'une couche
+    '''
+    def getListOfValuesFromItemStyle(self):
+        listOfValues = {}
+
+        # La couche n'a pas de style défini, QGIS applique une symbologie par défaut
+        if len(self.style) == 0:
+            return listOfValues
+
+        tmp = {'children': []}
+        for stKey, stValues in self.style.items():
+            if stKey == 'children':
+                if type(stValues) is list and len(stValues) == 0:
+                    continue
+                else:
+                    for dftvValue in stValues:
+                        listOfValues[dftvValue['name']] = dftvValue
+            else:
+                tmp[stKey] = stValues
+        listOfValues['default'] = tmp
+
+        return listOfValues

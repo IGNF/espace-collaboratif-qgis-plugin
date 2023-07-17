@@ -54,8 +54,7 @@ class EditFormFieldFromAttributes(object):
     def readData(self):
         # Correspondance nom du champ/type du champ
         linkFieldType = {}
-        valeurs = self.data['attributes']
-        for c, v in valeurs.items():
+        for v in self.data:
             self.name = v['name']
             self.index = self.layer.fields().indexOf(self.name)
             self.setFieldTitle(v['title'])
@@ -69,8 +68,9 @@ class EditFormFieldFromAttributes(object):
                            self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable']),
                            self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'])]
             self.setFieldAllConstraints(constraints, v['nullable'])
-            self.setFieldListOfValues(v['listOfValues'], v['default_value'])
-            self.setFieldReadOnly(v['readOnly'], v['computed'])
+            self.setFieldListOfValues(v['enum'], v['default_value'])
+            #self.setFieldReadOnly(v['readOnly'], v['computed'])
+            self.setFieldReadOnly(v['computed'])
             linkFieldType[v['name']] = v['type']
         return linkFieldType
 
@@ -187,9 +187,10 @@ class EditFormFieldFromAttributes(object):
       Contrairement à ce que dit l'aide de QGIS, setReadOnly doit être mis à True pour que le champ ne soit pas éditable
     '''
 
-    def setFieldReadOnly(self, readOnly, computed):
-
-        if self.name == self.data['idName'] or readOnly or computed:
+    # def setFieldReadOnly(self, readOnly, computed):
+    def setFieldReadOnly(self, computed):
+        # if self.name == self.data['idName'] or readOnly or computed:
+        if self.name == self.layer.idNameForDatabase or computed:
             formConfig = self.layer.editFormConfig()
             formConfig.setReadOnly(self.index, True)
             self.layer.setEditFormConfig(formConfig)

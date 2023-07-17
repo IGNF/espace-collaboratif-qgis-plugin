@@ -667,7 +667,7 @@ class RipartPlugin:
             result = SQLiteManager.selectRowsInTableOfTables(layer.name())
             if result is not None:
                 for r in result:
-                    parameters['databasename'] = layer.databasename = r[4]
+                    parameters['databasename'] = layer.databaseName = r[4]
                     layer.isBduni = r[3]
                     parameters['isBduni'] = r[3]
                     parameters['sridLayer'] = r[5]

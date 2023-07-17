@@ -147,7 +147,7 @@ class SQLiteManager(object):
         print('fetchone : {}'.format(cur.fetchone()))
         print('fetchall : {}'.format(cur.fetchall()))
         parameters_geometry_column = {'tableName': layer.name, 'geometryName': layer.geometryName,
-                                      'crs': layer.srid, 'geometryType': self.geometryType, 'is3D': self.is3D}
+                                      'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
         print(sqlGeometryColumn)
         cur.execute(sqlGeometryColumn)

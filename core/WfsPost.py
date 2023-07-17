@@ -29,9 +29,9 @@ class WfsPost(object):
     def __init__(self, context, layer, filterName):
         self.context = context
         self.layer = layer
-        self.url = self.context.client.getUrl() + '/gcms/wfstransactions'
-        self.identification = self.context.client.getAuth()
-        self.proxy = self.context.client.getProxies()
+        self.url = self.context.urlHostEspaceCo + '/gcms/wfstransactions'
+        self.identification = self.context.auth
+        self.proxy = self.context.proxy
         self.actions = []
         self.endReport = ''
         self.transactionReport = ''
@@ -147,7 +147,7 @@ class WfsPost(object):
 
     def gcms_post(self, strActions, bNormalWfsPost):
         print("Post_action : {}".format(strActions))
-        params = dict(actions=strActions, database=self.layer.databasename)
+        params = dict(actions=strActions, database=self.layer.databaseName)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
         xmlResponse = XMLResponse(response)
@@ -209,7 +209,7 @@ class WfsPost(object):
             self.layer.reload()
 
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
-        parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
+        parameters = {'databasename': self.layer.databaseName, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
                       'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName, False),
                       'detruit': bDetruit, 'isBduni': self.layer.isBduni,

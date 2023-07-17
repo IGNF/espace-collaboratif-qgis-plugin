@@ -24,9 +24,9 @@ class WfsGet(object):
 
     def __init__(self, context, parameters):
         self.context = context
-        self.url = self.context.client.getUrl() + '/gcms/wfs'
-        self.identification = self.context.client.getAuth()
-        self.proxy = self.context.client.getProxies()
+        self.url = self.context.urlHostEspaceCo + '/gcms/wfs'
+        self.identification = self.context.auth
+        self.proxy = self.context.proxy
         self.databaseName = parameters['databasename']
         self.layerName = parameters['layerName']
         self.geometryName = parameters['geometryName']
@@ -161,7 +161,7 @@ class WfsGet(object):
 
     def getMaxNumrec(self):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
-        url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.client.getUrl(),
+        url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.urlHostEspaceCo,
                                                                          self.databaseName, self.layerName)
         response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
         data = json.loads(response)
