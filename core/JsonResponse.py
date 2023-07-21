@@ -25,7 +25,7 @@ class JsonResponse(object):
         layer.tileZoomLevel = data['tile_zoom_level']
         layer.readOnly = data['read_only']
         layer.geometryName = data['geometry_name']
-        layer.databaseName = data['database']
+        layer.databasename = data['database']
         layer.wfs = data['wfs']
         layer.wfsTransaction = data['wfs_transactions']
         layer.attributes = data['columns']

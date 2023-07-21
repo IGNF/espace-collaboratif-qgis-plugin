@@ -301,6 +301,7 @@ class Contexte(object):
         while connectionResult < 0:
             self.loginWindow.exec_()
             connectionResult = self.loginWindow.connectionResult
+            self.auth = self.loginWindow.auth
         return connectionResult
 
     def getOrCreateDatabase(self):
@@ -366,13 +367,13 @@ class Contexte(object):
                 continue
             geomDim = attribute['is3d']
             geomType = attribute['type']
-        parameters = {'uri': uri.uri(), 'name': layer.name, 'genre': 'spatialite', 'databasename': layer.databaseName,
+        parameters = {'uri': uri.uri(), 'name': layer.name, 'genre': 'spatialite', 'databasename': layer.databasename,
                       'sqliteManager': sqliteManager, 'idName': layer.idName,
                       'geometryName': layer.geometryName, 'geometryDimension': geomDim,
                       'geometryType': geomType}
 
-        # vlayer = GuichetVectorLayer(parameters)
-        vlayer = QgsVectorLayer(uri.uri(), layer.name, 'spatialite')
+        vlayer = GuichetVectorLayer(parameters)
+        # vlayer = QgsVectorLayer(uri.uri(), layer.name, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
 
@@ -550,21 +551,21 @@ class Contexte(object):
         idNameForDatabase = layer.databaseId
         newVectorLayer.idNameForDatabase = idNameForDatabase
         newVectorLayer.geometryNameForDatabase = geometryName
-        newVectorLayer.databasename = layer.databaseName
+        newVectorLayer.databasename = layer.databasename
         newVectorLayer.srid = layer.srid
         newVectorLayer.geometryDimensionForDatabase = layer.is3d
         newVectorLayer.geometryTypeForDatabase = layer.geometryType
 
         # Remplissage de la table SQLite liée à la couche
-        parameters = {'databasename': layer.databaseName, 'layerName': layer.name, 'role': layer.role,
-                      'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
-                      'sridLayer': layer.srid, 'bbox': bbox,
-                      'detruit': bColumnDetruitExist, 'isBduni': layer.isBduni,
-                      'is3D': layer.is3d, 'urlTransaction': None, 'numrec': "0"}
-        wfsGet = WfsGet(self, parameters)
+        parameters = {'databasename': layer.databasename, 'layerName': layer.name,
+                      'sridLayer': layer.srid, 'role': layer.role, 'isBduni': layer.isBduni,
+                      'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
+                      'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
+                      'urlHostEspaceCo': self.urlHostEspaceCo, 'authentification': self.auth,
+                      'proxy': self.proxy
+                      }
+        wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcms_get(True)
-        if maxNumrecMessage[1].find('error'):
-            return maxNumrecMessage[1]
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1
@@ -575,7 +576,7 @@ class Contexte(object):
             dim = 1
 
         parametersForTableOfTables = {'layer': layer.name, 'idName': idNameForDatabase, 'standard': valStandard,
-                                      'database': layer.databaseName, 'srid': layer.srid,
+                                      'database': layer.databasename, 'srid': layer.srid,
                                       'geometryName': geometryName, 'geometryDimension': dim,
                                       'geometryType': layer.geometryType,
                                       'numrec': maxNumrecMessage[0]}
@@ -589,9 +590,8 @@ class Contexte(object):
         newVectorLayer.correspondanceChampType = efffa.readData()
 
         # Modification de la symbologie de la couche
-        # TODO remetre en circulation les 2 lignes de code qui suivent
-        # listOfValuesFromItemStyle = layer.getListOfValuesFromItemStyle()
-        # newVectorLayer.setModifySymbols(listOfValuesFromItemStyle)
+        listOfValuesFromItemStyle = layer.getListOfValuesFromItemStyle()
+        newVectorLayer.setModifySymbols(listOfValuesFromItemStyle)
 
         # Affichage des données en fonction de l'échelle
         newVectorLayer.setDisplayScale(layer.minzoom, layer.maxzoom)
@@ -618,79 +618,6 @@ class Contexte(object):
         message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
         print(message)
         return message
-
-    # def formatLayer(self, layer, newVectorLayer, nodeGroup, structure, bbox, bColumnDetruitExist):
-    #     geometryName = structure['geometryName']
-    #     newVectorLayer.isStandard = layer.isStandard
-    #     idNameForDatabase = structure['idName']
-    #     newVectorLayer.idNameForDatabase = idNameForDatabase
-    #     newVectorLayer.geometryNameForDatabase = geometryName
-    #     newVectorLayer.databasename = layer.databasename
-    #     sridLayer = int(structure['attributes'][geometryName]['srid'])
-    #     newVectorLayer.srid = sridLayer
-    #     newVectorLayer.geometryDimensionForDatabase = structure['attributes'][geometryName]['is3d']
-    #     newVectorLayer.geometryTypeForDatabase = structure['attributes'][geometryName]['type']
-    #
-    #     # Remplissage de la table SQLite liée à la couche
-    #     parameters = {'databasename': layer.databasename, 'layerName': layer.name, 'role': layer.role,
-    #                   'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
-    #                   'sridLayer': sridLayer, 'bbox': bbox,
-    #                   'detruit': bColumnDetruitExist, 'isStandard': layer.isStandard,
-    #                   'is3D': structure['attributes'][geometryName]['is3d'], 'urlTransaction': None, 'numrec': "0"}
-    #     wfsGet = WfsGet(self, parameters)
-    #     maxNumrecMessage = wfsGet.gcms_get(True)
-    #
-    #     # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
-    #     valStandard = 1
-    #     if not layer.isStandard:
-    #         valStandard = 0
-    #     dim = 0
-    #     if structure['attributes'][geometryName]['is3d']:
-    #         dim = 1
-    #
-    #     parametersForTableOfTables = {'layer': layer.name, 'idName': idNameForDatabase, 'standard': valStandard,
-    #                                   'database': layer.databasename, 'srid': sridLayer,
-    #                                   'geometryName': geometryName, 'geometryDimension': dim,
-    #                                   'geometryType': structure['attributes'][geometryName]['type'],
-    #                                   'numrec': maxNumrecMessage[0]}
-    #     SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
-    #
-    #     # On stocke le srid de la layer pour pouvoir traiter le post
-    #     newVectorLayer.srid = parameters['sridLayer']
-    #
-    #     # Modification du formulaire d'attributs
-    #     efffa = EditFormFieldFromAttributes(newVectorLayer, structure)
-    #     newVectorLayer.correspondanceChampType = efffa.readData()
-    #
-    #     # Modification de la symbologie de la couche
-    #     listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(structure)
-    #     newVectorLayer.setModifySymbols(listOfValuesFromItemStyle)
-    #
-    #     # Affichage des données en fonction de l'échelle
-    #     newVectorLayer.setDisplayScale(layer.minzoom, layer.maxzoom)
-    #
-    #     # Une couche en visualisation est non modifiable
-    #     if layer.role == 'visu' or layer.role == 'ref':
-    #         newVectorLayer.setReadOnly()
-    #
-    #     # Ajout de la couche dans la carte
-    #     self.QgsProject.instance().addMapLayer(newVectorLayer, False)
-    #     nodeGroup.addLayer(newVectorLayer)
-    #     self.guichetLayers.append(newVectorLayer)
-    #
-    #     # On masque les champs de travail et champs internes
-    #     # fields = newVectorLayer.fields()
-    #     # for i in range(0, fields.count()):
-    #     #     f = fields.field(i)
-    #     #     if f.name() == cst.ID_SQLITE or f.name() == cst.IS_FINGERPRINT or f.name() == cst.FINGERPRINT:
-    #     #         self.hideColumn(newVectorLayer, f.name())
-    #     #         hidden_setup = QgsEditorWidgetSetup('Hidden', f.editorWidgetSetup().config())
-    #     #         newVectorLayer.setEditorWidgetSetup(i, hidden_setup)
-    #
-    #     self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
-    #     message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
-    #     print(message)
-    #     return message
 
     def getUriDatabaseSqlite(self):
         uri = QgsDataSourceUri(cst.EPSG4326)
@@ -1010,13 +937,16 @@ class Contexte(object):
         cr = listCroquis[0]
         try:
             self.conn = spatialite_connect(self.dbPath)
+            print(self.dbPath)
             cur = self.conn.cursor()
 
             sql = u"Drop table if Exists " + tmpTable
+            print(sql)
             cur.execute(sql)
 
             sql = u"CREATE TABLE " + tmpTable + " (" + \
                   u"id INTEGER NOT NULL PRIMARY KEY, textGeom TEXT, centroid TEXT)"
+            print(sql)
             cur.execute(sql)
 
             i = 0
@@ -1041,6 +971,7 @@ class Contexte(object):
                 textGeom = textGeom[:-1] + textGeomEnd
                 sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," + \
                       "AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
+                print(sql)
                 cur.execute(sql)
 
             self.conn.commit()

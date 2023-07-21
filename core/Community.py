@@ -61,6 +61,9 @@ class Community(object):
     def query(self, partOfUrl) -> JsonResponse:
         httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxies)
         response = httpRequest.getResponse(partOfUrl, None)
+        if response.status_code != 200:
+            message = "Community.query : {}".format(response.text)
+            raise Exception(message)
         jsonResponse = JsonResponse(response)
         return jsonResponse
 

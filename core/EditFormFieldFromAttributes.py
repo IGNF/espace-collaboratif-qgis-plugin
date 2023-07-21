@@ -14,25 +14,20 @@ class EditFormFieldFromAttributes(object):
     """
     Mise en forme des champs dans le formulaire d'attributs QGIS
     """
-    # les données
-    data = None
-    # couche concernée
-    layer = None
-    # nom du champ
-    name = None
-    # n° du champ dans la liste des champs de l'objet
-    index = None
-    action = None
 
     '''
     Initialisation de la classe avec la couche active (layer) et les données récupérées (data)
-    au format json par la fonction core.client.py/connexionFeatureTypeJson
+    au format json
     '''
 
     def __init__(self, layer, data):
+        # les données
         self.data = data
+        # couche concernée
         self.layer = layer
         self.action = Action(layer)
+        self.index = None
+        self.name = None
 
     # si le champ est de type 'JsonValue' alors on ajoute une action pour pourvoir le modifier
     def setAction(self, attributeType, attributeName):
@@ -59,7 +54,8 @@ class EditFormFieldFromAttributes(object):
             self.index = self.layer.fields().indexOf(self.name)
             self.setFieldTitle(v['title'])
             self.setFieldSwitchType(v['type'], v['default_value'])
-            self.setAction(v['type'], v['name'])
+            # TODO désactivé pour l'instant
+            # self.setAction(v['type'], v['name'])
             self.setFieldConstraintNotNull(v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
             constraints = [self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'],
@@ -69,6 +65,7 @@ class EditFormFieldFromAttributes(object):
                            self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'])]
             self.setFieldAllConstraints(constraints, v['nullable'])
             self.setFieldListOfValues(v['enum'], v['default_value'])
+            # TODO voir Madeline pour le readOnly
             #self.setFieldReadOnly(v['readOnly'], v['computed'])
             self.setFieldReadOnly(v['computed'])
             linkFieldType[v['name']] = v['type']
@@ -158,8 +155,7 @@ class EditFormFieldFromAttributes(object):
     '''
 
     def setFieldConstraintNotNull(self, bNullable):
-
-        if bNullable is None or bNullable is True or bNullable == '' or self.name == self.data['idName']:
+        if bNullable is None or bNullable is True or bNullable == '' or self.name == self.layer.idNameForDatabase:
             return
         self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintNotNull)
 
@@ -189,7 +185,7 @@ class EditFormFieldFromAttributes(object):
 
     # def setFieldReadOnly(self, readOnly, computed):
     def setFieldReadOnly(self, computed):
-        # if self.name == self.data['idName'] or readOnly or computed:
+        # if self.name == self.layer.idNameForDatabase or readOnly or computed:
         if self.name == self.layer.idNameForDatabase or computed:
             formConfig = self.layer.editFormConfig()
             formConfig.setReadOnly(self.index, True)
@@ -301,7 +297,7 @@ class EditFormFieldFromAttributes(object):
 
         if (minLength is None and maxLength is None) or \
                 (minLength == '' and maxLength == '') or \
-                self.name == self.data['idName']:
+                self.name == self.layer.idNameForDatabase:
             return None
 
         listExpressions = []
@@ -339,7 +335,7 @@ class EditFormFieldFromAttributes(object):
 
     def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
 
-        if pattern is None or pattern == '' or self.name == self.data['idName']:
+        if pattern is None or pattern == '' or self.name == self.layer.idNameForDatabase:
             return None
 
         newPattern = pattern.replace('\\', '\\\\')
@@ -396,19 +392,6 @@ class EditFormFieldFromAttributes(object):
     '''
 
     def setFieldInteger(self, defaultInteger):
-        # # Type: Range
-        # QgsEWS_type = 'Range'
-        # # Config: {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0, 'Step': 1,
-        # # 'Style': 'SpinBox'}
-        #
-        # QgsEWS_config = {'AllowNull': True, 'Max': 2147483647, 'Min': -2147483648, 'Precision': 0,
-        #                  'Step': 1, 'Style': 'SpinBox'}
-        # self.setFormEditor(QgsEWS_type, QgsEWS_config)
-        #
-        # if defaultInteger is None or defaultInteger == '':
-        #     return
-        # self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultInteger))
-
         # Il vaut mieux utiliser un TextEdit contraint par regex pour pouvoir gérer les valeurs null car le
         # type Range ne les accepte pas.
         # Type: TextEdit
@@ -430,19 +413,6 @@ class EditFormFieldFromAttributes(object):
     '''
 
     def setFieldDouble(self, defaultDouble):
-        # # Type: Range
-        # QgsEWS_type = 'Range'
-        # # Config: {'AllowNull': True, 'Max': 1.7976931348623157e+308, 'Min': -1.7976931348623157e+308,
-        # # 'Precision': 6, 'Step': 1.0, 'Style': 'SpinBox'}
-        # QgsEWS_config = {'AllowNull': True, 'Max': 1.7976931348623157e+308,
-        #                  'Min': -1.7976931348623157e+308, 'Precision': 6, 'Step': 1.0,
-        #                  'Style': 'SpinBox'}
-        # self.setFormEditor(QgsEWS_type, QgsEWS_config)
-        #
-        # if defaultDouble is None or defaultDouble == '':
-        #     return
-        # self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDouble))
-
         # Il vaut mieux utiliser un TextEdit contraint par regex pour pouvoir gérer les valeurs null car le
         # type Range ne les accepte pas.
         # Type: TextEdit

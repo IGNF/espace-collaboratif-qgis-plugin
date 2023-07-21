@@ -23,6 +23,7 @@ class RipartServiceRequest(object):
         try:
             r = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
                              params=params, verify=False)
+            print("".format(r.url))
             if r.status_code == 200:
                 r.encoding = 'utf-8'
                 response = json.loads(r.text)

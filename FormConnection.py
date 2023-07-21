@@ -52,9 +52,9 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lblLogin.setFont(font)
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
         self.setFixedSize(self.width(), self.height())
-
         # Initialisation du fichier de log
         self.logger = RipartLogger("FormConnexionDialog").getRipartLogger()
+        self.auth = {}
 
     def setLogin(self, login):
         self.lineEditLogin.setText(login)
@@ -93,9 +93,18 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         dlgInfo.exec_()
 
     def connectToService(self):
+        # La fonction correspond au bouton Connecter...
         # Sauvegarde des éléments de connexion
         self.context.login = self.getLogin()
         self.context.pwd = self.getPwd()
+        if self.context.login == '' or self.context.pwd == '':
+            self.context.pwd = ""
+            self.context.client = None
+            self.context.profil = None
+            self.connectionResult = -1
+            return self.connectionResult
+        self.auth['login'] = self.getLogin()
+        self.auth['password'] = self.getPwd()
         community = Community(self.urlHost, self.context.login, self.context.pwd, self.context.proxy)
         try:
             listGroup = community.extractCommunities()
@@ -123,13 +132,15 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
             # Bouton Annuler
             elif dlgChoixGroupe.cancel:
                 dlgChoixGroupe.close()
+                self.close()
                 return
+
             # Les informations de connexion sont montrées à l'utilisateur
             self.setDisplayInformations()
             self.connectionResult = 1
         except Exception as e:
-            self.context.pwd = ""
             self.context.logger.error(format(e))
+            self.context.pwd = ""
             self.context.client = None
             self.context.profil = None
             self.connectionResult = -1

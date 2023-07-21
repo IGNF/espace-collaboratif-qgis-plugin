@@ -29,7 +29,7 @@ class WfsPost(object):
     def __init__(self, context, layer, filterName):
         self.context = context
         self.layer = layer
-        self.url = self.context.urlHostEspaceCo + '/gcms/wfstransactions'
+        self.url = self.context.urlHostEspaceCo + '/gcms/api/wfstransactions'
         self.identification = self.context.auth
         self.proxy = self.context.proxy
         self.actions = []
@@ -147,7 +147,7 @@ class WfsPost(object):
 
     def gcms_post(self, strActions, bNormalWfsPost):
         print("Post_action : {}".format(strActions))
-        params = dict(actions=strActions, database=self.layer.databaseName)
+        params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
         xmlResponse = XMLResponse(response)
@@ -209,13 +209,15 @@ class WfsPost(object):
             self.layer.reload()
 
         numrec = SQLiteManager.selectNumrecTableOfTables(self.layer.name())
-        parameters = {'databasename': self.layer.databaseName, 'layerName': self.layer.name(),
+        parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
                       'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName, False),
                       'detruit': bDetruit, 'isBduni': self.layer.isBduni,
                       'is3D': self.layer.geometryDimensionForDatabase,
-                      'numrec': numrec}
-        wfsGet = WfsGet(self.context, parameters)
+                      'numrec': numrec, 'role': None,
+                      'urlHostEspaceCo': self.context.urlHostEspaceCo,
+                      'authentification': self.context.auth, 'proxy': self.context.proxy}
+        wfsGet = WfsGet(parameters)
         numrecmessage = wfsGet.gcms_get()
         if 'error' in numrecmessage[1]:
             message = "Vos modifications ont bien été prises en compte mais la couche n'a pas pu être rechargée " \

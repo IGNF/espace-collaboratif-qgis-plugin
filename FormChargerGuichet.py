@@ -56,8 +56,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # if connexionLayers[0] == "Accepted":
         #     self.listLayers = connexionLayers[1]
         #     # Les couches sont chargées dans l'ordre renvoyé dans geoaut_get.
-        #     # Il faut donc inversé l'ordre pour retrouver le paramétrage de la carte du groupe
-        #     self.listLayers.reverse()
+        # Il faut inverser l'ordre pour retrouver le paramétrage de la carte du groupe
+        self.listLayers.reverse()
 
         # Remplissage des différentes tables de couches
         self.setTableWidgetMonGuichet()

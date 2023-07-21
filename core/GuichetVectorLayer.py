@@ -17,16 +17,6 @@ from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
 
 
 class GuichetVectorLayer(QgsVectorLayer):
-    databasename = None
-    correspondanceChampType = None
-    sqliteManager = None
-    srid = None
-    # Juste pour savoir si cette couche est de type 'standard' ou 'bduni' avec gcms_fingerprint
-    isBduni = None
-    idNameForDatabase = None
-    geometryNameForDatabase = None
-    geometryDimensionForDatabase = None
-    geometryTypeForDatabase = None
 
     def __init__(self, parameters):
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
@@ -39,6 +29,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.geometryDimensionForDatabase = parameters['geometryDimension']
         self.geometryTypeForDatabase = parameters['geometryType']
         self.conditionFactory = ConditionFactory()
+        self.correspondanceChampType = None
 
     '''
         Transformation de la condition en expression QGIS
@@ -465,28 +456,28 @@ class GuichetVectorLayer(QgsVectorLayer):
     def setDisplayScale(self, minS, maxS):
         # Correspondance zoom des tuiles - échelle approximative
         scale = {
-            '0': 559082264,
-            '1': 279541132,
-            '2': 139770566,
-            '3': 69885283,
-            '4': 34942642,
-            '5': 17471321,
-            '6': 8735660,
-            '7': 4367830,
-            '8': 2183915,
-            '9': 1091958,
-            '10': 545979,
-            '11': 272989,
-            '12': 136495,
-            '13': 68247,
-            '14': 34124,
-            '15': 17062,
-            '16': 8531,
-            '17': 4265,
-            '18': 2133,
-            '19': 1066,
-            '20': 533,
-            '21': 267
+            0: 559082264,
+            1: 279541132,
+            2: 139770566,
+            3: 69885283,
+            4: 34942642,
+            5: 17471321,
+            6: 8735660,
+            7: 4367830,
+            8: 2183915,
+            9: 1091958,
+            10: 545979,
+            11: 272989,
+            12: 136495,
+            13: 68247,
+            14: 34124,
+            15: 17062,
+            16: 8531,
+            17: 4265,
+            18: 2133,
+            19: 1066,
+            20: 533,
+            21: 267
         }
         self.setMinimumScale(scale[minS])
         self.setMaximumScale(scale[maxS])

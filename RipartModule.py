@@ -171,7 +171,6 @@ class RipartPlugin:
             return
         if not self.searchSpecificLayer(layer.name()):
             return
-        print("Connect because layer added: " + layer.name())
         self.connectSpecificSignals(layer)
 
     def connectSpecificSignals(self, layer):
@@ -231,22 +230,23 @@ class RipartPlugin:
 
     def doConnexion(self, bButtonConnect):
         #  bButtonConnect à True : connexion systématique
-        #  l'utilisateur a cliqué sur le bouton "Se connecter à l'Espace Collaboratif"
+        #  car l'utilisateur a cliqué sur le bouton "Se connecter à l'Espace Collaboratif"
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
-            return
+            return 0
         if self.context.profil is None or bButtonConnect:
-         #if self.context.client is None:
-            resCo = self.context.getConnexionEspaceCollaboratif(newLogin=True)
-            if not resCo:
-                return
+            return self.context.getConnexionEspaceCollaboratif(newLogin=True)
+        else:
+            return 1
 
     def saveChangesForOneLayer(self, layer):
         global commitLayerResult
         if layer is None:
             return
         # Connexion à l'Espace collaboratif
-        self.doConnexion(False)
+        # si res = 0, alors l'utilisateur à annuler son action
+        if not self.doConnexion(False):
+            return
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
@@ -527,12 +527,19 @@ class RipartPlugin:
     def chargerGuichet(self):
         try:
             # Connexion à l'Espace collaboratif
-            #TODO retourner community plutot que de l'initialiser encore une fois
-            self.doConnexion(False)
+            # si res = 0, alors l'utilisateur à annuler son action
+            if not self.doConnexion(False):
+                return
+            # TODO retourner community plutot que de l'initialiser encore une fois
+            # Les requêtes peuvent être longues
+            messageProgress = "Groupe {} : récupération des couches".format(self.context.groupeactif)
+            progress = ProgressBar(1, messageProgress)
+            progress.setValue(1)
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
             community = Community(self.context.urlHostEspaceCo, self.context.login, self.context.pwd,
                                   self.context.proxy)
             listLayers = community.extractLayers(self.context.profil.geogroup.getId())
+            progress.close()
             # et les présenter à l'utilisateur pour qu'il fasse son choix de travail
             dlgChargerGuichet = FormChargerGuichet(self.context, listLayers)
             # L'utilisateur a cliqué sur le bouton Annuler ou la croix de du dialogue  de la fenetre de connexion
@@ -608,7 +615,9 @@ class RipartPlugin:
         print("Synchroniser les données de toutes les couches")
 
         # Connexion à l'Espace collaboratif
-        self.doConnexion(False)
+        # si res = 0, alors l'utilisateur à annuler son action
+        if not self.doConnexion(False):
+            return
 
         # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
         layersToSynchronize = []
@@ -663,11 +672,13 @@ class RipartPlugin:
             endMessage += "<br/>{0}\n".format(layer.name())
             bbox = BBox(self.context)
             parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName),
-                          'sridProject': cst.EPSGCRS}
+                          'sridProject': cst.EPSGCRS, 'role': None,
+                          'urlHostEspaceCo': self.context.urlHostEspaceCo,
+                          'authentification': self.context.auth, 'proxy': self.context.proxy}
             result = SQLiteManager.selectRowsInTableOfTables(layer.name())
             if result is not None:
                 for r in result:
-                    parameters['databasename'] = layer.databaseName = r[4]
+                    parameters['databasename'] = layer.databasename = r[4]
                     layer.isBduni = r[3]
                     parameters['isBduni'] = r[3]
                     parameters['sridLayer'] = r[5]
@@ -688,7 +699,7 @@ class RipartPlugin:
             parameters['detruit'] = bDetruit
             numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
             parameters['numrec'] = numrec
-            wfsGet = WfsGet(self.context, parameters)
+            wfsGet = WfsGet(parameters)
             # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser
             # Il faut aussi qu'il soit différent de 0, ce numrec correspondant à une table non BDUni
             if layer.isBduni:
@@ -741,9 +752,10 @@ class RipartPlugin:
         del self.toolbar
 
     def run(self):
-        """Fenêtre de connexion"""
         # Connexion à l'Espace collaboratif
-        self.doConnexion(True)
+        # si res = 0, alors l'utilisateur à annuler son action
+        if not self.doConnexion(True):
+            return
 
     def downloadRemarks(self):
         """Downloads remarks

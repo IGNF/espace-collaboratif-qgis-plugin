@@ -12,8 +12,6 @@ class SQLiteManager(object):
 
     def __init__(self):
         self.dbPath = SQLiteManager.getBaseSqlitePath()
-        self.dbPath = ""
-        self.tableAttributes = None
         self.is3D = None
         self.geometryType = None
 
@@ -56,7 +54,7 @@ class SQLiteManager(object):
         columnDetruitExist = False
         typeGeometrie = ''
         sqlAttributes = ""
-        for value in self.tableAttributes:
+        for value in layer.attributes:
             if self.setSwitchType(value['type']) == '':
                 return "", "", ""
             if value['name'] == "detruit":
@@ -83,38 +81,6 @@ class SQLiteManager(object):
         self.geometryType = typeGeometrie
         return sqlAttributes, typeGeometrie, columnDetruitExist
 
-    # def setAttributesTableToSql(self, geometryName, layer):
-    #     columnDetruitExist = False
-    #     typeGeometrie = ''
-    #     # sqlAttributes = "{0} INTEGER PRIMARY KEY AUTOINCREMENT,".format(cst.ID_SQLITE)
-    #     sqlAttributes = ""
-    #     for value in self.tableAttributes.values():
-    #         if self.setSwitchType(value['type']) == '':
-    #             return "", "", ""
-    #         if value['name'] == "detruit":
-    #             columnDetruitExist = True
-    #             sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
-    #         elif value['name'] == geometryName:
-    #             typeGeometrie = self.setSwitchType(value['type'])
-    #         # au cas où il y aurait déjà un attribut nommé id_sqlite
-    #         elif value['name'] == cst.ID_SQLITE:
-    #             sqlAttributes += "{0} {1},".format(cst.ID_ORIGINAL, self.setSwitchType(value['type']))
-    #         # TODO Noémie : 29/7/22 Arnaud m'a indiqué que gcms_fingerprint et gcms_numrec ne doivent pas apparaitre
-    #         # TODO comme attributs cachés vis à vis de l'extérieur, cf les urls suivantes
-    #         # TODO (BIEN) https://qlf-collaboratif.ign.fr/collaboratif-3.4/gcms/database/bduni_recette_test/feature-type/equipement_de_transport.json
-    #         # TODO (PAS BIEN) https://espacecollaboratif.ign.fr/gcms/database/bduni_interne_qualif_fxx/feature-type/equipement_de_transport.json
-    #         elif value['name'] == cst.FINGERPRINT or value['name'] == cst.NUMREC:
-    #             continue
-    #         else:
-    #             sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
-    #     # Anomalie 17196, l'identifiant ID_SQLITE et FINGERPRINT sont positionnés en dernier dans le formulaire
-    #     sqlAttributes += "{0} INTEGER PRIMARY KEY AUTOINCREMENT".format(cst.ID_SQLITE)
-    #     if not layer.isStandard:
-    #         sqlAttributes += ",{0} TEXT".format(cst.FINGERPRINT)
-    #     # ordre d'insertion geometrie, gcms_fingerprint
-    #     self.geometryType = typeGeometrie
-    #     return sqlAttributes, typeGeometrie, columnDetruitExist
-
     def addGeometryColumn(self, parameters):
         # Paramétrage de la colonne géométrie en 2D par défaut
         if parameters['is3D']:
@@ -130,72 +96,30 @@ class SQLiteManager(object):
         return sql
 
     def createTableFromLayer(self, layer):
-        SQLiteManager.vacuumDatabase()
-        self.tableAttributes = layer.attributes
         t = self.setAttributesTableToSql(layer)
         if t[0] == "" and t[1] == "" and t[2] == "":
-            raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
+            raise Exception("SQLite : création de la table {} impossible, un type de colonne est inconnu".format(layer.name))
         connection = spatialite_connect(self.dbPath)
         sql = u"CREATE TABLE {0} (".format(layer.name)
         sql += t[0]
         sql += ')'
         cur = connection.cursor()
-        print(sql)
         cur.execute(sql)
-        print('description : {}'.format(cur.description))
-        print('arraysize : {}'.format(cur.arraysize))
-        print('fetchone : {}'.format(cur.fetchone()))
-        print('fetchall : {}'.format(cur.fetchall()))
+        connection.commit()
         parameters_geometry_column = {'tableName': layer.name, 'geometryName': layer.geometryName,
                                       'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
-        print(sqlGeometryColumn)
         cur.execute(sqlGeometryColumn)
-        print('description : {}'.format(cur.description))
-        print('arraysize : {}'.format(cur.arraysize))
-        print('fetchone : {}'.format(cur.fetchone()))
-        print('fetchall : {}'.format(cur.fetchall()))
-        cur.close()
+        if cur.fetchone()[0] == 0:
+            print("SQLiteManager : table {} créée.".format(layer.name))
+        else:
+            raise Exception("SQLiteManager : création de la table {} impossible.".format(layer.name))
         connection.commit()
+        cur.close()
         connection.close()
         # compactage de la base
         SQLiteManager.vacuumDatabase()
         return t[2]
-
-    # def createTableFromLayer(self, layer, tableStructure):
-    #     # Stockage du nom du champ contenant la géométrie
-    #     geometryName = tableStructure['geometryName']
-    #     self.is3D = tableStructure['attributes'][geometryName]['is3d']
-    #     # La structure de la table à créer
-    #     self.tableAttributes = tableStructure['attributes']
-    #     t = self.setAttributesTableToSql(geometryName, layer)
-    #     if t[0] == "" and t[1] == "" and t[2] == "":
-    #         raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
-    #
-    #     connection = spatialite_connect(self.dbPath)
-    #     sql = u"CREATE TABLE {0} (".format(layer.name)
-    #     sql += t[0]
-    #     sql += ')'
-    #     cur = connection.cursor()
-    #     print(sql)
-    #     cur.execute(sql)
-    #     '''sqlSpatial = 'SELECT InitSpatialMetaData()'
-    #     print(sqlSpatial)
-    #     cur.execute(sqlSpatial)'''
-    #     parameters_geometry_column = {'tableName': layer.name, 'geometryName': tableStructure['geometryName'],
-    #                                   'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
-    #     sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
-    #     print(sqlGeometryColumn)
-    #     cur.execute(sqlGeometryColumn)
-    #     if len(cur.fetchall()) == 0:
-    #         print("SQLiteManager : création de la table {0} réussie".format(layer.name))
-    #     cur.close()
-    #     connection.commit()
-    #     connection.close()
-    #     # compactage de la base
-    #     SQLiteManager.vacuumDatabase()
-    #     # retourne True si la colonne detruit existe dans la table
-    #     return t[2]
 
     def setSwitchType(self, vType):
         if vType == 'Boolean':
@@ -347,28 +271,6 @@ class SQLiteManager(object):
         if len(cleabss) > 0:
             SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
-    # Non utilisé et pas mis à jour
-    # def insertRowsInTableWithSpatialFilter(self, parameters, attributesRows, bboxWorkingArea):
-    #     totalRows = 0
-    #     if len(attributesRows) == 0:
-    #         return totalRows
-    #     wkt = Wkt(parameters)
-    #     # Insertion des lignes dans la table
-    #     connection = spatialite_connect(self.dbPath)
-    #     cur = connection.cursor()
-    #     for attributesRow in attributesRows:
-    #         columnsValues = self.setColumnsValuesForInsertWithSpatialFilter(attributesRow, parameters, bboxWorkingArea, wkt)
-    #         # si le tuple est vide alors l'objet est en dehors de la zone de travail
-    #         if columnsValues[0] == '' and columnsValues[1] == '':
-    #             continue
-    #         sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
-    #         cur.execute(sql)
-    #         totalRows += 1
-    #     cur.close()
-    #     connection.commit()
-    #     connection.close()
-    #     return totalRows
-
     def insertRowsInTable(self, parameters, attributesRows):
         totalRows = 0
         if len(attributesRows) == 0:
@@ -491,7 +393,7 @@ class SQLiteManager(object):
     @staticmethod
     def createTableOfTables():
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
-              u"standard INTEGER, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
+              u"bduni BOOL, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
               u"geometryType TEXT, numrec INTEGER)".format(cst.TABLEOFTABLES)
         SQLiteManager.executeSQL(sql)
 

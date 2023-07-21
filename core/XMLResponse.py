@@ -215,9 +215,9 @@ class XMLResponse(object):
                     if url is None or url.text is None:
                         continue
                     layer.url = url.text
-                    layer.databaseName = self.findDatabaseName(url.text)
+                    layer.databasename = self.findDatabaseName(url.text)
                     print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.getName(),
-                                                                               layer.name, layer.databaseName))
+                                                                               layer.name, layer.databasename))
                     layer_id = nodelayer.find('LAYER')
                     if layer_id is not None:
                         layer.layer_id = layer_id.text

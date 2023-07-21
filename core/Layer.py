@@ -16,7 +16,7 @@ class Layer(object):
     def __init__(self):
         # Attributs remplis avec gcms/api/communities/{community_id}/layers
         self.databaseId = None
-        self.databaseName = ''
+        self.databasename = ''
         self.geoservice = {}
         self.id = None
         self.opacity = 1
@@ -56,7 +56,7 @@ class Layer(object):
         listOfValues = {}
 
         # La couche n'a pas de style défini, QGIS applique une symbologie par défaut
-        if len(self.style) == 0:
+        if self.style is None:
             return listOfValues
 
         tmp = {'children': []}

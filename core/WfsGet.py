@@ -1,33 +1,20 @@
 import time
 import json
-from .RipartServiceRequest import RipartServiceRequest
+from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
 
 
 class WfsGet(object):
-    context = None
-    url = None
-    identification = None
-    proxy = None
-    databaseName = None
-    layerName = None
-    geometryName = None
-    sridProject = None
-    sridLayer = None
-    bbox = None
-    parametersGcmsGet = None
-    bDetruit = None
-    isBduni = None
-    is3D = None
-    numrec = None
-    parametersForInsertsInTable = None
 
-    def __init__(self, context, parameters):
-        self.context = context
-        self.url = self.context.urlHostEspaceCo + '/gcms/wfs'
-        self.identification = self.context.auth
-        self.proxy = self.context.proxy
-        self.databaseName = parameters['databasename']
+    def __init__(self, parameters):
+        if 'urlHostEspaceCo' in parameters:
+            self.urlHostEspaceCo = parameters['urlHostEspaceCo']
+            self.url = parameters['urlHostEspaceCo'] + '/gcms/api/wfs'
+        if 'authentification' in parameters:
+            self.identification = parameters['authentification']
+        if 'proxy' in parameters:
+            self.proxy = parameters['proxy']
+        self.databasename = parameters['databasename']
         self.layerName = parameters['layerName']
         self.geometryName = parameters['geometryName']
         self.sridProject = parameters['sridProject']
@@ -48,7 +35,7 @@ class WfsGet(object):
         # il s'agit de retrouver
         self.initParametersGcmsGet(True)
         while True:
-            response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
+            response = HttpRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 break
@@ -111,7 +98,7 @@ class WfsGet(object):
             maxNumrec = self.getMaxNumrec()
         sqliteManager = SQLiteManager()
         while True:
-            response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
+            response = HttpRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
@@ -153,7 +140,7 @@ class WfsGet(object):
                 message = "{0} objet(s), extrait(s) en : {1} minute(s)".format(totalRows, round(timeResult / 60, 1))
         else:
             if totalRows == 0:
-                message += "\nPas d'objets extraits"
+                message += "Pas d'objets extraits"
             else:
                 if message == '':
                     message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
@@ -161,9 +148,9 @@ class WfsGet(object):
 
     def getMaxNumrec(self):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
-        url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.urlHostEspaceCo,
-                                                                         self.databaseName, self.layerName)
-        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.urlHostEspaceCo, self.databasename,
+                                                                         self.layerName)
+        response = HttpRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
         data = json.loads(response)
         return data['numrec']
 
@@ -180,7 +167,7 @@ class WfsGet(object):
         self.parametersGcmsGet['outputFormat'] = outputFormat
 
     def setTypeName(self):
-        typename = "{0}:{1}".format(self.databaseName, self.layerName)
+        typename = "{0}:{1}".format(self.databasename, self.layerName)
         self.parametersGcmsGet['typename'] = typename
 
     def setNumrec(self):
