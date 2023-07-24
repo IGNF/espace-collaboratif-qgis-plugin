@@ -679,8 +679,12 @@ class RipartPlugin:
             if result is not None:
                 for r in result:
                     parameters['databasename'] = layer.databasename = r[4]
-                    layer.isBduni = r[3]
-                    parameters['isBduni'] = r[3]
+                    bduni = True
+                    # si r[3] est égal à 1 alors c'est une table standard
+                    if r[3] == 1:
+                        bduni = False
+                    layer.isBduni = bduni
+                    parameters['isBduni'] = bduni
                     parameters['sridLayer'] = r[5]
                     layer.idNameForDatabase = r[2]
                     parameters['geometryName'] = r[6]
@@ -701,7 +705,7 @@ class RipartPlugin:
             parameters['numrec'] = numrec
             wfsGet = WfsGet(parameters)
             # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser
-            # Il faut aussi qu'il soit différent de 0, ce numrec correspondant à une table non BDUni
+            # Il faut aussi qu'il soit égal à 1, ce numrec correspondant à une table non BDUni
             if layer.isBduni:
                 maxNumrec = wfsGet.getMaxNumrec()
                 if numrec == maxNumrec:

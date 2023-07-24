@@ -92,10 +92,11 @@ class WfsGet(object):
         self.initParametersGcmsGet()
         start = time.time()
         totalRows = 0
-        if not self.isBduni:
-            maxNumrec = 0
-        else:
+        if self.isBduni:
             maxNumrec = self.getMaxNumrec()
+        else:
+            maxNumrec = 0
+
         sqliteManager = SQLiteManager()
         while True:
             response = HttpRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
