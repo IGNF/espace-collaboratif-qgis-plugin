@@ -77,7 +77,7 @@ class WfsGet(object):
         self.setVersion('1.0.0')
 
     # La requête doit être de type :
-    # https://espacecollaboratif.ign.fr/gcms/wfs
+    # https://espacecollaboratif.ign.fr/gcms/api/wfs
     # ?service=WFS
     # &request=GetFeature
     # &typeName=bduni_interne_qualif_fxx:troncon_de_route
@@ -153,6 +153,7 @@ class WfsGet(object):
                                                                          self.layerName)
         response = HttpRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
         data = json.loads(response)
+        print("database : {} numrec : {}".format(self.databasename, data['numrec']))
         return data['numrec']
 
     def setService(self):

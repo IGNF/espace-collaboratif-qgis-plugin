@@ -104,7 +104,7 @@ class Client(object):
     '''
         Connexion à une base de données et une couche donnée
         La requête est par exemple :
-        https://espacecollaboratif.ign.fr/gcms/database/test/feature-type/Surfaces.json
+        https://espacecollaboratif.ign.fr/gcms/api/database/test/feature-type/Surfaces.json
         La réponse transformée en json est sous forme de dictionnaire par exemple :
         ...'attributes': 'zone': {...,'listOfValues': [None, 'Zone1', ' Zone2', 'Zone3'],...}...
     '''
@@ -117,7 +117,7 @@ class Client(object):
 
         tmp = layerUrl.split('&')
         dbName = tmp[1].split('=')
-        url = "{}/gcms/database/{}/feature-type/{}.json".format(self.__url, dbName[1], layerName)
+        url = "{}/gcms/api/database/{}/feature-type/{}.json".format(self.__url, dbName[1], layerName)
         self.logger.debug("{0} {1}".format("connexionFeatureTypeJson : ", url))
 
         featuretypeResponse = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password),

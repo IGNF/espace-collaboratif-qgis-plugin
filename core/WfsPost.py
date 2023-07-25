@@ -190,8 +190,8 @@ class WfsPost(object):
         return json.loads(response)
 
     def getNumrecFromTransaction(self, urlTransaction):
-        # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281922.json
-        # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281927/action/1130961.json
+        # https://espacecollaboratif.ign.fr/gcms/api/database/test/transaction/281922.json
+        # https://espacecollaboratif.ign.fr/gcms/api/database/test/transaction/281927/action/1130961.json
         url = "{0}.json".format(urlTransaction)
         response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
         data = json.loads(response)

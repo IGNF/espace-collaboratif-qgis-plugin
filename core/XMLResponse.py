@@ -167,7 +167,7 @@ class XMLResponse(object):
 
     def findDatabaseName(self, urlStr):
         # La chaine url est de type
-        # https://espacecollaboratif.ign.fr/gcms/wfs?service=wfs&databasename=bdtopo_metropole
+        # https://espacecollaboratif.ign.fr/gcms/api/wfs?service=wfs&databasename=bdtopo_metropole
         pos = urlStr.find('&')
         if pos == -1:
             return ""

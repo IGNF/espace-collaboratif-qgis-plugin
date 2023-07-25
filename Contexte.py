@@ -548,7 +548,7 @@ class Contexte(object):
     def formatLayer(self, layer, newVectorLayer, nodeGroup, bbox, bColumnDetruitExist):
         geometryName = layer.geometryName
         newVectorLayer.isBduni = layer.isBduni
-        idNameForDatabase = layer.databaseId
+        idNameForDatabase = layer.idName
         newVectorLayer.idNameForDatabase = idNameForDatabase
         newVectorLayer.geometryNameForDatabase = geometryName
         newVectorLayer.databasename = layer.databasename

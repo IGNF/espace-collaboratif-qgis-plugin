@@ -393,17 +393,17 @@ class SQLiteManager(object):
     @staticmethod
     def createTableOfTables():
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
-              u"bduni BOOL, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
+              u"standard BOOL, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
               u"geometryType TEXT, numrec INTEGER)".format(cst.TABLEOFTABLES)
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
     def InsertIntoTableOfTables(parameters):
-        # TODO
-        # Si l'enregistrement existe déjà, on sort ou on update ?
+        # Si l'enregistrement existe déjà, on le détruit avant d'insérer le nouveau
         result = SQLiteManager.selectRowsInTableOfTables(parameters['layer'])
         if len(result) == 1:
-            return
+            sql = "DELETE FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, parameters['layer'])
+            SQLiteManager.executeSQL(sql)
 
         columns = ''
         values = ''

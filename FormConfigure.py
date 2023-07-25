@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.core import QgsVectorLayer
 from .RipartHelper import RipartHelper
 from .Contexte import Contexte
+from core.SQLiteManager import SQLiteManager
+from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
 
@@ -239,7 +241,12 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         Sauvegarde la configuration des différents paramètres dans le fichier xml
         """
         # Url
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, self.lineEditUrl.text(), "Serveur")
+        # Si l'URL a changé, il faut vider la table des tables
+        oldUrl = RipartHelper.load_urlhost(self.context.projectDir)
+        newUrl = self.lineEditUrl.text()
+        if oldUrl != newUrl:
+            SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, newUrl, "Serveur")
 
         # Proxy
         if self.checkBoxProxy.isChecked():

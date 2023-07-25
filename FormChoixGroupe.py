@@ -261,7 +261,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if bNewGroup:
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
-                      "supprimées. Voulez-vous continuer ?".format(newGroup.getName())
+                      "supprimées. Voulez-vous continuer ?".format(newGroup.name())
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     root.removeChildNode(newGroup)
