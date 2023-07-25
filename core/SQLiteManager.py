@@ -433,11 +433,11 @@ class SQLiteManager(object):
 
     @staticmethod
     def InsertIntoTableOfTables(parameters):
-        # TODO
-        # Si l'enregistrement existe déjà, on sort ou on update ?
+        # Si l'enregistrement existe déjà, on le détruit avant d'insérer le nouveau
         result = SQLiteManager.selectRowsInTableOfTables(parameters['layer'])
         if len(result) == 1:
-            return
+            sql = "DELETE FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, parameters['layer'])
+            SQLiteManager.executeSQL(sql)
 
         columns = ''
         values = ''
