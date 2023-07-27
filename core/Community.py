@@ -78,31 +78,38 @@ class Community(object):
             return
         return jsonResponse.getCommunities()
 
-    def getDataLayersFromTable(self, layer):
+    def getDataLayerFromTable(self, layer):
         tmp = "gcms/api/databases/{0}/tables/{1}".format(layer.databaseId, layer.table)
         jsonResponse = self.query(tmp)
         if jsonResponse is None:
             return
         jsonResponse.getDataFromTable(layer)
 
+    def getDataLayerFromGeoservice(self, layer, geoservice):
+        tmp = "gcms/api/geoservices/{}".format(geoservice['id'])
+        jsonResponse = self.query(tmp)
+        if jsonResponse is None:
+            return
+        jsonResponse.getDataFromGeoservice(layer)
+
     def getLayers(self, data):
         layers = []
         for d in data:
             layer = Layer()
-            if d['type'] == 'geoservice':
-                continue
             layer.visibility = d['visibility']
             layer.opacity = d['opacity']
             layer.type = d['type']
             layer.role = d['role']
             layer.id = d['id']
             layer.databaseId = d['database']
-            layer.geoservice = d['geoservice']
             layer.order = d['order']
             layer.preferred_style = d['preferred_style']
             layer.snapto = d['snapto']
             layer.table = d['table']
-            self.getDataLayersFromTable(layer)
+            if d['type'] == cst.WFS:
+                self.getDataLayerFromTable(layer)
+            if d['type'] == cst.WMTS:
+                self.getDataLayerFromGeoservice(layer, d['geoservice'])
             layers.append(layer)
         return layers
 

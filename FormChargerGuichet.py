@@ -44,24 +44,12 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         self.context = context
         self.listLayers = listLayers
-        # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
-        # connexionLayers = context.getLayers()
-        #
-        # if connexionLayers[0] == "Rejected":
-        #     self.bRejected = True
-        #     return
-        #
-        # profilUser = connexionLayers[2]
-        #
-        # if connexionLayers[0] == "Accepted":
-        #     self.listLayers = connexionLayers[1]
-        #     # Les couches sont chargées dans l'ordre renvoyé dans geoaut_get.
         # Il faut inverser l'ordre pour retrouver le paramétrage de la carte du groupe
         self.listLayers.reverse()
 
         # Remplissage des différentes tables de couches
         self.setTableWidgetMonGuichet()
-        self.setTableWidgetFondsGeoportail()
+        self.setTableWidgetFondsGeoservices()
         # self.setTableWidgetAutresGeoservices()
 
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
@@ -109,29 +97,25 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # Colonne "Charger"
             self.setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
 
-    def setTableWidgetFondsGeoportail(self):
+    def setTableWidgetFondsGeoservices(self):
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
-        self.tableWidgetFondsGeoportail.setHorizontalHeaderLabels(entete)
-        self.tableWidgetFondsGeoportail.setColumnWidth(0, 400)
-        self.tableWidgetFondsGeoportail.setColumnWidth(1, 200)
-        self.tableWidgetFondsGeoportail.setColumnWidth(2, 130)
+        self.tableWidgetFondsGeoservices.setHorizontalHeaderLabels(entete)
+        self.tableWidgetFondsGeoservices.setColumnWidth(0, 400)
+        self.tableWidgetFondsGeoservices.setColumnWidth(1, 200)
+        self.tableWidgetFondsGeoservices.setColumnWidth(2, 130)
 
         # Autres lignes de la table
         for layer in self.listLayers:
-            if layer.type != cst.WMTS and layer.type != cst.WMS:
+            if layer.type != cst.WMTS:
                 continue
 
-            if layer.url.find(cst.WXSIGN) == -1:
-                continue
-
-            rowPosition = self.tableWidgetFondsGeoportail.rowCount()
-            self.tableWidgetFondsGeoportail.insertRow(rowPosition)
+            rowPosition = self.tableWidgetFondsGeoservices.rowCount()
+            self.tableWidgetFondsGeoservices.insertRow(rowPosition)
 
             # Colonne "Nom de la couche"
-            layerComposed = "{} ({})".format(layer.name, layer.layer_id)
-            item = QtWidgets.QTableWidgetItem(layerComposed)
-            self.tableWidgetFondsGeoportail.setItem(rowPosition, 0, item)
+            item = QtWidgets.QTableWidgetItem(layer.geoservice['title'])
+            self.tableWidgetFondsGeoservices.setItem(rowPosition, 0, item)
 
             # Colonne "Rôle"
             role = layer.role
@@ -139,10 +123,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 item = QtWidgets.QTableWidgetItem(self.roleCleVal[role])
             else:
                 item = QtWidgets.QTableWidgetItem("Pas de rôle, bizarre !")
-            self.tableWidgetFondsGeoportail.setItem(rowPosition, 1, item)
+            self.tableWidgetFondsGeoservices.setItem(rowPosition, 1, item)
 
             # Colonne "Charger"
-            self.setColonneCharger(self.tableWidgetFondsGeoportail, rowPosition, 2)
+            self.setColonneCharger(self.tableWidgetFondsGeoservices, rowPosition, 2)
 
     def setTableWidgetAutresGeoservices(self):
         # Entête
@@ -187,7 +171,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     def save(self):
         self.accept()
         layersQGIS = []
-        layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoportail, 2),
+        layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoservices, 2),
                          self.getLayersSelected(self.tableWidgetMonGuichet, 2)]
 
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]

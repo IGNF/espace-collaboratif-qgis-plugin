@@ -13,6 +13,23 @@ class JsonResponse(object):
     def __init__(self, response):
         self.__response = response
 
+    def getNumrec(self):
+        numrec = 0
+        if self.__response is None:
+            return numrec
+        data = self.__response.json()
+        if not 'numrec' in data:
+            return numrec
+        return data['numrec']
+
+    def getDataFromGeoservice(self, layer):
+        if self.__response is None:
+            return layer
+        data = self.__response.json()
+        # il faut copier le nom de la couche pour récupérer les données de la layer dans la boite "Cherger le guichet"
+        layer.name = data['title']
+        layer.geoservice.update(data)
+
     def getDataFromTable(self, layer):
         if self.__response is None:
             return layer
@@ -21,7 +38,8 @@ class JsonResponse(object):
         layer.description = data['description']
         layer.minzoom = data['min_zoom_level']
         layer.maxzoom = data['max_zoom_level']
-        layer.isBduni = data['database_versioning']
+        if data['database_versioning'] is True:
+            layer.isStandard = False
         layer.tileZoomLevel = data['tile_zoom_level']
         layer.readOnly = data['read_only']
         layer.geometryName = data['geometry_name']

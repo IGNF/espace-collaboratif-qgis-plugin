@@ -100,7 +100,7 @@ namespace = {'gml': 'http://www.opengis.net/gml'}
 # Types de couches, balise <TYPE>
 WMS = "geoservice"
 WFS = "feature-type"
-WMTS = "WMTS"
+WMTS = "geoservice"
 WCS = "WCS"
 COLLABORATIF = "collaboratif.ign.fr"
 WXSIGN = "wxs.ign.fr"

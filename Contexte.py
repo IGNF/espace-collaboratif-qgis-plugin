@@ -473,7 +473,7 @@ class Contexte(object):
                 '''
                 if layer.type == cst.WMTS:
                     importWmts = importWMTS(self, layer)
-                    titleLayer_uri = importWmts.getWtmsUrlParams(layer.layer_id)
+                    titleLayer_uri = importWmts.getWtmsUrlParams(layer.geoservice['layers'])
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                     if not rlayer.isValid():
                         print("Layer {} failed to load !".format(rlayer.name()))
@@ -547,7 +547,7 @@ class Contexte(object):
 
     def formatLayer(self, layer, newVectorLayer, nodeGroup, bbox, bColumnDetruitExist):
         geometryName = layer.geometryName
-        newVectorLayer.isBduni = layer.isBduni
+        newVectorLayer.isStandard = layer.isStandard
         idNameForDatabase = layer.idName
         newVectorLayer.idNameForDatabase = idNameForDatabase
         newVectorLayer.geometryNameForDatabase = geometryName
@@ -558,7 +558,7 @@ class Contexte(object):
 
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.name,
-                      'sridLayer': layer.srid, 'role': layer.role, 'isBduni': layer.isBduni,
+                      'sridLayer': layer.srid, 'role': layer.role, 'isStandard': layer.isStandard,
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'authentification': self.auth,
@@ -569,7 +569,7 @@ class Contexte(object):
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1
-        if layer.isBduni:
+        if not layer.isStandard:
             valStandard = 0
         dim = 0
         if layer.is3d:

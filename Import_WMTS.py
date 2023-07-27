@@ -43,18 +43,17 @@ except ImportError as e:
 
 
 class importWMTS:
-    # Variables
-    wmts = None
-    uri = QgsDataSourceUri()
-    context = None
-    wmts_lyr = None
-    tile_matrix_set = None
-    layer_id = None
-    crs = None
-    title_layer = None
-    selected_layer = None
+    uri = None
 
     def __init__(self, context, layer):
+        self.wmts = None
+        self.uri = QgsDataSourceUri().uri()
+        self.wmts_lyr = None
+        self.tile_matrix_set = None
+        self.layer_id = None
+        self.crs = None
+        self.title_layer = None
+        self.selected_layer = None
         self.context = context
         self.selected_layer = layer
         self.checkOpenService()
@@ -74,7 +73,7 @@ class importWMTS:
         web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
         '''
         self.crs = "EPSG:3857"
-        self.uri = self.selected_layer.url.format(urllib.parse.unquote(urllib.parse.urlencode(params)))
+        self.uri = self.selected_layer.geoservice['url'].format(urllib.parse.unquote(urllib.parse.urlencode(params)))
 
     # opening WMTS
     def checkOpenService(self):
@@ -168,9 +167,9 @@ class importWMTS:
     # SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities
     def getWtmsUrlParams(self, idGuichetLayerWmts):
         if not idGuichetLayerWmts:
-            raise Exception("Import_WMTS.py::getWtmsUrlParams : le nom de la couche geoportail est vide")
+            raise Exception("Import_WMTS.getWtmsUrlParams : le nom de la couche Géoservices est vide")
         if self.getLayer(idGuichetLayerWmts) is None:
-            raise Exception("Import_WMTS.py::getWtmsUrlParams : impossible de récupérer la couche Geoportail")
+            raise Exception("Import_WMTS.getWtmsUrlParams : impossible de récupérer la couche Géoservices")
         self.getTileMatrixSet()
         wmts_url_params = {
             "crs": self.crs,

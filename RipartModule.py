@@ -378,7 +378,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Se connecter a l\'Espace Collaboratif'),
-            callback=self.run,
+            callback=self.runConnexion,
             status_tip=self.tr(u'Se connecter a l\'Espace Collaboratif'),
             parent=self.iface.mainWindow())
 
@@ -438,16 +438,6 @@ class RipartPlugin:
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
-        '''
-        icon_path = ':/plugins/RipartPlugin/images/save.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
-            callback=self.saveChangesForAllLayers,
-            status_tip=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
-            parent=self.iface.mainWindow())
-        '''
-
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
         self.add_action(
             icon_path,
@@ -455,16 +445,6 @@ class RipartPlugin:
             callback=self.synchronizeData,
             status_tip=self.tr(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
-
-        '''
-        icon_path = ':/plugins/RipartPlugin/images/modifyFieldJson.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Modifier un champ JSON'),
-            callback=self.modifyFieldJson,
-            status_tip=self.tr(u'Modifier un champ JSON'),
-            parent=self.iface.mainWindow())
-        '''
 
         self.config.triggered.connect(self.configurePref)
         self.config.setStatusTip(self.tr(u"Ouvre la fenêtre de configuration du plugin."))
@@ -485,44 +465,6 @@ class RipartPlugin:
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
-
-    '''
-    def modifyFieldJson(self):
-        QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, "En travaux")
-        layer = self.context.iface.activeLayer()
-        fields = layer.fields()
-        for field in fields:
-            name = field.name()
-            if name != 'sens_de_circulation':
-                continue
-
-            index = fields.indexOf(name)
-            ews = layer.editorWidgetSetup(index)
-            print("Type:", ews.type())
-            print("Config:", ews.config())
-        self.context = Contexte.getInstance(self, QgsProject)
-        if self.context is None:
-            return
-        if self.context.client is None:
-            if not self.context.getConnexionEspaceCollaboratif(newLogin=True):
-                return
-        layer = self.iface.activeLayer()
-        dlgModifyFieldJson = FieldsJsonView(self.context, layer)
-        dlgModifyFieldJson.exec_()
-    '''
-
-    '''
-    def test(self):
-        # Voir les données du formulaire pour chaque attribut
-        layer = self.context.iface.activeLayer()
-        for f in layer.selectedFeatures():
-            fields = f.fields()
-            for field in fields:
-                name = field.name()
-                index = fields.indexOf(name)
-                ews = layer.editorWidgetSetup(index)
-                print("Name:{0}, Type:{1}, Config:{2}".format(name, ews.type(), ews.config()))
-    '''
 
     def chargerGuichet(self):
         try:
@@ -560,55 +502,6 @@ class RipartPlugin:
                             str(e),
                             level=1, duration=5)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-
-    '''
-    def saveChangesForAllLayers(self):
-        report = "<b>Contenu de la transaction</b>"
-        self.context = Contexte.getInstance(self, QgsProject)
-        if self.context is None:
-            return
-        if self.context.client is None:
-            if not self.context.getConnexionEspaceCollaboratif(newLogin=True):
-                return
-        messages = []
-        # Une transaction par couche modifiée
-        layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
-        for layer in QgsProject.instance().mapLayers().values():
-            bRes = False
-            for layerTableOfTables in layersTableOfTables:
-                if layer.name() in layerTableOfTables[0]:
-                    bRes = True
-                    break
-            if not bRes:
-                continue
-            editBuffer = layer.editBuffer()
-            if not editBuffer:
-                continue
-
-            try:
-                messageProgress = "Synchronisation de la couche {}".format(layer.name())
-                progress = ProgressBar(1, messageProgress)
-                wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
-                # Les modifications d'une couche sont envoyées au serveur, il faut donc vider le buffer de la couche
-                # ou sont stockés les changements, c'est un post normal
-                bNormalWfsPost = True
-                progress.setValue(1)
-                messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)))
-                progress.close()
-
-            except Exception as e:
-                messages.append('<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e))
-
-        # Message de fin de transaction
-        dlgInfo = FormInfo()
-        dlgInfo.textInfo.setText(report)
-        dlgInfo.textInfo.setOpenExternalLinks(True)
-        if len(messages) == 0:
-            dlgInfo.textInfo.append("<br/>Vide")
-        for message in messages:
-            dlgInfo.textInfo.append(message)
-        dlgInfo.exec_()
-    '''
 
     def synchronizeData(self):
         endMessage = '<b>Contenu de la synchronisation</b>'
@@ -679,12 +572,8 @@ class RipartPlugin:
             if result is not None:
                 for r in result:
                     parameters['databasename'] = layer.databasename = r[4]
-                    bduni = True
-                    # si r[3] est égal à 1 alors c'est une table standard
-                    if r[3] == 1:
-                        bduni = False
-                    layer.isBduni = bduni
-                    parameters['isBduni'] = bduni
+                    layer.isStandard = r[3]
+                    parameters['isStandard'] = r[3]
                     parameters['sridLayer'] = r[5]
                     layer.idNameForDatabase = r[2]
                     parameters['geometryName'] = r[6]
@@ -695,7 +584,7 @@ class RipartPlugin:
             bDetruit = True
             # si c'est une autre table donc standard alors la colonne n'existe pas
             # et il faut vider la table pour éviter de créer un objet à chaque Get
-            if not layer.isBduni:
+            if layer.isStandard:
                 bDetruit = False
                 SQLiteManager.emptyTable(layer.name())
                 SQLiteManager.vacuumDatabase()
@@ -706,7 +595,7 @@ class RipartPlugin:
             wfsGet = WfsGet(parameters)
             # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser
             # Il faut aussi qu'il soit égal à 1, ce numrec correspondant à une table non BDUni
-            if layer.isBduni:
+            if not layer.isStandard:
                 maxNumrec = wfsGet.getMaxNumrec()
                 if numrec == maxNumrec:
                     endMessage += "<br/>Pas de mise à jour\n\n"
@@ -755,9 +644,8 @@ class RipartPlugin:
             self.iface.removeToolBarIcon(action)
         del self.toolbar
 
-    def run(self):
+    def runConnexion(self):
         # Connexion à l'Espace collaboratif
-        # si res = 0, alors l'utilisateur à annuler son action
         if not self.doConnexion(True):
             return
 

@@ -9,8 +9,10 @@ from .XMLResponse import XMLResponse
 from . import Constantes as cst
 from .Wkt import Wkt
 from .BBox import BBox
+from .HttpRequest import HttpRequest
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from qgis.PyQt.QtWidgets import QMessageBox
+from .JsonResponse import JsonResponse
 
 
 class WfsPost(object):
@@ -47,7 +49,7 @@ class WfsPost(object):
             for r in result:
                 self.layer.databasename = r[4]
                 self.isTableStandard = r[3]
-                self.layer.isBduni = r[3]
+                self.layer.isStandard = r[3]
                 self.layer.srid = r[5]
                 self.layer.idNameForDatabase = r[2]
                 self.layer.geometryNameForDatabase = r[6]
@@ -112,8 +114,6 @@ class WfsPost(object):
         if self.isTableStandard:
             self.setKey(feature.id(), self.layer.idNameForDatabase)
         for key, value in attributesChanged.items():
-            # if value == "NULL" or value is None or value == qgis.core.NULL: #Remplacement par QGIS d'une valeur vide, on n'envoie pas
-            #     fieldsNameValue += '"{0}": null, '.format(feature.fields()[key].name())
             if value is None or value == qgis.core.NULL: #Remplacement par QGIS d'une valeur vide, on n'envoie pas
                 continue
             else:
@@ -148,18 +148,20 @@ class WfsPost(object):
     def gcms_post(self, strActions, bNormalWfsPost):
         print("Post_action : {}".format(strActions))
         params = dict(actions=strActions, database=self.layer.databasename)
-        response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
+        response = HttpRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                         data=params)
-        xmlResponse = XMLResponse(response)
+        xmlResponse = XMLResponse(response.text)
         responseWfs = xmlResponse.checkResponseWfsTransactions()
         if responseWfs['status'] == 'SUCCESS':
             # Mise à jour de la base SQLite pour les objets détruits et modifiés
             # d'une couche BDUni
-            if self.layer.isBduni:
+            if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
             # Mise à jour de la couche
             try:
-                self.synchronize()
+                # Le numrec est égal à 0 pour une couche standard
+                # à un numéro pour une couche BDUni
+                numrec = self.synchronize()
             except Exception as e:
                 QMessageBox.information(self.context.iface.mainWindow(), cst.IGNESPACECO, format(e))
                 # Suppression de la couche dans la carte. Virer la table dans SQLite
@@ -172,10 +174,7 @@ class WfsPost(object):
                     SQLiteManager.emptyTable(cst.TABLEOFTABLES)
                 SQLiteManager.vacuumDatabase()
                 return
-            numrec = self.getNumrecFromTransaction(responseWfs['urlTransaction'])
-            # Cas des couches standard, il faut mettre numrec à 0
-            if numrec is None:
-                numrec = 0
+            # Mise à jour du numrec pour la couche dans la table des tables
             SQLiteManager.updateNumrecTableOfTables(self.layer.name(), numrec)
             SQLiteManager.vacuumDatabase()
             # Le buffer de la couche est vidée et elle est rechargée
@@ -184,25 +183,12 @@ class WfsPost(object):
             self.layer.reload()
         return responseWfs
 
-    def getJsonTransaction(self, urlTransaction):
-        url = "{0}.json".format(urlTransaction)
-        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
-        return json.loads(response)
-
-    def getNumrecFromTransaction(self, urlTransaction):
-        # https://espacecollaboratif.ign.fr/gcms/api/database/test/transaction/281922.json
-        # https://espacecollaboratif.ign.fr/gcms/api/database/test/transaction/281927/action/1130961.json
-        url = "{0}.json".format(urlTransaction)
-        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
-        data = json.loads(response)
-        return data['numrec']
-
     def synchronize(self):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
         # et il faut vider la table pour éviter de créer un objet à chaque Get
-        if not self.layer.isBduni:
+        if self.layer.isStandard:
             bDetruit = False
             SQLiteManager.emptyTable(self.layer.name())
             SQLiteManager.vacuumDatabase()
@@ -212,7 +198,7 @@ class WfsPost(object):
         parameters = {'databasename': self.layer.databasename, 'layerName': self.layer.name(),
                       'geometryName': self.layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
                       'sridLayer': self.layer.srid, 'bbox': self.bbox.getFromLayer(self.filterName, False),
-                      'detruit': bDetruit, 'isBduni': self.layer.isBduni,
+                      'detruit': bDetruit, 'isStandard': self.layer.isStandard,
                       'is3D': self.layer.geometryDimensionForDatabase,
                       'numrec': numrec, 'role': None,
                       'urlHostEspaceCo': self.context.urlHostEspaceCo,
@@ -224,6 +210,7 @@ class WfsPost(object):
                       "dans QGIS. Il faut la ré-importer. En cas de problème, veuillez contacter le gestionnaire " \
                       "de votre groupe."
             raise Exception(message)
+        return numrecmessage[0]
 
     def commitLayer(self, currentLayer, editBuffer, bNormalWfsPost):
         self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)

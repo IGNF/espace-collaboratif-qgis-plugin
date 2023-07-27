@@ -75,7 +75,7 @@ class SQLiteManager(object):
                 sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
         # Anomalie 17196, l'identifiant ID_SQLITE et FINGERPRINT sont positionnés en dernier dans le formulaire
         sqlAttributes += "{0} INTEGER PRIMARY KEY AUTOINCREMENT".format(cst.ID_SQLITE)
-        if layer.isBduni:
+        if not layer.isStandard:
             sqlAttributes += ",{0} TEXT".format(cst.FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
         self.geometryType = typeGeometrie
@@ -110,10 +110,9 @@ class SQLiteManager(object):
                                       'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
         cur.execute(sqlGeometryColumn)
-        if cur.fetchone()[0] == 0:
-            print("SQLiteManager : table {} créée.".format(layer.name))
-        else:
+        if not SQLiteManager.isTableExist(layer.name):
             raise Exception("SQLiteManager : création de la table {} impossible.".format(layer.name))
+        print("SQLiteManager : table {} créée.".format(layer.name))
         connection.commit()
         cur.close()
         connection.close()
@@ -314,6 +313,8 @@ class SQLiteManager(object):
 
     @staticmethod
     def emptyTable(tableName):
+        if not SQLiteManager.isTableExist(tableName):
+            return
         sql = u"DELETE FROM {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} vidée".format(tableName))

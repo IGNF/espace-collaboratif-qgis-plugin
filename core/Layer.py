@@ -32,7 +32,7 @@ class Layer(object):
         self.description = ""
         self.minzoom = 0
         self.maxzoom = 20
-        self.isBduni = False
+        self.isStandard = True
         self.tileZoomLevel = 0
         self.readOnly = None
         self.geometryName = ''
@@ -44,10 +44,6 @@ class Layer(object):
         self.is3d = None
         self.style = {}
         self.srid = -1
-        # self.styles = []
-        # les attributs suivants sont-ils utiles ?
-        # self.extent = None
-        # self.url = ""
 
     '''
         Pour l'item 'style', récupération de la symbologie d'une couche

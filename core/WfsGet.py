@@ -22,13 +22,13 @@ class WfsGet(object):
         self.bbox = parameters['bbox']
         self.parametersGcmsGet = {}
         self.bDetruit = parameters['detruit']
-        self.isBduni = parameters['isBduni']
+        self.isStandard = parameters['isStandard']
         self.is3D = parameters['is3D']
         self.numrec = int(parameters['numrec'])
         # Paramètres pour insérer un objet dans une table SQLite
         self.parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                             'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
-                                            'isBduni': self.isBduni, 'is3D': self.is3D,
+                                            'isStandard': self.isStandard, 'is3D': self.is3D,
                                             'geometryType': ""}
 
     def makeRequestDeletedObjects(self):
@@ -92,10 +92,10 @@ class WfsGet(object):
         self.initParametersGcmsGet()
         start = time.time()
         totalRows = 0
-        if self.isBduni:
-            maxNumrec = self.getMaxNumrec()
-        else:
+        if self.isStandard:
             maxNumrec = 0
+        else:
+            maxNumrec = self.getMaxNumrec()
 
         sqliteManager = SQLiteManager()
         while True:
@@ -109,7 +109,7 @@ class WfsGet(object):
                 break
             # si c'est une table non BDUni ou une extraction,
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
-            if not self.isBduni or bExtraction:
+            if not self.isStandard or bExtraction:
                 totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
@@ -130,7 +130,7 @@ class WfsGet(object):
             if response['stop']:
                 break
         # suppression des objets pour une table BDUni et différent d'une extraction
-        if self.isBduni and bExtraction is False:
+        if self.isStandard and bExtraction is False:
             self.makeRequestDeletedObjects()
         # nettoyage de la base SQLite
         SQLiteManager.vacuumDatabase()
@@ -152,7 +152,7 @@ class WfsGet(object):
         url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.urlHostEspaceCo, self.databasename,
                                                                          self.layerName)
         response = HttpRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
-        data = json.loads(response)
+        data = json.loads(response.text)
         print("database : {} numrec : {}".format(self.databasename, data['numrec']))
         return data['numrec']
 

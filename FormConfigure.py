@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.core import QgsVectorLayer
 from .RipartHelper import RipartHelper
 from .Contexte import Contexte
-from core.SQLiteManager import SQLiteManager
+from .core.SQLiteManager import SQLiteManager
 from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
