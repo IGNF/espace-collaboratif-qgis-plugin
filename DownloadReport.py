@@ -2,56 +2,63 @@ from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTr
     QgsEditorWidgetSetup
 
 from qgis.utils import spatialite_connect
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsVectorLayer, QgsProject, \
+    QgsDataSourceUri
 
 from .PluginHelper import PluginHelper
-from .Contexte import Contexte
 
 from .core.ProgressBar import ProgressBar
 from .core.BBox import BBox
 from .core.RipartLoggerCl import RipartLogger
 from .core.NoProfileException import NoProfileException
+from .core.SQLiteManager import SQLiteManager
 from .core import Constantes as cst
 
+import os.path
 
+
+# Importation des signalements dans le projet QGIS
 class DownloadReport(object):
-    """Importation des remarques dans le projet QGIS
-    """
-    logger = RipartLogger("DownloadReport").getRipartLogger()
-
-    # le contexte de la carte
-    context = None
-
-    # barre de progression (des remarques importées)
-    progress = None
-    progressVal = 0
 
     def __init__(self, context):
-        """
-        Constructor
-        Initialisation du contexte et de la progressbar
-
-        :param context: le contexte de la carte actuelle
-        :type context: Contexte
-        """
+        self.logger = RipartLogger("DownloadReport").getRipartLogger()
         self.context = context
+        # barre de progression des signalements importés
+        self.progress = None
+        self.progressVal = 0
 
-    def doImport(self):
-        """Téléchargement et import des remarques sur la carte
-        """
-        self.logger.debug("doImport")
+    def getUriDatabaseSqlite(self):
+        uri = QgsDataSourceUri(cst.EPSG4326)
+        uri.setDatabase(SQLiteManager.getBaseSqlitePath())
+        return uri
 
-        params = {}  # paramètres pour la requête au service Ripart
+    def addReportSketchLayersToTheCurrentMap(self):
+        uri = self.getUriDatabaseSqlite()
+        self.logger.debug(uri.uri())
+        maplayers = self.context.getAllMapLayers()
+        root = QgsProject.instance().layerTreeRoot()
+        for table in PluginHelper.reportSketchLayersName:
+            if table not in maplayers:
+                uri.setDataSource('', table, 'geom')
+                uri.setSrid(str(cst.EPSGCRS))
+                vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
+                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+                QgsProject.instance().addMapLayer(vlayer, False)
+                root.insertLayer(0, vlayer)
+                self.logger.debug("Layer " + vlayer.name() + " added to map")
+                # ajoute les styles aux couches
+                style = os.path.join(self.context.projectDir, "espacecoStyles", table + ".qml")
+                vlayer.loadNamedStyle(style)
+        self.context.mapCan.refresh()
 
-        if self.context.client is None:
-            connResult = self.context.getConnexionEspaceCollaboratif()
-            if not connResult:
-                return 0
-            if self.context.client is None:  # la connexion a échoué, on ne fait rien
-                self.context.iface.messageBar().pushMessage("",
-                                                            "Un problème de connexion avec l'Espace collaboratif est survenu. Veuillez vous reconnecter.",
-                                                            level=2, duration=5)
-                return
+    # Téléchargement et import des signalements sur la carte
+    def do(self):
+        self.logger.debug("DownloadReport.do")
 
+        # paramètres pour la requête au service de l'espace collaboratif
+        params = {}
+
+        # l'utilisateur n'a pas de profil actif, impossible pour lui de travailler
         if self.context.profil.geogroup.getName() is None:
             raise NoProfileException(
                 "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
@@ -75,10 +82,12 @@ class DownloadReport(object):
         message = "Placement des signalements sur la carte"
         self.progress = ProgressBar(200, message)
 
-        self.context.addRipartLayersToMap()
+        # Création des couches et des liens vers la base SQLite
+        self.addReportSketchLayersToTheCurrentMap()
 
-        # vider les tables ripart
-        self.context.emptyAllRipartLayers()
+        # Vider les tables signalement et croquis
+        SQLiteManager.emptyAllReportAndSketchInTables(PluginHelper.reportSketchLayersName)
+        self.context.refresh_layers()
 
         pagination = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Pagination, "Map").text
         if pagination is None:

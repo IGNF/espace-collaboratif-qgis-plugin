@@ -121,7 +121,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         topItems = []
 
         for lay in maplayers:
-            if type(lay) is QgsVectorLayer and not lay.name() in PluginHelper.croquis_layers_name:
+            if type(lay) is QgsVectorLayer and not lay.name() in PluginHelper.reportSketchLayersName:
                 item = QTreeWidgetItem()
                 item.setText(0, str(lay.name()))
                 inConfig = lay.name() in attCroq

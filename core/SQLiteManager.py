@@ -481,3 +481,8 @@ class SQLiteManager(object):
         sql = "SELECT AddGeometryColumn('" + nameTable + "',"
         sql += "'geom'," + str(cst.EPSGCRS) + ",'" + geometryType + "', 'XY')"
         SQLiteManager.executeSQL(sql)
+
+    @staticmethod
+    def emptyAllReportAndSketchInTables(tablesList):
+        for table in tablesList:
+            SQLiteManager.emptyTable(table)

@@ -54,7 +54,7 @@ class Magicwand(object):
         selectedRemarque = False
         mapLayers = self.context.mapCan.layers()
         for ml in mapLayers:
-            if ml.name() in PluginHelper.sketch_layers and len(ml.selectedFeatures()) > 0:
+            if ml.name() in PluginHelper.sketchLayers and len(ml.selectedFeatures()) > 0:
                 selectedCroquis = True
             if ml.name() == PluginHelper.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
                 selectedRemarque = True
@@ -84,7 +84,7 @@ class Magicwand(object):
         mapLayers = self.context.mapCan.layers()
 
         for ml in mapLayers:
-            if ml.name() in PluginHelper.sketch_layers and len(ml.selectedFeatures()) > 0:
+            if ml.name() in PluginHelper.sketchLayers and len(ml.selectedFeatures()) > 0:
 
                 for feat in ml.selectedFeatures():
                     idx = ml.fields().lookupField("NoSignalement")

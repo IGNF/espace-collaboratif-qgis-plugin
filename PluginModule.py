@@ -102,7 +102,7 @@ class RipartPlugin:
             self.context = Contexte.getInstance(self, QgsProject)
 
         # S'il n'a y pas de base SQLite
-        uri = self.context.getUriDatabaseSqlite()
+        uri = SQLiteManager.getBaseSqlitePath()
         if uri is None:
             return
 
@@ -381,7 +381,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Créer un nouveau signalement'),
-            callback=self.createRemark,
+            callback=self.createReport,
             status_tip=self.tr(u'Créer un nouveau signalement'),
             parent=self.iface.mainWindow())
 
@@ -389,7 +389,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Supprimer les signalements de la carte en cours'),
-            callback=self.removeRemarks,
+            callback=self.removeReports,
             status_tip=self.tr(u'Supprimer les signalements de la carte en cours'),
             parent=self.iface.mainWindow())
 
@@ -623,12 +623,12 @@ class RipartPlugin:
     # Téléchargement des signalements
     def downloadReports(self):
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            # Connexion à l'Espace collaboratif
+            if not self.doConnexion(False):
                 return
-
+            # Téléchargement des signalements
             downloadReport = DownloadReport(self.context)
-            result = downloadReport.doImport()
+            result = downloadReport.do()
             if result == 0:
                 return
 
@@ -665,9 +665,7 @@ class RipartPlugin:
                             "Problème dans la réponse faite au(x) signalement(s) : {0}".format(str(e)),
                             level=2, duration=5)
 
-    def createRemark(self):
-        """Create a new remark
-        """
+    def createReport(self):
         try:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
@@ -681,22 +679,20 @@ class RipartPlugin:
                             u"Un problème est survenu lors de la création du signalement",
                             level=2, duration=5)
 
-    def removeRemarks(self):
-        """Remove all remarks from current map
-        (empty the tables from ripart table of the sqlite DB)
-        """
+    # Suppression de tous les signalements et croquis de la carte courante
+    def removeReports(self):
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            # Connexion à l'Espace collaboratif
+            if not self.doConnexion(False):
                 return
             message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.Yes:
-                self.context.emptyAllRipartLayers()
+                SQLiteManager.emptyAllReportAndSketchInTables(PluginHelper.reportSketchLayersName)
+                self.context.refresh_layers()
             else:
                 return
-
         except Exception as e:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",

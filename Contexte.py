@@ -10,9 +10,8 @@ version 4.0.1, 15/12/2020
 
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
-from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
-    QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
-    QgsWkbTypes, QgsLayerTreeGroup, QgsEditorWidgetSetup
+from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
+    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup
 
 import os.path
 import shutil
@@ -117,6 +116,7 @@ class Contexte(object):
         self.profil = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        self.dbPath = SQLiteManager.getBaseSqlitePath()
 
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata()
@@ -309,7 +309,6 @@ class Contexte(object):
 
     # Création de la base de données spatialite si elle n'existe pas
     def createDatabaseSQLite(self):
-        self.dbPath = SQLiteManager.getBaseSqlitePath()
         if not os.path.isfile(self.dbPath):
             try:
                 shutil.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
@@ -326,7 +325,7 @@ class Contexte(object):
             return
         SQLiteManager.createReportTable()
         # Création des tables de croquis, si elles n'existent pas
-        for nameTable, geometryType in PluginHelper.sketch_layers.items():
+        for nameTable, geometryType in PluginHelper.sketchLayers.items():
             if SQLiteManager.isTableExist(nameTable):
                 continue
             SQLiteManager.createSketchTable(nameTable, geometryType)
@@ -343,7 +342,7 @@ class Contexte(object):
         bColumnDetruitExist = sqliteManager.createTableFromLayer(layer)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
-        uri = self.getUriDatabaseSqlite()
+        uri = SQLiteManager.getBaseSqlitePath()
         self.logger.debug(uri.uri())
         uri.setDataSource('', layer.name, layer.geometryName)
         uri.setSrid(str(cst.EPSGCRS))
@@ -604,38 +603,6 @@ class Contexte(object):
         print(message)
         return message
 
-    def getUriDatabaseSqlite(self):
-        uri = QgsDataSourceUri(cst.EPSG4326)
-        dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
-        uri.setDatabase(self.dbPath)
-        return uri
-
-    def addRipartLayersToMap(self):
-        """Add ripart layers to the current map
-        """
-        uri = self.getUriDatabaseSqlite()
-        self.logger.debug(uri.uri())
-
-        maplayers = self.getAllMapLayers()
-        root = self.QgsProject.instance().layerTreeRoot()
-
-        for table in PluginHelper.croquis_layers_name:
-            if table not in maplayers:
-                uri.setDataSource('', table, 'geom')
-                uri.setSrid(str(cst.EPSGCRS))
-                vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
-                self.QgsProject.instance().addMapLayer(vlayer, False)
-                root.insertLayer(0, vlayer)
-                self.logger.debug("Layer " + vlayer.name() + " added to map")
-
-                # ajoute les styles aux couches
-                style = os.path.join(self.projectDir, "espacecoStyles", table + ".qml")
-                vlayer.loadNamedStyle(style)
-
-        self.mapCan.refresh()
-
     def getAllMapLayers(self):
         """
         Return the list of layer names which are loaded in the map
@@ -683,25 +650,6 @@ class Contexte(object):
             return mapByName[0]
         else:
             return None
-
-    def emptyAllRipartLayers(self):
-        """
-        Supprime toutes les remarques, vide les tables de la base ripart.sqlite
-        """
-        ripartLayers = PluginHelper.sketch_layers
-        ripartLayers[PluginHelper.nom_Calque_Signalement] = "POINT"
-        try:
-            self.conn = spatialite_connect(self.dbPath)
-            for table in ripartLayers:
-                PluginHelper.emptyTable(self.conn, table)
-            ripartLayers.pop(PluginHelper.nom_Calque_Signalement, None)
-            self.conn.commit()
-        except RipartException as e:
-            self.logger.error(format(e))
-            raise
-        finally:
-            self.conn.close()
-        self.refresh_layers()
 
     def refresh_layers(self):
         """
@@ -912,8 +860,6 @@ class Contexte(object):
         :rtype: list de Point
         """
         cur = None
-        dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
         tmpTable = "tmpTable"
         allCroquisPoints = []
         if len(listCroquis) == 0:
@@ -981,8 +927,6 @@ class Contexte(object):
         barycentre = None
         tmpTable = "tmpTable"
         try:
-            dbName = self.projectFileName + "_espaceco"
-            self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
             self.conn = spatialite_connect(self.dbPath)
             cur = self.conn.cursor()
 
@@ -1038,7 +982,7 @@ class Contexte(object):
         :return: dictionnaire contenant les croquis
         :rtype: dictionnary
         """
-        crlayers = PluginHelper.sketch_layers
+        crlayers = PluginHelper.sketchLayers
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
 

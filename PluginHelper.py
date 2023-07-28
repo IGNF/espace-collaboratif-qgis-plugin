@@ -42,12 +42,12 @@ class PluginHelper:
     nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
     nom_Calque_Croquis_Point = "Croquis_EC_Point"
 
-    sketch_layers = {nom_Calque_Croquis_Polygone: 'POLYGON', nom_Calque_Croquis_Ligne: 'LINESTRING',
-                     nom_Calque_Croquis_Point: 'POINT'}
+    sketchLayers = {nom_Calque_Croquis_Polygone: 'POLYGON', nom_Calque_Croquis_Ligne: 'LINESTRING',
+                    nom_Calque_Croquis_Point: 'POINT'}
 
     # liste des noms, car le dictionnaire ne préserve pas l'ordre des éléments
-    croquis_layers_name = [nom_Calque_Croquis_Polygone, nom_Calque_Croquis_Ligne,
-                           nom_Calque_Croquis_Point, nom_Calque_Signalement]
+    reportSketchLayersName = [nom_Calque_Croquis_Polygone, nom_Calque_Croquis_Ligne,
+                              nom_Calque_Croquis_Point, nom_Calque_Signalement]
 
     calque_Signalement_Lyr = "Signalement.lyr"
 
@@ -490,23 +490,6 @@ class PluginHelper:
         for c in maptag.findall('Attributs_croquis'):
             maptag.remove(c)
         tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
-
-    @staticmethod
-    def emptyTable(conn, table):
-        """Vide le contenu de la table donnée en paramètre
-        
-        :param conn: la connexion à la base de données
-        :type conn: 
-        
-        :param table: la table à vider
-        :type: string
-        """
-        cur = conn.cursor()
-        try:
-            sql = u"DELETE FROM " + table
-            cur.execute(sql)
-        finally:
-            cur.close()
 
     @staticmethod
     def insertRemarques(conn, rem):
