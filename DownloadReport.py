@@ -1,30 +1,22 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 1 oct. 2015
-
-version 3.0.0 , 26/11/2018
-
-@author: AChang-Wailing
-"""
-
-from .core.RipartLoggerCl import RipartLogger
-from PyQt5.QtWidgets import QProgressBar, QApplication
-from PyQt5.QtCore import Qt
-from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, \
+from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject,\
     QgsEditorWidgetSetup
+
 from qgis.utils import spatialite_connect
+
 from .PluginHelper import PluginHelper
-from .core.BBox import BBox
-from .core import Constantes as cst
-from .core.NoProfileException import NoProfileException
 from .Contexte import Contexte
+
 from .core.ProgressBar import ProgressBar
+from .core.BBox import BBox
+from .core.RipartLoggerCl import RipartLogger
+from .core.NoProfileException import NoProfileException
+from .core import Constantes as cst
 
 
-class ImporterRipart(object):
+class DownloadReport(object):
     """Importation des remarques dans le projet QGIS
     """
-    logger = RipartLogger("ImporterRipart").getRipartLogger()
+    logger = RipartLogger("DownloadReport").getRipartLogger()
 
     # le contexte de la carte
     context = None
@@ -37,14 +29,14 @@ class ImporterRipart(object):
         """
         Constructor
         Initialisation du contexte et de la progressbar
-        
+
         :param context: le contexte de la carte actuelle
         :type context: Contexte
         """
         self.context = context
 
     def doImport(self):
-        """Téléchargement et import des remarques sur la carte   
+        """Téléchargement et import des remarques sur la carte
         """
         self.logger.debug("doImport")
 
@@ -211,7 +203,7 @@ class ImporterRipart(object):
 
     def setMapExtent(self, box):
         """set de l'étendue de la carte
-        
+
         :param box: bounding box
         """
         source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
@@ -229,7 +221,7 @@ class ImporterRipart(object):
 
     def showImportResult(self, cnt):
         """Résultat de l'import
-        
+
         :param cnt: le nombre de remarques importées
         :type cnt: int
         """
