@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from qgis.PyQt import uic, QtWidgets
 from PyQt5.QtCore import Qt
 from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
 from .core import Constantes as cst
@@ -59,11 +59,11 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def setComboBoxWorkZone(self):
         index = -1
         polyLayers = self.context.getMapPolygonLayers()
-        polyList = [val for key, val in polyLayers.items() if val != RipartHelper.nom_Calque_Croquis_Polygone]
+        polyList = [val for key, val in polyLayers.items() if val != PluginHelper.nom_Calque_Croquis_Polygone]
         self.comboBoxWorkZone.clear()
         self.comboBoxWorkZone.addItem("")
         self.comboBoxWorkZone.addItems(polyList)
-        zone = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
+        zone = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
         if zone is None:
             self.comboBoxWorkZone.setCurrentIndex(0)
         else:
@@ -92,7 +92,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             extension = os.path.splitext(shapefilePath)[1]
             if extension[1:] not in formats:
                 message = u"Le fichier de type '" + extension + u"' n'est pas un fichier Shapefile."
-                RipartHelper.showMessageBox(message)
+                PluginHelper.showMessageBox(message)
             else:
                 parts = shapefilePath.split('/')
                 shapefileName = parts[len(parts) - 1]
@@ -156,7 +156,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez " \
                       "le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
                       "assigné]".format(vlayer.name())
-            RipartHelper.showMessageBox(message)
+            PluginHelper.showMessageBox(message)
         return ""
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
@@ -191,12 +191,12 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if spatialFilterLayerName in self.newShapefilesDict:
             message = self.importShapefile(spatialFilterLayerName)
             # Sauvegarde du nom de la nouvelle zone de travail
-            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
+            PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_Zone_extraction,
                                         spatialFilterLayerName,
                                         "Map")
         # si spatialFilterLayerName est rempli, la zone existe déjà
         elif spatialFilterLayerName != '':
-            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
+            PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_Zone_extraction,
                                         spatialFilterLayerName,
                                         "Map")
 
@@ -224,8 +224,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             return
 
         # Le nom de la zone stockée dans le xml .../xxx_espaceco.xml
-        storedWorkZone = RipartHelper.load_ripartXmlTag(self.context.projectDir,
-                                                        RipartHelper.xml_Zone_extraction,
+        storedWorkZone = PluginHelper.load_ripartXmlTag(self.context.projectDir,
+                                                        PluginHelper.xml_Zone_extraction,
                                                         "Map").text
 
         bNewGroup = self.activeGroup != self.nameChosenGroup
@@ -269,7 +269,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                     QgsProject.instance().write()
                 else:
                     self.bCancel = True
-                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.nameChosenGroup,
+                PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_GroupeActif, self.nameChosenGroup,
                                         "Serveur")
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
@@ -288,7 +288,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     self.context.removeLayersFromProject(layersInProject, layersInTT, False)
-                    RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone,
+                    PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
                                                 "Map")
                     self.removeTablesSQLite(layersInProject)
                 else:

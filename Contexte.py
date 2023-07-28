@@ -20,7 +20,7 @@ import ntpath
 import configparser
 
 from .RipartException import RipartException
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.ClientHelper import ClientHelper
 from .core.SketchAttributes import SketchAttributes
@@ -129,7 +129,10 @@ class Contexte(object):
             self.checkConfigFile()
 
             # set de la base de données
-            self.getOrCreateDatabase()
+            self.createDatabaseSQLite()
+
+            # Création des tables de signalements et de croquis
+            self.createTablesReportsAndSketchs()
 
             # set des fichiers de style
             self.copyRipartStyleFiles()
@@ -185,7 +188,7 @@ class Contexte(object):
         """
         self.projectDir = QgsProject.instance().homePath()
         if self.projectDir == "":
-            RipartHelper.showMessageBox(
+            PluginHelper.showMessageBox(
                 u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser le plugin de l'espace collaboratif")
             raise Exception(u"Projet QGIS non enregistré")
 
@@ -194,7 +197,7 @@ class Contexte(object):
 
         nbPoints = fname.count(".")
         if nbPoints != 1:
-            RipartHelper.showMessageBox(
+            PluginHelper.showMessageBox(
                 u"Le nom de votre projet QGIS ne doit pas contenir de point en dehors de son extension (.qgz). Merci "
                 u"de le renommer.")
             raise Exception(u"Nom de projet QGIS non valide")
@@ -205,28 +208,28 @@ class Contexte(object):
         """
         Contrôle de l'existence du fichier de configuration
         """
-        ripartxml = self.projectDir + os.path.sep + RipartHelper.getConfigFile()
+        ripartxml = self.projectDir + os.path.sep + PluginHelper.getConfigFile()
         if not os.path.isfile(ripartxml):
             try:
-                shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
-                            RipartHelper.nom_Fichier_Parametres_Ripart, ripartxml)
-                self.logger.debug("Copy {}".format(RipartHelper.nom_Fichier_Parametres_Ripart))
-                new_file = os.path.join(self.projectDir, RipartHelper.getConfigFile())
+                shutil.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
+                            PluginHelper.nom_Fichier_Parametres_Ripart, ripartxml)
+                self.logger.debug("Copy {}".format(PluginHelper.nom_Fichier_Parametres_Ripart))
+                new_file = os.path.join(self.projectDir, PluginHelper.getConfigFile())
                 os.rename(ripartxml, new_file)
             except Exception as e:
                 self.logger.error(
-                    "No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
-                raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
+                    "No {} found in plugin directory".format(PluginHelper.nom_Fichier_Parametres_Ripart) + format(e))
+                raise Exception("Le fichier de configuration " + PluginHelper.nom_Fichier_Parametres_Ripart +
                                 " n'a pas été trouvé.")
 
     def copyRipartStyleFiles(self):
         """
         Copie les fichiers de styles (pour les remarques et croquis ripart)
         """
-        styleFilesDir = self.projectDir + os.path.sep + RipartHelper.qmlStylesDir
+        styleFilesDir = self.projectDir + os.path.sep + PluginHelper.qmlStylesDir
 
-        RipartHelper.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
-                          RipartHelper.qmlStylesDir, styleFilesDir)
+        PluginHelper.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
+                          PluginHelper.qmlStylesDir, styleFilesDir)
 
     def getVisibilityLayersFromGroupeActif(self):
         """
@@ -259,34 +262,34 @@ class Contexte(object):
         """
         self.logger.debug("getConnexionEspaceCollaboratif")
         try:
-            self.urlHostEspaceCo = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
+            self.urlHostEspaceCo = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_UrlHost,
                                                                   "Serveur").text
             self.logger.debug("this.urlHostEspaceCo " + self.urlHostEspaceCo)
 
         except Exception as e:
             self.logger.error("URLHOST inexistant dans fichier configuration")
-            RipartHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
+            PluginHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
                                         u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion "
                                         u"...)")
             return
 
         self.loginWindow = FormConnectionDialog(self)
         self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostEspaceCo))
-        loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")
+        loginXmlNode = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur")
         if loginXmlNode is None:
             self.login = ""
         else:
-            self.login = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur").text
+            self.login = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur").text
 
-        xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
+        xmlproxy = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_proxy, "Serveur").text
         if xmlproxy is not None and str(xmlproxy).strip() != '':
             self.proxy = {'https': str(xmlproxy).strip()}
         else:
             self.proxy = None
 
-        xmlgroupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif, "Serveur")
+        xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
         if xmlgroupeactif is not None:
-            self.groupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif,
+            self.groupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
                                                               "Serveur").text
             if self.groupeactif is not None:
                 self.logger.debug("this.groupeactif " + self.groupeactif)
@@ -304,45 +307,29 @@ class Contexte(object):
             self.auth = self.loginWindow.auth
         return connectionResult
 
-    def getOrCreateDatabase(self):
-        """
-        Retourne la base de données spatialite contenant les tables des remarques et croquis
-        Si la BD n'existe pas, elle est créée
-        """
-        curs = None
-        dbName = self.projectFileName + "_espaceco"
-        self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
-
+    # Création de la base de données spatialite si elle n'existe pas
+    def createDatabaseSQLite(self):
+        self.dbPath = SQLiteManager.getBaseSqlitePath()
         if not os.path.isfile(self.dbPath):
             try:
-                shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
-                            RipartHelper.ripart_db, self.dbPath)
+                shutil.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
+                            PluginHelper.ripart_db, self.dbPath)
                 self.logger.debug("copy espaceco.sqlite")
             except Exception as e:
                 self.logger.error("no espaceco.sqlite found in plugin directory" + format(e))
                 raise e
-        try:
-            # creating a Cursor
-            self.conn = spatialite_connect(self.dbPath)
-            curs = self.conn.cursor()
-            # create layer Signalement
-            sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
-            curs.execute(sql)
-            if curs.fetchone() is None:
-                RipartHelper.createRemarqueTable(self.conn)
-            # create layer Croquis
-            for lay in RipartHelper.croquis_layers:
-                sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + lay + "'"
-                curs.execute(sql)
-                if curs.fetchone() is None:
-                    RipartHelper.createCroquisTable(self.conn, lay, RipartHelper.croquis_layers[lay])
 
-        except RipartException as e:
-            self.logger.error(format(e))
-            raise
-        finally:
-            curs.close()
-            self.conn.close()
+    # Création des tables de signalements et de croquis
+    def createTablesReportsAndSketchs(self):
+        # Création de la table des signalements, si elle n'existe pas
+        if SQLiteManager.isTableExist('Signalement'):
+            return
+        SQLiteManager.createReportTable()
+        # Création des tables de croquis, si elles n'existent pas
+        for nameTable, geometryType in PluginHelper.sketch_layers.items():
+            if SQLiteManager.isTableExist(nameTable):
+                continue
+            SQLiteManager.createSketchTable(nameTable, geometryType)
 
     def importWFS(self, layer):
         # Création éventuelle de la table SQLite liée à la couche
@@ -456,11 +443,6 @@ class Contexte(object):
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WFS:
-                    # Récupération de la structure de la future table
-                    # structure = self.client.connexionFeatureTypeJson(layer.url, layer.name)
-                    # if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
-                    #   layer.isStandard = False
-                    # sourceLayer = self.importWFS(layer, structure)
                     sourceLayer = self.importWFS(layer)
                     if not sourceLayer[0].isValid():
                         endMessage += "Layer {} failed to load !\n".format(layer.name)
@@ -474,6 +456,9 @@ class Contexte(object):
                 if layer.type == cst.WMTS:
                     importWmts = importWMTS(self, layer)
                     titleLayer_uri = importWmts.getWtmsUrlParams(layer.geoservice['layers'])
+                    if 'Exception' in titleLayer_uri[0]:
+                        endMessage += "{0} : {1}\n\n".format(layer.name, titleLayer_uri[1])
+                        continue
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                     if not rlayer.isValid():
                         print("Layer {} failed to load !".format(rlayer.name()))
@@ -635,7 +620,7 @@ class Contexte(object):
         maplayers = self.getAllMapLayers()
         root = self.QgsProject.instance().layerTreeRoot()
 
-        for table in RipartHelper.croquis_layers_name:
+        for table in PluginHelper.croquis_layers_name:
             if table not in maplayers:
                 uri.setDataSource('', table, 'geom')
                 uri.setSrid(str(cst.EPSGCRS))
@@ -703,13 +688,13 @@ class Contexte(object):
         """
         Supprime toutes les remarques, vide les tables de la base ripart.sqlite
         """
-        ripartLayers = RipartHelper.croquis_layers
-        ripartLayers[RipartHelper.nom_Calque_Signalement] = "POINT"
+        ripartLayers = PluginHelper.sketch_layers
+        ripartLayers[PluginHelper.nom_Calque_Signalement] = "POINT"
         try:
             self.conn = spatialite_connect(self.dbPath)
             for table in ripartLayers:
-                RipartHelper.emptyTable(self.conn, table)
-            ripartLayers.pop(RipartHelper.nom_Calque_Signalement, None)
+                PluginHelper.emptyTable(self.conn, table)
+            ripartLayers.pop(PluginHelper.nom_Calque_Signalement, None)
             self.conn.commit()
         except RipartException as e:
             self.logger.error(format(e))
@@ -736,7 +721,7 @@ class Contexte(object):
             # self.conn= sqlite3.connect(self.dbPath)
             self.conn = spatialite_connect(self.dbPath)
 
-            sql = "UPDATE " + RipartHelper.nom_Calque_Signalement + " SET "
+            sql = "UPDATE " + PluginHelper.nom_Calque_Signalement + " SET "
             sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
             sql += " Date_validation= '" + rem.getAttribut("dateValidation") + "',"
             sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateResponse()) + "', "
@@ -760,7 +745,7 @@ class Contexte(object):
         :param statut: le statut de la remarque (=code renvoyé par le service)
         :type statut: string
         """
-        remLay = self.getLayerByName(RipartHelper.nom_Calque_Signalement)
+        remLay = self.getLayerByName(PluginHelper.nom_Calque_Signalement)
         expression = '"Statut" = \'' + statut + '\''
         filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
         return len(list(filtFeatures))
@@ -785,7 +770,7 @@ class Contexte(object):
         """
 
         # dictionnaire : key: nom calque, value: liste des attributs
-        attCroquis = RipartHelper.load_attCroquis(self.projectDir)
+        attCroquis = PluginHelper.load_attCroquis(self.projectDir)
 
         # Recherche tous les features sélectionnés sur la carte (pour les transformer en croquis)
         listCroquis = []
@@ -800,7 +785,7 @@ class Contexte(object):
                 message = "La couche {0} ne peut pas être utilisée pour créer un signalement car son système " \
                           "de projection n'est pas défini. Veuillez le définir avant de créer " \
                           "un signalement.".format(nom)
-                RipartHelper.showMessageBox(message)
+                PluginHelper.showMessageBox(message)
                 return []
 
             for f in lay.selectedFeatures():
@@ -1029,7 +1014,7 @@ class Contexte(object):
         """
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
-        table = RipartHelper.nom_Calque_Signalement
+        table = PluginHelper.nom_Calque_Signalement
         lay = self.getLayerByName(table)
         sql = "SELECT * FROM " + table + "  WHERE noSignalement in (" + noSignalements + ")"
         rows = cur.execute(sql)
@@ -1053,7 +1038,7 @@ class Contexte(object):
         :return: dictionnaire contenant les croquis
         :rtype: dictionnary
         """
-        crlayers = RipartHelper.croquis_layers
+        crlayers = PluginHelper.sketch_layers
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
 
@@ -1079,7 +1064,7 @@ class Contexte(object):
                           "collaboratif' pour confirmer dans quel groupe vous souhaitez travailler.\nAttention : si vous " \
                           "avez déjà chargé les couches d'un autre groupe, vous devez les supprimer au préalable ou " \
                           "créer un autre projet QGIS.".format(self.profil.title, nomProfilServeur)
-                RipartHelper.showMessageBox(message)
+                PluginHelper.showMessageBox(message)
                 raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")
 
     def getLayers(self) -> (str, [], object):

@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateT
 from .core.ClientHelper import ClientHelper
 from .core import Constantes as cst
 from .core.Theme import Theme
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .core.ThemeAttributes import ThemeAttributes
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
@@ -87,8 +87,8 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             self.groupBoxProfil.setTitle(profil.author.name + u" (Profil par défaut)")
 
         # les noms des thèmes préférés (du fichier de configuration)
-        self.preferredThemes = RipartHelper.load_preferredThemes(self.context.projectDir)
-        preferredGroup = RipartHelper.load_preferredGroup(self.context.projectDir)
+        self.preferredThemes = PluginHelper.load_preferredThemes(self.context.projectDir)
+        preferredGroup = PluginHelper.load_preferredGroup(self.context.projectDir)
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
         self.infosgeogroups = profil.infosGeogroups
@@ -515,7 +515,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                 if extension[1:] not in self.context.formats:
                     message = u"Les fichiers de type '" + extension + u"' ne sont pas autorisés comme pièce-jointe " \
                                                                       u"pour l'Espace collaboratif. "
-                    RipartHelper.showMessageBox(message)
+                    PluginHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
 
                 elif sizeFilename > self.docMaxSize:
@@ -524,7 +524,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
                               str(os.path.getsize(filename) / 1000) + \
                               u" Ko) dépasse celle maximale autorisée (" + str(self.docMaxSize / 1000) + u" Ko)"
 
-                    RipartHelper.showMessageBox(message)
+                    PluginHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
 
                 else:

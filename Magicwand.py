@@ -8,7 +8,7 @@ version 3.0.0 , 26/11/2018
 """
 
 # standard_library.install_aliases()
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 
 
 class Magicwand(object):
@@ -54,9 +54,9 @@ class Magicwand(object):
         selectedRemarque = False
         mapLayers = self.context.mapCan.layers()
         for ml in mapLayers:
-            if ml.name() in RipartHelper.croquis_layers and len(ml.selectedFeatures()) > 0:
+            if ml.name() in PluginHelper.sketch_layers and len(ml.selectedFeatures()) > 0:
                 selectedCroquis = True
-            if ml.name() == RipartHelper.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
+            if ml.name() == PluginHelper.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
                 selectedRemarque = True
 
         if selectedCroquis and selectedRemarque:
@@ -84,7 +84,7 @@ class Magicwand(object):
         mapLayers = self.context.mapCan.layers()
 
         for ml in mapLayers:
-            if ml.name() in RipartHelper.croquis_layers and len(ml.selectedFeatures()) > 0:
+            if ml.name() in PluginHelper.sketch_layers and len(ml.selectedFeatures()) > 0:
 
                 for feat in ml.selectedFeatures():
                     idx = ml.fields().lookupField("NoSignalement")
@@ -100,7 +100,7 @@ class Magicwand(object):
         # key: layer name, value: noSignalement
         croquisLays = {}
 
-        remarqueLay = self.context.getLayerByName(RipartHelper.nom_Calque_Signalement)
+        remarqueLay = self.context.getLayerByName(PluginHelper.nom_Calque_Signalement)
         feats = remarqueLay.selectedFeatures()
 
         for f in feats:

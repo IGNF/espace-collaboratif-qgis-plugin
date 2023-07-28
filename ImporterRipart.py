@@ -13,7 +13,7 @@ from PyQt5.QtCore import Qt
 from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, \
     QgsEditorWidgetSetup
 from qgis.utils import spatialite_connect
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .core.BBox import BBox
 from .core import Constantes as cst
 from .core.NoProfileException import NoProfileException
@@ -66,7 +66,7 @@ class ImporterRipart(object):
 
         # filtre spatial
         bbox = BBox(self.context)
-        box = bbox.getFromLayer(RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+        box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.context.projectDir).text)
 
         # si la box est à None alors, l'utilisateur veut extraire France entière
         # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
@@ -75,7 +75,7 @@ class ImporterRipart(object):
             return
 
         filtreLay = None
-        filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
+        filtre = PluginHelper.load_CalqueFiltrage(self.context.projectDir).text
         if filtre is not None and len(filtre.strip()) > 0:
             self.logger.debug("Spatial filter :" + filtre)
             filtreLay = self.context.getLayerByName(filtre)
@@ -88,14 +88,14 @@ class ImporterRipart(object):
         # vider les tables ripart
         self.context.emptyAllRipartLayers()
 
-        pagination = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination, "Map").text
+        pagination = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Pagination, "Map").text
         if pagination is None:
-            pagination = RipartHelper.defaultPagination
+            pagination = PluginHelper.defaultPagination
 
-        date = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_DateExtraction, "Map").text
-        date = RipartHelper.formatDate(date)
+        date = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
+        date = PluginHelper.formatDate(date)
 
-        groupFilter = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Group, "Map").text
+        groupFilter = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Group, "Map").text
         if groupFilter == 'true':
             groupId = self.context.profil.geogroup.getId()
 
@@ -121,7 +121,7 @@ class ImporterRipart(object):
                 pt = "POINT(" + ptx + " " + pty + ")"
                 ptgeom = QgsGeometry.fromWkt(pt)
 
-                if RipartHelper.isInGeometry(ptgeom, filtreLay):
+                if PluginHelper.isInGeometry(ptgeom, filtreLay):
                     remsToKeep[key] = rems[key]
 
         else:
@@ -139,7 +139,7 @@ class ImporterRipart(object):
                     if remId == '618195' or remId == '618197':
                         debug = True
 
-                    RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
+                    PluginHelper.insertRemarques(self.context.conn, remsToKeep[remId])
                     i += 1
                     if cnt > 0:
                         self.progressVal = int(round(i * 100 / cnt))
@@ -154,7 +154,7 @@ class ImporterRipart(object):
                 self.context.conn.close()
 
             if cnt > 1:
-                remLayer = self.context.getLayerByName(RipartHelper.nom_Calque_Signalement)
+                remLayer = self.context.getLayerByName(PluginHelper.nom_Calque_Signalement)
                 remLayer.updateExtents(True)
                 box = remLayer.extent()
                 self.setMapExtent(box)
@@ -179,7 +179,7 @@ class ImporterRipart(object):
             self.progress.close()
 
     def setFormAttributes(self):
-        listLayers = QgsProject.instance().mapLayersByName(RipartHelper.nom_Calque_Signalement)
+        listLayers = QgsProject.instance().mapLayersByName(PluginHelper.nom_Calque_Signalement)
         if len(listLayers) == 0:
             return
         features = None
@@ -249,4 +249,4 @@ class ImporterRipart(object):
                         "- " + str(valid) + " signalement(s)  validé(s).\n" + \
                         "- " + str(reject) + " signalement(s) rejeté(s).\n"
 
-        RipartHelper.showMessageBox(resultMessage)
+        PluginHelper.showMessageBox(resultMessage)

@@ -57,7 +57,7 @@ from .ImporterRipart import ImporterRipart
 from .SeeReport import SeeReport
 from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .ReplyReport import ReplyReport
 from .FieldsJsonView import FieldsJsonView
 
@@ -259,7 +259,7 @@ class RipartPlugin:
         if not editBuffer:
             return
         try:
-            wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+            wfsPost = WfsPost(self.context, layer, PluginHelper.load_CalqueFiltrage(self.context.projectDir).text)
             # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
             # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
             bNormalWfsPost = False
@@ -556,7 +556,7 @@ class RipartPlugin:
                         editBuffer.rollBack()
 
         # Synchronisation des couches une par une
-        spatialFilterName = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
+        spatialFilterName = PluginHelper.load_CalqueFiltrage(self.context.projectDir).text
         progress = ProgressBar(len(QgsProject.instance().mapLayers()), cst.UPDATETEXTPROGRESS)
         i = 0
         for layer in layersToSynchronize:
@@ -815,12 +815,12 @@ class RipartPlugin:
     def showHelp(self):
         """Ouvre le document d'aide utilisateur   
         """
-        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "files", RipartHelper.ripart_help_file))
-        RipartHelper.open_file(file_path)
+        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "files", PluginHelper.ripart_help_file))
+        PluginHelper.open_file(file_path)
 
     def showLog(self):
         """Ouvre le dernier fichier de log
         """
         logpath = self.ripartLogger.getLogpath()
         if logpath is not None:
-            RipartHelper.open_file(logpath)
+            PluginHelper.open_file(logpath)

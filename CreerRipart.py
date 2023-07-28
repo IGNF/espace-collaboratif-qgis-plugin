@@ -10,7 +10,7 @@ version 4.0.1, 15/12/2020
 
 from .core.RipartLoggerCl import RipartLogger
 from .FormCreerRemarque import FormCreerRemarque
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .core.Remarque import Remarque
 
 
@@ -34,7 +34,7 @@ class CreerRipart(object):
             hasSelectedFeature = self.context.hasMapSelectedFeatures()
        
             if not hasSelectedFeature:
-                RipartHelper.showMessageBox(u"Aucun objet sélectionné.\nIl est donc impossible de déterminer le "
+                PluginHelper.showMessageBox(u"Aucun objet sélectionné.\nIl est donc impossible de déterminer le "
                                             u"point d'application du nouveau signalement à créer.")
                 return    # si pas d'objet sélectionné, on arrête le processus
 
@@ -85,9 +85,9 @@ class CreerRipart(object):
             tmpRem.setCommentaire(formCreate.textEditMessage.toPlainText())
             
             selectedThemes = formCreate.getSelectedThemes()
-            RipartHelper.save_preferredThemes(self.context.projectDir, selectedThemes)
+            PluginHelper.save_preferredThemes(self.context.projectDir, selectedThemes)
 
-            RipartHelper.save_preferredGroup(self.context.projectDir, formCreate.preferredGroup)
+            PluginHelper.save_preferredGroup(self.context.projectDir, formCreate.preferredGroup)
             
             tmpRem.addThemeList(selectedThemes)  
             
@@ -129,7 +129,7 @@ class CreerRipart(object):
             else:
                 message += "de la création de {0} nouveaux signalements pour l'espace collaboratif.\n".format(nbReports)
                 message += "Les identifiants vont de {0} à {1}.".format(listNewReportIds[0], listNewReportIds[nbReports-1])
-            RipartHelper.showMessageBox(message)
+            PluginHelper.showMessageBox(message)
 
         except Exception as e:
             self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=5)
@@ -172,7 +172,7 @@ class CreerRipart(object):
 
         self.logger.info(u"Succès de la création du nouveau signalement n°" + str(remarqueNouvelle.id))
         
-        RipartHelper.insertRemarques(self.context.conn, remarqueNouvelle)
+        PluginHelper.insertRemarques(self.context.conn, remarqueNouvelle)
         self.context.conn.commit()
             
         return remarqueNouvelle

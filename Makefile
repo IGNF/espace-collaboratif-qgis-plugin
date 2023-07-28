@@ -38,15 +38,15 @@ LOCALES =
 # translation
 SOURCES = \
 	__init__.py \
-	RipartModule.py RipartModule_dialog.py
+	PluginModule.py PluginModule_dialog.py
 
-PLUGINNAME = RipartModule
+PLUGINNAME = PluginModule
 
 PY_FILES = \
 	__init__.py \
-	RipartModule.py RipartModule_dialog.py
+	PluginModule.py PluginModule_dialog.py
 
-UI_FILES = RipartModule_dialog_base.ui
+UI_FILES = PluginModule_dialog_base.ui
 
 EXTRAS = metadata.txt icon.png
 

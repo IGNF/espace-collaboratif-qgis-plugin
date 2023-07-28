@@ -5,7 +5,7 @@ Created on 3 janv. 2022
 """
 from .SeeReportView import SeeReportView
 from .core.RipartLoggerCl import RipartLogger
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 
 
 class SeeReport(object):
@@ -36,7 +36,7 @@ class SeeReport(object):
                     return
 
             activeLayer = self.context.iface.activeLayer()
-            if activeLayer is None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
+            if activeLayer is None or activeLayer.name() != PluginHelper.nom_Calque_Signalement:
                 self.context.iface.messageBar().pushMessage("Attention",
                                                             'Le calque "Signalement" doit être le calque actif',
                                                             level=1, duration=5)

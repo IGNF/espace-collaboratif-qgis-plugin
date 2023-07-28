@@ -1,13 +1,7 @@
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes,\
-    QgsPoint, QgsAbstractGeometry
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes
 
 
 class Wkt(object):
-    sridSource = None
-    sridTarget = None
-    geometryName = None
-    geometryType = None
-    crsTransform = None
 
     def __init__(self, parameters):
         self.sridSource = parameters['sridSource']
@@ -31,7 +25,6 @@ class Wkt(object):
         geometry.transform(self.crsTransform)
         return "GeomFromText('{0}', {1}),".format(geometry.asWkt(), self.sridTarget)
 
-    # TODO ajouter un parametre pour distinguer une géométrie BDUNI
     def toPostGeometry(self, qgsGeometryObject, is3D, bBDUni):
         # Vérification du type géométrique entre QGIS et le serveur
         # et transformation du type le cas échéant

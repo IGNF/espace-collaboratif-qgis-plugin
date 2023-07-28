@@ -23,7 +23,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .core import Constantes as cst
 
 
-class RipartHelper:
+class PluginHelper:
     """
     Classe contenant des utilitaires pour le plugin
     """
@@ -38,14 +38,12 @@ class RipartHelper:
     qmlStylesDir = "espacecoStyles"
 
     nom_Calque_Signalement = "Signalement"
-    # nom_Calque_Croquis_Fleche = "Croquis_EC_Fleche"
-    # nom_Calque_Croquis_Texte = "Croquis_EC_Texte"
     nom_Calque_Croquis_Polygone = "Croquis_EC_Polygone"
     nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
     nom_Calque_Croquis_Point = "Croquis_EC_Point"
 
-    croquis_layers = {nom_Calque_Croquis_Polygone: 'POLYGON', nom_Calque_Croquis_Ligne: 'LINESTRING',
-                      nom_Calque_Croquis_Point: 'POINT'}
+    sketch_layers = {nom_Calque_Croquis_Polygone: 'POLYGON', nom_Calque_Croquis_Ligne: 'LINESTRING',
+                     nom_Calque_Croquis_Point: 'POINT'}
 
     # liste des noms, car le dictionnaire ne préserve pas l'ordre des éléments
     croquis_layers_name = [nom_Calque_Croquis_Polygone, nom_Calque_Croquis_Ligne,
@@ -80,7 +78,7 @@ class RipartHelper:
     defaultPagination = 100
     longueurMaxChamp = 5000
 
-    logger = RipartLogger("RipartHelper").getRipartLogger()
+    logger = RipartLogger("PluginHelper").getRipartLogger()
 
     @staticmethod
     def getConfigFile():
@@ -104,14 +102,14 @@ class RipartHelper:
         """
         urlhost = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            urlhost = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_UrlHost, "Serveur"))
+            urlhost = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_UrlHost, "Serveur"))
             if urlhost is None:
-                urlhost = RipartHelper.addXmlElement(projectDir, "URLHost", "Serveur")
+                urlhost = PluginHelper.addXmlElement(projectDir, "URLHost", "Serveur")
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return urlhost
 
@@ -124,14 +122,14 @@ class RipartHelper:
         """
         login = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            login = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Login, "Serveur"))
+            login = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_Login, "Serveur"))
             if login is None:
-                login = RipartHelper.addXmlElement(projectDir, "Login", "Serveur")
+                login = PluginHelper.addXmlElement(projectDir, "Login", "Serveur")
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return login
 
@@ -146,15 +144,15 @@ class RipartHelper:
         :type login: string
         """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            xlogin = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Login, "Serveur"))
+            xlogin = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_Login, "Serveur"))
             xlogin.text = login
 
-            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
-            RipartHelper.logger.error(format(e))
+            PluginHelper.logger.error(format(e))
 
     @staticmethod
     def load_proxy(projectDir):
@@ -165,14 +163,14 @@ class RipartHelper:
         """
         proxy = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            proxy = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_proxy, "Serveur"))
+            proxy = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_proxy, "Serveur"))
             if proxy is None:
-                proxy = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_proxy, "Serveur")
+                proxy = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_proxy, "Serveur")
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return proxy
 
@@ -187,15 +185,15 @@ class RipartHelper:
         :type proxy: string
         """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            xproxy = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_proxy, "Serveur"))
+            xproxy = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_proxy, "Serveur"))
             xproxy.text = proxy
 
-            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
-            RipartHelper.logger.error(format(e))
+            PluginHelper.logger.error(format(e))
 
     @staticmethod
     def load_groupeactif(projectDir):
@@ -206,14 +204,14 @@ class RipartHelper:
                 """
         groupeactif = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            groupeactif = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupeActif, "Serveur"))
+            groupeactif = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif, "Serveur"))
             if groupeactif is None:
-                groupeactif = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_GroupeActif, "Serveur")
+                groupeactif = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_GroupeActif, "Serveur")
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return groupeactif
 
@@ -228,15 +226,15 @@ class RipartHelper:
                 :type groupeactif: string
                 """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            xgroupeactif = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupeActif, "Serveur"))
+            xgroupeactif = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif, "Serveur"))
             xgroupeactif.text = groupeactif
 
-            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
-            RipartHelper.logger.error(format(e))
+            PluginHelper.logger.error(format(e))
 
     @staticmethod
     def load_preferredGroup(projectDir):
@@ -247,14 +245,14 @@ class RipartHelper:
                 """
         groupePrefere = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            groupePrefere = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupePrefere, "Serveur"))
+            groupePrefere = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupePrefere, "Serveur"))
             if groupePrefere is None:
-                groupePrefere = RipartHelper.addXmlElement(projectDir, RipartHelper.xml_GroupePrefere, "Serveur")
+                groupePrefere = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_GroupePrefere, "Serveur")
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return ClientHelper.notNoneValue(groupePrefere.text)
 
@@ -269,15 +267,15 @@ class RipartHelper:
                 :type preferredGroup: string
                 """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            xgroupePrefere = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_GroupePrefere, "Serveur"))
+            xgroupePrefere = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupePrefere, "Serveur"))
             xgroupePrefere.text = preferredGroup
 
-            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
-            RipartHelper.logger.error(format(e))
+            PluginHelper.logger.error(format(e))
 
     @staticmethod
     def load_CalqueFiltrage(projectDir):
@@ -288,12 +286,12 @@ class RipartHelper:
         """
         calque = ""
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            calque = xmlroot.find(RipartHelper.getXPath(RipartHelper.xml_Zone_extraction, "Map"))
+            calque = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_Zone_extraction, "Map"))
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return calque
 
@@ -316,35 +314,35 @@ class RipartHelper:
         """
         node = None
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            node = xmlroot.find(RipartHelper.getXPath(tag, parent))
+            node = xmlroot.find(PluginHelper.getXPath(tag, parent))
 
             if node is None:
-                node = RipartHelper.addXmlElement(projectDir, tag, parent)
+                node = PluginHelper.addXmlElement(projectDir, tag, parent)
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return node
 
     @staticmethod
     def addXmlElement(projectDir, elem, parentElem, value=None):
-        tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+        tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
         xmlroot = tree.getroot()
         if parentElem != "root":
             parentNode = xmlroot.find(parentElem)
         else:
             parentNode = xmlroot
         if parentNode is None:
-            parentNode = RipartHelper.addXmlElement(projectDir, parentElem, "root")
+            parentNode = PluginHelper.addXmlElement(projectDir, parentElem, "root")
 
         elementNode = ET.SubElement(parentNode, elem)
 
         if value is not None:
             elementNode.text = value
 
-        tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+        tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         return elementNode
 
@@ -357,19 +355,19 @@ class RipartHelper:
         """
         attCroquis = {}
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            nodes = xmlroot.findall(RipartHelper.getXPath(RipartHelper.xml_AttributsCroquis, "Map"))
+            nodes = xmlroot.findall(PluginHelper.getXPath(PluginHelper.xml_AttributsCroquis, "Map"))
 
             for cr in nodes:
-                nomCalque = cr.find(RipartHelper.xml_BaliseNomCalque).text
+                nomCalque = cr.find(PluginHelper.xml_BaliseNomCalque).text
                 attCroquis[nomCalque] = []
-                fields = cr.iter(RipartHelper.xml_BaliseChampCalque)
+                fields = cr.iter(PluginHelper.xml_BaliseChampCalque)
                 for f in fields:
                     attCroquis[nomCalque].append(f.text)
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return attCroquis
 
@@ -382,18 +380,18 @@ class RipartHelper:
         """
         prefThemes = []
         try:
-            print(RipartHelper.getConfigFile())
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            print(PluginHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
 
             prefThs = xmlroot.findall(
-                RipartHelper.getXPath(RipartHelper.xml_Themes + "/" + RipartHelper.xml_Theme, "Map"))
+                PluginHelper.getXPath(PluginHelper.xml_Themes + "/" + PluginHelper.xml_Theme, "Map"))
 
             for n in prefThs:
                 prefThemes.append(ClientHelper.notNoneValue(n.text))
 
         except Exception as e:
-            RipartHelper.logger.error(str(e))
+            PluginHelper.logger.error(str(e))
 
         return prefThemes
 
@@ -408,16 +406,16 @@ class RipartHelper:
         :type prefThemes: list de Theme
         """
         # first load Themes_prefs tag (create the tag if the tag doesn't exist yet)
-        themesNode = RipartHelper.load_ripartXmlTag(projectDir, RipartHelper.xml_Themes, "Map")
-        RipartHelper.removeNode(projectDir, RipartHelper.xml_Theme, "Map/" + RipartHelper.xml_Themes)
+        themesNode = PluginHelper.load_ripartXmlTag(projectDir, PluginHelper.xml_Themes, "Map")
+        PluginHelper.removeNode(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes)
         for th in prefThemes:
-            RipartHelper.addXmlElement(projectDir, RipartHelper.xml_Theme, "Map/" + RipartHelper.xml_Themes,
+            PluginHelper.addXmlElement(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes,
                                        th.group.getName())
 
     @staticmethod
     def addNode(projectDir, tag, value, parentTag=None):
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
             if parentTag is None:
                 parentNode = xmlroot
@@ -427,15 +425,15 @@ class RipartHelper:
             newTag = ET.SubElement(parentNode, tag)
             newTag.text = value
 
-            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
-            RipartHelper.logger.error(format(e))
+            PluginHelper.logger.error(format(e))
 
     @staticmethod
     def removeNode(projectDir, tag, parentTag=None):
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
             if parentTag is None:
                 parentNode = xmlroot
@@ -445,32 +443,32 @@ class RipartHelper:
             for c in parentNode.findall(tag):
                 parentNode.remove(c)
 
-            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
-            RipartHelper.logger.error(format(e))
+            PluginHelper.logger.error(format(e))
 
     @staticmethod
     def setXmlTagValue(projectDir, tag, value, parent=None):
         """Donne une valeur à un tag du fichier de config
         """
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            node = xmlroot.find(RipartHelper.getXPath(tag, parent))
+            node = xmlroot.find(PluginHelper.getXPath(tag, parent))
             node.text = value
 
-            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
-            RipartHelper.logger.error(format(e))
+            PluginHelper.logger.error(format(e))
 
     @staticmethod
     def setAttributsCroquis(projectDir, calqueName, values):
         try:
-            tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            mapNode = xmlroot.find(RipartHelper.xml_Map)
+            mapNode = xmlroot.find(PluginHelper.xml_Map)
 
             nodeAtributsCroquis = ET.SubElement(mapNode, 'Attributs_croquis')
             nodeNom = ET.SubElement(nodeAtributsCroquis, 'Calque_Nom')
@@ -479,82 +477,19 @@ class RipartHelper:
                 field = ET.SubElement(nodeAtributsCroquis, 'Calque_Champ')
                 field.text = val
 
-            tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
+            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
         except Exception as e:
             # fix_print_with_import
             print(format(e))
 
     @staticmethod
     def removeAttCroquis(projectDir):
-        tree = ET.parse(projectDir + "/" + RipartHelper.getConfigFile())
+        tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
         xmlroot = tree.getroot()
         maptag = xmlroot.find('Map')
         for c in maptag.findall('Attributs_croquis'):
             maptag.remove(c)
-        tree.write(projectDir + "/" + RipartHelper.getConfigFile(), encoding="utf-8")
-
-    @staticmethod
-    def createRemarqueTable(conn):
-        """
-        Création de la table Signalement
-        """
-        cur = conn.cursor()
-        sql = u"CREATE TABLE Signalement (" + \
-              u"id INTEGER NOT NULL PRIMARY KEY," + \
-              u"NoSignalement INTEGER," + \
-              u"Auteur TEXT, " + \
-              u"Commune TEXT, " + \
-              u"Insee TEXT, " + \
-              u"Département TEXT, " + \
-              u"Département_id  TEXT," + \
-              u"Date_création TEXT," + \
-              u"Date_MAJ TEXT," + \
-              u"Date_validation TEXT," + \
-              u"Thèmes TEXT ," + \
-              u"Statut TEXT ," + \
-              u"Message TEXT," + \
-              u"Réponses TEXT," + \
-              u"URL TEXT," + \
-              u"URL_privé TEXT ," + \
-              u"Document TEXT," + \
-              u"Autorisation TEXT)"
-        cur.execute(sql)
-        conn.commit()
-        # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('Signalement','geom', " + str(cst.EPSGCRS) + ", 'POINT', 'XY')"
-        cur.execute(sql)
-        cur.close()
-        conn.commit()
-
-    @staticmethod
-    def createCroquisTable(conn, table, geomType):
-        """Création d'une table de croquis
-        
-        :param conn: la connexion à la base de données
-        :type conn: 
-        
-        :param table: le nom de la table à créer
-        :type table: string
-        
-        :param geomType: le type de la géométrie 
-        :type: string
-        """
-        cur = conn.cursor()
-        sql = u"CREATE TABLE " + table + " (" + \
-              u"id INTEGER NOT NULL PRIMARY KEY," + \
-              u"NoSignalement INTEGER," + \
-              u"Nom TEXT ," + \
-              u"Attributs_croquis," + \
-              u"Lien_objet_BDUNI TEXT) "
-        cur.execute(sql)
-        cur.close()
-        # creating a POINT Geometry column
-        cursor = conn.cursor()
-        sql = "SELECT AddGeometryColumn('" + table + "',"
-        sql += "'geom'," + str(cst.EPSGCRS) + ",'" + geomType + "', 'XY')"
-        cursor.execute(sql)
-        cursor.close()
-        conn.commit()
+        tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
     @staticmethod
     def emptyTable(conn, table):
@@ -583,27 +518,27 @@ class RipartHelper:
         @param rem: la remarque à ajouter
         @type rem: Remarque  
         """
-        RipartHelper.logger.debug("insertRemarques")
+        PluginHelper.logger.debug("insertRemarques")
         cur = conn.cursor()
         try:
-            RipartHelper.logger.debug("INSERT rem id:" + str(rem.id))
+            PluginHelper.logger.debug("INSERT rem id:" + str(rem.id))
 
             ptx = rem.position.longitude
             pty = rem.position.latitude
 
             if type(rem.dateCreation) == datetime:
-                rem.dateCreation = RipartHelper.formatDatetime(rem.dateCreation)
+                rem.dateCreation = PluginHelper.formatDatetime(rem.dateCreation)
             if type(rem.dateMiseAJour) == datetime:
-                rem.dateMiseAJour = RipartHelper.formatDatetime(rem.dateMiseAJour)
+                rem.dateMiseAJour = PluginHelper.formatDatetime(rem.dateMiseAJour)
             if type(rem.dateValidation) == datetime:
-                rem.dateValidation = RipartHelper.formatDatetime(rem.dateValidation)
+                rem.dateValidation = PluginHelper.formatDatetime(rem.dateValidation)
 
             if rem.dateValidation is None:
                 rem.dateValidation = ""
 
             geom = " GeomFromText('POINT(" + str(ptx) + " " + str(pty) + ")', {})".format(cst.EPSGCRS)
 
-            sql = u"INSERT INTO " + RipartHelper.nom_Calque_Signalement
+            sql = u"INSERT INTO " + PluginHelper.nom_Calque_Signalement
             sql += u" (NoSignalement, Auteur, Commune, Insee, Département, Département_id, Date_création, Date_MAJ, "
             sql += u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document, Autorisation, geom) "
             sql += u"VALUES ("
@@ -630,7 +565,7 @@ class RipartHelper:
             cur.execute(sql)
             rowcount = cur.rowcount
             if rowcount != 1:
-                RipartHelper.logger.error("No row inserted:" + sql)
+                PluginHelper.logger.error("No row inserted:" + sql)
 
             if len(rem.croquis) > 0:
                 croquis = rem.croquis
@@ -649,13 +584,13 @@ class RipartHelper:
 
                     if str(cr.type) == "Point" or str(cr.type) == "Texte":
                         geom = sgeom % ('POINT', coord)
-                        sql = sql % (RipartHelper.nom_Calque_Croquis_Point, geom)
+                        sql = sql % (PluginHelper.nom_Calque_Croquis_Point, geom)
                     elif str(cr.type) == "Ligne" or str(cr.type) == "Fleche":
                         geom = sgeom % ('LINESTRING', coord)
-                        sql = sql % (RipartHelper.nom_Calque_Croquis_Ligne, geom)
+                        sql = sql % (PluginHelper.nom_Calque_Croquis_Ligne, geom)
                     elif str(cr.type) == 'Polygone':
                         geom = sgeom % ('POLYGON(', coord + ")")
-                        sql = sql % (RipartHelper.nom_Calque_Croquis_Polygone, geom)
+                        sql = sql % (PluginHelper.nom_Calque_Croquis_Polygone, geom)
                     cur.execute(sql)
 
         except Exception as e:
@@ -706,7 +641,7 @@ class RipartHelper:
             elif len(sdate.split("-")) > 0:
                 rdate = sdate
         except Exception as e:
-            rdate = RipartHelper.defaultDate
+            rdate = PluginHelper.defaultDate
         return rdate
 
     @staticmethod
@@ -765,7 +700,7 @@ class RipartHelper:
     @staticmethod
     def getGeometryWorkZone(projectDir):
         geometryWorkZone = None
-        nameWorkZone = RipartHelper.load_CalqueFiltrage(projectDir).text
+        nameWorkZone = PluginHelper.load_CalqueFiltrage(projectDir).text
         layerWorkZone = QgsProject.instance().mapLayersByName(nameWorkZone)
         if len(layerWorkZone) > 1:
             return geometryWorkZone

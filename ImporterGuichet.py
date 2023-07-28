@@ -7,7 +7,7 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
 """
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.BBox import BBox
 from .core.NoProfileException import NoProfileException
@@ -49,7 +49,7 @@ class ImporterGuichet(object):
 
             # filtre spatial
             bbox = BBox(self.context)
-            box = bbox.getFromLayer(RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
+            box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.context.projectDir).text)
             # si la box est à None alors, l'utilisateur veut extraire France entière
             # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
             # ne souhaite pas extraire les données France entière
@@ -63,4 +63,4 @@ class ImporterGuichet(object):
             self.context.addGuichetLayersToMap(guichet_layers, box, self.context.profil.geogroup.getName())
 
         except Exception as e:
-            RipartHelper.showMessageBox('{}'.format(e))
+            PluginHelper.showMessageBox('{}'.format(e))

@@ -8,7 +8,7 @@ version 3.0.0 , 26/11/2018
 """
 from .SeeReportView import SeeReportView
 from .core.RipartLoggerCl import RipartLogger
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .core import Constantes as cst
 from .ReplyReportView import ReplyReportView
 
@@ -36,7 +36,7 @@ class RepondreRipart(object):
         try:
 
             activeLayer = self.context.iface.activeLayer()
-            if activeLayer is None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
+            if activeLayer is None or activeLayer.name() != PluginHelper.nom_Calque_Signalement:
                 self.context.iface.messageBar().pushMessage("Attention",
                                                             'Le calque "Signalement" doit être le calque actif',
                                                             level=1, duration=5)

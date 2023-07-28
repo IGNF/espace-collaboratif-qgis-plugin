@@ -16,7 +16,7 @@ from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.core import QgsVectorLayer
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .Contexte import Contexte
 from .core.SQLiteManager import SQLiteManager
 from .core import Constantes as cst
@@ -60,14 +60,14 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
 
-        self.lineEditUrl.setText(RipartHelper.load_urlhost(context.projectDir).text)
+        self.lineEditUrl.setText(PluginHelper.load_urlhost(context.projectDir).text)
 
-        login = RipartHelper.load_login(context.projectDir).text
+        login = PluginHelper.load_login(context.projectDir).text
         self.lineEditLogin.setText(login)
 
-        date = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_DateExtraction, "Map").text
+        date = PluginHelper.load_ripartXmlTag(context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
         if date is not None:
-            date = RipartHelper.formatDate(date)
+            date = PluginHelper.formatDate(date)
             dt = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
             self.checkBoxDate.setChecked(True)
         else:
@@ -89,16 +89,16 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         self.setAttributCroquis()
 
-        proxy = RipartHelper.load_proxy(context.projectDir).text
+        proxy = PluginHelper.load_proxy(context.projectDir).text
         self.lineEditProxy.setText(proxy)
 
-        groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
+        groupeactif = PluginHelper.load_groupeactif(context.projectDir).text
         self.lineEditGroupeActif.setText(groupeactif)
 
     def setWorkArea(self):
         # Par défaut l'item Zone de travail est vidée
         self.lineEditWorkArea.setText('')
-        workArea = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
+        workArea = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
         layersName = self.context.getAllMapLayers()
         bFind = False
         for layerName in layersName:
@@ -112,7 +112,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         Set des atttributs des croquis dans le treeWidget
         """
-        attCroq = RipartHelper.load_attCroquis(self.context.projectDir)
+        attCroq = PluginHelper.load_attCroquis(self.context.projectDir)
         if len(attCroq) > 0:
             self.checkBoxAttributs.setChecked(True)
 
@@ -121,7 +121,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         topItems = []
 
         for lay in maplayers:
-            if type(lay) is QgsVectorLayer and not lay.name() in RipartHelper.croquis_layers_name:
+            if type(lay) is QgsVectorLayer and not lay.name() in PluginHelper.croquis_layers_name:
                 item = QTreeWidgetItem()
                 item.setText(0, str(lay.name()))
                 inConfig = lay.name() in attCroq
@@ -242,18 +242,18 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         # Url
         # Si l'URL a changé, il faut vider la table des tables
-        oldUrl = RipartHelper.load_urlhost(self.context.projectDir)
+        oldUrl = PluginHelper.load_urlhost(self.context.projectDir)
         newUrl = self.lineEditUrl.text()
         if oldUrl != newUrl:
             SQLiteManager.emptyTable(cst.TABLEOFTABLES)
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, newUrl, "Serveur")
+        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_UrlHost, newUrl, "Serveur")
 
         # Proxy
         if self.checkBoxProxy.isChecked():
             proxy = self.lineEditProxy.text()
         else:
             proxy = ""
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_proxy, proxy, "Serveur")
+        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_proxy, proxy, "Serveur")
 
         # date
         if self.checkBoxDate.isChecked():
@@ -261,14 +261,14 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             sdate = d.toString('dd/MM/yyyy') + " 00:00:00"
         else:
             sdate = ""
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_DateExtraction, sdate, "Map")
+        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_DateExtraction, sdate, "Map")
 
         # attributs croquis
-        RipartHelper.removeAttCroquis(self.context.projectDir)
+        PluginHelper.removeAttCroquis(self.context.projectDir)
         if self.checkBoxAttributs.isChecked():
             checkedItems = self.getCheckedTreeItems()
             for calque in checkedItems:
-                RipartHelper.setAttributsCroquis(self.context.projectDir, calque, checkedItems[calque])
+                PluginHelper.setAttributsCroquis(self.context.projectDir, calque, checkedItems[calque])
     
     def keyPressEvent(self, event):
         """

@@ -12,8 +12,6 @@ class SQLiteManager(object):
 
     def __init__(self):
         self.dbPath = SQLiteManager.getBaseSqlitePath()
-        self.is3D = None
-        self.geometryType = None
 
     @staticmethod
     def getBaseSqlitePath():
@@ -78,7 +76,6 @@ class SQLiteManager(object):
         if not layer.isStandard:
             sqlAttributes += ",{0} TEXT".format(cst.FINGERPRINT)
         # ordre d'insertion geometrie, gcms_fingerprint
-        self.geometryType = typeGeometrie
         return sqlAttributes, typeGeometrie, columnDetruitExist
 
     def addGeometryColumn(self, parameters):
@@ -105,9 +102,9 @@ class SQLiteManager(object):
         sql += ')'
         cur = connection.cursor()
         cur.execute(sql)
-        connection.commit()
+        #connection.commit()
         parameters_geometry_column = {'tableName': layer.name, 'geometryName': layer.geometryName,
-                                      'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
+                                      'crs': cst.EPSGCRS, 'geometryType': t[1], 'is3D': layer.is3d}
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
         cur.execute(sqlGeometryColumn)
         if not SQLiteManager.isTableExist(layer.name):
@@ -434,3 +431,53 @@ class SQLiteManager(object):
         cur.close()
         connection.close()
         return result
+
+    @staticmethod
+    def createReportTable():
+        """
+        Création de la table des signalements
+        """
+        sql = u"CREATE TABLE Signalement (" + \
+              u"id INTEGER NOT NULL PRIMARY KEY," + \
+              u"NoSignalement INTEGER," + \
+              u"Auteur TEXT, " + \
+              u"Commune TEXT, " + \
+              u"Insee TEXT, " + \
+              u"Département TEXT, " + \
+              u"Département_id  TEXT," + \
+              u"Date_création TEXT," + \
+              u"Date_MAJ TEXT," + \
+              u"Date_validation TEXT," + \
+              u"Thèmes TEXT ," + \
+              u"Statut TEXT ," + \
+              u"Message TEXT," + \
+              u"Réponses TEXT," + \
+              u"URL TEXT," + \
+              u"URL_privé TEXT ," + \
+              u"Document TEXT," + \
+              u"Autorisation TEXT)"
+        SQLiteManager.executeSQL(sql)
+        # creating a POINT Geometry column
+        sql = "SELECT AddGeometryColumn('Signalement','geom', " + str(cst.EPSGCRS) + ", 'POINT', 'XY')"
+        SQLiteManager.executeSQL(sql)
+
+    @staticmethod
+    def createSketchTable(nameTable, geometryType):
+        """
+        Création d'une table de croquis
+        :param nameTable: le nom de la table à créer
+        :type nameTable: string
+        :param geometryType: le type de la géométrie
+        :type: string
+        """
+        sql = u"CREATE TABLE " + nameTable + " (" + \
+              u"id INTEGER NOT NULL PRIMARY KEY," + \
+              u"NoSignalement INTEGER," + \
+              u"Nom TEXT ," + \
+              u"Attributs_croquis," + \
+              u"Lien_objet_BDUNI TEXT) "
+        SQLiteManager.executeSQL(sql)
+        # creating a POINT or LINE or POLYGON Geometry column
+        sql = "SELECT AddGeometryColumn('" + nameTable + "',"
+        sql += "'geom'," + str(cst.EPSGCRS) + ",'" + geometryType + "', 'XY')"
+        SQLiteManager.executeSQL(sql)

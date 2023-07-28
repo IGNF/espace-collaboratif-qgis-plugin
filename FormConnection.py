@@ -20,7 +20,7 @@ import requests
 
 from .core.Client import Client
 from .core.ClientHelper import ClientHelper
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
 from .FormChoixGroupe import FormChoixGroupe
 from .FormInfo import FormInfo
 from .core import Constantes as cst
@@ -80,11 +80,11 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         dlgInfo.textInfo.append("Login : {}".format(self.context.login))
         dlgInfo.textInfo.append("Groupe : {}".format(self.context.profil.title))
         if self.context.profil.zone == cst.ZoneGeographique.UNDEFINED:
-            zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
+            zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
             if zoneExtraction == "" or zoneExtraction is None or len(
                     self.context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
                 dlgInfo.textInfo.append("Zone : pas de zone définie")
-                RipartHelper.setXmlTagValue(self.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
+                PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
             else:
                 dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
             self.context.profil.zone = zoneExtraction
@@ -108,7 +108,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         community = Community(self.urlHost, self.context.login, self.context.pwd, self.context.proxy)
         try:
             listGroup = community.extractCommunities()
-            RipartHelper.save_login(self.projectDir, self.getLogin())
+            PluginHelper.save_login(self.projectDir, self.getLogin())
             dlgChoixGroupe = FormChoixGroupe(self.context, listGroup, self.context.groupeactif)
             dlgChoixGroupe.exec_()
             # bouton Continuer
@@ -119,16 +119,16 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 self.context.profil = community.getUserProfil(idNomGroupe[0])
 
                 # Sauvegarde du groupe actif dans le xml du projet utilisateur
-                RipartHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
+                PluginHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
                 self.context.groupeactif = idNomGroupe[1]
 
                 # On enregistre le groupe comme groupe préféré pour la création de signalement
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-                formPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
+                formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
                 if formPreferredGroup != idNomGroupe[1]:
                     # TODO compléter la liste des themes
-                    RipartHelper.save_preferredThemes(self.projectDir, [])
-                RipartHelper.save_preferredGroup(self.projectDir, idNomGroupe[1])
+                    PluginHelper.save_preferredThemes(self.projectDir, [])
+                PluginHelper.save_preferredGroup(self.projectDir, idNomGroupe[1])
             # Bouton Annuler
             elif dlgChoixGroupe.cancel:
                 dlgChoixGroupe.close()
@@ -144,7 +144,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
             self.context.client = None
             self.context.profil = None
             self.connectionResult = -1
-            RipartHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
+            PluginHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
         return self.connectionResult
 
     # def connectToService(self):
@@ -161,7 +161,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     #         profile = client.getProfile()
     #
     #         if profile is not None:
-    #             RipartHelper.save_login(self.projectDir, self.getLogin())
+    #             PluginHelper.save_login(self.projectDir, self.getLogin())
     #             self.context.client = client
     #
     #             # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
@@ -173,17 +173,17 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     #
     #                 # si l'utilisateur n'a pas de profil, il faut indiquer que le groupe actif est vide
     #                 if "défaut" in profile.title:
-    #                     RipartHelper.save_groupeactif(self.projectDir, "Aucun")
+    #                     PluginHelper.save_groupeactif(self.projectDir, "Aucun")
     #                 else:
-    #                     RipartHelper.save_groupeactif(self.projectDir, profile.geogroup.getName())
+    #                     PluginHelper.save_groupeactif(self.projectDir, profile.geogroup.getName())
     #
     #                     # On enregistre le groupe comme groupe préféré (par défaut) pour la création de signalement
     #                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-    #                     preferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
+    #                     preferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
     #                     if preferredGroup != profile.geogroup.getName():
-    #                         RipartHelper.save_preferredThemes(self.projectDir, [])
+    #                         PluginHelper.save_preferredThemes(self.projectDir, [])
     #
-    #                     RipartHelper.save_preferredGroup(self.projectDir, profile.geogroup.getName())
+    #                     PluginHelper.save_preferredGroup(self.projectDir, profile.geogroup.getName())
     #
     #             # sinon le choix d'un autre groupe est présenté à l'utilisateur
     #             # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
@@ -219,15 +219,15 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     #                         #     self.context.profil = profilMessage[0]
     #
     #                     # Sauvegarde du groupe actif dans le xml du projet utilisateur
-    #                     RipartHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
+    #                     PluginHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
     #                     self.groupeactif = idNomGroupe[1]
     #
     #                     # On enregistre le groupe comme groupe préféré pour la création de signalement
     #                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-    #                     formPreferredGroup = RipartHelper.load_preferredGroup(self.projectDir)
+    #                     formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
     #                     if formPreferredGroup != profile.geogroup.getName():
-    #                         RipartHelper.save_preferredThemes(self.projectDir, [])
-    #                     RipartHelper.save_preferredGroup(self.projectDir, profile.geogroup.getName())
+    #                         PluginHelper.save_preferredThemes(self.projectDir, [])
+    #                     PluginHelper.save_preferredGroup(self.projectDir, profile.geogroup.getName())
     #
     #                 # Bouton Annuler
     #                 elif dlgChoixGroupe.cancel:
@@ -254,11 +254,11 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     #             dlgInfo.textInfo.append("Login : {}".format(self.context.login))
     #             dlgInfo.textInfo.append("Groupe : {}".format(self.context.profil.title))
     #             if self.context.profil.zone == cst.ZoneGeographique.UNDEFINED:
-    #                 zoneExtraction = RipartHelper.load_CalqueFiltrage(self.projectDir).text
+    #                 zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
     #                 if zoneExtraction == "" or zoneExtraction is None or len(
     #                         self.context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
     #                     dlgInfo.textInfo.append("Zone : pas de zone définie")
-    #                     RipartHelper.setXmlTagValue(self.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
+    #                     PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
     #                 else:
     #                     dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
     #                 self.context.profil.zone = zoneExtraction
@@ -280,7 +280,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
     #         self.context.profil = None
     #         self.connectionResult = -1
     #
-    #         RipartHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
+    #         PluginHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
     #
     #     return self.connectionResult
 

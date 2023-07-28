@@ -43,7 +43,6 @@ except ImportError as e:
 
 
 class importWMTS:
-    uri = None
 
     def __init__(self, context, layer):
         self.wmts = None
@@ -133,6 +132,8 @@ class importWMTS:
 
     # Get a layer
     def getLayer(self, idGuichetLayerWmts):
+        if self.wmts is None:
+            return None
         layers = list(self.wmts.contents)
         print("Available layers : ", layers)
         for layer in layers:
@@ -167,9 +168,9 @@ class importWMTS:
     # SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities
     def getWtmsUrlParams(self, idGuichetLayerWmts):
         if not idGuichetLayerWmts:
-            raise Exception("Import_WMTS.getWtmsUrlParams : le nom de la couche Géoservices est vide")
+            return "Exception", "Import_WMTS.getWtmsUrlParams : le nom de la couche Géoservices est vide"
         if self.getLayer(idGuichetLayerWmts) is None:
-            raise Exception("Import_WMTS.getWtmsUrlParams : impossible de récupérer la couche Géoservices")
+            return "Exception", "Import_WMTS.getWtmsUrlParams : impossible de récupérer la couche Géoservices"
         self.getTileMatrixSet()
         wmts_url_params = {
             "crs": self.crs,
