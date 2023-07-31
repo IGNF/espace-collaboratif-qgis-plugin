@@ -8,6 +8,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .core.Query import Query
+from .core.Report import Report
 from .core import Constantes as cst
 
 
@@ -41,12 +42,10 @@ class DownloadReport(object):
         self.__context.mapCan.refresh()
 
     def insertReportsIntoSQLite(self, data):
-        print("Nombre de signalements extraits : {}".format(len(data)))
-        print(data)
-        # listRemarques = []
-        # for d in data:
-        #     report = Remarque()
-        #     listRemarques.append(report)
+        listReports = []
+        for d in data:
+            report = Report(d)
+            listReports.append(report)
 
     def getReports(self, date):
         # filtre spatial

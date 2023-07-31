@@ -149,6 +149,8 @@ class WfsGet(object):
 
     def getMaxNumrec(self):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
+        # TODO remplacer l'url par
+        # https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/databases/18/tables/479/max-numrec
         url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.urlHostEspaceCo, self.databasename,
                                                                          self.layerName)
         response = HttpRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)

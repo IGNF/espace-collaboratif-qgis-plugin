@@ -17,43 +17,6 @@ from .RipartLoggerCl import RipartLogger
 
 import json
 
-"""[
-{'replies': [],
-'attachments': [],
-'community': 102,
-'author': 676,
-'validator': None,
-'id': 162917,
-'commune': {
-    'name': '93050',
-    'title': 'NEUILLY-SUR-MARNE',
-    'type': 'municipality', 
-    'deleted': False},
-'departement': {
-    'name': '93', 
-    'title': 'SEINE-SAINT-DENIS', 
-    'type': 'department', 
-    'deleted': False},
-'territory': {
-    'name': 'FXX',
-    'title': 'France métropolitaine',
-    'type': 'territory',
-    'deleted': False},
-'geometry': 'POINT(2.52922767594837 48.8643781391392)',
-'comment': 'Test Eric : nouvel immeuble :-\\',
-'opening_date': '2023-07-28T14:48:58+02:00',
-'closing_date': None,
-'updating_date': '2023-07-28T14:48:58+02:00',
-'attributes': [{
-    'community': 1,
-    'theme': 'Bâti',
-    'attributes': []}], 
-'status': 'submit',
-'sketch_xml': None,
-'sketch': None,
-'input_device': 'www',
-'device_version': '0.0'}]
-"""
 
 class Remarque(object):
     """
