@@ -14,17 +14,9 @@ RIPART_CLIENT_PROTOCOL = "_RIPART_QGIS_99712"
 
 # Définition donnant la version de ce programme.
 RIPART_CLIENT_VERSION = ""
-RIPART_GEOREM_GET = "georem_get"
-RIPART_GEOREM_POST = "georem_post"
-RIPART_GEOREM_PUT = "georem_put"
-RIPART_CONNECT = "connect"
-RIPART_GEOAUT_GET = "geoaut_get"
-RIPART_QUESTION_POST = "geoquestion_post"
-RIPART_QUESTION_GET = "geoquestion_get"
 
 STATUT = Enum("undefined", "submit", "pending", "pending0", "pending1", "valid", "valid0", "reject", "reject0",
               "pending2")
-
 
 def getStatuts():
     statuts = [STATUT.submit.__str__(),

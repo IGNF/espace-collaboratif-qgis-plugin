@@ -102,7 +102,7 @@ class RipartPlugin:
             self.context = Contexte.getInstance(self, QgsProject)
 
         # S'il n'a y pas de base SQLite
-        uri = SQLiteManager.getBaseSqlitePath()
+        uri = self.context.getUriDatabaseSqlite()
         if uri is None:
             return
 
@@ -451,7 +451,7 @@ class RipartPlugin:
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
             community = Community(self.context.urlHostEspaceCo, self.context.login, self.context.pwd,
                                   self.context.proxy)
-            listLayers = community.extractLayers(self.context.profil.geogroup.getId())
+            listLayers = community.extractLayers(self.context.profil.geogroup.getId(), 1, 20)
             progress.close()
             # et les présenter à l'utilisateur pour qu'il fasse son choix de travail
             dlgChargerGuichet = FormChargerGuichet(self.context, listLayers)
@@ -535,7 +535,7 @@ class RipartPlugin:
             progress.setValue(i)
             endMessage += "<br/>{0}\n".format(layer.name())
             bbox = BBox(self.context)
-            parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName),
+            parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName, False, True),
                           'sridProject': cst.EPSGCRS, 'role': None,
                           'urlHostEspaceCo': self.context.urlHostEspaceCo,
                           'authentification': self.context.auth, 'proxy': self.context.proxy}

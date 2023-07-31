@@ -1,8 +1,10 @@
 import json
+import requests
 from . import requests
 from .requests.auth import HTTPBasicAuth
 
 
+# Classe implémentant une requête HTTP
 class HttpRequest(object):
 
     def __init__(self, url, login, pwd, proxies):
@@ -11,11 +13,13 @@ class HttpRequest(object):
         self.__password = pwd
         self.__proxies = proxies
 
-    def getResponse(self, partOfUrl, params):
+    # Retourne une réponse HTTP GET
+    def getResponse(self, partOfUrl, params=None) -> requests.Response:
         uri = "{}/{}".format(self.__url, partOfUrl)
         if params is not None:
             response = requests.get(uri, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
                                     params=params, verify=False)
+            print(response.url)
         else:
             # Ne pas vérifier le certificat en localhost
             if uri.find("localhost.ign.fr") != -1:
@@ -26,7 +30,9 @@ class HttpRequest(object):
         response.encoding = 'utf-8'
         return response
 
-    def getNextResponse(self, partOfUrl, params=None):
+    # Retourne un dictionnaire comprenant le status de la réponse HTTP GET, les données et s'il faut relancer
+    # la requête (status_code 206)
+    def getNextResponse(self, partOfUrl, params) -> {}:
         try:
             response = self.getResponse(partOfUrl, params)
             data = response.json()
@@ -46,10 +52,12 @@ class HttpRequest(object):
             return {'status': 'error'}
 
     @staticmethod
-    def nextRequest(url, authent=None, proxies=None, params=None):
+    # Même requête que précédemment mais en utilisant les paramètres offset et maxFeatures
+    def nextRequest(url, authent=None, proxies=None, params=None) -> {}:
         try:
             r = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
                              params=params, verify=False)
+            print("HttpRequest.nextRequest.url : {}".format(r.url))
             if r.status_code == 200:
                 r.encoding = 'utf-8'
                 response = json.loads(r.text)
@@ -65,7 +73,8 @@ class HttpRequest(object):
             return {'status': 'error'}
 
     @staticmethod
-    def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, files=None):
+    # lance une requête HTTP GET ou POST en fonction des vcariables données en entrée
+    def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, files=None) -> requests.Response:
         try:
             if data is None and files is None:
                 response = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,

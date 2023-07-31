@@ -11,7 +11,7 @@ version 4.0.1, 15/12/2020
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
-    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup
+    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri
 
 import os.path
 import shutil
@@ -342,7 +342,7 @@ class Contexte(object):
         bColumnDetruitExist = sqliteManager.createTableFromLayer(layer)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
-        uri = SQLiteManager.getBaseSqlitePath()
+        uri = self.getUriDatabaseSqlite()
         self.logger.debug(uri.uri())
         uri.setDataSource('', layer.name, layer.geometryName)
         uri.setSrid(str(cst.EPSGCRS))
@@ -362,34 +362,6 @@ class Contexte(object):
         # vlayer = QgsVectorLayer(uri.uri(), layer.name, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
-
-    # def importWFS(self, layer, structure):
-    #     # Création éventuelle de la table SQLite liée à la couche
-    #     sqliteManager = SQLiteManager()
-    #
-    #     # Si la table du nom de la couche existe,
-    #     # elle est vidée, détruite et recréée
-    #     if SQLiteManager.isTableExist(layer.name):
-    #         SQLiteManager.emptyTable(layer.name)
-    #         SQLiteManager.deleteTable(layer.name)
-    #     bColumnDetruitExist = sqliteManager.createTableFromLayer(layer, structure)
-    #
-    #     # Création de la source pour la couche dans la carte liée à la table SQLite
-    #     uri = self.getUriDatabaseSqlite()
-    #     self.logger.debug(uri.uri())
-    #     geometryName = structure['geometryName']
-    #     uri.setDataSource('', layer.name, geometryName)
-    #     uri.setSrid(str(cst.EPSGCRS))
-    #     parameters = {'uri': uri.uri(), 'name': layer.name, 'genre': 'spatialite', 'databasename': layer.databasename,
-    #                   'sqliteManager': sqliteManager, 'idName': structure['idName'],
-    #                   'geometryName': geometryName, 'geometryDimension': structure['attributes'][geometryName]['is3d'],
-    #                   'geometryType': structure['attributes'][geometryName]['type']}
-    #
-    #     vlayer = GuichetVectorLayer(parameters)
-    #     # plugin_layer = PluginGuichetLayer()
-    #     # vlayer = QgsVectorLayer(uri.uri(), layer.name, 'spatialite')
-    #     vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
-    #     return vlayer, bColumnDetruitExist
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
         """
@@ -1062,3 +1034,8 @@ class Contexte(object):
                 infosLayers.append(layersAll)
 
         return "Accepted", infosLayers, profilUser
+
+    def getUriDatabaseSqlite(self):
+        uri = QgsDataSourceUri(cst.EPSG4326)
+        uri.setDatabase(SQLiteManager.getBaseSqlitePath())
+        return uri

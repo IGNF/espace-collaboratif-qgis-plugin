@@ -1,41 +1,30 @@
-from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject,\
+import os.path
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsEditorWidgetSetup
-
-from qgis.utils import spatialite_connect
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsVectorLayer, QgsProject, \
-    QgsDataSourceUri
-
 from .PluginHelper import PluginHelper
-
 from .core.ProgressBar import ProgressBar
 from .core.BBox import BBox
 from .core.RipartLoggerCl import RipartLogger
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
+from .core.Query import Query
 from .core import Constantes as cst
-
-import os.path
 
 
 # Importation des signalements dans le projet QGIS
 class DownloadReport(object):
 
     def __init__(self, context):
-        self.logger = RipartLogger("DownloadReport").getRipartLogger()
-        self.context = context
+        self.__logger = RipartLogger("DownloadReport").getRipartLogger()
+        self.__context = context
         # barre de progression des signalements importés
-        self.progress = None
-        self.progressVal = 0
-
-    def getUriDatabaseSqlite(self):
-        uri = QgsDataSourceUri(cst.EPSG4326)
-        uri.setDatabase(SQLiteManager.getBaseSqlitePath())
-        return uri
+        self.__progress = None
+        self.__progressVal = 0
 
     def addReportSketchLayersToTheCurrentMap(self):
-        uri = self.getUriDatabaseSqlite()
-        self.logger.debug(uri.uri())
-        maplayers = self.context.getAllMapLayers()
+        uri = self.__context.getUriDatabaseSqlite()
+        self.__logger.debug(uri.uri())
+        maplayers = self.__context.getAllMapLayers()
         root = QgsProject.instance().layerTreeRoot()
         for table in PluginHelper.reportSketchLayersName:
             if table not in maplayers:
@@ -45,139 +34,167 @@ class DownloadReport(object):
                 vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
                 QgsProject.instance().addMapLayer(vlayer, False)
                 root.insertLayer(0, vlayer)
-                self.logger.debug("Layer " + vlayer.name() + " added to map")
+                self.__logger.debug("Layer " + vlayer.name() + " added to map")
                 # ajoute les styles aux couches
-                style = os.path.join(self.context.projectDir, "espacecoStyles", table + ".qml")
+                style = os.path.join(self.__context.projectDir, "espacecoStyles", table + ".qml")
                 vlayer.loadNamedStyle(style)
-        self.context.mapCan.refresh()
+        self.__context.mapCan.refresh()
 
-    # Téléchargement et import des signalements sur la carte
-    def do(self):
-        self.logger.debug("DownloadReport.do")
+    def insertReportsIntoSQLite(self, data):
+        print("Nombre de signalements extraits : {}".format(len(data)))
+        print(data)
+        # listRemarques = []
+        # for d in data:
+        #     report = Remarque()
+        #     listRemarques.append(report)
 
-        # paramètres pour la requête au service de l'espace collaboratif
-        params = {}
-
-        # l'utilisateur n'a pas de profil actif, impossible pour lui de travailler
-        if self.context.profil.geogroup.getName() is None:
-            raise NoProfileException(
-                "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
-
+    def getReports(self, date):
         # filtre spatial
-        bbox = BBox(self.context)
-        box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.context.projectDir).text)
-
+        bbox = BBox(self.__context)
+        box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, False, False)
         # si la box est à None alors, l'utilisateur veut extraire France entière
         # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
-        # ne souhaite pas extraire les données France entière et on sort
+        # ne souhaite pas extraire les données France entière
         if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
             return
 
-        filtreLay = None
-        filtre = PluginHelper.load_CalqueFiltrage(self.context.projectDir).text
-        if filtre is not None and len(filtre.strip()) > 0:
-            self.logger.debug("Spatial filter :" + filtre)
-            filtreLay = self.context.getLayerByName(filtre)
+        query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
+                      self.__context.proxy)
+        query.setPartOfUrl('gcms/api/reports')
+        query.setPage(1)
+        query.setLimit(100)
+        query.setBox(box)
+        query.setOpeningDate(date)
+        data = query.multiple()
+        return data
+
+    # Téléchargement et import des signalements sur la carte
+    def do(self):
+        self.__logger.debug("DownloadReport.do")
+
+        # l'utilisateur n'a pas de profil actif, impossible pour lui de travailler
+        if self.__context.profil.geogroup.getName() is None:
+            raise NoProfileException(
+                "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
         message = "Placement des signalements sur la carte"
         self.progress = ProgressBar(200, message)
 
-        # Création des couches et des liens vers la base SQLite
+        # Création des couches dans QGIS et des liens vers la base SQLite
         self.addReportSketchLayersToTheCurrentMap()
 
         # Vider les tables signalement et croquis
         SQLiteManager.emptyAllReportAndSketchInTables(PluginHelper.reportSketchLayersName)
-        self.context.refresh_layers()
 
-        pagination = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Pagination, "Map").text
-        if pagination is None:
-            pagination = PluginHelper.defaultPagination
-
-        date = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
+        # Téléchargement des signalements
+        date = PluginHelper.load_ripartXmlTag(self.__context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
         date = PluginHelper.formatDate(date)
+        data = self.getReports(date)
 
-        groupFilter = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Group, "Map").text
-        if groupFilter == 'true':
-            groupId = self.context.profil.geogroup.getId()
+        # Insertion des signalements dans la base SQLite
+        if len(data) == 0:
+            return
+        self.insertReportsIntoSQLite(data)
 
-            params['group'] = str(groupId)
+        # Rafraichir la carte
+        self.__context.refresh_layers()
 
-        self.context.client.setIface(self.context.iface)
+        # Fermer la patience
+        self.progress.close()
 
-        if box is not None:
-            params['box'] = box.boxToString()
+        # Afficher les résultats
+        cnt = 0
+        self.showImportResult(cnt)
 
-        params['pagination'] = pagination
-        params['updatingDate'] = date
-
-        rems = self.context.client.getGeoRems(params)
-
-        # Filtrage spatial affiné des remarques.
-        if box is not None:
-            remsToKeep = {}
-
-            for key in rems:
-                ptx = rems[key].position.longitude
-                pty = rems[key].position.latitude
-                pt = "POINT(" + ptx + " " + pty + ")"
-                ptgeom = QgsGeometry.fromWkt(pt)
-
-                if PluginHelper.isInGeometry(ptgeom, filtreLay):
-                    remsToKeep[key] = rems[key]
-
-        else:
-            remsToKeep = rems
-
-        cnt = len(remsToKeep)
-
-        try:
-            i = 100
-            try:
-                self.context.conn = spatialite_connect(self.context.dbPath)
-
-                for remId in remsToKeep:
-
-                    if remId == '618195' or remId == '618197':
-                        debug = True
-
-                    PluginHelper.insertRemarques(self.context.conn, remsToKeep[remId])
-                    i += 1
-                    if cnt > 0:
-                        self.progressVal = int(round(i * 100 / cnt))
-                        self.progress.setValue(self.progressVal)
-
-                self.context.conn.commit()
-
-            except Exception as e:
-                self.logger.error(format(e))
-                raise
-            finally:
-                self.context.conn.close()
-
-            if cnt > 1:
-                remLayer = self.context.getLayerByName(PluginHelper.nom_Calque_Signalement)
-                remLayer.updateExtents(True)
-                box = remLayer.extent()
-                self.setMapExtent(box)
-
-            elif filtreLay is not None:
-                box = filtreLay.extent()
-                self.setMapExtent(box)
-
-            # Résultat
-            self.showImportResult(cnt)
-
-            # Modification du formulaire pour afficher l'attribut "Thèmes" sous forme de "Vue JSON"
-            # Vue par défaut : Arborescence
-            # Formater le JSON : Indenté
-            self.setFormAttributes()
-            self.progress.close()
-
-        except Exception as e:
-            raise
-
-        finally:
-            self.progress.close()
+        # pagination = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Pagination, "Map").text
+        # if pagination is None:
+        #     pagination = PluginHelper.defaultPagination
+        #
+        # date = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
+        # date = PluginHelper.formatDate(date)
+        #
+        # groupFilter = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Group, "Map").text
+        # if groupFilter == 'true':
+        #     groupId = self.context.profil.geogroup.getId()
+        #
+        #     params['group'] = str(groupId)
+        #
+        # self.context.client.setIface(self.context.iface)
+        #
+        # if box is not None:
+        #     params['box'] = box.boxToString()
+        #
+        # params['pagination'] = pagination
+        # params['updatingDate'] = date
+        #
+        # rems = self.context.client.getGeoRems(params)
+        #
+        # # Filtrage spatial affiné des remarques.
+        # if box is not None:
+        #     remsToKeep = {}
+        #
+        #     for key in rems:
+        #         ptx = rems[key].position.longitude
+        #         pty = rems[key].position.latitude
+        #         pt = "POINT(" + ptx + " " + pty + ")"
+        #         ptgeom = QgsGeometry.fromWkt(pt)
+        #
+        #         if PluginHelper.isInGeometry(ptgeom, filtreLay):
+        #             remsToKeep[key] = rems[key]
+        #
+        # else:
+        #     remsToKeep = rems
+        #
+        # cnt = len(remsToKeep)
+        #
+        # try:
+        #     i = 100
+        #     try:
+        #         self.context.conn = spatialite_connect(self.context.dbPath)
+        #
+        #         for remId in remsToKeep:
+        #
+        #             if remId == '618195' or remId == '618197':
+        #                 debug = True
+        #
+        #             PluginHelper.insertRemarques(self.context.conn, remsToKeep[remId])
+        #             i += 1
+        #             if cnt > 0:
+        #                 self.progressVal = int(round(i * 100 / cnt))
+        #                 self.progress.setValue(self.progressVal)
+        #
+        #         self.context.conn.commit()
+        #
+        #     except Exception as e:
+        #         self.logger.error(format(e))
+        #         raise
+        #     finally:
+        #         self.context.conn.close()
+        #
+        #     if cnt > 1:
+        #         remLayer = self.context.getLayerByName(PluginHelper.nom_Calque_Signalement)
+        #         remLayer.updateExtents(True)
+        #         box = remLayer.extent()
+        #         self.setMapExtent(box)
+        #
+        #     elif filtreLay is not None:
+        #         box = filtreLay.extent()
+        #         self.setMapExtent(box)
+        #
+        #     # Résultat
+        #     self.showImportResult(cnt)
+        #
+        #     # Modification du formulaire pour afficher l'attribut "Thèmes" sous forme de "Vue JSON"
+        #     # Vue par défaut : Arborescence
+        #     # Formater le JSON : Indenté
+        #     self.setFormAttributes()
+        #     self.progress.close()
+        #
+        # except Exception as e:
+        #     raise
+        #
+        # finally:
+        #     self.progress.close()
 
     def setFormAttributes(self):
         listLayers = QgsProject.instance().mapLayersByName(PluginHelper.nom_Calque_Signalement)
@@ -217,7 +234,7 @@ class DownloadReport(object):
         """
         source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
 
-        mapCrs = self.context.mapCan.mapSettings().destinationCrs().authid()
+        mapCrs = self.__context.mapCan.mapSettings().destinationCrs().authid()
         dest_crs = QgsCoordinateReferenceSystem(mapCrs)
 
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
@@ -226,7 +243,7 @@ class DownloadReport(object):
         # distance pour le buffer: 10% de la distance minimale (hauteur ou largeur)
         dist = min(new_box.width(), new_box.height()) * 0.1
         # zoom sur la couche Signalement
-        self.context.mapCan.setExtent(new_box.buffered(dist))
+        self.__context.mapCan.setExtent(new_box.buffered(dist))
 
     def showImportResult(self, cnt):
         """Résultat de l'import
@@ -234,13 +251,13 @@ class DownloadReport(object):
         :param cnt: le nombre de remarques importées
         :type cnt: int
         """
-        submit = self.context.countRemarqueByStatut(cst.STATUT.submit.__str__())
-        pending = self.context.countRemarqueByStatut(cst.STATUT.pending.__str__()) + \
-                  self.context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) + \
-                  self.context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) + \
-                  self.context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
-        reject = self.context.countRemarqueByStatut(cst.STATUT.reject.__str__())
-        valid = self.context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.context.countRemarqueByStatut(
+        submit = self.__context.countRemarqueByStatut(cst.STATUT.submit.__str__())
+        pending = self.__context.countRemarqueByStatut(cst.STATUT.pending.__str__()) + \
+                  self.__context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) + \
+                  self.__context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) + \
+                  self.__context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
+        reject = self.__context.countRemarqueByStatut(cst.STATUT.reject.__str__())
+        valid = self.__context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.__context.countRemarqueByStatut(
             cst.STATUT.valid0.__str__())
 
         resultMessage = "Extraction réussie avec succès de " + str(cnt) + " signalement(s) depuis le serveur \n" + \
