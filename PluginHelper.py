@@ -519,7 +519,7 @@ class PluginHelper:
             if rem.dateValidation is None:
                 rem.dateValidation = ""
 
-            geom = " GeomFromText('POINT(" + str(ptx) + " " + str(pty) + ")', {})".format(cst.EPSGCRS)
+            geom = " GeomFromText('POINT(" + str(ptx) + " " + str(pty) + ")', {})".format(cst.EPSGCRS4326)
 
             sql = u"INSERT INTO " + PluginHelper.nom_Calque_Signalement
             sql += u" (NoSignalement, Auteur, Commune, Insee, Département, Département_id, Date_création, Date_MAJ, "
@@ -562,7 +562,7 @@ class PluginHelper:
                              ClientHelper.getValForDB(cr.getAttributsInStringFormat()) + "', %s)"
                     sql += values
 
-                    sgeom = " GeomFromText('%s(%s)', {})".format(cst.EPSGCRS)
+                    sgeom = " GeomFromText('%s(%s)', {})".format(cst.EPSGCRS4326)
                     coord = cr.getCoordinatesFromPoints()
 
                     if str(cr.type) == "Point" or str(cr.type) == "Texte":
@@ -592,7 +592,7 @@ class PluginHelper:
         :param geomLayer: QgsVectorlayer
         """
         layerCrs = geomLayer.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         xform = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
         featsPoly = geomLayer.getFeatures()
         isWithin = False

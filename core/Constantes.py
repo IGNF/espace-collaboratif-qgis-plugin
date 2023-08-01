@@ -98,7 +98,8 @@ COLLABORATIF = "collaboratif.ign.fr"
 WXSIGN = "wxs.ign.fr"
 
 # Système de coordonnées de référence de Ripart
-EPSGCRS = 4326
+EPSGCRS4326 = 4326
+EPSGCRS2154 = 2154
 EPSG4326 = 'EPSG:4326'
 EPSG2154 = 'EPSG:2154'
 ID_ORIGINAL = 'id_original'

@@ -104,7 +104,7 @@ class SQLiteManager(object):
         cur.execute(sql)
         #connection.commit()
         parameters_geometry_column = {'tableName': layer.name, 'geometryName': layer.geometryName,
-                                      'crs': cst.EPSGCRS, 'geometryType': t[1], 'is3D': layer.is3d}
+                                      'crs': cst.EPSGCRS4326, 'geometryType': t[1], 'is3D': layer.is3d}
         sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
         cur.execute(sqlGeometryColumn)
         if not SQLiteManager.isTableExist(layer.name):
@@ -458,7 +458,7 @@ class SQLiteManager(object):
               u"Autorisation TEXT)"
         SQLiteManager.executeSQL(sql)
         # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('Signalement','geom', " + str(cst.EPSGCRS) + ", 'POINT', 'XY')"
+        sql = "SELECT AddGeometryColumn('Signalement','geom', " + str(cst.EPSGCRS4326) + ", 'POINT', 'XY')"
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
@@ -479,10 +479,11 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
         # creating a POINT or LINE or POLYGON Geometry column
         sql = "SELECT AddGeometryColumn('" + nameTable + "',"
-        sql += "'geom'," + str(cst.EPSGCRS) + ",'" + geometryType + "', 'XY')"
+        sql += "'geom'," + str(cst.EPSGCRS4326) + ",'" + geometryType + "', 'XY')"
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    def emptyAllReportAndSketchInTables(tablesList):
+    def emptyReportsAndSketchsInTables(tablesList):
         for table in tablesList:
             SQLiteManager.emptyTable(table)
+        SQLiteManager.vacuumDatabase()

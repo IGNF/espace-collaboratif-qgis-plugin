@@ -59,7 +59,7 @@ class WfsPost(object):
     def getGeometryWorkingArea(self):
         self.layerWorkingArea = self.__context.getLayerByName(self.__filterName)
         layerWorkingAreaCrs = self.layerWorkingArea.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         coordTransform = QgsCoordinateTransform(layerWorkingAreaCrs, destCrs, QgsProject.instance())
         featureIds = self.layerWorkingArea.selectedFeatureIds()
         geomWorkingArea = self.layerWorkingArea.getGeometry(featureIds[0])
@@ -68,7 +68,7 @@ class WfsPost(object):
         return geomWorkingArea
 
     def setGeometry(self, geometry, bBDUni):
-        parameters = {'geometryName': self.__layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS,
+        parameters = {'geometryName': self.__layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS4326,
                       'sridTarget': self.__layer.srid, 'geometryType': self.__layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
         # Est-ce que la géométrie de l'objet intersecte la bounding box de la zone de travail
@@ -182,7 +182,7 @@ class WfsPost(object):
 
         numrec = SQLiteManager.selectNumrecTableOfTables(self.__layer.name())
         parameters = {'databasename': self.__layer.databasename, 'layerName': self.__layer.name(),
-                      'geometryName': self.__layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS,
+                      'geometryName': self.__layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS4326,
                       'sridLayer': self.__layer.srid, 'bbox': self.__bbox.getFromLayer(self.__filterName, False, True),
                       'detruit': bDetruit, 'isStandard': self.__layer.isStandard,
                       'is3D': self.__layer.geometryDimensionForDatabase,

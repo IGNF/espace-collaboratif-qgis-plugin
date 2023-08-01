@@ -115,7 +115,7 @@ class Contexte(object):
         self.groupeactif = ""
         self.profil = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
-        self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         self.dbPath = SQLiteManager.getBaseSqlitePath()
 
         # version in metadata
@@ -345,7 +345,7 @@ class Contexte(object):
         uri = self.getUriDatabaseSqlite()
         self.logger.debug(uri.uri())
         uri.setDataSource('', layer.name, layer.geometryName)
-        uri.setSrid(str(cst.EPSGCRS))
+        uri.setSrid(str(cst.EPSGCRS4326))
         geomDim = ""
         geomType = ""
         for attribute in layer.attributes:
@@ -360,7 +360,7 @@ class Contexte(object):
 
         vlayer = GuichetVectorLayer(parameters)
         # vlayer = QgsVectorLayer(uri.uri(), layer.name, 'spatialite')
-        vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+        vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
         return vlayer, bColumnDetruitExist
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
@@ -515,7 +515,7 @@ class Contexte(object):
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.name,
                       'sridLayer': layer.srid, 'role': layer.role, 'isStandard': layer.isStandard,
-                      'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS,
+                      'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'authentification': self.auth,
                       'proxy': self.proxy
@@ -770,7 +770,7 @@ class Contexte(object):
         geomPoints = []
 
         try:
-            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
+            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
             transformer = QgsCoordinateTransform(layerCrs, destCrs, self.QgsProject.instance())
             if ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
                 geomPoints = geom.asPolygon()

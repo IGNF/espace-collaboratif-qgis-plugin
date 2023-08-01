@@ -8,7 +8,6 @@ from .core.RipartLoggerCl import RipartLogger
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .core.Query import Query
-from .core.Report import Report
 from .core import Constantes as cst
 
 
@@ -30,9 +29,9 @@ class DownloadReport(object):
         for table in PluginHelper.reportSketchLayersName:
             if table not in maplayers:
                 uri.setDataSource('', table, 'geom')
-                uri.setSrid(str(cst.EPSGCRS))
+                uri.setSrid(str(cst.EPSGCRS4326))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
                 QgsProject.instance().addMapLayer(vlayer, False)
                 root.insertLayer(0, vlayer)
                 self.__logger.debug("Layer " + vlayer.name() + " added to map")
@@ -41,13 +40,65 @@ class DownloadReport(object):
                 vlayer.loadNamedStyle(style)
         self.__context.mapCan.refresh()
 
-    def insertReportsIntoSQLite(self, data):
-        listReports = []
-        for d in data:
-            report = Report(d)
-            listReports.append(report)
+    def getAttachments(self, attachments) -> str:
+        docs = ''
+        if attachments is None or len(attachments) == 0:
+            return docs
+        for attachment in attachments:
+            docs += "{} ".format(attachment['download_uri'])
+        return docs[:-1]
 
-    def getReports(self, date):
+    def setUrl(self, idReport) -> str:
+        # https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/reports/162918
+        return "{0}/gcms/api/reports/{1}".format(self.__context.urlHostEspaceCo, idReport)
+
+    def getThemes(self, themes) -> str:
+        strThemes = ''
+        if themes is None or len(themes) == 0:
+            return strThemes
+        for theme in themes:
+            strThemes += "{},".format(theme)
+        return strThemes[:-1]
+
+    def insertReportsIntoSQLite(self, datas):
+        parameters = {'tableName': 'Signalement', 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
+                      'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
+        attributesRows = []
+        for data in datas:
+            attributesRow = {
+                'NoSignalement': data['id'],
+                'Auteur': data['author'],
+                'Commune': data['commune']['title'],
+                'Insee': data['commune']['name'],
+                'Département': data['departement']['title'],
+                'Département_id': data['departement']['name'],
+                'Date_création': data['opening_date'],
+                'Date_MAJ': data['updating_date'],
+                'Date_validation': data['closing_date'],
+                'Thèmes': self.getThemes(data['attributes']),
+                'Statut': data['status'],
+                'Message': data['comment'],
+                'Réponses': '',
+                'URL': self.setUrl(data['id']),
+                'URL_privé': '',
+                'Document': self.getAttachments(data['attachments']),
+                'Autorisation': '',
+                'geom': data['geometry']
+            }
+            attributesRows.append(attributesRow)
+        sqliteManager = SQLiteManager()
+        sqliteManager.insertRowsInTable(parameters, attributesRows)
+        # TODO que fait-on des attributs suivants ?
+        # data['replies']
+        # data['community']
+        # data['validator']
+        # data['territory']
+        # data['sketch_xml']
+        # data['sketch']
+        # data['input_device']
+        # data['device_version']
+
+    def getReports(self, date) -> []:
         # filtre spatial
         bbox = BBox(self.__context)
         box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, False, False)
@@ -83,7 +134,7 @@ class DownloadReport(object):
         self.addReportSketchLayersToTheCurrentMap()
 
         # Vider les tables signalement et croquis
-        SQLiteManager.emptyAllReportAndSketchInTables(PluginHelper.reportSketchLayersName)
+        SQLiteManager.emptyReportsAndSketchsInTables(PluginHelper.reportSketchLayersName)
 
         # Téléchargement des signalements
         date = PluginHelper.load_ripartXmlTag(self.__context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
@@ -231,7 +282,7 @@ class DownloadReport(object):
 
         :param box: bounding box
         """
-        source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
+        source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
 
         mapCrs = self.__context.mapCan.mapSettings().destinationCrs().authid()
         dest_crs = QgsCoordinateReferenceSystem(mapCrs)

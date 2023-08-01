@@ -536,7 +536,7 @@ class RipartPlugin:
             endMessage += "<br/>{0}\n".format(layer.name())
             bbox = BBox(self.context)
             parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName, False, True),
-                          'sridProject': cst.EPSGCRS, 'role': None,
+                          'sridProject': cst.EPSGCRS4326, 'role': None,
                           'urlHostEspaceCo': self.context.urlHostEspaceCo,
                           'authentification': self.context.auth, 'proxy': self.context.proxy}
             result = SQLiteManager.selectRowsInTableOfTables(layer.name())
@@ -685,11 +685,11 @@ class RipartPlugin:
             # Connexion à l'Espace collaboratif
             if not self.doConnexion(False):
                 return
-            message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
+            message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours ?"
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.Yes:
-                SQLiteManager.emptyAllReportAndSketchInTables(PluginHelper.reportSketchLayersName)
+                SQLiteManager.emptyReportsAndSketchsInTables(PluginHelper.reportSketchLayersName)
                 self.context.refresh_layers()
             else:
                 return

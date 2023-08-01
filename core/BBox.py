@@ -49,7 +49,7 @@ class BBox(object):
                 raise Exception(message)
             layerFilterExtent = self.__layerFilter.extent()
             if bTransformCoordinates:
-                destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+                destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
                 coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
                 newLayerFilterExtent = coordTransform.transform(layerFilterExtent)
                 return Box(newLayerFilterExtent.xMinimum(), newLayerFilterExtent.yMinimum(),
@@ -64,7 +64,7 @@ class BBox(object):
         self.__layerFilter = self.__context.getLayerByName(filterName)
         qgsRectangle = self.__layerFilter.extent()
         layerFilterCrs = self.__layerFilter.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
         newQgsRectangle = coordTransform.transform(qgsRectangle)
         return newQgsRectangle.asWktPolygon()

@@ -103,7 +103,7 @@ class Query(object):
 
             if len(data) != 0 and response['stop'] and response['page'] == 0:
                 return data
-            # Il s'agit du nombre de pages et non d'un offset
+
             self.setPage(self.__params['page'] + 1)
             if response['stop']:
                 break

@@ -240,9 +240,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         Sauvegarde la configuration des différents paramètres dans le fichier xml
         """
-        # Url
-        # Si l'URL a changé, il faut vider la table des tables
-        oldUrl = PluginHelper.load_urlhost(self.context.projectDir)
+        # Url, si l'Url a changé, il faut vider la table des tables
+        oldUrl = PluginHelper.load_urlhost(self.context.projectDir).text
         newUrl = self.lineEditUrl.text()
         if oldUrl != newUrl:
             SQLiteManager.emptyTable(cst.TABLEOFTABLES)
