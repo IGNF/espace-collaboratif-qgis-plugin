@@ -408,9 +408,10 @@ class PluginHelper:
         # first load Themes_prefs tag (create the tag if the tag doesn't exist yet)
         themesNode = PluginHelper.load_ripartXmlTag(projectDir, PluginHelper.xml_Themes, "Map")
         PluginHelper.removeNode(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes)
+        # TODO modifier le code
         for th in prefThemes:
             PluginHelper.addXmlElement(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes,
-                                       th.group.getName())
+                                       th.getName())
 
     @staticmethod
     def addNode(projectDir, tag, value, parentTag=None):

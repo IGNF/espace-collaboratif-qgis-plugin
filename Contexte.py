@@ -18,6 +18,7 @@ import shutil
 import ntpath
 import configparser
 
+from .core.Community import Community
 from .RipartException import RipartException
 from .PluginHelper import PluginHelper
 from .core.RipartLoggerCl import RipartLogger
@@ -47,7 +48,6 @@ class Contexte(object):
     pwd = ""
     urlHostEspaceCo = ""
     profil = None
-
     # groupe actif
     groupeactif = ""
 
@@ -117,9 +117,9 @@ class Contexte(object):
         self.logger = RipartLogger("Contexte").getRipartLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         self.dbPath = SQLiteManager.getBaseSqlitePath()
-
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata()
+        self.__userCommunity = None
 
         try:
             # set du répertoire et fichier du projet qgis
@@ -145,6 +145,12 @@ class Contexte(object):
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
             raise
+
+    def getUserCommunity(self) -> Community:
+        return self.__userCommunity
+
+    def setUserCommunity(self, community) -> None:
+        self.__userCommunity = community
 
     def getMetadata(self):
         config = configparser.RawConfigParser()
@@ -295,7 +301,7 @@ class Contexte(object):
                 self.logger.debug("this.groupeactif " + self.groupeactif)
 
         if self.login == "" or self.pwd == "" or newLogin:
-            self.loginWindow.setLogin(self.login)
+            self.loginWindow.setLineEditLogin(self.login)
 
         # Le résultat de la connexion est initialisé à -1.
         # Tant qu'il reste à -1, c'est que le formulaire de connexion a renvoyé une exception (mauvais mot de passe, pb
@@ -303,8 +309,8 @@ class Contexte(object):
         connectionResult = -1
         while connectionResult < 0:
             self.loginWindow.exec_()
-            connectionResult = self.loginWindow.connectionResult
-            self.auth = self.loginWindow.auth
+            connectionResult = self.loginWindow.getConnectionResult()
+            self.auth = self.loginWindow.getAuthentification()
         return connectionResult
 
     # Création de la base de données spatialite si elle n'existe pas

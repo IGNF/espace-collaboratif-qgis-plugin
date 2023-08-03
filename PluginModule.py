@@ -204,8 +204,8 @@ class RipartPlugin:
         #  car l'utilisateur a cliqué sur le bouton "Se connecter à l'Espace Collaboratif"
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
-            return 0
-        if self.context.profil is None or bButtonConnect:
+            return -1
+        if bButtonConnect:
             return self.context.getConnexionEspaceCollaboratif(newLogin=True)
         else:
             return 1
@@ -443,26 +443,25 @@ class RipartPlugin:
             # si res = 0, alors l'utilisateur à annuler son action
             if not self.doConnexion(False):
                 return
-            # TODO retourner community plutot que de l'initialiser encore une fois
             # Les requêtes peuvent être longues
             messageProgress = "Groupe {} : récupération des couches".format(self.context.groupeactif)
             progress = ProgressBar(1, messageProgress)
             progress.setValue(1)
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
-            community = Community(self.context.urlHostEspaceCo, self.context.login, self.context.pwd,
-                                  self.context.proxy)
-            listLayers = community.extractLayers(self.context.profil.geogroup.getId(), 1, 20)
+            params = {'url': self.context.urlHostEspaceCo, 'login': self.context.login, 'pwd': self.context.pwd,
+                      'proxy': self.context.proxy}
+            community = Community(params)
+            page = 1
+            limit = 20
+            listLayers = community.extractLayers(self.context.getUserCommunity().getId(), page, limit)
             progress.close()
+            if len(listLayers) == 0:
+                raise Exception(u"Votre communauté n'a pas paramétré sa carte, il n'y a pas de données à charger.")
             # et les présenter à l'utilisateur pour qu'il fasse son choix de travail
             dlgChargerGuichet = FormChargerGuichet(self.context, listLayers)
-            # L'utilisateur a cliqué sur le bouton Annuler ou la croix de du dialogue  de la fenetre de connexion
+            # L'utilisateur a cliqué sur le bouton Annuler ou la croix du dialogue
             if dlgChargerGuichet.bRejected:
                 return
-            # TODO remettre ce bout de code en circulation
-            # if dlgChargerGuichet.context.profil is not None:
-            #     if len(dlgChargerGuichet.context.profil.infosGeogroups) == 1 and \
-            #             len(dlgChargerGuichet.context.profil.infosGeogroups[0].layers) == 0:
-            #         raise Exception(u"Votre groupe n'a pas paramétré sa carte, il n'y a pas de données à charger.")
             # Affichage de la boite
             dlgChargerGuichet.exec_()
 

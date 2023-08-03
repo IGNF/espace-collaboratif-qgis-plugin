@@ -1,47 +1,45 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 20 oct. 2015
-Updated on 23 oct. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: AChang-Wailing, EPeyrouse
-"""
-
 import os
-
+import requests
 from PyQt5.QtWidgets import QDialogButtonBox
-from qgis.PyQt import uic
-from .core.RipartLoggerCl import RipartLogger
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtGui import QImage
-
-import requests
-
-from .core.Client import Client
+from qgis.PyQt import uic
+from .core import Constantes as cst
+from .core.CommunitiesMember import CommunitiesMember
+from .core.RipartLoggerCl import RipartLogger
 from .core.ClientHelper import ClientHelper
 from .PluginHelper import PluginHelper
 from .FormChoixGroupe import FormChoixGroupe
 from .FormInfo import FormInfo
-from .core import Constantes as cst
-from .core.Community import Community
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnection_base.ui'))
 
 
+# Fenêtre de login
 class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
-    """ Fenêtre de login
-    """
 
-    def __init__(self, context, parent=None):
+    def __init__(self, context, parent=None) -> None:
         super(FormConnectionDialog, self).__init__(parent)
-
         self.setupUi(self)
-        self.connectionResult = 0
-        self.urlHost = ""
-        self.projectDir = ""
-        self.setContext(context)
-        # Quelques mises en forme du dialogue à son initialisation
+        self.__context = None
+        self.__urlHost = ''
+        self.__projectDir = ''
+        self.__auth = {}
+        # Par défaut -1 (problème de connection), si 1 connection réussie
+        self.__connectionResult = -1
+        self.__logger = RipartLogger("FormConnexionDialog").getRipartLogger()
+        self.setContextAndVariables(context)
+        # Quelques mises en forme du dialogue avant affichage vers l'utilisateur
+        self.shapeDialog()
+
+    def setContextAndVariables(self, context) -> None:
+        self.__context = context
+        self.__urlHost = context.urlHostEspaceCo
+        self.__projectDir = context.projectDir
+        self.lineEditLogin.setText(context.login)
+        self.lineEditPwd.setText("")
+
+    def shapeDialog(self) -> None:
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Connecter")
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.connectToService)
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
@@ -52,260 +50,131 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lblLogin.setFont(font)
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
         self.setFixedSize(self.width(), self.height())
-        # Initialisation du fichier de log
-        self.logger = RipartLogger("FormConnexionDialog").getRipartLogger()
-        self.auth = {}
 
-    def setLogin(self, login):
+    def getConnectionResult(self) -> int:
+        return self.__connectionResult
+
+    def getAuthentification(self) -> {}:
+        return self.__auth
+
+    def setLineEditLogin(self, login) -> None:
         self.lineEditLogin.setText(login)
 
-    def getLogin(self):
+    def getLineEditLogin(self) -> str:
         return self.lineEditLogin.text()
 
-    def getPwd(self):
+    def getLineEditPwd(self) :
         return self.lineEditPwd.text()
 
-    def setDisplayInformations(self):
-        # Les infos de connexion présentée à l'utilisateur
-        dlgInfo = FormInfo()
-        # Modification du logo en fonction du groupe
-        if self.context.profil.logo != "":
-            image = QImage()
-            image.loadFromData(requests.get(self.context.profil.logo).content)
-            dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-        elif self.context.profil.title == "Profil par défaut":
-            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
-        dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
-        dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHost))
-        dlgInfo.textInfo.append("Login : {}".format(self.context.login))
-        dlgInfo.textInfo.append("Groupe : {}".format(self.context.profil.title))
-        if self.context.profil.zone == cst.ZoneGeographique.UNDEFINED:
-            zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
-            if zoneExtraction == "" or zoneExtraction is None or len(
-                    self.context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
-                dlgInfo.textInfo.append("Zone : pas de zone définie")
-                PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
-            else:
-                dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
-            self.context.profil.zone = zoneExtraction
-        else:
-            dlgInfo.textInfo.append("Zone : {}".format(self.context.profil.zone.__str__()))
-        dlgInfo.exec_()
-
+    # La fonction correspond au bouton Connecter...
     def connectToService(self):
-        # La fonction correspond au bouton Connecter...
+        self.__context.login = self.getLineEditLogin()
+        self.__context.pwd = self.getLineEditPwd()
+        if self.__context.login == '' or self.__context.pwd == '':
+            self.__context.pwd = ""
+            self.__context.client = None
+            self.__context.profil = None
+            self.__connectionResult = -1
+            return self.__connectionResult
         # Sauvegarde des éléments de connexion
-        self.context.login = self.getLogin()
-        self.context.pwd = self.getPwd()
-        if self.context.login == '' or self.context.pwd == '':
-            self.context.pwd = ""
-            self.context.client = None
-            self.context.profil = None
-            self.connectionResult = -1
-            return self.connectionResult
-        self.auth['login'] = self.getLogin()
-        self.auth['password'] = self.getPwd()
-        community = Community(self.urlHost, self.context.login, self.context.pwd, self.context.proxy)
+        self.__auth['login'] = self.getLineEditLogin()
+        self.__auth['password'] = self.getLineEditPwd()
+        PluginHelper.save_login(self.__projectDir, self.getLineEditLogin())
         try:
-            listGroup = community.extractCommunities()
-            PluginHelper.save_login(self.projectDir, self.getLogin())
-            dlgChoixGroupe = FormChoixGroupe(self.context, listGroup, self.context.groupeactif)
+            # Recherche des communautés
+            communities = CommunitiesMember(self.__urlHost, self.getLineEditLogin(), self.getLineEditPwd(),
+                                            self.__context.proxy)
+            communities.extractCommunities()
+            # La liste des communautés à afficher dans la boite de choix des communautés
+            listCommunities = communities.getListNameOfCommunities()
+            dlgChoixGroupe = FormChoixGroupe(self.__context, listCommunities, self.__context.groupeactif)
             dlgChoixGroupe.exec_()
-            # bouton Continuer
+            # bouton Continuer (le choix du nouveau profil est validé)
             if not dlgChoixGroupe.bCancel:
-                # Le choix du nouveau profil est validé
-                # Le nouvel id et nom du groupe sont retournés par un tuple
+                # Le nouvel id et nom du groupe sont retournés dans un tuple idNomGroupe
                 idNomGroupe = dlgChoixGroupe.getChosenGroupInfo()
-                self.context.profil = community.getUserProfil(idNomGroupe[0])
+
+                # La communauté de l'utilisateur est stocké dans le contexte
+                self.__context.setUserCommunity(communities.getUserCommunity(idNomGroupe[1]))
 
                 # Sauvegarde du groupe actif dans le xml du projet utilisateur
-                PluginHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
-                self.context.groupeactif = idNomGroupe[1]
+                PluginHelper.save_groupeactif(self.__projectDir, idNomGroupe[1])
+                self.__context.groupeactif = idNomGroupe[1]
 
                 # On enregistre le groupe comme groupe préféré pour la création de signalement
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-                formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
+                formPreferredGroup = PluginHelper.load_preferredGroup(self.__projectDir)
                 if formPreferredGroup != idNomGroupe[1]:
-                    # TODO compléter la liste des themes
-                    PluginHelper.save_preferredThemes(self.projectDir, [])
-                PluginHelper.save_preferredGroup(self.projectDir, idNomGroupe[1])
+                    # TODO voir avec Noémie, il s'agit bien des themes utilisateur (ceux dans community)
+                    #  et non activeThemes ou shared_themes ?
+                    PluginHelper.save_preferredThemes(self.__projectDir, self.__context.getUserCommunity().getThemes())
+                PluginHelper.save_preferredGroup(self.__projectDir, idNomGroupe[1])
             # Bouton Annuler
             elif dlgChoixGroupe.cancel:
                 dlgChoixGroupe.close()
                 self.close()
                 return
-
             # Les informations de connexion sont montrées à l'utilisateur
             self.setDisplayInformations()
-            self.connectionResult = 1
+            self.__connectionResult = 1
         except Exception as e:
-            self.context.logger.error(format(e))
-            self.context.pwd = ""
-            self.context.client = None
-            self.context.profil = None
-            self.connectionResult = -1
+            self.__context.logger.error(format(e))
+            self.__context.pwd = ""
+            self.__context.client = None
+            self.__context.profil = None
+            self.__connectionResult = -1
             PluginHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
-        return self.connectionResult
+        return self.__connectionResult
 
-    # def connectToService(self):
-    #     """Connexion à l'Espace collaboratif
-    #
-    #     :return 1 si la connexion a réussi, 0 si elle a été annulée, -1 s'il y a eu une erreur (Exception)
-    #     :rtype int
-    #     """
-    #     self.context.login = self.getLogin()
-    #     self.context.pwd = self.getPwd()
-    #     print("login " + self.context.login)
-    #     try:
-    #         client = Client(self.urlHost, self.context.login, self.context.pwd, self.context.proxy)
-    #         profile = client.getProfile()
-    #
-    #         if profile is not None:
-    #             PluginHelper.save_login(self.projectDir, self.getLogin())
-    #             self.context.client = client
-    #
-    #             # si l'utilisateur appartient à 1 seul groupe, celui-ci est déjà actif
-    #             # si l'utilisateur n'appartient à aucun groupe, un profil par défaut
-    #             # est attribué mais il ne contient pas d'infosgeogroupes
-    #             if len(profile.infosGeogroups) < 1:
-    #                 # le profil de l'utilisateur est déjà récupéré et reste actif (NB: a priori, il n'a pas de profil)
-    #                 self.context.profil = profile
-    #
-    #                 # si l'utilisateur n'a pas de profil, il faut indiquer que le groupe actif est vide
-    #                 if "défaut" in profile.title:
-    #                     PluginHelper.save_groupeactif(self.projectDir, "Aucun")
-    #                 else:
-    #                     PluginHelper.save_groupeactif(self.projectDir, profile.geogroup.getName())
-    #
-    #                     # On enregistre le groupe comme groupe préféré (par défaut) pour la création de signalement
-    #                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-    #                     preferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
-    #                     if preferredGroup != profile.geogroup.getName():
-    #                         PluginHelper.save_preferredThemes(self.projectDir, [])
-    #
-    #                     PluginHelper.save_preferredGroup(self.projectDir, profile.geogroup.getName())
-    #
-    #             # sinon le choix d'un autre groupe est présenté à l'utilisateur
-    #             # le formulaire est proposé même si l'utilisateur n'appartient qu'à un groupe
-    #             # afin qu'il puisse remplir sa clé Géoportail
-    #             else:
-    #                 dlgChoixGroupe = FormChoixGroupe(self.context, profile, self.context.groupeactif)
-    #                 dlgChoixGroupe.exec_()
-    #
-    #                 # bouton Valider
-    #                 if not dlgChoixGroupe.bCancel:
-    #
-    #                     # le choix du nouveau profil est validé
-    #                     # le nouvel id et nom du groupe sont retournés dans un tuple
-    #                     idNomGroupe = dlgChoixGroupe.getChosenGroupInfo()
-    #
-    #                     # si l'utilisateur n'appartient qu'à un seul groupe, le profil chargé reste actif
-    #                     if len(profile.infosGeogroups) == 1:
-    #                         self.context.profil = profile
-    #                     else:
-    #                         profil = client.setChangeUserProfil(idNomGroupe[0])
-    #                         self.context.profil = profil
-    #                         # récupère le profil et un message dans un tuple
-    #                         # profilMessage = client.setChangeUserProfil(idNomGroupe[0])
-    #                         # messTmp = profilMessage[1]
-    #                         #
-    #                         # # setChangeUserProfil retourne un message "Le profil du groupe xx est déjà actif"
-    #                         # if messTmp.find('actif') != -1:
-    #                         #     # le profil chargé reste actif
-    #                         #     self.context.profil = profil
-    #                         # else:
-    #                         #     # setChangeUserProfil retourne un message vide
-    #                         #     # le nouveau profil devient actif
-    #                         #     self.context.profil = profilMessage[0]
-    #
-    #                     # Sauvegarde du groupe actif dans le xml du projet utilisateur
-    #                     PluginHelper.save_groupeactif(self.projectDir, idNomGroupe[1])
-    #                     self.groupeactif = idNomGroupe[1]
-    #
-    #                     # On enregistre le groupe comme groupe préféré pour la création de signalement
-    #                     # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-    #                     formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
-    #                     if formPreferredGroup != profile.geogroup.getName():
-    #                         PluginHelper.save_preferredThemes(self.projectDir, [])
-    #                     PluginHelper.save_preferredGroup(self.projectDir, profile.geogroup.getName())
-    #
-    #                 # Bouton Annuler
-    #                 elif dlgChoixGroupe.cancel:
-    #                     print("rejected")
-    #                     dlgChoixGroupe.close()
-    #                     #self.close()
-    #                     #self = None
-    #                     return
-    #
-    #             # les infos de connexion présentée à l'utilisateur
-    #             dlgInfo = FormInfo()
-    #
-    #             # Modification du logo en fonction du groupe
-    #             if profile.logo != "":
-    #                 logoPath = "{0}{1}".format(self.urlHost, profile.logo)
-    #                 image = QImage()
-    #                 image.loadFromData(requests.get(logoPath).content)
-    #                 dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-    #             elif profile.title == "Profil par défaut":
-    #                 dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
-    #
-    #             dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
-    #             dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHost))
-    #             dlgInfo.textInfo.append("Login : {}".format(self.context.login))
-    #             dlgInfo.textInfo.append("Groupe : {}".format(self.context.profil.title))
-    #             if self.context.profil.zone == cst.ZoneGeographique.UNDEFINED:
-    #                 zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
-    #                 if zoneExtraction == "" or zoneExtraction is None or len(
-    #                         self.context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
-    #                     dlgInfo.textInfo.append("Zone : pas de zone définie")
-    #                     PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
-    #                 else:
-    #                     dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
-    #                 self.context.profil.zone = zoneExtraction
-    #             else:
-    #                 dlgInfo.textInfo.append("Zone : {}".format(self.context.profil.zone.__str__()))
-    #
-    #             dlgInfo.exec_()
-    #
-    #             self.connectionResult = 1
-    #
-    #         else:
-    #             # fix_print_with_import
-    #             print("error")
-    #
-    #     except Exception as e:
-    #         self.context.pwd = ""
-    #         self.context.logger.error(format(e))
-    #         self.context.client = None
-    #         self.context.profil = None
-    #         self.connectionResult = -1
-    #
-    #         PluginHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
-    #
-    #     return self.connectionResult
-
-    def setContext(self, context):
-        """Set du contexte
-        """
-        self.context = context
-        self.lineEditLogin.setText(context.login)
-        self.lineEditPwd.setText("")
-        self.setUrlHost(context.urlHostEspaceCo)
-        self.setProjectDir(context.projectDir)
-
-    def setUrlHost(self, urlHost):
-        """Set de l'url du service Espace collaboratif
-        """
-        self.urlHost = urlHost
-
-    def setProjectDir(self, projectDir):
-        """Set de le chemin du projet QGIS
-        """
-        self.projectDir = projectDir
+    def setDisplayInformations(self):
+        # Les infos de connexion présentée à l'utilisateur
+        dlgInfo = FormInfo()
+        # Modification du logo en fonction du groupe
+        if self.__context.getUserCommunity().getLogo() != "":
+            image = QImage()
+            image.loadFromData(requests.get(self.__context.getUserCommunity().getLogo()).content)
+            dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
+        elif self.__context.getUserCommunity().getName() == "Profil par défaut":
+            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
+        dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
+        dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.__urlHost))
+        dlgInfo.textInfo.append("Login : {}".format(self.__context.login))
+        dlgInfo.textInfo.append("Groupe : {}".format(self.__context.getUserCommunity().getName()))
+        zoneExtraction = PluginHelper.load_CalqueFiltrage(self.__projectDir).text
+        if zoneExtraction == "" or zoneExtraction is None or len(
+                self.__context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
+            dlgInfo.textInfo.append("Zone de travail : pas de zone définie")
+            PluginHelper.setXmlTagValue(self.__projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
+        else:
+            dlgInfo.textInfo.append("Zone de travail : {}".format(zoneExtraction))
+        # TODO faut-il contrôler (mais de quelle manière ?) la zone de travail de l'utilisateur
+        #  avec la variable emprises (FR, 38185, autre) de community qui autorise les droits de saisie
+        #  sachant que nous n'avons pas pour l'instant l'emprise géographique stockée sur le serveur
+        #  Faut-il indiquer l'emprise sur le serveur ? pour distinguer emprise serveur et zone de travail QGIS ?
+        #  je l'ai ajouté dans le doute
+        strEmprises = ''
+        if len(self.__context.getUserCommunity().getEmprises()) == 0:
+            strEmprises = 'aucune,'
+        else:
+            for emprise in self.__context.getUserCommunity().getEmprises():
+                strEmprises += "{},".format(emprise)
+        dlgInfo.textInfo.append("Emprise(s) serveur : {}".format(strEmprises[:-1]))
+        # if self.__context.profil.zone == cst.ZoneGeographique.UNDEFINED:
+        #     zoneExtraction = PluginHelper.load_CalqueFiltrage(self.__projectDir).text
+        #     if zoneExtraction == "" or zoneExtraction is None or len(
+        #             self.__context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
+        #         dlgInfo.textInfo.append("Zone : pas de zone définie")
+        #         PluginHelper.setXmlTagValue(self.__projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
+        #     else:
+        #         dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
+        #     self.__context.profil.zone = zoneExtraction
+        # else:
+        #     dlgInfo.textInfo.append("Zone : {}".format(self.__context.profil.zone.__str__()))
+        dlgInfo.exec_()
 
     def Cancel(self):
         self.close()
 
     def closeEvent(self, event):
-        self.connectionResult = 0
+        self.__connectionResult = 0
         self.close()

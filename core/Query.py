@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMessageBox
 from .HttpRequest import HttpRequest
-from .JsonResponse import JsonResponse
+from .requests import Response
 from . import Constantes as cst
 
 
@@ -117,11 +117,10 @@ class Query(object):
             return
 
     # Requete HTTP simple
-    def simple(self) -> JsonResponse:
+    def simple(self) -> Response:
         httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxy)
         response = httpRequest.getResponse(self.__partOfUrl, None)
         if response.status_code != 200:
             message = "Query.simple : {}".format(response.text)
             raise Exception(message)
-        jsonResponse = JsonResponse(response)
-        return jsonResponse
+        return response

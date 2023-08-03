@@ -1,13 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 25 nov. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: EPeyrouse, NGremeaux
-"""
 import os
-
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from qgis.PyQt import uic, QtWidgets
 from PyQt5.QtCore import Qt
@@ -26,14 +17,14 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     et récupération du profil utilisateur
     """
 
-    def __init__(self, context, listGroups, activeGroup, parent=None):
+    def __init__(self, context, listNamesIdsCommunities, activeGroup, parent=None):
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
         self.context = context
         # self.profile = profile
-        self.listGroups = listGroups
+        self.__listNamesIdsCommunities = listNamesIdsCommunities
         self.activeGroup = activeGroup
         self.newShapefilesDict = {}
         #self.infosgeogroups = None
@@ -51,8 +42,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setButtonsTextAndConnect()
 
     def setComboBoxGroup(self):
-        for listGroup in self.listGroups:
-            self.comboBoxGroup.addItem(listGroup.getName())
+        for nameid in self.__listNamesIdsCommunities:
+            self.comboBoxGroup.addItem(nameid['name'])
         if self.activeGroup is not None and self.activeGroup != "":
             self.comboBoxGroup.setCurrentText(self.activeGroup)
 
@@ -173,9 +164,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             self.bCancel = False
 
         # Récupération du nom du groupe que l'utilisateur a choisi
-        for lg in self.listGroups:
-            if lg.getName() == self.comboBoxGroup.currentText():
-                self.idChosenGroup = lg.getId()
+        for nameid in self.__listNamesIdsCommunities:
+            if nameid['name'] == self.comboBoxGroup.currentText():
+                self.idChosenGroup = nameid['id']
                 break
         self.nameChosenGroup = self.comboBoxGroup.currentText()
         self.accept()

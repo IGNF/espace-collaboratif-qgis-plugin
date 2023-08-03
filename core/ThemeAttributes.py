@@ -1,42 +1,60 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 8 nov. 2017
-Updated on 26 nov. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: AChang-Wailing, EPeyrouse, NGremeaux
-"""
-
-
+# Classe représentant un attribut d'un thème
 class ThemeAttributes(object):
-    """
-    Classe représentant un attribut d'un thème
-    """
 
-    def __init__(self, theme="", name="", value=""):
-        """
-        Constructeur
-        
-        :param nom: le nom de l'attribut
-        :type nom:string
-        
-        :param valeur: la valeur de l'attribut
-        :type valeur:string
-        """
-        self.__theme = theme
-        self.__name = name
-        self.__value = value
-        self.__defaultValue = None
-        self.__values = []
+    def __init__(self) -> None:
+        self.__name = ''
+        self.__title = ''
         self.__type = None
+        self.__values = []
+        self.__default = ''
+        # self.__inputConstraint = None
+        # self.__jsonSchema = None
+        # self.__help = None
+        self.__required = False
         self.__mandatory = False
+        # self.__original = {}
 
-    def setType(self, attType):
-        self.__type = attType
+    def keyExist(self, key, data) -> bool:
+        if key in data:
+            return True
+        return False
 
-    def setMandatory(self):
-        self.__mandatory = True
+    def getAttributes(self, data) -> None:
+        if self.keyExist('name', data):
+            self.__name = data['name']
+        if self.keyExist('title', data):
+            self.__title = data['title']
+        if self.keyExist('type', data):
+            self.__type = data['type']
+        if self.keyExist('values', data):
+            self.__values = data['values']
+        if self.keyExist('default', data):
+            self.__default = data['default']
+        if self.keyExist('required', data):
+            self.__required = data['required']
+        if self.keyExist('mandatory', data):
+            self.__mandatory = data['mandatory']
+
+    def getName(self) -> str:
+        return self.__name
+
+    def getTitle(self) -> str:
+        return self.__title
+
+    def getType(self) -> None:
+        return self.__type
+
+    def getValues(self) -> []:
+        return self.__values
+
+    def getDefault(self) -> str:
+        return self.__default
+
+    def getRequired(self) -> bool:
+        return self.__required
+
+    def getMandatory(self) -> bool:
+        return self.__mandatory
 
     def setTagDisplay(self, display):
         self.__tagDisplay = display

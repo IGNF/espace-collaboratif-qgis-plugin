@@ -1,20 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 25 nov. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: EPeyrouse, NGremeaux
-"""
-
 import os
-
 from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5 import QtCore
-
 from qgis.PyQt import uic, QtWidgets
-
-from .ImporterGuichet import ImporterGuichet
+from .PluginHelper import PluginHelper
+from .core.BBox import BBox
+from .core.NoProfileException import NoProfileException
+from .core.SQLiteManager import SQLiteManager
+from .core.RipartLoggerCl import RipartLogger
 from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChargerGuichet_base.ui'))
@@ -36,16 +28,17 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     bRejected = False
 
-    def __init__(self, context, listLayers, parent=None):
+    def __init__(self, context, listLayers, parent=None) -> None:
         super(FormChargerGuichet, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
 
-        self.context = context
-        self.listLayers = listLayers
+        self.__context = context
+        self.__logger = RipartLogger("ImporterGuichet").getRipartLogger()
+        self.__listLayers = listLayers
         # Il faut inverser l'ordre pour retrouver le paramétrage de la carte du groupe
-        self.listLayers.reverse()
+        self.__listLayers.reverse()
 
         # Remplissage des différentes tables de couches
         self.setTableWidgetMonGuichet()
@@ -55,17 +48,16 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
 
-        #self.labelGroupeActif.setText("Groupe actif : {}".format(profilUser.geogroup.getName()))
-        self.labelGroupeActif.setText("Groupe actif : {}".format(self.context.groupeactif))
+        self.labelGroupeActif.setText("Communauté active : {}".format(context.getUserCommunity().getName()))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  ##ff0000
 
-    def setColonneCharger(self, tableWidget, row, column):
+    def setColonneCharger(self, tableWidget, row, column) -> None:
         itemCheckBox = QtWidgets.QTableWidgetItem()
         itemCheckBox.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
         itemCheckBox.setCheckState(QtCore.Qt.CheckState.Unchecked)
         tableWidget.setItem(row, column, itemCheckBox)
 
-    def setTableWidgetMonGuichet(self):
+    def setTableWidgetMonGuichet(self) -> None:
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetMonGuichet.setHorizontalHeaderLabels(entete)
@@ -75,7 +67,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.tableWidgetMonGuichet.setColumnWidth(2, 130)
 
         # Autres lignes de la table
-        for layer in self.listLayers:
+        for layer in self.__listLayers:
             if layer.type != cst.WFS:
                 continue
 
@@ -97,7 +89,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # Colonne "Charger"
             self.setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
 
-    def setTableWidgetFondsGeoservices(self):
+    def setTableWidgetFondsGeoservices(self) -> None:
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetFondsGeoservices.setHorizontalHeaderLabels(entete)
@@ -106,7 +98,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.tableWidgetFondsGeoservices.setColumnWidth(2, 130)
 
         # Autres lignes de la table
-        for layer in self.listLayers:
+        for layer in self.__listLayers:
             if layer.type != cst.WMTS:
                 continue
 
@@ -128,13 +120,13 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # Colonne "Charger"
             self.setColonneCharger(self.tableWidgetFondsGeoservices, rowPosition, 2)
 
-    def setTableWidgetAutresGeoservices(self):
+    def setTableWidgetAutresGeoservices(self) -> None:
         # Entête
         entete = ["Nom de la couche", "Type", "Charger"]
         self.tableWidgetAutresGeoservices.setHorizontalHeaderLabels(entete)
 
         # Autres lignes de la table
-        for layer in self.listLayers:
+        for layer in self.__listLayers:
             if layer.type != cst.WFS and layer.type != cst.WMS:
                 continue
 
@@ -159,7 +151,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         self.tableWidgetAutresGeoservices.resizeColumnsToContents()
 
-    def getLayersSelected(self, tableWidget, numCol):
+    def getLayersSelected(self, tableWidget, numCol) -> []:
         checked_list = []
         for i in range(tableWidget.rowCount()):
             item = tableWidget.item(i, numCol)
@@ -168,7 +160,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 checked_list.append(itemCouche.text())
         return checked_list
 
-    def save(self):
+    def save(self) -> None:
         self.accept()
         layersQGIS = []
         layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoservices, 2),
@@ -183,14 +175,43 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                     name = tmpName[0].rstrip()  # pour supprimer l'espace final
                 else:
                     name = tmp
-                for layer in self.listLayers:
+                for layer in self.__listLayers:
                     if name == layer.name:
                         layersQGIS.append(layer)
                         break
+        # Téléchargement et import des couches du guichet sur la carte
+        self.doImport(layersQGIS)
 
-        importGuichet = ImporterGuichet(self.context)
-        importGuichet.doImport(layersQGIS)
+    def doImport(self, selectedLayers) -> None:
+        try:
+            self.__logger.debug("doImport")
 
-    def cancel(self):
+            if self.__context.getUserCommunity() is None:
+                raise NoProfileException(
+                    "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
+
+            if self.__context.getUserCommunity().getName() is None:
+                raise NoProfileException(
+                    "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
+
+            # filtre spatial
+            bbox = BBox(self.__context)
+            box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, False, True)
+            # si la box est à None alors, l'utilisateur veut extraire France entière
+            # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
+            # ne souhaite pas extraire les données France entière
+            if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
+                return
+
+            # création de la table des tables
+            SQLiteManager.createTableOfTables()
+
+            # Import des couches du guichet sélectionnées par l'utilisateur
+            self.__context.addGuichetLayersToMap(selectedLayers, box, self.__context.getUserCommunity().getName())
+
+        except Exception as e:
+            PluginHelper.showMessageBox('{}'.format(e))
+
+    def cancel(self) -> None:
         self.reject()
         print("L'utilisateur est sorti de la boite Charger les couches du groupe")
