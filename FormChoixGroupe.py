@@ -17,20 +17,18 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     et récupération du profil utilisateur
     """
 
-    def __init__(self, context, listNamesIdsCommunities, activeGroup, parent=None):
+    def __init__(self, context, listNamesIdsCommunities, nameActiveCommunity, parent=None) -> None:
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-        self.context = context
-        # self.profile = profile
+        self.__context = context
         self.__listNamesIdsCommunities = listNamesIdsCommunities
-        self.activeGroup = activeGroup
-        self.newShapefilesDict = {}
-        #self.infosgeogroups = None
-        self.bCancel = True
-        self.idChosenGroup = None
-        self.nameChosenGroup = None
+        self.__nameActiveCommunity = nameActiveCommunity
+        self.__newShapefilesDict = {}
+        self.__bCancel = True
+        self.__idSelectedCommunity = ''
+        self.__nameSelectedCommunity = ''
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
         self.setComboBoxGroup()
@@ -41,40 +39,43 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # Modification des intitulés des boutons
         self.setButtonsTextAndConnect()
 
-    def setComboBoxGroup(self):
+    def getCancel(self) -> int:
+        return self.__bCancel
+
+    def setComboBoxGroup(self) -> None:
         for nameid in self.__listNamesIdsCommunities:
             self.comboBoxGroup.addItem(nameid['name'])
-        if self.activeGroup is not None and self.activeGroup != "":
-            self.comboBoxGroup.setCurrentText(self.activeGroup)
+        if self.__nameActiveCommunity is not None and self.__nameActiveCommunity != "":
+            self.comboBoxGroup.setCurrentText(self.__nameActiveCommunity)
 
-    def setComboBoxWorkZone(self):
+    def setComboBoxWorkZone(self) -> None:
         index = -1
-        polyLayers = self.context.getMapPolygonLayers()
+        polyLayers = self.__context.getMapPolygonLayers()
         polyList = [val for key, val in polyLayers.items() if val != PluginHelper.nom_Calque_Croquis_Polygone]
         self.comboBoxWorkZone.clear()
         self.comboBoxWorkZone.addItem("")
         self.comboBoxWorkZone.addItems(polyList)
-        zone = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
+        zone = PluginHelper.load_ripartXmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
         if zone is None:
             self.comboBoxWorkZone.setCurrentIndex(0)
         else:
             index = self.comboBoxWorkZone.findText(zone, Qt.MatchFlag.MatchCaseSensitive)
-            # si le nom de la couche stockée dans le xml n'est pas dans la liste des couches existantes
+            # si le nom de la couche n'est pas dans la liste des couches existantes
             # dans le projet alors on affiche une zone vide
             if index == -1:
                 self.comboBoxWorkZone.setCurrentIndex(0)
         if index > 0:
             self.comboBoxWorkZone.setCurrentIndex(index)
 
-    def setButtonsTextAndConnect(self):
+    def setButtonsTextAndConnect(self) -> None:
         self.buttonBox.button(QDialogButtonBox.Save).setText("Continuer")
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
         self.toolButtonShapeFile.clicked.connect(self.openShapeFile)
 
-    def openShapeFile(self):
-        self.newShapefilesDict.clear()
+    def openShapeFile(self) -> None:
+        self.__newShapefilesDict.clear()
         formats = ["shp", "SHP"]
         filters = u"ESRI Shapefile (*.shp; *.SHP);;"
         shapefilePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.',
@@ -120,14 +121,14 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                     index += 1
 
                 if bAddItem:
-                    self.newShapefilesDict[shapefileLayerName] = shapefilePath
+                    self.__newShapefilesDict[shapefileLayerName] = shapefilePath
                     self.comboBoxWorkZone.addItem(shapefileLayerName)
                     self.comboBoxWorkZone.setCurrentText(shapefileLayerName)
         else:
             self.comboBoxWorkZone.setCurrentIndex(0)
 
-    def importShapefile(self, shapefileLayerName):
-        shapefilePath = self.newShapefilesDict[shapefileLayerName]
+    def importShapefile(self, shapefileLayerName) -> str:
+        shapefilePath = self.__newShapefilesDict[shapefileLayerName]
         if shapefilePath is None:
             return "Impossible d'importer le fichier {0}".format(shapefilePath)
 
@@ -151,7 +152,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         return ""
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
-    def save(self):
+    def save(self) -> None:
         # Si le nom de la zone de travail est vide → extraction complete
         spatialFilterLayerName = self.comboBoxWorkZone.currentText()
         if spatialFilterLayerName == '':
@@ -161,16 +162,16 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:
                 return
-            self.bCancel = False
+            self.__bCancel = False
 
         # Récupération du nom du groupe que l'utilisateur a choisi
         for nameid in self.__listNamesIdsCommunities:
             if nameid['name'] == self.comboBoxGroup.currentText():
-                self.idChosenGroup = nameid['id']
+                self.__idSelectedCommunity = nameid['id']
                 break
-        self.nameChosenGroup = self.comboBoxGroup.currentText()
+        self.__nameSelectedCommunity = self.comboBoxGroup.currentText()
         self.accept()
-        self.bCancel = False
+        self.__bCancel = False
 
         # Est-ce qu'un changement de groupe ou de zone de travail est intervenu au moment de la sauvegarde ?
         # Si oui, il faut supprimer l'ensemble des couches et le groupe
@@ -179,15 +180,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # Création d'une nouvelle zone de travail si le dictionnaire est rempli avec un shape
         # que l'utilisateur a chargé avec le bouton 'Parcourir'
         message = ""
-        if spatialFilterLayerName in self.newShapefilesDict:
+        if spatialFilterLayerName in self.__newShapefilesDict:
             message = self.importShapefile(spatialFilterLayerName)
             # Sauvegarde du nom de la nouvelle zone de travail
-            PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_Zone_extraction,
+            PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
                                         spatialFilterLayerName,
                                         "Map")
         # si spatialFilterLayerName est rempli, la zone existe déjà
         elif spatialFilterLayerName != '':
-            PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_Zone_extraction,
+            PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
                                         spatialFilterLayerName,
                                         "Map")
 
@@ -201,32 +202,32 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     en fonction de son choix
     """
 
-    def getChosenGroupInfo(self):
-        return self.idChosenGroup, self.nameChosenGroup
+    def getChosenGroupInfo(self) -> ():
+        return self.__idSelectedCommunity, self.__nameSelectedCommunity
 
     # bouton Annuler
-    def cancel(self):
-        self.bCancel = True
+    def cancel(self) -> None:
+        self.__bCancel = True
         self.reject()
 
-    def deleteLayersAndGroup(self, userWorkZone):
+    def deleteLayersAndGroup(self, userWorkZone) -> None:
         # Si c'est un projet nouvellement créé, il faut vérifier si la table des tables existe
         if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             return
 
         # Le nom de la zone stockée dans le xml .../xxx_espaceco.xml
-        storedWorkZone = PluginHelper.load_ripartXmlTag(self.context.projectDir,
+        storedWorkZone = PluginHelper.load_ripartXmlTag(self.__context.projectDir,
                                                         PluginHelper.xml_Zone_extraction,
                                                         "Map").text
 
-        bNewGroup = self.activeGroup != self.nameChosenGroup
+        bNewGroup = self.__nameActiveCommunity != self.__nameSelectedCommunity
         bNewZone = storedWorkZone != userWorkZone
         # Si rien n'a changé, on sort
         if not bNewGroup and not bNewZone:
             return
 
         # Récupération de l'ensemble des noms des couches chargées dans le projet QGIS
-        projectLayers = self.context.getAllMapLayers()
+        projectLayers = self.__context.getAllMapLayers()
         layersInProject = []
         for lp in projectLayers:
             tmp = Layer()
@@ -259,9 +260,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                     self.removeTablesSQLite(layersInProject)
                     QgsProject.instance().write()
                 else:
-                    self.bCancel = True
-                PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_GroupeActif, self.nameChosenGroup,
-                                        "Serveur")
+                    self.__bCancel = True
+                PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_GroupeActif,
+                                            self.__nameSelectedCommunity, "Serveur")
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
         if bNewZone:
@@ -278,14 +279,14 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                           " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    self.context.removeLayersFromProject(layersInProject, layersInTT, False)
-                    PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
+                    self.__context.removeLayersFromProject(layersInProject, layersInTT, False)
+                    PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
                                                 "Map")
                     self.removeTablesSQLite(layersInProject)
                 else:
-                    self.bCancel = True
+                    self.__bCancel = True
 
-    def removeTablesSQLite(self, layers):
+    def removeTablesSQLite(self, layers) -> None:
         for layer in layers:
             if SQLiteManager.isTableExist(layer.name):
                 SQLiteManager.emptyTable(layer.name)

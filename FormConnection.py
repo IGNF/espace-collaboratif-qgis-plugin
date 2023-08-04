@@ -87,10 +87,11 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
             communities.extractCommunities()
             # La liste des communautés à afficher dans la boite de choix des communautés
             listCommunities = communities.getListNameOfCommunities()
-            dlgChoixGroupe = FormChoixGroupe(self.__context, listCommunities, self.__context.groupeactif)
+            dlgChoixGroupe = FormChoixGroupe(self.__context, listCommunities,
+                                             PluginHelper.load_groupeactif(self.__projectDir).text)
             dlgChoixGroupe.exec_()
             # bouton Continuer (le choix du nouveau profil est validé)
-            if not dlgChoixGroupe.bCancel:
+            if not dlgChoixGroupe.getCancel():
                 # Le nouvel id et nom du groupe sont retournés dans un tuple idNomGroupe
                 idNomGroupe = dlgChoixGroupe.getChosenGroupInfo()
 
@@ -110,7 +111,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                     PluginHelper.save_preferredThemes(self.__projectDir, self.__context.getUserCommunity().getThemes())
                 PluginHelper.save_preferredGroup(self.__projectDir, idNomGroupe[1])
             # Bouton Annuler
-            elif dlgChoixGroupe.cancel:
+            elif dlgChoixGroupe.getCancel():
                 dlgChoixGroupe.close()
                 self.close()
                 return
@@ -176,5 +177,5 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.close()
 
     def closeEvent(self, event):
-        self.__connectionResult = 0
+        self.__connectionResult = 1
         self.close()

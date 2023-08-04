@@ -205,7 +205,7 @@ class RipartPlugin:
         self.context = Contexte.getInstance(self, QgsProject)
         if self.context is None:
             return -1
-        if bButtonConnect:
+        if self.context.getUserCommunity() is None or bButtonConnect:
             return self.context.getConnexionEspaceCollaboratif(newLogin=True)
         else:
             return 1
