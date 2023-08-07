@@ -92,8 +92,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         proxy = PluginHelper.load_proxy(context.projectDir).text
         self.lineEditProxy.setText(proxy)
 
-        groupeactif = PluginHelper.load_groupeactif(context.projectDir).text
-        self.lineEditGroupeActif.setText(groupeactif)
+        activeCommunityName = PluginHelper.loadActiveCommunityName(context.projectDir).text
+        self.lineEditGroupeActif.setText(activeCommunityName)
 
     def setWorkArea(self):
         # Par défaut l'item Zone de travail est vidée

@@ -98,14 +98,14 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             listeNamesGroups.append(igg.group.getName())
 
         # Valeur par défaut : groupe actif
-        groupeActif = self.context.groupeactif
+        activeCommunity = self.context.getActiveCommunityName()
         if preferredGroup in listeNamesGroups:
             self.comboBoxGroupe.setCurrentText(preferredGroup)
         else:
-            if groupeActif is not None and groupeActif != "" and groupeActif in listeNamesGroups:
-                self.comboBoxGroupe.setCurrentText(groupeActif)
+            if activeCommunity is not None and activeCommunity != "" and activeCommunity in listeNamesGroups:
+                self.comboBoxGroupe.setCurrentText(activeCommunity)
             else:
-                groupeActif = 'Aucun'
+                activeCommunity = 'Aucun'
                 self.comboBoxGroupe.setCurrentText('Aucun')
 
         # largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
@@ -114,7 +114,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.itemChanged.connect(self.onItemChanged)
 
         # On modifie les thèmes proposés en fonction du groupe sélectionné
-        if groupeActif != 'Aucun':
+        if activeCommunity != 'Aucun':
             self.comboBoxGroupe.currentIndexChanged.connect(self.groupIndexChanged)
             self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
         else:
@@ -280,7 +280,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         georemComment = infosgeogroup.reportDefaultComment
         if georemComment != "":
             self.textEditMessage.setText(georemComment)
-        if nameGroup == self.context.groupeactif:
+        if nameGroup == self.context.getUserCommunity().getName():
             themes = self.context.profil.themes
             filteredThemes = self.context.profil.filteredThemes
         else:

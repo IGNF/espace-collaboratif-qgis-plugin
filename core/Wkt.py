@@ -25,6 +25,11 @@ class Wkt(object):
         geometry.transform(self.crsTransform)
         return "GeomFromText('{0}', {1}),".format(geometry.asWkt(), self.sridTarget)
 
+    @staticmethod
+    def toGetLonLatFromGeometry(txtGeometry):
+        geometry = QgsGeometry.fromWkt(txtGeometry)
+        return geometry.asPoint().x(), geometry.asPoint().y
+
     def toPostGeometry(self, qgsGeometryObject, is3D, bBDUni):
         # Vérification du type géométrique entre QGIS et le serveur
         # et transformation du type le cas échéant

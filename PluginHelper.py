@@ -196,41 +196,29 @@ class PluginHelper:
             PluginHelper.logger.error(format(e))
 
     @staticmethod
-    def load_groupeactif(projectDir):
-        """Retourne le groupe actif sauvegardé dans le fichier de configuration xml
-
-                :param projectDir: le chemin vers le répertoire du projet
-                :type projectDir: string
-                """
-        groupeactif = ""
+    # Retourne le nom de la communauté active sauvegardée dans le fichier de configuration xml
+    def loadActiveCommunityName(projectDir):
+        activeCommunity = ""
         try:
             tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            groupeactif = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif, "Serveur"))
-            if groupeactif is None:
-                groupeactif = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_GroupeActif, "Serveur")
+            activeCommunity = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif, "Serveur"))
+            if activeCommunity is None:
+                activeCommunity = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_GroupeActif, "Serveur")
 
         except Exception as e:
             PluginHelper.logger.error(str(e))
 
-        return groupeactif
+        return activeCommunity
 
     @staticmethod
-    def save_groupeactif(projectDir, groupeactif):
-        """Enregistre le groupe actif dans le fichier de configuration
-
-                :param projectDir: le chemin vers le répertoire du projet
-                :type projectDir: string
-
-                :param groupeactif: le groupe actif de l'utilisateur
-                :type groupeactif: string
-                """
+    # Enregistre le groupe actif dans le fichier de configuration
+    def saveActiveCommunityName(projectDir, activeCommunity):
         try:
             tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
-            xgroupeactif = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif, "Serveur"))
-            xgroupeactif.text = groupeactif
-
+            xActiveCommunity = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif, "Serveur"))
+            xActiveCommunity.text = activeCommunity
             tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
@@ -408,7 +396,6 @@ class PluginHelper:
         # first load Themes_prefs tag (create the tag if the tag doesn't exist yet)
         themesNode = PluginHelper.load_ripartXmlTag(projectDir, PluginHelper.xml_Themes, "Map")
         PluginHelper.removeNode(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes)
-        # TODO modifier le code
         for th in prefThemes:
             PluginHelper.addXmlElement(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes,
                                        th.getName())

@@ -1,65 +1,50 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 3 janv. 2022
-@author: EPeyrouse
-"""
+from .ToolsReport import ToolsReport
 from .SeeReportView import SeeReportView
-from .core.RipartLoggerCl import RipartLogger
 from .PluginHelper import PluginHelper
+from .core import Report
+from .core.RipartLoggerCl import RipartLogger
 
 
+# Classe pour visualiser un signalement
 class SeeReport(object):
-    """
-    Classe pour visualiser un signalement
-    """
-    logger = RipartLogger("SeeReport").getRipartLogger()
-    context = None
-    error = "Il faut sélectionner un et un seul signalement"
 
-    def __init__(self, context):
-        self.context = context
+    def __init__(self, context) -> None:
+        self.__context = context
+        self.__logger = RipartLogger("SeeReport").getRipartLogger()
 
-    def do(self):
+    def do(self) -> None:
         """
         Affichage de la fenêtre de visualisation d'un signalement
         """
         try:
-            if self.context.client is None:
-                connResult = self.context.getConnexionEspaceCollaboratif()
-                if not connResult:
-                    return 0
-                # la connexion a échoué, on ne fait rien
-                if self.context.ripClient is None:
-                    self.context.iface.messageBar().pushMessage("",
-                                                                u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer",
-                                                                level=2, duration=5)
-                    return
-
-            activeLayer = self.context.iface.activeLayer()
+            activeLayer = self.__context.iface.activeLayer()
             if activeLayer is None or activeLayer.name() != PluginHelper.nom_Calque_Signalement:
-                self.context.iface.messageBar().pushMessage("Attention",
-                                                            'Le calque "Signalement" doit être le calque actif',
-                                                            level=1, duration=5)
+                self.__context.iface.messageBar().pushMessage("Attention",
+                                                              'La couche "Signalement" doit être la couche active',
+                                                              level=1, duration=5)
                 return
-            else:
-                selFeats = activeLayer.selectedFeatures()
-                if len(selFeats) != 1:
-                    self.context.iface.messageBar().pushMessage("Attention", self.error, level=1, duration=10)
-                    return
 
-                remIds = []
-                for feat in selFeats:
-                    remIds.append(feat.attribute('NoSignalement'))
+            selectedFeatures = activeLayer.selectedFeatures()
+            if len(selectedFeatures) != 1:
+                self.__context.iface.messageBar().pushMessage("Attention",
+                                                              "Il faut sélectionner un et un seul signalement",
+                                                              level=1, duration=10)
+                return
 
-            client = self.context.client
-            remId = remIds[0]
-            report = client.getGeoRem(remId)
-            self.logger.debug("SeeReport")
-            seeReportView = SeeReportView(self.context, report)
-            seeReportView.setReport()
+            reportsId = []
+            for feat in selectedFeatures:
+                reportsId.append(feat.attribute('NoSignalement'))
+            report = self.getReportWithId(reportsId[0])
+            self.__logger.debug("SeeReport")
+            seeReportView = SeeReportView()
+            seeReportView.setReport(report)
             seeReportView.show()
-            return seeReportView
+            #return seeReportView
 
         except Exception as e:
-            self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
+            self.__logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
             raise
+
+    def getReportWithId(self, id) -> Report:
+        toolsReport = ToolsReport(self.__context)
+        return toolsReport.getReport(id)

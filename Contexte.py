@@ -19,7 +19,6 @@ import ntpath
 import configparser
 
 from .core.Community import Community
-from .RipartException import RipartException
 from .PluginHelper import PluginHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.ClientHelper import ClientHelper
@@ -48,8 +47,7 @@ class Contexte(object):
     pwd = ""
     urlHostEspaceCo = ""
     profil = None
-    # groupe actif
-    groupeactif = ""
+
 
     # client pour le service RIPart
     client = None
@@ -112,7 +110,6 @@ class Contexte(object):
         self.pwd = ""
         self.auth = {'login': self.login, 'password': self.pwd}
         self.urlHostEspaceCo = ""
-        self.groupeactif = ""
         self.profil = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
@@ -120,6 +117,7 @@ class Contexte(object):
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata()
         self.__userCommunity = None
+        self.__activeCommunityName = ''
 
         try:
             # set du répertoire et fichier du projet qgis
@@ -151,6 +149,12 @@ class Contexte(object):
 
     def setUserCommunity(self, community) -> None:
         self.__userCommunity = community
+
+    def setActiveCommunityName(self, name) -> None:
+        self.__activeCommunityName = name
+
+    def getActiveCommunityName(self) -> str:
+        return self.__activeCommunityName
 
     def getMetadata(self):
         config = configparser.RawConfigParser()
@@ -242,14 +246,14 @@ class Contexte(object):
         Retourne True si au moins une couche est éditable
         False sinon
         """
-        if self.groupeactif is None or self.groupeactif == "":
+        if self.__activeCommunityName is None or self.__activeCommunityName == "":
             return False
 
         if self.profil is None:
             return False
 
         for infoGeogroup in self.profil.infosGeogroups:
-            if infoGeogroup.getName() != self.groupeactif:
+            if infoGeogroup.getName() != self.__activeCommunityName:
                 continue
 
             for layer in infoGeogroup.layers:
@@ -295,10 +299,10 @@ class Contexte(object):
 
         xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
         if xmlgroupeactif is not None:
-            self.groupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
+            self.__activeCommunityName = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
                                                               "Serveur").text
-            if self.groupeactif is not None:
-                self.logger.debug("this.groupeactif " + self.groupeactif)
+            if self.__activeCommunityName is not None:
+                self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
 
         if self.login == "" or self.pwd == "" or newLogin:
             self.loginWindow.setLineEditLogin(self.login)

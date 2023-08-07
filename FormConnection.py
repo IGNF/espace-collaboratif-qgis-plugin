@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtGui import QImage
 from qgis.PyQt import uic
-from .core import Constantes as cst
 from .core.CommunitiesMember import CommunitiesMember
 from .core.RipartLoggerCl import RipartLogger
 from .core.ClientHelper import ClientHelper
@@ -87,32 +86,33 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
             communities.extractCommunities()
             # La liste des communautés à afficher dans la boite de choix des communautés
             listCommunities = communities.getListNameOfCommunities()
-            dlgChoixGroupe = FormChoixGroupe(self.__context, listCommunities,
-                                             PluginHelper.load_groupeactif(self.__projectDir).text)
-            dlgChoixGroupe.exec_()
+            dlgSelectedCommunities = FormChoixGroupe(self.__context, listCommunities,
+                                                     PluginHelper.loadActiveCommunityName(self.__projectDir).text)
+            dlgSelectedCommunities.exec_()
             # bouton Continuer (le choix du nouveau profil est validé)
-            if not dlgChoixGroupe.getCancel():
-                # Le nouvel id et nom du groupe sont retournés dans un tuple idNomGroupe
-                idNomGroupe = dlgChoixGroupe.getChosenGroupInfo()
+            if not dlgSelectedCommunities.getCancel():
+                # Le nouvel id et nom du groupe sont retournés dans un tuple idNameCommunity
+                idNameCommunity = dlgSelectedCommunities.getIdAndNameFromSelectedCommunity()
 
                 # La communauté de l'utilisateur est stocké dans le contexte
-                self.__context.setUserCommunity(communities.getUserCommunity(idNomGroupe[1]))
+                self.__context.setUserCommunity(communities.getUserCommunity(idNameCommunity[1]))
+                self.__context.setActiveCommunityName(idNameCommunity[1])
 
                 # Sauvegarde du groupe actif dans le xml du projet utilisateur
-                PluginHelper.save_groupeactif(self.__projectDir, idNomGroupe[1])
-                self.__context.groupeactif = idNomGroupe[1]
+                PluginHelper.saveActiveCommunityName(self.__projectDir, idNameCommunity[1])
+                self.__context.setActiveCommunityName(idNameCommunity[1])
 
                 # On enregistre le groupe comme groupe préféré pour la création de signalement
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
                 formPreferredGroup = PluginHelper.load_preferredGroup(self.__projectDir)
-                if formPreferredGroup != idNomGroupe[1]:
+                if formPreferredGroup != idNameCommunity[1]:
                     # TODO voir avec Noémie, il s'agit bien des themes utilisateur (ceux dans community)
                     #  et non activeThemes ou shared_themes ?
                     PluginHelper.save_preferredThemes(self.__projectDir, self.__context.getUserCommunity().getThemes())
-                PluginHelper.save_preferredGroup(self.__projectDir, idNomGroupe[1])
+                PluginHelper.save_preferredGroup(self.__projectDir, idNameCommunity[1])
             # Bouton Annuler
-            elif dlgChoixGroupe.getCancel():
-                dlgChoixGroupe.close()
+            elif dlgSelectedCommunities.getCancel():
+                dlgSelectedCommunities.close()
                 self.close()
                 return
             # Les informations de connexion sont montrées à l'utilisateur

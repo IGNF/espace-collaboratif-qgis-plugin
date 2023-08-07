@@ -25,7 +25,7 @@ from .FormChargerGuichet import FormChargerGuichet
 from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
 from .Contexte import Contexte
-from .DownloadReport import DownloadReport
+from .ToolsReport import ToolsReport
 from .SeeReport import SeeReport
 from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
@@ -444,7 +444,7 @@ class RipartPlugin:
             if not self.doConnexion(False):
                 return
             # Les requêtes peuvent être longues
-            messageProgress = "Groupe {} : récupération des couches".format(self.context.groupeactif)
+            messageProgress = "Communauté {} : récupération des couches".format(self.context.getUserCommunity().getName())
             progress = ProgressBar(1, messageProgress)
             progress.setValue(1)
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
@@ -626,8 +626,8 @@ class RipartPlugin:
             if not self.doConnexion(False):
                 return
             # Téléchargement des signalements
-            downloadReport = DownloadReport(self.context)
-            result = downloadReport.do()
+            toolsReport = ToolsReport(self.context)
+            result = toolsReport.download()
             if result == 0:
                 return
 
@@ -736,19 +736,18 @@ class RipartPlugin:
         """Visualisation du signalement (message, réponses et statut)
         """
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            # Connexion à l'Espace collaboratif
+            if not self.doConnexion(False):
                 return
 
             seeReport = SeeReport(self.context)
-            self.SeeReportView = seeReport.do()
+            seeReport.do()
+            # self.SeeReportView = seeReport.do()
 
         except Exception as e:
             self.logger.error("SeeReport " + format(e))
             self.context.iface.messageBar(). \
-                pushMessage("Erreur",
-                            u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.",
-                            level=2, duration=5)
+                pushMessage("Erreur", format(e), level=2, duration=5)
 
     def ripAbout(self):
         """Montre la fenêtre "about" avec les informations de version du plugin 

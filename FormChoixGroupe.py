@@ -202,7 +202,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     en fonction de son choix
     """
 
-    def getChosenGroupInfo(self) -> ():
+    def getIdAndNameFromSelectedCommunity(self) -> ():
         return self.__idSelectedCommunity, self.__nameSelectedCommunity
 
     # bouton Annuler
