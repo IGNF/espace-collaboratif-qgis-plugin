@@ -73,13 +73,13 @@ class Remarque(object):
     # réponses de la remarque Ripart (liste d'objet GeoReponse)
     responses = []
 
-    # croquis de la remarque  list(Croquis)
+    # croquis de la remarque list(Croquis)
     croquis = []
 
-    # documents attachés à la remarque  (liste de string)
+    # documents attachés à la remarque (liste de string)
     documents = []
 
-    # thèmes attachés à la remarque  list(Theme)
+    # thèmes attachés à la remarque list(Theme)
     themes = []
 
     hash = ""

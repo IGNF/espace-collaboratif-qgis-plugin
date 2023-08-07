@@ -50,6 +50,7 @@ class RipartPlugin:
             application at run time.
         :type iface: QgsInterface
         """
+        self.SeeReportView = None
         self.ripartLogger = RipartLogger("RipartPlugin")
         self.logger = self.ripartLogger.getRipartLogger()
 
@@ -741,8 +742,7 @@ class RipartPlugin:
                 return
 
             seeReport = SeeReport(self.context)
-            seeReport.do()
-            # self.SeeReportView = seeReport.do()
+            self.SeeReportView = seeReport.do()
 
         except Exception as e:
             self.logger.error("SeeReport " + format(e))

@@ -1,3 +1,4 @@
+from typing import Optional
 from .ToolsReport import ToolsReport
 from .SeeReportView import SeeReportView
 from .PluginHelper import PluginHelper
@@ -12,7 +13,7 @@ class SeeReport(object):
         self.__context = context
         self.__logger = RipartLogger("SeeReport").getRipartLogger()
 
-    def do(self) -> None:
+    def do(self) -> Optional[SeeReportView]:
         """
         Affichage de la fenêtre de visualisation d'un signalement
         """
@@ -39,11 +40,12 @@ class SeeReport(object):
             seeReportView = SeeReportView(self.__context.getActiveCommunityName())
             seeReportView.setReport(report)
             seeReportView.show()
+            return seeReportView
 
         except Exception as e:
             self.__logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
             raise
 
-    def getReportWithId(self, id) -> Report:
+    def getReportWithId(self, reportId) -> Report:
         toolsReport = ToolsReport(self.__context)
-        return toolsReport.getReport(id)
+        return toolsReport.getReport(reportId)
