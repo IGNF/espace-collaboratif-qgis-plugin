@@ -27,7 +27,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             self.lbl_contentNumberReport.setStyleSheet("QLabel {color : blue}")  # #ff0000
             self.lbl_displayGeneralInformation.setText(self.DisplayGeneralInformation())
             # self.pte_displayThemes.setPlainText(self.DisplayThemes())
-            # self.lbl_displayDescription.setText(report.getComment())
+            self.lbl_displayDescription.setText(report.getComment())
             self.DisplayFilesAttached()
             #self.pte_displayResponses.setPlainText(report.concatenateReplies())
         except Exception as e:
