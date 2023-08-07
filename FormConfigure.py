@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.core import QgsVectorLayer
 from .RipartHelper import RipartHelper
 from .Contexte import Contexte
-from core.SQLiteManager import SQLiteManager
+from .core.SQLiteManager import SQLiteManager
 from .core import ConstanteRipart as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
@@ -244,7 +244,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         # Url
         # Si l'URL a changé, il faut vider la table des tables
-        oldUrl = RipartHelper.load_urlhost(self.context.projectDir)
+        oldUrl = RipartHelper.load_urlhost(self.context.projectDir).text
         newUrl = self.lineEditUrl.text()
         if oldUrl != newUrl:
             SQLiteManager.emptyTable(cst.TABLEOFTABLES)
