@@ -1,9 +1,6 @@
 import os
-
 from PyQt5 import QtCore
 from qgis.PyQt import uic, QtWidgets
-from numpy import double
-
 from .core.Wkt import Wkt
 from .core.RipartLoggerCl import RipartLogger
 from .core import Constantes as cst
@@ -34,25 +31,23 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             self.DisplayFilesAttached()
             #self.pte_displayResponses.setPlainText(report.concatenateReplies())
         except Exception as e:
-            self.__logger.error("setRemarque")
+            self.__logger.error("setReport")
             raise e
 
     def DisplayGeneralInformation(self) -> str:
         generalInformation = "Communauté : {0}\n".format(self.__activeCommunityName)
-        generalInformation += "Auteur : {0}\n".format(self.__report.getAuthor())
-        generalInformation += "Commune : {0}\n".format(self.DisplayTown(self.__report.getCommune(),
-                                                                        self.__report.getInsee()))
-        generalInformation += "Posté le : {0}\n".format(self.__report.getDateCreation())
-        generalInformation += "Statut : {0}\n".format(self.DisplayStatus(self.__report.getStatut()))
-        generalInformation += "Source : {0}\n".format(self.DisplaySource(self.__report.getInputDevice()))
-        lonlat = Wkt.toGetLonLatFromGeometry(self.__report.getGeometry())
-        generalInformation += "Localisation : {0}\n".format(self.DisplayLocation(lonlat[0], lonlat[1]))
+        generalInformation += "Auteur : {0}\n".format(self.__report.getStrAuthor())
+        generalInformation += "Commune : {0}\n".format(self._displayTown())
+        generalInformation += "Posté le : {0}\n".format(self.__report.getDatetimeCreation())
+        generalInformation += "Statut : {0}\n".format(self._displayStatus())
+        generalInformation += "Source : {0}\n".format(self._displaySource())
+        generalInformation += "Localisation : {0}\n".format(self._displayLocation())
         return generalInformation
 
-    def DisplayTown(self, town, number) -> str:
-        return "{0} ({1})".format(town, number)
+    def _displayTown(self) -> str:
+        return "{0} ({1})".format(self.__report.getCommune(), self.__report.getInsee())
 
-    def DisplayStatus(self, statusToSearch) -> str:
+    def _displayStatus(self) -> str:
         correspondance = {
             cst.STATUT.submit.__str__(): "Reçu dans nos services",
             cst.STATUT.pending.__str__(): "En cours de traitement",
@@ -64,12 +59,11 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             cst.STATUT.reject0.__str__(): "Rejeté (hors de propos)",
             cst.STATUT.pending2.__str__(): "En attente de validation"
         }
-        if statusToSearch in correspondance.keys():
-            return correspondance[statusToSearch]
-        else:
-            return "Indéfini"
+        if self.__report.getStatut() in correspondance.keys():
+            return correspondance[self.__report.getStatut()]
+        return "Indéfini"
 
-    def DisplaySource(self, stringToSearch) -> str:
+    def _displaySource(self) -> str:
         sources = {
             "UNKNOWN": "Soumise via l\'API",
             "www": "Saisie sur le site web",
@@ -79,16 +73,19 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             "PHONE": "Saisie depuis un smartphone",
             "SPOTIT": "Saisie sur SPOTIT"
         }
-        return sources[stringToSearch]
+        if self.__report.getInputDevice() in sources.keys():
+            return sources[self.__report.getInputDevice()]
+        return "Indéfini"
 
-    def DisplayLocation(self, longitude, latitude) -> str:
+    def _displayLocation(self) -> str:
+        lonlat = Wkt.toGetLonLatFromGeometry(self.__report.getGeometry())
         dirLon = "E"
         dirLat = "N"
-        if longitude < 0:
+        if lonlat[0] < 0:
             dirLon = "O"
-        if latitude < 0:
+        if lonlat[1] < 0:
             dirLat = "S"
-        return "{0}°{1}, {2}°{3}".format(str(longitude), dirLon, str(latitude), dirLat)
+        return "{0}°{1}, {2}°{3}".format(str(lonlat[0]), dirLon, str(lonlat[1]), dirLat)
 
     def DisplayThemes(self) -> str:
         displayThemes = ''
@@ -104,8 +101,10 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         return displayThemes.replace("=", " : ")
 
     def DisplayFilesAttached(self) -> None:
-        allDocuments = self.__report.getAttachments()
+        allDocuments = self.__report.getListAttachments()
+        htmlDocuments = ''
         for document in allDocuments:
-            self.lbl_displayDocuments.setText('<a href={0}>{1}</a>'.format(document, document))
-            self.lbl_displayDocuments.setTextFormat(QtCore.Qt.TextFormat.RichText)
-            self.lbl_displayDocuments.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextBrowserInteraction)
+            htmlDocuments += '<a href={0}>{1}</a><br />'.format(document, document)
+        self.lbl_displayDocuments.setText(htmlDocuments)
+        self.lbl_displayDocuments.setTextFormat(QtCore.Qt.TextFormat.RichText)
+        self.lbl_displayDocuments.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextBrowserInteraction)

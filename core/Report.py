@@ -1,4 +1,6 @@
 from .RipartLoggerCl import RipartLogger
+from datetime import datetime
+
 
 class Report(object):
 
@@ -14,13 +16,13 @@ class Report(object):
         self.__dateCreation = data['opening_date']
         self.__dateMaj = data['updating_date']
         self.__dateValidation = data['closing_date']
-        self.__themes = self.setThemes(data['attributes'])
+        self.__themes = data['attributes']
         self.__statut = data['status']
         self.__message = data['comment']
-        self.__replies = self.setReplies(data['replies'])
-        self.__url = self.setUrl(data['id'])
+        self.__replies = data['replies']
+        self.__url = self._setUrl(data['id'])
         self.__urlPrive = ''
-        self.__attachments = self.setAttachments(data['attachments'])
+        self.__attachments = data['attachments']
         self.__autorisation = ''
         self.__comment = data['comment']
         self.__inputDevice = data['input_device']
@@ -40,9 +42,6 @@ class Report(object):
     def getComment(self) -> str:
         return self.__comment
 
-    def getAuthor(self) -> str:
-        return self.__author
-
     def getCommune(self) -> str:
         return self.__commune
 
@@ -50,6 +49,7 @@ class Report(object):
         return self.__insee
 
     def getDateCreation(self) -> str:
+        # valeur de retour 2023-08-01T14:51:55+02:00
         return self.__dateCreation
 
     def getStatut(self) -> str:
@@ -64,18 +64,18 @@ class Report(object):
     def getColumnsForSQlite(self) -> {}:
         return {
             'NoSignalement': self.__id,
-            'Auteur': self.__author,
+            'Auteur': self.getStrAuthor(),
             'Commune': self.__commune,
             'Insee': self.__insee,
             'Département': self.__departement,
             'Département_id': self.__departementId,
-            'Date_création': self.__dateCreation,
-            'Date_MAJ': self.__dateMaj,
-            'Date_validation': self.__dateValidation,
-            'Thèmes': self._getStrThemes(),
+            'Date_création': self.getDatetimeCreation(),
+            'Date_MAJ': self.getDatetimeMaj(),
+            'Date_validation': self.getDatetimeValidation(),
+            'Thèmes': self.getStrThemes(),
             'Statut': self.__statut,
             'Message': self.__message,
-            'Réponses': self._getStrReplies(),
+            'Réponses': self.getStrReplies(),
             'URL': self.__url,
             'URL_privé': self.__urlPrive,
             'Document': self._getStrAttachments(),
@@ -83,37 +83,80 @@ class Report(object):
             'geom': self.__geometry
         }
 
-    def setAttachments(self, attachments) -> []:
-        listAttachments = []
-        if attachments is None or len(attachments) == 0:
-            return listAttachments
-        for attachment in attachments:
-            listAttachments.append(attachment['download_uri'])
-        return listAttachments
+    def getDatetimeCreation(self):
+        # valeur en entrée 2023-08-01T14:51:55+02:00
+        # valeur de retour 2023-08-01 14:51:55
+        dt = datetime.fromisoformat(self.__dateCreation)
+        dtc = dt.strftime('%Y-%m-%d %H:%M:%S')
+        return dtc
 
-    def getAttachments(self) -> []:
+    def getDatetimeMaj(self):
+        # valeur en entrée 2023-08-01T14:51:55+02:00
+        # valeur de retour 2023-08-01 14:51:55
+        dt = datetime.fromisoformat(self.__dateCreation)
+        dtmaj = dt.strftime('%Y-%m-%d %H:%M:%S')
+        return dtmaj
+
+    def getDatetimeValidation(self):
+        # valeur en entrée 2023-08-01T14:51:55+02:00
+        # valeur de retour 2023-08-01 14:51:55
+        dt = datetime.fromisoformat(self.__dateCreation)
+        dtv = dt.strftime('%Y-%m-%d %H:%M:%S')
+        return dtv
+
+    def getAuthor(self) -> {}:
+        # valeur de retour
+        # {"id": 676,
+        # "username": "epeyrouse",
+        # "email": "eric.peyrouse@ign.fr"}
+        # ou
+        # un entier
+        return self.__author
+
+    # SQLite, colonne 'Auteur' : il faut retourner le nom 'username'
+    def getStrAuthor(self) -> str:
+        if type(self.__author) is int:
+            return str(self.__author)
+        return self.__author['username']
+
+    def getAttachments(self) -> [{}]:
+        # valeur de retour
+        # {"short_fileName": "Toto.txt",
+        # "id": 7056,
+        # "title": "Toto",
+        # "description": null,
+        # "filename": "IMG/txt/4990fcaa50b7e36c7e4b2b3d04463de5_Toto.txt",
+        # "size": 52,
+        # "width": null,
+        # "height": null,
+        # "date": "2023-08-01T13:01:13+02:00",
+        # "geometry": "POINT(2.53161412208155 48.8635337081288)",
+        # "download_uri": "https://qlf-collaboratif.ign.fr/collaboratif-develop/document/download/7056"}
+        #
         return self.__attachments
 
+    # SQLite, colonne 'Document' : il faut retourner l'url 'download_uri'
     def _getStrAttachments(self) -> str:
+        # valeur de retour
+        # https://qlf-collaboratif.ign.fr/collaboratif-develop/document/download/7058
+        # si plusieurs documents, insertion d'un espace entre les url
         documents = ''
         if self.__attachments is None or len(self.__attachments) == 0:
             return documents
         for attachment in self.__attachments:
-            documents += "{} ".format(attachment)
+            documents += "{} ".format(attachment['download_uri'])
         return documents[:-1]
 
-    def setThemes(self, themes) -> []:
-        listThemes = []
-        if themes is None or len(themes) == 0:
-            return listThemes
-        for theme in themes:
-            listThemes.append(theme)
-        return listThemes
+    def getListAttachments(self):
+        attachments = []
+        for attachment in self.__attachments:
+            attachments.append(attachment['download_uri'])
+        return attachments
 
-    def getThemes(self) -> []:
+    def getThemes(self) -> [{}]:
         return self.__themes
 
-    def _getStrThemes(self) -> str:
+    def getStrThemes(self) -> str:
         strThemes = ''
         if self.__themes is None or len(self.__themes) == 0:
             return strThemes
@@ -121,18 +164,10 @@ class Report(object):
             strThemes += "{},".format(theme)
         return strThemes[:-1]
 
-    def setReplies(self, replies) -> []:
-        listReplies = []
-        if replies is None or len(replies) == 0:
-            return listReplies
-        for replie in replies:
-            listReplies.append(replie)
-        return listReplies
-
-    def getReplies(self) -> []:
+    def getReplies(self) -> [{}]:
         return self.__replies
 
-    def _getStrReplies(self) -> str:
+    def getStrReplies(self) -> str:
         strReplies = ''
         if self.__replies is None or len(self.__replies) == 0:
             return strReplies
@@ -140,7 +175,7 @@ class Report(object):
             strReplies += "{},".format(replie)
         return strReplies[:-1]
 
-    def setUrl(self, idReport) -> str:
+    def _setUrl(self, idReport) -> str:
         return "{0}/gcms/api/reports/{1}".format(self.__urlHostEspaceCo, idReport)
 
     #  Concatène les réponses existantes d'un signalement

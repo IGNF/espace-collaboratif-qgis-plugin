@@ -11,8 +11,8 @@ class CommunitiesMember(object):
         self.__login = login
         self.__pwd = pwd
         self.__proxy = proxy
-        # self.__firstname = ''
-        # self.__surname = ''
+        self.__firstname = ''
+        self.__surname = ''
         self.__id = -1
         self.__username = ''
         # self.__email = ''
@@ -54,6 +54,12 @@ class CommunitiesMember(object):
 
         if self.keyExist('username', data):
             self.__username = data['username']
+
+        if self.keyExist('firstname', data):
+            self.__firstname = data['firstname']
+
+        if self.keyExist('surname', data):
+            self.__surname = data['surname']
 
         if self.keyExist('active_themes', data):
             self.getDatasActiveThemes(data['active_themes'])

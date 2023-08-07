@@ -35,7 +35,13 @@ class SeeReport(object):
             reportsId = []
             for feat in selectedFeatures:
                 reportsId.append(feat.attribute('NoSignalement'))
-            report = self.getReportWithId(reportsId[0])
+            # TODO suggestion
+            #  Aller chercher les données dans SQLite ??? plutôt que de lancer la requête (dans getReport)
+            #  https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/reports/162918
+            #  Les données clientes dans SQLite sont censées être les mêmes que sur le serveur
+            #  même si la base SQLite contient moins de colonnes que d'attributs serveur retournés par la nouvelle API
+            toolsReport = ToolsReport(self.__context)
+            report = toolsReport.getReport(reportsId[0])
             self.__logger.debug("SeeReport")
             seeReportView = SeeReportView(self.__context.getActiveCommunityName())
             seeReportView.setReport(report)
@@ -45,7 +51,3 @@ class SeeReport(object):
         except Exception as e:
             self.__logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
             raise
-
-    def getReportWithId(self, reportId) -> Report:
-        toolsReport = ToolsReport(self.__context)
-        return toolsReport.getReport(reportId)
