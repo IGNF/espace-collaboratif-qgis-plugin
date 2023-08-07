@@ -36,10 +36,9 @@ class SeeReport(object):
                 reportsId.append(feat.attribute('NoSignalement'))
             report = self.getReportWithId(reportsId[0])
             self.__logger.debug("SeeReport")
-            seeReportView = SeeReportView()
+            seeReportView = SeeReportView(self.__context.getActiveCommunityName())
             seeReportView.setReport(report)
             seeReportView.show()
-            #return seeReportView
 
         except Exception as e:
             self.__logger.error(format(e) + ";" + str(type(e)) + " " + str(e))

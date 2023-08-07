@@ -15,12 +15,13 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
     """
     Forme de visualisation de l'historique de la remarque + sélection/déselection croquis + ouverture document joint
     """
-    def __init__(self) -> None:
+    def __init__(self, activeCommunityName) -> None:
         super(SeeReportView, self).__init__(None)
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
         self.__logger = RipartLogger("SeeReportView").getRipartLogger()
         self.__report = None
+        self.__activeCommunityName = activeCommunityName
 
     def setReport(self, report) -> None:
         try:
@@ -38,7 +39,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             raise e
 
     def DisplayGeneralInformation(self) -> str:
-        generalInformation = "Groupe : {0}\n".format(self.context.getActiveCommunityName)
+        generalInformation = "Communauté : {0}\n".format(self.__activeCommunityName)
         generalInformation += "Auteur : {0}\n".format(self.__report.getAuthor())
         generalInformation += "Commune : {0}\n".format(self.DisplayTown(self.__report.getCommune(),
                                                                         self.__report.getInsee()))
@@ -104,7 +105,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         return displayThemes.replace("=", " : ")
 
     def DisplayFilesAttached(self) -> None:
-        allDocuments = self.__report.getAllDocumentsForDisplay()
+        allDocuments = self.__report.getAttachments()
         for document in allDocuments:
             self.lbl_displayDocuments.setText('<a href={0}>{1}</a>'.format(document, document))
             self.lbl_displayDocuments.setTextFormat(QtCore.Qt.TextFormat.RichText)

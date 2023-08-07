@@ -28,7 +28,7 @@ class Wkt(object):
     @staticmethod
     def toGetLonLatFromGeometry(txtGeometry):
         geometry = QgsGeometry.fromWkt(txtGeometry)
-        return geometry.asPoint().x(), geometry.asPoint().y
+        return geometry.asPoint().x(), geometry.asPoint().y()
 
     def toPostGeometry(self, qgsGeometryObject, is3D, bBDUni):
         # Vérification du type géométrique entre QGIS et le serveur

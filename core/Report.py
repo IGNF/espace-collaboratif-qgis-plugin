@@ -11,13 +11,13 @@ class Report(object):
         self.__dateCreation = data['opening_date']
         self.__dateMaj = data['updating_date']
         self.__dateValidation = data['closing_date']
-        self.__themes = self.getThemes(data['attributes'])
+        self.__themes = self.getStrThemes(data['attributes'])
         self.__statut = data['status']
         self.__message = data['comment']
-        self.__replies = self.getReplies(data['replies'])
+        self.__replies = self.getStrReplies(data['replies'])
         self.__url = self.setUrl(data['id'])
         self.__urlPrive = ''
-        self.__attachments = self.getAttachments(data['attachments'])
+        self.__attachments = self.getStrAttachments(data['attachments'])
         self.__autorisation = ''
         self.__comment = data['comment']
         self.__inputDevice = data['input_device']
@@ -37,6 +37,15 @@ class Report(object):
     def getComment(self) -> str:
         return self.__comment
 
+    def getAttachments(self) -> str:
+        return self.__attachments
+
+    def getThemes(self) -> str:
+        return self.__themes
+
+    def getReplies(self) -> str:
+        return self.__replies
+
     def getAuthor(self) -> str:
         return self.__author
 
@@ -54,6 +63,9 @@ class Report(object):
 
     def getInputDevice(self) -> str:
         return self.__inputDevice
+
+    def getGeometry(self) -> str:
+        return self.__geometry
 
     #  Concatène les réponses existantes d'un signalement
     def concatenateReplies(self) -> str:
@@ -106,7 +118,7 @@ class Report(object):
             'geom': self.__geometry
         }
 
-    def getAttachments(self, attachments) -> str:
+    def getStrAttachments(self, attachments) -> str:
         docs = ''
         if attachments is None or len(attachments) == 0:
             return docs
@@ -117,7 +129,7 @@ class Report(object):
     def setUrl(self, idReport) -> str:
         return "{0}/gcms/api/reports/{1}".format(self.__urlHostEspaceCo, idReport)
 
-    def getThemes(self, themes) -> str:
+    def getStrThemes(self, themes) -> str:
         strThemes = ''
         if themes is None or len(themes) == 0:
             return strThemes
@@ -126,7 +138,7 @@ class Report(object):
         return strThemes[:-1]
 
     # TODO vérifier avec l'ancien code
-    def getReplies(self, replies):
+    def getStrReplies(self, replies) -> str:
         strReplies = ''
         if replies is None or len(replies) == 0:
             return strReplies
