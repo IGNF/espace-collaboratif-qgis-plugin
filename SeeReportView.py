@@ -38,7 +38,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         generalInformation = "Communauté : {0}\n".format(self.__activeCommunityName)
         generalInformation += "Auteur : {0}\n".format(self.__report.getStrAuthor())
         generalInformation += "Commune : {0}\n".format(self._displayTown())
-        generalInformation += "Posté le : {0}\n".format(self.__report.getDatetimeCreation())
+        generalInformation += "Posté le : {0}\n".format(self.__report.getStrDateCreation())
         generalInformation += "Statut : {0}\n".format(self._displayStatus())
         generalInformation += "Source : {0}\n".format(self._displaySource())
         generalInformation += "Localisation : {0}\n".format(self._displayLocation())

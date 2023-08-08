@@ -66,18 +66,18 @@ class Report(object):
     def getColumnsForSQlite(self) -> {}:
         return {
             'NoSignalement': self.__id,
-            'Auteur': self.__setStrForDatabase(self.getStrAuthor()),
-            'Commune': self.__setStrForDatabase(self.__commune),
+            'Auteur': self.getStrAuthor(),
+            'Commune': self.__commune,
             'Insee': self.__insee,
-            'Département': self.__setStrForDatabase(self.__departement),
+            'Département': self.__departement,
             'Département_id': self.__departementId,
-            'Date_création': self.getDatetimeCreation(),
-            'Date_MAJ': self.getDatetimeMaj(),
-            'Date_validation': self.getDatetimeValidation(),
-            'Thèmes': self.__setStrForDatabase(self.getStrThemes()),
+            'Date_création': self.getStrDateCreation(),
+            'Date_MAJ': self.getStrDateMaj(),
+            'Date_validation': self.getStrDateValidation(),
+            'Thèmes': self.getStrThemes(),
             'Statut': self.__statut,
-            'Message': self.__setStrForDatabase(self.__message),
-            'Réponses': self.__setStrForDatabase(self.getStrReplies()),
+            'Message': self.__message,
+            'Réponses': self.getStrReplies().replace('\n', ' '),
             'URL': self.__url,
             'URL_privé': self.__urlPrive,
             'Document': self._getStrAttachments(),
@@ -90,27 +90,26 @@ class Report(object):
             return ""
         return nodeValue
 
-    def __setStrForDatabase(self, strToEvaluate) -> str:
-        strForDB = self.__notNoneValue(strToEvaluate)
-        strForDB = strForDB.replace("'", "''")
-        strForDB = strForDB.replace('"', '""')
-        return strForDB
-
     def __formatDateToStrftime(self, dateToFormat):
         # valeur en entrée 2023-08-01T14:51:55+02:00
         # valeur de retour 2023-08-01 14:51:55
+        if dateToFormat == '':
+            return dateToFormat
         dt = datetime.fromisoformat(dateToFormat)
         dtc = dt.strftime('%Y-%m-%d %H:%M:%S')
         return dtc
 
-    def getDatetimeCreation(self):
-        return self.__formatDateToStrftime(self.__dateCreation)
+    def getStrDateCreation(self):
+        dc = self.__notNoneValue(self.__dateCreation)
+        return self.__formatDateToStrftime(dc)
 
-    def getDatetimeMaj(self):
-        return self.__formatDateToStrftime(self.__dateMaj)
+    def getStrDateMaj(self):
+        dm = self.__notNoneValue(self.__dateMaj)
+        return self.__formatDateToStrftime(dm)
 
-    def getDatetimeValidation(self):
-        return self.__formatDateToStrftime(self.__dateValidation)
+    def getStrDateValidation(self):
+        dv = self.__notNoneValue(self.__dateValidation)
+        return self.__formatDateToStrftime(dv)
 
     def getAuthor(self) -> {}:
         # valeur de retour
@@ -184,19 +183,18 @@ class Report(object):
         strThemes = ""
         for t in self.__themes:
             # le nom du thème
-            strThemes += self.__setStrForDatabase(t['theme'])
+            strThemes += t['theme']
             # les attributs du thème
-            if len(t['attributes']) == 0:
-                continue
-            z = 0
-            for attName, attValue in t['attributes'].items():
-                if z == 0:
-                    strThemes += "("
-                    z += 1
-                strThemes += self.__setStrForDatabase("{}={},".format(attName, self.__notNoneValue(attValue)))
-            if z > 0:
-                strThemes = strThemes[:-1]
-                strThemes += ")"
+            if len(t['attributes']) != 0:
+                z = 0
+                for attName, attValue in t['attributes'].items():
+                    if z == 0:
+                        strThemes += "("
+                        z += 1
+                    strThemes += "{}={},".format(attName, self.__notNoneValue(attValue))
+                if z > 0:
+                    strThemes = strThemes[:-1]
+                    strThemes += ")"
             strThemes += "|"
         return strThemes[:-1]
 
@@ -229,7 +227,7 @@ class Report(object):
                 strReplies += " par {}".format(replie['author'])
                 strReplies += " le {}.".format(self.__formatDateToStrftime(replie['date']))
                 strReplies += "\n{}\n".format(replie['content'])
-        return strReplies
+        return strReplies[:-1]
 
     # Crée de toutes pieces une url d'accès au signalement
     def _setUrl(self, idReport) -> str:

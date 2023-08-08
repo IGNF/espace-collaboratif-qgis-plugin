@@ -278,6 +278,7 @@ class SQLiteManager(object):
         for attributesRow in attributesRows:
             columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters, wkt)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
+            print(sql)
             cur.execute(sql)
             totalRows += 1
         cur.close()
