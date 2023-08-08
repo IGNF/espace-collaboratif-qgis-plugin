@@ -26,10 +26,10 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             self.lbl_contentNumberReport.setText("Signalement n°{0}".format(report.getId()))
             self.lbl_contentNumberReport.setStyleSheet("QLabel {color : blue}")  # #ff0000
             self.lbl_displayGeneralInformation.setText(self.DisplayGeneralInformation())
-            # self.pte_displayThemes.setPlainText(self.DisplayThemes())
+            self.pte_displayThemes.setPlainText(self.DisplayThemes())
             self.lbl_displayDescription.setText(report.getComment())
             self.DisplayFilesAttached()
-            #self.pte_displayResponses.setPlainText(report.concatenateReplies())
+            self.pte_displayResponses.setPlainText(report.getStrReplies())
         except Exception as e:
             self.__logger.error("setReport")
             raise e
@@ -89,7 +89,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
 
     def DisplayThemes(self) -> str:
         displayThemes = ''
-        themes = self.__report.concatenateThemes(False)
+        themes = self.__report.getStrThemes()
         for theme in themes:
             firstSeparator = {"|", ")"}
             for ch in firstSeparator:

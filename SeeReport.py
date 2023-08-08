@@ -2,7 +2,6 @@ from typing import Optional
 from .ToolsReport import ToolsReport
 from .SeeReportView import SeeReportView
 from .PluginHelper import PluginHelper
-from .core import Report
 from .core.RipartLoggerCl import RipartLogger
 
 

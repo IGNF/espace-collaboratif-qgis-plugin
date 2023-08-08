@@ -71,12 +71,19 @@ class Community(object):
             return True
         return False
 
+    def getProfil(self, datas):
+        # TODO à compléter suivant réponse ligne 38 dans seeReport.py
+        return 'utilisateur inconnu'
+
     # Récupère les informations d'une communauté
-    def getUserProfil(self, community_id) -> Profil:
+    def getUserProfil(self, community_id) -> None:
         self.__query.setPartOfUrl("gcms/api/communities/{}".format(community_id))
-        jsonResponse = self.__query.simple()
-        profil = jsonResponse.extractProfileFromCommunities()
-        return profil
+        response = self.__query.simple()
+        if response is None:
+            return
+        data = response.json()
+        self.getProfil(data)
+
 
     # Récupère les couches associées à une communauté
     def extractLayers(self, communityId, page, limit) -> []:

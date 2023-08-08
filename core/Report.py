@@ -61,21 +61,23 @@ class Report(object):
     def getGeometry(self) -> str:
         return self.__geometry
 
+    # TODO dans SQLIte, on stoke du json ou une chaine reformatée ?
+    #  j'ai pris l'option chaine reformatée
     def getColumnsForSQlite(self) -> {}:
         return {
             'NoSignalement': self.__id,
-            'Auteur': self.getStrAuthor(),
-            'Commune': self.__commune,
+            'Auteur': self.__setStrForDatabase(self.getStrAuthor()),
+            'Commune': self.__setStrForDatabase(self.__commune),
             'Insee': self.__insee,
-            'Département': self.__departement,
+            'Département': self.__setStrForDatabase(self.__departement),
             'Département_id': self.__departementId,
             'Date_création': self.getDatetimeCreation(),
             'Date_MAJ': self.getDatetimeMaj(),
             'Date_validation': self.getDatetimeValidation(),
-            'Thèmes': self.getStrThemes(),
+            'Thèmes': self.__setStrForDatabase(self.getStrThemes()),
             'Statut': self.__statut,
-            'Message': self.__message,
-            'Réponses': self.getStrReplies(),
+            'Message': self.__setStrForDatabase(self.__message),
+            'Réponses': self.__setStrForDatabase(self.getStrReplies()),
             'URL': self.__url,
             'URL_privé': self.__urlPrive,
             'Document': self._getStrAttachments(),
@@ -83,32 +85,40 @@ class Report(object):
             'geom': self.__geometry
         }
 
-    def getDatetimeCreation(self):
+    def __notNoneValue(self, nodeValue) -> str:
+        if nodeValue is None:
+            return ""
+        return nodeValue
+
+    def __setStrForDatabase(self, strToEvaluate) -> str:
+        strForDB = self.__notNoneValue(strToEvaluate)
+        strForDB = strForDB.replace("'", "''")
+        strForDB = strForDB.replace('"', '""')
+        return strForDB
+
+    def __formatDateToStrftime(self, dateToFormat):
         # valeur en entrée 2023-08-01T14:51:55+02:00
         # valeur de retour 2023-08-01 14:51:55
-        dt = datetime.fromisoformat(self.__dateCreation)
+        dt = datetime.fromisoformat(dateToFormat)
         dtc = dt.strftime('%Y-%m-%d %H:%M:%S')
         return dtc
 
+    def getDatetimeCreation(self):
+        return self.__formatDateToStrftime(self.__dateCreation)
+
     def getDatetimeMaj(self):
-        # valeur en entrée 2023-08-01T14:51:55+02:00
-        # valeur de retour 2023-08-01 14:51:55
-        dt = datetime.fromisoformat(self.__dateCreation)
-        dtmaj = dt.strftime('%Y-%m-%d %H:%M:%S')
-        return dtmaj
+        return self.__formatDateToStrftime(self.__dateMaj)
 
     def getDatetimeValidation(self):
-        # valeur en entrée 2023-08-01T14:51:55+02:00
-        # valeur de retour 2023-08-01 14:51:55
-        dt = datetime.fromisoformat(self.__dateCreation)
-        dtv = dt.strftime('%Y-%m-%d %H:%M:%S')
-        return dtv
+        return self.__formatDateToStrftime(self.__dateValidation)
 
     def getAuthor(self) -> {}:
         # valeur de retour
-        # {"id": 676,
+        # {
+        # "id": 676,
         # "username": "epeyrouse",
-        # "email": "eric.peyrouse@ign.fr"}
+        # "email": "eric.peyrouse@ign.fr"
+        # }
         # ou
         # un entier
         return self.__author
@@ -121,7 +131,8 @@ class Report(object):
 
     def getAttachments(self) -> [{}]:
         # valeur de retour
-        # {"short_fileName": "Toto.txt",
+        # {
+        # "short_fileName": "Toto.txt",
         # "id": 7056,
         # "title": "Toto",
         # "description": null,
@@ -131,8 +142,8 @@ class Report(object):
         # "height": null,
         # "date": "2023-08-01T13:01:13+02:00",
         # "geometry": "POINT(2.53161412208155 48.8635337081288)",
-        # "download_uri": "https://qlf-collaboratif.ign.fr/collaboratif-develop/document/download/7056"}
-        #
+        # "download_uri": "https://qlf-collaboratif.ign.fr/collaboratif-develop/document/download/7056"
+        # }
         return self.__attachments
 
     # SQLite, colonne 'Document' : il faut retourner l'url 'download_uri'
@@ -154,55 +165,73 @@ class Report(object):
         return attachments
 
     def getThemes(self) -> [{}]:
+        # valeur de retour
+        # attributes": [{
+        # "community": 80,
+        # "theme": "Dépose-Repose",
+        # "attributes": {
+        #   "Organisme": "AZERT",
+        #   "Téléphone": "4254777",
+        #   "Adresse mail": "ffss",
+        #   "Disparition RN": "1",
+        #   "Adresse Postale": "123 rue poc",
+        #   "Nom Correspondant": "azert"
+        #   }
+        # }]
         return self.__themes
 
     def getStrThemes(self) -> str:
-        strThemes = ''
-        if self.__themes is None or len(self.__themes) == 0:
-            return strThemes
-        for theme in self.__themes:
-            strThemes += "{},".format(theme)
+        strThemes = ""
+        for t in self.__themes:
+            # le nom du thème
+            strThemes += self.__setStrForDatabase(t['theme'])
+            # les attributs du thème
+            if len(t['attributes']) == 0:
+                continue
+            z = 0
+            for attName, attValue in t['attributes'].items():
+                if z == 0:
+                    strThemes += "("
+                    z += 1
+                strThemes += self.__setStrForDatabase("{}={},".format(attName, self.__notNoneValue(attValue)))
+            if z > 0:
+                strThemes = strThemes[:-1]
+                strThemes += ")"
+            strThemes += "|"
         return strThemes[:-1]
 
     def getReplies(self) -> [{}]:
+        # valeur de retour
+        # {"author": 3,
+        # "id": 79743,
+        # "title": "test",
+        # "content": "test",
+        # "status": "valid",
+        # "date": "2010-01-07T10:46:04+01:00"}
         return self.__replies
 
+    # Concatène les réponses existantes d'un signalement
     def getStrReplies(self) -> str:
         strReplies = ''
         if self.__replies is None or len(self.__replies) == 0:
             return strReplies
-        for replie in self.__replies:
-            strReplies += "{},".format(replie)
-        return strReplies[:-1]
+        count = len(self.__replies)
+        if count == 0:
+            strReplies += "Ce signalement n'a pas reçu de réponses."
+        else:
+            for replie in self.__replies:
+                strReplies += "Réponse n°{}".format(count.__str__())
+                count -= 1
+                # TODO c'est un n° et non le username
+                #  que fait-on ?
+                #  ticket redmine
+                #  ou requete https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/users/user_id
+                strReplies += " par {}".format(replie['author'])
+                strReplies += " le {}.".format(self.__formatDateToStrftime(replie['date']))
+                strReplies += "\n{}\n".format(replie['content'])
+        return strReplies
 
+    # Crée de toutes pieces une url d'accès au signalement
     def _setUrl(self, idReport) -> str:
+        # TODO faut-il demander l'ajout de cette url dans la réponse de la nouvelle API ?
         return "{0}/gcms/api/reports/{1}".format(self.__urlHostEspaceCo, idReport)
-
-    #  Concatène les réponses existantes d'un signalement
-    # def concatenateReplies(self) -> str:
-    #     concatenate = ""
-    #
-    #     if len(self.__replies) == 0:
-    #         concatenate += "Ce signalement n'a pas reçu de réponses."
-    #     else:
-    #         count = len(self.__replies)
-    #         for response in self.__replies:
-    #             concatenate += "Réponse n°" + count.__str__()
-    #             count -= 1
-    #
-    #             if response.author.name is not None:
-    #                 author_name = response.author.name
-    #                 if len(author_name) != 0:
-    #                     concatenate += " par " + response.author.name
-    #             if response.date is not None:
-    #                 concatenate += " le " + response.date.strftime("%Y-%m-%d %H:%M:%S")
-    #
-    #             try:
-    #                 if response.response is not None:
-    #                     concatenate += ".\n" + response.response.strip() + "\n"
-    #                 else:
-    #                     self.__logger.error("No message in response " + self.__id)
-    #             except Exception as e:
-    #                 self.__logger.error(format(e))
-    #
-    #     return concatenate
