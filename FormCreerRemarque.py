@@ -489,7 +489,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             self.lblMessageError.setStyleSheet("QLabel { background-color : #F5A802; font-weight:bold}")
             self.lblMessageError.setText(u"Le message est obligatoire")
             self.context.iface.messageBar().pushMessage("Attention", u'Le message est obligatoire', level=1,
-                                                        duration=10)
+                                                        duration=3)
             return
 
         self.bSend = True

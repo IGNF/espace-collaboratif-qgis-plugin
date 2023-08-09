@@ -21,14 +21,14 @@ class SeeReport(object):
             if activeLayer is None or activeLayer.name() != PluginHelper.nom_Calque_Signalement:
                 self.__context.iface.messageBar().pushMessage("Attention",
                                                               'La couche "Signalement" doit être la couche active',
-                                                              level=1, duration=5)
+                                                              level=1, duration=3)
                 return
 
             selectedFeatures = activeLayer.selectedFeatures()
             if len(selectedFeatures) != 1:
                 self.__context.iface.messageBar().pushMessage("Attention",
                                                               "Il faut sélectionner un et un seul signalement",
-                                                              level=1, duration=10)
+                                                              level=1, duration=3)
                 return
 
             reportsId = []
@@ -41,7 +41,7 @@ class SeeReport(object):
             #  même si la base SQLite contient moins de colonnes que d'attributs serveur retournés par la nouvelle API
             toolsReport = ToolsReport(self.__context)
             report = toolsReport.getReport(reportsId[0])
-            self.__logger.debug("SeeReport")
+            self.__logger.debug("SeeReport.do")
             seeReportView = SeeReportView(self.__context.getActiveCommunityName())
             seeReportView.setReport(report)
             seeReportView.show()

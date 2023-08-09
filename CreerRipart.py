@@ -46,7 +46,7 @@ class CreerRipart(object):
                 if self.context.client is None:
                     self.context.iface.messageBar().pushMessage("", u"Un problème de connexion avec le service est "
                                                                     u"survenu. Veuillez rééssayer", level=2,
-                                                                duration=5)
+                                                                duration=3)
                     return
 
             # Création des croquis à partir de la sélection de features
@@ -68,7 +68,7 @@ class CreerRipart(object):
         except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)", level=2,
-                                                        duration=15)
+                                                        duration=3)
 
     def _createNewReport(self, formCreate, croquisList):
         """Création d'une nouvelle remarque (requête au service ripart)
@@ -104,7 +104,7 @@ class CreerRipart(object):
                 newReport = self._prepareAndSendReport(tmpRem, croquisList, formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
                 if newReport is None:
                     self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création du "
-                                                                    u"signalement ", level=2, duration=15)
+                                                                    u"signalement ", level=2, duration=3)
                      
                 listNewReportIds.append(newReport.id)
             
@@ -132,7 +132,7 @@ class CreerRipart(object):
             PluginHelper.showMessageBox(message)
 
         except Exception as e:
-            self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=5)
+            self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=3)
             self.logger.error("in _createNewReport " + format(e))
 
         finally:

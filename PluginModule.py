@@ -310,7 +310,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Répondre à un signalement'),
-            callback=self.__answerToReport,
+            callback=self.__replyToReport,
             status_tip=self.tr(u'Répondre à un signalement'),
             parent=self.iface.mainWindow())
 
@@ -402,7 +402,7 @@ class RipartPlugin:
             self.__sendMessageBarException('PluginModule.__viewReport', e)
 
     # Répondre à un signalement
-    def __answerToReport(self):
+    def __replyToReport(self):
         try:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):

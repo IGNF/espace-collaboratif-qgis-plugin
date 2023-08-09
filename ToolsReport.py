@@ -95,7 +95,7 @@ class ToolsReport(object):
         self.addReportSketchLayersToTheCurrentMap()
 
         # Vider les tables signalement et croquis
-        SQLiteManager.emptyReportsAndSketchsInTables(PluginHelper.reportSketchLayersName)
+        SQLiteManager.setEmptyTablesReportsAndSketchs(PluginHelper.reportSketchLayersName)
 
         # Téléchargement des signalements
         date = PluginHelper.load_ripartXmlTag(self.__context.projectDir, PluginHelper.xml_DateExtraction, "Map").text

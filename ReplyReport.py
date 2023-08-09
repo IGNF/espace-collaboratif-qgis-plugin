@@ -1,53 +1,35 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 20 déc. 2021
-@author: EPEyrouse
-"""
-from .core.RipartLoggerCl import RipartLogger
-from .PluginHelper import PluginHelper
-from .core import Constantes as cst
+from .ToolsReport import ToolsReport
 from .ReplyReportView import ReplyReportView
+from .PluginHelper import PluginHelper
+from .core.RipartLoggerCl import RipartLogger
 from .core.ClientHelper import ClientHelper
+from .core import Constantes as cst
 
 
+# Classe servant à la gestion d'une réponse à un signalement
 class ReplyReport(object):
-    """
-    Classe pour répondre à un signalement
-    """
-    logger = RipartLogger("ReplyReport").getRipartLogger()
-    context = None
-
     def __init__(self, context):
-        self.context = context
+        self.__context = context
+        self.__logger = RipartLogger("ReplyReport").getRipartLogger()
 
+    # Affichage de la fenêtre de réponse à un signalement
     def do(self):
-        """
-        Affichage de la fenêtre de réponse à un signalement
-        """
+        self.__logger.debug("ReplyReport.do")
         try:
-            if self.context.client is None:
-                connResult = self.context.getConnexionEspaceCollaboratif()
-                if not connResult:
-                    return 0
-                # la connexion a échoué, on ne fait rien
-                if self.context.client is None:
-                    self.context.iface.messageBar().pushMessage("",
-                                                                u"Un problème de connexion avec avec l'Espace Collaboratif est survenu. Veuillez rééssayer",
-                                                                level=2, duration=5)
-                    return
-
             # Est-ce que la couche Signalement existe dans la carte ?
-            bExist = self.context.IsLayerInMap(PluginHelper.nom_Calque_Signalement)
+            bExist = self.__context.IsLayerInMap(PluginHelper.nom_Calque_Signalement)
             if not bExist:
-                mess = "Pas de couche 'Signalement' dans la carte.\nIl est donc impossible de répondre à un signalement.\nIl faut se connecter à l'Espace collaboratif et télécharger les signalements."
-                self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=5)
+                mess = "Pas de couche 'Signalement' dans la carte.\nIl est donc impossible de répondre à un " \
+                       "signalement.\nIl faut se connecter à l'Espace collaboratif et télécharger les signalements."
+                self.__context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=3)
+                self.__logger.error(mess)
                 return
             else:
-                activeLayer = self.context.iface.activeLayer()
+                activeLayer = self.__context.iface.activeLayer()
                 if activeLayer is None or activeLayer.name() != PluginHelper.nom_Calque_Signalement:
-                    self.context.iface.messageBar().pushMessage("Attention",
-                                                                'Le calque "Signalement" doit être le calque actif',
-                                                                level=1, duration=5)
+                    mess = 'Le calque "{}" doit être le calque actif'.format(PluginHelper.nom_Calque_Signalement)
+                    self.__context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=3)
+                    self.__logger.error(mess)
                     return
                 # get selected features
                 selFeats = activeLayer.selectedFeatures()
@@ -55,44 +37,51 @@ class ReplyReport(object):
                 replyReports = []
                 for feat in selFeats:
                     idReport = feat.attribute('NoSignalement')
-                    report = self.context.client.getGeoRem(idReport)
+                    toolsReport = ToolsReport(self.__context)
+                    report = toolsReport.getReport(idReport)
                     # Le statut du signalement est-il cloturé ?
                     pos = 0
-                    if report.statut.__str__() not in cst.openStatut:
-                        messageReportNoValid += "Impossible de répondre au signalement n°{0}, car il est clôturé depuis le {1}\n".format(idReport, report.DateValidation)
+                    if report.getStatut() not in cst.openStatut:
+                        messageReportNoValid += "Impossible de répondre au signalement n°{0}, car il est clôturé " \
+                                                "depuis le {1}\n".format(idReport, report.getStrDateValidation())
                         pos = -1
                     # Les autorisations sont-elles suffisantes pour modifier le signalement par une réponse
-                    bAuthorisation = True
-                    if report.autorisation not in ["RW", "RW+", "RW-"]:
-                        messageReportNoValid += "Vous n'êtes pas autorisé à modifier le signalement n°{0}\n".format(idReport)
-                        bAuthorisation = False
-                    if pos != -1 and bAuthorisation:
+                    # TODO -> Noémie voir ticket redmine http://sd-redmine.ign.fr/issues/18058
+                    # bAuthorisation = True
+                    # if report.autorisation not in ["RW", "RW+", "RW-"]:
+                    #     messageReportNoValid += "Vous n'êtes pas autorisé à modifier le signalement n°{0}\n".format(idReport)
+                    #     bAuthorisation = False
+                    # if pos != -1 and bAuthorisation:
+                    #     replyReports.append(report)
+                    if pos != -1:
                         replyReports.append(report)
 
                 if len(replyReports) == 0:
                     mess = "Pas de signalements sélectionnés. Veuillez sélectionner un ou plusieurs signalements."
                     if messageReportNoValid != "":
-                        mess = "Les signalements sélectionnés ne sont pas valides. Opération terminée.\n{0}".format(messageReportNoValid)
-                    self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=5)
+                        mess = "Les signalements sélectionnés ne sont pas valides. " \
+                               "Opération terminée.\n{0}".format(messageReportNoValid)
+                    self.__context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=3)
                     return
 
-                self.logger.debug("view reply report")
+                self.__logger.debug("ReplyReportView.exec")
                 dlgReplyReport = ReplyReportView(replyReports)
                 dlgReplyReport.exec_()
                 if dlgReplyReport.bResponse:
                     for report in replyReports:
-                        report.statut = cst.CorrespondenceStatusWording[dlgReplyReport.newStatus]
-                        newReport = self.context.client.addResponse(report, ClientHelper.notNoneValue(dlgReplyReport.newResponse), "")
+                        newStatut = cst.CorrespondenceStatusWording[dlgReplyReport.newStatus]
+                        newResponse = dlgReplyReport.newResponse
+                        newReport = report.addResponse(newResponse, newStatut)
                         if newReport is None:
                             raise Exception("georep_post a renvoyé une erreur")
-                        self.context.updateRemarqueInSqlite(newReport)
+                        self.__context.updateRemarqueInSqlite(newReport)
                     information = "Votre réponse "
                     if len(replyReports) == 1:
                         information += "au signalement {0} a bien été envoyée.".format(replyReports[0].id)
                     else:
                         information += "aux {0} signalements a bien été envoyée.".format(len(replyReports))
-                    self.context.iface.messageBar().pushMessage("Succès", information, level=0, duration=15)
+                    self.__context.iface.messageBar().pushMessage("Succès", information, level=0, duration=3)
 
         except Exception as e:
-            self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
-            raise
+            self.__logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
+            raise Exception

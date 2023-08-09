@@ -464,7 +464,7 @@ class Contexte(object):
             self.iface.messageBar(). \
                 pushMessage("Remarque",
                             str(e),
-                            level=1, duration=10)
+                            level=1, duration=3)
             print(str(e))
 
     def hideColumn(self, layer, columnName):

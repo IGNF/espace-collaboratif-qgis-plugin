@@ -62,7 +62,7 @@ class Magicwand(object):
         if selectedCroquis and selectedRemarque:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Veuillez sélectionner des signalements ou des croquis (mais pas les deux)",
-                                                        level=1, duration=10)
+                                                        level=1, duration=3)
             return None
         elif selectedCroquis:
             return "croquis"
@@ -71,7 +71,7 @@ class Magicwand(object):
         else:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Aucun croquis ou signalement sélectionné",
-                                                        level=1, duration=10)
+                                                        level=1, duration=3)
             return None
 
     """

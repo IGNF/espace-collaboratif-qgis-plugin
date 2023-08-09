@@ -682,14 +682,14 @@ class PluginHelper:
         if nb > 1:
             message = "Le filtrage des objets sera impossible car la couche {0} contient plusieurs objets." \
                       "Il faut une seule zone de travail pour filtrer les objets après extraction des données.".format(nameWorkZone)
-            QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=5)
+            QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
             return geometryWorkZone
         for feat in feats:
             geometryWorkZone = feat.geometry()
         if len(list(geometryWorkZone.parts())) > 1:
              message = "Le filtrage des objets sera impossible car la zone de travail est une surface multiple." \
                       "Il faut une surface simple pour filtrer les objets après extraction des données.".format(nameWorkZone)
-             QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=5)
+             QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
              return geometryWorkZone
         layerWorkZone[0].rollBack()
         layerWorkZone[0].removeSelection()

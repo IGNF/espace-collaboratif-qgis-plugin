@@ -23,11 +23,13 @@ class Report(object):
         self.__url = self._setUrl(data['id'])
         self.__urlPrive = ''
         self.__attachments = data['attachments']
+        # TODO les autorisations ne sont plus dans la réponse il faut les déduire...???? dixit Sylvain
+        #  résultat : ticket redmine to Madeline
         self.__autorisation = ''
         self.__comment = data['comment']
         self.__inputDevice = data['input_device']
         self.__geometry = data['geometry']
-        # TODO autres variables retournées par l'API, que fait-on ?
+        # TODO -> Noémie autres variables retournées par l'API, que fait-on ?
         # self.__community = data['community']
         # self.__validator = data['validator']
         # self.__territory = data['territory']
@@ -51,6 +53,9 @@ class Report(object):
     def getDateCreation(self) -> str:
         # valeur de retour 2023-08-01T14:51:55+02:00
         return self.__dateCreation
+
+    def setStatut(self, statut):
+        self.__statut = statut
 
     def getStatut(self) -> str:
         return self.__statut
@@ -220,7 +225,7 @@ class Report(object):
             for replie in self.__replies:
                 strReplies += "Réponse n°{}".format(count.__str__())
                 count -= 1
-                # TODO c'est un n° et non le username
+                # TODO -> Noémie c'est un n° et non le username
                 #  que fait-on ?
                 #  ticket redmine
                 #  ou requete https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/users/user_id
@@ -231,5 +236,13 @@ class Report(object):
 
     # Crée de toutes pieces une url d'accès au signalement
     def _setUrl(self, idReport) -> str:
-        # TODO faut-il demander l'ajout de cette url dans la réponse de la nouvelle API ?
+        # TODO -> Noémie faut-il demander l'ajout de cette url dans la réponse de la nouvelle API ?
         return "{0}/gcms/api/reports/{1}".format(self.__urlHostEspaceCo, idReport)
+
+    def addResponse(self, response, statut):
+        if response is None:
+            response = ''
+        if statut is None:
+            statut = ''
+
+        return None
