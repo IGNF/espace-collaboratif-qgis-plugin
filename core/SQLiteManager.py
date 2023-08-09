@@ -1,19 +1,20 @@
 import ntpath
 import json
 import os.path
-
 from qgis.utils import spatialite_connect
-from qgis.core import QgsProject, QgsGeometry
+from qgis.core import QgsProject
 from . import Constantes as cst
 from .Wkt import Wkt
 
 
+# Classe permettant la gestion d'une base SQLite liée à un projet QGIS
 class SQLiteManager(object):
 
     def __init__(self):
-        self.dbPath = SQLiteManager.getBaseSqlitePath()
+        self.__dbPath = SQLiteManager.getBaseSqlitePath()
 
     @staticmethod
+    # Retourne le chemin vers la base SQlite
     def getBaseSqlitePath():
         projectDir = QgsProject.instance().homePath()
         fname = ntpath.basename(QgsProject.instance().fileName())
@@ -23,6 +24,7 @@ class SQLiteManager(object):
         return dbPath
 
     @staticmethod
+    # Execute un code sql en ouvrant une connexion à la table SQLite
     def executeSQL(sql):
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
@@ -32,6 +34,7 @@ class SQLiteManager(object):
         connection.close()
 
     @staticmethod
+    # Retourne True si la table existe, False sinon
     def isTableExist(tableName):
         bFind = True
         dbPath = SQLiteManager.getBaseSqlitePath()
@@ -48,37 +51,43 @@ class SQLiteManager(object):
         connection.close()
         return bFind
 
-    def setAttributesTableToSql(self, layer):
+    # Retourne un tuple contenant le sql de création d'une table, le type de géométrie et un booléen à True
+    # si la colonne détruit existe dans la table (uniquement pour les tables BDUni)
+    def __setAttributesTableToSql(self, layer):
         columnDetruitExist = False
         typeGeometrie = ''
         sqlAttributes = ""
         for value in layer.attributes:
-            if self.setSwitchType(value['type']) == '':
+            if self.__setSwitchType(value['type']) == '':
                 return "", "", ""
             if value['name'] == "detruit":
                 columnDetruitExist = True
-                sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
+                sqlAttributes += "{0} {1},".format(value['name'], self.__setSwitchType(value['type']))
             elif value['name'] == layer.geometryName:
-                typeGeometrie = self.setSwitchType(value['type'])
+                typeGeometrie = self.__setSwitchType(value['type'])
             # au cas où il y aurait déjà un attribut nommé id_sqlite
             elif value['name'] == cst.ID_SQLITE:
-                sqlAttributes += "{0} {1},".format(cst.ID_ORIGINAL, self.setSwitchType(value['type']))
+                sqlAttributes += "{0} {1},".format(cst.ID_ORIGINAL, self.__setSwitchType(value['type']))
             # TODO Noémie : 29/7/22 Arnaud m'a indiqué que gcms_fingerprint et gcms_numrec ne doivent pas apparaitre
-            # TODO comme attributs cachés vis à vis de l'extérieur, cf les urls suivantes
-            # TODO (BIEN) https://qlf-collaboratif.ign.fr/collaboratif-3.4/gcms/database/bduni_recette_test/feature-type/equipement_de_transport.json
-            # TODO (PAS BIEN) https://espacecollaboratif.ign.fr/gcms/database/bduni_interne_qualif_fxx/feature-type/equipement_de_transport.json
+            #  TODO comme attributs cachés vis à vis de l'extérieur, cf les urls suivantes TODO (BIEN)
+            #   https://qlf-collaboratif.ign.fr/collaboratif-3.4/gcms/database/bduni_recette_test/feature-type
+            #   /equipement_de_transport.json TODO (PAS BIEN)
+            #    https://espacecollaboratif.ign.fr/gcms/database/bduni_interne_qualif_fxx/feature-type
+            #    /equipement_de_transport.json
             elif value['name'] == cst.FINGERPRINT or value['name'] == cst.NUMREC:
                 continue
             else:
-                sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
+                sqlAttributes += "{0} {1},".format(value['name'], self.__setSwitchType(value['type']))
         # Anomalie 17196, l'identifiant ID_SQLITE et FINGERPRINT sont positionnés en dernier dans le formulaire
         sqlAttributes += "{0} INTEGER PRIMARY KEY AUTOINCREMENT".format(cst.ID_SQLITE)
         if not layer.isStandard:
+            # ordre d'insertion geometrie puis gcms_fingerprint
             sqlAttributes += ",{0} TEXT".format(cst.FINGERPRINT)
-        # ordre d'insertion geometrie, gcms_fingerprint
         return sqlAttributes, typeGeometrie, columnDetruitExist
 
-    def addGeometryColumn(self, parameters):
+    # Ajout de la colonne géométrie à une table
+    # la variable parameters contient les informations nécessaires à la création
+    def __addGeometryColumn(self, parameters):
         # Paramétrage de la colonne géométrie en 2D par défaut
         if parameters['is3D']:
             sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XYZ')".format(parameters['tableName'],
@@ -92,20 +101,20 @@ class SQLiteManager(object):
                                                                                     parameters['geometryType'])
         return sql
 
+    # Création d'une table pour une couche de la carte
     def createTableFromLayer(self, layer):
-        t = self.setAttributesTableToSql(layer)
+        t = self.__setAttributesTableToSql(layer)
         if t[0] == "" and t[1] == "" and t[2] == "":
             raise Exception("SQLite : création de la table {} impossible, un type de colonne est inconnu".format(layer.name))
-        connection = spatialite_connect(self.dbPath)
+        connection = spatialite_connect(self.__dbPath)
         sql = u"CREATE TABLE {0} (".format(layer.name)
         sql += t[0]
         sql += ')'
         cur = connection.cursor()
         cur.execute(sql)
-        #connection.commit()
         parameters_geometry_column = {'tableName': layer.name, 'geometryName': layer.geometryName,
                                       'crs': cst.EPSGCRS4326, 'geometryType': t[1], 'is3D': layer.is3d}
-        sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
+        sqlGeometryColumn = self.__addGeometryColumn(parameters_geometry_column)
         cur.execute(sqlGeometryColumn)
         if not SQLiteManager.isTableExist(layer.name):
             raise Exception("SQLiteManager : création de la table {} impossible.".format(layer.name))
@@ -117,7 +126,8 @@ class SQLiteManager(object):
         SQLiteManager.vacuumDatabase()
         return t[2]
 
-    def setSwitchType(self, vType):
+    # Retourne un type de colonne SQLite en fonction d'un type d'attribut passé en entrée
+    def __setSwitchType(self, vType):
         if vType == 'Boolean':
             return 'INTEGER'
         elif vType == 'Integer':
@@ -157,51 +167,9 @@ class SQLiteManager(object):
         else:
             return ''
 
-    def setColumnsValuesForInsertWithSpatialFilter(self, attributesRow, parameters, bboxWorkingArea, wkt):
-        tmpColumns = '('
-        tmpValues = '('
-        for column, value in attributesRow.items():
-            if column == parameters['geometryName']:
-                # si la géometrie n'est pas dans la zone de travail alors on renvoie un tuple avec du vide
-                geom = QgsGeometry.fromWkt(value)
-                newGeom = wkt.transformGeometry(geom)
-                if not wkt.isGeometryObjectIntersectSpatialFilter(bboxWorkingArea, newGeom):
-                    return "", ""
-                tmpColumns += '{0},'.format(column)
-                tmpValues += wkt.toGetGeometry(value)
-                continue
-            elif column == cst.ID_SQLITE:
-                tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
-            else:
-                tmpColumns += '{0},'.format(column)
-            if value is None:
-                tmpValues += "'',"
-            else:
-                if type(value) == str:
-                    value = value.replace("'", "''")
-                if type(value) == list:
-                    listToJson = ''
-                    dict_object = {}
-                    for lv in value:
-                        for k, v in lv.items():
-                            if v is None:
-                                dict_object[k] = v
-                            else:
-                                dict_object[k] = v.replace("'", "''")
-                        listToJson = "'{}',".format(json.dumps(dict_object, sort_keys=True, indent=2))
-                    tmpValues += listToJson
-                    continue
-                tmpValues += "'{}',".format(value)
-        pos = len(tmpColumns)
-        strColumns = tmpColumns[0:pos - 1]
-        strColumns += ')'
-        pos = len(tmpValues)
-        strValues = tmpValues[0:pos - 1]
-        strValues += ')'
-        # sinon on renvoie un tuple contenant l'ensemble des colonnes et valeurs pour l'insertion dans la table
-        return strColumns, strValues
-
-    def setColumnsValuesForInsert(self, attributesRow, parameters, wkt):
+    # Retourne un tuple (colonnes, valeurs) avec les noms/valeurs de chaque enregistrement
+    # contenus dans une liste d'attributs
+    def __setColumnsValuesForInsert(self, attributesRow, parameters, wkt):
         tmpColumns = '('
         tmpValues = '('
         for column, value in attributesRow.items():
@@ -246,6 +214,7 @@ class SQLiteManager(object):
         return strColumns, strValues
 
     @staticmethod
+    # Suppression des enregistrements d'une table BDUni en fonction d'une liste de clés primaires données en entrée
     def deleteRowsInTableBDUni(tableName, keys):
         tmp = ''
         for key in keys:
@@ -255,6 +224,7 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
+    # Supprime les enregistrements d'une table BDUni en fonction des actions de synchronisation
     def setActionsInTableBDUni(tableName, itemsTransaction):
         cleabss = []
         for item in itemsTransaction:
@@ -267,16 +237,17 @@ class SQLiteManager(object):
         if len(cleabss) > 0:
             SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
+    # Insère un ou plusieurs enregistrements dans une table en fonction de la liste des attributs donnée en entrée
     def insertRowsInTable(self, parameters, attributesRows):
         totalRows = 0
         if len(attributesRows) == 0:
             return totalRows
         wkt = Wkt(parameters)
         # Insertion des lignes dans la table
-        connection = spatialite_connect(self.dbPath)
+        connection = spatialite_connect(self.__dbPath)
         cur = connection.cursor()
         for attributesRow in attributesRows:
-            columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters, wkt)
+            columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
             cur.execute(sql)
             totalRows += 1
@@ -286,6 +257,8 @@ class SQLiteManager(object):
         return totalRows
 
     @staticmethod
+    # Retourne le nom de la clé primaire (et la clé MD5 d'une empreinte) pour une table non BDUni
+    # ou retourne le nom de la clé primaire et la clé MD5 d'une empreinte pour une table BDUni
     def selectRowsInTable(layer, ids):
         tmp = "("
         for idTmp in ids:
@@ -309,6 +282,7 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
+    # Suppression de tous les enregistrements d'une table
     def emptyTable(tableName):
         if not SQLiteManager.isTableExist(tableName):
             return
@@ -317,12 +291,14 @@ class SQLiteManager(object):
         print("SQLiteManager : table {0} vidée".format(tableName))
 
     @staticmethod
+    # Suppression d'une table
     def deleteTable(tableName):
         sql = u"DROP TABLE {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} détruite".format(tableName))
 
     @staticmethod
+    # Retourne un tuple dont le premier élément est égale à 1 si la colonne existe dans la table
     def isColumnExist(tableName, columnName):
         sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
@@ -334,6 +310,7 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
+    # Retourne la valeur d'une colonne pour une table donnée
     def selectColumnFromTable(tableName, columnName):
         sql = u"SELECT {0} FROM {1}".format(columnName, tableName)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
@@ -345,6 +322,7 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
+    # Retourne la valeur d'une colonne selon une condition d'égalité
     def selectColumnFromTableWithCondition(tableName, columnName, key):
         sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, columnName, key)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
@@ -355,18 +333,20 @@ class SQLiteManager(object):
         connection.close()
         return result
 
-    # Indispensable après le chargement d'une nouvelle couche
     @staticmethod
+    # Compactage de la base SQLite (Indispensable après le chargement d'une nouvelle couche)
     def vacuumDatabase():
         sql = u"VACUUM"
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
+    # Met à jour le numéro de synchronisation d'une table
     def updateNumrecTableOfTables(layer, numrec):
         sql = "UPDATE {0} SET numrec = {1} WHERE layer = '{2}'".format(cst.TABLEOFTABLES, numrec, layer)
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
+    # Retourne l'ensemble des noms de tables stockées dans la table des tables
     def selectLayersFromTableOfTables():
         sql = "SELECT layer FROM {0}".format(cst.TABLEOFTABLES)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
@@ -378,6 +358,7 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
+    # Retourne le dernier numéro de synchronisation pour une couche (à 0 pour une table non BDUni)
     def selectNumrecTableOfTables(layer):
         sql = "SELECT numrec FROM {0} where layer = '{1}'".format(cst.TABLEOFTABLES, layer)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
@@ -389,6 +370,8 @@ class SQLiteManager(object):
         return result[0]
 
     @staticmethod
+    # Création de la table des tables qui permet de stocker les informations nécessaires
+    # en vue d'une synchronisation vers le serveur par exemple
     def createTableOfTables():
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
               u"standard BOOL, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
@@ -396,6 +379,7 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
+    # Insérer un enregistrement dans la table des tables
     def InsertIntoTableOfTables(parameters):
         # Si l'enregistrement existe déjà, on le détruit avant d'insérer le nouveau
         result = SQLiteManager.selectRowsInTableOfTables(parameters['layer'])
@@ -417,6 +401,7 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
+    # Retourne toutes les colonnes d'un enregistrement d'une table de la table des tables
     def selectRowsInTableOfTables(tableName):
         result = None
         # Est-ce que la table existe ?
@@ -433,10 +418,8 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
+    # Création de la table des signalements
     def createReportTable():
-        """
-        Création de la table des signalements
-        """
         sql = u"CREATE TABLE Signalement (" + \
               u"id INTEGER NOT NULL PRIMARY KEY," + \
               u"NoSignalement INTEGER," + \
@@ -462,14 +445,8 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
+    # Création d'une table de croquis
     def createSketchTable(nameTable, geometryType):
-        """
-        Création d'une table de croquis
-        :param nameTable: le nom de la table à créer
-        :type nameTable: string
-        :param geometryType: le type de la géométrie
-        :type: string
-        """
         sql = u"CREATE TABLE " + nameTable + " (" + \
               u"id INTEGER NOT NULL PRIMARY KEY," + \
               u"NoSignalement INTEGER," + \
@@ -483,7 +460,8 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    def emptyReportsAndSketchsInTables(tablesList):
+    # Suppression de tous les enregistrements de toutes les tables d'une liste
+    def setEmptyTablesReportsAndSketchs(tablesList):
         for table in tablesList:
             SQLiteManager.emptyTable(table)
         SQLiteManager.vacuumDatabase()

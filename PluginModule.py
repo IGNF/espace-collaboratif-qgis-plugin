@@ -429,11 +429,12 @@ class RipartPlugin:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
                 return
-            message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours ?"
+            message = u"Êtes-vous sûr de vouloir supprimer les signalements et les croquis associés " \
+                      u"de la carte en cours ?"
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.Yes:
-                SQLiteManager.emptyReportsAndSketchsInTables(PluginHelper.reportSketchLayersName)
+                SQLiteManager.setEmptyTablesReportsAndSketchs(PluginHelper.reportSketchLayersName)
                 self.__context.refresh_layers()
             else:
                 return

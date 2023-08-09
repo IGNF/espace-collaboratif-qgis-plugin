@@ -648,7 +648,7 @@ class Contexte(object):
         """
         curs = None
         try:
-            # self.conn= sqlite3.connect(self.dbPath)
+            # self.conn= sqlite3.connect(self.__dbPath)
             self.conn = spatialite_connect(self.dbPath)
 
             sql = "UPDATE " + PluginHelper.nom_Calque_Signalement + " SET "
