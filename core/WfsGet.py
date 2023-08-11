@@ -150,13 +150,20 @@ class WfsGet(object):
     def getMaxNumrec(self):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
         # TODO remplacer l'url par
-        # https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/databases/18/tables/479/max-numrec
+        #  https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/databases/18/tables/479/max-numrec
+        numrec = 1
         url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.urlHostEspaceCo, self.databasename,
                                                                          self.layerName)
         response = HttpRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
-        data = json.loads(response.text)
-        print("database : {} numrec : {}".format(self.databasename, data['numrec']))
-        return data['numrec']
+        # Succès : get (code 200) post (code 201)
+        if response.status_code == 200 and response.status_code == 201:
+            data = response.json()
+            print("database : {} numrec : {}".format(self.databasename, data['numrec']))
+            numrec = data['numrec']
+        else:
+            message = "code : {} raison : {}".format(response.status_code, response.reason)
+            raise Exception("WfsGet.getMaxNumrec -> ".format(message))
+        return numrec
 
     def setService(self):
         self.parametersGcmsGet['service'] = 'WFS'

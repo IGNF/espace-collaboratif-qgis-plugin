@@ -1,5 +1,6 @@
-from .RipartLoggerCl import RipartLogger
+from qgis.core import QgsProject
 from datetime import datetime
+from .RipartLoggerCl import RipartLogger
 
 
 class Report(object):
@@ -26,7 +27,6 @@ class Report(object):
         # TODO les autorisations ne sont plus dans la réponse il faut les déduire...???? dixit Sylvain
         #  résultat : ticket redmine to Madeline
         self.__autorisation = ''
-        self.__comment = data['comment']
         self.__inputDevice = data['input_device']
         self.__geometry = data['geometry']
         # TODO -> Noémie autres variables retournées par l'API, que fait-on ?
@@ -37,12 +37,10 @@ class Report(object):
         # self.__sketch_xml = data['sketch_xml']
         # self.__sketch = data['sketch']
         # self.__input_device = data['input_device']
+        # self.__comment = data['comment']
 
     def getId(self) -> int:
         return self.__id
-
-    def getComment(self) -> str:
-        return self.__comment
 
     def getCommune(self) -> str:
         return self.__commune
@@ -59,6 +57,9 @@ class Report(object):
 
     def getStatut(self) -> str:
         return self.__statut
+
+    def getMessage(self) -> str:
+        return self.__message
 
     def getInputDevice(self) -> str:
         return self.__inputDevice
@@ -79,6 +80,7 @@ class Report(object):
             'Date_création': self.getStrDateCreation(),
             'Date_MAJ': self.getStrDateMaj(),
             'Date_validation': self.getStrDateValidation(),
+            # TODO faut-il le name ou le title de l'attribut dans SQLite (pour l'instant j'ai pris le name)
             'Thèmes': self.getStrThemes(),
             'Statut': self.__statut,
             'Message': self.__message,
@@ -184,6 +186,26 @@ class Report(object):
         # }]
         return self.__themes
 
+    def getStrThemesForDisplay(self, activeUserCommunity) -> str:
+        strThemes = ""
+        for t in self.__themes:
+            # le nom du thème
+            strThemes += t['theme']
+            # les attributs du thème
+            if len(t['attributes']) != 0:
+                z = 0
+                for key, value in t['attributes'].items():
+                    if z == 0:
+                        strThemes += "("
+                        z += 1
+                    strThemes += "{}={},".format(activeUserCommunity.switchNameToTitleFromThemeAttributes(key),
+                                                 self.__notNoneValue(value))
+                if z > 0:
+                    strThemes = strThemes[:-1]
+                    strThemes += ")"
+            strThemes += "|"
+        return strThemes[:-1]
+
     def getStrThemes(self) -> str:
         strThemes = ""
         for t in self.__themes:
@@ -192,11 +214,11 @@ class Report(object):
             # les attributs du thème
             if len(t['attributes']) != 0:
                 z = 0
-                for attName, attValue in t['attributes'].items():
+                for key, value in t['attributes'].items():
                     if z == 0:
                         strThemes += "("
                         z += 1
-                    strThemes += "{}={},".format(attName, self.__notNoneValue(attValue))
+                    strThemes += "{}={},".format(key, self.__notNoneValue(value))
                 if z > 0:
                     strThemes = strThemes[:-1]
                     strThemes += ")"
@@ -238,11 +260,3 @@ class Report(object):
     def _setUrl(self, idReport) -> str:
         # TODO -> Noémie faut-il demander l'ajout de cette url dans la réponse de la nouvelle API ?
         return "{0}/gcms/api/reports/{1}".format(self.__urlHostEspaceCo, idReport)
-
-    def addResponse(self, response, statut):
-        if response is None:
-            response = ''
-        if statut is None:
-            statut = ''
-
-        return None

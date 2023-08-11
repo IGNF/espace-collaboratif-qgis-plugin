@@ -42,7 +42,7 @@ class SeeReport(object):
             toolsReport = ToolsReport(self.__context)
             report = toolsReport.getReport(reportsId[0])
             self.__logger.debug("SeeReport.do")
-            seeReportView = SeeReportView(self.__context.getActiveCommunityName())
+            seeReportView = SeeReportView(self.__context.getUserCommunity())
             seeReportView.setReport(report)
             seeReportView.show()
             return seeReportView

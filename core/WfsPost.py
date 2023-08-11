@@ -100,7 +100,7 @@ class WfsPost(object):
         if self.__isTableStandard:
             self.setKey(feature.id(), self.__layer.idNameForDatabase)
         for key, value in attributesChanged.items():
-            if value is None or value == qgis.core.NULL: #Remplacement par QGIS d'une valeur vide, on n'envoie pas
+            if value is None or value == qgis.core.NULL:  # Remplacement par QGIS d'une valeur vide, on n'envoie pas
                 continue
             else:
                 if value == "NULL":
@@ -135,12 +135,12 @@ class WfsPost(object):
         print("Post_action : {}".format(strActions))
         params = dict(actions=strActions, database=self.__layer.databasename)
         response = HttpRequest.makeHttpRequest(self.__url, authent=self.__identification, proxies=self.__proxy,
-                                                        data=params)
+                                               data=params)
         xmlResponse = XMLResponse(response.text)
         responseWfs = xmlResponse.checkResponseWfsTransactions()
         if responseWfs['status'] == 'SUCCESS':
-            # Mise à jour de la base SQLite pour les objets détruits et modifiés
-            # d'une couche BDUni
+            # Mise à jour de la base SQLite pour les objets détruits
+            # et modifiés d'une couche BDUni
             if not self.__layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__actions)
             # Mise à jour de la couche
@@ -257,7 +257,8 @@ class WfsPost(object):
         elif status == 'SUCCESS':
             information = self.__transactionReport
             tabInfo = message.split(' : ')
-            information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
+            information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage[
+                'urlTransaction'], tabInfo[1])
         return information
 
     def pushAddedFeatures(self, addedFeatures, bBDUni):

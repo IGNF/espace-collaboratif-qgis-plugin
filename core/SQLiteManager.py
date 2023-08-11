@@ -465,3 +465,11 @@ class SQLiteManager(object):
         for table in tablesList:
             SQLiteManager.emptyTable(table)
         SQLiteManager.vacuumDatabase()
+
+    @staticmethod
+    # Met à jour les colonnes d'un enregistrement d'une table en fonction d'une condition
+    def updateTable(parameters):
+        sql = "UPDATE {0} SET {1} WHERE {2}".format(parameters['name'], parameters['attributes'],
+                                                    parameters['condition'])
+        print(sql)
+        SQLiteManager.executeSQL(sql)

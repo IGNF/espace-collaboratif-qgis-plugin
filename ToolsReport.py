@@ -9,6 +9,7 @@ from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .core.Query import Query
 from .core.Report import Report
+from .core.HttpRequest import HttpRequest
 from .core import Constantes as cst
 
 
@@ -32,7 +33,8 @@ class ToolsReport(object):
                 uri.setDataSource('', table, 'geom')
                 uri.setSrid(str(cst.EPSGCRS4326))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+                vlayer.setCrs(
+                    QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
                 QgsProject.instance().addMapLayer(vlayer, False)
                 root.insertLayer(0, vlayer)
                 self.__logger.debug("Layer " + vlayer.name() + " added to map")
@@ -191,3 +193,28 @@ class ToolsReport(object):
         dist = min(new_box.width(), new_box.height()) * 0.1
         # zoom sur la couche Signalement
         self.__context.mapCan.setExtent(new_box.buffered(dist))
+
+    def updateReportIntoSQLite(self, report) -> None:
+        attributes = "Date_MAJ = '{}', Date_validation = '{}', Réponses = '{}', Statut ='{}'".format(
+            report.getStrDateMaj(), report.getStrDateValidation(), report.getStrReplies(), report.getStatut())
+        condition = 'NoSignalement = {}'.format(report.getId())
+        parameters = {'name': PluginHelper.nom_Calque_Signalement, 'attributes': attributes, 'condition': condition}
+        SQLiteManager.updateTable(parameters)
+
+    # Ajoute une réponse à un signalement
+    def addResponse(self, parameters) -> Report:
+        report = None
+        idReport = parameters['reportId']
+        uri = "{0}/gcms/api/reports/{1}/replies".format(self.__context.urlHostEspaceCo, idReport)
+        response = HttpRequest.makeHttpRequest(uri, parameters['authentification'], parameters['proxy'],
+                                               data=parameters['requestBody'])
+        # Succès : get (code 200) post (code 201)
+        if response.status_code == 200 and response.status_code == 201:
+            report = Report(self.__context.urlHostEspaceCo, response.json())
+        elif response.status_code == 403:
+            PluginHelper.showMessageBox("Vous n'avez pas les droits pour modifier "
+                                        "le signalement {}.".format(idReport))
+        else:
+            message = "code : {} raison : {}".format(response.status_code, response.reason)
+            raise Exception("ToolsReport.addResponse -> ".format(message))
+        return report

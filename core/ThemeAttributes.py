@@ -14,25 +14,25 @@ class ThemeAttributes(object):
         self.__mandatory = False
         # self.__original = {}
 
-    def keyExist(self, key, data) -> bool:
+    def __keyExist(self, key, data) -> bool:
         if key in data:
             return True
         return False
 
     def getAttributes(self, data) -> None:
-        if self.keyExist('name', data):
+        if self.__keyExist('name', data):
             self.__name = data['name']
-        if self.keyExist('title', data):
+        if self.__keyExist('title', data):
             self.__title = data['title']
-        if self.keyExist('type', data):
+        if self.__keyExist('type', data):
             self.__type = data['type']
-        if self.keyExist('values', data):
+        if self.__keyExist('values', data):
             self.__values = data['values']
-        if self.keyExist('default', data):
+        if self.__keyExist('default', data):
             self.__default = data['default']
-        if self.keyExist('required', data):
+        if self.__keyExist('required', data):
             self.__required = data['required']
-        if self.keyExist('mandatory', data):
+        if self.__keyExist('mandatory', data):
             self.__mandatory = data['mandatory']
 
     def getName(self) -> str:
@@ -66,3 +66,6 @@ class ThemeAttributes(object):
         x = values.split('|')
         for value in x:
             self.__values.append(value)
+
+    def getNameAndTitle(self) -> {}:
+        return {self.__name: self.__title}

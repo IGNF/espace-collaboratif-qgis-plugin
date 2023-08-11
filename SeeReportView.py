@@ -12,13 +12,13 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
     """
     Forme de visualisation de l'historique de la remarque + sélection/déselection croquis + ouverture document joint
     """
-    def __init__(self, activeCommunityName) -> None:
+    def __init__(self, activeUserCommunity) -> None:
         super(SeeReportView, self).__init__(None)
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
         self.__logger = RipartLogger("SeeReportView").getRipartLogger()
         self.__report = None
-        self.__activeCommunityName = activeCommunityName
+        self.__activeUserCommunity = activeUserCommunity
 
     def setReport(self, report) -> None:
         try:
@@ -27,7 +27,8 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             self.lbl_contentNumberReport.setStyleSheet("QLabel {color : blue}")  # #ff0000
             self.lbl_displayGeneralInformation.setText(self.DisplayGeneralInformation())
             self.pte_displayThemes.setPlainText(self.DisplayThemes())
-            self.lbl_displayDescription.setText(report.getComment())
+            # TODO changer l'item description et documents joints de label en plain text
+            self.lbl_displayDescription.setText(report.getMessage())
             self.DisplayFilesAttached()
             self.pte_displayResponses.setPlainText(report.getStrReplies())
         except Exception as e:
@@ -35,7 +36,9 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             raise e
 
     def DisplayGeneralInformation(self) -> str:
-        generalInformation = "Communauté : {0}\n".format(self.__activeCommunityName)
+        generalInformation = "Groupe : {0}\n".format(self.__activeUserCommunity.getName())
+        # TODO -> sur le guichet pour l'affichage d'un signalement sur l'auteur il y a un (ign.fr)
+        # doit-on le déduire de l'adresse mail ?
         generalInformation += "Auteur : {0}\n".format(self.__report.getStrAuthor())
         generalInformation += "Commune : {0}\n".format(self._displayTown())
         generalInformation += "Posté le : {0}\n".format(self.__report.getStrDateCreation())
@@ -89,7 +92,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
 
     def DisplayThemes(self) -> str:
         displayThemes = ''
-        themes = self.__report.getStrThemes()
+        themes = self.__report.getStrThemesForDisplay(self.__activeUserCommunity)
         for theme in themes:
             firstSeparator = {"|", ")"}
             for ch in firstSeparator:

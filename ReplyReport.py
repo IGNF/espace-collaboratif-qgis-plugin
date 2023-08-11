@@ -11,6 +11,8 @@ class ReplyReport(object):
     def __init__(self, context):
         self.__context = context
         self.__logger = RipartLogger("ReplyReport").getRipartLogger()
+        # Initialisation des outils de gestion d'un signalement
+        self.__toolsReport = ToolsReport(self.__context)
 
     # Affichage de la fenêtre de réponse à un signalement
     def do(self):
@@ -37,8 +39,7 @@ class ReplyReport(object):
                 replyReports = []
                 for feat in selFeats:
                     idReport = feat.attribute('NoSignalement')
-                    toolsReport = ToolsReport(self.__context)
-                    report = toolsReport.getReport(idReport)
+                    report = self.__toolsReport.getReport(idReport)
                     # Le statut du signalement est-il cloturé ?
                     pos = 0
                     if report.getStatut() not in cst.openStatut:
@@ -71,16 +72,23 @@ class ReplyReport(object):
                     for report in replyReports:
                         newStatut = cst.CorrespondenceStatusWording[dlgReplyReport.newStatus]
                         newResponse = dlgReplyReport.newResponse
-                        newReport = report.addResponse(newResponse, newStatut)
+                        # TODO -> Noémie le post d'une réponse à un signalement demande un title
+                        #  j'ai mis vide pour l'instant doit-on mettre une valeur style "envoyée de QGIS"
+                        parameters = {'reportId': report.getId(),
+                                      'authentification': {'login': self.__context.auth['login'],
+                                                           'password': self.__context.auth['password']},
+                                      'proxy': self.__context.proxy,
+                                      'requestBody': {'title': '', 'content': newResponse, 'status': newStatut}}
+                        newReport = self.__toolsReport.addResponse(parameters)
                         if newReport is None:
-                            raise Exception("georep_post a renvoyé une erreur")
-                        self.__context.updateRemarqueInSqlite(newReport)
+                            raise Exception("toolsReport.addResponse a renvoyé une erreur")
+                        self.__toolsReport.updateReportIntoSQLite(newReport)
                     information = "Votre réponse "
                     if len(replyReports) == 1:
                         information += "au signalement {0} a bien été envoyée.".format(replyReports[0].id)
                     else:
                         information += "aux {0} signalements a bien été envoyée.".format(len(replyReports))
-                    self.__context.iface.messageBar().pushMessage("Succès", information, level=0, duration=3)
+                    self.__context.iface.messageBar().pushMessage("Succès", information, level=0, duration=5)
 
         except Exception as e:
             self.__logger.error(format(e) + ";" + str(type(e)) + " " + str(e))

@@ -74,18 +74,12 @@ class HttpRequest(object):
 
     @staticmethod
     # lance une requête HTTP GET ou POST en fonction des vcariables données en entrée
-    def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, files=None) -> requests.Response:
-        try:
-            if data is None and files is None:
-                response = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
-                                 params=params, verify=False)
-            else:
-                response = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
-                                  data=data, files=files, verify=False)
-            if response.status_code != 200:
-                raise Exception(response.reason)
-            response.encoding = 'utf-8'
-        except Exception as e:
-            raise Exception(u"Connexion impossible.\nVeuillez vérifier les paramètres de connexion\n(Aide>Configurer "
-                            u"le plugin.\nErreur : {0})".format(e))
+    def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, files=None) -> ():
+        if data is None and files is None:
+            response = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
+                             params=params, verify=False)
+        else:
+            response = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
+                              data=data, files=files, verify=False)
+        response.encoding = 'utf-8'
         return response

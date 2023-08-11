@@ -397,6 +397,7 @@ class RipartPlugin:
             if not self.__doConnexion(False):
                 return
             seeReport = SeeReport(self.__context)
+            # TODO la réponse est bien envoyée mais vérifier pourquoi cela renvoie une exception ?
             self.__SeeReportView = seeReport.do()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__viewReport', e)
@@ -410,7 +411,7 @@ class RipartPlugin:
             replyReport = ReplyReport(self.__context)
             replyReport.do()
         except Exception as e:
-            self.__sendMessageBarException('PluginModule.__answerToReport', e)
+            self.__sendMessageBarException('PluginModule.__replyToReport', e)
 
     # Création d'un signalement géolocalisé
     def __createReport(self):

@@ -24,22 +24,22 @@ class Community(object):
     def getDatas(self, data) -> None:
         if len(data) == 0:
             return
-        if self.keyExist('community_name', data):
+        if self.__keyExist('community_name', data):
             self.__name = data['community_name']
-        if self.keyExist('community_id', data):
+        if self.__keyExist('community_id', data):
             self.__id = data['community_id']
-        if self.keyExist('user_id', data):
+        if self.__keyExist('user_id', data):
             self.__userId = data['user_id']
-        if self.keyExist('emprises', data):
+        if self.__keyExist('emprises', data):
             self.__emprises = data['emprises']
-        if self.keyExist('profile', data):
-            self.getDataThemes(data['profile'])
+        if self.__keyExist('profile', data):
+            self.__getDataThemes(data['profile'])
 
-    def getDataThemes(self, datas) -> None:
+    def __getDataThemes(self, datas) -> None:
         if len(datas) == 0:
             return
         for data in datas:
-            if self.keyExist('themes', data):
+            if self.__keyExist('themes', data):
                 for d in data['themes']:
                     theme = Theme()
                     theme.getTheme(d)
@@ -66,7 +66,7 @@ class Community(object):
     def getLogo(self) -> str:
         return self.__logo
 
-    def keyExist(self, key, data) -> bool:
+    def __keyExist(self, key, data) -> bool:
         if key in data:
             return True
         return False
@@ -164,3 +164,9 @@ class Community(object):
         # il faut copier le nom de la couche pour récupérer les données de la layer dans la boite "Charger le guichet"
         layer.name = data['title']
         layer.geoservice.update(data)
+
+    def switchNameToTitleFromThemeAttributes(self, nameAttribute) -> str:
+        title = ''
+        for theme in self.__themes:
+            title = theme.getSwitchAttributeNameToTitle(nameAttribute)
+        return title

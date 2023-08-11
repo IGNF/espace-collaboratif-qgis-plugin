@@ -15,7 +15,7 @@ class CommunitiesMember(object):
         self.__surname = ''
         self.__id = -1
         self.__username = ''
-        # self.__email = ''
+        self.__email = ''
         # Liste des communautés de l'utilisateur
         self.__communities = []
         # Liste des thèmes partagés
@@ -49,30 +49,33 @@ class CommunitiesMember(object):
 
         data = response.json()
 
-        if self.keyExist('id', data):
+        if self.__keyExist('id', data):
             self.__id = data['id']
 
-        if self.keyExist('username', data):
+        if self.__keyExist('username', data):
             self.__username = data['username']
 
-        if self.keyExist('firstname', data):
+        if self.__keyExist('firstname', data):
             self.__firstname = data['firstname']
 
-        if self.keyExist('surname', data):
+        if self.__keyExist('surname', data):
             self.__surname = data['surname']
 
-        if self.keyExist('active_themes', data):
+        if self.__keyExist('email', data):
+            self.__email = data['email']
+
+        if self.__keyExist('active_themes', data):
             self.getDatasActiveThemes(data['active_themes'])
 
-        if self.keyExist('communities_member', data):
+        if self.__keyExist('communities_member', data):
             self.getDatasCommunities(data['communities_member'])
 
-        if self.keyExist('shared_themes', data):
+        if self.__keyExist('shared_themes', data):
             self.getDatasSharedThemes(data['shared_themes'])
 
         return self.__listNameOfCommunities
 
-    def keyExist(self, key, data) -> bool:
+    def __keyExist(self, key, data) -> bool:
         if key in data:
             return True
         return False
