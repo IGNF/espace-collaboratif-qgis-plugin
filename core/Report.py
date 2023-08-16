@@ -1,4 +1,3 @@
-from qgis.core import QgsProject
 from datetime import datetime
 from .RipartLoggerCl import RipartLogger
 
@@ -10,6 +9,7 @@ class Report(object):
         self.__urlHostEspaceCo = urlHostEspaceCo
         self.__id = data['id']
         self.__author = data['author']
+        self.__url = self._setUrl(data['id'])
         self.__commune = data['commune']['title']
         self.__insee = data['commune']['name']
         self.__departement = data['departement']['title']
@@ -21,7 +21,6 @@ class Report(object):
         self.__statut = data['status']
         self.__message = data['comment']
         self.__replies = data['replies']
-        self.__url = self._setUrl(data['id'])
         self.__urlPrive = ''
         self.__attachments = data['attachments']
         # TODO les autorisations ne sont plus dans la réponse il faut les déduire...???? dixit Sylvain
@@ -29,14 +28,13 @@ class Report(object):
         self.__autorisation = ''
         self.__inputDevice = data['input_device']
         self.__geometry = data['geometry']
-        # TODO -> Noémie autres variables retournées par l'API, que fait-on ?
+        # TODO à décoder pour importer les croquis dans la carte
+        # self.__sketch_xml = data['sketch_xml']
+        # self.__sketch = data['sketch']
+        # TODO -> Noémie les variables suivantes sont retournées par l'API, que fait-on ?
         # self.__community = data['community']
         # self.__validator = data['validator']
         # self.__territory = data['territory']
-        # self.__attributes = data['attributes']
-        # self.__sketch_xml = data['sketch_xml']
-        # self.__sketch = data['sketch']
-        # self.__input_device = data['input_device']
         # self.__comment = data['comment']
 
     def getId(self) -> int:
@@ -251,7 +249,7 @@ class Report(object):
                 #  que fait-on ?
                 #  ticket redmine
                 #  ou requete https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/users/user_id
-                strReplies += " par {}".format(replie['author'])
+                strReplies += " par {}".format(replie['author']['username'])
                 strReplies += " le {}.".format(self.__formatDateToStrftime(replie['date']))
                 strReplies += "\n{}\n".format(replie['content'])
         return strReplies[:-1]

@@ -79,10 +79,10 @@ class ReplyReport(object):
                                                            'password': self.__context.auth['password']},
                                       'proxy': self.__context.proxy,
                                       'requestBody': {'title': '', 'content': newResponse, 'status': newStatut}}
-                        newReport = self.__toolsReport.addResponse(parameters)
-                        if newReport is None:
+                        jsonResponse = self.__toolsReport.addResponseToServer(parameters)
+                        if jsonResponse is None:
                             raise Exception("toolsReport.addResponse a renvoyé une erreur")
-                        self.__toolsReport.updateReportIntoSQLite(newReport)
+                        self.__toolsReport.updateReportIntoSQLite(jsonResponse)
                     information = "Votre réponse "
                     if len(replyReports) == 1:
                         information += "au signalement {0} a bien été envoyée.".format(replyReports[0].id)

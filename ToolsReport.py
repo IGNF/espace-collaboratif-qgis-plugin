@@ -194,27 +194,39 @@ class ToolsReport(object):
         # zoom sur la couche Signalement
         self.__context.mapCan.setExtent(new_box.buffered(dist))
 
-    def updateReportIntoSQLite(self, report) -> None:
-        attributes = "Date_MAJ = '{}', Date_validation = '{}', Réponses = '{}', Statut ='{}'".format(
-            report.getStrDateMaj(), report.getStrDateValidation(), report.getStrReplies(), report.getStatut())
-        condition = 'NoSignalement = {}'.format(report.getId())
+    def updateReportIntoSQLite(self, jsonResponse) -> None:
+        # TODO "ancien code" remis au gout du jour
+        # attributes = "Date_MAJ = '{}', Date_validation = '{}', Réponses = '{}', Statut ='{}'".format(
+        #     jsonResponse['updating_date'], jsonResponse['closing_date'], jsonResponse['replies']['content'],
+        #     jsonResponse['status'])
+        # TODO nouveau code avec la réponse de la nouvelle API ticket redmine #18070
+        #   {'report_id': 162920, 'id': 103797, 'author': {'id': 676, 'username': 'epeyrouse',
+        #   'email': 'eric.peyrouse@ign.fr'}, 'title': None, 'content': 'Nouvelle réponse pour le signalement',
+        #   'status': 'valid', 'date': '2023-08-16T15:54:30+02:00'}
+        #  Noémie -> je suppose que la date retournée est la date de maj et non de validation
+        content = jsonResponse['content']
+        if type(content) == str:
+            content = content.replace("'", "''")
+        attributes = "Date_MAJ = '{}', Réponses = '{}', Statut ='{}'".format(jsonResponse['date'],
+                                                                             content,
+                                                                             jsonResponse['status'])
+        condition = "NoSignalement = {}".format(jsonResponse['report_id'])
         parameters = {'name': PluginHelper.nom_Calque_Signalement, 'attributes': attributes, 'condition': condition}
         SQLiteManager.updateTable(parameters)
 
     # Ajoute une réponse à un signalement
-    def addResponse(self, parameters) -> Report:
-        report = None
+    def addResponseToServer(self, parameters) -> None:
         idReport = parameters['reportId']
         uri = "{0}/gcms/api/reports/{1}/replies".format(self.__context.urlHostEspaceCo, idReport)
         response = HttpRequest.makeHttpRequest(uri, parameters['authentification'], parameters['proxy'],
                                                data=parameters['requestBody'])
         # Succès : get (code 200) post (code 201)
-        if response.status_code == 200 and response.status_code == 201:
-            report = Report(self.__context.urlHostEspaceCo, response.json())
+        if response.status_code == 200 or response.status_code == 201:
+            return response.json()
         elif response.status_code == 403:
             PluginHelper.showMessageBox("Vous n'avez pas les droits pour modifier "
                                         "le signalement {}.".format(idReport))
+            return None
         else:
             message = "code : {} raison : {}".format(response.status_code, response.reason)
             raise Exception("ToolsReport.addResponse -> ".format(message))
-        return report
