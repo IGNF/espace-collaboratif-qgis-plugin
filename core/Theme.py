@@ -15,16 +15,19 @@ class Theme(object):
         self.__switchNameToTitle = {}
 
     def getTheme(self, data) -> None:
-        if self.__keyExist('theme', data):
-            self.__name = data['theme']
-        if self.__keyExist('global', data):
-            self.__global = data['global']
-        if self.__keyExist('database', data):
-            self.__database = data['database']
-        if self.__keyExist('featureType', data):
-            self.__featureType = data['featureType']
-        if self.__keyExist('attributes', data):
-            self.__getDataAttributes(data['attributes'])
+        if type(data) is str:
+            self.__name = data
+        else:
+            if self.__keyExist('theme', data):
+                self.__name = data['theme']
+            if self.__keyExist('global', data):
+                self.__global = data['global']
+            if self.__keyExist('database', data):
+                self.__database = data['database']
+            if self.__keyExist('featureType', data):
+                self.__featureType = data['featureType']
+            if self.__keyExist('attributes', data):
+                self.__getDataAttributes(data['attributes'])
 
     def getName(self) -> str:
         return self.__name

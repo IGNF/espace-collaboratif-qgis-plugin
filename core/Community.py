@@ -101,20 +101,32 @@ class Community(object):
         layers = []
         for d in data:
             layer = Layer()
-            layer.visibility = d['visibility']
-            layer.opacity = d['opacity']
-            layer.type = d['type']
-            layer.role = d['role']
-            layer.id = d['id']
-            layer.databaseId = d['database']
-            layer.order = d['order']
-            layer.preferred_style = d['preferred_style']
-            layer.snapto = d['snapto']
-            layer.table = d['table']
-            if d['type'] == cst.WFS:
-                self.getDataLayerFromTable(layer)
-            if d['type'] == cst.WMTS:
-                self.getDataLayerFromGeoservice(layer, d['geoservice'])
+            if self.__keyExist('visibility', d):
+                layer.visibility = d['visibility']
+            if self.__keyExist('opacity', d):
+                layer.opacity = d['opacity']
+            if self.__keyExist('type', d):
+                layer.type = d['type']
+            if self.__keyExist('role', d):
+                layer.role = d['role']
+            if self.__keyExist('id', d):
+                layer.id = d['id']
+            if self.__keyExist('database', d):
+                layer.databaseId = d['database']
+            if self.__keyExist('order', d):
+                layer.order = d['order']
+            if self.__keyExist('preferred_style', d):
+                layer.preferred_style = d['preferred_style']
+            if self.__keyExist('snapto', d):
+                layer.snapto = d['snapto']
+            if self.__keyExist('table', d):
+                layer.table = d['table']
+            if self.__keyExist('type', d):
+                if d['type'] == cst.WFS:
+                    self.getDataLayerFromTable(layer)
+                if d['type'] == cst.WMTS:
+                    if self.__keyExist('geoservice', d):
+                        self.getDataLayerFromGeoservice(layer, d['geoservice'])
             layers.append(layer)
         return layers
 
@@ -128,27 +140,45 @@ class Community(object):
         self.getDataFromTable(data, layer)
 
     def getDataFromTable(self, data, layer):
-        layer.name = data['name']
-        layer.description = data['description']
-        layer.minzoom = data['min_zoom_level']
-        layer.maxzoom = data['max_zoom_level']
-        if data['database_versioning'] is True:
-            layer.isStandard = False
-        layer.tileZoomLevel = data['tile_zoom_level']
-        layer.readOnly = data['read_only']
-        layer.geometryName = data['geometry_name']
-        layer.databasename = data['database']
-        layer.wfs = data['wfs']
-        layer.wfsTransaction = data['wfs_transactions']
-        layer.attributes = data['columns']
-        layer.idName = data['id_name']
-        for column in data['columns']:
-            if column['name'] != layer.geometryName:
-                continue
-            layer.is3d = column['is3d']
-            layer.geometryType = column['type']
-            layer.srid = column['srid']
-        layer.style = data['style']
+        if self.__keyExist('name', data):
+            layer.name = data['name']
+        if self.__keyExist('description', data):
+            layer.description = data['description']
+        if self.__keyExist('min_zoom_level', data):
+            layer.minzoom = data['min_zoom_level']
+        if self.__keyExist('max_zoom_level', data):
+            layer.maxzoom = data['max_zoom_level']
+        if self.__keyExist('database_versioning', data):
+            if data['database_versioning'] is True:
+                layer.isStandard = False
+        if self.__keyExist('tile_zoom_level', data):
+            layer.tileZoomLevel = data['tile_zoom_level']
+        if self.__keyExist('read_only', data):
+            layer.readOnly = data['read_only']
+        if self.__keyExist('geometry_name', data):
+            layer.geometryName = data['geometry_name']
+        if self.__keyExist('database', data):
+            layer.databasename = data['database']
+        if self.__keyExist('wfs', data):
+            layer.wfs = data['wfs']
+        if self.__keyExist('wfs_transactions', data):
+            layer.wfsTransaction = data['wfs_transactions']
+        if self.__keyExist('style', data):
+            layer.style = data['style']
+        if self.__keyExist('id_name', data):
+            layer.idName = data['id_name']
+        if self.__keyExist('columns', data):
+            layer.attributes = data['columns']
+            for column in data['columns']:
+                if self.__keyExist('name', column):
+                    if column['name'] != layer.geometryName:
+                        continue
+                if self.__keyExist('is3d', column):
+                    layer.is3d = column['is3d']
+                if self.__keyExist('type', column):
+                    layer.geometryType = column['type']
+                if self.__keyExist('srid', column):
+                    layer.srid = column['srid']
         # layer.styles = data['styles']
 
     # Récupère les informations d'un géoservice
@@ -162,7 +192,8 @@ class Community(object):
 
     def getDataFromGeoservice(self, data, layer):
         # il faut copier le nom de la couche pour récupérer les données de la layer dans la boite "Charger le guichet"
-        layer.name = data['title']
+        if self.__keyExist('title', data):
+            layer.name = data['title']
         layer.geoservice.update(data)
 
     def switchNameToTitleFromThemeAttributes(self, nameAttribute) -> str:

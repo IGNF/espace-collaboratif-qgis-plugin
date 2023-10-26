@@ -48,7 +48,6 @@ class CommunitiesMember(object):
             return []
 
         data = response.json()
-
         if self.__keyExist('id', data):
             self.__id = data['id']
 

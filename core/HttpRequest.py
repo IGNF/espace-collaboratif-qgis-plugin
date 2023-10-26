@@ -47,7 +47,7 @@ class HttpRequest(object):
                     # le parametre page est mis à 0 car la récupération des données est finie
                     return {'status': 'ok', 'page': 0, 'data': data, 'stop': True}
             else:
-                return {'status': 'error', 'reason': response.reason, 'url': response.url}
+                return {'status': 'error', 'reason': data['message'], 'url': response.url}
         except Exception as e:
             return {'status': 'error'}
 

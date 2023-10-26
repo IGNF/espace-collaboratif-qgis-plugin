@@ -184,10 +184,14 @@ class RipartPlugin:
         self.__context = Contexte.getInstance(self, QgsProject)
         if self.__context is None:
             return False
-        if self.__context.getUserCommunity() is None or bButtonConnect:
-            return self.__context.getConnexionEspaceCollaboratif(newLogin=True)
-        else:
-            return True
+        if bButtonConnect:
+            if not self.__context.getConnexionEspaceCollaboratif(newLogin=True):
+                return False
+        elif not bButtonConnect:
+            if self.__context.getUserCommunity() is None:
+                if not self.__context.getConnexionEspaceCollaboratif(newLogin=True):
+                    return False
+        return True
 
     def __sendMessageBarException(self, message, exception):
         self.__context.iface.messageBar().clearWidgets()
@@ -458,11 +462,10 @@ class RipartPlugin:
     def __downloadLayersFromMyCommunity(self):
         try:
             # Connexion à l'Espace collaboratif
-            # si res = 0, alors l'utilisateur à annuler son action
             if not self.__doConnexion(False):
                 return
             # Les requêtes peuvent être longues
-            messageProgress = "Communauté {} : récupération des couches".format(
+            messageProgress = "Groupe {} : récupération des couches".format(
                 self.__context.getUserCommunity().getName())
             progress = ProgressBar(1, messageProgress)
             progress.setValue(1)
