@@ -30,13 +30,15 @@ class WfsGet(object):
                                             'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
                                             'isStandard': self.isStandard, 'is3D': self.is3D,
                                             'geometryType': ""}
+        self.databaseid = parameters['databaseid']
+        self.tableid = parameters['tableid']
 
     def makeRequestDeletedObjects(self):
         # il s'agit de retrouver
         self.initParametersGcmsGet(True)
         while True:
             response = HttpRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
-                                                        params=self.parametersGcmsGet)
+                                               params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 break
 
@@ -100,7 +102,7 @@ class WfsGet(object):
         sqliteManager = SQLiteManager()
         while True:
             response = HttpRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
-                                                        params=self.parametersGcmsGet)
+                                               params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
                 break
@@ -149,17 +151,15 @@ class WfsGet(object):
 
     def getMaxNumrec(self):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
-        # TODO remplacer l'url par
-        #  https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/databases/18/tables/479/max-numrec
-        numrec = 1
-        url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.urlHostEspaceCo, self.databasename,
-                                                                         self.layerName)
+        # https://qlf-collaboratif.cegedim-hds.fr/collaboratif-4.0/gcms/api/databases/18/tables/479/max-numrec
+
+        url = "{0}/gcms/api/databases/{1}/tables/{2}/max-numrec".format(self.urlHostEspaceCo, self.databaseid,
+                                                                        self.tableid)
         response = HttpRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
         # Succès : get (code 200) post (code 201)
-        if response.status_code == 200 and response.status_code == 201:
-            data = response.json()
-            print("database : {} numrec : {}".format(self.databasename, data['numrec']))
-            numrec = data['numrec']
+        if response.status_code == 200 or response.status_code == 201:
+            numrec = response.json()
+            print("database : {} numrec : {}".format(self.databasename, numrec))
         else:
             message = "code : {} raison : {}".format(response.status_code, response.reason)
             raise Exception("WfsGet.getMaxNumrec -> ".format(message))

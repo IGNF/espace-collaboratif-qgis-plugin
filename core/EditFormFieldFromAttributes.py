@@ -50,6 +50,8 @@ class EditFormFieldFromAttributes(object):
         # Correspondance nom du champ/type du champ
         linkFieldType = {}
         for v in self.data:
+            if v['name'] is None:
+                continue
             self.name = v['name']
             self.index = self.layer.fields().indexOf(self.name)
             self.setFieldTitle(v['title'])
@@ -59,14 +61,15 @@ class EditFormFieldFromAttributes(object):
             self.setFieldConstraintNotNull(v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
             constraints = [self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'],
-                                                                         v['type'], v['nullable']),
-                           self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type']),
+                                                                         v['nullable']),
+                           self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type'],
+                                                                        v['name']),
                            self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable']),
                            self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'])]
             self.setFieldAllConstraints(constraints, v['nullable'])
             self.setFieldListOfValues(v['enum'], v['default_value'])
             # TODO voir Madeline pour le readOnly
-            #self.setFieldReadOnly(v['readOnly'], v['computed'])
+            # self.setFieldReadOnly(v['readOnly'], v['computed'])
             self.setFieldReadOnly(v['computed'])
             linkFieldType[v['name']] = v['type']
         return linkFieldType
@@ -74,7 +77,7 @@ class EditFormFieldFromAttributes(object):
     def setFieldAllConstraints(self, constraints, bNullable):
         expressionAllConstraints = ''
         for c in constraints:
-            if c is None:
+            if c == 'None':
                 continue
             expressionAllConstraints += "({}) AND ".format(c)
 
@@ -85,7 +88,8 @@ class EditFormFieldFromAttributes(object):
         expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 5]
 
         if bNullable:
-            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name, expressionAllConstraints)
+            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(
+                self.name, expressionAllConstraints)
 
         self.layer.setConstraintExpression(self.index, expressionAllConstraints)
 
@@ -94,6 +98,8 @@ class EditFormFieldFromAttributes(object):
     '''
 
     def setFieldSwitchType(self, vType, default_value):
+        if vType is None:
+            return
 
         if vType == 'Boolean':
             self.setFieldBoolean(default_value)
@@ -140,10 +146,8 @@ class EditFormFieldFromAttributes(object):
     '''
 
     def setFieldTitle(self, title):
-
         if title is None or title == '':
             return
-
         self.layer.setFieldAlias(self.index, title)
 
     '''
@@ -166,7 +170,6 @@ class EditFormFieldFromAttributes(object):
     '''
 
     def setFieldConstraintUnique(self, bUnique):
-
         if bUnique is None or bUnique is False or bUnique == '':
             return
         self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
@@ -206,11 +209,10 @@ class EditFormFieldFromAttributes(object):
     Il faut avoir : "date_nom" >= '2020-06-01' and "date_nom" <= '2021-06-30' 
     '''
 
-    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType):
+    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, vName):
         expTmp = None
-        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == self.data[
-            'idName']:
-            return None
+        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == vName:
+            return 'None'
 
         if vType == 'DateTime':
             minValue = minValue.replace(' ', 'T')
@@ -235,7 +237,7 @@ class EditFormFieldFromAttributes(object):
         listExpressions.append(expTmp)
 
         if len(listExpressions) == 0:
-            return None
+            return 'None'
         elif len(listExpressions) == 1:
             expression = listExpressions[0]
         else:
@@ -262,9 +264,9 @@ class EditFormFieldFromAttributes(object):
 
     def setFieldExpressionConstraintMapping(self, constraintField, conditionField):
         if constraintField is None and conditionField is None:
-            return None
+            return 'None'
         if constraintField['type'] != 'mapping':
-            return None
+            return 'None'
         expression = 'CASE'
         for k, v in constraintField['mapping'].items():
             # le caractère apostrophe est doublé
@@ -293,12 +295,12 @@ class EditFormFieldFromAttributes(object):
     Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
     '''
 
-    def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, vType, bNullable):
+    def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, bNullable):
 
         if (minLength is None and maxLength is None) or \
                 (minLength == '' and maxLength == '') or \
                 self.name == self.layer.idNameForDatabase:
-            return None
+            return 'None'
 
         listExpressions = []
 
@@ -314,7 +316,7 @@ class EditFormFieldFromAttributes(object):
 
         # Expression
         if len(listExpressions) == 0:
-            return None
+            return 'None'
         elif len(listExpressions) == 1:
             expression = listExpressions[0]
         else:
@@ -322,7 +324,8 @@ class EditFormFieldFromAttributes(object):
 
         # Cas particulier des string nullable
         if bNullable is True:
-            expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name, expression)
+            expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name,
+                                                                                                   expression)
         return expression
 
     '''
@@ -336,7 +339,7 @@ class EditFormFieldFromAttributes(object):
     def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
 
         if pattern is None or pattern == '' or self.name == self.layer.idNameForDatabase:
-            return None
+            return 'None'
 
         newPattern = pattern.replace('\\', '\\\\')
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)

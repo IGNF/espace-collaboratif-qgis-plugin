@@ -132,8 +132,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             if layer.url.find(cst.COLLABORATIF) != -1:
                 continue
-            if layer.url.find(cst.WXSIGN) != -1:
-                continue
+            # TODO il y a surement quelque chose à faire ici
+            # if layer.url.find(cst.WXSIGN) != -1:
+                # continue
 
             rowPosition = self.tableWidgetAutresGeoservices.rowCount()
             self.tableWidgetAutresGeoservices.insertRow(rowPosition)
