@@ -166,18 +166,11 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         layersQGIS = []
         layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoservices, 2),
                          self.getLayersSelected(self.tableWidgetMonGuichet, 2)]
-
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
         for layerChecked in layersChecked:
             for tmp in layerChecked:
-                # tmp est sous la forme 'troncon_de_voie_ferree' ou 'Cartes IGN (GEOGRAPHICALGRIDSYSTEMS.MAPS)'
-                if '(' in tmp:
-                    tmpName = tmp.split('(')
-                    name = tmpName[0].rstrip()  # pour supprimer l'espace final
-                else:
-                    name = tmp
                 for layer in self.__listLayers:
-                    if name == layer.name:
+                    if tmp == layer.name:
                         layersQGIS.append(layer)
                         break
         # Téléchargement et import des couches du guichet sur la carte

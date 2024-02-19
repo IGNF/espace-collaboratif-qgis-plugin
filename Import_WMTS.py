@@ -68,8 +68,8 @@ class importWMTS:
         }
 
         '''
-        Avec l'url http://wxs.ign.fr/VOTRE_CLE/geoportail/wmts, la projection proposée est
-        web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
+        Avec l'url https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities,
+        la projection proposée est web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
         '''
         self.crs = "EPSG:3857"
         self.uri = self.selected_layer.geoservice['url'].format(urllib.parse.unquote(urllib.parse.urlencode(params)))
@@ -78,6 +78,7 @@ class importWMTS:
     def checkOpenService(self):
         self.appendUriCapabilities()
         try:
+            # Quels sont les geoservices disponibles ?
             self.wmts = WebMapTileService(self.uri)
         except TypeError as e:
             print("OWSLib mixing str and unicode args", str(e))
@@ -112,6 +113,13 @@ class importWMTS:
         wmts_lyr_url = wmts_lyr_url[0].get("url")
         print("Available url : {}".format(wmts_lyr_url))
         return wmts_lyr_url
+
+    def getUrl(self) -> str:
+        if 'private' in self.uri:
+            urlFinal = "{}%26{}".format(self.uri, cst.PARTOFURLWMTS)
+        else:
+            urlFinal = "{}%3F{}".format(self.uri, cst.PARTOFURLWMTS)
+        return urlFinal
 
     # Style definition
     def getStyles(self):
@@ -168,9 +176,12 @@ class importWMTS:
     # SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities
     def getWtmsUrlParams(self, idGuichetLayerWmts):
         if not idGuichetLayerWmts:
-            return "Exception", "Import_WMTS.getWtmsUrlParams : le nom de la couche Géoservices est vide"
+            return "Exception", "Import_WMTS.getWtmsUrlParams : le nom de la couche géoservices est vide"
+
         if self.getLayer(idGuichetLayerWmts) is None:
-            return "Exception", "Import_WMTS.getWtmsUrlParams : impossible de récupérer la couche Géoservices"
+            return "Exception", "Import_WMTS.getWtmsUrlParams.getLayer : géoservices non disponible pour la couche {}"\
+                                .format(idGuichetLayerWmts)
+
         self.getTileMatrixSet()
         wmts_url_params = {
             "crs": self.crs,
@@ -179,7 +190,7 @@ class importWMTS:
             "layers": self.layer_id,
             "styles": self.getStyles(),
             "tileMatrixSet": self.tile_matrix_set,
-            "url": "{}{}".format(self.getTileUrl(), "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
+            "url": self.getUrl()
         }
         wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
         return self.title_layer, wmts_url_final

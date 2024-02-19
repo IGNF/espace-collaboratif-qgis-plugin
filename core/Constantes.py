@@ -90,6 +90,7 @@ namespace = {'gml': 'http://www.opengis.net/gml'}
 
 # Constantes pour le chargement des couches du guichet
 # Types de couches, balise <TYPE>
+PARTOFURLWMTS = "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"
 WMS = "geoservice"
 WFS = "feature-type"
 WMTS = "geoservice"

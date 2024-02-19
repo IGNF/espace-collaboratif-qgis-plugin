@@ -442,7 +442,7 @@ class Contexte(object):
                         continue
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                     if not rlayer.isValid():
-                        print("Layer {} failed to load !".format(rlayer.name()))
+                        endMessage = "Layer {} failed to load !".format(rlayer.name())
                         continue
 
                     self.QgsProject.instance().addMapLayer(rlayer, False)
