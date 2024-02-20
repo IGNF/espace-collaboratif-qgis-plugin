@@ -130,7 +130,7 @@ class Contexte(object):
             self.createDatabaseSQLite()
 
             # Création des tables de signalements et de croquis
-            self.createTablesReportsAndSketchs()
+            # self.createTablesReportsAndSketchs()
 
             # set des fichiers de style
             self.copyRipartStyleFiles()
@@ -330,15 +330,16 @@ class Contexte(object):
 
     # Création des tables de signalements et de croquis
     def createTablesReportsAndSketchs(self):
-        # Création de la table des signalements, si elle n'existe pas
-        if SQLiteManager.isTableExist('Signalement'):
-            return
-        SQLiteManager.createReportTable()
-        # Création des tables de croquis, si elles n'existent pas
-        for nameTable, geometryType in PluginHelper.sketchLayers.items():
-            if SQLiteManager.isTableExist(nameTable):
-                continue
-            SQLiteManager.createSketchTable(nameTable, geometryType)
+        # Création de la table des signalements et de croquis
+        for table in PluginHelper.reportSketchLayersName:
+            if SQLiteManager.isTableExist(table):
+                SQLiteManager.emptyTable(table)
+                SQLiteManager.deleteTable(table)
+            if table == PluginHelper.nom_Calque_Signalement:
+                SQLiteManager.createReportTable()
+            elif table in PluginHelper.sketchLayers:
+                SQLiteManager.createSketchTable(table, PluginHelper.sketchLayers[table])
+        SQLiteManager.vacuumDatabase()
 
     def importWFS(self, layer):
         # Création éventuelle de la table SQLite liée à la couche

@@ -185,20 +185,24 @@ class SQLiteManager(object):
             if value is None:
                 tmpValues += "'NULL',"
             else:
-                if type(value) == str:
+                if type(value) is dict:
+                    if 'username' in value:
+                        value = value['username']
+                elif type(value) is str:
                     value = value.replace("'", "''")
-                if type(value) == bool:
+                elif type(value) is bool:
                     if value:
                         value = 1
                     elif not value:
                         value = 0
-                if type(value) == list:
+                elif type(value) is list:
                     listToJson = ''
                     dict_object = {}
                     for lv in value:
                         for k, v in lv.items():
                             if v is None:
-                                dict_object[k] = v
+                                #dict_object[k] = v
+                                dict_object[k] = 'NULL'
                             else:
                                 dict_object[k] = v.replace("'", "''")
                         listToJson = "'{}',".format(json.dumps(dict_object, sort_keys=True, indent=2))
@@ -249,6 +253,7 @@ class SQLiteManager(object):
         for attributesRow in attributesRows:
             columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
+            print(sql)
             cur.execute(sql)
             totalRows += 1
         cur.close()

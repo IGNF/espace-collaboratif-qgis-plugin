@@ -64,7 +64,7 @@ class ToolsReport(object):
     def getReports(self, date) -> []:
         # filtre spatial
         bbox = BBox(self.__context)
-        box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, False, False)
+        box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, False, True)
         # si la box est à None alors, l'utilisateur veut extraire France entière
         # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
         # ne souhaite pas extraire les données France entière
@@ -90,14 +90,14 @@ class ToolsReport(object):
             raise NoProfileException(
                 "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
+        # Création des tables de signalements et de croquis
+        self.__context.createTablesReportsAndSketchs()
+
         message = "Placement des signalements sur la carte"
         self.progress = ProgressBar(200, message)
 
         # Création des couches dans QGIS et des liens vers la base SQLite
         self.addReportSketchLayersToTheCurrentMap()
-
-        # Vider les tables signalement et croquis
-        SQLiteManager.setEmptyTablesReportsAndSketchs(PluginHelper.reportSketchLayersName)
 
         # Téléchargement des signalements
         date = PluginHelper.load_ripartXmlTag(self.__context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
@@ -116,10 +116,9 @@ class ToolsReport(object):
         self.progress.close()
 
         # Afficher les résultats
-        cnt = 0
-        self.showImportResult(cnt)
+        self.showImportResult()
 
-    def showImportResult(self, cnt) -> None:
+    def showImportResult(self) -> None:
         """Résultat de l'import
 
         :param cnt: le nombre de remarques importées
@@ -134,7 +133,7 @@ class ToolsReport(object):
         valid = self.__context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.__context.countRemarqueByStatut(
             cst.STATUT.valid0.__str__())
 
-        resultMessage = "Extraction réussie avec succès de " + str(cnt) + " signalement(s) depuis le serveur \n" + \
+        resultMessage = "Extraction réussie avec succès de " + str(submit+pending+valid+reject) + " signalement(s) depuis le serveur \n" + \
                         "avec la répartition suivante : \n\n" + \
                         "- " + str(submit) + " signalement(s) nouveau(x).\n" + \
                         "- " + str(pending) + " signalement(s) en cours de traitement.\n" + \

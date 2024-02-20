@@ -8,7 +8,7 @@ class Report(object):
         self.__logger = RipartLogger("Report").getRipartLogger()
         self.__urlHostEspaceCo = urlHostEspaceCo
         self.__id = data['id']
-        self.__author = data['author']
+        self.__author = self.__notNoneValue(data['author'])
         self.__url = self._setUrl(data['id'])
         self.__commune = data['commune']['title']
         self.__insee = data['commune']['name']
@@ -29,7 +29,7 @@ class Report(object):
         self.__inputDevice = data['input_device']
         self.__geometry = data['geometry']
         # TODO à décoder pour importer les croquis dans la carte
-        # self.__sketch_xml = data['sketch_xml']
+        self.__sketch_xml = data['sketch_xml']
         # self.__sketch = data['sketch']
         # TODO -> Noémie les variables suivantes sont retournées par l'API, que fait-on ?
         # self.__community = data['community']
@@ -131,7 +131,8 @@ class Report(object):
     def getStrAuthor(self) -> str:
         if type(self.__author) is int:
             return str(self.__author)
-        return self.__author['username']
+        return self.__author
+        #return self.__author['username']
 
     def getAttachments(self) -> [{}]:
         # valeur de retour
