@@ -43,16 +43,17 @@ class ToolsReport(object):
                 vlayer.loadNamedStyle(style)
         self.__context.mapCan.refresh()
 
-    def insertReportsIntoSQLite(self, datas) -> None:
-        parameters = {'tableName': 'Signalement', 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
+    def insertReportsSketchsIntoSQLite(self, datas) -> int:
+        parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
                       'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
         attributesRows = []
         for data in datas:
             report = Report(self.__context.urlHostEspaceCo, data)
+            res = report.InsertSketchIntoSQLite()
             columns = report.getColumnsForSQlite()
             attributesRows.append(columns)
         sqliteManager = SQLiteManager()
-        sqliteManager.insertRowsInTable(parameters, attributesRows)
+        return sqliteManager.insertRowsInTable(parameters, attributesRows)
 
     def getReport(self, id):
         query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
@@ -107,7 +108,7 @@ class ToolsReport(object):
         # Insertion des signalements dans la base SQLite
         if len(data) == 0:
             return
-        self.insertReportsIntoSQLite(data)
+        nbReports = self.insertReportsSketchsIntoSQLite(data)
 
         # Rafraichir la carte
         self.__context.refresh_layers()
@@ -116,9 +117,9 @@ class ToolsReport(object):
         self.progress.close()
 
         # Afficher les résultats
-        self.showImportResult()
+        self.showImportResult(nbReports)
 
-    def showImportResult(self) -> None:
+    def showImportResult(self, nbReports) -> None:
         """Résultat de l'import
 
         :param cnt: le nombre de remarques importées
@@ -133,7 +134,7 @@ class ToolsReport(object):
         valid = self.__context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.__context.countRemarqueByStatut(
             cst.STATUT.valid0.__str__())
 
-        resultMessage = "Extraction réussie avec succès de " + str(submit+pending+valid+reject) + " signalement(s) depuis le serveur \n" + \
+        resultMessage = "Extraction réussie avec succès de " + str(nbReports) + " signalement(s) depuis le serveur \n" + \
                         "avec la répartition suivante : \n\n" + \
                         "- " + str(submit) + " signalement(s) nouveau(x).\n" + \
                         "- " + str(pending) + " signalement(s) en cours de traitement.\n" + \
@@ -144,7 +145,7 @@ class ToolsReport(object):
 
     # NOTE : non utilisée mais peut servir ;-)
     def setFormAttributes(self) -> None:
-        listLayers = QgsProject.instance().mapLayersByName(PluginHelper.nom_Calque_Signalement)
+        listLayers = QgsProject.instance().mapLayersByName(cst.nom_Calque_Signalement)
         if len(listLayers) == 0:
             return
         features = None
@@ -210,7 +211,7 @@ class ToolsReport(object):
                                                                              content,
                                                                              jsonResponse['status'])
         condition = "NoSignalement = {}".format(jsonResponse['report_id'])
-        parameters = {'name': PluginHelper.nom_Calque_Signalement, 'attributes': attributes, 'condition': condition}
+        parameters = {'name': cst.nom_Calque_Signalement, 'attributes': attributes, 'condition': condition}
         SQLiteManager.updateTable(parameters)
 
     # Ajoute une réponse à un signalement

@@ -24,39 +24,21 @@ class Sketch(object):
     Fleche : une flêche du croquis
     '''
     sketchType = Enum("Vide", "Point", "Ligne", "Polygone", "Texte", "Fleche")
-    
-    # Type du croquis
-    type = sketchType.Vide
-    
-    # Nom du croquis
-    name = ""
-    
-    # La liste des attributs (clé, valeur)
-    attributes = list()
-    
-    # La liste des points composants le croquis (coordonnées)
-    points = list()
-    
-    coordinates = ""
 
-    def __init__(self, name="", typeSketch=sketchType.Vide, points=None):
-        """
-        Constructeur d'un croquis
-        
-        :param name: string le nom du croquis
-        :param typeSketch: sketchType le type du croquis
-        :param points: une liste de points 
-        """
-        self.name = name
-        
-        self.type = typeSketch
-        
+    def __init__(self):
+        # Type du croquis
+        self.type = self.sketchType.Vide
+
+        # Nom du croquis
+        self.name = ""
+
+        # La liste des attributs (clé, valeur)
         self.attributes = list()
-        
-        if points is None:
-            self.points = list()
-        else:
-            self.points = points
+
+        # La liste des points composants le croquis (coordonnées)
+        self.points = list()
+
+        self.coordinates = ""
 
     def addPoint(self, point):
         """

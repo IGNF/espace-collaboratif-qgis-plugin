@@ -1,9 +1,8 @@
 from typing import Optional
 from .ToolsReport import ToolsReport
 from .SeeReportView import SeeReportView
-from .PluginHelper import PluginHelper
 from .core.RipartLoggerCl import RipartLogger
-
+from .core import Constantes as cst
 
 # Classe pour visualiser un signalement
 class SeeReport(object):
@@ -18,7 +17,7 @@ class SeeReport(object):
         """
         try:
             activeLayer = self.__context.iface.activeLayer()
-            if activeLayer is None or activeLayer.name() != PluginHelper.nom_Calque_Signalement:
+            if activeLayer is None or activeLayer.name() != cst.nom_Calque_Signalement:
                 self.__context.iface.messageBar().pushMessage("Attention",
                                                               'La couche "Signalement" doit être la couche active',
                                                               level=1, duration=3)

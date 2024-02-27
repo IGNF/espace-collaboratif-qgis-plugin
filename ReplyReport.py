@@ -1,8 +1,6 @@
 from .ToolsReport import ToolsReport
 from .ReplyReportView import ReplyReportView
-from .PluginHelper import PluginHelper
 from .core.RipartLoggerCl import RipartLogger
-from .core.ClientHelper import ClientHelper
 from .core import Constantes as cst
 
 
@@ -19,7 +17,7 @@ class ReplyReport(object):
         self.__logger.debug("ReplyReport.do")
         try:
             # Est-ce que la couche Signalement existe dans la carte ?
-            bExist = self.__context.IsLayerInMap(PluginHelper.nom_Calque_Signalement)
+            bExist = self.__context.IsLayerInMap(cst.nom_Calque_Signalement)
             if not bExist:
                 mess = "Pas de couche 'Signalement' dans la carte.\nIl est donc impossible de répondre à un " \
                        "signalement.\nIl faut se connecter à l'Espace collaboratif et télécharger les signalements."
@@ -28,8 +26,8 @@ class ReplyReport(object):
                 return
             else:
                 activeLayer = self.__context.iface.activeLayer()
-                if activeLayer is None or activeLayer.name() != PluginHelper.nom_Calque_Signalement:
-                    mess = 'Le calque "{}" doit être le calque actif'.format(PluginHelper.nom_Calque_Signalement)
+                if activeLayer is None or activeLayer.name() != cst.nom_Calque_Signalement:
+                    mess = 'Le calque "{}" doit être le calque actif'.format(cst.nom_Calque_Signalement)
                     self.__context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=3)
                     self.__logger.error(mess)
                     return

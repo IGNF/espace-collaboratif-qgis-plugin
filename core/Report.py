@@ -1,5 +1,10 @@
+import json
 from datetime import datetime
+
+from .ClientHelper import ClientHelper
 from .RipartLoggerCl import RipartLogger
+from .SQLiteManager import SQLiteManager
+from . import Constantes as cst
 
 
 class Report(object):
@@ -30,7 +35,7 @@ class Report(object):
         self.__geometry = data['geometry']
         # TODO à décoder pour importer les croquis dans la carte
         self.__sketch_xml = data['sketch_xml']
-        # self.__sketch = data['sketch']
+        self.__sketch = data['sketch']
         # TODO -> Noémie les variables suivantes sont retournées par l'API, que fait-on ?
         # self.__community = data['community']
         # self.__validator = data['validator']
@@ -65,6 +70,12 @@ class Report(object):
     def getGeometry(self) -> str:
         return self.__geometry
 
+    def getSketch(self) -> str:
+        return self.__sketch
+
+    def getSketchXml(self) -> str:
+        return self.__sketch_xml
+
     # TODO dans SQLIte, on stoke du json ou une chaine reformatée ?
     #  j'ai pris l'option chaine reformatée
     def getColumnsForSQlite(self) -> {}:
@@ -89,6 +100,44 @@ class Report(object):
             'Autorisation': self.__autorisation,
             'geom': self.__geometry
         }
+
+    def InsertSketchIntoSQLite(self):
+        if self.getSketch() is None:
+            return
+        jsonDatas = json.loads(self.getSketch())
+        objects = jsonDatas['objects']
+        for obj in objects:
+            geomAndTable = self.whatGeometryAndTableIs(obj['geometry'])
+            parameters = {'tableName': geomAndTable[1], 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
+                          'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False,
+                          'geometryType': geomAndTable[0]}
+            attributesRows = [{
+                'NoSignalement': self.__id,
+                'Nom': jsonDatas['name'],
+                'Attributs_croquis': self.getAttributes(obj['attributes']),
+                'Lien_objet_BDUNI': '',
+                'geom': obj['geometry']
+            }]
+            sqliteManager = SQLiteManager()
+            return sqliteManager.insertRowsInTable(parameters, attributesRows)
+
+    def whatGeometryAndTableIs(self, geom):
+        if 'POINT' in geom:
+            return 'POINT', cst.nom_Calque_Croquis_Point
+        if 'LINESTRING' in geom:
+            return 'LINESTRING', cst.nom_Calque_Croquis_Ligne
+        if 'POLYGON' in geom:
+            return 'POLYGON', cst.nom_Calque_Croquis_Polygone
+
+    def getAttributes(self, attributes):
+        strAttributes = ''
+        for k, v in attributes.items():
+            strAttributes += "{0}='{1}'|".format(ClientHelper.notNoneValue(k), ClientHelper.notNoneValue(v))
+
+        if len(strAttributes) > 0:
+            strAttributes = strAttributes[:-1]
+
+        return strAttributes
 
     def __notNoneValue(self, nodeValue) -> str:
         if nodeValue is None:
@@ -132,7 +181,7 @@ class Report(object):
         if type(self.__author) is int:
             return str(self.__author)
         return self.__author
-        #return self.__author['username']
+        # return self.__author['username']
 
     def getAttachments(self) -> [{}]:
         # valeur de retour

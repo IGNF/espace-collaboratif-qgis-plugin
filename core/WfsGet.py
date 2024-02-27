@@ -1,5 +1,4 @@
 import time
-import json
 from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
 

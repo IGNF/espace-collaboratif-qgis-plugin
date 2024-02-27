@@ -9,6 +9,7 @@ version 3.0.0 , 26/11/2018
 
 # standard_library.install_aliases()
 from .PluginHelper import PluginHelper
+from .core import Constantes as cst
 
 
 class Magicwand(object):
@@ -56,7 +57,7 @@ class Magicwand(object):
         for ml in mapLayers:
             if ml.name() in PluginHelper.sketchLayers and len(ml.selectedFeatures()) > 0:
                 selectedCroquis = True
-            if ml.name() == PluginHelper.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
+            if ml.name() == cst.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
                 selectedRemarque = True
 
         if selectedCroquis and selectedRemarque:
@@ -100,7 +101,7 @@ class Magicwand(object):
         # key: layer name, value: noSignalement
         croquisLays = {}
 
-        remarqueLay = self.context.getLayerByName(PluginHelper.nom_Calque_Signalement)
+        remarqueLay = self.context.getLayerByName(cst.nom_Calque_Signalement)
         feats = remarqueLay.selectedFeatures()
 
         for f in feats:

@@ -51,7 +51,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def setComboBoxWorkZone(self) -> None:
         index = -1
         polyLayers = self.__context.getMapPolygonLayers()
-        polyList = [val for key, val in polyLayers.items() if val != PluginHelper.nom_Calque_Croquis_Polygone]
+        polyList = [val for key, val in polyLayers.items() if val != cst.nom_Calque_Croquis_Polygone]
         self.comboBoxWorkZone.clear()
         self.comboBoxWorkZone.addItem("")
         self.comboBoxWorkZone.addItems(polyList)

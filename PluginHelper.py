@@ -37,17 +37,12 @@ class PluginHelper:
     # dossier des fichiers de style .qml
     qmlStylesDir = "espacecoStyles"
 
-    nom_Calque_Signalement = "Signalement"
-    nom_Calque_Croquis_Polygone = "Croquis_EC_Polygone"
-    nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
-    nom_Calque_Croquis_Point = "Croquis_EC_Point"
-
-    sketchLayers = {nom_Calque_Croquis_Polygone: 'POLYGON', nom_Calque_Croquis_Ligne: 'LINESTRING',
-                    nom_Calque_Croquis_Point: 'POINT'}
+    sketchLayers = {cst.nom_Calque_Croquis_Polygone: 'POLYGON', cst.nom_Calque_Croquis_Ligne: 'LINESTRING',
+                    cst.nom_Calque_Croquis_Point: 'POINT'}
 
     # liste des noms, car le dictionnaire ne préserve pas l'ordre des éléments
-    reportSketchLayersName = [nom_Calque_Croquis_Polygone, nom_Calque_Croquis_Ligne,
-                              nom_Calque_Croquis_Point, nom_Calque_Signalement]
+    reportSketchLayersName = [cst.nom_Calque_Croquis_Polygone, cst.nom_Calque_Croquis_Ligne,
+                              cst.nom_Calque_Croquis_Point, cst.nom_Calque_Signalement]
 
     calque_Signalement_Lyr = "Signalement.lyr"
 
@@ -509,7 +504,7 @@ class PluginHelper:
 
             geom = " GeomFromText('POINT(" + str(ptx) + " " + str(pty) + ")', {})".format(cst.EPSGCRS4326)
 
-            sql = u"INSERT INTO " + PluginHelper.nom_Calque_Signalement
+            sql = u"INSERT INTO " + cst.nom_Calque_Signalement
             sql += u" (NoSignalement, Auteur, Commune, Insee, Département, Département_id, Date_création, Date_MAJ, "
             sql += u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document, Autorisation, geom) "
             sql += u"VALUES ("
@@ -555,13 +550,13 @@ class PluginHelper:
 
                     if str(cr.type) == "Point" or str(cr.type) == "Texte":
                         geom = sgeom % ('POINT', coord)
-                        sql = sql % (PluginHelper.nom_Calque_Croquis_Point, geom)
+                        sql = sql % (cst.nom_Calque_Croquis_Point, geom)
                     elif str(cr.type) == "Ligne" or str(cr.type) == "Fleche":
                         geom = sgeom % ('LINESTRING', coord)
-                        sql = sql % (PluginHelper.nom_Calque_Croquis_Ligne, geom)
+                        sql = sql % (cst.nom_Calque_Croquis_Ligne, geom)
                     elif str(cr.type) == 'Polygone':
                         geom = sgeom % ('POLYGON(', coord + ")")
-                        sql = sql % (PluginHelper.nom_Calque_Croquis_Polygone, geom)
+                        sql = sql % (cst.nom_Calque_Croquis_Polygone, geom)
                     cur.execute(sql)
 
         except Exception as e:

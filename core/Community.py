@@ -1,5 +1,4 @@
 from . import Constantes as cst
-from .Profil import Profil
 from .Layer import Layer
 from .Query import Query
 from .Theme import Theme

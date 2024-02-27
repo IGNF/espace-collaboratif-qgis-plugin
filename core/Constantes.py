@@ -113,3 +113,8 @@ LOADINGTEXTPROGRESS = "Chargement des couches du guichet"
 UPDATETEXTPROGRESS = "Mise à jour des couches du guichet"
 ESPACECO = "[ESPACE CO] "
 IGNESPACECO = "IGN Espace Collaboratif"
+
+nom_Calque_Signalement = "Signalement"
+nom_Calque_Croquis_Polygone = "Croquis_EC_Polygone"
+nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
+nom_Calque_Croquis_Point = "Croquis_EC_Point"

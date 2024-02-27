@@ -335,7 +335,7 @@ class Contexte(object):
             if SQLiteManager.isTableExist(table):
                 SQLiteManager.emptyTable(table)
                 SQLiteManager.deleteTable(table)
-            if table == PluginHelper.nom_Calque_Signalement:
+            if table == cst.nom_Calque_Signalement:
                 SQLiteManager.createReportTable()
             elif table in PluginHelper.sketchLayers:
                 SQLiteManager.createSketchTable(table, PluginHelper.sketchLayers[table])
@@ -652,7 +652,7 @@ class Contexte(object):
             # self.conn= sqlite3.connect(self.__dbPath)
             self.conn = spatialite_connect(self.dbPath)
 
-            sql = "UPDATE " + PluginHelper.nom_Calque_Signalement + " SET "
+            sql = "UPDATE " + cst.nom_Calque_Signalement + " SET "
             sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
             sql += " Date_validation= '" + rem.getAttribut("dateValidation") + "',"
             sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateResponse()) + "', "
@@ -676,7 +676,7 @@ class Contexte(object):
         :param statut: le statut de la remarque (=code renvoyé par le service)
         :type statut: string
         """
-        remLay = self.getLayerByName(PluginHelper.nom_Calque_Signalement)
+        remLay = self.getLayerByName(cst.nom_Calque_Signalement)
         expression = '"Statut" = \'' + statut + '\''
         filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
         return len(list(filtFeatures))
@@ -941,7 +941,7 @@ class Contexte(object):
         """
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
-        table = PluginHelper.nom_Calque_Signalement
+        table = cst.nom_Calque_Signalement
         lay = self.getLayerByName(table)
         sql = "SELECT * FROM " + table + "  WHERE noSignalement in (" + noSignalements + ")"
         rows = cur.execute(sql)
