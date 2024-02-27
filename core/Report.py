@@ -105,23 +105,31 @@ class Report(object):
         if self.getSketch() is None:
             return
         jsonDatas = json.loads(self.getSketch())
+        print(jsonDatas)
         objects = jsonDatas['objects']
         for obj in objects:
-            geomAndTable = self.whatGeometryAndTableIs(obj['geometry'])
+            geomAndTable = self.__whatGeometryAndTableIs(obj['geometry'])
             parameters = {'tableName': geomAndTable[1], 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
                           'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False,
                           'geometryType': geomAndTable[0]}
             attributesRows = [{
                 'NoSignalement': self.__id,
-                'Nom': jsonDatas['name'],
-                'Attributs_croquis': self.getAttributes(obj['attributes']),
+                'Nom': self.__getNameFromDatas(jsonDatas),
+                'Attributs_croquis': self.__getAttributes(obj),
                 'Lien_objet_BDUNI': '',
                 'geom': obj['geometry']
             }]
             sqliteManager = SQLiteManager()
             return sqliteManager.insertRowsInTable(parameters, attributesRows)
 
-    def whatGeometryAndTableIs(self, geom):
+    def __getNameFromDatas(self, datas) -> str:
+        if 'name' in datas:
+            return datas['name']
+        if 'name' in datas['objects']:
+            return datas['objects']['name']
+        return ''
+
+    def __whatGeometryAndTableIs(self, geom) -> ():
         if 'POINT' in geom:
             return 'POINT', cst.nom_Calque_Croquis_Point
         if 'LINESTRING' in geom:
@@ -129,10 +137,12 @@ class Report(object):
         if 'POLYGON' in geom:
             return 'POLYGON', cst.nom_Calque_Croquis_Polygone
 
-    def getAttributes(self, attributes):
+    def __getAttributes(self, datas) -> str:
+        if 'attributes' not in datas:
+            return ''
         strAttributes = ''
-        for k, v in attributes.items():
-            strAttributes += "{0}='{1}'|".format(ClientHelper.notNoneValue(k), ClientHelper.notNoneValue(v))
+        for k, v in datas['attributes'].items():
+            strAttributes += "{0}='{1}'|".format(self.__notNoneValue(k), self.__notNoneValue(v))
 
         if len(strAttributes) > 0:
             strAttributes = strAttributes[:-1]
