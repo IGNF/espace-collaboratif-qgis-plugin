@@ -83,7 +83,7 @@ class ReplyReport(object):
                         self.__toolsReport.updateReportIntoSQLite(jsonResponse)
                     information = "Votre réponse "
                     if len(replyReports) == 1:
-                        information += "au signalement {0} a bien été envoyée.".format(replyReports[0].id)
+                        information += "au signalement {0} a bien été envoyée.".format(replyReports[0].getId())
                     else:
                         information += "aux {0} signalements a bien été envoyée.".format(len(replyReports))
                     self.__context.iface.messageBar().pushMessage("Succès", information, level=0, duration=5)
