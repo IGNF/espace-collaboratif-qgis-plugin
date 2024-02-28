@@ -23,7 +23,7 @@ class ToolsReport(object):
         self.__progress = None
         self.__progressVal = 0
 
-    def addReportSketchLayersToTheCurrentMap(self) -> None:
+    def __addReportSketchLayersToTheCurrentMap(self) -> None:
         uri = self.__context.getUriDatabaseSqlite()
         self.__logger.debug(uri.uri())
         maplayers = self.__context.getAllMapLayers()
@@ -43,7 +43,7 @@ class ToolsReport(object):
                 vlayer.loadNamedStyle(style)
         self.__context.mapCan.refresh()
 
-    def insertReportsSketchsIntoSQLite(self, datas) -> int:
+    def __insertReportsSketchsIntoSQLite(self, datas) -> int:
         parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
                       'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
         attributesRows = []
@@ -62,7 +62,7 @@ class ToolsReport(object):
         response = query.simple()
         return Report(self.__context.urlHostEspaceCo, response.json())
 
-    def getReports(self, date) -> []:
+    def __getReports(self, date) -> []:
         # filtre spatial
         bbox = BBox(self.__context)
         box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, False, True)
@@ -98,17 +98,17 @@ class ToolsReport(object):
         self.progress = ProgressBar(200, message)
 
         # Création des couches dans QGIS et des liens vers la base SQLite
-        self.addReportSketchLayersToTheCurrentMap()
+        self.__addReportSketchLayersToTheCurrentMap()
 
         # Téléchargement des signalements
         date = PluginHelper.load_ripartXmlTag(self.__context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
         date = PluginHelper.formatDate(date)
-        data = self.getReports(date)
+        data = self.__getReports(date)
 
         # Insertion des signalements dans la base SQLite
         if len(data) == 0:
             return
-        nbReports = self.insertReportsSketchsIntoSQLite(data)
+        nbReports = self.__insertReportsSketchsIntoSQLite(data)
 
         # Rafraichir la carte
         self.__context.refresh_layers()
@@ -117,9 +117,9 @@ class ToolsReport(object):
         self.progress.close()
 
         # Afficher les résultats
-        self.showImportResult(nbReports)
+        self.__showImportResult(nbReports)
 
-    def showImportResult(self, nbReports) -> None:
+    def __showImportResult(self, nbReports) -> None:
         """Résultat de l'import
 
         :param cnt: le nombre de remarques importées
@@ -134,7 +134,8 @@ class ToolsReport(object):
         valid = self.__context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.__context.countRemarqueByStatut(
             cst.STATUT.valid0.__str__())
 
-        resultMessage = "Extraction réussie avec succès de " + str(nbReports) + " signalement(s) depuis le serveur \n" + \
+        resultMessage = "Extraction réussie avec succès de " + str(submit+pending+valid+reject) +\
+                        " signalement(s) depuis le serveur \n" + \
                         "avec la répartition suivante : \n\n" + \
                         "- " + str(submit) + " signalement(s) nouveau(x).\n" + \
                         "- " + str(pending) + " signalement(s) en cours de traitement.\n" + \

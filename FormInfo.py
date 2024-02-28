@@ -21,7 +21,7 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
     Dialogue donnant des informations sur le résultat
     des actions effectuées par l'utilisateur
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super(FormInfo, self).__init__(parent)
 
         self.setupUi(self)

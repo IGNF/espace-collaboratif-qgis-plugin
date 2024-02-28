@@ -140,7 +140,7 @@ class RipartPlugin:
         if len(editLayers) >= 1:
             self.__saveEdits(editLayers)
 
-    def __searchSpecificLayer(self, layerName):
+    def __searchSpecificLayer(self, layerName) -> bool:
         if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             if SQLiteManager.selectColumnFromTableWithCondition(cst.TABLEOFTABLES, "layer", layerName) is not None:
                 return True
@@ -557,7 +557,7 @@ class RipartPlugin:
                               'urlHostEspaceCo': self.__context.urlHostEspaceCo,
                               'authentification': self.__context.auth, 'proxy': self.__context.proxy}
                 result = SQLiteManager.selectRowsInTableOfTables(layer.name())
-                if result is not None:
+                if len(result) > 0:
                     for r in result:
                         parameters['databasename'] = layer.databasename = r[4]
                         layer.isStandard = r[3]

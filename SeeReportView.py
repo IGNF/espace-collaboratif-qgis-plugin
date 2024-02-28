@@ -25,32 +25,32 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             self.__report = report
             self.lbl_contentNumberReport.setText("Signalement n°{0}".format(report.getId()))
             self.lbl_contentNumberReport.setStyleSheet("QLabel {color : blue}")  # #ff0000
-            self.lbl_displayGeneralInformation.setText(self.DisplayGeneralInformation())
-            self.pte_displayThemes.setPlainText(self.DisplayThemes())
+            self.lbl_displayGeneralInformation.setText(self.__displayGeneralInformation())
+            self.pte_displayThemes.setPlainText(self.__displayThemes())
             # TODO changer l'item description et documents joints de label en plain text
             self.lbl_displayDescription.setText(report.getMessage())
-            self.DisplayFilesAttached()
+            self.__displayFilesAttached()
             self.pte_displayResponses.setPlainText(report.getStrReplies())
         except Exception as e:
             self.__logger.error("setReport")
             raise e
 
-    def DisplayGeneralInformation(self) -> str:
+    def __displayGeneralInformation(self) -> str:
         generalInformation = "Groupe : {0}\n".format(self.__activeUserCommunity.getName())
         # TODO -> sur le guichet pour l'affichage d'un signalement sur l'auteur il y a un (ign.fr)
         # doit-on le déduire de l'adresse mail ?
         generalInformation += "Auteur : {0}\n".format(self.__report.getStrAuthor())
-        generalInformation += "Commune : {0}\n".format(self._displayTown())
+        generalInformation += "Commune : {0}\n".format(self.__displayTown())
         generalInformation += "Posté le : {0}\n".format(self.__report.getStrDateCreation())
-        generalInformation += "Statut : {0}\n".format(self._displayStatus())
-        generalInformation += "Source : {0}\n".format(self._displaySource())
-        generalInformation += "Localisation : {0}\n".format(self._displayLocation())
+        generalInformation += "Statut : {0}\n".format(self.__displayStatus())
+        generalInformation += "Source : {0}\n".format(self.__displaySource())
+        generalInformation += "Localisation : {0}\n".format(self.__displayLocation())
         return generalInformation
 
-    def _displayTown(self) -> str:
+    def __displayTown(self) -> str:
         return "{0} ({1})".format(self.__report.getCommune(), self.__report.getInsee())
 
-    def _displayStatus(self) -> str:
+    def __displayStatus(self) -> str:
         correspondance = {
             cst.STATUT.submit.__str__(): "Reçu dans nos services",
             cst.STATUT.pending.__str__(): "En cours de traitement",
@@ -66,7 +66,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             return correspondance[self.__report.getStatut()]
         return "Indéfini"
 
-    def _displaySource(self) -> str:
+    def __displaySource(self) -> str:
         sources = {
             "UNKNOWN": "Soumise via l\'API",
             "www": "Saisie sur le site web",
@@ -80,7 +80,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             return sources[self.__report.getInputDevice()]
         return "Indéfini"
 
-    def _displayLocation(self) -> str:
+    def __displayLocation(self) -> str:
         lonlat = Wkt.toGetLonLatFromGeometry(self.__report.getGeometry())
         dirLon = "E"
         dirLat = "N"
@@ -90,7 +90,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             dirLat = "S"
         return "{0}°{1}, {2}°{3}".format(str(lonlat[0]), dirLon, str(lonlat[1]), dirLat)
 
-    def DisplayThemes(self) -> str:
+    def __displayThemes(self) -> str:
         displayThemes = ''
         themes = self.__report.getStrThemesForDisplay(self.__activeUserCommunity)
         for theme in themes:
@@ -103,7 +103,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             displayThemes += theme
         return displayThemes.replace("=", " : ")
 
-    def DisplayFilesAttached(self) -> None:
+    def __displayFilesAttached(self) -> None:
         allDocuments = self.__report.getListAttachments()
         htmlDocuments = ''
         for document in allDocuments:

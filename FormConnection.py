@@ -27,20 +27,20 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         # Par défaut -1 (problème de connection), si 1 connection réussie
         self.__connectionResult = -1
         self.__logger = RipartLogger("FormConnexionDialog").getRipartLogger()
-        self.setContextAndVariables(context)
+        self.__setContextAndVariables(context)
         # Quelques mises en forme du dialogue avant affichage vers l'utilisateur
-        self.shapeDialog()
+        self.__shapeDialog()
 
-    def setContextAndVariables(self, context) -> None:
+    def __setContextAndVariables(self, context) -> None:
         self.__context = context
         self.__urlHost = context.urlHostEspaceCo
         self.__projectDir = context.projectDir
         self.lineEditLogin.setText(context.login)
         self.lineEditPwd.setText("")
 
-    def shapeDialog(self) -> None:
+    def __shapeDialog(self) -> None:
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Connecter")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.connectToService)
+        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__connectToService)
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.Cancel)
         font = QtGui.QFont()
@@ -66,7 +66,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         return self.lineEditPwd.text()
 
     # La fonction correspond au bouton Connecter...
-    def connectToService(self):
+    def __connectToService(self):
         self.__context.login = self.getLineEditLogin()
         self.__context.pwd = self.getLineEditPwd()
         if self.__context.login == '' or self.__context.pwd == '':
@@ -116,7 +116,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 self.close()
                 return
             # Les informations de connexion sont montrées à l'utilisateur
-            self.setDisplayInformations()
+            self.__setDisplayInformations()
             self.__connectionResult = 1
         except Exception as e:
             self.__context.logger.error(format(e))
@@ -127,7 +127,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
             PluginHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
         return self.__connectionResult
 
-    def setDisplayInformations(self):
+    def __setDisplayInformations(self):
         # Les infos de connexion présentée à l'utilisateur
         dlgInfo = FormInfo()
         # Modification du logo en fonction du groupe
@@ -173,9 +173,9 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         #     dlgInfo.textInfo.append("Zone : {}".format(self.__context.profil.zone.__str__()))
         dlgInfo.exec_()
 
-    def Cancel(self):
+    def Cancel(self) -> None:
         self.close()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         self.__connectionResult = 1
         self.close()

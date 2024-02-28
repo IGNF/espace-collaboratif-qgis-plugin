@@ -1,7 +1,5 @@
 import json
 from datetime import datetime
-
-from .ClientHelper import ClientHelper
 from .RipartLoggerCl import RipartLogger
 from .SQLiteManager import SQLiteManager
 from . import Constantes as cst
@@ -104,30 +102,56 @@ class Report(object):
     def InsertSketchIntoSQLite(self):
         if self.getSketch() is None:
             return
+
         jsonDatas = json.loads(self.getSketch())
-        print(jsonDatas)
-        objects = jsonDatas['objects']
+        objects = self.__getKey(jsonDatas, 'objects')
+        nbSketch = 0
         for obj in objects:
-            geomAndTable = self.__whatGeometryAndTableIs(obj['geometry'])
+            geom = self.__getKey(obj, 'geometry')
+            if geom == '':
+                continue
+            attributesRows = [{
+                'NoSignalement': self.__id,
+                'Nom': self.__getKey(obj, 'name'),
+                'Attributs_croquis': self.__getAttributes(obj),
+                'Lien_objet_BDUNI': '',
+                'geom': geom
+            }]
+            geomAndTable = self.__whatGeometryAndTableIs(geom)
             parameters = {'tableName': geomAndTable[1], 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
                           'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False,
                           'geometryType': geomAndTable[0]}
-            attributesRows = [{
-                'NoSignalement': self.__id,
-                'Nom': self.__getNameFromDatas(jsonDatas),
-                'Attributs_croquis': self.__getAttributes(obj),
-                'Lien_objet_BDUNI': '',
-                'geom': obj['geometry']
-            }]
-            sqliteManager = SQLiteManager()
-            return sqliteManager.insertRowsInTable(parameters, attributesRows)
 
-    def __getNameFromDatas(self, datas) -> str:
-        if 'name' in datas:
-            return datas['name']
-        if 'name' in datas['objects']:
-            return datas['objects']['name']
+            sqliteManager = SQLiteManager()
+            nbSketch += sqliteManager.insertRowsInTable(parameters, attributesRows)
+        print('signalement n° {0}, {1} croquis'.format(self.__id, nbSketch))
+
+    def __getKey(self, datas, key):
+        if key in datas:
+            return datas[key]
         return ''
+
+    def __getAttributes(self, datas) -> str:
+        strAttributes = ''
+        data = None
+        if 'attributes' in datas:
+            data = datas
+        elif 'objects' in datas:
+            if 'attributes' in datas['objects']:
+                data = datas['objects']
+        else:
+            return strAttributes
+
+        if len(data['attributes']) == 0:
+            return strAttributes
+
+        for k, v in data['attributes'].items():
+            strAttributes += "{0}='{1}'|".format(self.__notNoneValue(k), self.__notNoneValue(v))
+
+        if len(strAttributes) > 0:
+            strAttributes = strAttributes[:-1]
+
+        return strAttributes
 
     def __whatGeometryAndTableIs(self, geom) -> ():
         if 'POINT' in geom:
@@ -136,18 +160,6 @@ class Report(object):
             return 'LINESTRING', cst.nom_Calque_Croquis_Ligne
         if 'POLYGON' in geom:
             return 'POLYGON', cst.nom_Calque_Croquis_Polygone
-
-    def __getAttributes(self, datas) -> str:
-        if 'attributes' not in datas:
-            return ''
-        strAttributes = ''
-        for k, v in datas['attributes'].items():
-            strAttributes += "{0}='{1}'|".format(self.__notNoneValue(k), self.__notNoneValue(v))
-
-        if len(strAttributes) > 0:
-            strAttributes = strAttributes[:-1]
-
-        return strAttributes
 
     def __notNoneValue(self, nodeValue) -> str:
         if nodeValue is None:
@@ -248,8 +260,13 @@ class Report(object):
         strThemes = ""
         for t in self.__themes:
             # le nom du thème
-            strThemes += t['theme']
+            if 'theme' in t:
+                strThemes += t['theme']
+            else:
+                strThemes += 'Nom de thème inconnu'
             # les attributs du thème
+            if 'attributes' not in t:
+                continue
             if len(t['attributes']) != 0:
                 z = 0
                 for key, value in t['attributes'].items():
@@ -268,8 +285,13 @@ class Report(object):
         strThemes = ""
         for t in self.__themes:
             # le nom du thème
-            strThemes += t['theme']
+            if 'theme' in t:
+                strThemes += t['theme']
+            else:
+                strThemes += 'Nom de thème inconnu'
             # les attributs du thème
+            if 'attributes' not in t:
+                continue
             if len(t['attributes']) != 0:
                 z = 0
                 for key, value in t['attributes'].items():
