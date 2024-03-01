@@ -22,7 +22,7 @@ from .FormConfigure import FormConfigure
 from .Contexte import Contexte
 from .ToolsReport import ToolsReport
 from .SeeReport import SeeReport
-from .CreerRipart import CreerRipart
+from .CreateReport import CreateReport
 from .Magicwand import Magicwand
 from .PluginHelper import PluginHelper
 from .ReplyReport import ReplyReport
@@ -423,7 +423,7 @@ class RipartPlugin:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
                 return
-            create = CreerRipart(self.__context)
+            create = CreateReport(self.__context)
             create.do()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__createReport', e)

@@ -7,68 +7,83 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-
+from .core.Point import Point
 from .core.RipartLoggerCl import RipartLogger
 from .FormCreerRemarque import FormCreerRemarque
 from .PluginHelper import PluginHelper
-from .core.Remarque import Remarque
+from .ToolsReport import ToolsReport
+from .core.Report import Report
+from .core.MapToolsReport import MapToolsReport
+from PyQt5.QtWidgets import QApplication
+from .core import Constantes as cst
+from PyQt5.QtCore import Qt
 
 
-class CreerRipart(object):
-    """
-    Classe pour la création d'une nouvelle remarque ripart
-    """
-    logger = RipartLogger("CreerRipart").getRipartLogger()
-    context = None
+# Classe pour la création d'un nouveau signalement
+class CreateReport(object):
 
     def __init__(self, context):
-        self.context = context
+        self.__logger = RipartLogger("CreateReport").getRipartLogger()
+        self.__context = context
+        clipboard = QApplication.clipboard()
+        clipboard.clear()
+        self.__activeLayer = self.__context.iface.activeLayer()
+        self.__canvas = self.__context.iface.mapCanvas()
 
-    def do(self): 
-        """
-        Création de la nouvelle remarque
-        """
-        self.context.iface.messageBar().clearWidgets()
-
-        try:
-            hasSelectedFeature = self.context.hasMapSelectedFeatures()
-       
-            if not hasSelectedFeature:
-                PluginHelper.showMessageBox(u"Aucun objet sélectionné.\nIl est donc impossible de déterminer le "
-                                            u"point d'application du nouveau signalement à créer.")
-                return    # si pas d'objet sélectionné, on arrête le processus
-
-            if self.context.client is None:
-                connResult = self.context.getConnexionEspaceCollaboratif()
-                if not connResult:
-                    return 0
-                # la connexion a échoué, on ne fait rien
-                if self.context.client is None:
-                    self.context.iface.messageBar().pushMessage("", u"Un problème de connexion avec le service est "
-                                                                    u"survenu. Veuillez rééssayer", level=2,
-                                                                duration=3)
-                    return
-
-            # Création des croquis à partir de la sélection de features
-            croquisList = self.context.makeCroquisFromSelection()
-
-            # Il y a eu un problème à la génération des croquis, on sort
-            if len(croquisList) == 0:
+    # Création d'un nouveau signalement
+    def do(self):
+        clipboard = QApplication.clipboard()
+        clipboard.clear()
+        hasSelectedFeature = self.__context.hasMapSelectedFeatures()
+        # Sans croquis
+        if not hasSelectedFeature:
+            if self.__activeLayer.name() != cst.nom_Calque_Signalement:
                 return
-            self.logger.debug(str(len(croquisList)) + u" croquis générés")
-        
-            # ouverture du formulaire de création de la remarque
-            formCreate = FormCreerRemarque(context=self.context, NbSketch=len(croquisList))
-            formCreate.exec_()
+            mapToolsReport = MapToolsReport(self.__canvas, self.__activeLayer)
+            self.__canvas.setMapTool(mapToolsReport)
+        # Avec croquis
+        else:
+            print("Création d'un croquis avec le ou les objet(s) sélectionné(s)")
 
-            # création de la remarque
-            if formCreate.bSend:
-                self._createNewReport(formCreate, croquisList)
-              
-        except Exception as e:
-            self.logger.error(format(e))
-            self.context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)", level=2,
-                                                        duration=3)
+        # try:
+        #     hasSelectedFeature = self.__context.hasMapSelectedFeatures()
+        #
+        #     if not hasSelectedFeature:
+        #         PluginHelper.showMessageBox(u"Aucun objet sélectionné.\nIl est donc impossible de déterminer le "
+        #                                     u"point d'application du nouveau signalement à créer.")
+        #         return    # si pas d'objet sélectionné, on arrête le processus
+        #
+        #     if self.__context.client is None:
+        #         connResult = self.__context.getConnexionEspaceCollaboratif()
+        #         if not connResult:
+        #             return 0
+        #         # la connexion a échoué, on ne fait rien
+        #         if self.__context.client is None:
+        #             self.__context.iface.messageBar().pushMessage("", u"Un problème de connexion avec le service est "
+        #                                                             u"survenu. Veuillez rééssayer", level=2,
+        #                                                         duration=3)
+        #             return
+        #
+        #     # Création des croquis à partir de la sélection de features
+        #     croquisList = self.__context.makeCroquisFromSelection()
+        #
+        #     # Il y a eu un problème à la génération des croquis, on sort
+        #     if len(croquisList) == 0:
+        #         return
+        #     self.logger.debug(str(len(croquisList)) + u" croquis générés")
+        #
+        #     # ouverture du formulaire de création de la remarque
+        #     formCreate = FormCreerRemarque(context=self.__context, NbSketch=len(croquisList))
+        #     formCreate.exec_()
+        #
+        #     # création de la remarque
+        #     if formCreate.bSend:
+        #         self._createNewReport(formCreate, croquisList)
+        #
+        # except Exception as e:
+        #     self.logger.error(format(e))
+        #     self.__context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)", level=2,
+        #                                                 duration=3)
 
     def _createNewReport(self, formCreate, croquisList):
         """Création d'une nouvelle remarque (requête au service ripart)
@@ -85,9 +100,9 @@ class CreerRipart(object):
             tmpRem.setCommentaire(formCreate.textEditMessage.toPlainText())
             
             selectedThemes = formCreate.getSelectedThemes()
-            PluginHelper.save_preferredThemes(self.context.projectDir, selectedThemes)
+            PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
 
-            PluginHelper.save_preferredGroup(self.context.projectDir, formCreate.preferredGroup)
+            PluginHelper.save_preferredGroup(self.__context.projectDir, formCreate.preferredGroup)
             
             tmpRem.addThemeList(selectedThemes)  
             
@@ -103,7 +118,7 @@ class CreerRipart(object):
                 listNewReportIds.clear()
                 newReport = self._prepareAndSendReport(tmpRem, croquisList, formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
                 if newReport is None:
-                    self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création du "
+                    self.__context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création du "
                                                                     u"signalement ", level=2, duration=3)
                      
                 listNewReportIds.append(newReport.id)
@@ -115,12 +130,12 @@ class CreerRipart(object):
                     tmpRem.clearCroquis()
                     newReport = self._prepareAndSendReport(tmpRem, [cr], formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
                     if newReport is None:
-                        self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création "
+                        self.__context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création "
                                                                         u"d'un signalement", level=2, duration=15)
                         continue
                     listNewReportIds.append(newReport.id)
    
-            self.context.refresh_layers()
+            self.__context.refresh_layers()
 
             message = 'Succès '
             nbReports = len(listNewReportIds)
@@ -132,11 +147,11 @@ class CreerRipart(object):
             PluginHelper.showMessageBox(message)
 
         except Exception as e:
-            self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=3)
+            self.__context.iface.messageBar().pushMessage("", format(e), level=2, duration=3)
             self.logger.error("in _createNewReport " + format(e))
 
         finally:
-            self.context.conn.close()   
+            self.__context.conn.close()
 
     def _prepareAndSendReport(self, tmpRem, croquisList, optionWithCroquis, idSelectedGeogroupe):
         """Trouve la position de la remarque, ajoute les croquis et envoie la requête au service Ripart
@@ -154,9 +169,9 @@ class CreerRipart(object):
         :rtype: Remarque
         """
         
-        client = self.context.client
+        client = self.__context.client
         
-        positionRemarque = self.context.getPositionRemarque(croquisList)
+        positionRemarque = self.__context.getPositionRemarque(croquisList)
                     
         if positionRemarque is None:
             self.logger.error("error in _prepareAndSendReport : positionRemarque not created")
@@ -172,7 +187,7 @@ class CreerRipart(object):
 
         self.logger.info(u"Succès de la création du nouveau signalement n°" + str(remarqueNouvelle.id))
         
-        PluginHelper.insertRemarques(self.context.conn, remarqueNouvelle)
-        self.context.conn.commit()
+        PluginHelper.insertRemarques(self.__context.conn, remarqueNouvelle)
+        self.__context.conn.commit()
             
         return remarqueNouvelle
