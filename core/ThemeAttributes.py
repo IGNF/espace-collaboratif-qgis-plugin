@@ -10,16 +10,19 @@ class ThemeAttributes(object):
         # self.__inputConstraint = None
         # self.__jsonSchema = None
         # self.__help = None
+        # TODO voir avec Noémie la différence entre obligatoire et requis
         self.__required = False
         self.__mandatory = False
         # self.__original = {}
+        #TODO faire le switch name/title
+        self.__switchNameToTitle = {}
 
     def __keyExist(self, key, data) -> bool:
         if key in data:
             return True
         return False
 
-    def getAttributes(self, data) -> None:
+    def setAttributes(self, data) -> None:
         if self.__keyExist('name', data):
             self.__name = data['name']
         if self.__keyExist('title', data):
@@ -56,16 +59,15 @@ class ThemeAttributes(object):
     def getMandatory(self) -> bool:
         return self.__mandatory
 
-    def setTagDisplay(self, display):
-        self.__tagDisplay = display
-
-    def setDefaultValue(self, defaultValue):
-        self.__defaultValue = defaultValue
+    def getNameAndTitle(self) -> {}:
+        return {self.__name: self.__title}
 
     def setValues(self, values):
         x = values.split('|')
         for value in x:
             self.__values.append(value)
 
-    def getNameAndTitle(self) -> {}:
-        return {self.__name: self.__title}
+    def switchNameToTitle(self):
+        if self.__title != '':
+            return self.__title
+        return self.__name

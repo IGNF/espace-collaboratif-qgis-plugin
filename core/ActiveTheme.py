@@ -27,7 +27,7 @@ class ActiveTheme(object):
             return
         for data in datas:
             theme = Theme()
-            theme.getTheme(data)
+            theme.setTheme(data)
             self.__themes.append(theme)
 
     def getGroupId(self) -> int:

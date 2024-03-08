@@ -17,14 +17,14 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     et récupération du profil utilisateur
     """
 
-    def __init__(self, context, listNamesIdsCommunities, nameActiveCommunity, parent=None) -> None:
+    def __init__(self, context, parent=None) -> None:
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
         self.__context = context
-        self.__listNamesIdsCommunities = listNamesIdsCommunities
-        self.__nameActiveCommunity = nameActiveCommunity
+        self.__listNamesIdsCommunities = context.getListNameOfCommunities()
+        self.__nameActiveCommunity = context.getActiveCommunityName()
         self.__newShapefilesDict = {}
         self.__bCancel = True
         self.__idSelectedCommunity = ''

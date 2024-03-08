@@ -10,35 +10,64 @@ class Report(object):
     def __init__(self, urlHostEspaceCo, data) -> None:
         self.__logger = RipartLogger("Report").getRipartLogger()
         self.__urlHostEspaceCo = urlHostEspaceCo
-        self.__id = data['id']
-        self.__author = self.__notNoneValue(data['author'])
-        self.__url = self._setUrl(data['id'])
-        self.__commune = data['commune']['title']
-        self.__insee = data['commune']['name']
-        self.__departement = data['departement']['title']
-        self.__departementId = data['departement']['name']
-        self.__dateCreation = data['opening_date']
-        self.__dateMaj = data['updating_date']
-        self.__dateValidation = data['closing_date']
-        self.__themes = data['attributes']
-        self.__statut = data['status']
-        self.__message = data['comment']
-        self.__replies = data['replies']
+        if self.__keyExist('id', data):
+            self.__id = data['id']
+            self.__url = self.__setUrl(data['id'])
+        if self.__keyExist('author', data):
+            self.__author = self.__notNoneValue(data['author'])
+        if self.__keysExists('commune', 'title', data):
+            self.__commune = data['commune']['title']
+        if self.__keysExists('commune', 'name', data):
+            self.__insee = data['commune']['name']
+        if self.__keysExists('departement', 'title', data):
+            self.__departement = data['departement']['title']
+        if self.__keysExists('departement', 'name', data):
+            self.__departementId = data['departement']['name']
+        if self.__keyExist('opening_date', data):
+            self.__dateCreation = data['opening_date']
+        if self.__keyExist('updating_date', data):
+            self.__dateMaj = data['updating_date']
+        if self.__keyExist('closing_date', data):
+            self.__dateValidation = data['closing_date']
+        if self.__keyExist('attributes', data):
+            self.__themes = data['attributes']
+        if self.__keyExist('status', data):
+            self.__statut = data['status']
+        if self.__keyExist('comment', data):
+            self.__message = data['comment']
+        if self.__keyExist('replies', data):
+            self.__replies = data['replies']
         self.__urlPrive = ''
-        self.__attachments = data['attachments']
+        if self.__keyExist('attachments', data):
+            self.__attachments = data['attachments']
         # TODO les autorisations ne sont plus dans la réponse il faut les déduire...???? dixit Sylvain
         #  résultat : ticket redmine to Madeline
         self.__autorisation = ''
-        self.__inputDevice = data['input_device']
-        self.__geometry = data['geometry']
+        if self.__keyExist('input_device', data):
+            self.__inputDevice = data['input_device']
+        if self.__keyExist('geometry', data):
+            self.__geometry = data['geometry']
         # TODO à décoder pour importer les croquis dans la carte
-        self.__sketch_xml = data['sketch_xml']
-        self.__sketch = data['sketch']
+        # self.__sketch_xml = data['sketch_xml']
+        if self.__keyExist('sketch', data):
+            self.__sketch = data['sketch']
         # TODO -> Noémie les variables suivantes sont retournées par l'API, que fait-on ?
         # self.__community = data['community']
         # self.__validator = data['validator']
         # self.__territory = data['territory']
         # self.__comment = data['comment']
+
+    def __keysExists(self, keyA, keyB, data) -> bool:
+        if self.__keyExist(keyA, data):
+            datum = data[keyA]
+            if self.__keyExist(keyB, datum):
+                return True
+        return False
+
+    def __keyExist(self, key, data) -> bool:
+        if key in data:
+            return True
+        return False
 
     def getId(self) -> int:
         return self.__id
@@ -337,6 +366,6 @@ class Report(object):
         return strReplies[:-1]
 
     # Crée de toutes pieces une url d'accès au signalement
-    def _setUrl(self, idReport) -> str:
+    def __setUrl(self, idReport) -> str:
         # TODO -> Noémie faut-il demander l'ajout de cette url dans la réponse de la nouvelle API ?
         return "{0}/gcms/api/reports/{1}".format(self.__urlHostEspaceCo, idReport)

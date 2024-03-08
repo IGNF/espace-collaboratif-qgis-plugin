@@ -1,7 +1,12 @@
+import json
 import os.path
+
+from PyQt5.QtWidgets import QApplication
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsEditorWidgetSetup
+
 from .PluginHelper import PluginHelper
+from .FormCreateReport import FormCreateReport
 from .core.ProgressBar import ProgressBar
 from .core.BBox import BBox
 from .core.RipartLoggerCl import RipartLogger
@@ -231,3 +236,44 @@ class ToolsReport(object):
         else:
             message = "code : {} raison : {}".format(response.status_code, response.reason)
             raise Exception("ToolsReport.addResponse -> ".format(message))
+
+    def createReport(self, sketchList):
+        # Ouverture du formulaire de création du signalement
+        nbSketch = len(sketchList)
+        formCreate = FormCreateReport(self.__context, nbSketch)
+        formCreate.exec_()
+        # création du ou des signalements
+        if formCreate.bSend:
+            self.__createAndSendNewReport(formCreate, sketchList)
+
+    def __createAndSendNewReport(self, formCreate, sketchList):
+        datas = {
+            'community': self.__context.getUserCommunity(),
+            'comment': formCreate.textEditMessage.toPlainText()
+        }
+
+        # Récupération des thèmes choisis par l'utilisateur
+        selectedThemes = formCreate.getSelectedThemes()
+        PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
+        PluginHelper.save_preferredGroup(self.__context.projectDir, formCreate.preferredGroup)
+        datas['attributes'] = self.getAttributesSelectedByUser(selectedThemes)
+
+        # Liste contenant les identifiants des nouveaux signalements créés
+        listNewReportIds = []
+
+        if formCreate.isSingleRemark():
+            if len(sketchList == 0):
+                clipBoard = QApplication.clipboard()
+                geom = clipBoard.text()
+                datas['geometry'] = geom
+            else:
+                listNewReportIds.clear()
+        else:
+            listNewReportIds.clear()
+
+        tmpReport = Report(self.__context.urlHostEspaceCo, datas)
+
+    def getAttributesSelectedByUser(self, selectedThemes):
+        attributes = ''
+
+        return json.dumps(attributes)

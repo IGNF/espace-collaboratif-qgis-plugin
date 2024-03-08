@@ -118,6 +118,10 @@ class Contexte(object):
         cst.RIPART_CLIENT_VERSION = self.getMetadata()
         self.__userCommunity = None
         self.__activeCommunityName = ''
+        self.__userName = ''
+        self.__listNameOfCommunities = None
+        self.__mapToolsReport = None
+        self.__community = None
 
         try:
             # set du répertoire et fichier du projet qgis
@@ -143,6 +147,24 @@ class Contexte(object):
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
             raise
+
+    def getCommunity(self):
+        return self.__community
+
+    def setCommunity(self, community):
+        self.__community = community
+
+    def getListNameOfCommunities(self) -> []:
+        return self.__listNameOfCommunities
+
+    def setListNameOfCommunities(self, listNameOfCommunities) -> None:
+        self.__listNameOfCommunities = listNameOfCommunities
+
+    def getUserNameCommunity(self) -> str:
+        return self.__userName
+
+    def setUserNameCommunity(self, userName) -> None:
+        self.__userName = userName
 
     def getUserCommunity(self) -> Community:
         return self.__userCommunity

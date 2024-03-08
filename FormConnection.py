@@ -84,10 +84,11 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
             communities = CommunitiesMember(self.__urlHost, self.getLineEditLogin(), self.getLineEditPwd(),
                                             self.__context.proxy)
             communities.extractCommunities()
+            self.__context.setCommunity(communities)
             # La liste des communautés à afficher dans la boite de choix des communautés
-            listCommunities = communities.getListNameOfCommunities()
-            dlgSelectedCommunities = FormChoixGroupe(self.__context, listCommunities,
-                                                     PluginHelper.loadActiveCommunityName(self.__projectDir).text)
+            self.__context.setListNameOfCommunities(communities.getListNameOfCommunities())
+            self.__context.setUserNameCommunity(communities.getUserName())
+            dlgSelectedCommunities = FormChoixGroupe(self.__context)
             dlgSelectedCommunities.exec_()
             # bouton Continuer (le choix du nouveau profil est validé)
             if not dlgSelectedCommunities.getCancel():

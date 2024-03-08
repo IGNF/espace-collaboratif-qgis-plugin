@@ -363,7 +363,6 @@ class PluginHelper:
         """
         prefThemes = []
         try:
-            print(PluginHelper.getConfigFile())
             tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
 

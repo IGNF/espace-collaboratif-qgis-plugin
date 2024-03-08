@@ -7,16 +7,12 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-from .core.Point import Point
 from .core.RipartLoggerCl import RipartLogger
-from .FormCreerRemarque import FormCreerRemarque
 from .PluginHelper import PluginHelper
 from .ToolsReport import ToolsReport
-from .core.Report import Report
 from .core.MapToolsReport import MapToolsReport
 from PyQt5.QtWidgets import QApplication
 from .core import Constantes as cst
-from PyQt5.QtCore import Qt
 
 
 # Classe pour la création d'un nouveau signalement
@@ -32,18 +28,34 @@ class CreateReport(object):
 
     # Création d'un nouveau signalement
     def do(self):
-        clipboard = QApplication.clipboard()
-        clipboard.clear()
-        hasSelectedFeature = self.__context.hasMapSelectedFeatures()
-        # Sans croquis
-        if not hasSelectedFeature:
-            if self.__activeLayer.name() != cst.nom_Calque_Signalement:
+        try:
+            clipboard = QApplication.clipboard()
+            clipboard.clear()
+            hasSelectedFeature = self.__context.hasMapSelectedFeatures()
+            # Sans croquis
+            if not hasSelectedFeature:
+                if self.__activeLayer.name() != cst.nom_Calque_Signalement:
+                    return
+                mapToolsReport = MapToolsReport(self.__context)
+                mapToolsReport.activate()
+                self.__canvas.setMapTool(mapToolsReport)
                 return
-            mapToolsReport = MapToolsReport(self.__canvas, self.__activeLayer)
-            self.__canvas.setMapTool(mapToolsReport)
-        # Avec croquis
-        else:
-            print("Création d'un croquis avec le ou les objet(s) sélectionné(s)")
+            # Avec croquis
+            else:
+                # Création des croquis à partir de la sélection de features
+                sketchList = self.__context.makeCroquisFromSelection()
+                # Il y a eu un problème à la génération des croquis, on sort
+                if len(sketchList) == 0:
+                    return
+                self.__logger.debug(str(len(sketchList)) + u" croquis générés")
+                # Création du ou des signalements
+                toolsReport = ToolsReport(self.__context)
+                toolsReport.createReport(sketchList)
+
+        except Exception as e:
+            self.__logger.error(format(e))
+            self.__context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)", level=2,
+                                                          duration=3)
 
         # try:
         #     hasSelectedFeature = self.__context.hasMapSelectedFeatures()
@@ -73,7 +85,7 @@ class CreateReport(object):
         #     self.logger.debug(str(len(croquisList)) + u" croquis générés")
         #
         #     # ouverture du formulaire de création de la remarque
-        #     formCreate = FormCreerRemarque(context=self.__context, NbSketch=len(croquisList))
+        #     formCreate = FormCreateReport(context=self.__context, NbSketch=len(croquisList))
         #     formCreate.exec_()
         #
         #     # création de la remarque
@@ -89,7 +101,7 @@ class CreateReport(object):
         """Création d'une nouvelle remarque (requête au service ripart)
         
         :param formCreate: le formulaire de création de la remarque
-        :type formCreate: FormCreerRemarque
+        :type formCreate: FormCreateReport
         
         :param croquisList: la liste des croquis associés à la remarque
         :type croquisList: list d'objet Croquis
@@ -148,7 +160,7 @@ class CreateReport(object):
 
         except Exception as e:
             self.__context.iface.messageBar().pushMessage("", format(e), level=2, duration=3)
-            self.logger.error("in _createNewReport " + format(e))
+            self.__logger.error("in _createNewReport " + format(e))
 
         finally:
             self.__context.conn.close()
@@ -174,7 +186,7 @@ class CreateReport(object):
         positionRemarque = self.__context.getPositionRemarque(croquisList)
                     
         if positionRemarque is None:
-            self.logger.error("error in _prepareAndSendReport : positionRemarque not created")
+            self.__logger.error("error in _prepareAndSendReport : positionRemarque not created")
             return None
         
         tmpRem.setPosition(positionRemarque)
@@ -185,7 +197,7 @@ class CreateReport(object):
         # create new remark (ripart service)
         remarqueNouvelle = client.createRemarque(tmpRem, idSelectedGeogroupe)
 
-        self.logger.info(u"Succès de la création du nouveau signalement n°" + str(remarqueNouvelle.id))
+        self.__logger.info(u"Succès de la création du nouveau signalement n°" + str(remarqueNouvelle.id))
         
         PluginHelper.insertRemarques(self.__context.conn, remarqueNouvelle)
         self.__context.conn.commit()

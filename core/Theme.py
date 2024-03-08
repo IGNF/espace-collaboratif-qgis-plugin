@@ -14,7 +14,7 @@ class Theme(object):
         self.__attributes = []
         self.__switchNameToTitle = {}
 
-    def getTheme(self, data) -> None:
+    def setTheme(self, data) -> None:
         if type(data) is str:
             self.__name = data
         else:
@@ -27,7 +27,7 @@ class Theme(object):
             if self.__keyExist('featureType', data):
                 self.__featureType = data['featureType']
             if self.__keyExist('attributes', data):
-                self.__getDataAttributes(data['attributes'])
+                self.__setDataAttributes(data['attributes'])
 
     def getName(self) -> str:
         return self.__name
@@ -44,12 +44,18 @@ class Theme(object):
     def getAttributes(self) -> []:
         return self.__attributes
 
-    def __getDataAttributes(self, datas) -> None:
+    def getSwitchAttributeNameToTitle(self, name):
+        title = ''
+        if name in self.__switchNameToTitle:
+            title = self.__switchNameToTitle[name]
+        return title
+
+    def __setDataAttributes(self, datas) -> None:
         if len(datas) == 0:
             return
         for data in datas:
             themeAttributes = ThemeAttributes()
-            themeAttributes.getAttributes(data)
+            themeAttributes.setAttributes(data)
             self.__attributes.append(themeAttributes)
             self.__switchNameToTitle.update(themeAttributes.getNameAndTitle())
 
@@ -57,9 +63,3 @@ class Theme(object):
         if key in data:
             return True
         return False
-
-    def getSwitchAttributeNameToTitle(self, name):
-        title = ''
-        if name in self.__switchNameToTitle:
-            title = self.__switchNameToTitle[name]
-        return title

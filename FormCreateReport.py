@@ -22,15 +22,14 @@ from .core.Theme import Theme
 from .PluginHelper import PluginHelper
 from .core.ThemeAttributes import ThemeAttributes
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreateReport_base.ui'))
 
 
-class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
+class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
     """
     Formulaire pour la création d'une nouvelle remarque
     """
-    logger = RipartLogger("FormCreerRemarque").getRipartLogger()
-    context = None
+    logger = RipartLogger("FormCreateReport").getRipartLogger()
 
     bSend = False
 
@@ -55,10 +54,10 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     # taille maximale du document joint
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
 
-    def __init__(self, context, NbSketch, parent=None):
+    def __init__(self, context, nbSketch, parent=None):
         """Constructor."""
 
-        super(FormCreerRemarque, self).__init__(parent)
+        super(FormCreateReport, self).__init__(parent)
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
         # self.<objectname>, and you can use autoconnect slots - see
@@ -66,7 +65,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.context = context
+        self.__context = context
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.onSend)
@@ -74,67 +73,77 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         self.checkBoxAttDoc.stateChanged.connect(self.openFileDialog)
 
         self.lblDoc.setProperty("visible", False)
-        if NbSketch >= 2:
+        if nbSketch >= 2:
             self.radioBtnUnique.setChecked(False)
             self.radioBtnMultiple.setChecked(True)
-            self.radioBtnMultiple.setText(u"Créer {0} signalements".format(NbSketch))
+            self.radioBtnMultiple.setText(u"Créer {0} signalements".format(nbSketch))
 
-        profil = self.context.client.getProfil()
-
-        if profil.geogroup.getName() is not None:
-            self.groupBoxProfil.setTitle(profil.author.name + " (" + profil.geogroup.getName() + ")")
+        self.__activeCommunity = self.__context.getActiveCommunityName()
+        if self.__activeCommunity is None:
+            profil = 'Profil par défaut'
         else:
-            self.groupBoxProfil.setTitle(profil.author.name + u" (Profil par défaut)")
+            profil = self.__activeCommunity
+        title = "{0} ({1})".format(self.__context.getUserNameCommunity(), profil)
+        self.groupBoxProfil.setTitle(title)
 
         # les noms des thèmes préférés (du fichier de configuration)
-        self.preferredThemes = PluginHelper.load_preferredThemes(self.context.projectDir)
-        preferredGroup = PluginHelper.load_preferredGroup(self.context.projectDir)
+        # TODO le theme prefere est-ils encore d'actualité ?
+        # self.preferredThemes = PluginHelper.load_preferredThemes(self.__context.projectDir)
+        preferredGroup = PluginHelper.load_preferredGroup(self.__context.projectDir)
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
-        self.infosgeogroups = profil.infosGeogroups
-        listeNamesGroups = []
-        for igg in self.infosgeogroups:
-            self.comboBoxGroupe.addItem(igg.group.getName())
-            listeNamesGroups.append(igg.group.getName())
+        self.__setComboBoxGroup()
 
         # Valeur par défaut : groupe actif
-        activeCommunity = self.context.getActiveCommunityName()
-        if preferredGroup in listeNamesGroups:
-            self.comboBoxGroupe.setCurrentText(preferredGroup)
-        else:
-            if activeCommunity is not None and activeCommunity != "" and activeCommunity in listeNamesGroups:
-                self.comboBoxGroupe.setCurrentText(activeCommunity)
-            else:
-                activeCommunity = 'Aucun'
-                self.comboBoxGroupe.setCurrentText('Aucun')
+        bInListNameOfCommunities = False
+        for nameid in self.__context.getListNameOfCommunities():
+            if preferredGroup == nameid['name']:
+                self.comboBoxGroupe.setCurrentText(preferredGroup)
+                bInListNameOfCommunities = True
+        if self.__activeCommunity is not None and self.__activeCommunity != "" and not bInListNameOfCommunities:
+            self.comboBoxGroupe.setCurrentText(self.__activeCommunity)
+        # TODO voir Noémie pour savoir si l'utilisateur peut être sans groupe
+        # else:
+            # self.__activeCommunity = 'Aucun'
+            # self.comboBoxGroupe.setCurrentText('Aucun')
 
         # largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
         self.treeWidget.setColumnWidth(0, 160)
         self.treeWidget.setColumnWidth(1, 150)
-        self.treeWidget.itemChanged.connect(self.onItemChanged)
+        self.treeWidget.itemChanged.connect(self.__onItemChanged)
 
-        # On modifie les thèmes proposés en fonction du groupe sélectionné
-        if activeCommunity != 'Aucun':
-            self.comboBoxGroupe.currentIndexChanged.connect(self.groupIndexChanged)
-            self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
-        else:
-            self.displayThemes(profil.globalThemes, profil.themes)
+        # Affichage des thèmes du groupe de l'utilisateur
+        self.__displayThemes(self.__context.getCommunity())
 
-        self.profilThemesList = profil.allThemes
+        # Modification des thèmes proposés en fonction du groupe sélectionné
+        self.comboBoxGroupe.currentIndexChanged.connect(self.__groupIndexChanged)
+        # self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
 
-        self.docMaxSize = self.context.client.get_MAX_TAILLE_UPLOAD_FILE()
+        # TODO dans quel cas, on affiche tous les themes (je suppose de tous les groupes ?) profil aucun
+        # self.profilThemesList = profil.allThemes
 
-    def onItemChanged(self, item, column):
+        self.docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
+        # Pas de croquis à joindre, l'utilisateur a cliqué un point sur la carte
+        if nbSketch == 0:
+            self.checkBoxJoinCroquis.setChecked(False)
+
+    def __setComboBoxGroup(self) -> None:
+        for nameid in self.__context.getListNameOfCommunities():
+            self.comboBoxGroupe.addItem(nameid['name'])
+        if self.__activeCommunity is not None and self.__activeCommunity != "":
+            self.comboBoxGroupe.setCurrentText(self.__activeCommunity)
+
+    def __onItemChanged(self, item, column):
         if column != 0:
             return
-        self.toggle(item)
+        self.__toggle(item)
         state = item.checkState(column)
         if state == Qt.CheckState.Checked:
             self.treeWidget.expandItem(item)
         else:
             self.treeWidget.collapseItem(item)
 
-    def toggle(self, item):
+    def __toggle(self, item):
         state = item.checkState(0)
         if state == Qt.CheckState.Unchecked:
             return
@@ -144,74 +153,57 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             if tlItem != item:
                 tlItem.setCheckState(0, Qt.CheckState.Unchecked)
 
-    def displayThemes(self, filteredThemes, themes):
-        """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
-        """
-        global th
-        preferredThemes = self.preferredThemes
-
-        if len(themes) <= 0:
+    def __displayThemesForCommunity(self, community):
+        themes = community.getThemes()
+        if len(themes) == 0:
             return
-
-        # boucle sur tous les thèmes filtrés du groupe
-        for thName in filteredThemes:
-
-            # On cherche l'objet theme correspondant dans la liste des themes
-            foundTheme = False
-            for th in themes:
-                if th.group.getName() == thName:
-                    foundTheme = True
-                    break
-
-            if not foundTheme:
-                continue
-
-            # Si le thème n'est pas dans le filtre du profil, on ne l'affiche pas
-            if not th.isFiltered:
-                continue
-
-            # ajout du thème dans le treeview
+        for theme in themes:
+            # Ajout du thème dans le treeview
             thItem = QTreeWidgetItem(self.treeWidget)
-            thItem.setText(0, th.group.getName())
-            thItem.setText(1, th.group.getId())
+            thItem.setText(0, theme.getName())
+            thItem.setText(1, '')
             self.treeWidget.addTopLevelItem(thItem)
 
-            # Pour masquer la 2ème colonne (qui contient le groupe id)
+            # Pour masquer la 2ème colonne TODO comprendre le pourquoi ???????
             thItem.setForeground(1, QtGui.QBrush(Qt.GlobalColor.white))
 
-            if ClientHelper.notNoneValue(th.group.getName()) in preferredThemes:
-                thItem.setCheckState(0, Qt.CheckState.Checked)
-                thItem.setExpanded(True)
-            else:
-                thItem.setCheckState(0, Qt.CheckState.Unchecked)
+            # Il faut mettre une case à cocher devant chaque theme
+            thItem.setCheckState(0, Qt.CheckState.Unchecked)
 
             # Affichage des attributs du thème et des modules d'aide à la saisie associés
-            for att in th.attributes:
-                attLabel = att.tagDisplay
+            if len(theme.getAttributes()) == 0:
+                continue
+            for attribute in theme.getAttributes():
+                attLabel = attribute.switchNameToTitle()
                 label = QtWidgets.QLabel(attLabel, self.treeWidget)
                 # Les attributs obligatoires sont en gras
-                if att.obligatoire is True:
+                if attribute.getMandatory() is True:
                     myFont = QtGui.QFont()
                     myFont.setBold(True)
                     label.setFont(myFont)
-
-                item_value = self.get_item_value_from_type(att)
+                # Construction de l'attribut en fonction de son type
+                item_value = self.__getItemValueFromType(attribute)
                 attItem = QtWidgets.QTreeWidgetItem()
                 thItem.addChild(attItem)
                 self.treeWidget.setItemWidget(attItem, 0, label)
                 self.treeWidget.setItemWidget(attItem, 1, item_value)
 
+    def __displayThemes(self, community):
+        """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
+        """
+        for c in community.getCommunities():
+            if self.__activeCommunity == c.getName():
+                self.__displayThemesForCommunity(c)
+                break
+
     '''
     Renvoie le type d'item pré-rempli avec sa valeur par défaut à afficher en face de chaque
     attribut du thème de signalement.
     '''
+    def __getItemValueFromType(self, att):
 
-    def get_item_value_from_type(self, att):
-
-        item_value = ""
-
-        attType = att.type
-        attDefaultval = att.defaultval
+        attType = att.getType()
+        attDefaultval = att.getDefault()
 
         if attType == "checkbox":
             item_value = QtWidgets.QCheckBox(self.treeWidget)
@@ -252,14 +244,15 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             item_value.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
 
         elif attType == 'list':
-            valeursToDisplay = []
-            for c, v in att.valeurs.items():
-                if v == "":
-                    valeursToDisplay.append(c)
-                else:
-                    valeursToDisplay.append(v)
+            valuesToDisplay = []
+            attValues = att.getValues()
+            if type(attValues) is dict:
+                for c, v in attValues.items():
+                    valuesToDisplay.append(c)
+            elif type(attValues) is list:
+                valuesToDisplay = attValues
             item_value = QtWidgets.QComboBox(self.treeWidget)
-            item_value.insertItems(0, valeursToDisplay)
+            item_value.insertItems(0, valuesToDisplay)
 
         else:
             item_value = QtWidgets.QLineEdit(self.treeWidget)
@@ -267,29 +260,21 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
 
         return item_value
 
-    def groupIndexChanged(self, index):
+    def __groupIndexChanged(self):
         """Détecte le groupe choisi et lance l'affiche des thèmes adequats.
         """
         self.treeWidget.clear()
-
-        infosgeogroup = self.infosgeogroups[index]
-        nameGroup = infosgeogroup.group.getName()
-        self.idSelectedGeogroup = infosgeogroup.group.getId()
-
-        # Affichage du commentaire par défaut dans la fenêtre message
-        georemComment = infosgeogroup.reportDefaultComment
-        if georemComment != "":
-            self.textEditMessage.setText(georemComment)
-        if nameGroup == self.context.getUserCommunity().getName():
-            themes = self.context.profil.themes
-            filteredThemes = self.context.profil.filteredThemes
-        else:
-            themes = infosgeogroup.themes
-            filteredThemes = infosgeogroup.filteredThemes
-
-        self.preferredGroup = nameGroup
-
-        self.displayThemes(filteredThemes, themes)
+        print('__groupIndexChanged')
+        userCommunityNameChoice = self.comboBoxGroupe.currentText()
+        print(userCommunityNameChoice)
+        if userCommunityNameChoice is not None:
+            community = self.__context.getCommunity()
+            for comm in community.getCommunities():
+                print(comm.getName())
+                if comm.getName() == userCommunityNameChoice:
+                    print(comm.getThemes())
+                    self.__displayThemesForCommunity(comm)
+                    break
 
     def isSingleRemark(self):
         """Indique si l'option de création d'une remarque unique a été choisie.
@@ -485,12 +470,12 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
     def onSend(self):
         """Envoi de la requête de création au service ripart
         """
-        if self.textEditMessage.toPlainText().strip() == "":
-            self.lblMessageError.setStyleSheet("QLabel { background-color : #F5A802; font-weight:bold}")
-            self.lblMessageError.setText(u"Le message est obligatoire")
-            self.context.iface.messageBar().pushMessage("Attention", u'Le message est obligatoire', level=1,
-                                                        duration=3)
-            return
+        # if self.textEditMessage.toPlainText().strip() == "":
+        #     self.lblMessageError.setStyleSheet("QLabel { background-color : #F5A802; font-weight:bold}")
+        #     self.lblMessageError.setText(u"Le message est obligatoire")
+        #     self.__context.iface.messageBar().pushMessage("Attention", u'Le message est obligatoire', level=1,
+        #                                                 duration=3)
+        #     return
 
         self.bSend = True
         self.close()
@@ -512,7 +497,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
             if filename != "":
                 extension = os.path.splitext(filename)[1]
                 sizeFilename = os.path.getsize(filename)
-                if extension[1:] not in self.context.formats:
+                if extension[1:] not in self.__context.formats:
                     message = u"Les fichiers de type '" + extension + u"' ne sont pas autorisés comme pièce-jointe " \
                                                                       u"pour l'Espace collaboratif. "
                     PluginHelper.showMessageBox(message)

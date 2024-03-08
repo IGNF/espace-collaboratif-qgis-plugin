@@ -41,7 +41,7 @@ class Community(object):
             if self.__keyExist('themes', data):
                 for d in data['themes']:
                     theme = Theme()
-                    theme.getTheme(d)
+                    theme.setTheme(d)
                     self.__themes.append(theme)
 
     def getName(self) -> str:
@@ -82,7 +82,6 @@ class Community(object):
             return
         data = response.json()
         self.getProfil(data)
-
 
     # Récupère les couches associées à une communauté
     def extractLayers(self, communityId, page, limit) -> []:
