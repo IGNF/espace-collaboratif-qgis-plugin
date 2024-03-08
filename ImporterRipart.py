@@ -220,6 +220,9 @@ class ImporterRipart(object):
         mapCrs = self.context.mapCan.mapSettings().destinationCrs().authid()
         dest_crs = QgsCoordinateReferenceSystem(mapCrs)
 
+        if not dest_crs.isValid():
+            return
+
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         new_box = transform.transformBoundingBox(box)
 
