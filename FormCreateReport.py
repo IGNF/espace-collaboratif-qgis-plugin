@@ -41,9 +41,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
     # dictionnaire des thèmes sélectionnés (key: nom du theme, value: l'objet Theme)
     selectedThemesList = {}
 
-    # liste des thèmes du profil (objets Theme)
-    profilThemesList = []
-
     # liste des thèmes préférés
     preferredThemes = []
     preferredGroup = ""
@@ -115,6 +112,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # Affichage des thèmes du groupe de l'utilisateur
         self.__displayThemes(self.__context.getCommunity())
 
+        # liste des thèmes du profil (objets Theme)
+        __themesList = []
+
         # Modification des thèmes proposés en fonction du groupe sélectionné
         self.comboBoxGroupe.currentIndexChanged.connect(self.__groupIndexChanged)
         # self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
@@ -154,10 +154,10 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 tlItem.setCheckState(0, Qt.CheckState.Unchecked)
 
     def __displayThemesForCommunity(self, community):
-        themes = community.getThemes()
-        if len(themes) == 0:
+        self.__themesList = community.getThemes()
+        if len(self.__themesList) == 0:
             return
-        for theme in themes:
+        for theme in self.__themesList:
             # Ajout du thème dans le treeview
             thItem = QTreeWidgetItem(self.treeWidget)
             thItem.setText(0, theme.getName())
@@ -266,6 +266,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.clear()
         print('__groupIndexChanged')
         userCommunityNameChoice = self.comboBoxGroupe.currentText()
+        self.__activeCommunity = userCommunityNameChoice
         print(userCommunityNameChoice)
         if userCommunityNameChoice is not None:
             community = self.__context.getCommunity()
@@ -276,7 +277,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     self.__displayThemesForCommunity(comm)
                     break
 
-    def isSingleRemark(self):
+    def isSingleReport(self):
         """Indique si l'option de création d'une remarque unique a été choisie.
         """
         return self.radioBtnUnique.isChecked()
@@ -286,12 +287,19 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """
         return self.textEditMessage.text()
 
-    def getSelectedThemes(self):
+    def getUserSelectedThemeWithAttributes(self):
         """Retourne la liste des thèmes (objets de type THEME) sélectionnés
         dans le formulaire de création du signalement
         """
-        selectedThemes = []
-
+        # Le signalement ne sera relié à aucun groupe
+        communityId = -1
+        for nameid in self.__context.getListNameOfCommunities():
+            if self.__activeCommunity == nameid['name']:
+                communityId = nameid['id']
+                break
+        data = {
+            "community": communityId
+        }
         root = self.treeWidget.invisibleRootItem()
         for i in range(root.childCount()):
             thItem = root.child(i)
@@ -299,42 +307,42 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if thItem.checkState(0) != Qt.CheckState.Checked:
                 continue
 
-            theme = Theme()
-            theme.group.setName(thItem.text(0))
-            theme.group.setId(thItem.text(1))
+            # Le nom du thème sélectionné
+            data["theme"] = thItem.text(0)
+
+            # Les attributs du theme remplis par l'utilisateur
+            selectedAttributes = {}
             errorMessage = ''
             for j in range(thItem.childCount()):
                 att = thItem.child(j)
                 label = self.treeWidget.itemWidget(att, 0).text()
-                key = self.get_key_from_attribute_value(label, thItem.text(0))
+                key = self.__getKeyFromAttributeValue(label, thItem.text(0))
                 widg = self.treeWidget.itemWidget(att, 1)
-                val = self.get_value_from_widget(widg, label, theme.group.getName())
-                errorMessage += self.correctValue(theme.group.getName(), theme.group.getId(), key, val)
-                attribut = ThemeAttributes(theme.group.getName(), ClientHelper.notNoneValue(key),
-                                         ClientHelper.notNoneValue(val))
-                theme.attributes.append(attribut)
-            if errorMessage != '':
-                raise Exception(errorMessage)
-            selectedThemes.append(theme)
-        return selectedThemes
+                val = self.__getValueFromWidget(widg, label, thItem.text(0))
+                errorMessage += self.__correctValue(thItem.text(0), key, val)
+                selectedAttributes[key] = val
+                if errorMessage != '':
+                    raise Exception(errorMessage)
+            data["attributes"] = selectedAttributes
+        return data
 
-    def correctValue(self, groupName, groupID, attributeName, value):
+    def __correctValue(self, groupName, attributeName, value):
         errorMessage = ''
-        for theme in self.profilThemesList:
-            if theme.group.getName() != groupName and theme.group.getId() != groupID:
+        for theme in self.__themesList:
+            if theme.getName() != groupName:
                 continue
-            for attribute in theme.attributes:
-                if attribute.nom != attributeName:
+            for attribute in theme.getAttributes():
+                if attribute.getName() != attributeName:
                     continue
-                if attribute.type == 'integer' or attribute.type == 'double':
+                if attribute.getType() == 'integer' or attribute.getType() == 'double':
                     if value != '' and not value.isdigit():
                         errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
-                if attribute.obligatoire is True:
+                if attribute.getMandatory() is True:
                     if value == '' or value is None:
                         errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
         return errorMessage
 
-    def get_value_from_widget(self, widg, widg_label, theme_name):
+    def __getValueFromWidget(self, widg, widg_label, theme_name):
         """
         Récupération au format adapté de la valeur saisie dans le formulaire pour chaque widget
         correspondant à un attribut du thème de signalement sélectionné.
@@ -360,69 +368,70 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         elif type(widg) == QtWidgets.QComboBox:
             form_value = widg.currentText()
-            val = self.get_key_from_list_of_values(form_value, widg_label, theme_name)
+            val = self.__getKeyFromListOfValues(form_value, widg_label, theme_name)
 
         else:
             val = widg.currentText()
 
         return val
 
-    def get_key_from_list_of_values(self, form_value, widg_label, theme_name):
+    def __getKeyFromListOfValues(self, form_value, widg_label, theme_name):
         """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
          par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
          récupérée dans le formulaire est directement utilisée.
         """
 
         # Récupération de l'objet Thème correspondant au nom du thème coché dans le formulaire
-        th = self._getThemeObject(theme_name)
+        th = self.__getThemeObject(theme_name)
         if th is None:
             return form_value
 
         # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
         found_att = False
-        for att in th.attributes:
+        for att in th.getAttributes():
             if found_att:
                 break
 
-            if att.tagDisplay != widg_label:
+            if att.getTitle() != widg_label:
                 continue
 
             # Une fois que l'attribut est trouvé, on remplace si besoin la valeur récupérée sur le formulaire par
             # la clé qui lui correspond dans la définition du thème
             found_att = True
-            for c, v in att.valeurs.items():
-                if v != "" and v == form_value:
-                    val = c
-                    return val
+            if type(att.getValues()) is dict:
+                for c, v in att.getValues():
+                    if v != "" and v == form_value:
+                        val = c
+                        return val
 
         return form_value
 
-    def get_key_from_attribute_value(self, widg_label, theme_name):
+    def __getKeyFromAttributeValue(self, widg_label, theme_name):
         """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
          par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
          récupérée dans le formulaire est directement utilisée.
         """
 
         # Récupération de l'objet Thème correspondant au nom du thème coché dans le formulaire
-        th = self._getThemeObject(theme_name)
+        th = self.__getThemeObject(theme_name)
         if th is None:
             return widg_label
 
         # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
         found_att = False
-        for att in th.attributes:
+        for att in th.getAttributes():
             if found_att:
                 break
 
-            if att.tagDisplay != widg_label:
+            if att.getName() != widg_label:
                 continue
 
-            key = att.nom
+            key = att.getName()
             return key
 
         return widg_label
 
-    def _getThemeObject(self, themeName):
+    def __getThemeObject(self, themeName):
         """Retourne l'objet THEME à partir de son nom
         
         :param themeName: le nom du thème
@@ -431,8 +440,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         :return l'objet Theme
         :rtype: Theme
         """
-        for th in self.profilThemesList:
-            if th.group.getName() == themeName:
+        for th in self.__themesList:
+            if th.getName() == themeName:
                 return th
         return None
 
@@ -476,7 +485,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         #     self.__context.iface.messageBar().pushMessage("Attention", u'Le message est obligatoire', level=1,
         #                                                 duration=3)
         #     return
-
         self.bSend = True
         self.close()
 

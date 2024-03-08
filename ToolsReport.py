@@ -139,7 +139,7 @@ class ToolsReport(object):
         valid = self.__context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.__context.countRemarqueByStatut(
             cst.STATUT.valid0.__str__())
 
-        resultMessage = "Extraction réussie avec succès de " + str(submit+pending+valid+reject) +\
+        resultMessage = "Extraction réussie avec succès de " + str(submit + pending + valid + reject) + \
                         " signalement(s) depuis le serveur \n" + \
                         "avec la répartition suivante : \n\n" + \
                         "- " + str(submit) + " signalement(s) nouveau(x).\n" + \
@@ -248,32 +248,31 @@ class ToolsReport(object):
 
     def __createAndSendNewReport(self, formCreate, sketchList):
         datas = {
-            'community': self.__context.getUserCommunity(),
+            'community': self.__context.getUserCommunity().getId(),  # obligatoire
             'comment': formCreate.textEditMessage.toPlainText()
         }
 
-        # Récupération des thèmes choisis par l'utilisateur
-        selectedThemes = formCreate.getSelectedThemes()
-        PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
+        # TODO voir Noémie pour les thèmes préférés
+        # PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
         PluginHelper.save_preferredGroup(self.__context.projectDir, formCreate.preferredGroup)
-        datas['attributes'] = self.getAttributesSelectedByUser(selectedThemes)
 
         # Liste contenant les identifiants des nouveaux signalements créés
         listNewReportIds = []
 
-        if formCreate.isSingleRemark():
-            if len(sketchList == 0):
+        if formCreate.isSingleReport():
+            if len(sketchList) == 0:
                 clipBoard = QApplication.clipboard()
-                geom = clipBoard.text()
-                datas['geometry'] = geom
+                datas['geometry'] = clipBoard.text()  # obligatoire
+                # Récupération du thème choisi et des attributs remplis par l'utilisateur
+                datas['attributes'] = formCreate.getUserSelectedThemeWithAttributes()
             else:
                 listNewReportIds.clear()
+                datas['sketch'] = self.__createReportWithSketch(sketchList, True)
         else:
             listNewReportIds.clear()
-
+            datas['sketch'] = self.__createReportWithSketch(sketchList, False)
         tmpReport = Report(self.__context.urlHostEspaceCo, datas)
 
-    def getAttributesSelectedByUser(self, selectedThemes):
-        attributes = ''
-
-        return json.dumps(attributes)
+    def __createReportWithSketch(self, sketchList, bOneReport):
+        sketch = {}
+        return sketch
