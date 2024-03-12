@@ -441,6 +441,7 @@ class Contexte(object):
                 if layer.type == cst.WMTS:
                     importWmts = importWMTS(self, layer)
                     titleLayer_uri = importWmts.getWtmsUrlParams(layer.layer_id)
+                    print (titleLayer_uri)
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                     if not rlayer.isValid():
                         print("Layer {} failed to load !".format(rlayer.name()))

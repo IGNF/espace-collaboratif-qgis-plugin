@@ -95,7 +95,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             if layer.type != cst.WFS:
                 continue
 
-            if layer.url.find(cst.COLLABORATIF) == -1:
+            if layer.url.find(self.context.urlHostRipart) == -1:
                 continue
 
             rowPosition = self.tableWidgetMonGuichet.rowCount()
@@ -129,7 +129,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             if layer.type != cst.WMTS and layer.type != cst.WMS:
                 continue
 
-            if layer.url.find(cst.WXSIGN) == -1:
+            if layer.url.find(cst.WXSIGN) == -1 and layer.url.find(cst.GEOPF) == -1:
                 continue
 
             rowPosition = self.tableWidgetFondsGeoportail.rowCount()

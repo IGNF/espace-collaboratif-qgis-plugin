@@ -172,14 +172,30 @@ class importWMTS:
         if self.getLayer(idGuichetLayerWmts) is None:
             raise Exception("Import_WMTS.py::getWtmsUrlParams : impossible de récupérer la couche Geoportail")
         self.getTileMatrixSet()
-        wmts_url_params = {
-            "crs": self.crs,
-            "dpiMode": "7",
-            "format": self.getFormat(),
-            "layers": self.layer_id,
-            "styles": self.getStyles(),
-            "tileMatrixSet": self.tile_matrix_set,
-            "url": "{}{}".format(self.getTileUrl(), "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
-        }
+
+        # Patch pour les flux privés GPF
+        url_tmp = self.getTileUrl()
+
+        if url_tmp.find("/private/") == -1:
+            wmts_url_params = {
+                "crs": self.crs,
+                "dpiMode": "7",
+                "format": self.getFormat(),
+                "layers": self.layer_id,
+                "styles": self.getStyles(),
+                "tileMatrixSet": self.tile_matrix_set,
+                "url": "{}?{}".format(self.getTileUrl(), "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
+            }
+        else:
+            wmts_url_params = {
+                "IgnoreGetMapUrl": 1,
+                "crs": self.crs,
+                "dpiMode": "7",
+                "format": self.getFormat(),
+                "layers": self.layer_id,
+                "styles": self.getStyles(),
+                "tileMatrixSet": self.tile_matrix_set,
+                "url": "{}?{}{}".format(self.getTileUrl(), "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities%26apikey%3D", cst.APIKEY)
+            }
         wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
         return self.title_layer, wmts_url_final
