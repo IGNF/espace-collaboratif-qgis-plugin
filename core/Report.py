@@ -30,7 +30,7 @@ class Report(object):
         if self.__keyExist('closing_date', data):
             self.__dateValidation = data['closing_date']
         if self.__keyExist('attributes', data):
-            self.__themes = data['attributes']
+            self.__theme = data['attributes']
         if self.__keyExist('status', data):
             self.__statut = data['status']
         if self.__keyExist('comment', data):
@@ -100,8 +100,8 @@ class Report(object):
     def getSketch(self) -> str:
         return self.__sketch
 
-    def getSketchXml(self) -> str:
-        return self.__sketch_xml
+    # def getSketchXml(self) -> str:
+    #     return self.__sketch_xml
 
     # TODO dans SQLIte, on stoke du json ou une chaine reformatée ?
     #  j'ai pris l'option chaine reformatée
@@ -117,7 +117,7 @@ class Report(object):
             'Date_MAJ': self.getStrDateMaj(),
             'Date_validation': self.getStrDateValidation(),
             # TODO faut-il le name ou le title de l'attribut dans SQLite (pour l'instant j'ai pris le name)
-            'Thèmes': self.getStrThemes(),
+            'Thèmes': self.getStrTheme(),
             'Statut': self.__statut,
             'Message': self.__message,
             'Réponses': self.getStrReplies().replace('\n', ' '),
@@ -269,7 +269,7 @@ class Report(object):
             attachments.append(attachment['download_uri'])
         return attachments
 
-    def getThemes(self) -> [{}]:
+    def getTheme(self) -> [{}]:
         # valeur de retour
         # attributes": [{
         # "community": 80,
@@ -283,36 +283,11 @@ class Report(object):
         #   "Nom Correspondant": "azert"
         #   }
         # }]
-        return self.__themes
+        return self.__theme
 
-    def getStrThemesForDisplay(self, activeUserCommunity) -> str:
+    def getStrTheme(self) -> str:
         strThemes = ""
-        for t in self.__themes:
-            # le nom du thème
-            if 'theme' in t:
-                strThemes += t['theme']
-            else:
-                strThemes += 'Nom de thème inconnu'
-            # les attributs du thème
-            if 'attributes' not in t:
-                continue
-            if len(t['attributes']) != 0:
-                z = 0
-                for key, value in t['attributes'].items():
-                    if z == 0:
-                        strThemes += "("
-                        z += 1
-                    strThemes += "{}={},".format(activeUserCommunity.switchNameToTitleFromThemeAttributes(key),
-                                                 self.__notNoneValue(value))
-                if z > 0:
-                    strThemes = strThemes[:-1]
-                    strThemes += ")"
-            strThemes += "|"
-        return strThemes[:-1]
-
-    def getStrThemes(self) -> str:
-        strThemes = ""
-        for t in self.__themes:
+        for t in self.__theme:
             # le nom du thème
             if 'theme' in t:
                 strThemes += t['theme']

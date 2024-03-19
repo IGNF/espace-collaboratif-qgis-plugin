@@ -92,15 +92,14 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
 
     def __displayThemes(self) -> str:
         displayThemes = ''
-        themes = self.__report.getStrThemesForDisplay(self.__activeUserCommunity)
-        for theme in themes:
-            firstSeparator = {"|", ")"}
-            for ch in firstSeparator:
-                theme = theme.replace(ch, "\n")
-            secondSeparator = {"(", ","}
-            for ch in secondSeparator:
-                theme = theme.replace(ch, "\n    ")
-            displayThemes += theme
+        theme = self.__report.getStrTheme()
+        firstSeparator = {"|", ")"}
+        for ch in firstSeparator:
+            theme = theme.replace(ch, "\n")
+        secondSeparator = {"(", ","}
+        for ch in secondSeparator:
+            theme = theme.replace(ch, "\n    ")
+        displayThemes += theme
         return displayThemes.replace("=", " : ")
 
     def __displayFilesAttached(self) -> None:

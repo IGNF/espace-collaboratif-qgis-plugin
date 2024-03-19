@@ -1,26 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 27 oct. 2015
-Updated on 27 nov. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: AChang-Wailing, EPeyrouse, NGremeaux
-"""
-
 import os
-
 from PyQt5 import QtGui, QtWidgets, uic
-from .core.RipartLoggerCl import RipartLogger
-
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
-
-from .core.ClientHelper import ClientHelper
+from .core.RipartLoggerCl import RipartLogger
 from .core import Constantes as cst
 from .core.Theme import Theme
 from .PluginHelper import PluginHelper
-from .core.ThemeAttributes import ThemeAttributes
+
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreateReport_base.ui'))
 
@@ -154,7 +140,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 tlItem.setCheckState(0, Qt.CheckState.Unchecked)
 
     def __displayThemesForCommunity(self, community):
-        self.__themesList = community.getThemes()
+        self.__themesList = community.getTheme()
         if len(self.__themesList) == 0:
             return
         for theme in self.__themesList:
@@ -273,7 +259,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             for comm in community.getCommunities():
                 print(comm.getName())
                 if comm.getName() == userCommunityNameChoice:
-                    print(comm.getThemes())
+                    print(comm.getTheme())
                     self.__displayThemesForCommunity(comm)
                     break
 
@@ -291,15 +277,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """Retourne la liste des thèmes (objets de type THEME) sélectionnés
         dans le formulaire de création du signalement
         """
-        # Le signalement ne sera relié à aucun groupe
-        communityId = -1
-        for nameid in self.__context.getListNameOfCommunities():
-            if self.__activeCommunity == nameid['name']:
-                communityId = nameid['id']
-                break
-        data = {
-            "community": communityId
-        }
+        data = {}
         root = self.treeWidget.invisibleRootItem()
         for i in range(root.childCount()):
             thItem = root.child(i)
@@ -307,8 +285,17 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if thItem.checkState(0) != Qt.CheckState.Checked:
                 continue
 
-            # Le nom du thème sélectionné
-            data["theme"] = thItem.text(0)
+            # Le nom du thème
+            themeName = thItem.text(0)
+            data['theme'] = themeName
+            bFind = False
+            for theme in self.__themesList:
+                if theme.getName() == themeName:
+                    data['community'] = theme.getCommunityId()
+                    bFind = True
+                    break
+            if not bFind:
+                data['community'] = -1
 
             # Les attributs du theme remplis par l'utilisateur
             selectedAttributes = {}
@@ -323,7 +310,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 selectedAttributes[key] = val
                 if errorMessage != '':
                     raise Exception(errorMessage)
-            data["attributes"] = selectedAttributes
+            data['attributes'] = selectedAttributes
         return data
 
     def __correctValue(self, groupName, attributeName, value):
@@ -462,7 +449,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         if self.checkBoxAttDoc.isChecked():
             return self.selFileName
         else:
-            return ""
+            return None
 
     def optionWithAttDoc(self):
         """
@@ -476,15 +463,19 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """
         return self.checkBoxJoinCroquis.isChecked()
 
+    # Envoi de la requête de création à l'espace collaboratif
     def onSend(self):
-        """Envoi de la requête de création au service ripart
-        """
-        # if self.textEditMessage.toPlainText().strip() == "":
-        #     self.lblMessageError.setStyleSheet("QLabel { background-color : #F5A802; font-weight:bold}")
-        #     self.lblMessageError.setText(u"Le message est obligatoire")
-        #     self.__context.iface.messageBar().pushMessage("Attention", u'Le message est obligatoire', level=1,
-        #                                                 duration=3)
-        #     return
+        # Il faut au moins un theme coché
+        nb = 0
+        root = self.treeWidget.invisibleRootItem()
+        for i in range(root.childCount()):
+            thItem = root.child(i)
+            if thItem.checkState(0) == Qt.CheckState.Checked:
+                nb = 1
+        if nb == 0:
+            self.__context.iface.messageBar().pushMessage("Attention", u'Il manque la sélection du thème', level=1, duration=3)
+            self.bSend = False
+
         self.bSend = True
         self.close()
 

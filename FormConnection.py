@@ -109,7 +109,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 if formPreferredGroup != idNameCommunity[1]:
                     # TODO voir avec Noémie, il s'agit bien des themes utilisateur (ceux dans community)
                     #  et non activeThemes ou shared_themes ?
-                    PluginHelper.save_preferredThemes(self.__projectDir, self.__context.getUserCommunity().getThemes())
+                    PluginHelper.save_preferredThemes(self.__projectDir, self.__context.getUserCommunity().getTheme())
                 PluginHelper.save_preferredGroup(self.__projectDir, idNameCommunity[1])
             # Bouton Annuler
             elif dlgSelectedCommunities.getCancel():

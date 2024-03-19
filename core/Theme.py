@@ -4,7 +4,8 @@ from .ThemeAttributes import ThemeAttributes
 # Classe représentant un thème
 class Theme(object):
 
-    def __init__(self) -> None:
+    def __init__(self, communityId) -> None:
+        self.__communityId = communityId
         self.__name = ''
         self.__global = False
         # TODO -> Noémie ce help est-il utile ?
@@ -28,6 +29,9 @@ class Theme(object):
                 self.__featureType = data['featureType']
             if self.__keyExist('attributes', data):
                 self.__setDataAttributes(data['attributes'])
+
+    def getCommunityId(self) -> int:
+        return self.__communityId
 
     def getName(self) -> str:
         return self.__name

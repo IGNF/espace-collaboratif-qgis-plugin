@@ -17,14 +17,14 @@ class MapToolsReport(QgsMapTool):
         self.__canvas.keyPressed.connect(self.__keyPressed)
         self.__vertex = None
         self.__snapcolor = QgsSettings().value("/qgis/digitizing/snap_color", QColor(Qt.GlobalColor.red))
-        self.__geometry = ''
+        self.__geometrySingleReport = ''
 
     def canvasReleaseEvent(self, event) -> None:
         pt = self.snappoint(event.originalPixelPoint())
         if pt is not None:
             clipboard = QApplication.clipboard()
-            self.__geometry = 'POINT({0} {1})'.format(pt.x(), pt.y())
-            clipboard.setText('POINT({0} {1})'.format(pt.x(), pt.y()))
+            self.__geometrySingleReport = 'POINT({0} {1})'.format(pt.x(), pt.y())
+            clipboard.setText(self.__geometrySingleReport)
             print(clipboard.text())
         self.__canvas.unsetMapTool(self)
 
@@ -42,14 +42,11 @@ class MapToolsReport(QgsMapTool):
 
     def __keyPressed(self, event):
         if event.key() == Qt.Key.Key_A:
-            # clipBoard = QApplication.clipboard()
-            # pt = clipBoard.text()
-            # print('pt : {}'.format(pt))
             # Création et envoi du signalement sur le serveur
             toolsReport = ToolsReport(self.__context)
             # La liste de croquis est vide puisque c'est un pointé sur la carte qui sert à créer le signalement
             sketchList = []
-            toolsReport.createReport(sketchList)
+            toolsReport.createReport(sketchList, self.__geometrySingleReport)
             self.endCreateReport()
         else:
             self.endCreateReport()
@@ -57,6 +54,7 @@ class MapToolsReport(QgsMapTool):
     def endCreateReport(self):
         self.deactivate()
         self.removeVertexMarker()
+        self.__canvas.refresh()
         return
 
     def removeVertexMarker(self):

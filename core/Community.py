@@ -13,7 +13,7 @@ class Community(object):
         self.__userId = -1
         self.__emprises = []
         # self.__role = ''
-        self.__themes = []
+        self.__theme = []
         self.__active = False
         self.__logo = ''
         # self.__description = ''
@@ -32,17 +32,20 @@ class Community(object):
         if self.__keyExist('emprises', data):
             self.__emprises = data['emprises']
         if self.__keyExist('profile', data):
-            self.__getDataThemes(data['profile'])
+            self.__getDataTheme(data['profile'])
 
-    def __getDataThemes(self, datas) -> None:
+    def __getDataTheme(self, datas) -> None:
         if len(datas) == 0:
             return
         for data in datas:
+            communityId = -1
+            if self.__keyExist('community_id', data):
+                communityId = data['community_id']
             if self.__keyExist('themes', data):
                 for d in data['themes']:
-                    theme = Theme()
+                    theme = Theme(communityId)
                     theme.setTheme(d)
-                    self.__themes.append(theme)
+                    self.__theme.append(theme)
 
     def getName(self) -> str:
         return self.__name
@@ -56,8 +59,8 @@ class Community(object):
     def getEmprises(self) -> []:
         return self.__emprises
 
-    def getThemes(self) -> []:
-        return self.__themes
+    def getTheme(self) -> []:
+        return self.__theme
 
     def getActive(self) -> bool:
         return self.__active
@@ -196,6 +199,6 @@ class Community(object):
 
     def switchNameToTitleFromThemeAttributes(self, nameAttribute) -> str:
         title = ''
-        for theme in self.__themes:
+        for theme in self.__theme:
             title = theme.getSwitchAttributeNameToTitle(nameAttribute)
         return title

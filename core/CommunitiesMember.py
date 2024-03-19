@@ -1,7 +1,5 @@
 from .Query import Query
 from .Community import Community
-from .SharedTheme import SharedTheme
-from .ActiveTheme import ActiveTheme
 
 
 class CommunitiesMember(object):
@@ -63,14 +61,8 @@ class CommunitiesMember(object):
         if self.__keyExist('email', data):
             self.__email = data['email']
 
-        if self.__keyExist('active_themes', data):
-            self.getDatasActiveThemes(data['active_themes'])
-
         if self.__keyExist('communities_member', data):
             self.getDatasCommunities(data['communities_member'])
-
-        if self.__keyExist('shared_themes', data):
-            self.getDatasSharedThemes(data['shared_themes'])
 
         return self.__listNameOfCommunities
 
@@ -78,14 +70,6 @@ class CommunitiesMember(object):
         if key in data:
             return True
         return False
-
-    def getDatasActiveThemes(self, datas) -> None:
-        if len(datas) == 0:
-            return
-        for data in datas:
-            activeTheme = ActiveTheme()
-            activeTheme.getActiveTheme(data)
-            self.__activeThemes.append(activeTheme)
 
     def getDatasCommunities(self, datas) -> None:
         if len(datas) == 0:
@@ -96,14 +80,6 @@ class CommunitiesMember(object):
             community.getDatas(data)
             self.__communities.append(community)
             self.__listNameOfCommunities.append({'name': community.getName(), 'id': community.getId()})
-
-    def getDatasSharedThemes(self, datas) -> None:
-        if len(datas) == 0:
-            return
-        for data in datas:
-            sharedTheme = SharedTheme()
-            sharedTheme.getSharedTheme(data)
-            self.__sharedThemes.append(sharedTheme)
 
     def getId(self):
         return self.__id

@@ -9,8 +9,8 @@ MAX_TAILLE_UPLOAD_FILE = 16000000
 # nombre par défaut de remarques par page
 # NB_DEFAULT_REMARQUES_PAGINATION = 100
 
-# Définition du protocole signant au près du service Ripart l'origine de ce programme.
-RIPART_CLIENT_PROTOCOL = "_RIPART_QGIS_99712"
+# Définition du protocole signant au près du service Collaboratif l'origine de ce programme.
+CLIENT_INPUT_DEVICE = "SIG-QGIS"
 
 # Définition donnant la version de ce programme.
 RIPART_CLIENT_VERSION = ""

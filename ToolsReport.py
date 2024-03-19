@@ -1,7 +1,8 @@
 import json
 import os.path
+import datetime
 
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsEditorWidgetSetup
 
@@ -48,17 +49,31 @@ class ToolsReport(object):
                 vlayer.loadNamedStyle(style)
         self.__context.mapCan.refresh()
 
-    def __insertReportsSketchsIntoSQLite(self, datas) -> int:
+    def __calculateRows(self, datas):
+        report = Report(self.__context.urlHostEspaceCo, datas)
+        res = report.InsertSketchIntoSQLite()
+        columns = report.getColumnsForSQlite()
+        return columns, report.getId()
+
+    def __insertReportsSketchsIntoSQLite(self, datas) -> []:
+        global rows
         parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
                       'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
         attributesRows = []
-        for data in datas:
-            report = Report(self.__context.urlHostEspaceCo, data)
-            res = report.InsertSketchIntoSQLite()
-            columns = report.getColumnsForSQlite()
-            attributesRows.append(columns)
+        idsReports = []
+        if type(datas) is list:
+            for data in datas:
+                rows = self.__calculateRows(data)
+                attributesRows.append(rows[0])
+                idsReports.append(rows[1])
+        if type(datas) is dict:
+            rows = self.__calculateRows(datas)
+            attributesRows.append(rows[0])
+            idsReports.append(rows[1])
+        # Insertion des signalements dans la base SQLite
         sqliteManager = SQLiteManager()
-        return sqliteManager.insertRowsInTable(parameters, attributesRows)
+        sqliteManager.insertRowsInTable(parameters, attributesRows)
+        return idsReports
 
     def getReport(self, id):
         query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
@@ -113,7 +128,7 @@ class ToolsReport(object):
         # Insertion des signalements dans la base SQLite
         if len(data) == 0:
             return
-        nbReports = self.__insertReportsSketchsIntoSQLite(data)
+        self.__insertReportsSketchsIntoSQLite(data)
 
         # Rafraichir la carte
         self.__context.refresh_layers()
@@ -122,19 +137,15 @@ class ToolsReport(object):
         self.progress.close()
 
         # Afficher les résultats
-        self.__showImportResult(nbReports)
+        self.__showImportResult()
 
-    def __showImportResult(self, nbReports) -> None:
-        """Résultat de l'import
-
-        :param cnt: le nombre de remarques importées
-        :type cnt: int
-        """
+    def __showImportResult(self) -> None:
+        # Résultat de l'import
         submit = self.__context.countRemarqueByStatut(cst.STATUT.submit.__str__())
-        pending = self.__context.countRemarqueByStatut(cst.STATUT.pending.__str__()) + \
-                  self.__context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) + \
-                  self.__context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) + \
-                  self.__context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
+        pending = self.__context.countRemarqueByStatut(cst.STATUT.pending.__str__()) \
+                  + self.__context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) \
+                  + self.__context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) \
+                  + self.__context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
         reject = self.__context.countRemarqueByStatut(cst.STATUT.reject.__str__())
         valid = self.__context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.__context.countRemarqueByStatut(
             cst.STATUT.valid0.__str__())
@@ -183,9 +194,9 @@ class ToolsReport(object):
 
     # NOTE : non utilisée mais peut servir ;-)
     def setMapExtent(self, box) -> None:
-        """set de l'étendue de la carte
+        """ Set de l'étendue de la carte
 
-        :param box: bounding box
+        :param box : bounding box
         """
         source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
 
@@ -195,7 +206,7 @@ class ToolsReport(object):
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         new_box = transform.transformBoundingBox(box)
 
-        # distance pour le buffer: 10% de la distance minimale (hauteur ou largeur)
+        # distance pour le buffer : 10% de la distance minimale (hauteur ou largeur)
         dist = min(new_box.width(), new_box.height()) * 0.1
         # zoom sur la couche Signalement
         self.__context.mapCan.setExtent(new_box.buffered(dist))
@@ -235,18 +246,19 @@ class ToolsReport(object):
             return None
         else:
             message = "code : {} raison : {}".format(response.status_code, response.reason)
-            raise Exception("ToolsReport.addResponse -> ".format(message))
+            self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
+            return
 
-    def createReport(self, sketchList):
+    def createReport(self, sketchList, strGeometryReport):
         # Ouverture du formulaire de création du signalement
         nbSketch = len(sketchList)
         formCreate = FormCreateReport(self.__context, nbSketch)
         formCreate.exec_()
         # création du ou des signalements
         if formCreate.bSend:
-            self.__createAndSendNewReport(formCreate, sketchList)
+            self.__createAndSendNewReport(formCreate, sketchList, strGeometryReport)
 
-    def __createAndSendNewReport(self, formCreate, sketchList):
+    def __createAndSendNewReport(self, formCreate, sketchList, strGeometryReport):
         datas = {
             'community': self.__context.getUserCommunity().getId(),  # obligatoire
             'comment': formCreate.textEditMessage.toPlainText()
@@ -256,23 +268,73 @@ class ToolsReport(object):
         # PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
         PluginHelper.save_preferredGroup(self.__context.projectDir, formCreate.preferredGroup)
 
-        # Liste contenant les identifiants des nouveaux signalements créés
-        listNewReportIds = []
+        # Récupération des fichiers attachés au signalement
+        # TODO Noémie : peut-on avoir plusieurs fichiers attachés ?
+        fileName = formCreate.getAttachedDoc()
+        if fileName is not None:
+            datas['attachments'] = {
+                'id': 0,
+                'short_fileName': '',
+                'description': '',
+                'title': '',
+                'type': '',
+                'size': 0,
+                'width': 0,
+                'height': 0,
+                'date': datetime.datetime.today().replace(microsecond=0).isoformat(),
+                'filename': fileName,
+                'geometry': ''
+            }
 
         if formCreate.isSingleReport():
             if len(sketchList) == 0:
-                clipBoard = QApplication.clipboard()
-                datas['geometry'] = clipBoard.text()  # obligatoire
+                datas['geometry'] = strGeometryReport  # obligatoire
                 # Récupération du thème choisi et des attributs remplis par l'utilisateur
-                datas['attributes'] = formCreate.getUserSelectedThemeWithAttributes()
+                attributes = formCreate.getUserSelectedThemeWithAttributes()
+                if len(attributes) == 0:
+                    message = "Impossible de créer un signalement sans thème. Veuillez en sélectionner un."
+                    QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+                    return
+                datas['attributes'] = attributes
             else:
-                listNewReportIds.clear()
                 datas['sketch'] = self.__createReportWithSketch(sketchList, True)
         else:
-            listNewReportIds.clear()
             datas['sketch'] = self.__createReportWithSketch(sketchList, False)
-        tmpReport = Report(self.__context.urlHostEspaceCo, datas)
+
+        # La saisie du signalement vient de QGIS
+        datas['input_device'] = cst.CLIENT_INPUT_DEVICE
+
+        # Envoi de la requete serveur en POST,
+        # il faut transformer les datas en json avec json.dumps
+        responseFromServer = self.__sendRequest(json.dumps(datas))
+        if responseFromServer is None:
+            return
+        contents = responseFromServer.json()
+        listNewReportIds = self.__insertReportsSketchsIntoSQLite(contents)
+        message = "Succès, création "
+        if len(listNewReportIds) == 1:
+            message += "d'un nouveau signalement : {}".format(listNewReportIds[0])
+        else:
+            listIds = ''
+            for id in listNewReportIds:
+                listIds += "{},".format(id)
+            message += "de plusieurs signalements : {}".format(listIds[:-1])
+        QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
 
     def __createReportWithSketch(self, sketchList, bOneReport):
         sketch = {}
         return sketch
+
+    def __sendRequest(self, datas):
+        # envoi de la requête
+        uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
+        response = HttpRequest.makeHttpRequest(uri, self.__context.auth, self.__context.proxy, None, datas)
+        if response.status_code == 200 or response.status_code == 201:
+            return response
+        else:
+            message = "code : {} raison : {}".format(response.status_code, response.reason)
+            self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
+        return None
+
+
+
