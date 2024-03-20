@@ -178,6 +178,7 @@ class importWMTS:
 
         if url_tmp.find("/private/") == -1:
             wmts_url_params = {
+                "IgnoreGetMapUrl": 1,
                 "crs": self.crs,
                 "dpiMode": "7",
                 "format": self.getFormat(),
