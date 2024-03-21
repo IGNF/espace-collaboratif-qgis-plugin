@@ -321,7 +321,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             for attribute in theme.getAttributes():
                 if attribute.getName() != attributeName:
                     continue
-                if attribute.getType() == 'integer' or attribute.getType() == 'double':
+                if attribute.getType() == 'int' or attribute.getType() == 'float':
                     if value != '' and not value.isdigit():
                         errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
                 if attribute.getMandatory() is True:
@@ -385,10 +385,11 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             # Une fois que l'attribut est trouvé, on remplace si besoin la valeur récupérée sur le formulaire par
             # la clé qui lui correspond dans la définition du thème
             found_att = True
-            if type(att.getValues()) is dict:
-                for c, v in att.getValues():
-                    if v != "" and v == form_value:
-                        val = c
+            values = att.getValues()
+            if type(values) is dict:
+                for c, v in values.items():
+                    if c != "" and c == form_value:
+                        val = v
                         return val
 
         return form_value
@@ -405,17 +406,11 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             return widg_label
 
         # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
-        found_att = False
         for att in th.getAttributes():
-            if found_att:
-                break
-
-            if att.getName() != widg_label:
+            if att.getTitle() != widg_label:
                 continue
-
             key = att.getName()
             return key
-
         return widg_label
 
     def __getThemeObject(self, themeName):
@@ -431,14 +426,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if th.getName() == themeName:
                 return th
         return None
-
-    def countSelectedTheme(self):
-        """Compte et retourne le nombre de thèmes sélectionnés
-        
-        :return le nombre de thèmes sélectionnés
-        :rtype: int
-        """
-        return len(self.getSelectedThemes())
 
     def getAttachedDoc(self):
         """Retourne le nom du fichier sélectionné 

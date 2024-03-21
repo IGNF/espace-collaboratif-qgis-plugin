@@ -304,7 +304,7 @@ class Contexte(object):
                                         u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion "
                                         u"...)")
             return
-
+        # TODO ajouter code Noémie sur le proxy
         self.loginWindow = FormConnectionDialog(self)
         self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostEspaceCo))
         loginXmlNode = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur")

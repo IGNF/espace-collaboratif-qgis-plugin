@@ -174,6 +174,7 @@ class importWMTS:
     # tileMatrixSet=PM&
     # url=https://wxs.ign.fr/choisirgeoportail/geoportail/wmts?
     # SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities
+    # TODO utilisation avec le proxy dans le panneau de configuration en désactivant les variables d'environnement
     def getWtmsUrlParams(self, idGuichetLayerWmts):
         if not idGuichetLayerWmts:
             return "Exception", "Import_WMTS.getWtmsUrlParams : le nom de la couche géoservices est vide"

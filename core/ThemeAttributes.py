@@ -5,8 +5,8 @@ class ThemeAttributes(object):
         self.__name = ''
         self.__title = ''
         self.__type = None
-        self.__values = []
-        self.__default = ''
+        self.__values = None
+        self.__default = None
         # self.__inputConstraint = None
         # self.__jsonSchema = None
         # self.__help = None
@@ -61,11 +61,6 @@ class ThemeAttributes(object):
 
     def getNameAndTitle(self) -> {}:
         return {self.__name: self.__title}
-
-    def setValues(self, values):
-        x = values.split('|')
-        for value in x:
-            self.__values.append(value)
 
     def switchNameToTitle(self):
         if self.__title != '':
