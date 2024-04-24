@@ -132,6 +132,9 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         # Les infos de connexion présentée à l'utilisateur
         dlgInfo = FormInfo()
         # Modification du logo en fonction du groupe
+        # TODO : si utilisateur sans groupe getUserCommunity est a None, il faut faire un test et changer le code
+        # TODO faire une fonction __setDisplayLogo()
+        # TODO sai1 sur la qualif par exemple
         if self.__context.getUserCommunity().getLogo() != "":
             image = QImage()
             image.loadFromData(requests.get(self.__context.getUserCommunity().getLogo()).content)
