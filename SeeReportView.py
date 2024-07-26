@@ -39,7 +39,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         generalInformation = "Groupe : {0}\n".format(self.__activeUserCommunity.getName())
         # TODO -> sur le guichet pour l'affichage d'un signalement sur l'auteur il y a un (ign.fr)
         # doit-on le déduire de l'adresse mail ?
-        generalInformation += "Auteur : {0}\n".format(self.__report.getStrAuthor())
+        generalInformation += "Auteur : {0}\n".format(self.__report.getAuthor()['username'])
         generalInformation += "Commune : {0}\n".format(self.__displayTown())
         generalInformation += "Posté le : {0}\n".format(self.__report.getStrDateCreation())
         generalInformation += "Statut : {0}\n".format(self.__displayStatus())
@@ -91,16 +91,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         return "{0}°{1}, {2}°{3}".format(str(lonlat[0]), dirLon, str(lonlat[1]), dirLat)
 
     def __displayThemes(self) -> str:
-        displayThemes = ''
-        theme = self.__report.getStrTheme()
-        firstSeparator = {"|", ")"}
-        for ch in firstSeparator:
-            theme = theme.replace(ch, "\n")
-        secondSeparator = {"(", ","}
-        for ch in secondSeparator:
-            theme = theme.replace(ch, "\n    ")
-        displayThemes += theme
-        return displayThemes.replace("=", " : ")
+        return self.__report.getStrTheme()
 
     def __displayFilesAttached(self) -> None:
         allDocuments = self.__report.getListAttachments()

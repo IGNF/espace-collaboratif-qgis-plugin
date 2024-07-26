@@ -117,7 +117,7 @@ class Report(object):
             'Date_MAJ': self.getStrDateMaj(),
             'Date_validation': self.getStrDateValidation(),
             # TODO faut-il le name ou le title de l'attribut dans SQLite (pour l'instant j'ai pris le name)
-            'Thèmes': self.getStrTheme(),
+            'Thèmes': self.getStrThemeInJson(),
             'Statut': self.__statut,
             'Message': self.__message,
             'Réponses': self.getStrReplies().replace('\n', ' '),
@@ -232,7 +232,6 @@ class Report(object):
         if type(self.__author) is int:
             return str(self.__author)
         return self.__author
-        # return self.__author['username']
 
     def getAttachments(self) -> [{}]:
         # valeur de retour
@@ -285,14 +284,14 @@ class Report(object):
         # }]
         return self.__theme
 
-    def getStrTheme(self) -> str:
+    def getStrThemeInJson(self) -> str:
         strThemes = ""
         for t in self.__theme:
             # le nom du thème
             if 'theme' in t:
-                strThemes += t['theme']
+                strThemes += "{}".format(t['theme'])
             else:
-                strThemes += 'Nom de thème inconnu'
+                strThemes += "Nom de thème inconnu"
             # les attributs du thème
             if 'attributes' not in t:
                 continue
@@ -302,12 +301,28 @@ class Report(object):
                     if z == 0:
                         strThemes += "("
                         z += 1
-                    strThemes += "{}={},".format(key, self.__notNoneValue(value))
+                    strThemes += "{}:{},".format(key, self.__notNoneValue(value))
                 if z > 0:
                     strThemes = strThemes[:-1]
                     strThemes += ")"
             strThemes += "|"
         return strThemes[:-1]
+
+    def getStrTheme(self) -> str:
+        strThemes = ""
+        for t in self.__theme:
+            # le nom du thème
+            if 'theme' in t:
+                strThemes += "{}\n".format(t['theme'])
+            else:
+                strThemes += "Nom de thème inconnu\n"
+            # les attributs du thème
+            if 'attributes' not in t:
+                continue
+            if len(t['attributes']) != 0:
+                for key, value in t['attributes'].items():
+                    strThemes += " {}:{}\n".format(key, self.__notNoneValue(value))
+        return strThemes
 
     def getReplies(self) -> [{}]:
         # valeur de retour
