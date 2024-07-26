@@ -46,7 +46,7 @@ class MapToolsReport(QgsMapTool):
             toolsReport = ToolsReport(self.__context)
             # La liste de croquis est vide puisque c'est un pointé sur la carte qui sert à créer le signalement
             sketchList = []
-            toolsReport.createReport(sketchList, self.__geometrySingleReport)
+            toolsReport.createSingleReport(sketchList, self.__geometrySingleReport)
             self.endCreateReport()
         else:
             self.endCreateReport()

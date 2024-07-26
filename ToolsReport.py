@@ -249,16 +249,28 @@ class ToolsReport(object):
             self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
             return
 
-    def createReport(self, sketchList, strGeometryReport):
+    def createSingleReport(self, sketchList, strGeometryReport):
         # Ouverture du formulaire de création du signalement
         nbSketch = len(sketchList)
         formCreate = FormCreateReport(self.__context, nbSketch)
         formCreate.exec_()
         # création du ou des signalements
         if formCreate.bSend:
-            self.__createAndSendNewReport(formCreate, sketchList, strGeometryReport)
+            params = {'geom': strGeometryReport}
+            self.__createAndSendNewReport(formCreate, sketchList, params)
 
-    def __createAndSendNewReport(self, formCreate, sketchList, strGeometryReport):
+    def createReport(self, sketchList):
+        # Ouverture du formulaire de création du signalement
+        nbSketch = len(sketchList)
+        formCreate = FormCreateReport(self.__context, nbSketch)
+        formCreate.exec_()
+        # création du ou des signalements
+        if formCreate.bSend:
+            #self.__createAndSendNewReport(formCreate, sketchList, strGeometryReport)
+            self.__createAndSendNewReport(formCreate, sketchList, None)
+
+    #def __createAndSendNewReport(self, formCreate, sketchList, strGeometryReport):
+    def __createAndSendNewReport(self, formCreate, sketchList, params):
         datas = {
             'community': self.__context.getUserCommunity().getId(),  # obligatoire
             'comment': formCreate.textEditMessage.toPlainText()
@@ -288,7 +300,8 @@ class ToolsReport(object):
 
         if formCreate.isSingleReport():
             if len(sketchList) == 0:
-                datas['geometry'] = strGeometryReport  # obligatoire
+                if params is not None:
+                    datas['geometry'] = params['geom']  # obligatoire
                 # Récupération du thème choisi et des attributs remplis par l'utilisateur
                 attributes = formCreate.getUserSelectedThemeWithAttributes()
                 if len(attributes) == 0:
@@ -323,6 +336,7 @@ class ToolsReport(object):
 
     def __createReportWithSketch(self, sketchList, bOneReport):
         sketch = {}
+
         return sketch
 
     def __sendRequest(self, datas):

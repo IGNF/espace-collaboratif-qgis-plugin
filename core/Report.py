@@ -301,7 +301,7 @@ class Report(object):
                     if z == 0:
                         strThemes += "("
                         z += 1
-                    strThemes += "{}:{},".format(key, self.__notNoneValue(value))
+                    strThemes += "{}={},".format(key, self.__notNoneValue(value))
                 if z > 0:
                     strThemes = strThemes[:-1]
                     strThemes += ")"
@@ -321,7 +321,7 @@ class Report(object):
                 continue
             if len(t['attributes']) != 0:
                 for key, value in t['attributes'].items():
-                    strThemes += " {}:{}\n".format(key, self.__notNoneValue(value))
+                    strThemes += " {} : {}\n".format(key, self.__notNoneValue(value))
         return strThemes
 
     def getReplies(self) -> [{}]:

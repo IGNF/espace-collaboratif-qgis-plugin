@@ -425,6 +425,7 @@ class RipartPlugin:
                 return
             create = CreateReport(self.__context)
             create.do()
+
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__createReport', e)
 

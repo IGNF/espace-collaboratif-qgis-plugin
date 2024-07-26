@@ -26,6 +26,128 @@ class CreateReport(object):
         self.__activeLayer = self.__context.iface.activeLayer()
         self.__canvas = self.__context.iface.mapCanvas()
 
+    def _getPositionReport(self, listCroquis):
+        """
+        Recherche et retourne la position de la remarque (point).
+        La position est calculée à partir des croquis associés à la remarque
+
+        :param listCroquis: la liste des croquis
+        :type listCroquis: list de Croquis
+
+        :return la position de la remarque
+        :rtype Point
+        """
+        # crée la table temporaire dans spatialite et calcule les centroides de chaque croquis
+        res = self.__createTempCroquisTable(listCroquis)
+
+        # trouve le barycentre de l'ensemble des centroïdes
+        if type(res) == list:
+            barycentre = self.__getBarycentre()
+            return barycentre
+        else:
+            return None
+
+    def _createTempCroquisTable(self, listCroquis):
+        """
+        Crée une table temporaire dans sqlite pour les nouveaux croquis
+        La table contient la géométrie des croquis au format texte (WKT).
+        Retourne la liste des points des croquis
+
+        :param listCroquis : la liste des nouveaux croquis
+        :type listCroquis: list
+
+        :return une liste contenant tous les points des croquis
+        :rtype: list de Point
+        """
+        cur = None
+        tmpTable = "tmpTable"
+        allCroquisPoints = []
+        if len(listCroquis) == 0:
+            return None
+
+        cr = listCroquis[0]
+        try:
+            self.conn = spatialite_connect(self.dbPath)
+            print(self.dbPath)
+            cur = self.conn.cursor()
+
+            sql = u"Drop table if Exists " + tmpTable
+            print(sql)
+            cur.execute(sql)
+
+            sql = u"CREATE TABLE " + tmpTable + " (" + \
+                  u"id INTEGER NOT NULL PRIMARY KEY, textGeom TEXT, centroid TEXT)"
+            print(sql)
+            cur.execute(sql)
+
+            i = 0
+            textGeom = ""
+            textGeomEnd = ""
+            for cr in listCroquis:
+                i += 1
+                if cr.type == cr.sketchType.Ligne:
+                    textGeom = "LINESTRING("
+                    textGeomEnd = ")"
+                elif cr.type == cr.sketchType.Polygone:
+                    textGeom = "POLYGON(("
+                    textGeomEnd = "))"
+                elif cr.type == cr.sketchType.Point:
+                    textGeom = "POINT("
+                    textGeomEnd = ")"
+
+                for pt in cr.points:
+                    textGeom += str(pt.longitude) + " " + str(pt.latitude) + ","
+                    allCroquisPoints.append(pt)
+
+                textGeom = textGeom[:-1] + textGeomEnd
+                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," + \
+                      "AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
+                print(sql)
+                cur.execute(sql)
+
+            self.conn.commit()
+
+        except Exception as e:
+            self.logger.error("_createTempCroquisTable " + format(e))
+            return False
+        finally:
+            cur.close()
+            self.conn.close()
+
+        return allCroquisPoints
+
+    def _getBarycentre(self):
+        """
+        Calcul du barycentre de l'ensemble des croquis à partir des centroides de chaque croquis;
+        ces centroides sont stockés dans la table temporaire "tmpTable"
+
+        :return: le barycentre
+        :rtype: Point
+        """
+        barycentre = None
+        tmpTable = "tmpTable"
+        try:
+            self.conn = spatialite_connect(self.dbPath)
+            cur = self.conn.cursor()
+
+            sql = "SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from " + tmpTable
+            cur.execute(sql)
+
+            rows = cur.fetchall()
+            sumX = 0
+            sumY = 0
+            for row in rows:
+                sumX += row[0]
+                sumY += row[1]
+            ptX = sumX / float(len(rows))
+            ptY = sumY / float(len(rows))
+            barycentre = Point(ptX, ptY)
+
+        except Exception as e:
+            self.logger.error("getBarycentre " + format(e))
+
+        return barycentre
+
     # Création d'un nouveau signalement
     def do(self):
         try:
