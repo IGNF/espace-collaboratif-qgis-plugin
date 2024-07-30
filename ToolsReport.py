@@ -249,42 +249,81 @@ class ToolsReport(object):
             self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
             return
 
-    def createSingleReport(self, sketchList, strGeometryReport):
-        # Ouverture du formulaire de création du signalement
-        nbSketch = len(sketchList)
-        formCreate = FormCreateReport(self.__context, nbSketch)
-        formCreate.exec_()
-        # création du ou des signalements
-        if formCreate.bSend:
-            params = {'geom': strGeometryReport}
-            self.__createAndSendNewReport(formCreate, sketchList, params)
+    def __getBarycentreInWkt(self, listPoints):
+        """
+        Retourne les coordonnées du signalement en WKT en calculant le barycentre en fonction
+        d'une liste de points représentant la géométrie du croquis
+
+        :param geomSketch : la géométrie sous forme d'une liste de points du croquis
+        :type geomSketch : list
+
+        :return : le barycentre
+        :rtype : Point
+        """
+        barycentreX = 0
+        barycentreY = 0
+        for pt in listPoints:
+            barycentreX += pt.longitude
+            barycentreY += pt.latitude
+        ptX = barycentreX / len(listPoints)
+        ptY = barycentreY / len(listPoints)
+        barycentre = 'POINT({0} {1})'.format(ptX, ptY)
+        return barycentre
+
+    def __createReportWithSketchs(self, sketchList, bOneReport) -> []:
+        datas = []
+        sketch = {
+            'name': '',
+            'objects': []
+        }
+        if bOneReport:
+            points = []
+            for sk in sketchList:
+                points.extend(sk.getAllPoints())
+                obj = {'type': sk.getTypeEnumInStr(sk.type), 'geometry': sk.getCoordinatesFromPointsToPost(),
+                       'attributes': sk.getAttributes()}
+                sketch['objects'].append(obj)
+            datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(points)})
+        else:
+            for sk in sketchList:
+                obj = {'type': sk.getTypeEnumInStr(sk.type), 'geometry': sk.getCoordinatesFromPointsToPost(),
+                       'attributes': sk.getAttributes()}
+                sketch['objects'].append(obj)
+                datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(sk.getAllPoints())})
+        return datas
 
     def createReport(self, sketchList):
         # Ouverture du formulaire de création du signalement
-        nbSketch = len(sketchList)
-        formCreate = FormCreateReport(self.__context, nbSketch)
+        formCreate = FormCreateReport(self.__context, len(sketchList))
         formCreate.exec_()
-        # création du ou des signalements
-        if formCreate.bSend:
-            #self.__createAndSendNewReport(formCreate, sketchList, strGeometryReport)
-            self.__createAndSendNewReport(formCreate, sketchList, None)
 
-    #def __createAndSendNewReport(self, formCreate, sketchList, strGeometryReport):
-    def __createAndSendNewReport(self, formCreate, sketchList, params):
-        datas = {
-            'community': self.__context.getUserCommunity().getId(),  # obligatoire
-            'comment': formCreate.textEditMessage.toPlainText()
-        }
+        # Envoi ou pas vers l'espace collaboratif ?
+        if not formCreate.bSend:
+            return
 
         # TODO voir Noémie pour les thèmes préférés
         # PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
         PluginHelper.save_preferredGroup(self.__context.projectDir, formCreate.preferredGroup)
 
-        # Récupération des fichiers attachés au signalement
-        # TODO Noémie : peut-on avoir plusieurs fichiers attachés ?
-        fileName = formCreate.getAttachedDoc()
-        if fileName is not None:
-            datas['attachments'] = {
+        # Les données pour le corps de la requête a envoyé au serveur
+        datasForRequest = {
+            'community': self.__context.getUserCommunity().getId(),  # obligatoire
+            'comment': formCreate.textEditMessage.toPlainText(),
+            'input_device': cst.CLIENT_INPUT_DEVICE
+        }
+
+        # Le thème sélectionné et ses attributs
+        themeWithAttributes = formCreate.getUserSelectedThemeWithAttributes()
+        if len(themeWithAttributes) == 0:
+            message = "Impossible de créer un signalement sans thème. Veuillez en sélectionner un."
+            QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+            return
+        datasForRequest['attributes'] = themeWithAttributes  # obligatoire
+
+        # Récupération du (ou des) fichier(s) joint(s) (max 4) au signalement
+        fileNames = formCreate.getAttachments()
+        for fileName in fileNames:
+            datasForRequest['attachments'].append({
                 'id': 0,
                 'short_fileName': '',
                 'description': '',
@@ -296,48 +335,45 @@ class ToolsReport(object):
                 'date': datetime.datetime.today().replace(microsecond=0).isoformat(),
                 'filename': fileName,
                 'geometry': ''
-            }
+            })
 
+        # Création du ou des signalements
         if formCreate.isSingleReport():
-            if len(sketchList) == 0:
-                if params is not None:
-                    datas['geometry'] = params['geom']  # obligatoire
-                # Récupération du thème choisi et des attributs remplis par l'utilisateur
-                attributes = formCreate.getUserSelectedThemeWithAttributes()
-                if len(attributes) == 0:
-                    message = "Impossible de créer un signalement sans thème. Veuillez en sélectionner un."
-                    QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
-                    return
-                datas['attributes'] = attributes
-            else:
-                datas['sketch'] = self.__createReportWithSketch(sketchList, True)
+            self.__createSingleReport(sketchList, datasForRequest)
         else:
-            datas['sketch'] = self.__createReportWithSketch(sketchList, False)
+            self.__createMultiReports(sketchList, datasForRequest)
 
-        # La saisie du signalement vient de QGIS
-        datas['input_device'] = cst.CLIENT_INPUT_DEVICE
+    def __createSingleReport(self, sketchList, datasForRequest):
+        sketchsGeometryReport = self.__createReportWithSketchs(sketchList, True)
+        datasForRequest['sketch'] = sketchsGeometryReport[0]['sketch']
+        datasForRequest['geometry'] = sketchsGeometryReport[0]['geometryReport']  # obligatoire
+        self.__sendReport(datasForRequest)
 
+    def __createMultiReports(self, sketchList, datasForRequest):
+        sketchsGeometrysReports = self.__createReportWithSketchs(sketchList, True)
+        for sketchGeometryReport in sketchsGeometrysReports:
+            datasForRequest['sketch'] = sketchGeometryReport['sketch']
+            datasForRequest['geometry'] = sketchGeometryReport['geometryReport']
+            self.__sendReport(datasForRequest)
+
+    def __sendReport(self, datasForRequest):
+        print(json.dumps(datasForRequest))
         # Envoi de la requete serveur en POST,
         # il faut transformer les datas en json avec json.dumps
-        responseFromServer = self.__sendRequest(json.dumps(datas))
+        responseFromServer = self.__sendRequest(json.dumps(datasForRequest))
         if responseFromServer is None:
             return
         contents = responseFromServer.json()
         listNewReportIds = self.__insertReportsSketchsIntoSQLite(contents)
         message = "Succès, création "
         if len(listNewReportIds) == 1:
-            message += "d'un nouveau signalement : {}".format(listNewReportIds[0])
+            message += "d'un nouveau signalement : {0}".format(listNewReportIds[0])
         else:
             listIds = ''
             for id in listNewReportIds:
                 listIds += "{},".format(id)
-            message += "de plusieurs signalements : {}".format(listIds[:-1])
+            message += "de plusieurs signalements : {0}".format(listIds[:-1])
         QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
-
-    def __createReportWithSketch(self, sketchList, bOneReport):
-        sketch = {}
-
-        return sketch
 
     def __sendRequest(self, datas):
         # envoi de la requête
@@ -346,9 +382,6 @@ class ToolsReport(object):
         if response.status_code == 200 or response.status_code == 201:
             return response
         else:
-            message = "code : {} raison : {}".format(response.status_code, response.reason)
+            message = "Code : {0}, Raison : {1}".format(response.status_code, response.reason)
             self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
         return None
-
-
-

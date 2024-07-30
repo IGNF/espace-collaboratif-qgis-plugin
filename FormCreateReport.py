@@ -7,13 +7,12 @@ from .core import Constantes as cst
 from .core.Theme import Theme
 from .PluginHelper import PluginHelper
 
-
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreateReport_base.ui'))
 
 
 class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
     """
-    Formulaire pour la création d'une nouvelle remarque
+    Formulaire pour la création d'un nouveau signalement
     """
     logger = RipartLogger("FormCreateReport").getRipartLogger()
 
@@ -21,8 +20,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     infogeogroups = []
 
-    # le nom du fichier sélectionné (document joint)
-    selFileName = None
+    # la liste du (ou des) nom(s) du (ou des) fichiers sélectionnés (document(s) joint(s))
+    selFileName = []
 
     # dictionnaire des thèmes sélectionnés (key: nom du theme, value: l'objet Theme)
     selectedThemesList = {}
@@ -51,9 +50,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         self.__context = context
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.onSend)
+        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__onSend)
 
-        self.checkBoxAttDoc.stateChanged.connect(self.openFileDialog)
+        self.checkBoxAttDoc.stateChanged.connect(self.__openFileDialog)
 
         self.lblDoc.setProperty("visible", False)
         if nbSketch >= 2:
@@ -87,8 +86,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             self.comboBoxGroupe.setCurrentText(self.__activeCommunity)
         # TODO voir Noémie pour savoir si l'utilisateur peut être sans groupe
         # else:
-            # self.__activeCommunity = 'Aucun'
-            # self.comboBoxGroupe.setCurrentText('Aucun')
+        # self.__activeCommunity = 'Aucun'
+        # self.comboBoxGroupe.setCurrentText('Aucun')
 
         # largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
         self.treeWidget.setColumnWidth(0, 160)
@@ -186,6 +185,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
     Renvoie le type d'item pré-rempli avec sa valeur par défaut à afficher en face de chaque
     attribut du thème de signalement.
     '''
+
     def __getItemValueFromType(self, att):
 
         attType = att.getType()
@@ -287,7 +287,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
             # Le nom du thème
             themeName = thItem.text(0)
-            data['theme'] = themeName
             bFind = False
             for theme in self.__themesList:
                 if theme.getName() == themeName:
@@ -296,7 +295,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     break
             if not bFind:
                 data['community'] = -1
-
+            data['theme'] = themeName
             # Les attributs du theme remplis par l'utilisateur
             selectedAttributes = {}
             errorMessage = ''
@@ -427,8 +426,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 return th
         return None
 
-    def getAttachedDoc(self):
-        """Retourne le nom du fichier sélectionné 
+    def getAttachments(self) -> str:
+        """Retourne le nom (ou les) nom(s) du (ou des) fichier(s) sélectionné(s)
         
         :return nom du fichier sélectionné
         :rtype: string
@@ -436,22 +435,22 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         if self.checkBoxAttDoc.isChecked():
             return self.selFileName
         else:
-            return None
+            return ""
 
-    def optionWithAttDoc(self):
-        """
-        :rtype : boolean
-        """
-        return self.checkBoxAttDoc.isChecked()
+    # def optionWithAttDoc(self):
+    #     """
+    #     :rtype : boolean
+    #     """
+    #     return self.checkBoxAttDoc.isChecked()
 
-    def optionWithCroquis(self):
-        """
-        :rtype : boolean
-        """
-        return self.checkBoxJoinCroquis.isChecked()
+    # def optionWithCroquis(self):
+    #     """
+    #     :rtype : boolean
+    #     """
+    #     return self.checkBoxJoinCroquis.isChecked()
 
     # Envoi de la requête de création à l'espace collaboratif
-    def onSend(self):
+    def __onSend(self):
         # Il faut au moins un theme coché
         nb = 0
         root = self.treeWidget.invisibleRootItem()
@@ -460,53 +459,57 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if thItem.checkState(0) == Qt.CheckState.Checked:
                 nb = 1
         if nb == 0:
-            self.__context.iface.messageBar().pushMessage("Attention", u'Il manque la sélection du thème', level=1, duration=3)
+            self.__context.iface.messageBar().pushMessage("Attention", u'Il manque la sélection du thème', level=1,
+                                                          duration=3)
             self.bSend = False
 
         self.bSend = True
         self.close()
 
-    def truncate(self, n, decimals=0):
+    def __truncate(self, n, decimals=0):
         multiplier = 10 ** decimals
         return int(n * multiplier) / multiplier
 
-    def openFileDialog(self):
-        if self.checkBoxAttDoc.isChecked():
+    def __openFileDialog(self):
+        if not self.checkBoxAttDoc.isChecked():
+            self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
+            self.lblDoc.setProperty("visible", False)
+            self.selFileName = None
+        else:
             filters = u"All files (*.*);;" + \
                       u"Images (*.BMP;*.GIF;*.JPG;*.JPEG;*.PNG);;" + \
                       u"Tracées (*.GPX);;" + \
                       u"Textes (*.DOC;*.DOCX;*.ODT;*.PDF;*.TXT);;" + \
                       u"Tableurs (*.CSV;*.KML;*.ODS;*XLS;*.XLSX);;" + \
                       u"Compressés (*.ZIP;*.7Z)"
-
-            filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Document à joindre à la remarque', '.', filters)
-            if filename != "":
-                extension = os.path.splitext(filename)[1]
-                sizeFilename = os.path.getsize(filename)
-                if extension[1:] not in self.__context.formats:
-                    message = u"Les fichiers de type '" + extension + u"' ne sont pas autorisés comme pièce-jointe " \
-                                                                      u"pour l'Espace collaboratif. "
-                    PluginHelper.showMessageBox(message)
-                    self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
-
-                elif sizeFilename > self.docMaxSize:
-                    message = u"Le fichier \"" + filename + \
-                              u"\" ne peut être envoyé à l'Espace collaboratif, car sa taille (" + \
-                              str(os.path.getsize(filename) / 1000) + \
-                              u" Ko) dépasse celle maximale autorisée (" + str(self.docMaxSize / 1000) + u" Ko)"
-
-                    PluginHelper.showMessageBox(message)
-                    self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
-
-                else:
-                    self.lblDoc.setProperty("visible", True)
-                    fileNameWithSize = "{0} ({1}Mo)".format(filename, self.truncate(sizeFilename / (1024 * 1024), 3))
-                    print(fileNameWithSize)
-                    self.lblDoc.setText(fileNameWithSize)
-                    self.selFileName = filename
-            else:
+            filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(self, 'Document à joindre à la remarque', '.',
+                                                                  filters)
+            message = ''
+            if len(filenames) > 4:
+                message += "Maximum 4 fichiers liés à un signalement\n"
+                PluginHelper.showMessageBox(message)
                 self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
-                self.selFileName = None
-        else:
-            self.lblDoc.setProperty("visible", False)
-            self.selFileName = None
+            elif len(filenames) > 0:
+                for filename in filenames:
+                    extension = os.path.splitext(filename)[1]
+                    if extension[1:] not in self.__context.formats:
+                        if extension not in message:
+                            message += "Les fichiers de type '{}' ne sont pas autorisés comme pièce-jointe pour " \
+                                       "l'Espace collaboratif.\n".format(extension)
+                    sizeFilename = os.path.getsize(filename)
+                    if sizeFilename > self.docMaxSize:
+                        message += u"Le fichier {0} ne peut être envoyé à l'Espace collaboratif, car sa taille " \
+                                   u"({1}Ko) dépasse celle maximale autorisée ({2}Ko).\n".format(filename,
+                                                                                                 str(sizeFilename/1000),
+                                                                                                 str(self.docMaxSize/1000))
+                PluginHelper.showMessageBox(message)
+                self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
+            else:
+                self.lblDoc.setProperty("visible", True)
+                fileNameWithSize = ''
+                for filename in filenames:
+                    sizeFilename = os.path.getsize(filename)
+                    fileNameWithSize += "{0} ({1}Mo)\n".format(filename, self.__truncate(sizeFilename / (1024 * 1024), 3))
+                    self.selFileName.append(filename)
+                print(fileNameWithSize)
+                self.lblDoc.setText(fileNameWithSize)

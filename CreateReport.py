@@ -116,51 +116,20 @@ class CreateReport(object):
 
         return allCroquisPoints
 
-    def _getBarycentre(self):
-        """
-        Calcul du barycentre de l'ensemble des croquis à partir des centroides de chaque croquis;
-        ces centroides sont stockés dans la table temporaire "tmpTable"
-
-        :return: le barycentre
-        :rtype: Point
-        """
-        barycentre = None
-        tmpTable = "tmpTable"
-        try:
-            self.conn = spatialite_connect(self.dbPath)
-            cur = self.conn.cursor()
-
-            sql = "SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from " + tmpTable
-            cur.execute(sql)
-
-            rows = cur.fetchall()
-            sumX = 0
-            sumY = 0
-            for row in rows:
-                sumX += row[0]
-                sumY += row[1]
-            ptX = sumX / float(len(rows))
-            ptY = sumY / float(len(rows))
-            barycentre = Point(ptX, ptY)
-
-        except Exception as e:
-            self.logger.error("getBarycentre " + format(e))
-
-        return barycentre
-
     # Création d'un nouveau signalement
     def do(self):
         try:
-            clipboard = QApplication.clipboard()
-            clipboard.clear()
+            # TODO réactiver les 2 lignes de code si cela fonctionne correctement
+            # clipboard = QApplication.clipboard()
+            # clipboard.clear()
             hasSelectedFeature = self.__context.hasMapSelectedFeatures()
-            # Sans croquis
+            # Sans croquis, en cliquant simplement sur la carte
             if not hasSelectedFeature:
                 if self.__activeLayer.name() != cst.nom_Calque_Signalement:
                     return
-                mapToolsReport = MapToolsReport(self.__context)
-                mapToolsReport.activate()
-                self.__canvas.setMapTool(mapToolsReport)
+                # mapToolsReport = MapToolsReport(self.__context)
+                # mapToolsReport.activate()
+                # self.__canvas.setMapTool(mapToolsReport)
                 return
             # Avec croquis
             else:

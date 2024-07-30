@@ -67,7 +67,7 @@ class WfsPost(object):
             geomWorkingArea.transform(coordTransform)
         return geomWorkingArea
 
-    def setGeometry(self, geometry, bBDUni):
+    def setPostGeometry(self, geometry, bBDUni):
         parameters = {'geometryName': self.__layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS4326,
                       'sridTarget': self.__layer.srid, 'geometryType': self.__layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
@@ -85,7 +85,7 @@ class WfsPost(object):
     def setGeometries(self, changedGeometries, bBDUni):
         geometries = {}
         for featureId, geometry in changedGeometries.items():
-            postGeometry = self.setGeometry(geometry, bBDUni)
+            postGeometry = self.setPostGeometry(geometry, bBDUni)
             geometries[featureId] = postGeometry
         return geometries
 
@@ -265,7 +265,7 @@ class WfsPost(object):
         for feature in addedFeatures:
             strFeature = self.setHeader()
             strFeature += self.setFieldsNameValue(feature)
-            postGeometry = self.setGeometry(feature.geometry(), bBDUni)
+            postGeometry = self.setPostGeometry(feature.geometry(), bBDUni)
             strFeature += postGeometry
             strFeature += self.setClientId(feature.attribute(cst.ID_SQLITE))
             strFeature += '},'
@@ -322,7 +322,7 @@ class WfsPost(object):
                     strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
                 else:
                     strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
-                postGeometry = self.setGeometry(geometry, bBDUni)
+                postGeometry = self.setPostGeometry(geometry, bBDUni)
                 strFeature += ', {0}'.format(postGeometry)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')

@@ -715,34 +715,34 @@ class Contexte(object):
                 return True
         return False
 
+    # Les objets sélectionnés sont transformés en croquis
     def makeCroquisFromSelection(self):
-        """
-        Transforme en croquis Ripart les object sélectionnés dans la carte en cours.
-        Le système de référence spatial doit être celui du service Ripart(i.e. 4326), donc il faut transformer les
-        coordonnées si la carte est dans un autre système de réf.
-        """
-
-        # dictionnaire : key: nom calque, value: liste des attributs
+        # Chargement à partir du fichier de configuration des attributs de l'objet sélectionné.
+        # Ces attributs deviendront les attributs du croquis.
+        # attCroquis est un dictionnaire : key: nom calque, value: liste des attributs
         attCroquis = PluginHelper.load_attCroquis(self.projectDir)
 
-        # Recherche tous les features sélectionnés sur la carte (pour les transformer en croquis)
+        # La listes de croquis définitifs
         listCroquis = []
         mapLayers = self.mapCan.layers()
+        # Recherche tous les objets sélectionnés sur la carte pour les transformer en croquis
         for lay in mapLayers:
+            # Quelques vérifications d'usage
             if type(lay) is not QgsVectorLayer:
                 continue
-
+            if len(lay.selectedFeatures()) == 0:
+                continue
             # Si le CRS de la couche n'est pas défini, on prévient l'utilisateur et on sort
-            if len(lay.selectedFeatures()) > 0 and not lay.sourceCrs().isValid():
+            if not lay.sourceCrs().isValid():
                 nom = lay.name()
                 message = "La couche {0} ne peut pas être utilisée pour créer un signalement car son système " \
                           "de projection n'est pas défini. Veuillez le définir avant de créer " \
                           "un signalement.".format(nom)
                 PluginHelper.showMessageBox(message)
                 return []
-
+            # Autant de croquis que d'objets sélectionnés qui peuvent être issus de différentes couches
             for f in lay.selectedFeatures():
-                # la liste des croquis
+                # la liste des croquis temporaires
                 croquiss = []
                 # le type du feature
                 ftype = f.geometry().type()
@@ -766,9 +766,8 @@ class Contexte(object):
                 else:
                     croquiss.append(self.makeCroquis(geom, ftype, lay.crs(), f[0]))
 
-                if len(croquiss) == 0:
-                    continue
-
+                # Transfert vers le croquis des éventuels attributs de l'objet sélectionné
+                # Ajout du croquis temporaire vers la liste définitive
                 for croquisTemp in croquiss:
                     if lay.name() in attCroquis:
                         for att in attCroquis[lay.name()]:
@@ -781,8 +780,8 @@ class Contexte(object):
 
     def makeCroquis(self, geom, ftype, layerCrs, fId):
         """
-        Génère un croquis Ripart à partir d'une géométrie
-        Les coordonnées des points du croquis doivent être transformées dans le crs de Ripart (4326)
+        Génère un croquis à partir d'une géométrie
+        Les coordonnées des points du croquis doivent être transformées dans le crs de l'espace collaboratif (4326)
 
         :param geom: la géométrie à transformer en croquis
         :type geom: QgsGeometry
@@ -799,9 +798,8 @@ class Contexte(object):
         :return le croquis créé
         :rtype Croquis ou None s'il y a eu une erreur
         """
-        newCroquis = Sketch()
+        newSketch = Sketch()
         geomPoints = []
-
         try:
             destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
             transformer = QgsCoordinateTransform(layerCrs, destCrs, self.QgsProject.instance())
@@ -811,25 +809,25 @@ class Contexte(object):
                     geomPoints = geomPoints[0]  # les points du polygone
                 else:
                     self.logger.debug(u"geomPoints problem " + str(fId))
-                newCroquis.type = newCroquis.sketchType.Polygone
+                newSketch.type = newSketch.sketchType.Polygone
             elif ftype == QgsWkbTypes.GeometryType.LineGeometry:
                 geomPoints = geom.asPolyline()
-                newCroquis.type = newCroquis.sketchType.Ligne
+                newSketch.type = newSketch.sketchType.Ligne
             elif ftype == QgsWkbTypes.GeometryType.PointGeometry:
                 geomPoints = [geom.asPoint()]
-                newCroquis.type = newCroquis.sketchType.Point
+                newSketch.type = newSketch.sketchType.Point
             else:
-                newCroquis.type = newCroquis.sketchType.Vide
+                newSketch.type = newSketch.sketchType.Vide
 
             for pt in geomPoints:
                 pt = transformer.transform(pt)
-                newCroquis.addPoint(Point(pt.x(), pt.y()))
+                newSketch.addPoint(Point(pt.x(), pt.y()))
 
         except Exception as e:
             self.logger.error(u"in makeCroquis:" + format(e))
             return None
 
-        return newCroquis
+        return newSketch
 
     def getPositionRemarque(self, listCroquis):
         """

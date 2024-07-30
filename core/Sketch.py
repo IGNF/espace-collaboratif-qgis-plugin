@@ -18,12 +18,16 @@ class Sketch(object):
     '''
     Vide : pas de croquis
     Point : un point du croquis
-    Ligne une polyligne du croquis
-    Polygone: un polygone simple (sans trous et non multiple) du croquis.
+    Ligne : une polyligne du croquis
+    Polygone : un polygone simple (sans trous et non multiple) du croquis.
     Texte : un champ texte du croquis
     Fleche : une flêche du croquis
     '''
     sketchType = Enum("Vide", "Point", "Ligne", "Polygone", "Texte", "Fleche")
+    typeToStr = {sketchType.Point: 'Point', sketchType.Texte: 'Texte', sketchType.Ligne: 'Ligne',
+                 sketchType.Fleche: 'Fleche', sketchType.Polygone: 'Polygon'}
+    typeToWKT = {sketchType.Point: 'POINT', sketchType.Texte: 'POINT', sketchType.Ligne: 'LINESTRING',
+                 sketchType.Fleche: 'LINESTRING', sketchType.Polygone: 'POLYGON'}
 
     def __init__(self):
         # Type du croquis
@@ -33,12 +37,15 @@ class Sketch(object):
         self.name = ""
 
         # La liste des attributs (clé, valeur)
-        self.attributes = list()
+        self.attributesList = list()
 
         # La liste des points composants le croquis (coordonnées)
-        self.points = list()
+        self.__points = list()
 
         self.coordinates = ""
+
+    def getAllPoints(self):
+        return self.__points
 
     def addPoint(self, point):
         """
@@ -46,7 +53,7 @@ class Sketch(object):
 
         :param point:  un objet Point
         """
-        self.points.append(point)
+        self.__points.append(point)
 
     def addAttribut(self, attribute):
         """Ajoute un attribut à la liste des attributs du croquis
@@ -54,7 +61,13 @@ class Sketch(object):
         :param attribute : l'objet Attribut
         :type attribute: Attribute
         """
-        self.attributes.append(attribute)
+        self.attributesList.append(attribute)
+
+    def getAttributes(self):
+        attributes = {}
+        for attribute in self.attributesList:
+            attributes[attribute.name] = attribute.value
+        return attributes
 
     def getPoint(self, i):
         """Recherche un point dans la liste de Points par sa position dans la liste
@@ -64,8 +77,8 @@ class Sketch(object):
         
         :return le point cherché
         :rtype Point
-        """      
-        return self.points[i]
+        """
+        return self.__points[i]
 
     def longitude(self, i):
         """Retourne la longitude pour le point i
@@ -75,7 +88,7 @@ class Sketch(object):
         
         :return la longitude
         :rtype float
-        """       
+        """
         return self.getPoint(i).longitude
 
     def latitude(self, i):
@@ -86,17 +99,17 @@ class Sketch(object):
         
         :return la latitude
         :rtype float
-        """       
+        """
         return self.getPoint(i).latitude
-                
+
     def firstCoord(self):
         """Retourne le premier point de la liste
         
         :return le premier point
         :rtype Point
         """
-        if len(self.points) > 0:
-            return self.points[0]
+        if len(self.__points) > 0:
+            return self.__points[0]
         else:
             return None
 
@@ -106,24 +119,24 @@ class Sketch(object):
         :return le dernier point
         :rtype Point
         """
-        if len(self.points) > 0:
-            return self.points[-1]
+        if len(self.__points) > 0:
+            return self.__points[-1]
         else:
             return None
 
-    def isClosed(self):
-        """Contrôle si la géométrie est fermée
-        rtype:boolean
-        """
-        return self.firstCoord() == self.lastCoord()
+    # def isClosed(self):
+    #     """Contrôle si la géométrie est fermée
+    #     rtype:boolean
+    #     """
+    #     return self.firstCoord() == self.lastCoord()
 
     def isValid(self):
         """Contrôle la validité de la géométrie
         """
-        nPoints = len(self.points)
+        nPoints = len(self.__points)
         if nPoints == 0 \
-                or ((self.type == self.sketchType.Point or self.type == self.sketchType.Texte) and nPoints != 1)\
-                or (self.type == self.sketchType.Polygone and not self.firstCoord().eq(self.lastCoord()))\
+                or ((self.type == self.sketchType.Point or self.type == self.sketchType.Texte) and nPoints != 1) \
+                or (self.type == self.sketchType.Polygone and not self.firstCoord().eq(self.lastCoord())) \
                 or (self.type == self.sketchType.Vide and nPoints > 0):
             return False
         return True
@@ -137,38 +150,38 @@ class Sketch(object):
         """
         if self.type == self.sketchType.Vide:
             return xmlDoc
-        
+
         objet = ET.Element('objet', {"type": self.type.__str__()})
         nom = ET.SubElement(objet, 'nom')
         nom.text = self.name
-        
+
         # la geométrie
         geom = ET.SubElement(objet, 'geometrie')
         coord = ""
-       
-        for pt in self.points:
+
+        for pt in self.__points:
             coord += pt.longitude.__str__() + "," + pt.latitude.__str__() + " "
-            
+
         coord = coord[:-1]
         ingeom = ''
         if self.type in [self.sketchType.Ligne, self.sketchType.Fleche]:
-            ingeom = ET.SubElement(geom, ns+':LineString')
+            ingeom = ET.SubElement(geom, ns + ':LineString')
         elif self.type in [self.sketchType.Point, self.sketchType.Texte]:
-            ingeom = ET.SubElement(geom, ns+':Point')
+            ingeom = ET.SubElement(geom, ns + ':Point')
         elif self.type == self.sketchType.Polygone:
-            pol = ET.SubElement(geom, ns+':Polygon')
-            outer = ET.SubElement(pol, ns+':outerBoundaryIs')
-            ingeom = ET.SubElement(outer, ns+':LinearRing')
+            pol = ET.SubElement(geom, ns + ':Polygon')
+            outer = ET.SubElement(pol, ns + ':outerBoundaryIs')
+            ingeom = ET.SubElement(outer, ns + ':LinearRing')
 
-        coordEl = ET.SubElement(ingeom, ns+':coordinates')
+        coordEl = ET.SubElement(ingeom, ns + ':coordinates')
         coordEl.text = coord
-        
+
         # les attributs
         xattributs = ET.SubElement(objet, 'attributs')
-        for att in self.attributes:
+        for att in self.attributesList:
             xatt = ET.SubElement(xattributs, 'attribut', {'name': ClientHelper.notNoneValue(att.nom)})
             xatt.text = ClientHelper.notNoneValue(att.valeur)
-            
+
         xmlDoc.append(objet)
         return xmlDoc
 
@@ -176,19 +189,30 @@ class Sketch(object):
         """
         """
         satt = ""
-        for att in self.attributes:
+        for att in self.attributesList:
             # Anomalie Redmine #14757 : le SQL n'aime pas les %
             attributeName = att.name.replace('%', 'pourcent')
             attributeValue = att.value.replace('%', 'pourcent')
             satt += ClientHelper.notNoneValue(attributeName) + "='" + ClientHelper.notNoneValue(attributeValue) + "'|"
-       
+
         if len(satt) > 0:
             satt = satt[:-1]
-        
+
         return satt
-            
+
     def getCoordinatesFromPoints(self):
         coord = ""
-        for pt in self.points:
+        for pt in self.__points:
             coord += str(pt.longitude) + " " + str(pt.latitude) + ","
-        return coord[:-1]    
+        return coord[:-1]
+
+    def getCoordinatesFromPointsToPost(self) -> str:
+        coord = ""
+        for pt in self.__points:
+            coord += str(pt.longitude) + " " + str(pt.latitude) + ","
+        if self.type not in self.typeToWKT:
+            return ''
+        return '{0}({1})'.format(self.typeToWKT[self.type], coord[:-1])
+
+    def getTypeEnumInStr(self, typeEnum):
+        return self.typeToStr[typeEnum]
