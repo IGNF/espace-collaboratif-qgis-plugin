@@ -49,32 +49,6 @@ class ToolsReport(object):
                 vlayer.loadNamedStyle(style)
         self.__context.mapCan.refresh()
 
-    def __calculateRows(self, datas):
-        report = Report(self.__context.urlHostEspaceCo, datas)
-        res = report.InsertSketchIntoSQLite()
-        columns = report.getColumnsForSQlite()
-        return columns, report.getId()
-
-    def __insertReportsSketchsIntoSQLite(self, datas) -> []:
-        global rows
-        parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
-                      'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
-        attributesRows = []
-        idsReports = []
-        if type(datas) is list:
-            for data in datas:
-                rows = self.__calculateRows(data)
-                attributesRows.append(rows[0])
-                idsReports.append(rows[1])
-        if type(datas) is dict:
-            rows = self.__calculateRows(datas)
-            attributesRows.append(rows[0])
-            idsReports.append(rows[1])
-        # Insertion des signalements dans la base SQLite
-        sqliteManager = SQLiteManager()
-        sqliteManager.insertRowsInTable(parameters, attributesRows)
-        return idsReports
-
     def getReport(self, id):
         query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
                       self.__context.proxy)
@@ -249,48 +223,24 @@ class ToolsReport(object):
             self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
             return
 
-    def __getBarycentreInWkt(self, listPoints):
-        """
-        Retourne les coordonnées du signalement en WKT en calculant le barycentre en fonction
-        d'une liste de points représentant la géométrie du croquis
+    def __sendReport(self, datasForRequest):
+        print(json.dumps(datasForRequest))
+        # Envoi de la requete serveur en POST, il faut transformer les datasForRequest en json avec json.dumps
+        responseFromServer = self.__sendRequest(json.dumps(datasForRequest))
+        if responseFromServer is None:
+            return
+        return responseFromServer.json()
 
-        :param geomSketch : la géométrie sous forme d'une liste de points du croquis
-        :type geomSketch : list
-
-        :return : le barycentre
-        :rtype : Point
-        """
-        barycentreX = 0
-        barycentreY = 0
-        for pt in listPoints:
-            barycentreX += pt.longitude
-            barycentreY += pt.latitude
-        ptX = barycentreX / len(listPoints)
-        ptY = barycentreY / len(listPoints)
-        barycentre = 'POINT({0} {1})'.format(ptX, ptY)
-        return barycentre
-
-    def __createReportWithSketchs(self, sketchList, bOneReport) -> []:
-        datas = []
-        sketch = {
-            'name': '',
-            'objects': []
-        }
-        if bOneReport:
-            points = []
-            for sk in sketchList:
-                points.extend(sk.getAllPoints())
-                obj = {'type': sk.getTypeEnumInStr(sk.type), 'geometry': sk.getCoordinatesFromPointsToPost(),
-                       'attributes': sk.getAttributes()}
-                sketch['objects'].append(obj)
-            datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(points)})
+    def __sendRequest(self, datas):
+        # envoi de la requête
+        uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
+        response = HttpRequest.makeHttpRequest(uri, self.__context.auth, self.__context.proxy, None, datas)
+        if response.status_code == 200 or response.status_code == 201:
+            return response
         else:
-            for sk in sketchList:
-                obj = {'type': sk.getTypeEnumInStr(sk.type), 'geometry': sk.getCoordinatesFromPointsToPost(),
-                       'attributes': sk.getAttributes()}
-                sketch['objects'].append(obj)
-                datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(sk.getAllPoints())})
-        return datas
+            message = "Code : {0}, Raison : {1}".format(response.status_code, response.reason)
+            self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
+        return None
 
     def createReport(self, sketchList):
         # Ouverture du formulaire de création du signalement
@@ -305,7 +255,7 @@ class ToolsReport(object):
         # PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
         PluginHelper.save_preferredGroup(self.__context.projectDir, formCreate.preferredGroup)
 
-        # Les données pour le corps de la requête a envoyé au serveur
+        # Une partie des données pour le corps de la requête a envoyé au serveur
         datasForRequest = {
             'community': self.__context.getUserCommunity().getId(),  # obligatoire
             'comment': formCreate.textEditMessage.toPlainText(),
@@ -339,32 +289,108 @@ class ToolsReport(object):
 
         # Création du ou des signalements
         if formCreate.isSingleReport():
-            self.__createSingleReport(sketchList, datasForRequest)
+            contents = self.__createSingleReport(sketchList, datasForRequest)
         else:
-            self.__createMultiReports(sketchList, datasForRequest)
+            contents = self.__createMultiReports(sketchList, datasForRequest)
 
-    def __createSingleReport(self, sketchList, datasForRequest):
+        # Insertion des signalements et des croquis dans la base SQLite
+        listNewReportIds = self.__insertReportsSketchsIntoSQLite(contents)
+
+        # Message de fin
+        self.__sendMessageEndProcess(listNewReportIds)
+
+    def __createSingleReport(self, sketchList, datasForRequest) -> []:
+        contents = []
         sketchsGeometryReport = self.__createReportWithSketchs(sketchList, True)
         datasForRequest['sketch'] = sketchsGeometryReport[0]['sketch']
         datasForRequest['geometry'] = sketchsGeometryReport[0]['geometryReport']  # obligatoire
-        self.__sendReport(datasForRequest)
+        contents.append(self.__sendReport(datasForRequest))
+        return contents
 
-    def __createMultiReports(self, sketchList, datasForRequest):
-        sketchsGeometrysReports = self.__createReportWithSketchs(sketchList, True)
+    def __createMultiReports(self, sketchList, datasForRequest) -> []:
+        contents = []
+        sketchsGeometrysReports = self.__createReportWithSketchs(sketchList, False)
         for sketchGeometryReport in sketchsGeometrysReports:
             datasForRequest['sketch'] = sketchGeometryReport['sketch']
             datasForRequest['geometry'] = sketchGeometryReport['geometryReport']
-            self.__sendReport(datasForRequest)
+            contents.append(self.__sendReport(datasForRequest))
+        return contents
 
-    def __sendReport(self, datasForRequest):
-        print(json.dumps(datasForRequest))
-        # Envoi de la requete serveur en POST,
-        # il faut transformer les datas en json avec json.dumps
-        responseFromServer = self.__sendRequest(json.dumps(datasForRequest))
-        if responseFromServer is None:
-            return
-        contents = responseFromServer.json()
-        listNewReportIds = self.__insertReportsSketchsIntoSQLite(contents)
+    def __getBarycentreInWkt(self, listPoints):
+        """
+        Retourne les coordonnées du signalement en WKT en calculant le barycentre en fonction
+        d'une liste de points représentant la géométrie du croquis
+
+        :param geomSketch : la géométrie sous forme d'une liste de points du croquis
+        :type geomSketch : list
+
+        :return : le barycentre
+        :rtype : Point
+        """
+        barycentreX = 0
+        barycentreY = 0
+        for pt in listPoints:
+            barycentreX += pt.longitude
+            barycentreY += pt.latitude
+        ptX = barycentreX / len(listPoints)
+        ptY = barycentreY / len(listPoints)
+        barycentre = 'POINT({0} {1})'.format(ptX, ptY)
+        return barycentre
+
+    def __createReportWithSketchs(self, sketchList, bOneReport) -> []:
+        datas = []
+
+        if bOneReport:
+            points = []
+            sketch = {
+                'name': '',
+                'objects': []
+            }
+            for sk in sketchList:
+                points.extend(sk.getAllPoints())
+                obj = {'type': sk.getTypeEnumInStr(sk.type), 'geometry': sk.getCoordinatesFromPointsToPost(),
+                       'attributes': sk.getAttributes()}
+                sketch['objects'].append(obj)
+            datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(points)})
+        else:
+            for sk in sketchList:
+                sketch = {
+                    'name': '',
+                    'objects': []
+                }
+                obj = {'type': sk.getTypeEnumInStr(sk.type), 'geometry': sk.getCoordinatesFromPointsToPost(),
+                       'attributes': sk.getAttributes()}
+                sketch['objects'].append(obj)
+                datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(sk.getAllPoints())})
+        return datas
+
+    def __calculateRows(self, datas):
+        report = Report(self.__context.urlHostEspaceCo, datas)
+        res = report.InsertSketchIntoSQLite()
+        columns = report.getColumnsForSQlite()
+        return columns, report.getId()
+
+    def __insertReportsSketchsIntoSQLite(self, datas) -> []:
+        global rows
+        parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
+                      'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
+        attributesRows = []
+        idsReports = []
+        if type(datas) is list:
+            for data in datas:
+                rows = self.__calculateRows(data)
+                attributesRows.append(rows[0])
+                idsReports.append(rows[1])
+        if type(datas) is dict:
+            rows = self.__calculateRows(datas)
+            attributesRows.append(rows[0])
+            idsReports.append(rows[1])
+        # Insertion des signalements dans la base SQLite
+        sqliteManager = SQLiteManager()
+        sqliteManager.insertRowsInTable(parameters, attributesRows)
+        return idsReports
+
+    def __sendMessageEndProcess(self, listNewReportIds):
         message = "Succès, création "
         if len(listNewReportIds) == 1:
             message += "d'un nouveau signalement : {0}".format(listNewReportIds[0])
@@ -374,14 +400,3 @@ class ToolsReport(object):
                 listIds += "{},".format(id)
             message += "de plusieurs signalements : {0}".format(listIds[:-1])
         QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
-
-    def __sendRequest(self, datas):
-        # envoi de la requête
-        uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
-        response = HttpRequest.makeHttpRequest(uri, self.__context.auth, self.__context.proxy, None, datas)
-        if response.status_code == 200 or response.status_code == 201:
-            return response
-        else:
-            message = "Code : {0}, Raison : {1}".format(response.status_code, response.reason)
-            self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
-        return None

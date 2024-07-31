@@ -25,7 +25,7 @@ class Sketch(object):
     '''
     sketchType = Enum("Vide", "Point", "Ligne", "Polygone", "Texte", "Fleche")
     typeToStr = {sketchType.Point: 'Point', sketchType.Texte: 'Texte', sketchType.Ligne: 'Ligne',
-                 sketchType.Fleche: 'Fleche', sketchType.Polygone: 'Polygon'}
+                 sketchType.Fleche: 'Fleche', sketchType.Polygone: 'Polygone'}
     typeToWKT = {sketchType.Point: 'POINT', sketchType.Texte: 'POINT', sketchType.Ligne: 'LINESTRING',
                  sketchType.Fleche: 'LINESTRING', sketchType.Polygone: 'POLYGON'}
 
@@ -209,10 +209,15 @@ class Sketch(object):
     def getCoordinatesFromPointsToPost(self) -> str:
         coord = ""
         for pt in self.__points:
-            coord += str(pt.longitude) + " " + str(pt.latitude) + ","
+            coord += str(pt.longitude) + " " + str(pt.latitude) + ", "
         if self.type not in self.typeToWKT:
             return ''
-        return '{0}({1})'.format(self.typeToWKT[self.type], coord[:-1])
+        # Cas particulier pour les polygones
+        if self.type == self.sketchType.Polygone:
+            geometryWKT = '{0}(({1}))'.format(self.typeToWKT[self.type], coord[:-2])
+        else:
+            geometryWKT = '{0}({1})'.format(self.typeToWKT[self.type], coord[:-2])
+        return geometryWKT
 
     def getTypeEnumInStr(self, typeEnum):
         return self.typeToStr[typeEnum]

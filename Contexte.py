@@ -716,7 +716,7 @@ class Contexte(object):
         return False
 
     # Les objets sélectionnés sont transformés en croquis
-    def makeCroquisFromSelection(self):
+    def makeSketchsFromSelection(self):
         # Chargement à partir du fichier de configuration des attributs de l'objet sélectionné.
         # Ces attributs deviendront les attributs du croquis.
         # attCroquis est un dictionnaire : key: nom calque, value: liste des attributs

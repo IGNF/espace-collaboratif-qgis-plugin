@@ -489,7 +489,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 message += "Maximum 4 fichiers liés à un signalement\n"
                 PluginHelper.showMessageBox(message)
                 self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
-            elif len(filenames) > 0:
+            elif len(filenames) > 0 and len(filenames) < 5:
                 for filename in filenames:
                     extension = os.path.splitext(filename)[1]
                     if extension[1:] not in self.__context.formats:
@@ -502,14 +502,16 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                                    u"({1}Ko) dépasse celle maximale autorisée ({2}Ko).\n".format(filename,
                                                                                                  str(sizeFilename/1000),
                                                                                                  str(self.docMaxSize/1000))
-                PluginHelper.showMessageBox(message)
-                self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
-            else:
-                self.lblDoc.setProperty("visible", True)
-                fileNameWithSize = ''
-                for filename in filenames:
-                    sizeFilename = os.path.getsize(filename)
-                    fileNameWithSize += "{0} ({1}Mo)\n".format(filename, self.__truncate(sizeFilename / (1024 * 1024), 3))
-                    self.selFileName.append(filename)
-                print(fileNameWithSize)
-                self.lblDoc.setText(fileNameWithSize)
+                if message != '':
+                    PluginHelper.showMessageBox(message)
+                    self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
+                else:
+                    # Affichage des documents sélectionnés dans l'espace dédié
+                    self.lblDoc.setProperty("visible", True)
+                    fileNameWithSize = ''
+                    for filename in filenames:
+                        sizeFilename = os.path.getsize(filename)
+                        fileNameWithSize += "{0} ({1}Mo)\n".format(filename, self.__truncate(sizeFilename / (1024 * 1024), 3))
+                        self.selFileName.append(filename)
+                    print(fileNameWithSize)
+                    self.lblDoc.setText(fileNameWithSize)

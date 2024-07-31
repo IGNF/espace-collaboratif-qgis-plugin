@@ -134,7 +134,7 @@ class CreateReport(object):
             # Avec croquis
             else:
                 # Création des croquis à partir de la sélection de features
-                sketchList = self.__context.makeCroquisFromSelection()
+                sketchList = self.__context.makeSketchsFromSelection()
                 # Il y a eu un problème à la génération des croquis, on sort
                 if len(sketchList) == 0:
                     return
@@ -168,7 +168,7 @@ class CreateReport(object):
         #             return
         #
         #     # Création des croquis à partir de la sélection de features
-        #     croquisList = self.__context.makeCroquisFromSelection()
+        #     croquisList = self.__context.makeSketchsFromSelection()
         #
         #     # Il y a eu un problème à la génération des croquis, on sort
         #     if len(croquisList) == 0:
