@@ -94,11 +94,11 @@ class Community(object):
         data = self.__query.multiple()
         if len(data) == 0:
             return
-        layers = self.getLayers(data)
+        layers = self.__getLayers(data)
         return layers
 
     # Récupère les infos d'une couche (table ou geoservice) et retourne une liste de toutes les couches
-    def getLayers(self, data) -> []:
+    def __getLayers(self, data) -> []:
         layers = []
         for d in data:
             layer = Layer()
@@ -124,23 +124,23 @@ class Community(object):
                 layer.table = d['table']
             if self.__keyExist('type', d):
                 if d['type'] == cst.WFS:
-                    self.getDataLayerFromTable(layer)
+                    self.__getDataLayerFromTable(layer)
                 if d['type'] == cst.WMTS:
                     if self.__keyExist('geoservice', d):
-                        self.getDataLayerFromGeoservice(layer, d['geoservice'])
+                        self.__getDataLayerFromGeoservice(layer, d['geoservice'])
             layers.append(layer)
         return layers
 
     # Récupère les informations d'une table de la base de données correspondant à une couche cartographique
-    def getDataLayerFromTable(self, layer):
+    def __getDataLayerFromTable(self, layer):
         self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseId, layer.table))
         response = self.__query.simple()
         if response is None:
             return
         data = response.json()
-        self.getDataFromTable(data, layer)
+        self.__getDataFromTable(data, layer)
 
-    def getDataFromTable(self, data, layer):
+    def __getDataFromTable(self, data, layer):
         if self.__keyExist('name', data):
             layer.name = data['name']
         if self.__keyExist('description', data):
@@ -183,15 +183,15 @@ class Community(object):
         # layer.styles = data['styles']
 
     # Récupère les informations d'un géoservice
-    def getDataLayerFromGeoservice(self, layer, geoservice):
+    def __getDataLayerFromGeoservice(self, layer, geoservice):
         self.__query.setPartOfUrl("gcms/api/geoservices/{}".format(geoservice['id']))
         response = self.__query.simple()
         if response is None:
             return
         data = response.json()
-        self.getDataFromGeoservice(data, layer)
+        self.__getDataFromGeoservice(data, layer)
 
-    def getDataFromGeoservice(self, data, layer):
+    def __getDataFromGeoservice(self, data, layer):
         # il faut copier le nom de la couche pour récupérer les données de la layer dans la boite "Charger le guichet"
         if self.__keyExist('title', data):
             layer.name = data['title']

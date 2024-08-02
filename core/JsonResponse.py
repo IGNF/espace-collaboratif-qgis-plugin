@@ -21,5 +21,3 @@ class JsonResponse(object):
         if not 'numrec' in data:
             return numrec
         return data['numrec']
-
-

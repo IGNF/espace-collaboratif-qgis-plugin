@@ -179,7 +179,7 @@ class RipartPlugin:
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def __doConnexion(self, bButtonConnect):
-        #  bButtonConnect à True : connexion systématique car l'utilisateur a cliqué
+        #  bButtonConnect à True : connexion systématique, l'utilisateur a cliqué
         #  sur le bouton "Se connecter à l'Espace Collaboratif"
         self.__context = Contexte.getInstance(self, QgsProject)
         if self.__context is None:

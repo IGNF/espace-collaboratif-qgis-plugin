@@ -14,7 +14,7 @@ class HttpRequest(object):
         self.__proxies = proxies
 
     # Retourne une réponse HTTP GET
-    def getResponse(self, partOfUrl, params=None) -> requests.Response:
+    def __getResponse(self, partOfUrl, params=None) -> requests.Response:
         uri = "{}/{}".format(self.__url, partOfUrl)
         if params is not None:
             response = requests.get(uri, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
@@ -32,9 +32,9 @@ class HttpRequest(object):
 
     # Retourne un dictionnaire comprenant le status de la réponse HTTP GET, les données et s'il faut relancer
     # la requête (status_code 206)
-    def getNextResponse(self, partOfUrl, params) -> {}:
+    def __getNextResponse(self, partOfUrl, params) -> {}:
         try:
-            response = self.getResponse(partOfUrl, params)
+            response = self.__getResponse(partOfUrl, params)
             data = response.json()
             # Statut de la réponse
             if response.status_code == 200:
@@ -44,7 +44,7 @@ class HttpRequest(object):
                     return {'status': 'ok', 'page': params['page'] + params['limit'], 'data': data,
                             'stop': False}
                 elif len(data) < params['limit']:
-                    # le parametre page est mis à 0 car la récupération des données est finie
+                    # le parametre page est mis à 0, car la récupération des données est finie
                     return {'status': 'ok', 'page': 0, 'data': data, 'stop': True}
             else:
                 return {'status': 'error', 'reason': data['message'], 'url': response.url}
@@ -52,7 +52,7 @@ class HttpRequest(object):
             return {'status': 'error'}
 
     @staticmethod
-    # Même requête que précédemment mais en utilisant les paramètres offset et maxFeatures
+    # Même requête que précédemment, mais en utilisant les paramètres offset et maxFeatures
     def nextRequest(url, authent=None, proxies=None, params=None) -> {}:
         try:
             r = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
@@ -65,7 +65,7 @@ class HttpRequest(object):
                     return {'status': 'ok', 'offset': params['offset'] + params['maxFeatures'], 'features': response,
                             'stop': False}
                 elif len(response) < params['maxFeatures']:
-                    # le parametre offset est mis à 0 car la récupération des données est finie
+                    # le parametre offset est mis à 0, car la récupération des données est finie
                     return {'status': 'ok', 'offset': 0, 'features': response, 'stop': True}
             else:
                 return {'status': 'error', 'reason': r.reason, 'url': r.url}
@@ -77,9 +77,9 @@ class HttpRequest(object):
     def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, files=None) -> ():
         if data is None and files is None:
             response = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
-                             params=params, verify=False)
+                                    params=params, verify=False)
         else:
             response = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
-                              data=data, files=files, verify=False)
+                                     data=data, files=files, verify=False)
         response.encoding = 'utf-8'
         return response

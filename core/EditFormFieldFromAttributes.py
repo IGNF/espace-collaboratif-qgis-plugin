@@ -6,7 +6,7 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
 """
-from qgis.core import QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue, QgsAction
+from qgis.core import QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue
 from .Action import *
 
 
@@ -371,13 +371,8 @@ class EditFormFieldFromAttributes(object):
     def setFieldBoolean(self, defaultState):
         # Type: ValueMap
         QgsEWS_type = 'ValueMap'
-        attribute_values = {}
-
         # Cas BDUNi
-        attribute_values["Oui"] = '1'
-        attribute_values["Non"] = '0'
-        attribute_values[""] = 'NULL'
-
+        attribute_values = {"Oui": '1', "Non": '0', "": 'NULL'}
         # Config: {'map': {'A compléter': 'NR', 'Coupe rase': 'C', 'Peuplement sain': 'S'}}
         QgsEWS_config = {'map': attribute_values}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
@@ -397,7 +392,7 @@ class EditFormFieldFromAttributes(object):
     def setFieldInteger(self, defaultInteger):
         # Il vaut mieux utiliser un TextEdit contraint par regex pour pouvoir gérer les valeurs null car le
         # type Range ne les accepte pas.
-        # Type: TextEdit
+        # Type : TextEdit
         QgsEWS_type = 'TextEdit'
         # Config: {'IsMultiline': False, 'UseHtml': False}
         QgsEWS_config = {'IsMultiline': False, 'UseHtml': False}
@@ -418,7 +413,7 @@ class EditFormFieldFromAttributes(object):
     def setFieldDouble(self, defaultDouble):
         # Il vaut mieux utiliser un TextEdit contraint par regex pour pouvoir gérer les valeurs null car le
         # type Range ne les accepte pas.
-        # Type: TextEdit
+        # Type : TextEdit
         QgsEWS_type = 'TextEdit'
         # Config: {'IsMultiline': False, 'UseHtml': False}
         QgsEWS_config = {'IsMultiline': False, 'UseHtml': False}
@@ -465,9 +460,8 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_type = 'DateTime'
         # Config: {'allow_null': True, 'calendar_popup': True, 'display_format': 'yyyy-MM-dd HH:mm:ss',
         # 'field_format': 'yyyy-MM-dd HH:mm:ss', 'field_iso_format': False}
-        QgsEWS_config = {'allow_null': True, 'calendar_popup': True,
-                         'display_format': 'yyyy-MM-dd HH:mm:ss', 'field_format': 'yyyy-MM-dd HH:mm:ss',
-                         'field_iso_format': False}
+        QgsEWS_config = {'allow_null': True, 'calendar_popup': True, 'display_format': 'yyyy-MM-dd HH:mm:ss',
+                         'field_format': 'yyyy-MM-dd HH:mm:ss', 'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
         if defaultDateTime is None or defaultDateTime == '':
@@ -495,8 +489,8 @@ class EditFormFieldFromAttributes(object):
         QgsEWS_type = 'DateTime'
         # Config: {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy', 'field_format': 'yyyy',
         # 'field_iso_format': False}
-        QgsEWS_config = {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy',
-                         'field_format': 'yyyy', 'field_iso_format': False}
+        QgsEWS_config = {'allow_null': True, 'calendar_popup': False, 'display_format': 'yyyy', 'field_format': 'yyyy',
+                         'field_iso_format': False}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
 
         if defaultYear is None or defaultYear == '':

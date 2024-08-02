@@ -663,39 +663,40 @@ class Contexte(object):
         for layer in self.mapCan.layers():
             layer.triggerRepaint()
 
-    def updateRemarqueInSqlite(self, rem):
+    # TODO à supprimer car non utilisée
+    # def updateRemarqueInSqlite(self, rem):
+    #     """
+    #     Met à jour une remarque (après l'ajout d'une réponse)
+    #     :param rem : la remarque à mettre à jour
+    #     :type rem: Remarque
+    #     """
+    #     curs = None
+    #     try:
+    #         # self.conn= sqlite3.connect(self.__dbPath)
+    #         self.conn = spatialite_connect(self.dbPath)
+    #
+    #         sql = "UPDATE " + cst.nom_Calque_Signalement + " SET "
+    #         sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
+    #         sql += " Date_validation= '" + rem.getAttribut("dateValidation") + "',"
+    #         sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateResponse()) + "', "
+    #         sql += " Statut='" + rem.statut + "' "
+    #         sql += " WHERE NoSignalement = " + rem.id
+    #
+    #         curs = self.conn.cursor()
+    #         curs.execute(sql)
+    #         self.conn.commit()
+    #
+    #     except Exception as e:
+    #         self.logger.error(format(e))
+    #         raise
+    #     finally:
+    #         curs.close()
+    #         self.conn.close()
+
+    def countReportsByStatut(self, statut):
         """
-        Met à jour une remarque (après l'ajout d'une réponse)
-        :param rem : la remarque à mettre à jour
-        :type rem: Remarque
-        """
-        curs = None
-        try:
-            # self.conn= sqlite3.connect(self.__dbPath)
-            self.conn = spatialite_connect(self.dbPath)
-
-            sql = "UPDATE " + cst.nom_Calque_Signalement + " SET "
-            sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
-            sql += " Date_validation= '" + rem.getAttribut("dateValidation") + "',"
-            sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateResponse()) + "', "
-            sql += " Statut='" + rem.statut + "' "
-            sql += " WHERE NoSignalement = " + rem.id
-
-            curs = self.conn.cursor()
-            curs.execute(sql)
-            self.conn.commit()
-
-        except Exception as e:
-            self.logger.error(format(e))
-            raise
-        finally:
-            curs.close()
-            self.conn.close()
-
-    def countRemarqueByStatut(self, statut):
-        """
-        Retourne le nombre de remarques ayant le statut donné en paramètre
-        :param statut: le statut de la remarque (=code renvoyé par le service)
+        Retourne le nombre de signalements ayant le statut donné en paramètre
+        :param statut: le statut du signalement (=code renvoyé par le service)
         :type statut: string
         """
         remLay = self.getLayerByName(cst.nom_Calque_Signalement)

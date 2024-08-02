@@ -18,6 +18,7 @@ RIPART_CLIENT_VERSION = ""
 STATUT = Enum("undefined", "submit", "pending", "pending0", "pending1", "valid", "valid0", "reject", "reject0",
               "pending2")
 
+
 def getStatuts():
     statuts = [STATUT.submit.__str__(),
                STATUT.pending.__str__(),

@@ -21,9 +21,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
     infogeogroups = []
 
     # la liste du (ou des) nom(s) du (ou des) fichiers sélectionnés (document(s) joint(s))
-    selFileName = []
+    __selFilesName = []
 
-    # dictionnaire des thèmes sélectionnés (key: nom du theme, value: l'objet Theme)
+    # dictionnaire des thèmes sélectionnés (key : nom du theme, value: l'objet Theme)
     selectedThemesList = {}
 
     # liste des thèmes préférés
@@ -35,6 +35,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     # taille maximale du document joint
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
+
+    # La liste des fichiers convertis en string($binary)
+    __stringBinaryFiles = []
 
     def __init__(self, context, nbSketch, parent=None):
         """Constructor."""
@@ -247,7 +250,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         return item_value
 
     def __groupIndexChanged(self):
-        """Détecte le groupe choisi et lance l'affiche des thèmes adequats.
+        """Détecte le groupe choisi et lance l'affiche des thèmes adéquats.
         """
         self.treeWidget.clear()
         print('__groupIndexChanged')
@@ -268,10 +271,10 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """
         return self.radioBtnUnique.isChecked()
 
-    def getMessage(self):
-        """Retourne le message de la remarque
+    def getComment(self):
+        """Retourne le commentaire entré par l'utilisateur (partie Commentaire)
         """
-        return self.textEditMessage.text()
+        return self.textEditMessage.toPlainText()
 
     def getUserSelectedThemeWithAttributes(self):
         """Retourne la liste des thèmes (objets de type THEME) sélectionnés
@@ -362,7 +365,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         return val
 
     def __getKeyFromListOfValues(self, form_value, widg_label, theme_name):
-        """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
+        """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans le formulaire
          par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
          récupérée dans le formulaire est directement utilisée.
         """
@@ -394,7 +397,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         return form_value
 
     def __getKeyFromAttributeValue(self, widg_label, theme_name):
-        """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans la formulaire
+        """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans le formulaire
          par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
          récupérée dans le formulaire est directement utilisée.
         """
@@ -426,16 +429,16 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 return th
         return None
 
-    def getAttachments(self) -> str:
-        """Retourne le nom (ou les) nom(s) du (ou des) fichier(s) sélectionné(s)
+    def getBinaryAttachments(self) -> []:
+        """Retourne une (ou plusieurs) chaine(s) binaire(s)
         
-        :return nom du fichier sélectionné
-        :rtype: string
+        :return la liste des fichiers transformés en string($binary)
+        :rtype: []
         """
         if self.checkBoxAttDoc.isChecked():
-            return self.selFileName
+            return self.__stringBinaryFiles
         else:
-            return ""
+            return []
 
     # def optionWithAttDoc(self):
     #     """
@@ -458,8 +461,15 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             thItem = root.child(i)
             if thItem.checkState(0) == Qt.CheckState.Checked:
                 nb = 1
+        # Pas de thème sélectionné
         if nb == 0:
             self.__context.iface.messageBar().pushMessage("Attention", u'Il manque la sélection du thème', level=1,
+                                                          duration=3)
+            self.bSend = False
+        # Commentaire de 10 caractères minimum
+        if len(self.textEditMessage) < 10:
+            self.__context.iface.messageBar().pushMessage("Attention",
+                                                          u'Le commentaire doit être de 10 caractères minimum', level=1,
                                                           duration=3)
             self.bSend = False
 
@@ -471,10 +481,11 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         return int(n * multiplier) / multiplier
 
     def __openFileDialog(self):
+        self.__stringBinaryFiles.clear()
         if not self.checkBoxAttDoc.isChecked():
             self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
             self.lblDoc.setProperty("visible", False)
-            self.selFileName = None
+            self.__selFilesName.clear()
         else:
             filters = u"All files (*.*);;" + \
                       u"Images (*.BMP;*.GIF;*.JPG;*.JPEG;*.PNG);;" + \
@@ -489,7 +500,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 message += "Maximum 4 fichiers liés à un signalement\n"
                 PluginHelper.showMessageBox(message)
                 self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
-            elif len(filenames) > 0 and len(filenames) < 5:
+            elif 0 < len(filenames) < 5:
                 for filename in filenames:
                     extension = os.path.splitext(filename)[1]
                     if extension[1:] not in self.__context.formats:
@@ -510,8 +521,18 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     self.lblDoc.setProperty("visible", True)
                     fileNameWithSize = ''
                     for filename in filenames:
+                        # La liste des fichiers pour affichage dans la boite
                         sizeFilename = os.path.getsize(filename)
-                        fileNameWithSize += "{0} ({1}Mo)\n".format(filename, self.__truncate(sizeFilename / (1024 * 1024), 3))
-                        self.selFileName.append(filename)
+                        fileNameWithSize += "{0} ({1}Mo)\n".format(
+                            filename, self.__truncate(sizeFilename / (1024 * 1024), 3))
+                        self.__selFilesName.append(filename)
+                        # La conversion en binaire
+                        self.__stringBinaryFiles.append(self.__fileToBinaryString(filename))
                     print(fileNameWithSize)
                     self.lblDoc.setText(fileNameWithSize)
+
+    def __fileToBinaryString(self, file_path):
+        with open(file_path, 'rb') as file:
+            binary_code = file.read()
+            binary_string = ''.join(format(byte, '08b') for byte in binary_code)
+        return binary_string

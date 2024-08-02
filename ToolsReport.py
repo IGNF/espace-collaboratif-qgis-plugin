@@ -1,6 +1,5 @@
 import json
 import os.path
-import datetime
 
 from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
@@ -49,10 +48,10 @@ class ToolsReport(object):
                 vlayer.loadNamedStyle(style)
         self.__context.mapCan.refresh()
 
-    def getReport(self, id):
+    def getReport(self, idReport):
         query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
                       self.__context.proxy)
-        query.setPartOfUrl('gcms/api/reports/{}'.format(id))
+        query.setPartOfUrl('gcms/api/reports/{}'.format(idReport))
         response = query.simple()
         return Report(self.__context.urlHostEspaceCo, response.json())
 
@@ -89,7 +88,7 @@ class ToolsReport(object):
         self.__context.createTablesReportsAndSketchs()
 
         message = "Placement des signalements sur la carte"
-        self.progress = ProgressBar(200, message)
+        self.__progress = ProgressBar(200, message)
 
         # Création des couches dans QGIS et des liens vers la base SQLite
         self.__addReportSketchLayersToTheCurrentMap()
@@ -108,20 +107,20 @@ class ToolsReport(object):
         self.__context.refresh_layers()
 
         # Fermer la patience
-        self.progress.close()
+        self.__progress.close()
 
         # Afficher les résultats
         self.__showImportResult()
 
     def __showImportResult(self) -> None:
         # Résultat de l'import
-        submit = self.__context.countRemarqueByStatut(cst.STATUT.submit.__str__())
-        pending = self.__context.countRemarqueByStatut(cst.STATUT.pending.__str__()) \
-                  + self.__context.countRemarqueByStatut(cst.STATUT.pending0.__str__()) \
-                  + self.__context.countRemarqueByStatut(cst.STATUT.pending1.__str__()) \
-                  + self.__context.countRemarqueByStatut(cst.STATUT.pending2.__str__())
-        reject = self.__context.countRemarqueByStatut(cst.STATUT.reject.__str__())
-        valid = self.__context.countRemarqueByStatut(cst.STATUT.valid.__str__()) + self.__context.countRemarqueByStatut(
+        submit = self.__context.countReportsByStatut(cst.STATUT.submit.__str__())
+        pending = self.__context.countReportsByStatut(cst.STATUT.pending.__str__()) + \
+                  self.__context.countReportsByStatut(cst.STATUT.pending0.__str__()) + \
+                  self.__context.countReportsByStatut(cst.STATUT.pending1.__str__()) + \
+                  self.__context.countReportsByStatut(cst.STATUT.pending2.__str__())
+        reject = self.__context.countReportsByStatut(cst.STATUT.reject.__str__())
+        valid = self.__context.countReportsByStatut(cst.STATUT.valid.__str__()) + self.__context.countReportsByStatut(
             cst.STATUT.valid0.__str__())
 
         resultMessage = "Extraction réussie avec succès de " + str(submit + pending + valid + reject) + \
@@ -225,7 +224,7 @@ class ToolsReport(object):
 
     def __sendReport(self, datasForRequest):
         print(json.dumps(datasForRequest))
-        # Envoi de la requete serveur en POST, il faut transformer les datasForRequest en json avec json.dumps
+        # Envoi de la requête serveur en POST, il faut transformer les datasForRequest en json
         responseFromServer = self.__sendRequest(json.dumps(datasForRequest))
         if responseFromServer is None:
             return
@@ -258,7 +257,7 @@ class ToolsReport(object):
         # Une partie des données pour le corps de la requête a envoyé au serveur
         datasForRequest = {
             'community': self.__context.getUserCommunity().getId(),  # obligatoire
-            'comment': formCreate.textEditMessage.toPlainText(),
+            'comment': formCreate.getComment(),
             'input_device': cst.CLIENT_INPUT_DEVICE
         }
 
@@ -271,27 +270,18 @@ class ToolsReport(object):
         datasForRequest['attributes'] = themeWithAttributes  # obligatoire
 
         # Récupération du (ou des) fichier(s) joint(s) (max 4) au signalement
-        fileNames = formCreate.getAttachments()
-        for fileName in fileNames:
-            datasForRequest['attachments'].append({
-                'id': 0,
-                'short_fileName': '',
-                'description': '',
-                'title': '',
-                'type': '',
-                'size': 0,
-                'width': 0,
-                'height': 0,
-                'date': datetime.datetime.today().replace(microsecond=0).isoformat(),
-                'filename': fileName,
-                'geometry': ''
-            })
+        # stringBinaryfileName = formCreate.getBinaryAttachments()
+        # datasForRequest['documents'] = []
+        # for stringBinary in stringBinaryfileName:
+        #     datasForRequest['documents'].append(stringBinary)
 
         # Création du ou des signalements
         if formCreate.isSingleReport():
             contents = self.__createSingleReport(sketchList, datasForRequest)
         else:
             contents = self.__createMultiReports(sketchList, datasForRequest)
+        if contents is None:
+            raise Exception("ToolsReport.__createSingleReport : erreur dans la création d'un signalement")
 
         # Insertion des signalements et des croquis dans la base SQLite
         listNewReportIds = self.__insertReportsSketchsIntoSQLite(contents)
@@ -321,8 +311,8 @@ class ToolsReport(object):
         Retourne les coordonnées du signalement en WKT en calculant le barycentre en fonction
         d'une liste de points représentant la géométrie du croquis
 
-        :param geomSketch : la géométrie sous forme d'une liste de points du croquis
-        :type geomSketch : list
+        :param listPoints : la géométrie sous forme d'une liste de points du croquis
+        :type listPoints : list
 
         :return : le barycentre
         :rtype : Point
@@ -339,7 +329,6 @@ class ToolsReport(object):
 
     def __createReportWithSketchs(self, sketchList, bOneReport) -> []:
         datas = []
-
         if bOneReport:
             points = []
             sketch = {
@@ -371,7 +360,6 @@ class ToolsReport(object):
         return columns, report.getId()
 
     def __insertReportsSketchsIntoSQLite(self, datas) -> []:
-        global rows
         parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
                       'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
         attributesRows = []
@@ -396,7 +384,7 @@ class ToolsReport(object):
             message += "d'un nouveau signalement : {0}".format(listNewReportIds[0])
         else:
             listIds = ''
-            for id in listNewReportIds:
-                listIds += "{},".format(id)
-            message += "de plusieurs signalements : {0}".format(listIds[:-1])
+            for idReport in listNewReportIds:
+                listIds += "{}, ".format(idReport)
+            message += "de plusieurs signalements : {0}".format(listIds[:-2])
         QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)

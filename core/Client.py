@@ -8,7 +8,6 @@ from . import Constantes
 from .Remarque import Remarque
 from .RipartServiceRequest import RipartServiceRequest
 from .XMLResponse import XMLResponse
-from .JsonResponse import JsonResponse
 from .ClientHelper import ClientHelper
 from .NoProfileException import NoProfileException
 from .RipartLoggerCl import RipartLogger
@@ -55,12 +54,12 @@ class Client(object):
     # def connect(self):
     #     """
     #     Connexion d'un utilisateur par son login et mot de passe
-    #     :return: Si la connexion se fait, retourne l'id de l'auteur; sinon retour du message d'erreur
+    #     :return : Si la connexion se fait, retourne l'id de l'auteur ; sinon retour du message d'erreur
     #     """
     #     try:
     #         self.logger.debug("tentative de connexion; " + self.__url + ' connect ' + self.__login)
     #         requests.get(self.__url, proxies=self.__proxies, auth=HTTPBasicAuth(self.__login, self.__password))
-    #     except Exception as e:
+    #     except Exception as e :
     #         self.logger.error(format(e))
     #         raise Exception(format(e))
     #     return self
@@ -73,7 +72,7 @@ class Client(object):
     def getProfilFromService(self):
         """
         Requête au service pour le profil utilisateur
-        :return: le profil de l'utilisateur
+        :return : le profil de l'utilisateur
         """
         community = Community(self.__url, self.__login, self.__password, self.__proxies)
         profile = community.getProfile()
@@ -133,37 +132,38 @@ class Client(object):
         Pour l'item 'style', récupération de la symbologie d'une couche
     '''
 
-    def getListOfValuesFromItemStyle(self, dataFeaturetype):
-        listOfValues = {}
-        tmp = {'children': []}
-        for dftKey, dftValue in dataFeaturetype.items():
-            if dftKey != 'style':
-                continue
-
-            # La couche n'a pas de style défini, QGIS applique une symbologie par défaut
-            if dftValue is None:
-                return listOfValues
-
-            for dftvKey, dftvValues in dftValue.items():
-                if dftvKey == 'children':
-                    if type(dftvValues) is list and len(dftvValues) == 0:
-                        continue
-                    else:
-                        for dftvValue in dftvValues:
-                            listOfValues[dftvValue['name']] = dftvValue
-                else:
-                    tmp[dftvKey] = dftvValues
-
-            listOfValues['default'] = tmp
-
-        return listOfValues
+    # TODO à supprimer
+    # def getListOfValuesFromItemStyle(self, dataFeaturetype):
+    #     listOfValues = {}
+    #     tmp = {'children': []}
+    #     for dftKey, dftValue in dataFeaturetype.items():
+    #         if dftKey != 'style':
+    #             continue
+    #
+    #         # La couche n'a pas de style défini, QGIS applique une symbologie par défaut
+    #         if dftValue is None:
+    #             return listOfValues
+    #
+    #         for dftvKey, dftvValues in dftValue.items():
+    #             if dftvKey == 'children':
+    #                 if type(dftvValues) is list and len(dftvValues) == 0:
+    #                     continue
+    #                 else:
+    #                     for dftvValue in dftvValues:
+    #                         listOfValues[dftvValue['name']] = dftvValue
+    #             else:
+    #                 tmp[dftvKey] = dftvValues
+    #
+    #         listOfValues['default'] = tmp
+    #
+    #     return listOfValues
 
     def getGeoRems(self, parameters):
         """Recherche les remarques.
         Boucle sur la méthode privée __getGeoRemsTotal, pour récupérer d'éventuelles MAJ ou nouvelles remarques
         faites entre le début et la fin de la requête
 
-        :param parameters: les paramètres de la requête
+        :param parameters : les paramètres de la requête
         :type parameters : dictionary
         """
         # progressbar pour le chargement des remarques
@@ -187,7 +187,7 @@ class Client(object):
     def __getGeoRemsTotal(self, parameters):
         """Recherche les remarques en fonction des paramètres et retourne le nombre total de remarques trouvées
 
-        :param parameters: les paramètres de la requête
+        :param parameters : les paramètres de la requête
         :type parameters : dictionary
 
         :return dictionnaire contenant les remarques
@@ -241,8 +241,8 @@ class Client(object):
     def getGeoRem(self, idSignalement):
         """Requête pour récupérer une remarque avec un identifiant donné
 
-        :param idSignalement: identifiant de la remarque que l'on souhaite récupérer
-        :type idSignalement: int
+        :param idSignalement : identifiant de la remarque que l'on souhaite récupérer
+        :type idSignalement : int
 
         :return la remarque
         :rtype Remarque
@@ -280,13 +280,13 @@ class Client(object):
     def addResponse(self, report, response, titleResponse):
         """Ajoute une réponse à une remarque
 
-        :param report: la remarque
+        :param report : la remarque
         :type report: Remarque
 
         :param response : la réponse
         :type response: string
 
-        :param titleResponse: le titre de la réponse
+        :param titleResponse : le titre de la réponse
         :type titleResponse : string
 
         :return la remarque à laquelle a été ajoutée la réponse
@@ -314,76 +314,77 @@ class Client(object):
             raise Exception(errMessage['message'], e)
         return remModif
 
-    def createRemarque(self, remarque, idSelectedGeogroup):
-        try:
-            params = {'version': Constantes.RIPART_CLIENT_VERSION,
-                      'protocol': Constantes.RIPART_CLIENT_PROTOCOL,
-                      'comment': ClientHelper.notNoneValue(remarque.commentaire)}
-            geometry = "POINT(" + str(remarque.getLongitude()) + " " + str(remarque.getLatitude()) + ")"
-            params['geometry'] = geometry
-            params['territory'] = self.getProfile().zone.__str__()
-            params['group'] = idSelectedGeogroup
-
-            # Ajout des thèmes selectionnés
-            themes = remarque.themes
-            if themes is not None and len(themes) > 0:
-                attributes = ""
-                for t in themes:
-                    groupeIdAndNom = ClientHelper.notNoneValue('"' + t.group.getId() + "::" + t.group.getName())
-                    attributes += ClientHelper.notNoneValue(groupeIdAndNom + "\"=>\"1\",")
-                    for at in t.attributes:
-                        attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
-
-                attributes = attributes[:-1]
-                params["attributes"] = attributes
-
-            # ajout des croquis
-            if not remarque.isCroquisEmpty():
-                croquis = remarque.croquis
-                gmlurl = "http://www.opengis.net/gml"
-                doc = ET.Element("CROQUIS", {"xmlns:gml": gmlurl})
-
-                for cr in croquis:
-                    doc = cr.encodeToXML(doc)
-
-                params["sketch"] = ET.tostring(doc)
-
-            # ajout des documents joints
-            documents = remarque.documents
-            docCnt = 0
-            files = {}
-            for document in documents:
-                if os.path.isfile(document):
-                    docCnt += 1
-                    if os.path.getsize(document) > Constantes.MAX_TAILLE_UPLOAD_FILE:
-                        raise Exception("Le fichier " + document + " est de taille supérieure à " +
-                                        str(Constantes.MAX_TAILLE_UPLOAD_FILE))
-
-                    files = {"upload" + str(docCnt): open(ClientHelper.notNoneValue(document), 'rb')}
-
-            # envoi de la requête
-            uri = self.__url + "/api/georem/georem_post.xml"
-            data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies, data=params,
-                                                        files=files)
-            xmlResponse = XMLResponse(data)
-            errMessage = xmlResponse.checkResponseValidity()
-
-            if errMessage['code'] == 'OK':
-                rems = xmlResponse.extractRemarques()
-                if len(rems) == 1:
-                    rem = list(rems.values())[0]
-                else:
-                    self.logger.error("Problème lors de l'ajout de la remarque")
-                    raise Exception("Problème lors de l'ajout de la remarque")
-            else:
-                self.logger.error(errMessage['message'])
-                raise Exception(errMessage['message'])
-
-        except Exception as e:
-            self.logger.error(str(e))
-            raise Exception(e)
-
-        return rem
+    # TODO à supprimer
+    # def createRemarque(self, remarque, idSelectedGeogroup):
+    #     try:
+    #         params = {'version': Constantes.RIPART_CLIENT_VERSION,
+    #                   'protocol': Constantes.RIPART_CLIENT_PROTOCOL,
+    #                   'comment': ClientHelper.notNoneValue(remarque.commentaire)}
+    #         geometry = "POINT(" + str(remarque.getLongitude()) + " " + str(remarque.getLatitude()) + ")"
+    #         params['geometry'] = geometry
+    #         params['territory'] = self.getProfile().zone.__str__()
+    #         params['group'] = idSelectedGeogroup
+    #
+    #         # Ajout des thèmes selectionnés
+    #         themes = remarque.themes
+    #         if themes is not None and len(themes) > 0:
+    #             attributes = ""
+    #             for t in themes:
+    #                 groupeIdAndNom = ClientHelper.notNoneValue('"' + t.group.getId() + "::" + t.group.getName())
+    #                 attributes += ClientHelper.notNoneValue(groupeIdAndNom + "\"=>\"1\",")
+    #                 for at in t.attributes:
+    #                     attributes += groupeIdAndNom + "::" + at.nom + '"=>"' + at.valeur + '",'
+    #
+    #             attributes = attributes[:-1]
+    #             params["attributes"] = attributes
+    #
+    #         # ajout des croquis
+    #         if not remarque.isCroquisEmpty():
+    #             croquis = remarque.croquis
+    #             gmlurl = "http://www.opengis.net/gml"
+    #             doc = ET.Element("CROQUIS", {"xmlns:gml": gmlurl})
+    #
+    #             for cr in croquis:
+    #                 doc = cr.encodeToXML(doc)
+    #
+    #             params["sketch"] = ET.tostring(doc)
+    #
+    #         # ajout des documents joints
+    #         documents = remarque.documents
+    #         docCnt = 0
+    #         files = {}
+    #         for document in documents:
+    #             if os.path.isfile(document):
+    #                 docCnt += 1
+    #                 if os.path.getsize(document) > Constantes.MAX_TAILLE_UPLOAD_FILE:
+    #                     raise Exception("Le fichier " + document + " est de taille supérieure à " +
+    #                                     str(Constantes.MAX_TAILLE_UPLOAD_FILE))
+    #
+    #                 files = {"upload" + str(docCnt): open(ClientHelper.notNoneValue(document), 'rb')}
+    #
+    #         # envoi de la requête
+    #         uri = self.__url + "/api/georem/georem_post.xml"
+    #         data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies, data=params,
+    #                                                     files=files)
+    #         xmlResponse = XMLResponse(data)
+    #         errMessage = xmlResponse.checkResponseValidity()
+    #
+    #         if errMessage['code'] == 'OK':
+    #             rems = xmlResponse.extractRemarques()
+    #             if len(rems) == 1:
+    #                 rem = list(rems.values())[0]
+    #             else:
+    #                 self.logger.error("Problème lors de l'ajout de la remarque")
+    #                 raise Exception("Problème lors de l'ajout de la remarque")
+    #         else:
+    #             self.logger.error(errMessage['message'])
+    #             raise Exception(errMessage['message'])
+    #
+    #     except Exception as e:
+    #         self.logger.error(str(e))
+    #         raise Exception(e)
+    #
+    #     return rem
 
     @staticmethod
     def get_MAX_TAILLE_UPLOAD_FILE():

@@ -41,23 +41,23 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.__listLayers.reverse()
 
         # Remplissage des différentes tables de couches
-        self.setTableWidgetMonGuichet()
-        self.setTableWidgetFondsGeoservices()
+        self.__setTableWidgetMonGuichet()
+        self.__setTableWidgetFondsGeoservices()
         # self.setTableWidgetAutresGeoservices()
 
-        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
+        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.__save)
+        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__cancel)
 
         self.labelGroupeActif.setText("Communauté active : {}".format(context.getUserCommunity().getName()))
-        self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  ##ff0000
+        self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  # #ff0000
 
-    def setColonneCharger(self, tableWidget, row, column) -> None:
+    def __setColonneCharger(self, tableWidget, row, column) -> None:
         itemCheckBox = QtWidgets.QTableWidgetItem()
         itemCheckBox.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
         itemCheckBox.setCheckState(QtCore.Qt.CheckState.Unchecked)
         tableWidget.setItem(row, column, itemCheckBox)
 
-    def setTableWidgetMonGuichet(self) -> None:
+    def __setTableWidgetMonGuichet(self) -> None:
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetMonGuichet.setHorizontalHeaderLabels(entete)
@@ -87,9 +87,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             self.tableWidgetMonGuichet.setItem(rowPosition, 1, item)
 
             # Colonne "Charger"
-            self.setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
+            self.__setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
 
-    def setTableWidgetFondsGeoservices(self) -> None:
+    def __setTableWidgetFondsGeoservices(self) -> None:
         # Entête
         entete = ["Nom de la couche", "Rôle", "Charger"]
         self.tableWidgetFondsGeoservices.setHorizontalHeaderLabels(entete)
@@ -118,41 +118,42 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             self.tableWidgetFondsGeoservices.setItem(rowPosition, 1, item)
 
             # Colonne "Charger"
-            self.setColonneCharger(self.tableWidgetFondsGeoservices, rowPosition, 2)
+            self.__setColonneCharger(self.tableWidgetFondsGeoservices, rowPosition, 2)
 
-    def setTableWidgetAutresGeoservices(self) -> None:
-        # Entête
-        entete = ["Nom de la couche", "Type", "Charger"]
-        self.tableWidgetAutresGeoservices.setHorizontalHeaderLabels(entete)
+    # TODO à supprimer car non utilisée
+    # def __setTableWidgetAutresGeoservices(self) -> None:
+    #     # Entête
+    #     entete = ["Nom de la couche", "Type", "Charger"]
+    #     self.tableWidgetAutresGeoservices.setHorizontalHeaderLabels(entete)
+    #
+    #     # Autres lignes de la table
+    #     for layer in self.__listLayers:
+    #         if layer.type != cst.WFS and layer.type != cst.WMS:
+    #             continue
+    #
+    #         if layer.url.find(cst.COLLABORATIF) != -1:
+    #             continue
+    #         # TODO il y a surement quelque chose à faire ici
+    #         # if layer.url.find(cst.WXSIGN) != -1:
+    #             # continue
+    #
+    #         rowPosition = self.tableWidgetAutresGeoservices.rowCount()
+    #         self.tableWidgetAutresGeoservices.insertRow(rowPosition)
+    #
+    #         # Colonne "Nom de la couche"
+    #         item = QtWidgets.QTableWidgetItem(layer.name)
+    #         self.tableWidgetAutresGeoservices.setItem(rowPosition, 0, item)
+    #
+    #         # Colonne "Type"
+    #         item = QtWidgets.QTableWidgetItem(layer.type)
+    #         self.tableWidgetAutresGeoservices.setItem(rowPosition, 1, item)
+    #
+    #         # Colonne "Charger"
+    #         self.__setColonneCharger(self.tableWidgetAutresGeoservices, rowPosition, 2)
+    #
+    #     self.tableWidgetAutresGeoservices.resizeColumnsToContents()
 
-        # Autres lignes de la table
-        for layer in self.__listLayers:
-            if layer.type != cst.WFS and layer.type != cst.WMS:
-                continue
-
-            if layer.url.find(cst.COLLABORATIF) != -1:
-                continue
-            # TODO il y a surement quelque chose à faire ici
-            # if layer.url.find(cst.WXSIGN) != -1:
-                # continue
-
-            rowPosition = self.tableWidgetAutresGeoservices.rowCount()
-            self.tableWidgetAutresGeoservices.insertRow(rowPosition)
-
-            # Colonne "Nom de la couche"
-            item = QtWidgets.QTableWidgetItem(layer.name)
-            self.tableWidgetAutresGeoservices.setItem(rowPosition, 0, item)
-
-            # Colonne "Type"
-            item = QtWidgets.QTableWidgetItem(layer.type)
-            self.tableWidgetAutresGeoservices.setItem(rowPosition, 1, item)
-
-            # Colonne "Charger"
-            self.setColonneCharger(self.tableWidgetAutresGeoservices, rowPosition, 2)
-
-        self.tableWidgetAutresGeoservices.resizeColumnsToContents()
-
-    def getLayersSelected(self, tableWidget, numCol) -> []:
+    def __getLayersSelected(self, tableWidget, numCol) -> []:
         checked_list = []
         for i in range(tableWidget.rowCount()):
             item = tableWidget.item(i, numCol)
@@ -161,11 +162,11 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 checked_list.append(itemCouche.text())
         return checked_list
 
-    def save(self) -> None:
+    def __save(self) -> None:
         self.accept()
         layersQGIS = []
-        layersChecked = [self.getLayersSelected(self.tableWidgetFondsGeoservices, 2),
-                         self.getLayersSelected(self.tableWidgetMonGuichet, 2)]
+        layersChecked = [self.__getLayersSelected(self.tableWidgetFondsGeoservices, 2),
+                         self.__getLayersSelected(self.tableWidgetMonGuichet, 2)]
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
         for layerChecked in layersChecked:
             for tmp in layerChecked:
@@ -174,9 +175,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                         layersQGIS.append(layer)
                         break
         # Téléchargement et import des couches du guichet sur la carte
-        self.doImport(layersQGIS)
+        self.__doImport(layersQGIS)
 
-    def doImport(self, selectedLayers) -> None:
+    def __doImport(self, selectedLayers) -> None:
         try:
             self.__logger.debug("doImport")
 
@@ -206,6 +207,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         except Exception as e:
             PluginHelper.showMessageBox('{}'.format(e))
 
-    def cancel(self) -> None:
+    def __cancel(self) -> None:
         self.reject()
         print("L'utilisateur est sorti de la boite Charger les couches du groupe")
