@@ -113,7 +113,7 @@ class Community(object):
             if self.__keyExist('id', d):
                 layer.id = d['id']
             if self.__keyExist('database', d):
-                layer.databaseId = d['database']
+                layer.databaseid = d['database']
             if self.__keyExist('order', d):
                 layer.order = d['order']
             if self.__keyExist('preferred_style', d):
@@ -121,7 +121,7 @@ class Community(object):
             if self.__keyExist('snapto', d):
                 layer.snapto = d['snapto']
             if self.__keyExist('table', d):
-                layer.table = d['table']
+                layer.tableid = d['table']
             if self.__keyExist('type', d):
                 if d['type'] == cst.WFS:
                     self.__getDataLayerFromTable(layer)
@@ -133,7 +133,7 @@ class Community(object):
 
     # Récupère les informations d'une table de la base de données correspondant à une couche cartographique
     def __getDataLayerFromTable(self, layer):
-        self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseId, layer.table))
+        self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseid, layer.tableid))
         response = self.__query.simple()
         if response is None:
             return
@@ -143,6 +143,7 @@ class Community(object):
     def __getDataFromTable(self, data, layer):
         if self.__keyExist('name', data):
             layer.name = data['name']
+            layer.tablename = data['name']
         if self.__keyExist('description', data):
             layer.description = data['description']
         if self.__keyExist('min_zoom_level', data):
@@ -192,7 +193,8 @@ class Community(object):
         self.__getDataFromGeoservice(data, layer)
 
     def __getDataFromGeoservice(self, data, layer):
-        # il faut copier le nom de la couche pour récupérer les données de la layer dans la boite "Charger le guichet"
+        # il faut copier le nom de la couche pour récupérer les données
+        # de la layer dans la boite "Charger le guichet"
         if self.__keyExist('title', data):
             layer.name = data['title']
         layer.geoservice.update(data)

@@ -15,8 +15,10 @@ class Layer(object):
 
     def __init__(self):
         # Attributs remplis avec gcms/api/communities/{community_id}/layers
-        self.databaseId = None
+        self.databaseid = 0
         self.databasename = ''
+        self.tableid = 0
+        self.tablename = ''
         self.geoservice = {}
         self.id = None
         self.opacity = 1
@@ -24,7 +26,6 @@ class Layer(object):
         self.preferred_style = None
         self.role = 'visu'
         self.snapto = None
-        self.table = 0
         self.type = 'feature-type'
         self.visibility = True
         # Attributs remplis avec gcms/api/databases/{database_id}/tables/{table_id}

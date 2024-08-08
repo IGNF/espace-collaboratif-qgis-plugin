@@ -21,7 +21,6 @@ import configparser
 from .core.Community import Community
 from .PluginHelper import PluginHelper
 from .core.RipartLoggerCl import RipartLogger
-from .core.ClientHelper import ClientHelper
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
 from .core.Sketch import Sketch
@@ -47,7 +46,6 @@ class Contexte(object):
     pwd = ""
     urlHostEspaceCo = ""
     profil = None
-
 
     # client pour le service RIPart
     client = None
@@ -286,7 +284,8 @@ class Contexte(object):
     def getConnexionEspaceCollaboratif(self, newLogin=False):
         """Connexion à l'espace collaboratif
 
-        :param newLogin: booléen indiquant si on fait un nouveau login (fonctionnalité "Connexion à l'espace collaboratif")
+        :param newLogin: booléen indiquant si on fait un nouveau login
+        (fonctionnalité "Connexion à l'espace collaboratif")
         :type newLogin: boolean
 
         :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
@@ -322,7 +321,7 @@ class Contexte(object):
         xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
         if xmlgroupeactif is not None:
             self.__activeCommunityName = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
-                                                              "Serveur").text
+                                                                        "Serveur").text
             if self.__activeCommunityName is not None:
                 self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
 
@@ -551,7 +550,7 @@ class Contexte(object):
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'authentification': self.auth,
-                      'proxy': self.proxy, 'databaseid': layer.databaseId, 'tableid': layer.table
+                      'proxy': self.proxy, 'databaseid': layer.databaseid, 'tableid': layer.tableid
                       }
         wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcms_get(True)
@@ -565,10 +564,10 @@ class Contexte(object):
             dim = 1
 
         parametersForTableOfTables = {'layer': layer.name, 'idName': idNameForDatabase, 'standard': valStandard,
-                                      'database': layer.databasename, 'srid': layer.srid,
+                                      'database': layer.databasename, 'databaseid': layer.databaseid,'srid': layer.srid,
                                       'geometryName': geometryName, 'geometryDimension': dim,
-                                      'geometryType': layer.geometryType,
-                                      'numrec': maxNumrecMessage[0]}
+                                      'geometryType': layer.geometryType, 'numrec': maxNumrecMessage[0],
+                                      'tableid': layer.tableid}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
         # On stocke le srid de la layer pour pouvoir traiter le post

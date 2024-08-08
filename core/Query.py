@@ -90,7 +90,7 @@ class Query(object):
         httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxy)
         data = []
         while True:
-            response = httpRequest.__getNextResponse(self.__partOfUrl, self.__params)
+            response = httpRequest.getNextResponse(self.__partOfUrl, self.__params)
             if response['status'] == 'error':
                 message += "[Query.multiple.getNextResponse] {0} : {1}".format(response['status'], response['reason'])
                 break

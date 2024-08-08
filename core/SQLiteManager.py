@@ -329,8 +329,8 @@ class SQLiteManager(object):
     @staticmethod
     # Retourne la valeur d'une colonne selon une condition d'égalité
     # TODO quelle valeur est retournee ?
-    def selectColumnFromTableWithCondition(tableName, columnName, key):
-        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, columnName, key)
+    def selectColumnFromTableWithCondition(columnName, tableName, conditionColumn, conditionValue):
+        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, conditionColumn, conditionValue)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
         cursor.execute(sql)
@@ -380,8 +380,9 @@ class SQLiteManager(object):
     # en vue d'une synchronisation vers le serveur par exemple
     def createTableOfTables() -> None:
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
-              u"standard BOOL, database TEXT, srid INTEGER, geometryName TEXT, geometryDimension INTEGER, " \
-              u"geometryType TEXT, numrec INTEGER)".format(cst.TABLEOFTABLES)
+              u"standard BOOL, database TEXT, databaseid INTEGER, srid INTEGER, geometryName TEXT, " \
+              u"geometryDimension INTEGER, geometryType TEXT, numrec INTEGER, " \
+              u"tableid INTEGER)".format(cst.TABLEOFTABLES)
         SQLiteManager.executeSQL(sql)
 
     @staticmethod

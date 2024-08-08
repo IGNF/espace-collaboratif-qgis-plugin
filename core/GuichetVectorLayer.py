@@ -205,7 +205,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         return symbol
 
     def __setSymbolLine(self, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity):
-        lineSymbol = self.setLineStyle(strokeLinecap, strokeDashstyle, strokeColor, strokeWidth)
+        lineSymbol = self.__setLineStyle(strokeLinecap, strokeDashstyle, strokeColor, strokeWidth)
         symbol = QgsLineSymbol().createSimple(lineSymbol)
         symbol.setOpacity(strokeOpacity)
         return symbol

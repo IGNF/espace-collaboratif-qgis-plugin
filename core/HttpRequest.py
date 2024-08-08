@@ -14,7 +14,7 @@ class HttpRequest(object):
         self.__proxies = proxies
 
     # Retourne une réponse HTTP GET
-    def __getResponse(self, partOfUrl, params=None) -> requests.Response:
+    def getResponse(self, partOfUrl, params=None) -> requests.Response:
         uri = "{}/{}".format(self.__url, partOfUrl)
         if params is not None:
             response = requests.get(uri, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies,
@@ -32,9 +32,9 @@ class HttpRequest(object):
 
     # Retourne un dictionnaire comprenant le status de la réponse HTTP GET, les données et s'il faut relancer
     # la requête (status_code 206)
-    def __getNextResponse(self, partOfUrl, params) -> {}:
+    def getNextResponse(self, partOfUrl, params) -> {}:
         try:
-            response = self.__getResponse(partOfUrl, params)
+            response = self.getResponse(partOfUrl, params)
             data = response.json()
             # Statut de la réponse
             if response.status_code == 200:

@@ -1,3 +1,5 @@
+import json
+
 import qgis.core
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from qgis.PyQt.QtWidgets import QMessageBox
@@ -16,45 +18,54 @@ class WfsPost(object):
     def __init__(self, context, layer, filterName):
         self.__context = context
         self.__layer = layer
-        self.__url = context.urlHostEspaceCo + '/gcms/api/wfstransactions'
+        # self.__url = context.urlHostEspaceCo + '/gcms/api/wfstransactions'
         self.__identification = context.auth
         self.__proxy = context.proxy
-        self.__actions = []
-        self.__endReport = ''
-        self.__transactionReport = ''
+        self.__endReporting = ''
+        self.__transactionReporting = ''
         ''' Il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
         que l'on peut stocker dans une table sqlite'''
-        self.initParametersLayer()
+        database_id = self.__initParametersLayer()
+        if database_id is None:
+            raise Exception("WfsPost:__init__, pour la couche {}, l'identifiant de la table n'est pas trouvé.".format(
+                layer.name()))
+        self.__url = "{0}/gcms/api/databases/{1}/transactions".format(context.urlHostEspaceCo, database_id)
         self.__bbox = BBox(context)
         self.__filterName = filterName
         self.__isTableStandard = True
+        self.__datasForPost = {}
 
-    def initParametersLayer(self):
+    def __initParametersLayer(self):
+        # r[0] : id
+        # r[1] : layer
+        # r[2] : idName
+        # r[3] : standard
+        # r[4] : database
+        # r[5] : databaseid
+        # r[6] : srid
+        # r[7] : geometryName
+        # r[8] : geometryDimension
+        # r[9] : geometryType
+        # r[10] : numrec
+        # r[11] : tableid
+        databaseid = None
         result = SQLiteManager.selectRowsInTableOfTables(self.__layer.name())
         if result is not None:
             for r in result:
                 self.__layer.databasename = r[4]
                 self.__isTableStandard = r[3]
                 self.__layer.isStandard = r[3]
-                self.__layer.srid = r[5]
+                self.__layer.srid = r[6]
                 self.__layer.idNameForDatabase = r[2]
-                self.__layer.geometryNameForDatabase = r[6]
-                self.__layer.geometryDimensionForDatabase = r[7]
-                self.__layer.geometryTypeForDatabase = r[8]
-
-    def formatItemActions(self):
-        res = '['
-        for action in self.__actions:
-            res += action
-            res += ','
-        pos = len(res)
-        # Remplacement de la virgule de fin par un crochet fermant
-        strActions = res[0:pos - 1]
-        strActions += ']'
-        return strActions
+                self.__layer.geometryNameForDatabase = r[7]
+                self.__layer.geometryDimensionForDatabase = r[8]
+                self.__layer.geometryTypeForDatabase = r[9]
+                self.__layer.tableid = r[11]
+                databaseid = r[5]
+        return databaseid
 
     def setHeader(self):
-        return '{"feature": {'
+        return '{"data": {'
 
     def getGeometryWorkingArea(self):
         self.layerWorkingArea = self.__context.getLayerByName(self.__filterName)
@@ -89,8 +100,8 @@ class WfsPost(object):
             geometries[featureId] = postGeometry
         return geometries
 
-    def setKey(self, key, idName):
-        return '"{0}": "{1}"'.format(idName, key)
+    def setKey(self, key, value):
+        return '"{0}": "{1}"'.format(key, value)
 
     def setFingerPrint(self, fingerprint):
         return '"{0}": "{1}", '.format(cst.FINGERPRINT, fingerprint)
@@ -98,7 +109,7 @@ class WfsPost(object):
     def setFieldsNameValueWithAttributes(self, feature, attributesChanged):
         fieldsNameValue = ""
         if self.__isTableStandard:
-            self.setKey(feature.id(), self.__layer.idNameForDatabase)
+            self.setKey(self.__layer.idNameForDatabase, feature.id())
         for key, value in attributesChanged.items():
             if value is None or value == qgis.core.NULL:  # Remplacement par QGIS d'une valeur vide, on n'envoie pas
                 continue
@@ -107,7 +118,7 @@ class WfsPost(object):
                     fieldsNameValue += '"{0}": null, '.format(feature.fields()[key].name())
                 else:
                     fieldsNameValue += '"{0}": "{1}", '.format(feature.fields()[key].name(), value)
-        # il faut enlever à la fin de la chaine la virgule et l'espace ', ' car c'est un update
+        #  Il faut enlever à la fin de la chaine la virgule et l'espace ', ' car c'est un update
         pos = len(fieldsNameValue)
         return fieldsNameValue[0:pos - 2]
 
@@ -121,19 +132,66 @@ class WfsPost(object):
             if fieldValue is None or str(fieldValue) == "NULL":
                 continue
             fieldsNameValue += '"{0}": "{1}", '.format(fieldName, fieldValue)
-        # il faut garder la virgule et l'espace en fin de chaine car l'action est à "insert"
+        # Il faut garder la virgule et l'espace en fin de chaine, car l'action est à "insert"
         # et il y a la géométrie de l'objet à concaténer
         return fieldsNameValue
 
     def setStateAndLayerName(self, state):
-        return '"state": "{0}", "typeName": "{1}"'.format(state, self.__layer.name())
+        return '"state": "{0}", "table": "{1}"'.format(state, self.__layer.name())
 
     def setClientId(self, clientFeatureId):
         return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
 
-    def gcms_post(self, strActions, bNormalWfsPost):
-        print("Post_action : {}".format(strActions))
-        params = dict(actions=strActions, database=self.__layer.databasename)
+    def __checkResponseTransactions(self, response):
+        # {"user_id":676,"user_name":"epeyrouse","groups":[375,199],"conflicts":[],"numrec":null,"id":397417,
+        # "started_at":"2024-08-08 11:09:13.000000","finished_at":"2024-08-08 11:09:13.000000","status":"committed",
+        # "comment":"SIG-QGIS","message":"Transaction appliqu\u00e9e avec succ\u00e8s.",
+        # "actions":[{"data":{"id_ligne":75},"table":"test.ligne_bidon","id":3142916,"state":"Delete",
+        # "server_feature_id":"75","client_feature_id":null}]}
+        message = {'message': response['message'], 'status': response['status'], 'fid': []}
+        message['fid'].append(response['id'])
+        return message
+
+    def __gcmsPost(self, bNormalWfsPost):
+        print("Post_action : {}".format(json.dumps(self.__datasForPost)))
+        response = HttpRequest.makeHttpRequest(self.__url, authent=self.__identification, proxies=self.__proxy,
+                                               data=json.dumps(self.__datasForPost))
+        responseTransactions = self.__checkResponseTransactions(response)
+        if responseTransactions['status'] == 'committed':
+            # Mise à jour de la base SQLite pour les objets détruits
+            # et modifiés d'une couche BDUni
+            if not self.__layer.isStandard:
+                SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
+            # Mise à jour de la couche
+            try:
+                # Le numrec est égal à 0 pour une couche standard
+                # à un numéro pour une couche BDUni
+                numrec = self.__synchronize()
+            except Exception as e:
+                QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
+                # Suppression de la couche dans la carte. Virer la table dans SQLite
+                layersID = [self.__layer.id()]
+                QgsProject.instance().removeMapLayers(layersID)
+                if SQLiteManager.isTableExist(self.__layer.name):
+                    SQLiteManager.emptyTable(self.__layer.name)
+                    SQLiteManager.deleteTable(self.__layer.name)
+                if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+                    SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+                SQLiteManager.vacuumDatabase()
+                return
+            # Mise à jour du numrec pour la couche dans la table des tables
+            SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
+            SQLiteManager.vacuumDatabase()
+            # Le buffer de la couche est vidée et elle est rechargée
+            if bNormalWfsPost:
+                self.__layer.rollBack()
+            self.__layer.reload()
+        return responseTransactions
+
+    def __gcmsPostSave(self, bNormalWfsPost):
+        print("Post_action : {}".format(self.__datasForPost['actions']))
+        # params = dict(actions=json.dumps(self.__datasForPost), database=self.__layer.databasename)
+        params = dict(actions=json.dumps(self.__datasForPost))
         response = HttpRequest.makeHttpRequest(self.__url, authent=self.__identification, proxies=self.__proxy,
                                                data=params)
         xmlResponse = XMLResponse(response.text)
@@ -142,12 +200,12 @@ class WfsPost(object):
             # Mise à jour de la base SQLite pour les objets détruits
             # et modifiés d'une couche BDUni
             if not self.__layer.isStandard:
-                SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__actions)
+                SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
             # Mise à jour de la couche
             try:
                 # Le numrec est égal à 0 pour une couche standard
                 # à un numéro pour une couche BDUni
-                numrec = self.synchronize()
+                numrec = self.__synchronize()
             except Exception as e:
                 QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
                 # Suppression de la couche dans la carte. Virer la table dans SQLite
@@ -169,7 +227,7 @@ class WfsPost(object):
             self.__layer.reload()
         return responseWfs
 
-    def synchronize(self):
+    def __synchronize(self):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
@@ -199,19 +257,29 @@ class WfsPost(object):
         return numrecmessage[0]
 
     def commitLayer(self, currentLayer, editBuffer, bNormalWfsPost):
-        self.__transactionReport += "<br/>Couche {0}\n".format(currentLayer)
-        self.__actions.clear()
+        # Ecriture du rapport de fin de synchronisation
+        self.__transactionReporting += "<br/>Couche {0}\n".format(currentLayer)
+
+        # Initialisation du corps de la requête
+        self.__datasForPost = {
+            'comment': cst.CLIENT_INPUT_DEVICE,
+            'actions': []
+        }
+
+        # Récupération des modifications opérées sur les couches
         addedFeatures = editBuffer.addedFeatures().values()
         changedGeometries = editBuffer.changedGeometries()
         changedAttributeValues = editBuffer.changedAttributeValues()
         deletedFeaturesId = editBuffer.deletedFeatureIds()
+
+        # Si pas de mises à jour, on sort avec un message de fin
         if len(addedFeatures) == 0 and \
                 len(changedGeometries) == 0 and \
                 len(changedAttributeValues) == 0 and \
                 len(deletedFeaturesId) == 0:
-            self.__transactionReport += "<br/>Rien à synchroniser\n"
-            self.__endReport += self.__transactionReport
-            return dict(status="SUCCESS", report=self.__endReport)
+            self.__transactionReporting += "<br/>Rien à synchroniser\n"
+            self.__endReporting += self.__transactionReporting
+            return dict(status="SUCCESS", reporting=self.__endReporting)
 
         # Est-ce une table BDUni
         result = SQLiteManager.isColumnExist(currentLayer, cst.FINGERPRINT)
@@ -219,34 +287,33 @@ class WfsPost(object):
         if result[0] == 1:
             bBDUni = True
 
-        # ajout
+        # Traitement des ajouts
         if len(addedFeatures) != 0:
-            self.pushAddedFeatures(addedFeatures, bBDUni)
-            self.__transactionReport += "<br/>Objets créés : {0}\n".format(len(addedFeatures))
+            self.__pushAddedFeatures(addedFeatures, bBDUni)
+            self.__transactionReporting += "<br/>Objets créés : {0}\n".format(len(addedFeatures))
 
-        # géométrie modifiée et/ou attributs modifiés
+        # Traitement des géométries modifiées et/ou attributs modifiés
         if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
-            self.pushChangedAttributesAndGeometries(changedAttributeValues, changedGeometries, bBDUni)
+            self.__pushChangedAttributesAndGeometries(changedAttributeValues, changedGeometries, bBDUni)
         elif len(changedGeometries) != 0:
-            self.pushChangedGeometries(changedGeometries, bBDUni)
+            self.__pushChangedGeometries(changedGeometries, bBDUni)
         elif len(changedAttributeValues) != 0:
-            self.pushChangedAttributeValues(changedAttributeValues)
+            self.__pushChangedAttributeValues(changedAttributeValues)
 
-        # suppression
+        # Traitement des suppressions
         if len(deletedFeaturesId) != 0:
-            self.pushDeletedFeatures(deletedFeaturesId)
-            self.__transactionReport += "<br/>Objets détruits : {0}\n".format(len(deletedFeaturesId))
+            self.__pushDeletedFeatures(deletedFeaturesId)
+            self.__transactionReporting += "<br/>Objets détruits : {0}\n".format(len(deletedFeaturesId))
 
         # Lancement de la transaction
-        nbObjModified = len(self.__actions) - (len(deletedFeaturesId) + len(addedFeatures))
+        nbObjModified = len(self.__datasForPost['actions']) - (len(deletedFeaturesId) + len(addedFeatures))
         if nbObjModified >= 1:
-            self.__transactionReport += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
-        strActions = self.formatItemActions()
-        endTransaction = self.gcms_post(strActions, bNormalWfsPost)
-        self.__endReport += self.setEndReport(endTransaction)
-        return dict(status=endTransaction['status'], report=self.__endReport)
+            self.__transactionReporting += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
+        endTransaction = self.__gcmsPost(bNormalWfsPost)
+        self.__endReporting += self.__setEndReporting(endTransaction)
+        return dict(status=endTransaction['status'], reporting=self.__endReporting)
 
-    def setEndReport(self, endTransactionMessage):
+    def __setEndReporting(self, endTransactionMessage):
         information = ''
         message = endTransactionMessage['message']
         status = endTransactionMessage['status']
@@ -255,25 +322,13 @@ class WfsPost(object):
                 endTransactionMessage['urlTransaction']))
             information = '<br/><font color="red">{0} : {1}</font>'.format(status, tmp)
         elif status == 'SUCCESS':
-            information = self.__transactionReport
+            information = self.__transactionReporting
             tabInfo = message.split(' : ')
             information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage[
                 'urlTransaction'], tabInfo[1])
         return information
 
-    def pushAddedFeatures(self, addedFeatures, bBDUni):
-        for feature in addedFeatures:
-            strFeature = self.setHeader()
-            strFeature += self.setFieldsNameValue(feature)
-            postGeometry = self.setPostGeometry(feature.geometry(), bBDUni)
-            strFeature += postGeometry
-            strFeature += self.setClientId(feature.attribute(cst.ID_SQLITE))
-            strFeature += '},'
-            strFeature += self.setStateAndLayerName('Insert')
-            strFeature += '}'
-            self.__actions.append(strFeature)
-
-    def pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
+    def __pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
         idsGeom = []
         idsAtt = []
         # Récupération des géométries par identifiant d'objet
@@ -287,9 +342,9 @@ class WfsPost(object):
                 if not self.__isTableStandard:
                     # Attention, ne pas changer l'ordre d'insertion
                     strFeature += self.setFingerPrint(r[1])
-                    strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
                 else:
-                    strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
                 strFeature += ', '
                 strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
                 if featureId in geometries:
@@ -298,7 +353,6 @@ class WfsPost(object):
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
-                self.__actions.append(strFeature)
                 idsAtt.append(featureId)
         # Suppression des modifications déjà traitées
         for idG in idsGeom:
@@ -307,11 +361,11 @@ class WfsPost(object):
             del changedAttributeValues[idA]
         # Il peut rester des modifications simples
         if len(geometries) != 0:
-            self.pushChangedGeometryTransformed(geometries)
+            self.__pushChangedGeometryTransformed(geometries)
         elif len(changedAttributeValues) != 0:
-            self.pushChangedAttributeValues(changedAttributeValues)
+            self.__pushChangedAttributeValues(changedAttributeValues)
 
-    def pushChangedGeometries(self, changedGeometries, bBDUni):
+    def __pushChangedGeometries(self, changedGeometries, bBDUni):
         for featureId, geometry in changedGeometries.items():
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
@@ -319,17 +373,16 @@ class WfsPost(object):
                 if not self.__isTableStandard:
                     # Attention, ne pas changer l'ordre d'insertion
                     strFeature += self.setFingerPrint(r[1])
-                    strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
                 else:
-                    strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
                 postGeometry = self.setPostGeometry(geometry, bBDUni)
                 strFeature += ', {0}'.format(postGeometry)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
-                self.__actions.append(strFeature)
 
-    def pushChangedGeometryTransformed(self, geometryTransformed):
+    def __pushChangedGeometryTransformed(self, geometryTransformed):
         for featureId, geometry in geometryTransformed.items():
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
@@ -344,9 +397,8 @@ class WfsPost(object):
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
-                self.__actions.append(strFeature)
 
-    def pushChangedAttributeValues(self, changedAttributeValues):
+    def __pushChangedAttributeValues(self, changedAttributeValues):
         for featureId, attributes in changedAttributeValues.items():
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
@@ -355,27 +407,44 @@ class WfsPost(object):
                 if not self.__isTableStandard:
                     # Attention, ne pas changer l'ordre d'insertion
                     strFeature += self.setFingerPrint(r[1])
-                    strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
                 else:
-                    strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
                 strFeature += ', '
                 strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
-                self.__actions.append(strFeature)
 
-    def pushDeletedFeatures(self, deletedFeatures):
+    def __pushDeletedFeatures(self, deletedFeatures):
+        action = {
+            'table': self.__layer.tableid,
+            'state': 'Delete',
+            'data': {}
+        }
         result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeatures)
+        data = {}
         for r in result:
-            strFeature = self.setHeader()
             if not self.__isTableStandard:
                 # Attention, ne pas changer l'ordre d'insertion
-                strFeature += self.setFingerPrint(r[1])
-                strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                data.update(self.setFingerPrint(r[1]))
+                data.update(self.setKey(r[0], self.__layer.idNameForDatabase))
             else:
-                strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
-            strFeature += '},'
-            strFeature += self.setStateAndLayerName('Delete')
-            strFeature += '}'
-            self.__actions.append(strFeature)
+                data.update(self.setKey(r[0], self.__layer.idNameForDatabase))
+            action['data'] = data
+            self.__datasForPost['actions'].append(action)
+
+    def __pushAddedFeatures(self, addedFeatures, bBDUni):
+        action = {
+            'table': self.__layer.tableid,
+            'state': 'Insert',
+            'data': {}
+        }
+        data = {}
+        for feature in addedFeatures:
+            data.update(self.setFieldsNameValue(feature))
+            postGeometry = self.setPostGeometry(feature.geometry(), bBDUni)
+            data.update(self.setKey('geometry', postGeometry))
+            data.update(self.setClientId(feature.attribute(cst.ID_SQLITE)))
+            action['data'] = data
+            self.__datasForPost['actions'].append(action)

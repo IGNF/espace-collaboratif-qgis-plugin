@@ -85,7 +85,7 @@ class RipartPlugin:
         if uri is None:
             return
 
-        # S'il n'a y pas de table des tables
+        # S'il n'y a pas de table des tables
         if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             return
 
@@ -142,7 +142,8 @@ class RipartPlugin:
 
     def __searchSpecificLayer(self, layerName) -> bool:
         if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-            if SQLiteManager.selectColumnFromTableWithCondition(cst.TABLEOFTABLES, "layer", layerName) is not None:
+            if SQLiteManager.selectColumnFromTableWithCondition("layer", cst.TABLEOFTABLES, "layer", layerName) \
+                    is not None:
                 return True
         return False
 
@@ -202,11 +203,11 @@ class RipartPlugin:
 
     def __saveChangesForOneLayer(self, layer):
         if layer is None:
-            return
+            return "PluginModule:__saveChangesForOneLayer, la couche n'est pas valable (None)."
         # Connexion à l'Espace collaboratif
         # si res = 0, alors l'utilisateur à annuler son action
         if not self.__doConnexion(False):
-            return
+            return "PluginModule:__saveChangesForOneLayer, problème de connexion à l'espace collaboratif."
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
@@ -214,17 +215,19 @@ class RipartPlugin:
                 bRes = True
                 break
         if not bRes:
-            return
+            return "PluginModule:__saveChangesForOneLayer, la table {} n'existe pas " \
+                   "dans la table des tables.".format(layer.name())
         editBuffer = layer.editBuffer()
         if not editBuffer:
-            return
+            return "PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
+                   " pour la couche {}".format(layer.name())
         try:
             wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
             # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
-            # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
+            # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
             bNormalWfsPost = False
             commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
-            messages = "{0}\n".format(commitLayerResult['report'])
+            messages = "{0}\n".format(commitLayerResult['reporting'])
 
             if commitLayerResult['status'] == "FAILED":
                 layer.destroyEditCommand()
