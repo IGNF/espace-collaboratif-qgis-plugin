@@ -78,7 +78,7 @@ class WfsPost(object):
             geomWorkingArea.transform(coordTransform)
         return geomWorkingArea
 
-    def setPostGeometry(self, geometry, bBDUni):
+    def setPostGeometry(self, geometry, bBDUni) -> {}:
         parameters = {'geometryName': self.__layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS4326,
                       'sridTarget': self.__layer.srid, 'geometryType': self.__layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
@@ -100,12 +100,6 @@ class WfsPost(object):
             geometries[featureId] = postGeometry
         return geometries
 
-    def setKey(self, key, value):
-        return '"{0}": "{1}"'.format(key, value)
-
-    def setFingerPrint(self, fingerprint):
-        return '"{0}": "{1}", '.format(cst.FINGERPRINT, fingerprint)
-
     def setFieldsNameValueWithAttributes(self, feature, attributesChanged):
         fieldsNameValue = ""
         if self.__isTableStandard:
@@ -122,8 +116,17 @@ class WfsPost(object):
         pos = len(fieldsNameValue)
         return fieldsNameValue[0:pos - 2]
 
-    def setFieldsNameValue(self, feature):
-        fieldsNameValue = ""
+    def setStateAndLayerName(self, state):
+        return '"state": "{0}", "table": "{1}"'.format(state, self.__layer.name())
+
+    def setKey(self, key, value) -> {}:
+        return {key: value}
+
+    def setFingerPrint(self, fingerprint) -> {}:
+        return {cst.FINGERPRINT: fingerprint}
+
+    def setFieldsNameValue(self, feature) -> {}:
+        fieldsNameValue = {}
         for field in feature.fields():
             fieldName = field.name()
             if fieldName == cst.ID_SQLITE:
@@ -131,16 +134,11 @@ class WfsPost(object):
             fieldValue = feature.attribute(fieldName)
             if fieldValue is None or str(fieldValue) == "NULL":
                 continue
-            fieldsNameValue += '"{0}": "{1}", '.format(fieldName, fieldValue)
-        # Il faut garder la virgule et l'espace en fin de chaine, car l'action est à "insert"
-        # et il y a la géométrie de l'objet à concaténer
+            fieldsNameValue[fieldName] = fieldValue
         return fieldsNameValue
 
-    def setStateAndLayerName(self, state):
-        return '"state": "{0}", "table": "{1}"'.format(state, self.__layer.name())
-
-    def setClientId(self, clientFeatureId):
-        return ', "{0}": "{1}"'.format(cst.CLIENTFEATUREID, clientFeatureId)
+    def setClientId(self, clientFeatureId) -> {}:
+        return {cst.CLIENTFEATUREID: clientFeatureId}
 
     def __checkResponseTransactions(self, response):
         # {"user_id":676,"user_name":"epeyrouse","groups":[375,199],"conflicts":[],"numrec":null,"id":397417,
@@ -148,8 +146,9 @@ class WfsPost(object):
         # "comment":"SIG-QGIS","message":"Transaction appliqu\u00e9e avec succ\u00e8s.",
         # "actions":[{"data":{"id_ligne":75},"table":"test.ligne_bidon","id":3142916,"state":"Delete",
         # "server_feature_id":"75","client_feature_id":null}]}
-        message = {'message': response['message'], 'status': response['status'], 'fid': []}
-        message['fid'].append(response['id'])
+        responseToDict = json.loads(response.text)
+        message = {'message': responseToDict["message"], 'status': responseToDict["status"], 'fid': []}
+        message['fid'].append(responseToDict["id"])
         return message
 
     def __gcmsPost(self, bNormalWfsPost):
@@ -390,9 +389,9 @@ class WfsPost(object):
                 if not self.__isTableStandard:
                     # Attention, ne pas changer l'ordre d'insertion
                     strFeature += self.setFingerPrint(r[1])
-                    strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
                 else:
-                    strFeature += self.setKey(r[0], self.__layer.idNameForDatabase)
+                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
                 strFeature += ', {0}'.format(geometry)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
@@ -417,21 +416,19 @@ class WfsPost(object):
                 strFeature += '}'
 
     def __pushDeletedFeatures(self, deletedFeatures):
-        action = {
-            'table': self.__layer.tableid,
-            'state': 'Delete',
-            'data': {}
-        }
         result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeatures)
-        data = {}
         for r in result:
+            action = {
+                'table': self.__layer.tableid,
+                'state': 'Delete',
+                'data': {}
+            }
             if not self.__isTableStandard:
                 # Attention, ne pas changer l'ordre d'insertion
-                data.update(self.setFingerPrint(r[1]))
-                data.update(self.setKey(r[0], self.__layer.idNameForDatabase))
+                action['data'].update(self.setFingerPrint(r[1]))
+                action['data'].update(self.setKey(self.__layer.idNameForDatabase, r[0]))
             else:
-                data.update(self.setKey(r[0], self.__layer.idNameForDatabase))
-            action['data'] = data
+                action['data'].update(self.setKey(self.__layer.idNameForDatabase, r[0]))
             self.__datasForPost['actions'].append(action)
 
     def __pushAddedFeatures(self, addedFeatures, bBDUni):
@@ -443,8 +440,7 @@ class WfsPost(object):
         data = {}
         for feature in addedFeatures:
             data.update(self.setFieldsNameValue(feature))
-            postGeometry = self.setPostGeometry(feature.geometry(), bBDUni)
-            data.update(self.setKey('geometry', postGeometry))
-            data.update(self.setClientId(feature.attribute(cst.ID_SQLITE)))
-            action['data'] = data
+            data.update(self.setPostGeometry(feature.geometry(), bBDUni))
+            action['data'].update(data)
             self.__datasForPost['actions'].append(action)
+            data.clear()

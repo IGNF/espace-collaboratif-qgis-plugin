@@ -30,7 +30,7 @@ class Wkt(object):
         geometry = QgsGeometry.fromWkt(txtGeometry)
         return geometry.asPoint().x(), geometry.asPoint().y()
 
-    def toPostGeometry(self, qgsGeometryObject, is3D, bBDUni):
+    def toPostGeometry(self, qgsGeometryObject, is3D, bBDUni) -> {}:
         # Vérification du type géométrique entre QGIS et le serveur
         # et transformation du type le cas échéant
         # Comme par exemple les équipements de transport qui sont de type géométrique
@@ -53,7 +53,7 @@ class Wkt(object):
             geometryWithModifiedZ.addZValue(-1000.)
             qgsGeometryObject.set(geometryWithModifiedZ)
 
-        return '"{0}": "{1}"'.format(self.geometryName, qgsGeometryObject.asWkt())
+        return {self.geometryName: qgsGeometryObject.asWkt()}
 
     def isBoundingBoxIntersectGeometryObject(self, boundingBoxSpatialFilter, qgsGeometryObject):
         boundingBoxGeometry = QgsGeometry.fromWkt(boundingBoxSpatialFilter)

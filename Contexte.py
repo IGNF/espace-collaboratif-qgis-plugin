@@ -564,8 +564,8 @@ class Contexte(object):
             dim = 1
 
         parametersForTableOfTables = {'layer': layer.name, 'idName': idNameForDatabase, 'standard': valStandard,
-                                      'database': layer.databasename, 'databaseid': layer.databaseid,'srid': layer.srid,
-                                      'geometryName': geometryName, 'geometryDimension': dim,
+                                      'database': layer.databasename, 'databaseid': layer.databaseid,
+                                      'srid': layer.srid, 'geometryName': geometryName, 'geometryDimension': dim,
                                       'geometryType': layer.geometryType, 'numrec': maxNumrecMessage[0],
                                       'tableid': layer.tableid}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
