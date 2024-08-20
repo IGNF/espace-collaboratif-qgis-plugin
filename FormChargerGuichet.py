@@ -209,4 +209,4 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
     def __cancel(self) -> None:
         self.reject()
-        print("L'utilisateur est sorti de la boite Charger les couches du groupe")
+        print("L'utilisateur est sorti de la boite : Charger les couches de mon groupe")

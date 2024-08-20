@@ -281,14 +281,14 @@ class Contexte(object):
                     return True
         return False
 
-    def getConnexionEspaceCollaboratif(self, newLogin=False):
+    def getConnexionEspaceCollaboratif(self, newLogin = False) -> int:
         """Connexion à l'espace collaboratif
 
         :param newLogin: booléen indiquant si on fait un nouveau login
         (fonctionnalité "Connexion à l'espace collaboratif")
         :type newLogin: boolean
 
-        :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
+        :return 1 si la connexion a réussi, 0 si elle a échoué, -1 s'il y a eu une erreur (Exception)
         :rtype int
         """
         self.logger.debug("getConnexionEspaceCollaboratif")
@@ -302,7 +302,7 @@ class Contexte(object):
             PluginHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
                                         u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion "
                                         u"...)")
-            return
+            return -1
         # TODO ajouter code Noémie sur le proxy
         self.loginWindow = FormConnectionDialog(self)
         self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostEspaceCo))
@@ -336,6 +336,10 @@ class Contexte(object):
             self.loginWindow.exec_()
             connectionResult = self.loginWindow.getConnectionResult()
             self.auth = self.loginWindow.getAuthentification()
+            # Si l'utilisateur a cliqué sur le bouton Annuler ou la croix de fermeture de la boite
+            # le login et le mot de passe sont vides
+            if len(self.auth) == 0:
+                return -1
         return connectionResult
 
     # Création de la base de données spatialite si elle n'existe pas
@@ -1020,7 +1024,7 @@ class Contexte(object):
         # Si le client n'existe pas, il faut demander à l'utilisateur de se connecter
         if self.client is None:
             connResult = self.getConnexionEspaceCollaboratif()
-            if not connResult or connResult == -1:
+            if connResult == -1:
                 # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
                 return "Rejected", infosLayers
         # Si malgré la demande de connexion le client n'est toujours pas déterminé
@@ -1041,7 +1045,7 @@ class Contexte(object):
 
         if self.client is None:
             connResult = self.getConnexionEspaceCollaboratif()
-            if not connResult or connResult == -1:
+            if connResult == -1:
                 # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
                 return "Rejected", infosLayers
 

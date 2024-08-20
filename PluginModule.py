@@ -106,7 +106,8 @@ class RipartPlugin:
                     if self.__context is None:
                         return
                     if self.__context.getUserCommunity() is None:
-                        if not self.__context.getConnexionEspaceCollaboratif(newLogin=True):
+                        connResult = self.__context.getConnexionEspaceCollaboratif(newLogin=True)
+                        if connResult == -1:
                             return
                 elif reply == QMessageBox.No:
                     projectLayers = QgsProject.instance().mapLayers()
@@ -138,7 +139,8 @@ class RipartPlugin:
             if self.__isLayerEditBuffered(editableLayer) is True:
                 editLayers.append(editableLayer)
         if len(editLayers) >= 1:
-            self.__saveEdits(editLayers)
+            if not self.__saveEdits(editLayers):
+                return
 
     def __searchSpecificLayer(self, layerName) -> bool:
         if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
@@ -178,6 +180,9 @@ class RipartPlugin:
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        if 'Error' in messageInfo:
+            return False
+        return True
 
     def __doConnexion(self, bButtonConnect):
         #  bButtonConnect à True : connexion systématique, l'utilisateur a cliqué
@@ -186,11 +191,13 @@ class RipartPlugin:
         if self.__context is None:
             return False
         if bButtonConnect:
-            if not self.__context.getConnexionEspaceCollaboratif(newLogin=True):
+            connResult = self.__context.getConnexionEspaceCollaboratif(newLogin=True)
+            if connResult == -1:
                 return False
         elif not bButtonConnect:
             if self.__context.getUserCommunity() is None:
-                if not self.__context.getConnexionEspaceCollaboratif(newLogin=True):
+                connResult = self.__context.getConnexionEspaceCollaboratif(newLogin=True)
+                if connResult == -1:
                     return False
         return True
 
@@ -203,11 +210,11 @@ class RipartPlugin:
 
     def __saveChangesForOneLayer(self, layer):
         if layer is None:
-            return "PluginModule:__saveChangesForOneLayer, la couche n'est pas valable (None)."
+            return "Error : PluginModule:__saveChangesForOneLayer, la couche n'est pas valable (None)."
         # Connexion à l'Espace collaboratif
         # si res = 0, alors l'utilisateur à annuler son action
         if not self.__doConnexion(False):
-            return "PluginModule:__saveChangesForOneLayer, problème de connexion à l'espace collaboratif."
+            return "Error : PluginModule:__saveChangesForOneLayer, problème de connexion à l'espace collaboratif."
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
@@ -215,11 +222,11 @@ class RipartPlugin:
                 bRes = True
                 break
         if not bRes:
-            return "PluginModule:__saveChangesForOneLayer, la table {} n'existe pas " \
+            return "Error : PluginModule:__saveChangesForOneLayer, la table {} n'existe pas " \
                    "dans la table des tables.".format(layer.name())
         editBuffer = layer.editBuffer()
         if not editBuffer:
-            return "PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
+            return "Error : PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
                    " pour la couche {}".format(layer.name())
         try:
             wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)

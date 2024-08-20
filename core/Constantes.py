@@ -119,3 +119,12 @@ nom_Calque_Signalement = "Signalement"
 nom_Calque_Croquis_Polygone = "Croquis_EC_Polygone"
 nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
 nom_Calque_Croquis_Point = "Croquis_EC_Point"
+
+STATUS_PENDING = 'pending'
+STATUS_COMMITTED = 'committed'
+STATUS_ROLLBACKED = 'rollbacked'
+STATUS_FAILED = 'failed'
+STATUS_CONFLICTING = 'conflicting'
+STATUS_CANCELLED = 'cancelled'
+STATUS_REPLAYED = 'replayed'
+

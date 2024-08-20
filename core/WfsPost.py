@@ -61,6 +61,7 @@ class WfsPost(object):
                 self.__layer.geometryDimensionForDatabase = r[8]
                 self.__layer.geometryTypeForDatabase = r[9]
                 self.__layer.tableid = r[11]
+                self.__layer.databaseid = r[5]
                 databaseid = r[5]
         return databaseid
 
@@ -147,8 +148,8 @@ class WfsPost(object):
         # "actions":[{"data":{"id_ligne":75},"table":"test.ligne_bidon","id":3142916,"state":"Delete",
         # "server_feature_id":"75","client_feature_id":null}]}
         responseToDict = json.loads(response.text)
-        message = {'message': responseToDict["message"], 'status': responseToDict["status"], 'fid': []}
-        message['fid'].append(responseToDict["id"])
+        message = {'message': responseToDict["message"], 'status': responseToDict["status"], 'id': []}
+        message['id'].append(responseToDict["id"])
         return message
 
     def __gcmsPost(self, bNormalWfsPost):
@@ -156,7 +157,7 @@ class WfsPost(object):
         response = HttpRequest.makeHttpRequest(self.__url, authent=self.__identification, proxies=self.__proxy,
                                                data=json.dumps(self.__datasForPost))
         responseTransactions = self.__checkResponseTransactions(response)
-        if responseTransactions['status'] == 'committed':
+        if responseTransactions['status'] == cst.STATUS_COMMITTED:
             # Mise à jour de la base SQLite pour les objets détruits
             # et modifiés d'une couche BDUni
             if not self.__layer.isStandard:
@@ -187,44 +188,45 @@ class WfsPost(object):
             self.__layer.reload()
         return responseTransactions
 
-    def __gcmsPostSave(self, bNormalWfsPost):
-        print("Post_action : {}".format(self.__datasForPost['actions']))
-        # params = dict(actions=json.dumps(self.__datasForPost), database=self.__layer.databasename)
-        params = dict(actions=json.dumps(self.__datasForPost))
-        response = HttpRequest.makeHttpRequest(self.__url, authent=self.__identification, proxies=self.__proxy,
-                                               data=params)
-        xmlResponse = XMLResponse(response.text)
-        responseWfs = xmlResponse.checkResponseWfsTransactions()
-        if responseWfs['status'] == 'SUCCESS':
-            # Mise à jour de la base SQLite pour les objets détruits
-            # et modifiés d'une couche BDUni
-            if not self.__layer.isStandard:
-                SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
-            # Mise à jour de la couche
-            try:
-                # Le numrec est égal à 0 pour une couche standard
-                # à un numéro pour une couche BDUni
-                numrec = self.__synchronize()
-            except Exception as e:
-                QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
-                # Suppression de la couche dans la carte. Virer la table dans SQLite
-                layersID = [self.__layer.id()]
-                QgsProject.instance().removeMapLayers(layersID)
-                if SQLiteManager.isTableExist(self.__layer.name):
-                    SQLiteManager.emptyTable(self.__layer.name)
-                    SQLiteManager.deleteTable(self.__layer.name)
-                if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-                    SQLiteManager.emptyTable(cst.TABLEOFTABLES)
-                SQLiteManager.vacuumDatabase()
-                return
-            # Mise à jour du numrec pour la couche dans la table des tables
-            SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
-            SQLiteManager.vacuumDatabase()
-            # Le buffer de la couche est vidée et elle est rechargée
-            if bNormalWfsPost:
-                self.__layer.rollBack()
-            self.__layer.reload()
-        return responseWfs
+    # TODO à virer
+    # def __gcmsPostSave(self, bNormalWfsPost):
+    #     print("Post_action : {}".format(self.__datasForPost['actions']))
+    #     # params = dict(actions=json.dumps(self.__datasForPost), database=self.__layer.databasename)
+    #     params = dict(actions=json.dumps(self.__datasForPost))
+    #     response = HttpRequest.makeHttpRequest(self.__url, authent=self.__identification, proxies=self.__proxy,
+    #                                            data=params)
+    #     xmlResponse = XMLResponse(response.text)
+    #     responseWfs = xmlResponse.checkResponseWfsTransactions()
+    #     if responseWfs['status'] == 'committed':
+    #         # Mise à jour de la base SQLite pour les objets détruits
+    #         # et modifiés d'une couche BDUni
+    #         if not self.__layer.isStandard:
+    #             SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
+    #         # Mise à jour de la couche
+    #         try:
+    #             # Le numrec est égal à 0 pour une couche standard
+    #             # à un numéro pour une couche BDUni
+    #             numrec = self.__synchronize()
+    #         except Exception as e:
+    #             QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
+    #             # Suppression de la couche dans la carte. Virer la table dans SQLite
+    #             layersID = [self.__layer.id()]
+    #             QgsProject.instance().removeMapLayers(layersID)
+    #             if SQLiteManager.isTableExist(self.__layer.name):
+    #                 SQLiteManager.emptyTable(self.__layer.name)
+    #                 SQLiteManager.deleteTable(self.__layer.name)
+    #             if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+    #                 SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+    #             SQLiteManager.vacuumDatabase()
+    #             return
+    #         # Mise à jour du numrec pour la couche dans la table des tables
+    #         SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
+    #         SQLiteManager.vacuumDatabase()
+    #         # Le buffer de la couche est vidée et elle est rechargée
+    #         if bNormalWfsPost:
+    #             self.__layer.rollBack()
+    #         self.__layer.reload()
+    #     return responseWfs
 
     def __synchronize(self):
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
@@ -245,7 +247,8 @@ class WfsPost(object):
                       'is3D': self.__layer.geometryDimensionForDatabase,
                       'numrec': numrec, 'role': None,
                       'urlHostEspaceCo': self.__context.urlHostEspaceCo,
-                      'authentification': self.__context.auth, 'proxy': self.__context.proxy}
+                      'authentification': self.__context.auth, 'proxy': self.__context.proxy,
+                      'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
         numrecmessage = wfsGet.gcms_get()
         if 'error' in numrecmessage[1]:
@@ -278,7 +281,7 @@ class WfsPost(object):
                 len(deletedFeaturesId) == 0:
             self.__transactionReporting += "<br/>Rien à synchroniser\n"
             self.__endReporting += self.__transactionReporting
-            return dict(status="SUCCESS", reporting=self.__endReporting)
+            return dict(status=cst.STATUS_COMMITTED, reporting=self.__endReporting)
 
         # Est-ce une table BDUni
         result = SQLiteManager.isColumnExist(currentLayer, cst.FINGERPRINT)
@@ -313,18 +316,16 @@ class WfsPost(object):
         return dict(status=endTransaction['status'], reporting=self.__endReporting)
 
     def __setEndReporting(self, endTransactionMessage):
-        information = ''
         message = endTransactionMessage['message']
         status = endTransactionMessage['status']
-        if status == 'FAILED':
-            tmp = message.replace('transaction', '<a href="{0}" target="_blank">transaction</a>'.format(
-                endTransactionMessage['urlTransaction']))
-            information = '<br/><font color="red">{0} : {1}</font>'.format(status, tmp)
-        elif status == 'SUCCESS':
+        if status == cst.STATUS_COMMITTED:
             information = self.__transactionReporting
-            tabInfo = message.split(' : ')
-            information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage[
-                'urlTransaction'], tabInfo[1])
+            information += '<br/>{0}'.format(message)
+            id = endTransactionMessage['id'][0]
+            information += '<br/><a href="{0}/{1}" target="_blank">{2}</a>'.format(self.__url, id, id)
+        else:
+            information = '<br/><font color="red">{0}</font>'.format(message)
+            information += '<br/><font color="red"><a status : {0}></a></font>'.format(status)
         return information
 
     def __pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
@@ -432,15 +433,12 @@ class WfsPost(object):
             self.__datasForPost['actions'].append(action)
 
     def __pushAddedFeatures(self, addedFeatures, bBDUni):
-        action = {
-            'table': self.__layer.tableid,
-            'state': 'Insert',
-            'data': {}
-        }
-        data = {}
         for feature in addedFeatures:
-            data.update(self.setFieldsNameValue(feature))
-            data.update(self.setPostGeometry(feature.geometry(), bBDUni))
-            action['data'].update(data)
+            action = {
+                'table': self.__layer.tableid,
+                'state': 'Insert',
+                'data': {}
+            }
+            action['data'].update(self.setFieldsNameValue(feature))
+            action['data'].update(self.setPostGeometry(feature.geometry(), bBDUni))
             self.__datasForPost['actions'].append(action)
-            data.clear()
