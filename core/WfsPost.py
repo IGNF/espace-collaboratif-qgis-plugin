@@ -5,7 +5,6 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsP
 from qgis.PyQt.QtWidgets import QMessageBox
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
-from .XMLResponse import XMLResponse
 from .Wkt import Wkt
 from .BBox import BBox
 from .HttpRequest import HttpRequest
@@ -69,12 +68,12 @@ class WfsPost(object):
         return '{"data": {'
 
     def getGeometryWorkingArea(self):
-        self.layerWorkingArea = self.__context.getLayerByName(self.__filterName)
-        layerWorkingAreaCrs = self.layerWorkingArea.crs()
+        layerWorkingArea = self.__context.getLayerByName(self.__filterName)
+        layerWorkingAreaCrs = layerWorkingArea.crs()
         destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         coordTransform = QgsCoordinateTransform(layerWorkingAreaCrs, destCrs, QgsProject.instance())
-        featureIds = self.layerWorkingArea.selectedFeatureIds()
-        geomWorkingArea = self.layerWorkingArea.getGeometry(featureIds[0])
+        featureIds = layerWorkingArea.selectedFeatureIds()
+        geomWorkingArea = layerWorkingArea.getGeometry(featureIds[0])
         if destCrs != layerWorkingAreaCrs:
             geomWorkingArea.transform(coordTransform)
         return geomWorkingArea
@@ -321,8 +320,8 @@ class WfsPost(object):
         if status == cst.STATUS_COMMITTED:
             information = self.__transactionReporting
             information += '<br/>{0}'.format(message)
-            id = endTransactionMessage['id'][0]
-            information += '<br/><a href="{0}/{1}" target="_blank">{2}</a>'.format(self.__url, id, id)
+            fid = endTransactionMessage['id'][0]
+            information += '<br/><a href="{0}/{1}" target="_blank">{2}</a>'.format(self.__url, fid, fid)
         else:
             information = '<br/><font color="red">{0}</font>'.format(message)
             information += '<br/><font color="red"><a status : {0}></a></font>'.format(status)

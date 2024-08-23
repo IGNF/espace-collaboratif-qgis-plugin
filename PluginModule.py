@@ -1,6 +1,7 @@
 import logging
 import os.path
 import configparser
+from qgis.core import  QgsFeatureRequest
 # Initialize Qt resources from file resources.py
 from . import resources
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
@@ -75,6 +76,28 @@ class RipartPlugin:
         self.iface.projectRead.connect(self.__connectProjectRead)
         QgsProject.instance().layerWasAdded.connect(self.__connectLayerWasAdded)
 
+    def __isLayersInTableOfTables(self) -> str:
+        message = ""
+        projectLayers = QgsProject.instance().mapLayers()
+        for k, v in projectLayers.items():
+            result = SQLiteManager.selectColumnFromTableWithCondition('layer', cst.TABLEOFTABLES, 'layer', v.name())
+            if result is None:
+                message += "{0}\n".format(v.name())
+        return message
+
+    def __isObjectsNotCommitted(self) -> dict:
+        objNotCommitted = {}
+        projectLayers = QgsProject.instance().mapLayers()
+        for k, v in projectLayers.items():
+            result = SQLiteManager.selectColumnFromTableWithCondition('idName', cst.TABLEOFTABLES, 'layer', v.name())
+            if result is None:
+                continue
+            expr = "'{0}' IS NULL".format(result[0])
+            it = v.getFeatures(QgsFeatureRequest().setFilterExpression(expr))
+            for feature in it:
+                objNotCommitted[v.name()] = feature
+        return objNotCommitted
+
     def __connectProjectRead(self):
         # si le contexte n'est pas encore initialisé
         if self.__context is None:
@@ -117,6 +140,27 @@ class RipartPlugin:
                         self.__connectSpecificSignals(v)
             break
 
+        # Est-ce que la base SQLite est désynchronisée avec le project ?
+        # La liste des layers du projet se retrouve bien dans la table des tables pour la base SQLite ?
+        result = self.__isLayersInTableOfTables()
+        if len(result) != 0:
+            message = "Attention, la base SQLite est désynchronisée avec votre projet. Il faut extraire " \
+                      "les couches suivantes :\n{0}".format(result)
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                         QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.__downloadLayersFromMyCommunity()
+
+        # S'il reste des objets non envoyés sur l'espace collaboratif
+        objectsNotCommitted = self.__isObjectsNotCommitted()
+        if len(objectsNotCommitted) >= 1:
+            message = "Votre projet contient des objets non synchronisés avec l'Espace collaboratif IGN. Nous vous " \
+                      "conseillons de les synchroniser sur le serveur.\nVoulez-vous le faire ? "
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                         QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                return
+
     def __connectLayerWasAdded(self, layer):
         if layer is None:
             return
@@ -158,11 +202,11 @@ class RipartPlugin:
             return True
         return False
 
-    def __saveEdits(self, layers):
+    def __saveEdits(self, editableLayers):
         allMessages = []
-        for layer in layers:
+        for layer in editableLayers:
             messageProgress = "Synchronisation de la couche {}".format(layer.name())
-            progress = ProgressBar(len(layers), messageProgress)
+            progress = ProgressBar(len(editableLayers), messageProgress)
             progress.setValue(1)
             allMessages.append(self.__saveChangesForOneLayer(layer))
             progress.close()
@@ -180,9 +224,8 @@ class RipartPlugin:
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-        if 'Error' in messageInfo:
-            return False
-        return True
+        if 'error' in messageInfo:
+            return
 
     def __doConnexion(self, bButtonConnect):
         #  bButtonConnect à True : connexion systématique, l'utilisateur a cliqué
@@ -210,11 +253,11 @@ class RipartPlugin:
 
     def __saveChangesForOneLayer(self, layer):
         if layer is None:
-            return "Error : PluginModule:__saveChangesForOneLayer, la couche n'est pas valable (None)."
+            return "error : PluginModule:__saveChangesForOneLayer, la couche n'est pas valable (None)."
         # Connexion à l'Espace collaboratif
         # si res = 0, alors l'utilisateur à annuler son action
         if not self.__doConnexion(False):
-            return "Error : PluginModule:__saveChangesForOneLayer, problème de connexion à l'espace collaboratif."
+            return "error : PluginModule:__saveChangesForOneLayer, problème de connexion à l'espace collaboratif."
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
@@ -222,11 +265,11 @@ class RipartPlugin:
                 bRes = True
                 break
         if not bRes:
-            return "Error : PluginModule:__saveChangesForOneLayer, la table {} n'existe pas " \
+            return "error : PluginModule:__saveChangesForOneLayer, la table {} n'existe pas " \
                    "dans la table des tables.".format(layer.name())
         editBuffer = layer.editBuffer()
         if not editBuffer:
-            return "Error : PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
+            return "error : PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
                    " pour la couche {}".format(layer.name())
         try:
             wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
@@ -511,6 +554,17 @@ class RipartPlugin:
             if not self.__doConnexion(False):
                 return
 
+            # Est-ce que la base SQLite est désynchronisée avec le project ?
+            # La liste des layers du projet se retrouve bien dans la table des tables pour la base SQLite ?
+            result = self.__isLayersInTableOfTables()
+            if len(result) != 0:
+                message = "Attention, la base SQLite est désynchronisée avec votre projet. Il faut extraire " \
+                          "les couches suivantes :\n{0}".format(result)
+                reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                             QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    self.__downloadLayersFromMyCommunity()
+
             # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
             layersToSynchronize = []
             layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
@@ -592,7 +646,7 @@ class RipartPlugin:
                 numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
                 parameters['numrec'] = numrec
                 wfsGet = WfsGet(parameters)
-                # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser
+                # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser.
                 # Il faut aussi qu'il soit égal à 1, ce numrec correspondant à une table non BDUni
                 if not layer.isStandard:
                     maxNumrec = wfsGet.getMaxNumrec()
