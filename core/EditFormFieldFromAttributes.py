@@ -403,7 +403,7 @@ class EditFormFieldFromAttributes(object):
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultInteger))
 
         # Vérification que la chaine ne contient que des nombres
-        expression = "regexp_match([0-9]+) != 0"
+        expression = "regexp_match(\"{}\", '[0-9]+') != 0".format(self.name)
         self.layer.setConstraintExpression(self.index, expression)
 
     '''
@@ -424,7 +424,7 @@ class EditFormFieldFromAttributes(object):
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue(defaultDouble))
 
         # Vérification que la chaine ne contient que des nombres
-        expression = "regexp_match([0-9]+(\\.[0-9]+)) != 0"
+        expression = "regexp_match(\"{}\", '[0-9]+(\\.[0-9]+)') != 0".format(self.name)
         self.layer.setConstraintExpression(self.index, expression)
 
     '''

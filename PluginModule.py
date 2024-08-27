@@ -1,7 +1,7 @@
 import logging
 import os.path
 import configparser
-from qgis.core import  QgsFeatureRequest
+from qgis.core import  QgsFeatureRequest, QgsVectorLayerEditBuffer
 # Initialize Qt resources from file resources.py
 from . import resources
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
@@ -76,27 +76,51 @@ class RipartPlugin:
         self.iface.projectRead.connect(self.__connectProjectRead)
         QgsProject.instance().layerWasAdded.connect(self.__connectLayerWasAdded)
 
-    def __isLayersInTableOfTables(self) -> str:
-        message = ""
-        projectLayers = QgsProject.instance().mapLayers()
-        for k, v in projectLayers.items():
-            result = SQLiteManager.selectColumnFromTableWithCondition('layer', cst.TABLEOFTABLES, 'layer', v.name())
-            if result is None:
-                message += "{0}\n".format(v.name())
-        return message
+    def __isLayersInTableOfTables(self) -> list:
+        layersNotInTable = []
+        root = QgsProject.instance().layerTreeRoot()
+        nodesGroup = root.findGroups()
+        for ng in nodesGroup:
+            if ng.name().find(cst.ESPACECO) == -1:
+                continue
+            qgsLayerTreelayers = ng.findLayers()
+            for qgsLayerTreelayer in qgsLayerTreelayers:
+                layer = qgsLayerTreelayer.layer()
+                result = SQLiteManager.selectColumnFromTableWithCondition('layer', cst.TABLEOFTABLES, 'layer',
+                                                                          layer.name())
+                if result is None:
+                    layersNotInTable.append(layer.name())
+                    # message += "{0}\n".format(layer.name())
+        return layersNotInTable
+        # projectLayers = QgsProject.instance().mapLayers()
+        # for k, v in projectLayers.items():
+        #     if (v.name)
+        #     result = SQLiteManager.selectColumnFromTableWithCondition('layer', cst.TABLEOFTABLES, 'layer', v.name())
+        #     if result is None:
+        #         message += "{0}\n".format(v.name())
 
-    def __isObjectsNotCommitted(self) -> dict:
+    def __isObjectsAddedNotCommitted(self) -> dict:
         objNotCommitted = {}
         projectLayers = QgsProject.instance().mapLayers()
         for k, v in projectLayers.items():
             result = SQLiteManager.selectColumnFromTableWithCondition('idName', cst.TABLEOFTABLES, 'layer', v.name())
             if result is None:
                 continue
-            expr = "'{0}' IS NULL".format(result[0])
+            expr = "\"{0}\" == ''".format(result[0])
             it = v.getFeatures(QgsFeatureRequest().setFilterExpression(expr))
             for feature in it:
-                objNotCommitted[v.name()] = feature
+                objNotCommitted['added'] = (v, feature)
         return objNotCommitted
+
+    def __doSynchroWithTableOfTables(self):
+        listLayersNotInTable = self.__isLayersInTableOfTables()
+        if len(listLayersNotInTable) != 0:
+            message = "Attention, la table générale SQLite est désynchronisée avec votre projet. Il faut extraire " \
+                      "les couches suivantes :\n{0}".format(listLayersNotInTable)
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                         QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.__downloadLayersFromMyCommunity()
 
     def __connectProjectRead(self):
         # si le contexte n'est pas encore initialisé
@@ -140,26 +164,25 @@ class RipartPlugin:
                         self.__connectSpecificSignals(v)
             break
 
+        # TODO voir avec Noémie
         # Est-ce que la base SQLite est désynchronisée avec le project ?
         # La liste des layers du projet se retrouve bien dans la table des tables pour la base SQLite ?
-        result = self.__isLayersInTableOfTables()
-        if len(result) != 0:
-            message = "Attention, la base SQLite est désynchronisée avec votre projet. Il faut extraire " \
-                      "les couches suivantes :\n{0}".format(result)
-            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                self.__downloadLayersFromMyCommunity()
+        # self.__doSynchroWithTableOfTables()
 
+        # TODO voir avec Noémie
         # S'il reste des objets non envoyés sur l'espace collaboratif
-        objectsNotCommitted = self.__isObjectsNotCommitted()
-        if len(objectsNotCommitted) >= 1:
-            message = "Votre projet contient des objets non synchronisés avec l'Espace collaboratif IGN. Nous vous " \
-                      "conseillons de les synchroniser sur le serveur.\nVoulez-vous le faire ? "
-            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                return
+        # objectsAddedNotCommitted = self.__isObjectsAddedNotCommitted()
+        # if len(objectsAddedNotCommitted) >= 1:
+        #     message = "Votre projet contient des objets non synchronisés avec l'Espace collaboratif IGN. Nous vous " \
+        #               "conseillons de les synchroniser sur le serveur.\nVoulez-vous le faire ? "
+        #     reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+        #                                  QMessageBox.No)
+        #     if reply == QMessageBox.Yes:
+        #         for objectAddedNotCommitted in objectsAddedNotCommitted:
+        #             qgsVectorLayerEditBuffer = QgsVectorLayerEditBuffer(objectAddedNotCommitted[0])
+        #             qgsVectorLayerEditBuffer.addFeature(objectAddedNotCommitted[1])
+        #             messages = self.__doPost(objectAddedNotCommitted[0], qgsVectorLayerEditBuffer)
+        #         return
 
     def __connectLayerWasAdded(self, layer):
         if layer is None:
@@ -251,6 +274,22 @@ class RipartPlugin:
                                                       level=2, duration=3)
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
+    def __doPost(self, layer, editBuffer):
+        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
+        # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
+        # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
+        bNormalWfsPost = False
+        commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
+        messages = "{0}\n".format(commitLayerResult['reporting'])
+        if commitLayerResult['status'] == "FAILED":
+            layer.destroyEditCommand()
+        else:
+            # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction
+            # commitLayer n'envoie pas d'exception sinon les modifs sont perdues
+            # et l'outil redemande une synchronisation
+            editBuffer.rollBack()
+        return messages
+
     def __saveChangesForOneLayer(self, layer):
         if layer is None:
             return "error : PluginModule:__saveChangesForOneLayer, la couche n'est pas valable (None)."
@@ -272,21 +311,7 @@ class RipartPlugin:
             return "error : PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
                    " pour la couche {}".format(layer.name())
         try:
-            wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
-            # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
-            # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
-            bNormalWfsPost = False
-            commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
-            messages = "{0}\n".format(commitLayerResult['reporting'])
-
-            if commitLayerResult['status'] == "FAILED":
-                layer.destroyEditCommand()
-            else:
-                # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction
-                # commitLayer n'envoie pas d'exception sinon les modifs sont perdues
-                # et l'outil redemande une synchronisation
-                editBuffer.rollBack()
-
+            messages = self.__doPost(layer, editBuffer)
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
@@ -556,14 +581,7 @@ class RipartPlugin:
 
             # Est-ce que la base SQLite est désynchronisée avec le project ?
             # La liste des layers du projet se retrouve bien dans la table des tables pour la base SQLite ?
-            result = self.__isLayersInTableOfTables()
-            if len(result) != 0:
-                message = "Attention, la base SQLite est désynchronisée avec votre projet. Il faut extraire " \
-                          "les couches suivantes :\n{0}".format(result)
-                reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                             QMessageBox.No)
-                if reply == QMessageBox.Yes:
-                    self.__downloadLayersFromMyCommunity()
+            # self.__doSynchroWithTableOfTables()
 
             # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
             layersToSynchronize = []

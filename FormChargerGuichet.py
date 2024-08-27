@@ -40,6 +40,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Il faut inverser l'ordre pour retrouver le paramétrage de la carte du groupe
         self.__listLayers.reverse()
 
+        # La liste des couches à cocher automatiquement si la table des tables dans SQLite est désynchronisée
+        # self.__listLayersToCheck = listLayersToCheck
+
         # Remplissage des différentes tables de couches
         self.__setTableWidgetMonGuichet()
         self.__setTableWidgetFondsGeoservices()
@@ -51,10 +54,13 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.labelGroupeActif.setText("Communauté active : {}".format(context.getUserCommunity().getName()))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  # #ff0000
 
-    def __setColonneCharger(self, tableWidget, row, column) -> None:
+    def __setColonneCharger(self, tableWidget, row, column, check=False) -> None:
         itemCheckBox = QtWidgets.QTableWidgetItem()
         itemCheckBox.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
-        itemCheckBox.setCheckState(QtCore.Qt.CheckState.Unchecked)
+        if not check:
+            itemCheckBox.setCheckState(QtCore.Qt.CheckState.Unchecked)
+        else:
+            itemCheckBox.setCheckState(QtCore.Qt.CheckState.Checked)
         tableWidget.setItem(row, column, itemCheckBox)
 
     def __setTableWidgetMonGuichet(self) -> None:
@@ -87,6 +93,10 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             self.tableWidgetMonGuichet.setItem(rowPosition, 1, item)
 
             # Colonne "Charger"
+            # check = False
+            # for layerToCheck in self.__listLayersToCheck:
+            #     if layerToCheck == layer.name():
+            #         check = True
             self.__setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
 
     def __setTableWidgetFondsGeoservices(self) -> None:
