@@ -140,15 +140,25 @@ class WfsPost(object):
     def setClientId(self, clientFeatureId) -> {}:
         return {cst.CLIENTFEATUREID: clientFeatureId}
 
-    def __checkResponseTransactions(self, response):
+    def __checkResponseTransactions(self, response) -> {}:
+        # Attention, les réponses sont de deux types :
+        # SUCCESS
+        # {'code': 400, 'message': 'String for field email is invalid'}
+        # FAILED
         # {"user_id":676,"user_name":"epeyrouse","groups":[375,199],"conflicts":[],"numrec":null,"id":397417,
         # "started_at":"2024-08-08 11:09:13.000000","finished_at":"2024-08-08 11:09:13.000000","status":"committed",
         # "comment":"SIG-QGIS","message":"Transaction appliqu\u00e9e avec succ\u00e8s.",
         # "actions":[{"data":{"id_ligne":75},"table":"test.ligne_bidon","id":3142916,"state":"Delete",
         # "server_feature_id":"75","client_feature_id":null}]}
+        message = ''
         responseToDict = json.loads(response.text)
-        message = {'message': responseToDict["message"], 'status': responseToDict["status"], 'id': []}
-        message['id'].append(responseToDict["id"])
+        if 'code' in responseToDict:
+            message = {'code': responseToDict['code'], 'message': responseToDict['message'],
+                       'status': 'error', 'id': [-1]}
+        if 'status' in responseToDict:
+            message = {'code': 200, 'message': responseToDict["message"],
+                       'status': responseToDict["status"], 'id': []}
+            message['id'].append(responseToDict["id"])
         return message
 
     def __gcmsPost(self, bNormalWfsPost):
@@ -323,8 +333,7 @@ class WfsPost(object):
             fid = endTransactionMessage['id'][0]
             information += '<br/><a href="{0}/{1}" target="_blank">{2}</a>'.format(self.__url, fid, fid)
         else:
-            information = '<br/><font color="red">{0}</font>'.format(message)
-            information += '<br/><font color="red"><a status : {0}></a></font>'.format(status)
+            information = '<br/><font color="red">error : {0}</font>'.format(message)
         return information
 
     def __pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
