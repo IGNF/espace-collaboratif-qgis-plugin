@@ -1,7 +1,7 @@
 import json
 
 import qgis.core
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
+from qgis.core import QgsProject
 from qgis.PyQt.QtWidgets import QMessageBox
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
@@ -34,7 +34,7 @@ class WfsPost(object):
         self.__isTableStandard = True
         self.__datasForPost = {}
 
-    def __initParametersLayer(self):
+    def __initParametersLayer(self) -> int:
         # r[0] : id
         # r[1] : layer
         # r[2] : idName
@@ -86,7 +86,7 @@ class WfsPost(object):
             geometries[featureId] = postGeometry
         return geometries
 
-    def __setFieldsNameValueWithAttributes(self, feature, attributesChanged):
+    def __setFieldsNameValueWithAttributes(self, feature, attributesChanged) -> {}:
         fieldsNameValue = {}
         for key, value in attributesChanged.items():
             if value is None or value == qgis.core.NULL:  # Remplacement par QGIS d'une valeur vide, on n'envoie pas
@@ -136,7 +136,7 @@ class WfsPost(object):
             message['id'].append(responseToDict["id"])
         return message
 
-    def __gcmsPost(self, bNormalWfsPost):
+    def __gcmsPost(self, bNormalWfsPost) -> {}:
         print("Post_action : {}".format(json.dumps(self.__datasForPost)))
         response = HttpRequest.makeHttpRequest(self.__url, authent=self.__identification, proxies=self.__proxy,
                                                data=json.dumps(self.__datasForPost))
@@ -172,7 +172,7 @@ class WfsPost(object):
             self.__layer.reload()
         return responseTransactions
 
-    def __synchronize(self):
+    def __synchronize(self) -> int:
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
         # si c'est une autre table donc standard alors la colonne n'existe pas
@@ -202,7 +202,7 @@ class WfsPost(object):
             raise Exception(message)
         return numrecmessage[0]
 
-    def commitLayer(self, currentLayer, editBuffer, bNormalWfsPost):
+    def commitLayer(self, currentLayer, editBuffer, bNormalWfsPost) -> {}:
         # Ecriture du rapport de fin de synchronisation
         self.__transactionReporting += "<br/>Couche {0}\n".format(currentLayer)
 
@@ -259,7 +259,7 @@ class WfsPost(object):
         self.__endReporting += self.__setEndReporting(endTransaction)
         return dict(status=endTransaction['status'], reporting=self.__endReporting)
 
-    def __setEndReporting(self, endTransactionMessage):
+    def __setEndReporting(self, endTransactionMessage) -> str:
         message = endTransactionMessage['message']
         status = endTransactionMessage['status']
         if status == cst.STATUS_COMMITTED:
@@ -279,7 +279,7 @@ class WfsPost(object):
         }
         return action
 
-    def __pushDeletedFeatures(self, deletedFeatures):
+    def __pushDeletedFeatures(self, deletedFeatures) -> None:
         result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeatures)
         for r in result:
             action = self.__setAction('Delete')
@@ -288,14 +288,14 @@ class WfsPost(object):
             action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             self.__datasForPost['actions'].append(action)
 
-    def __pushAddedFeatures(self, addedFeatures, bBDUni):
+    def __pushAddedFeatures(self, addedFeatures, bBDUni) -> None:
         for feature in addedFeatures:
             action = self.__setAction('Insert')
             action['data'].update(self.__setFieldsNameValue(feature))
             action['data'].update(self.__setPostGeometry(feature.geometry(), bBDUni))
             self.__datasForPost['actions'].append(action)
 
-    def __pushChangedAttributeValues(self, changedAttributeValues):
+    def __pushChangedAttributeValues(self, changedAttributeValues) -> None:
         for featureId, attributes in changedAttributeValues.items():
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
@@ -307,7 +307,7 @@ class WfsPost(object):
             action['data'].update(self.__setFieldsNameValueWithAttributes(feature, attributes))
             self.__datasForPost['actions'].append(action)
 
-    def __pushChangedGeometries(self, changedGeometries, isGeometryAsWkt, bBDUni):
+    def __pushChangedGeometries(self, changedGeometries, isGeometryAsWkt, bBDUni) -> None:
         for featureId, geometry in changedGeometries.items():
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
@@ -321,7 +321,7 @@ class WfsPost(object):
                 action['data'].update(self.__setPostGeometry(geometry, bBDUni))
             self.__datasForPost['actions'].append(action)
 
-    def __pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
+    def __pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni) -> None:
         # Les deux listes où sont stockés les identifiants d'objets traités dans le premier cas
         idsGeom = []
         idsAtt = []

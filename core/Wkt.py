@@ -8,17 +8,12 @@ class Wkt(object):
         self.sridTarget = parameters['sridTarget']
         self.geometryName = parameters['geometryName']
         self.geometryType = parameters['geometryType']
-        self.crsTransform = self.setCoordinateTransform()
+        self.crsTransform = self.__setCoordinateTransform()
 
-    def setCoordinateTransform(self):
+    def __setCoordinateTransform(self) -> QgsCoordinateTransform:
         crsSource = QgsCoordinateReferenceSystem(self.sridSource)
         crsTarget = QgsCoordinateReferenceSystem(self.sridTarget)
         return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
-
-    def transformGeometry(self, geom):
-        tr = self.setCoordinateTransform()
-        geom.transform(tr)
-        return geom
 
     def toGetGeometry(self, txtGeometry):
         geometry = QgsGeometry.fromWkt(txtGeometry)
@@ -26,14 +21,14 @@ class Wkt(object):
         return "GeomFromText('{0}', {1}),".format(geometry.asWkt(), self.sridTarget)
 
     @staticmethod
-    def toGetLonLatFromGeometry(txtGeometry):
+    def toGetLonLatFromGeometry(txtGeometry) -> ():
         geometry = QgsGeometry.fromWkt(txtGeometry)
         return geometry.asPoint().x(), geometry.asPoint().y()
 
     def toPostGeometry(self, qgsGeometryObject, is3D, bBDUni) -> {}:
         # Vérification du type géométrique entre QGIS et le serveur
         # et transformation du type le cas échéant
-        # Comme par exemple les équipements de transport qui sont de type géométrique
+        # Comme les équipements de transport qui sont de type géométrique
         # MULTIPOLYGON Z alors que QGIS renvoie du POLYGON Z
         serverGeometryType = self.geometryType
         serverGeometryTypePost = serverGeometryType
@@ -42,7 +37,8 @@ class Wkt(object):
             serverGeometryTypePost += 'Z'
         objectWkbTypeGeometry = qgsGeometryObject.wkbType()
         strObjectWkbTypeGeometry = QgsWkbTypes.displayString(objectWkbTypeGeometry)
-        if strObjectWkbTypeGeometry != serverGeometryTypePost and not(strObjectWkbTypeGeometry.startswith(serverGeometryType)):
+        if strObjectWkbTypeGeometry != serverGeometryTypePost \
+                and not(strObjectWkbTypeGeometry.startswith(serverGeometryType)):
             qgsGeometryObject.convertToMultiType()
         qgsGeometryObject.transform(self.crsTransform)
 
@@ -55,17 +51,10 @@ class Wkt(object):
 
         return {self.geometryName: qgsGeometryObject.asWkt()}
 
-    def isBoundingBoxIntersectGeometryObject(self, boundingBoxSpatialFilter, qgsGeometryObject):
+    def isBoundingBoxIntersectGeometryObject(self, boundingBoxSpatialFilter, qgsGeometryObject) -> bool:
         boundingBoxGeometry = QgsGeometry.fromWkt(boundingBoxSpatialFilter)
         boundingBoxGeometryEngine = QgsGeometry.createGeometryEngine(boundingBoxGeometry.constGet())
         boundingBoxGeometryEngine.prepareGeometry()
         if boundingBoxGeometryEngine.intersects(qgsGeometryObject.constGet()):
-            return True
-        return False
-
-    def isGeometryObjectIntersectSpatialFilter(self, spatialFilterGeometry, qgsGeometryObject):
-        objectGeometryEngine = QgsGeometry.createGeometryEngine(qgsGeometryObject.constGet())
-        objectGeometryEngine.prepareGeometry()
-        if objectGeometryEngine.intersects(spatialFilterGeometry.constGet()):
             return True
         return False
