@@ -79,7 +79,7 @@ class WfsPost(object):
                             "déplacer ou le(s) supprimer.")
         return wkt.toPostGeometry(geometry, self.__layer.geometryDimensionForDatabase, bBDUni)
 
-    def __setGeometries(self, changedGeometries, bBDUni):
+    def __setGeometries(self, changedGeometries, bBDUni) -> {}:
         geometries = {}
         for featureId, geometry in changedGeometries.items():
             postGeometry = self.__setPostGeometry(geometry, bBDUni)
@@ -242,7 +242,7 @@ class WfsPost(object):
         if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
             self.__pushChangedAttributesAndGeometries(changedAttributeValues, changedGeometries, bBDUni)
         elif len(changedGeometries) != 0:
-            self.__pushChangedGeometries(changedGeometries, bBDUni)
+            self.__pushChangedGeometries(changedGeometries, False, bBDUni)
         elif len(changedAttributeValues) != 0:
             self.__pushChangedAttributeValues(changedAttributeValues)
 
@@ -270,59 +270,6 @@ class WfsPost(object):
         else:
             information = '<br/><font color="red">error : {0}</font>'.format(message)
         return information
-
-    def __pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
-        idsGeom = []
-        idsAtt = []
-        # Récupération des géométries par identifiant d'objet
-        geometries = self.__setGeometries(changedGeometries, bBDUni)
-        # Traitement des actions doubles (ou simples) sur un objet (geometrie, attributs)
-        for featureId, attributes in changedAttributeValues.items():
-            feature = self.__layer.getFeature(featureId)
-            result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
-            for r in result:
-                strFeature = self.setHeader()
-                if not self.__isTableStandard:
-                    # Attention, ne pas changer l'ordre d'insertion
-                    strFeature += self.__setFingerPrint(r[1])
-                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
-                else:
-                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
-                strFeature += ', '
-                strFeature += self.__setFieldsNameValueWithAttributes(feature, attributes)
-                if featureId in geometries:
-                    strFeature += ', {0}'.format(geometries[featureId])
-                    idsGeom.append(featureId)
-                strFeature += '},'
-                strFeature += self.setStateAndLayerName('Update')
-                strFeature += '}'
-                idsAtt.append(featureId)
-        # Suppression des modifications déjà traitées
-        for idG in idsGeom:
-            del geometries[idG]
-        for idA in idsAtt:
-            del changedAttributeValues[idA]
-        # Il peut rester des modifications simples
-        if len(geometries) != 0:
-            self.__pushChangedGeometryTransformed(geometries)
-        elif len(changedAttributeValues) != 0:
-            self.__pushChangedAttributeValues(changedAttributeValues)
-
-    def __pushChangedGeometryTransformed(self, geometryTransformed):
-        for featureId, geometry in geometryTransformed.items():
-            result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
-            for r in result:
-                strFeature = self.setHeader()
-                if not self.__isTableStandard:
-                    # Attention, ne pas changer l'ordre d'insertion
-                    strFeature += self.__setFingerPrint(r[1])
-                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
-                else:
-                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
-                strFeature += ', {0}'.format(geometry)
-                strFeature += '},'
-                strFeature += self.setStateAndLayerName('Update')
-                strFeature += '}'
 
     def __setAction(self, state) -> {}:
         action = {
@@ -360,7 +307,7 @@ class WfsPost(object):
             action['data'].update(self.__setFieldsNameValueWithAttributes(feature, attributes))
             self.__datasForPost['actions'].append(action)
 
-    def __pushChangedGeometries(self, changedGeometries, bBDUni):
+    def __pushChangedGeometries(self, changedGeometries, isGeometryAsWkt, bBDUni):
         for featureId, geometry in changedGeometries.items():
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
@@ -368,5 +315,44 @@ class WfsPost(object):
                 if not self.__isTableStandard:
                     action['data'].update(self.__setFingerPrint(r[1]))
                 action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
-            action['data'].update(self.__setPostGeometry(geometry, bBDUni))
+            if isGeometryAsWkt:
+                action['data'].update(changedGeometries[featureId])
+            else:
+                action['data'].update(self.__setPostGeometry(geometry, bBDUni))
             self.__datasForPost['actions'].append(action)
+
+    def __pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni):
+        # Les deux listes où sont stockés les identifiants d'objets traités dans le premier cas
+        idsGeom = []
+        idsAtt = []
+
+        # Récupération des géométries par identifiant d'objet
+        geometries = self.__setGeometries(changedGeometries, bBDUni)
+
+        # Premier cas : traitement des actions doubles sur un objet (geometrie et attributs)
+        for featureId, attributes in changedAttributeValues.items():
+            action = self.__setAction('Update')
+            result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
+            for r in result:
+                if not self.__isTableStandard:
+                    action['data'].update(self.__setFingerPrint(r[1]))
+                action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
+            feature = self.__layer.getFeature(featureId)
+            action['data'].update(self.__setFieldsNameValueWithAttributes(feature, attributes))
+            idsAtt.append(featureId)
+            if featureId in geometries:
+                action['data'].update(geometries[featureId])
+                idsGeom.append(featureId)
+            self.__datasForPost['actions'].append(action)
+
+        # Suppression des modifications déjà traitées
+        for idG in idsGeom:
+            del geometries[idG]
+        for idA in idsAtt:
+            del changedAttributeValues[idA]
+
+        # Deuxième cas : traitement des actions simples sur un objet (geometrie ou attributs)
+        if len(geometries) != 0:
+            self.__pushChangedGeometries(geometries, True, bBDUni)
+        if len(changedAttributeValues) != 0:
+            self.__pushChangedAttributeValues(changedAttributeValues)
