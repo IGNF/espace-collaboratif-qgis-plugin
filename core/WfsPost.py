@@ -64,21 +64,23 @@ class WfsPost(object):
                 databaseid = r[5]
         return databaseid
 
+    # TODO à virer
     def setHeader(self):
         return '{"data": {'
 
-    def getGeometryWorkingArea(self):
-        layerWorkingArea = self.__context.getLayerByName(self.__filterName)
-        layerWorkingAreaCrs = layerWorkingArea.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
-        coordTransform = QgsCoordinateTransform(layerWorkingAreaCrs, destCrs, QgsProject.instance())
-        featureIds = layerWorkingArea.selectedFeatureIds()
-        geomWorkingArea = layerWorkingArea.getGeometry(featureIds[0])
-        if destCrs != layerWorkingAreaCrs:
-            geomWorkingArea.transform(coordTransform)
-        return geomWorkingArea
+    # TODO à virer
+    # def getGeometryWorkingArea(self):
+    #     layerWorkingArea = self.__context.getLayerByName(self.__filterName)
+    #     layerWorkingAreaCrs = layerWorkingArea.crs()
+    #     destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+    #     coordTransform = QgsCoordinateTransform(layerWorkingAreaCrs, destCrs, QgsProject.instance())
+    #     featureIds = layerWorkingArea.selectedFeatureIds()
+    #     geomWorkingArea = layerWorkingArea.getGeometry(featureIds[0])
+    #     if destCrs != layerWorkingAreaCrs:
+    #         geomWorkingArea.transform(coordTransform)
+    #     return geomWorkingArea
 
-    def setPostGeometry(self, geometry, bBDUni) -> {}:
+    def __setPostGeometry(self, geometry, bBDUni) -> {}:
         parameters = {'geometryName': self.__layer.geometryNameForDatabase, 'sridSource': cst.EPSGCRS4326,
                       'sridTarget': self.__layer.srid, 'geometryType': self.__layer.geometryTypeForDatabase}
         wkt = Wkt(parameters)
@@ -93,39 +95,36 @@ class WfsPost(object):
                             "déplacer ou le(s) supprimer.")
         return wkt.toPostGeometry(geometry, self.__layer.geometryDimensionForDatabase, bBDUni)
 
-    def setGeometries(self, changedGeometries, bBDUni):
+    def __setGeometries(self, changedGeometries, bBDUni):
         geometries = {}
         for featureId, geometry in changedGeometries.items():
-            postGeometry = self.setPostGeometry(geometry, bBDUni)
+            postGeometry = self.__setPostGeometry(geometry, bBDUni)
             geometries[featureId] = postGeometry
         return geometries
 
-    def setFieldsNameValueWithAttributes(self, feature, attributesChanged):
-        fieldsNameValue = ""
-        if self.__isTableStandard:
-            self.setKey(self.__layer.idNameForDatabase, feature.id())
+    def __setFieldsNameValueWithAttributes(self, feature, attributesChanged):
+        fieldsNameValue = {}
         for key, value in attributesChanged.items():
             if value is None or value == qgis.core.NULL:  # Remplacement par QGIS d'une valeur vide, on n'envoie pas
                 continue
-            else:
-                if value == "NULL":
-                    fieldsNameValue += '"{0}": null, '.format(feature.fields()[key].name())
-                else:
-                    fieldsNameValue += '"{0}": "{1}", '.format(feature.fields()[key].name(), value)
-        #  Il faut enlever à la fin de la chaine la virgule et l'espace ', ' car c'est un update
-        pos = len(fieldsNameValue)
-        return fieldsNameValue[0:pos - 2]
+            if value == "NULL":
+                fieldsNameValue[feature.fields()[key].name()] = 'null'
+                continue
+            fieldsNameValue[feature.fields()[key].name()] = value
+        return fieldsNameValue
 
+
+    # TODO à virer
     def setStateAndLayerName(self, state):
         return '"state": "{0}", "table": "{1}"'.format(state, self.__layer.name())
 
-    def setKey(self, key, value) -> {}:
+    def __setKey(self, key, value) -> {}:
         return {key: value}
 
-    def setFingerPrint(self, fingerprint) -> {}:
+    def __setFingerPrint(self, fingerprint) -> {}:
         return {cst.FINGERPRINT: fingerprint}
 
-    def setFieldsNameValue(self, feature) -> {}:
+    def __setFieldsNameValue(self, feature) -> {}:
         fieldsNameValue = {}
         for field in feature.fields():
             fieldName = field.name()
@@ -137,8 +136,9 @@ class WfsPost(object):
             fieldsNameValue[fieldName] = fieldValue
         return fieldsNameValue
 
-    def setClientId(self, clientFeatureId) -> {}:
-        return {cst.CLIENTFEATUREID: clientFeatureId}
+    # TODO à virer
+    # def setClientId(self, clientFeatureId) -> {}:
+    #     return {cst.CLIENTFEATUREID: clientFeatureId}
 
     def __checkResponseTransactions(self, response) -> {}:
         # Attention, les réponses sont de deux types :
@@ -340,7 +340,7 @@ class WfsPost(object):
         idsGeom = []
         idsAtt = []
         # Récupération des géométries par identifiant d'objet
-        geometries = self.setGeometries(changedGeometries, bBDUni)
+        geometries = self.__setGeometries(changedGeometries, bBDUni)
         # Traitement des actions doubles (ou simples) sur un objet (geometrie, attributs)
         for featureId, attributes in changedAttributeValues.items():
             feature = self.__layer.getFeature(featureId)
@@ -349,12 +349,12 @@ class WfsPost(object):
                 strFeature = self.setHeader()
                 if not self.__isTableStandard:
                     # Attention, ne pas changer l'ordre d'insertion
-                    strFeature += self.setFingerPrint(r[1])
-                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
+                    strFeature += self.__setFingerPrint(r[1])
+                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
                 else:
-                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
+                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
                 strFeature += ', '
-                strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
+                strFeature += self.__setFieldsNameValueWithAttributes(feature, attributes)
                 if featureId in geometries:
                     strFeature += ', {0}'.format(geometries[featureId])
                     idsGeom.append(featureId)
@@ -380,11 +380,11 @@ class WfsPost(object):
                 strFeature = self.setHeader()
                 if not self.__isTableStandard:
                     # Attention, ne pas changer l'ordre d'insertion
-                    strFeature += self.setFingerPrint(r[1])
-                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
+                    strFeature += self.__setFingerPrint(r[1])
+                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
                 else:
-                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
-                postGeometry = self.setPostGeometry(geometry, bBDUni)
+                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
+                postGeometry = self.__setPostGeometry(geometry, bBDUni)
                 strFeature += ', {0}'.format(postGeometry)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
@@ -397,29 +397,11 @@ class WfsPost(object):
                 strFeature = self.setHeader()
                 if not self.__isTableStandard:
                     # Attention, ne pas changer l'ordre d'insertion
-                    strFeature += self.setFingerPrint(r[1])
-                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
+                    strFeature += self.__setFingerPrint(r[1])
+                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
                 else:
-                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
+                    strFeature += self.__setKey(self.__layer.idNameForDatabase, r[0])
                 strFeature += ', {0}'.format(geometry)
-                strFeature += '},'
-                strFeature += self.setStateAndLayerName('Update')
-                strFeature += '}'
-
-    def __pushChangedAttributeValues(self, changedAttributeValues):
-        for featureId, attributes in changedAttributeValues.items():
-            result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
-            for r in result:
-                feature = self.__layer.getFeature(featureId)
-                strFeature = self.setHeader()
-                if not self.__isTableStandard:
-                    # Attention, ne pas changer l'ordre d'insertion
-                    strFeature += self.setFingerPrint(r[1])
-                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
-                else:
-                    strFeature += self.setKey(self.__layer.idNameForDatabase, r[0])
-                strFeature += ', '
-                strFeature += self.setFieldsNameValueWithAttributes(feature, attributes)
                 strFeature += '},'
                 strFeature += self.setStateAndLayerName('Update')
                 strFeature += '}'
@@ -433,11 +415,8 @@ class WfsPost(object):
                 'data': {}
             }
             if not self.__isTableStandard:
-                # Attention, ne pas changer l'ordre d'insertion
-                action['data'].update(self.setFingerPrint(r[1]))
-                action['data'].update(self.setKey(self.__layer.idNameForDatabase, r[0]))
-            else:
-                action['data'].update(self.setKey(self.__layer.idNameForDatabase, r[0]))
+                action['data'].update(self.__setFingerPrint(r[1]))
+            action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             self.__datasForPost['actions'].append(action)
 
     def __pushAddedFeatures(self, addedFeatures, bBDUni):
@@ -447,6 +426,22 @@ class WfsPost(object):
                 'state': 'Insert',
                 'data': {}
             }
-            action['data'].update(self.setFieldsNameValue(feature))
-            action['data'].update(self.setPostGeometry(feature.geometry(), bBDUni))
+            action['data'].update(self.__setFieldsNameValue(feature))
+            action['data'].update(self.__setPostGeometry(feature.geometry(), bBDUni))
+            self.__datasForPost['actions'].append(action)
+
+    def __pushChangedAttributeValues(self, changedAttributeValues):
+        for featureId, attributes in changedAttributeValues.items():
+            action = {
+                'table': self.__layer.tableid,
+                'state': 'Update',
+                'data': {}
+            }
+            result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
+            for r in result:
+                if not self.__isTableStandard:
+                    action['data'].update(self.__setFingerPrint(r[1]))
+                action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
+            feature = self.__layer.getFeature(featureId)
+            action['data'].update(self.__setFieldsNameValueWithAttributes(feature, attributes))
             self.__datasForPost['actions'].append(action)
