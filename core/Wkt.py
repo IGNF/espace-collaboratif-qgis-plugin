@@ -3,7 +3,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsP
 
 class Wkt(object):
 
-    def __init__(self, parameters):
+    def __init__(self, parameters) -> None:
         self.sridSource = parameters['sridSource']
         self.sridTarget = parameters['sridTarget']
         self.geometryName = parameters['geometryName']

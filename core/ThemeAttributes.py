@@ -14,7 +14,6 @@ class ThemeAttributes(object):
         self.__required = False
         self.__mandatory = False
         # self.__original = {}
-        #TODO faire le switch name/title
         self.__switchNameToTitle = {}
 
     def __keyExist(self, key, data) -> bool:
@@ -53,16 +52,13 @@ class ThemeAttributes(object):
     def getDefault(self) -> str:
         return self.__default
 
-    def getRequired(self) -> bool:
-        return self.__required
-
     def getMandatory(self) -> bool:
         return self.__mandatory
 
     def getNameAndTitle(self) -> {}:
         return {self.__name: self.__title}
 
-    def switchNameToTitle(self):
+    def switchNameToTitle(self) -> str:
         if self.__title != '':
             return self.__title
         return self.__name

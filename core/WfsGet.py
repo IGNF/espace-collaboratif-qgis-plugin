@@ -5,7 +5,7 @@ from .SQLiteManager import SQLiteManager
 
 class WfsGet(object):
 
-    def __init__(self, parameters):
+    def __init__(self, parameters) -> None:
         if 'urlHostEspaceCo' in parameters:
             self.urlHostEspaceCo = parameters['urlHostEspaceCo']
             self.url = parameters['urlHostEspaceCo'] + '/gcms/api/wfs'
@@ -32,9 +32,27 @@ class WfsGet(object):
         self.databaseid = parameters['databaseid']
         self.tableid = parameters['tableid']
 
-    def makeRequestDeletedObjects(self):
+    def __initParametersGcmsGet(self, filterDelete=False) -> None:
+        offset = 0
+        maxFeatures = 5000
+        # Passage des paramètres pour l'url
+        self.__setService()
+        self.__setRequest()
+        # GeoJSON | JSON | CSV | GML (par défaut)
+        self.__setOutputFormat('JSON')
+        self.__setTypeName()
+        if self.numrec != 0:
+            self.__setNumrec()
+        if self.bbox is not None:
+            self.__setBBox()
+        self.__setFilter(filterDelete)
+        self.__setOffset(offset)
+        self.__setMaxFeatures(maxFeatures)
+        self.__setVersion('1.0.0')
+
+    def __makeRequestDeletedObjects(self) -> None:
         # il s'agit de retrouver
-        self.initParametersGcmsGet(True)
+        self.__initParametersGcmsGet(True)
         while True:
             response = HttpRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
                                                params=self.parametersGcmsGet)
@@ -55,27 +73,9 @@ class WfsGet(object):
                         # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
                         # l'enregistrement
                         SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
-            self.setOffset(response['offset'])
+            self.__setOffset(response['offset'])
             if response['stop']:
                 break
-
-    def initParametersGcmsGet(self, filterDelete=False):
-        offset = 0
-        maxFeatures = 5000
-        # Passage des paramètres pour l'url
-        self.setService()
-        self.setRequest()
-        # GeoJSON | JSON | CSV | GML (par défaut)
-        self.setOutputFormat('JSON')
-        self.setTypeName()
-        if self.numrec != 0:
-            self.setNumrec()
-        if self.bbox is not None:
-            self.setBBox()
-        self.setFilter(filterDelete)
-        self.setOffset(offset)
-        self.setMaxFeatures(maxFeatures)
-        self.setVersion('1.0.0')
 
     # La requête doit être de type :
     # https://espacecollaboratif.ign.fr/gcms/api/wfs
@@ -88,9 +88,9 @@ class WfsGet(object):
     # &maxFeatures=200
     # &version=1.1.0
     # http://gitlab.dockerforge.ign.fr/rpg/oukile_v2/blob/master/assets/js/oukile/saisie_controle/services/layer-service.js
-    def gcms_get(self, bExtraction=False):
+    def gcms_get(self, bExtraction=False) -> ():
         message = ""
-        self.initParametersGcmsGet()
+        self.__initParametersGcmsGet()
         start = time.time()
         totalRows = 0
         if self.isStandard:
@@ -127,12 +127,12 @@ class WfsGet(object):
                         # l'ancien enregistrement et en insérer un nouveau
                         SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
                         totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
-            self.setOffset(response['offset'])
+            self.__setOffset(response['offset'])
             if response['stop']:
                 break
         # suppression des objets pour une table BDUni et différent d'une extraction
         if self.isStandard is False or self.isStandard == 0 and bExtraction is False:
-            self.makeRequestDeletedObjects()
+            self.__makeRequestDeletedObjects()
         # nettoyage de la base SQLite
         SQLiteManager.vacuumDatabase()
         end = time.time()
@@ -148,7 +148,7 @@ class WfsGet(object):
                     message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
         return maxNumrec, message
 
-    def getMaxNumrec(self):
+    def getMaxNumrec(self) -> int:
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
         # https://qlf-collaboratif.cegedim-hds.fr/collaboratif-4.0/gcms/api/databases/18/tables/479/max-numrec
 
@@ -164,37 +164,37 @@ class WfsGet(object):
             raise Exception("WfsGet.getMaxNumrec -> ".format(message))
         return numrec
 
-    def setService(self):
+    def __setService(self) -> None:
         self.parametersGcmsGet['service'] = 'WFS'
 
-    def setVersion(self, version):
+    def __setVersion(self, version) -> None:
         self.parametersGcmsGet['version'] = version
 
-    def setRequest(self):
+    def __setRequest(self) -> None:
         self.parametersGcmsGet['request'] = 'GetFeature'
 
-    def setOutputFormat(self, outputFormat):
+    def __setOutputFormat(self, outputFormat) -> None:
         self.parametersGcmsGet['outputFormat'] = outputFormat
 
-    def setTypeName(self):
+    def __setTypeName(self) -> None:
         typename = "{0}:{1}".format(self.databasename, self.layerName)
         self.parametersGcmsGet['typename'] = typename
 
-    def setNumrec(self):
+    def __setNumrec(self) -> None:
         self.parametersGcmsGet['numrec'] = self.numrec
 
-    def setFilter(self, filter):
+    def __setFilter(self, filter) -> None:
         if self.bDetruit:
             if filter:
                 self.parametersGcmsGet['filter'] = '{"detruit":true}'
             else:
                 self.parametersGcmsGet['filter'] = '{"detruit":false}'
 
-    def setBBox(self):
+    def __setBBox(self) -> None:
         self.parametersGcmsGet['bbox'] = self.bbox.boxToStringWithSrid(self.sridProject, self.sridLayer)
 
-    def setOffset(self, offset):
+    def __setOffset(self, offset) -> None:
         self.parametersGcmsGet['offset'] = offset
 
-    def setMaxFeatures(self, maxFeatures):
+    def __setMaxFeatures(self, maxFeatures) -> None:
         self.parametersGcmsGet['maxFeatures'] = maxFeatures

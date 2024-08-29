@@ -1,7 +1,7 @@
 import logging
 import os.path
 import configparser
-from qgis.core import  QgsFeatureRequest, QgsVectorLayerEditBuffer
+from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
 from . import resources
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt

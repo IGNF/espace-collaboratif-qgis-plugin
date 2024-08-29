@@ -14,7 +14,7 @@ from . import Constantes as cst
 # Classe implémentant une requête HTTP POST
 class WfsPost(object):
 
-    def __init__(self, context, layer, filterName):
+    def __init__(self, context, layer, filterName) -> None:
         self.__context = context
         self.__layer = layer
         # self.__url = context.urlHostEspaceCo + '/gcms/api/wfstransactions'

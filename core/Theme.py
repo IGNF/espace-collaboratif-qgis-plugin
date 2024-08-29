@@ -36,19 +36,10 @@ class Theme(object):
     def getName(self) -> str:
         return self.__name
 
-    def getGlobal(self) -> bool:
-        return self.__global
-
-    def getDatabase(self) -> str:
-        return self.__database
-
-    def getFeatureType(self) -> str:
-        return self.__featureType
-
     def getAttributes(self) -> []:
         return self.__attributes
 
-    def getSwitchAttributeNameToTitle(self, name):
+    def getSwitchAttributeNameToTitle(self, name) -> str:
         title = ''
         if name in self.__switchNameToTitle:
             title = self.__switchNameToTitle[name]
