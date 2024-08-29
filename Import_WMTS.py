@@ -32,6 +32,7 @@ except ImportError as e:
         "Dependencies - HTTPError not within owslib."
         " Trying to get it from urllib directly."
     )
+
 try:
     from urllib import HTTPError
 
@@ -44,7 +45,7 @@ except ImportError as e:
 
 class importWMTS:
 
-    def __init__(self, context, layer):
+    def __init__(self, context, layer) -> None:
         self.wmts = None
         self.uri = QgsDataSourceUri().uri()
         self.wmts_lyr = None
@@ -55,13 +56,13 @@ class importWMTS:
         self.selected_layer = None
         self.context = context
         self.selected_layer = layer
-        self.checkOpenService()
-        self.checkGetTile()
-        self.checkTileMatrixSet()
+        self.__checkOpenService()
+        self.__checkGetTile()
+        self.__checkTileMatrixSet()
 
     # Construction url GetCapabilities sur le geoportail
     # exemple : https://wxs.ign.fr/[cle]/wmts?service=WMTS&request=GetCapabilities
-    def appendUriCapabilities(self):
+    def __appendUriCapabilities(self) -> None:
         params = {
             'service': cst.WMTS,
             'request': 'GetCapabilities'
@@ -75,8 +76,8 @@ class importWMTS:
         self.uri = self.selected_layer.geoservice['url'].format(urllib.parse.unquote(urllib.parse.urlencode(params)))
 
     # opening WMTS
-    def checkOpenService(self):
-        self.appendUriCapabilities()
+    def __checkOpenService(self) -> bool:
+        self.__appendUriCapabilities()
         try:
             # Quels sont les geoservices disponibles ?
             self.wmts = WebMapTileService(self.uri)
@@ -90,7 +91,7 @@ class importWMTS:
         return True
 
     # check if GetTile operation is available
-    def checkGetTile(self):
+    def __checkGetTile(self) -> bool:
         if not hasattr(self.wmts, "gettile") or "GetTile" not in [op.name for op in self.wmts.operations]:
             print("Required GetTile operation not available in: " + self.uri)
             return False
@@ -99,7 +100,7 @@ class importWMTS:
         return True
 
     # check if tilematrixsets is available
-    def checkTileMatrixSet(self):
+    def __checkTileMatrixSet(self) -> bool:
         if not hasattr(self.wmts, "tilematrixsets"):
             print("Required tilematrixsets not available in: " + self.uri)
             return False
@@ -175,7 +176,7 @@ class importWMTS:
     # url=https://wxs.ign.fr/choisirgeoportail/geoportail/wmts?
     # SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities
     # TODO utilisation avec le proxy dans le panneau de configuration en désactivant les variables d'environnement
-    def getWtmsUrlParams(self, idGuichetLayerWmts):
+    def getWtmsUrlParams(self, idGuichetLayerWmts) -> ():
         if not idGuichetLayerWmts:
             return "Exception", "Import_WMTS.getWtmsUrlParams : le nom de la couche géoservices est vide"
 
@@ -184,15 +185,7 @@ class importWMTS:
                                 .format(idGuichetLayerWmts)
 
         self.getTileMatrixSet()
-        # wmts_url_params = {
-        #     "crs": self.crs,
-        #     "dpiMode": "7",
-        #     "format": self.getFormat(),
-        #     "layers": self.layer_id,
-        #     "styles": self.getStyles(),
-        #     "tileMatrixSet": self.tile_matrix_set,
-        #     "url": self.getUrl()
-        # }
+
         # Patch pour les flux privés GPF
         url_tmp = self.getTileUrl()
 

@@ -37,7 +37,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
 
     # La liste des fichiers convertis en string($binary)
-    __stringBinaryFiles = []
+    __stringBinaryFiles = {}
 
     def __init__(self, context, nbSketch, parent=None):
         """Constructor."""
@@ -429,7 +429,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 return th
         return None
 
-    def getBinaryAttachments(self) -> []:
+    def getBinaryAttachments(self) -> {}:
         """Retourne une (ou plusieurs) chaine(s) binaire(s)
         
         :return la liste des fichiers transformés en string($binary)
@@ -438,7 +438,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         if self.checkBoxAttDoc.isChecked():
             return self.__stringBinaryFiles
         else:
-            return []
+            return {}
 
     # def optionWithAttDoc(self):
     #     """
@@ -527,7 +527,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                             filename, self.__truncate(sizeFilename / (1024 * 1024), 3))
                         self.__selFilesName.append(filename)
                         # La conversion en binaire
-                        self.__stringBinaryFiles.append(self.__fileToBinaryString(filename))
+                        self.__stringBinaryFiles.update({filename: self.__fileToBinaryString(filename)})
                     print(fileNameWithSize)
                     self.lblDoc.setText(fileNameWithSize)
 

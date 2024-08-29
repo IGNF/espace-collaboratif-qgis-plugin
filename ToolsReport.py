@@ -272,10 +272,10 @@ class ToolsReport(object):
         datasForRequest['attributes'] = themeWithAttributes  # obligatoire
 
         # Récupération du (ou des) fichier(s) joint(s) (max 4) au signalement
-        # stringBinaryfileName = formCreate.getBinaryAttachments()
-        # datasForRequest['documents'] = []
-        # for stringBinary in stringBinaryfileName:
-        #     datasForRequest['documents'].append(stringBinary)
+        binaryAttachments = formCreate.getBinaryAttachments()
+        datasForRequest['documents'] = []
+        for binaryAttachment in binaryAttachments:
+            datasForRequest['documents'].append(json.dumps(binaryAttachment))
 
         # Création du ou des signalements
         if formCreate.isSingleReport():

@@ -271,7 +271,7 @@ class RipartPlugin:
         self.__context.iface.messageBar().clearWidgets()
         self.__logger.error(format(exception))
         self.__context.iface.messageBar().pushMessage("Erreur", "{} : {}".format(message, str(exception)),
-                                                      level=2, duration=3)
+                                                      level=2, duration=5)
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def __doPost(self, layer, editBuffer):

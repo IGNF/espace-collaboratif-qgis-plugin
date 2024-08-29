@@ -171,6 +171,9 @@ class Report(object):
         else:
             return strAttributes
 
+        if data['attributes'] is None:
+            return strAttributes
+
         if len(data['attributes']) == 0:
             return strAttributes
 
