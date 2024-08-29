@@ -318,6 +318,23 @@ class Contexte(object):
         else:
             self.proxy = None
 
+        xmlproxy = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_proxy, "Serveur").text
+        if xmlproxy is not None and str(xmlproxy).strip() != '':
+            if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
+                PluginHelper.showMessageBox(
+                    u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
+                return -1
+            self.proxy = {'https': str(xmlproxy).strip()}
+
+            proxy = str(xmlproxy).strip()
+
+            os.environ['http_proxy'] = proxy
+            os.environ['HTTP_PROXY'] = proxy
+            os.environ['https_proxy'] = proxy
+            os.environ['HTTPS_PROXY'] = proxy
+        else:
+            self.proxy = None
+
         xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
         if xmlgroupeactif is not None:
             self.__activeCommunityName = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
@@ -463,6 +480,7 @@ class Contexte(object):
                 if layer.type == cst.WMTS:
                     importWmts = importWMTS(self, layer)
                     titleLayer_uri = importWmts.getWtmsUrlParams(layer.geoservice['layers'])
+                    print(titleLayer_uri)
                     if 'Exception' in titleLayer_uri[0]:
                         endMessage += "{0} : {1}\n\n".format(layer.name, titleLayer_uri[1])
                         continue
@@ -715,8 +733,9 @@ class Contexte(object):
         """
         mapLayers = self.mapCan.layers()
         for layer in mapLayers:
-            if type(layer) is QgsVectorLayer and len(layer.selectedFeatures()) > 0:
-                return True
+            if type(layer) is QgsVectorLayer or type(layer) is GuichetVectorLayer:
+                if len(layer.selectedFeatures()) > 0:
+                    return True
         return False
 
     # Les objets sélectionnés sont transformés en croquis

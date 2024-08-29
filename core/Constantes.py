@@ -97,7 +97,9 @@ WFS = "feature-type"
 WMTS = "geoservice"
 WCS = "WCS"
 COLLABORATIF = "collaboratif.ign.fr"
+GEOPF = "data.geopf.fr"
 # WXSIGN = "wxs.ign.fr"
+APIKEY = "ign_scan_ws"
 
 # Système de coordonnées de référence de Ripart
 EPSGCRS4326 = 4326
