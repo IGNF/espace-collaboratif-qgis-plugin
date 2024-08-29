@@ -18,7 +18,7 @@ from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
 
 class GuichetVectorLayer(QgsVectorLayer):
 
-    def __init__(self, parameters):
+    def __init__(self, parameters) -> None:
         super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
         self.databasename = parameters['databasename']
         self.sqliteManager = parameters['sqliteManager']
