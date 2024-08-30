@@ -6,6 +6,25 @@ from . import Constantes as cst
 
 
 class Report(object):
+    # Initialisation des variables utiles à un signalement
+    __id = -1
+    __author = ''
+    __commune = ''
+    __insee = ''
+    __departement = ''
+    __departementId = ''
+    __dateCreation = ''
+    __dateMaj = ''
+    __dateValidation = ''
+    __theme = ''
+    __statut = ''
+    __message = ''
+    __replies = ''
+    __url = ''
+    __urlPrive = ''
+    __attachments = ''
+    __autorisation = ''
+    __geometry = ''
 
     def __init__(self, urlHostEspaceCo, data) -> None:
         self.__logger = RipartLogger("Report").getRipartLogger()
@@ -14,7 +33,7 @@ class Report(object):
             self.__id = data['id']
             self.__url = self.__setUrl(data['id'])
         if self.__keyExist('author', data):
-            self.__author = self.__notNoneValue(data['author'])
+            self.__author = data['author']
         if self.__keysExists('commune', 'title', data):
             self.__commune = data['commune']['title']
         if self.__keysExists('commune', 'name', data):
@@ -58,8 +77,12 @@ class Report(object):
         # self.__comment = data['comment']
 
     def __keysExists(self, keyA, keyB, data) -> bool:
+        if data[keyA] is None:
+            return False
         if self.__keyExist(keyA, data):
             datum = data[keyA]
+            if datum[keyB] is None:
+                return False
             if self.__keyExist(keyB, datum):
                 return True
         return False
@@ -353,9 +376,18 @@ class Report(object):
                 #  que fait-on ?
                 #  ticket redmine
                 #  ou requete https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/users/user_id
-                strReplies += " par {}".format(replie['author']['username'])
-                strReplies += " le {}.".format(self.__formatDateToStrftime(replie['date']))
-                strReplies += "\n{}\n".format(replie['content'])
+                if replie['author'] is None:
+                    strReplies += " par utilisateur inconnu"
+                else:
+                    strReplies += " par {}".format(replie['author']['username'])
+                if replie['date'] is None:
+                    strReplies += " le date inconnue."
+                else:
+                    strReplies += " le {}.".format(self.__formatDateToStrftime(replie['date']))
+                if replie['content'] is None:
+                    strReplies += "\nCommentaire inconnu\n"
+                else:
+                    strReplies += "\n{}\n".format(replie['content'])
         return strReplies[:-1]
 
     # Crée de toutes pieces une url d'accès au signalement
