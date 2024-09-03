@@ -27,6 +27,7 @@ class ToolsReport(object):
         # barre de progression des signalements importés
         self.__progress = None
         self.__progressVal = 0
+        self.__datasForRequest = {}
 
     def __addReportSketchLayersToTheCurrentMap(self) -> None:
         uri = self.__context.getUriDatabaseSqlite()
@@ -224,18 +225,19 @@ class ToolsReport(object):
             self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
             return
 
-    def __sendReport(self, datasForRequest):
-        print(json.dumps(datasForRequest))
+    def __sendReport(self, filesAttachments):
+        print(self.__datasForRequest)
         # Envoi de la requête serveur en POST, il faut transformer les datasForRequest en json
-        responseFromServer = self.__sendRequest(json.dumps(datasForRequest))
+        responseFromServer = self.__sendRequest(filesAttachments)
         if responseFromServer is None:
             return
         return responseFromServer.json()
 
-    def __sendRequest(self, datas):
+    def __sendRequest(self, filesAttachments):
         # envoi de la requête
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
-        response = HttpRequest.makeHttpRequest(uri, self.__context.auth, self.__context.proxy, None, datas)
+        response = HttpRequest.makeHttpRequest(uri, self.__context.auth, self.__context.proxy, None,
+                                               self.__datasForRequest, filesAttachments)
         if response.status_code == 200 or response.status_code == 201:
             return response
         else:
@@ -256,9 +258,24 @@ class ToolsReport(object):
         # PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
         PluginHelper.save_preferredGroup(self.__context.projectDir, formCreate.preferredGroup)
 
-        # Une partie des données pour le corps de la requête a envoyé au serveur
-        datasForRequest = {
-            'community': self.__context.getUserCommunity().getId(),  # obligatoire
+        # Pour joindre un fichier à un signalement avec Request HTTP library,
+        # une partie des données doit être de type dictionnaire l'autre transformée en json (sketch et attributes)
+        # comme l'exemple ci-dessous. Cela fonctionne aussi pour la simple création d'un signalement.
+        """
+        {
+            'community': 375,
+            'comment': 'Test QGIS avec la nouvelle API',
+            'input_device': 'SIG-QGIS',
+            'attributes': '{"community": 1, "theme": "Route", "attributes": {}}',
+            'sketch': '{"name": "", "objects": [{"type": "Ligne", "geometry": "LINESTRING(2.4383950982381015
+                        48.85775256550695, 2.4378823444106827 48.85735617006071, 2.4375939203827577 
+                        48.8572549622097)", '"attributes": {}}]}',
+            'geometry': 'POINT(2.437957121010514 48.85745456592579)'
+        }
+        """
+        self.__datasForRequest.clear()
+        self.__datasForRequest = {
+            'community': self.__context.getUserCommunity().getId(),  # champ obligatoire
             'comment': formCreate.getComment(),
             'input_device': cst.CLIENT_INPUT_DEVICE
         }
@@ -269,19 +286,16 @@ class ToolsReport(object):
             message = "Impossible de créer un signalement sans thème. Veuillez en sélectionner un."
             QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
             return
-        datasForRequest['attributes'] = themeWithAttributes  # obligatoire
+        self.__datasForRequest['attributes'] = json.dumps(themeWithAttributes)  # obligatoire
 
         # Récupération du (ou des) fichier(s) joint(s) (max 4) au signalement
-        binaryAttachments = formCreate.getBinaryAttachments()
-        datasForRequest['documents'] = []
-        for binaryAttachment in binaryAttachments:
-            datasForRequest['documents'].append(json.dumps(binaryAttachment))
+        filesAttachments = formCreate.getFilesAttachments()
 
         # Création du ou des signalements
         if formCreate.isSingleReport():
-            contents = self.__createSingleReport(sketchList, datasForRequest)
+            contents = self.__createSingleReport(sketchList, filesAttachments)
         else:
-            contents = self.__createMultiReports(sketchList, datasForRequest)
+            contents = self.__createMultiReports(sketchList, filesAttachments)
         if contents is None:
             raise Exception("ToolsReport.__createSingleReport : erreur dans la création d'un signalement")
 
@@ -291,21 +305,21 @@ class ToolsReport(object):
         # Message de fin
         self.__sendMessageEndProcess(listNewReportIds)
 
-    def __createSingleReport(self, sketchList, datasForRequest) -> []:
+    def __createSingleReport(self, sketchList, filesAttachments) -> []:
         contents = []
         sketchsGeometryReport = self.__createReportWithSketchs(sketchList, True)
-        datasForRequest['sketch'] = sketchsGeometryReport[0]['sketch']
-        datasForRequest['geometry'] = sketchsGeometryReport[0]['geometryReport']  # obligatoire
-        contents.append(self.__sendReport(datasForRequest))
+        self.__datasForRequest['sketch'] = json.dumps(sketchsGeometryReport[0]['sketch'])
+        self.__datasForRequest['geometry'] = sketchsGeometryReport[0]['geometryReport']  # obligatoire
+        contents.append(self.__sendReport(filesAttachments))
         return contents
 
-    def __createMultiReports(self, sketchList, datasForRequest) -> []:
+    def __createMultiReports(self, sketchList, filesAttachments) -> []:
         contents = []
         sketchsGeometrysReports = self.__createReportWithSketchs(sketchList, False)
         for sketchGeometryReport in sketchsGeometrysReports:
-            datasForRequest['sketch'] = sketchGeometryReport['sketch']
-            datasForRequest['geometry'] = sketchGeometryReport['geometryReport']
-            contents.append(self.__sendReport(datasForRequest))
+            self.__datasForRequest['sketch'] = sketchGeometryReport['sketch']
+            self.__datasForRequest['geometry'] = sketchGeometryReport['geometryReport']
+            contents.append(self.__sendReport(filesAttachments))
         return contents
 
     def __getBarycentreInWkt(self, listPoints):
@@ -357,7 +371,7 @@ class ToolsReport(object):
 
     def __calculateRows(self, datas):
         report = Report(self.__context.urlHostEspaceCo, datas)
-        res = report.InsertSketchIntoSQLite()
+        report.InsertSketchIntoSQLite()
         columns = report.getColumnsForSQlite()
         return columns, report.getId()
 

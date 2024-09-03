@@ -1,3 +1,4 @@
+import json
 import os
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
@@ -35,9 +36,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     # taille maximale du document joint
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
-
-    # La liste des fichiers convertis en string($binary)
-    __stringBinaryFiles = {}
 
     def __init__(self, context, nbSketch, parent=None):
         """Constructor."""
@@ -114,6 +112,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # Pas de croquis à joindre, l'utilisateur a cliqué un point sur la carte
         if nbSketch == 0:
             self.checkBoxJoinCroquis.setChecked(False)
+
+        # La liste des fichiers joints au signalement
+        self.__files = {}
 
     def __setComboBoxGroup(self) -> None:
         for nameid in self.__context.getListNameOfCommunities():
@@ -429,14 +430,13 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 return th
         return None
 
-    def getBinaryAttachments(self) -> {}:
+    def getFilesAttachments(self) -> {}:
         """Retourne une (ou plusieurs) chaine(s) binaire(s)
         
         :return la liste des fichiers transformés en string($binary)
-        :rtype: []
         """
         if self.checkBoxAttDoc.isChecked():
-            return self.__stringBinaryFiles
+            return self.__files
         else:
             return {}
 
@@ -467,7 +467,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                                                           duration=3)
             self.bSend = False
         # Commentaire de 10 caractères minimum
-        if len(self.textEditMessage) < 10:
+        if len(self.textEditMessage.toPlainText()) < 10:
             self.__context.iface.messageBar().pushMessage("Attention",
                                                           u'Le commentaire doit être de 10 caractères minimum', level=1,
                                                           duration=3)
@@ -481,7 +481,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         return int(n * multiplier) / multiplier
 
     def __openFileDialog(self):
-        self.__stringBinaryFiles.clear()
+        self.__files.clear()
         if not self.checkBoxAttDoc.isChecked():
             self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
             self.lblDoc.setProperty("visible", False)
@@ -511,8 +511,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     if sizeFilename > self.docMaxSize:
                         message += u"Le fichier {0} ne peut être envoyé à l'Espace collaboratif, car sa taille " \
                                    u"({1}Ko) dépasse celle maximale autorisée ({2}Ko).\n".format(filename,
-                                                                                                 str(sizeFilename/1000),
-                                                                                                 str(self.docMaxSize/1000))
+                                                                                                 str(sizeFilename / 1000),
+                                                                                                 str(self.docMaxSize / 1000))
                 if message != '':
                     PluginHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
@@ -526,13 +526,14 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                         fileNameWithSize += "{0} ({1}Mo)\n".format(
                             filename, self.__truncate(sizeFilename / (1024 * 1024), 3))
                         self.__selFilesName.append(filename)
-                        # La conversion en binaire
-                        self.__stringBinaryFiles.update({filename: self.__fileToBinaryString(filename)})
+                        # La liste des fichiers à uploader
+                        # {'image': (filename, open(filename, 'rb'), "multipart/form-data")}
+                        # files = [('files', open('a.txt', 'rb')), ('files', open('b.txt', 'rb'))]
+                        # files = {'file': ('report.xls', open('report.xls', 'rb'))}
+                        # files = {"file": open("file", "rb")}
+                        names = filename.split('/')
+                        # self.__files.update({"file": (names[len(names) - 1], open(filename, "rb"))})
+                        self.__files.update({names[len(names) - 1]: open(filename, 'rb')})
                     print(fileNameWithSize)
+                    print(self.__files)
                     self.lblDoc.setText(fileNameWithSize)
-
-    def __fileToBinaryString(self, file_path):
-        with open(file_path, 'rb') as file:
-            binary_code = file.read()
-            binary_string = ''.join(format(byte, '08b') for byte in binary_code)
-        return binary_string
