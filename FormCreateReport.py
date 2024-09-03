@@ -1,4 +1,3 @@
-import json
 import os
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
@@ -463,14 +462,16 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 nb = 1
         # Pas de thème sélectionné
         if nb == 0:
-            self.__context.iface.messageBar().pushMessage("Attention", u'Il manque la sélection du thème', level=1,
-                                                          duration=3)
+            # self.__context.iface.messageBar().pushMessage("Attention", u'Il manque la sélection du thème', level=1,
+            #                                               duration=3)
+            PluginHelper.showMessageBox("Attention, il manque la sélection du thème.")
             self.bSend = False
         # Commentaire de 10 caractères minimum
         if len(self.textEditMessage.toPlainText()) < 10:
-            self.__context.iface.messageBar().pushMessage("Attention",
-                                                          u'Le commentaire doit être de 10 caractères minimum', level=1,
-                                                          duration=3)
+            # self.__context.iface.messageBar().pushMessage("Attention",
+            #                                               u'Le commentaire doit être de 10 caractères minimum', level=1,
+            #                                               duration=3)
+            PluginHelper.showMessageBox("Attention, le commentaire doit être de 10 caractères minimum.")
             self.bSend = False
 
         self.bSend = True
@@ -495,6 +496,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                       u"Compressés (*.ZIP;*.7Z)"
             filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(self, 'Document à joindre à la remarque', '.',
                                                                   filters)
+            if len(filenames) == 0:
+                self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
             message = ''
             if len(filenames) > 4:
                 message += "Maximum 4 fichiers liés à un signalement\n"
@@ -510,9 +513,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     sizeFilename = os.path.getsize(filename)
                     if sizeFilename > self.docMaxSize:
                         message += u"Le fichier {0} ne peut être envoyé à l'Espace collaboratif, car sa taille " \
-                                   u"({1}Ko) dépasse celle maximale autorisée ({2}Ko).\n".format(filename,
-                                                                                                 str(sizeFilename / 1000),
-                                                                                                 str(self.docMaxSize / 1000))
+                                   u"({1}Ko) dépasse celle maximale autorisée ({2}Ko).\n"\
+                                .format(filename, str(sizeFilename / 1000), str(self.docMaxSize / 1000))
                 if message != '':
                     PluginHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
@@ -526,14 +528,12 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                         fileNameWithSize += "{0} ({1}Mo)\n".format(
                             filename, self.__truncate(sizeFilename / (1024 * 1024), 3))
                         self.__selFilesName.append(filename)
-                        # La liste des fichiers à uploader
-                        # {'image': (filename, open(filename, 'rb'), "multipart/form-data")}
-                        # files = [('files', open('a.txt', 'rb')), ('files', open('b.txt', 'rb'))]
-                        # files = {'file': ('report.xls', open('report.xls', 'rb'))}
-                        # files = {"file": open("file", "rb")}
+                        # Les fichiers à uploader sous forme de dictionnaire
+                        # Exemple : files = {'save.png': open('D:/Temp/save.png', 'rb')}
                         names = filename.split('/')
-                        # self.__files.update({"file": (names[len(names) - 1], open(filename, "rb"))})
                         self.__files.update({names[len(names) - 1]: open(filename, 'rb')})
+                        # Traduction dans la requête
+                        # {'save.png': <_io.BufferedReader name='D:/Temp/save.png'>}
                     print(fileNameWithSize)
                     print(self.__files)
                     self.lblDoc.setText(fileNameWithSize)

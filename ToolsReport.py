@@ -295,6 +295,9 @@ class ToolsReport(object):
         if formCreate.isSingleReport():
             contents = self.__createSingleReport(sketchList, filesAttachments)
         else:
+            if len(sketchList) == 1:
+                raise Exception("ToolsReport.__createMultiReports : attention, il fallait cocher la case [Créer un "
+                                "signalement unique].")
             contents = self.__createMultiReports(sketchList, filesAttachments)
         if contents is None:
             raise Exception("ToolsReport.__createSingleReport : erreur dans la création d'un signalement")

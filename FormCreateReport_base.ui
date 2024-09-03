@@ -62,7 +62,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tabTheme">
      <attribute name="title">
@@ -137,7 +137,7 @@
         <x>10</x>
         <y>60</y>
         <width>371</width>
-        <height>31</height>
+        <height>71</height>
        </rect>
       </property>
       <property name="text">
@@ -151,7 +151,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>110</y>
+        <y>140</y>
         <width>201</width>
         <height>20</height>
        </rect>
@@ -167,7 +167,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>140</y>
+        <y>170</y>
         <width>161</width>
         <height>20</height>
        </rect>

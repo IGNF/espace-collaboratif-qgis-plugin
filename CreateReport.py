@@ -53,5 +53,5 @@ class CreateReport(object):
 
         except Exception as e:
             self.__logger.error(format(e))
-            self.__context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)", level=2,
-                                                          duration=3)
+            self.__context.iface.messageBar().pushMessage("Erreur", u"Problème dans la création de signalement(s) : {}"
+                                                          .format(e), level=2, duration=4)

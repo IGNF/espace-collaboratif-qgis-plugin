@@ -60,16 +60,16 @@ class Ui_dlgCreateRem(object):
         self.checkBoxAttDoc.setGeometry(QtCore.QRect(10, 30, 151, 20))
         self.checkBoxAttDoc.setObjectName("checkBoxAttDoc")
         self.lblDoc = QtWidgets.QLabel(self.tabOption)
-        self.lblDoc.setGeometry(QtCore.QRect(10, 60, 371, 31))
+        self.lblDoc.setGeometry(QtCore.QRect(10, 60, 371, 71))
         self.lblDoc.setText("")
         self.lblDoc.setWordWrap(True)
         self.lblDoc.setObjectName("lblDoc")
         self.radioBtnUnique = QtWidgets.QRadioButton(self.tabOption)
-        self.radioBtnUnique.setGeometry(QtCore.QRect(10, 110, 201, 20))
+        self.radioBtnUnique.setGeometry(QtCore.QRect(10, 140, 201, 20))
         self.radioBtnUnique.setChecked(True)
         self.radioBtnUnique.setObjectName("radioBtnUnique")
         self.radioBtnMultiple = QtWidgets.QRadioButton(self.tabOption)
-        self.radioBtnMultiple.setGeometry(QtCore.QRect(10, 140, 161, 20))
+        self.radioBtnMultiple.setGeometry(QtCore.QRect(10, 170, 161, 20))
         self.radioBtnMultiple.setObjectName("radioBtnMultiple")
         self.tabWidget.addTab(self.tabOption, "")
         self.textEditMessage = QtWidgets.QTextEdit(self.groupBoxProfil)
@@ -118,7 +118,7 @@ class Ui_dlgCreateRem(object):
         self.buttonBox.setObjectName("buttonBox")
 
         self.retranslateUi(dlgCreateRem)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(dlgCreateRem)
 
     def retranslateUi(self, dlgCreateRem):
