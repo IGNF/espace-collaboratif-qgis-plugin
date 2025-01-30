@@ -1,3 +1,4 @@
+import json
 import os
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
@@ -35,6 +36,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     # taille maximale du document joint
     docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
+
+    __communityIdWhenThemeChanged = None
 
     def __init__(self, context, nbSketch, parent=None):
         """Constructor."""
@@ -93,6 +96,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.setColumnWidth(0, 160)
         self.treeWidget.setColumnWidth(1, 150)
         self.treeWidget.itemChanged.connect(self.__onItemChanged)
+        # self.treeWidget.itemClicked.connect(self.__onItemClicked)
 
         # Affichage des thèmes du groupe de l'utilisateur
         self.__displayThemes(self.__context.getCommunity())
@@ -130,6 +134,15 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             self.treeWidget.expandItem(item)
         else:
             self.treeWidget.collapseItem(item)
+
+    def __onItemClicked(self, item, column):
+        for j in range(item.childCount()):
+            att = item.child(j)
+            widg = self.treeWidget.itemWidget(att, 0)
+            if widg.hasSelectedText():
+                state = item.checkState(0)
+                if state == Qt.CheckState.Unchecked:
+                    item.checkState(Qt.CheckState.Checked)
 
     def __toggle(self, item):
         state = item.checkState(0)
@@ -249,6 +262,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         return item_value
 
+    def getCommunityIdWhenThemeChanged(self):
+        return self.__communityIdWhenThemeChanged
+
     def __groupIndexChanged(self):
         """Détecte le groupe choisi et lance l'affiche des thèmes adéquats.
         """
@@ -264,6 +280,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 if comm.getName() == userCommunityNameChoice:
                     print(comm.getTheme())
                     self.__displayThemesForCommunity(comm)
+                    self.__communityIdWhenThemeChanged = comm.getId()
                     break
 
     def isSingleReport(self):
@@ -309,20 +326,19 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 widg = self.treeWidget.itemWidget(att, 1)
                 val = self.__getValueFromWidget(widg, label, thItem.text(0))
                 errorMessage += self.__correctValue(thItem.text(0), key, val)
-                selectedAttributes[key] = val
+                valueChangedIfTypeAttributeIsJson = self.__getJsonValue(thItem.text(0), key, val)
+                selectedAttributes[key] = str(valueChangedIfTypeAttributeIsJson)
                 if errorMessage != '':
                     raise Exception(errorMessage)
             data['attributes'] = selectedAttributes
         return data
 
-    def __correctValue(self, groupName, attributeName, value):
+    def __correctValue(self, groupName, attributeName, value) -> str:
         errorMessage = ''
         for theme in self.__themesList:
             if theme.getName() != groupName:
                 continue
             for attribute in theme.getAttributes():
-                if attribute.getName() != attributeName:
-                    continue
                 if attribute.getType() == 'int' or attribute.getType() == 'float':
                     if value != '' and not value.isdigit():
                         errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
@@ -330,6 +346,19 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     if value == '' or value is None:
                         errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
         return errorMessage
+
+    def __getJsonValue(self, groupName, attributeName, value):
+        valueChangedIfTypeAttributeIsJson = value
+        for theme in self.__themesList:
+            if theme.getName() != groupName:
+                continue
+            for attribute in theme.getAttributes():
+                if attribute.getName() != attributeName:
+                    continue
+                if attribute.getType() != 'jsonvalue':
+                    continue
+                valueChangedIfTypeAttributeIsJson = json.loads(value)
+        return valueChangedIfTypeAttributeIsJson
 
     def __getValueFromWidget(self, widg, widg_label, theme_name):
         """
@@ -439,18 +468,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         else:
             return {}
 
-    # def optionWithAttDoc(self):
-    #     """
-    #     :rtype : boolean
-    #     """
-    #     return self.checkBoxAttDoc.isChecked()
-
-    # def optionWithCroquis(self):
-    #     """
-    #     :rtype : boolean
-    #     """
-    #     return self.checkBoxJoinCroquis.isChecked()
-
     # Envoi de la requête de création à l'espace collaboratif
     def __onSend(self):
         # Il faut au moins un theme coché
@@ -462,15 +479,10 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 nb = 1
         # Pas de thème sélectionné
         if nb == 0:
-            # self.__context.iface.messageBar().pushMessage("Attention", u'Il manque la sélection du thème', level=1,
-            #                                               duration=3)
             PluginHelper.showMessageBox("Attention, il manque la sélection du thème.")
             self.bSend = False
         # Commentaire de 10 caractères minimum
         if len(self.textEditMessage.toPlainText()) < 10:
-            # self.__context.iface.messageBar().pushMessage("Attention",
-            #                                               u'Le commentaire doit être de 10 caractères minimum', level=1,
-            #                                               duration=3)
             PluginHelper.showMessageBox("Attention, le commentaire doit être de 10 caractères minimum.")
             self.bSend = False
 
@@ -531,9 +543,11 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                         # Les fichiers à uploader sous forme de dictionnaire
                         # Exemple : files = {'save.png': open('D:/Temp/save.png', 'rb')}
                         names = filename.split('/')
-                        self.__files.update({names[len(names) - 1]: open(filename, 'rb')})
+                        # self.__files.update({names[len(names) - 1]: open(filename, 'rb')}) # fonctionne à garder
+                        # exemple requests_toolbelt : 'field2': ('filename', open('file.py', 'rb'), 'text/plain')
+                        self.__files.update({names[len(names) - 1]: (names[len(names) - 1], open(filename, 'rb'))})
                         # Traduction dans la requête
                         # {'save.png': <_io.BufferedReader name='D:/Temp/save.png'>}
-                    print(fileNameWithSize)
-                    print(self.__files)
+                    # print(fileNameWithSize)
+                    # print(self.__files)
                     self.lblDoc.setText(fileNameWithSize)

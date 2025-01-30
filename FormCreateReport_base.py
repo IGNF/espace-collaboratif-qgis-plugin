@@ -33,7 +33,7 @@ class Ui_dlgCreateRem(object):
         self.groupBoxProfil.setTitle("")
         self.groupBoxProfil.setObjectName("groupBoxProfil")
         self.tabWidget = QtWidgets.QTabWidget(self.groupBoxProfil)
-        self.tabWidget.setGeometry(QtCore.QRect(10, 130, 391, 231))
+        self.tabWidget.setGeometry(QtCore.QRect(10, 130, 391, 241))
         font = QtGui.QFont()
         font.setPointSize(8)
         self.tabWidget.setFont(font)
@@ -73,7 +73,7 @@ class Ui_dlgCreateRem(object):
         self.radioBtnMultiple.setObjectName("radioBtnMultiple")
         self.tabWidget.addTab(self.tabOption, "")
         self.textEditMessage = QtWidgets.QTextEdit(self.groupBoxProfil)
-        self.textEditMessage.setGeometry(QtCore.QRect(10, 390, 391, 81))
+        self.textEditMessage.setGeometry(QtCore.QRect(10, 400, 391, 81))
         font = QtGui.QFont()
         font.setPointSize(8)
         font.setBold(False)
@@ -82,7 +82,7 @@ class Ui_dlgCreateRem(object):
         self.textEditMessage.setFont(font)
         self.textEditMessage.setObjectName("textEditMessage")
         self.lblMessage = QtWidgets.QLabel(self.groupBoxProfil)
-        self.lblMessage.setGeometry(QtCore.QRect(10, 370, 111, 16))
+        self.lblMessage.setGeometry(QtCore.QRect(10, 380, 111, 16))
         font = QtGui.QFont()
         font.setPointSize(9)
         font.setBold(True)
@@ -118,7 +118,7 @@ class Ui_dlgCreateRem(object):
         self.buttonBox.setObjectName("buttonBox")
 
         self.retranslateUi(dlgCreateRem)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(dlgCreateRem)
 
     def retranslateUi(self, dlgCreateRem):

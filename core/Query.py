@@ -8,13 +8,23 @@ from . import Constantes as cst
 # pour le get d'une Requests Python
 class Query(object):
 
-    def __init__(self, url, login, passwd, proxy):
+    def __init__(self, url, proxy):
+        self.__headers = {}
         self.__url = url
-        self.__login = login
-        self.__password = passwd
         self.__proxy = proxy
         self.__partOfUrl = ''
         self.__params = {}
+
+    # def __init__(self, url, login, passwd, proxy):
+    #     self.__url = url
+    #     self.__login = login
+    #     self.__password = passwd
+    #     self.__proxy = proxy
+    #     self.__partOfUrl = ''
+    #     self.__params = {}
+
+    def setHeaders(self, tokenType, tokenAccess):
+        self.__headers['Authorization'] = '{} {}'.format(tokenType, tokenAccess)
 
     # Le complément de l'url générale permettant de constituer la requête HTTP finale
     def setPartOfUrl(self, partOfUrl):
@@ -87,7 +97,7 @@ class Query(object):
     # Retourne une liste de données
     def multiple(self) -> []:
         message = ""
-        httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxy)
+        httpRequest = HttpRequest(self.__url, self.__headers, self.__proxy)
         data = []
         while True:
             response = httpRequest.getNextResponse(self.__partOfUrl, self.__params)
@@ -118,7 +128,7 @@ class Query(object):
 
     # Requete HTTP simple
     def simple(self) -> Response:
-        httpRequest = HttpRequest(self.__url, self.__login, self.__password, self.__proxy)
+        httpRequest = HttpRequest(self.__url, self.__headers, self.__proxy)
         response = httpRequest.getResponse(self.__partOfUrl, None)
         if response.status_code != 200:
             if response.reason.find('Unauthorized') != -1:

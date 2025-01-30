@@ -4,10 +4,8 @@ from .Community import Community
 
 class CommunitiesMember(object):
 
-    def __init__(self, url, login, pwd, proxy) -> None:
+    def __init__(self, url, tokenType, tokenAccess, proxy) -> None:
         self.__url = url
-        self.__login = login
-        self.__pwd = pwd
         self.__proxy = proxy
         self.__firstname = ''
         self.__surname = ''
@@ -20,7 +18,9 @@ class CommunitiesMember(object):
         self.__sharedThemes = []
         # Liste des thèmes actifs
         self.__activeThemes = []
-        self.__query = Query(url, login, pwd, proxy)
+        self.__tokenType = tokenType
+        self.__tokenAccess = tokenAccess
+        self.__query = Query(url, proxy)
         # liste des noms des communautés de l'utilisateur
         self.__listNameOfCommunities = []
         # Le nom de la communauté choisie par l'utilisateur lors de sa connexion
@@ -40,6 +40,7 @@ class CommunitiesMember(object):
 
     # Récupère les informations sur un utilisateur
     def extractCommunities(self) -> []:
+        self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/users/me")
         response = self.__query.simple()
         if response is None:
@@ -74,7 +75,8 @@ class CommunitiesMember(object):
     def getDatasCommunities(self, datas) -> None:
         if len(datas) == 0:
             return
-        params = {'url': self.__url, 'login': self.__login, 'pwd': self.__pwd, 'proxy': self.__proxy}
+        params = {'url': self.__url, 'tokentype': self.__tokenType, 'tokenaccess': self.__tokenAccess,
+                  'proxy': self.__proxy}
         for data in datas:
             community = Community(params)
             community.getDatas(data)

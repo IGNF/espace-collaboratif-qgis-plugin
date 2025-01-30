@@ -138,8 +138,9 @@ class WfsPost(object):
 
     def __gcmsPost(self, bNormalWfsPost) -> {}:
         print("Post_action : {}".format(json.dumps(self.__datasForPost)))
-        response = HttpRequest.makeHttpRequest(self.__url, authent=self.__identification, proxies=self.__proxy,
-                                               data=json.dumps(self.__datasForPost))
+        headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
+        response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxy, data=json.dumps(self.__datasForPost),
+                                               headers=headers)
         responseTransactions = self.__checkResponseTransactions(response)
         if responseTransactions['status'] == cst.STATUS_COMMITTED:
             # Mise à jour de la base SQLite pour les objets détruits

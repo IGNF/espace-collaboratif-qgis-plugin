@@ -17,6 +17,8 @@ from .core.Report import Report
 from .core.HttpRequest import HttpRequest
 from .core import Constantes as cst
 
+from requests_toolbelt import MultipartEncoder
+
 
 # Importation des signalements dans le projet QGIS
 class ToolsReport(object):
@@ -50,8 +52,10 @@ class ToolsReport(object):
         self.__context.mapCan.refresh()
 
     def getReport(self, idReport):
-        query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
-                      self.__context.proxy)
+        query = Query(self.__context.urlHostEspaceCo, self.__context.proxy)
+        # query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
+        #               self.__context.proxy)
+        query.setHeaders(self.__context.getTokenType(), self.__context.getTokenAccess())
         query.setPartOfUrl('gcms/api/reports/{}'.format(idReport))
         response = query.simple()
         return Report(self.__context.urlHostEspaceCo, response.json())
@@ -65,9 +69,8 @@ class ToolsReport(object):
         # ne souhaite pas extraire les données France entière
         if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
             return
-
-        query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
-                      self.__context.proxy)
+        query = Query(self.__context.urlHostEspaceCo, self.__context.proxy)
+        query.setHeaders(self.__context.getTokenType(), self.__context.getTokenAccess())
         query.setPartOfUrl('gcms/api/reports')
         query.setPage(1)
         query.setLimit(100)
@@ -211,8 +214,9 @@ class ToolsReport(object):
     def addResponseToServer(self, parameters) -> None:
         idReport = parameters['reportId']
         uri = "{0}/gcms/api/reports/{1}/replies".format(self.__context.urlHostEspaceCo, idReport)
-        response = HttpRequest.makeHttpRequest(uri, parameters['authentification'], parameters['proxy'],
-                                               data=parameters['requestBody'])
+        headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
+        response = HttpRequest.makeHttpRequest(uri, parameters['proxy'], data=parameters['requestBody'],
+                                               headers=headers)
         # Succès : get (code 200) post (code 201)
         if response.status_code == 200 or response.status_code == 201:
             return response.json()
@@ -226,18 +230,21 @@ class ToolsReport(object):
             return
 
     def __sendReport(self, filesAttachments):
-        print(self.__datasForRequest)
-        # Envoi de la requête serveur en POST, il faut transformer les datasForRequest en json
-        responseFromServer = self.__sendRequest(filesAttachments)
+        self.__datasForRequest.update(filesAttachments)
+        datas = MultipartEncoder(fields=self.__datasForRequest)
+        print(datas)
+        # responseFromServer = self.__sendRequest(filesAttachments)
+        responseFromServer = self.__sendRequest(datas)
         if responseFromServer is None:
             return
         return responseFromServer.json()
 
-    def __sendRequest(self, filesAttachments):
+    def __sendRequest(self, datas):
         # envoi de la requête
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
-        response = HttpRequest.makeHttpRequest(uri, self.__context.auth, self.__context.proxy, None,
-                                               self.__datasForRequest, filesAttachments)
+        headers = {'Content-Type': datas.content_type, 'Authorization': '{} {}'.format(self.__context.getTokenType(),
+                                                                                       self.__context.getTokenAccess())}
+        response = HttpRequest.makeHttpRequest(uri, self.__context.proxy, None, datas, headers)
         if response.status_code == 200 or response.status_code == 201:
             return response
         else:
@@ -274,8 +281,12 @@ class ToolsReport(object):
         }
         """
         self.__datasForRequest.clear()
+        # Si l'utilisateur a choisi un thème n'appartenant pas à sa community
+        communityId = formCreate.getCommunityIdWhenThemeChanged()
+        if communityId is None:
+            communityId = self.__context.getUserCommunity().getId()
         self.__datasForRequest = {
-            'community': self.__context.getUserCommunity().getId(),  # champ obligatoire
+            'community': str(communityId),  # champ obligatoire
             'comment': formCreate.getComment(),
             'input_device': cst.CLIENT_INPUT_DEVICE
         }
@@ -286,7 +297,7 @@ class ToolsReport(object):
             message = "Impossible de créer un signalement sans thème. Veuillez en sélectionner un."
             QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
             return
-        self.__datasForRequest['attributes'] = json.dumps(themeWithAttributes)  # obligatoire
+        self.__datasForRequest['attributes'] = json.dumps(themeWithAttributes)
 
         # Récupération du (ou des) fichier(s) joint(s) (max 4) au signalement
         filesAttachments = formCreate.getFilesAttachments()
@@ -310,18 +321,18 @@ class ToolsReport(object):
 
     def __createSingleReport(self, sketchList, filesAttachments) -> []:
         contents = []
-        sketchsGeometryReport = self.__createReportWithSketchs(sketchList, True)
-        self.__datasForRequest['sketch'] = json.dumps(sketchsGeometryReport[0]['sketch'])
-        self.__datasForRequest['geometry'] = sketchsGeometryReport[0]['geometryReport']  # obligatoire
+        sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, True)
+        self.__datasForRequest['sketch'] = json.dumps(sketchsDatasGeometryReport[0]['sketch'])
+        self.__datasForRequest['geometry'] = sketchsDatasGeometryReport[0]['geometryReport']  # obligatoire
         contents.append(self.__sendReport(filesAttachments))
         return contents
 
     def __createMultiReports(self, sketchList, filesAttachments) -> []:
         contents = []
-        sketchsGeometrysReports = self.__createReportWithSketchs(sketchList, False)
-        for sketchGeometryReport in sketchsGeometrysReports:
-            self.__datasForRequest['sketch'] = sketchGeometryReport['sketch']
-            self.__datasForRequest['geometry'] = sketchGeometryReport['geometryReport']
+        sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, False)
+        for sketchDataGeometryReport in sketchsDatasGeometryReport:
+            self.__datasForRequest['sketch'] = json.dumps(sketchDataGeometryReport['sketch'])
+            self.__datasForRequest['geometry'] = sketchDataGeometryReport['geometryReport']
             contents.append(self.__sendReport(filesAttachments))
         return contents
 

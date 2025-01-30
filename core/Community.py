@@ -18,7 +18,10 @@ class Community(object):
         self.__logo = ''
         # self.__description = ''
         # self.__date = None
-        self.__query = Query(params['url'], params['login'], params['pwd'], params['proxy'])
+        # self.__query = Query(params['url'], params['login'], params['pwd'], params['proxy'])
+        self.__tokenType = params['tokentype']
+        self.__tokenAccess = params['tokenaccess']
+        self.__query = Query(params['url'], params['proxy'])
 
     def getDatas(self, data) -> None:
         if len(data) == 0:
@@ -79,6 +82,7 @@ class Community(object):
 
     # Récupère les informations d'une communauté
     def getUserProfil(self, community_id) -> None:
+        self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/communities/{}".format(community_id))
         response = self.__query.simple()
         if response is None:
@@ -90,6 +94,7 @@ class Community(object):
     def extractLayers(self, communityId, page, limit) -> []:
         self.__query.setPage(page)
         self.__query.setLimit(limit)
+        self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/communities/{}/layers".format(communityId))
         data = self.__query.multiple()
         if len(data) == 0:
@@ -133,6 +138,7 @@ class Community(object):
 
     # Récupère les informations d'une table de la base de données correspondant à une couche cartographique
     def __getDataLayerFromTable(self, layer):
+        self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseid, layer.tableid))
         response = self.__query.simple()
         if response is None:
@@ -185,6 +191,7 @@ class Community(object):
 
     # Récupère les informations d'un géoservice
     def __getDataLayerFromGeoservice(self, layer, geoservice):
+        self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/geoservices/{}".format(geoservice['id']))
         response = self.__query.simple()
         if response is None:

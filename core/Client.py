@@ -19,14 +19,13 @@ from .Community import Community
 
 
 class Client(object):
-    def __init__(self, url, login, pwd, proxies):
+    def __init__(self, url, tokenType, tokenAccess, proxies):
         """
         Initialisation du client et connexion au service ripart
         """
         self.__url = url
-        self.__login = login
-        self.__password = pwd
-        self.__auth = {'login': self.__login, 'password': self.__password}
+        self.__tokenType = tokenType
+        self.__tokenAccess = tokenAccess
         self.__proxies = proxies
         self.__author = None
         self.__version = None
@@ -39,9 +38,6 @@ class Client(object):
 
     def getUrl(self):
         return self.__url
-
-    def getAuth(self):
-        return self.__auth
 
     def getProxies(self):
         return self.__proxies
@@ -64,41 +60,41 @@ class Client(object):
     #         raise Exception(format(e))
     #     return self
 
-    def getProfile(self):
-        if self.__profile is None:
-            self.__profile = self.getProfilFromService()
-        return self.__profile
+    # def getProfile(self):
+    #     if self.__profile is None:
+    #         self.__profile = self.getProfilFromService()
+    #     return self.__profile
+    #
+    # def getProfilFromService(self):
+    #     """
+    #     Requête au service pour le profil utilisateur
+    #     :return : le profil de l'utilisateur
+    #     """
+    #     community = Community(self.__url, self.__tokenType, self.__tokenAccess, self.__proxies)
+    #     profile = community.getProfile()
+    #     return profile
 
-    def getProfilFromService(self):
-        """
-        Requête au service pour le profil utilisateur
-        :return : le profil de l'utilisateur
-        """
-        community = Community(self.__url, self.__login, self.__password, self.__proxies)
-        profile = community.getProfile()
-        return profile
-
-    def getNomProfil(self):
-        url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
-        self.logger.debug(url)
-        data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
-        self.logger.debug("data auth ")
-        xml = XMLResponse(data.text)
-
-        errMessage = xml.checkResponseValidity()
-        if errMessage['code'] == 'OK':
-            nomProfil = xml.extractNomProfil()
-        else:
-            if errMessage['message'] != "":
-                result = errMessage['message']
-            elif errMessage['code'] != "":
-                result = ClientHelper.getErrorMessage(errMessage['code'])
-            else:
-                result = ClientHelper.getErrorMessage(data.status_code)
-
-            raise Exception(ClientHelper.notNoneValue(result))
-
-        return nomProfil
+    # def getNomProfil(self):
+    #     url = "{}/{}".format(self.__url, "api/georem/geoaut_get.xml")
+    #     self.logger.debug(url)
+    #     data = requests.get(url, auth=HTTPBasicAuth(self.__login, self.__password), proxies=self.__proxies)
+    #     self.logger.debug("data auth ")
+    #     xml = XMLResponse(data.text)
+    #
+    #     errMessage = xml.checkResponseValidity()
+    #     if errMessage['code'] == 'OK':
+    #         nomProfil = xml.extractNomProfil()
+    #     else:
+    #         if errMessage['message'] != "":
+    #             result = errMessage['message']
+    #         elif errMessage['code'] != "":
+    #             result = ClientHelper.getErrorMessage(errMessage['code'])
+    #         else:
+    #             result = ClientHelper.getErrorMessage(data.status_code)
+    #
+    #         raise Exception(ClientHelper.notNoneValue(result))
+    #
+    #     return nomProfil
 
     '''
         Connexion à une base de données et une couche donnée

@@ -7,31 +7,38 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-
-from qgis.PyQt.QtWidgets import QMessageBox
-from qgis.utils import spatialite_connect
-from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
-    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri
-
 import os.path
 import shutil
 import ntpath
 import configparser
+import time
+import requests
 
-from .core.Community import Community
+from PyQt5 import QtGui
+from PyQt5.QtGui import QImage
+from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.utils import spatialite_connect
+from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
+    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri
+from .Import_WMTS import importWMTS
+from .FormConnection import FormConnectionDialog
+from .FormChoixGroupe import FormChoixGroupe
+from .FormInfo import FormInfo
 from .PluginHelper import PluginHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
 from .core.Sketch import Sketch
-from .FormConnection import FormConnectionDialog
 from .core import Constantes as cst
-from .Import_WMTS import importWMTS
+from .core.Community import Community
+from .core.CommunitiesMember import CommunitiesMember
 from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 from .core.WfsGet import WfsGet
 from .core.SQLiteManager import SQLiteManager
 from .core.ProgressBar import ProgressBar
+from .core.ign_keycloak.KeycloakService import KeycloakService
+from .core.ClientHelper import ClientHelper
 
 
 class Contexte(object):
@@ -42,8 +49,9 @@ class Contexte(object):
     instance = None
 
     # identifiants de connexion
-    login = ""
-    pwd = ""
+    # login = ""
+    # pwd = ""
+
     urlHostEspaceCo = ""
     profil = None
 
@@ -107,7 +115,6 @@ class Contexte(object):
         self.login = ""
         self.pwd = ""
         self.auth = {'login': self.login, 'password': self.pwd}
-        self.urlHostEspaceCo = ""
         self.profil = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
@@ -120,10 +127,17 @@ class Contexte(object):
         self.__listNameOfCommunities = None
         self.__mapToolsReport = None
         self.__community = None
+        # Connexion avec keycloack
+        self.__keycloakService = None
+        self.__tokenAccess = ''
+        self.__tokenType = ''
+        self.__tokenTimerStart = 0
+        self.__tokenExpireIn = 0
 
         try:
             # set du répertoire et fichier du projet qgis
             self.setProjectParams()
+            self.urlHostEspaceCo = PluginHelper.load_urlhost(self.projectDir).text
 
             # contrôle l'existence du fichier de configuration
             self.checkConfigFile()
@@ -281,7 +295,162 @@ class Contexte(object):
                     return True
         return False
 
-    def getConnexionEspaceCollaboratif(self, newLogin = False) -> int:
+    def getConnexionEspaceCollaboratifWithKeycloak(self, bAutomaticConnection) -> None:
+        if bAutomaticConnection and self.__keycloakService is not None:
+            self.__keycloakService.logout()
+
+        self.logger.debug("getConnexionEspaceCollaboratifWithKeycloak")
+        self.__tokenTimerStart = time.perf_counter()
+        KEYCLOAK_SERVER_URI = "https://sso.geopf.fr/"
+        KEYCLOAK_CLIENT_ID = "espaceco-qgis"
+        KEYCLOAK_CLIENT_SECRET = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"
+        # KEYCLOAK_SERVER_URI = "https://sso-qua.priv.geopf.fr/"
+        # KEYCLOAK_CLIENT_ID = "cartes-gouv-dev"
+        # KEYCLOAK_CLIENT_SECRET = "mjkWkBruwdsUHsimBclM00tDFfsKgoVq"
+        KEYCLOAK_REALM_NAME = "geoplateforme"
+        IGN_PROXY = "http://proxy.ign.fr:3128"
+        proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
+        self.__keycloakService = KeycloakService(KEYCLOAK_SERVER_URI, KEYCLOAK_REALM_NAME, KEYCLOAK_CLIENT_ID,
+                                                 client_secret=KEYCLOAK_CLIENT_SECRET, proxies=proxies)
+        r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
+        # print(r)
+        # print('-------------')
+        r = self.__keycloakService.get_access_token(r["code"][0])
+        # print(r)
+        # print('-------------')
+        self.__tokenAccess = r["access_token"]
+        # print("access_token : {}".format(r["access_token"]))
+        # print('-------------')
+        self.__tokenExpireIn = r["expires_in"]
+        # print("expires_in : {}".format(r["expires_in"]))
+        # print('-------------')
+        # print("timerAccessToken : {}".format(self.__tokenTimerStart))
+        # print('-------------')
+        self.__tokenType = r["token_type"]
+        # print("token_type : {}".format(r["token_type"]))
+        # print('-------------')
+        r = self.__keycloakService.get_userinfo(r["access_token"])
+        self.login = r['email']
+        # print(r)
+        # keycloak_service.logout()
+        self.__connectToService()
+
+    def __connectToService(self):
+        PluginHelper.save_login(self.projectDir, self.login)
+        xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
+        if xmlgroupeactif is not None:
+            self.__activeCommunityName = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
+                                                                        "Serveur").text
+            if self.__activeCommunityName is not None:
+                self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
+        try:
+            # Recherche des communautés
+            communities = CommunitiesMember(self.urlHostEspaceCo, self.__tokenType, self.__tokenAccess,
+                                            self.proxy)
+            communities.extractCommunities()
+            self.setCommunity(communities)
+            # La liste des communautés à afficher dans la boite de choix des communautés
+            self.setListNameOfCommunities(communities.getListNameOfCommunities())
+            self.setUserNameCommunity(communities.getUserName())
+            dlgSelectedCommunities = FormChoixGroupe(self)
+            dlgSelectedCommunities.exec_()
+            # bouton Continuer (le choix du nouveau profil est validé)
+            if not dlgSelectedCommunities.getCancel():
+                # Le nouvel id et nom du groupe sont retournés dans un tuple idNameCommunity
+                idNameCommunity = dlgSelectedCommunities.getIdAndNameFromSelectedCommunity()
+
+                # La communauté de l'utilisateur est stocké dans le contexte
+                self.setUserCommunity(communities.getUserCommunity(idNameCommunity[1]))
+                self.setActiveCommunityName(idNameCommunity[1])
+
+                # Sauvegarde du groupe actif dans le xml du projet utilisateur
+                PluginHelper.saveActiveCommunityName(self.projectDir, idNameCommunity[1])
+                self.setActiveCommunityName(idNameCommunity[1])
+
+                # On enregistre le groupe comme groupe préféré pour la création de signalement
+                # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
+                formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
+                if formPreferredGroup != idNameCommunity[1]:
+                    # TODO voir avec Noémie, il s'agit bien des themes utilisateur (ceux dans community)
+                    #  et non activeThemes ou shared_themes ?
+                    PluginHelper.save_preferredThemes(self.projectDir, self.getUserCommunity().getTheme())
+                PluginHelper.save_preferredGroup(self.projectDir, idNameCommunity[1])
+            # Bouton Annuler
+            elif dlgSelectedCommunities.getCancel():
+                dlgSelectedCommunities.close()
+                return
+            # Les informations de connexion sont montrées à l'utilisateur
+            self.__setDisplayInformations()
+            self.__connectionResult = 1
+        except Exception as e:
+            self.logger.error(format(e))
+            self.client = None
+            self.profil = None
+            self.__connectionResult = -1
+            PluginHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
+        return self.__connectionResult
+
+    def __setDisplayInformations(self):
+        # Les infos de connexion présentée à l'utilisateur
+        dlgInfo = FormInfo()
+        # Modification du logo en fonction du groupe
+        # TODO : si utilisateur sans groupe getUserCommunity est a None, il faut faire un test et changer le code
+        # TODO faire une fonction __setDisplayLogo()
+        # TODO sai1 sur la qualif par exemple
+        if self.getUserCommunity().getLogo() != "":
+            image = QImage()
+            image.loadFromData(requests.get(self.getUserCommunity().getLogo()).content)
+            dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
+        elif self.getUserCommunity().getName() == "Profil par défaut":
+            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
+        dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
+        dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))
+        dlgInfo.textInfo.append("Login : {}".format(self.login))
+        dlgInfo.textInfo.append("Groupe : {}".format(self.getUserCommunity().getName()))
+        zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
+        if zoneExtraction == "" or zoneExtraction is None or len(
+                self.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
+            dlgInfo.textInfo.append("Zone de travail : pas de zone définie")
+            PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
+        else:
+            dlgInfo.textInfo.append("Zone de travail : {}".format(zoneExtraction))
+        # TODO faut-il contrôler (mais de quelle manière ?) la zone de travail de l'utilisateur
+        #  avec la variable emprises (FR, 38185, autre) de community qui autorise les droits de saisie
+        #  sachant que nous n'avons pas pour l'instant l'emprise géographique stockée sur le serveur
+        #  Faut-il indiquer l'emprise sur le serveur ? pour distinguer emprise serveur et zone de travail QGIS ?
+        #  je l'ai ajouté dans le doute
+        strEmprises = ''
+        if len(self.getUserCommunity().getEmprises()) == 0:
+            strEmprises = 'aucune,'
+        else:
+            for emprise in self.getUserCommunity().getEmprises():
+                strEmprises += "{},".format(emprise)
+        dlgInfo.textInfo.append("Emprise(s) serveur : {}".format(strEmprises[:-1]))
+        # if self.__context.profil.zone == cst.ZoneGeographique.UNDEFINED:
+        #     zoneExtraction = PluginHelper.load_CalqueFiltrage(self.__projectDir).text
+        #     if zoneExtraction == "" or zoneExtraction is None or len(
+        #             self.__context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
+        #         dlgInfo.textInfo.append("Zone : pas de zone définie")
+        #         PluginHelper.setXmlTagValue(self.__projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
+        #     else:
+        #         dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
+        #     self.__context.profil.zone = zoneExtraction
+        # else:
+        #     dlgInfo.textInfo.append("Zone : {}".format(self.__context.profil.zone.__str__()))
+        dlgInfo.exec_()
+
+    def getTokenType(self):
+        return self.__tokenType
+
+    def getTokenAccess(self):
+        return self.__tokenAccess
+
+    def closeConnexionEspaceCollaboratif(self):
+        if self.__keycloakService is None:
+            return
+        self.__keycloakService.logout()
+
+    def getConnexionEspaceCollaboratif(self, newLogin=False) -> int:
         """Connexion à l'espace collaboratif
 
         :param newLogin: booléen indiquant si on fait un nouveau login
@@ -539,8 +708,8 @@ class Contexte(object):
                 message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(
                     tmp[:-2])
             else:
-                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?".format(
-                    tmp[:-2])
+                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?"\
+                    .format(tmp[:-2])
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:
@@ -890,8 +1059,6 @@ class Contexte(object):
         allCroquisPoints = []
         if len(listCroquis) == 0:
             return None
-
-        cr = listCroquis[0]
         try:
             self.conn = spatialite_connect(self.dbPath)
             print(self.dbPath)
@@ -926,8 +1093,8 @@ class Contexte(object):
                     allCroquisPoints.append(pt)
 
                 textGeom = textGeom[:-1] + textGeomEnd
-                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom + "'," + \
-                      "AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
+                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom \
+                      + "', AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
                 print(sql)
                 cur.execute(sql)
 
@@ -980,7 +1147,7 @@ class Contexte(object):
         """
         Sélection des remarques données par leur no
         :param noSignalements : les no de signalements à sélectionner
-        :type noSignalements: list de string
+        :type noSignalements : list de string
         """
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
@@ -998,15 +1165,15 @@ class Contexte(object):
         """
         Retourne les croquis associés à une remarque
 
-        :param noSignalement: le no de la remarque
-        :type noSignalement: int
+        :param noSignalement : le no de la remarque
+        :type noSignalement : int
 
-        :param croquisSelFeats: dictionnaire contenant les croquis
+        :param croquisSelFeats : dictionnaire contenant les croquis
                                  (key: le nom de la table du croquis, value: liste des identifiants de croquis)
-        :type croquisSelFeats: dictionnary
+        :type croquisSelFeats : dictionnary
 
-        :return: dictionnaire contenant les croquis
-        :rtype: dictionnary
+        :return : dictionnaire contenant les croquis
+        :rtype : dictionnary
         """
         crlayers = PluginHelper.sketchLayers
         self.conn = spatialite_connect(self.dbPath)
@@ -1024,25 +1191,25 @@ class Contexte(object):
 
         return croquisSelFeats
 
-    def checkProfilServeurClient(self):
-        # Le profil a t'il pu être changé sur le serveur ?
-        if self.client is not None:
-            nomProfilServeur = self.client.getNomProfil()
-            if self.profil.title != nomProfilServeur:
-                message = "Votre groupe actif ({} versus {}) semble avoir été modifié par une autre application cliente " \
-                          "de l'Espace collaboratif.\nMerci de vous reconnecter via le bouton 'Se connecter à l'Espace " \
-                          "collaboratif' pour confirmer dans quel groupe vous souhaitez travailler.\nAttention : si vous " \
-                          "avez déjà chargé les couches d'un autre groupe, vous devez les supprimer au préalable ou " \
-                          "créer un autre projet QGIS.".format(self.profil.title, nomProfilServeur)
-                PluginHelper.showMessageBox(message)
-                raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")
+    # def checkProfilServeurClient(self):
+    #     # Le profil a t'il pu être changé sur le serveur ?
+    #     if self.client is not None:
+    #         nomProfilServeur = self.client.getNomProfil()
+    #         if self.profil.title != nomProfilServeur:
+    #             message = "Votre groupe actif ({} versus {}) semble avoir été modifié par une autre application cliente " \
+    #                       "de l'Espace collaboratif.\nMerci de vous reconnecter via le bouton 'Se connecter à l'Espace " \
+    #                       "collaboratif' pour confirmer dans quel groupe vous souhaitez travailler.\nAttention : si vous " \
+    #                       "avez déjà chargé les couches d'un autre groupe, vous devez les supprimer au préalable ou " \
+    #                       "créer un autre projet QGIS.".format(self.profil.title, nomProfilServeur)
+    #             PluginHelper.showMessageBox(message)
+    #             raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")
 
     def getLayers(self) -> (str, [], object):
         # La liste des couches et non la liste de courses ;-)
         infosLayers = []
         # Si le client n'existe pas, il faut demander à l'utilisateur de se connecter
         if self.client is None:
-            connResult = self.getConnexionEspaceCollaboratif()
+            connResult = self.getConnexionEspaceCollaboratifWithKeycloak()
             if connResult == -1:
                 # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
                 return "Rejected", infosLayers
@@ -1063,7 +1230,7 @@ class Contexte(object):
         infosLayers = []
 
         if self.client is None:
-            connResult = self.getConnexionEspaceCollaboratif()
+            connResult = self.getConnexionEspaceCollaboratifWithKeycloak(False)
             if connResult == -1:
                 # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
                 return "Rejected", infosLayers
