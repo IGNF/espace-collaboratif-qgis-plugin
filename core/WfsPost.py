@@ -40,6 +40,7 @@ class WfsPost(object):
         self.initParametersLayer()
         self.bbox = BBox(self.context)
         self.filterName = filterName
+        self.libelle_transaction = []
 
     def initParametersLayer(self):
         result = SQLiteManager.selectRowsInTableOfTables(self.layer.name())
@@ -54,16 +55,34 @@ class WfsPost(object):
                 self.layer.geometryDimensionForDatabase = r[7]
                 self.layer.geometryTypeForDatabase = r[8]
 
-    def formatItemActions(self):
-        res = '['
+    def formatItemActions(self) -> list:
+        # Evolution #20450, les transactions n'acceptent que 40 actions à chaque fois
+        actionsPackage = []
+        nb = 0
+        nbTotal = 0
+        res = ''
         for action in self.actions:
+            if nb == 0:
+                res = '['
             res += action
             res += ','
-        pos = len(res)
-        # Remplacement de la virgule de fin par un crochet fermant
-        strActions = res[0:pos - 1]
-        strActions += ']'
-        return strActions
+            nb += 1
+            nbTotal += 1
+            if nbTotal == len(self.actions):
+                pos = len(res)
+                # Remplacement de la virgule de fin par un crochet fermant
+                strActions = res[0:pos - 1]
+                strActions += ']'
+                actionsPackage.append((nb, strActions))
+            elif nb == 39:
+                pos = len(res)
+                # Remplacement de la virgule de fin par un crochet fermant
+                strActions = res[0:pos - 1]
+                strActions += ']'
+                actionsPackage.append((40, strActions))
+                nb = 0
+                res = ''
+        return actionsPackage
 
     def setHeader(self):
         return '{"feature": {'
@@ -230,7 +249,8 @@ class WfsPost(object):
             raise Exception(message)
 
     def commitLayer(self, currentLayer, editBuffer, bNormalWfsPost):
-        self.transactionReport += "<br/>Couche {0}\n".format(currentLayer)
+        totalOftransactions = []
+        self.transactionReport += "<br/>Couche {0}".format(currentLayer)
         self.actions.clear()
         addedFeatures = editBuffer.addedFeatures().values()
         changedGeometries = editBuffer.changedGeometries()
@@ -240,9 +260,9 @@ class WfsPost(object):
                 len(changedGeometries) == 0 and \
                 len(changedAttributeValues) == 0 and \
                 len(deletedFeaturesId) == 0:
-            self.transactionReport += "<br/>Rien à synchroniser\n"
+            self.transactionReport += "<br/>Rien à synchroniser"
             self.endReport += self.transactionReport
-            return dict(status="SUCCESS", report=self.endReport)
+            return totalOftransactions.append(dict(status="SUCCESS", report=self.endReport))
 
         # Est-ce une table BDUni
         result = SQLiteManager.isColumnExist(currentLayer, cst.FINGERPRINT)
@@ -253,7 +273,7 @@ class WfsPost(object):
         # ajout
         if len(addedFeatures) != 0:
             self.pushAddedFeatures(addedFeatures, bBDUni)
-            self.transactionReport += "<br/>Objets créés : {0}\n".format(len(addedFeatures))
+            self.transactionReport += "<br/>Objets créés : {0}".format(len(addedFeatures))
 
         # géométrie modifiée et/ou attributs modifiés
         if len(changedGeometries) != 0 and len(changedAttributeValues) != 0:
@@ -266,18 +286,22 @@ class WfsPost(object):
         # suppression
         if len(deletedFeaturesId) != 0:
             self.pushDeletedFeatures(deletedFeaturesId)
-            self.transactionReport += "<br/>Objets détruits : {0}\n".format(len(deletedFeaturesId))
+            self.transactionReport += "<br/>Objets détruits : {0}".format(len(deletedFeaturesId))
 
         # Lancement de la transaction
         nbObjModified = len(self.actions) - (len(deletedFeaturesId) + len(addedFeatures))
         if nbObjModified >= 1:
-            self.transactionReport += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
-        strActions = self.formatItemActions()
-        endTransaction = self.gcms_post(strActions, bNormalWfsPost)
-        self.endReport += self.setEndReport(endTransaction)
-        return dict(status=endTransaction['status'], report=self.endReport)
+            self.transactionReport += "<br/>Objets modifiés : {0}".format(nbObjModified)
+        actionsPacket = self.formatItemActions()
+        endReport = self.transactionReport
+        for strActions in actionsPacket:
+            endTransaction = self.gcms_post(strActions[1], bNormalWfsPost)
+            endReport += self.setEndReport(strActions[0], endTransaction)
+            totalOftransactions.append(dict(status=endTransaction['status'], report=endReport))
+            endReport = ''
+        return totalOftransactions
 
-    def setEndReport(self, endTransactionMessage):
+    def setEndReport(self, nbObjects, endTransactionMessage):
         information = ''
         message = endTransactionMessage['message']
         status = endTransactionMessage['status']
@@ -286,9 +310,11 @@ class WfsPost(object):
                 endTransactionMessage['urlTransaction']))
             information = '<br/><font color="red">{0} : {1}</font>'.format(status, tmp)
         elif status == 'SUCCESS':
-            information = self.transactionReport
+            information += "<br/>Objets impactés : {0}".format(nbObjects)
             tabInfo = message.split(' : ')
+            self.libelle_transaction.append(tabInfo)
             information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a><br>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
+            print(information)
         return information
 
     def pushAddedFeatures(self, addedFeatures, bBDUni):

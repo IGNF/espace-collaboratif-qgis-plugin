@@ -382,7 +382,9 @@ class SQLiteManager(object):
 
     @staticmethod
     def selectColumnFromTableWithCondition(tableName, columnName, key):
-        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, columnName, key)
+        tableName = SQLiteManager.echap(tableName)
+        keyValue = SQLiteManager.echap(key)
+        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, columnName, keyValue)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
         cursor.execute(sql)
@@ -467,3 +469,10 @@ class SQLiteManager(object):
         cur.close()
         connection.close()
         return result
+
+    @staticmethod
+    def echap(strToEchap):
+        if strToEchap.find('\'') != -1:
+            tmp = strToEchap.replace('\'', '\'\'')
+            return tmp
+        return strToEchap

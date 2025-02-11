@@ -99,7 +99,7 @@ class Contexte(object):
     # extension sqlite
     sqlite_ext = ".sqlite"
 
-    def __init__(self, QObject, QgsProject):
+    def __init__(self, QObject, QgsProject, bConnectProjectRead):
         """
         Constructor
 
@@ -125,13 +125,13 @@ class Contexte(object):
             self.setProjectParams()
 
             # contrôle l'existence du fichier de configuration
-            self.checkConfigFile()
+            self.checkConfigFile(bConnectProjectRead)
 
             # set de la base de données
-            self.getOrCreateDatabase()
+            self.getOrCreateDatabase(bConnectProjectRead)
 
             # set des fichiers de style
-            self.copyRipartStyleFiles()
+            self.copyRipartStyleFiles(bConnectProjectRead)
 
             # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
             formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
@@ -155,24 +155,25 @@ class Contexte(object):
         return False
 
     @staticmethod
-    def getInstance(QObject=None, QgsProject=None):
+    def getInstance(QObject=None, QgsProject=None, bConnectProjectRead=False):
         """
         Retourne l'instance du Contexte
         """
-        if not Contexte.instance or (Contexte.instance.projectDir != QgsProject.instance().homePath() or
-                                     ntpath.basename(QgsProject.instance().fileName()) not in [
-                                         Contexte.instance.projectFileName + ".qgs",
-                                         Contexte.instance.projectFileName + ".qgz"]):
-            Contexte.instance = Contexte._createInstance(QObject, QgsProject)
+        if not bConnectProjectRead or not Contexte.instance or \
+                (Contexte.instance.projectDir != QgsProject.instance().homePath() or
+                 ntpath.basename(QgsProject.instance().fileName()) not in [
+                     Contexte.instance.projectFileName + ".qgs",
+                     Contexte.instance.projectFileName + ".qgz"]):
+            Contexte.instance = Contexte._createInstance(QObject, QgsProject, bConnectProjectRead)
         return Contexte.instance
 
     @staticmethod
-    def _createInstance(QObject, QgsProject):
+    def _createInstance(QObject, QgsProject, bConnectProjectRead):
         """
         Création de l'instance du contexte
         """
         try:
-            Contexte.instance = Contexte(QObject, QgsProject)
+            Contexte.instance = Contexte(QObject, QgsProject, bConnectProjectRead)
             Contexte.instance.logger.debug("Nouvelle instance de contexte créée")
         except Exception as e:
             Contexte.instance = None
@@ -200,10 +201,13 @@ class Contexte(object):
 
         self.projectFileName = fname[:fname.find(".")]
 
-    def checkConfigFile(self):
+    def checkConfigFile(self, bConnectProjectRead):
         """
         Contrôle de l'existence du fichier de configuration
         """
+        if bConnectProjectRead:
+            return
+
         ripartxml = self.projectDir + os.path.sep + RipartHelper.getConfigFile()
         if not os.path.isfile(ripartxml):
             try:
@@ -213,16 +217,18 @@ class Contexte(object):
                 new_file = os.path.join(self.projectDir, RipartHelper.getConfigFile())
                 os.rename(ripartxml, new_file)
             except Exception as e:
-                self.logger.error("No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
+                self.logger.error(
+                    "No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
                 raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
                                 " n'a pas été trouvé.")
 
-    def copyRipartStyleFiles(self):
+    def copyRipartStyleFiles(self, bConnectProjectRead):
+        if bConnectProjectRead:
+            return
         """
-        Copie les fichiers de styles (pour les remarques et croquis ripart)
+            Copie les fichiers de styles (pour les remarques et croquis ripart)
         """
         styleFilesDir = self.projectDir + os.path.sep + RipartHelper.qmlStylesDir
-
         RipartHelper.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
                           RipartHelper.qmlStylesDir, styleFilesDir)
 
@@ -279,7 +285,8 @@ class Contexte(object):
         xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
         if xmlproxy is not None and str(xmlproxy).strip() != '':
             if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
-                RipartHelper.showMessageBox(u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
+                RipartHelper.showMessageBox(
+                    u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
                 return
             self.proxy = {'https': str(xmlproxy).strip()}
         else:
@@ -305,11 +312,13 @@ class Contexte(object):
 
         return connectionResult
 
-    def getOrCreateDatabase(self):
+    def getOrCreateDatabase(self, bConnectProjectRead):
         """
         Retourne la base de données spatialite contenant les tables des remarques et croquis
         Si la BD n'existe pas, elle est créée
         """
+        if bConnectProjectRead:
+            return
         curs = None
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
@@ -493,9 +502,11 @@ class Contexte(object):
 
         if bAskForConfirmation:
             if len(removeLayers) == 1:
-                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(tmp[:-2])
+                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(
+                    tmp[:-2])
             else:
-                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?".format(tmp[:-2])
+                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?".format(
+                    tmp[:-2])
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:

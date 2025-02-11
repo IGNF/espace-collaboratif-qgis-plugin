@@ -29,6 +29,8 @@ from builtins import str
 from builtins import range
 import os.path
 
+from PyQt5.QtGui import QGuiApplication
+
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
@@ -123,11 +125,15 @@ class RipartPlugin:
         # - quand des mises à jour ont été effectuées sur la couche
         self.iface.projectRead.connect(self.connectProjectRead)
         QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
+        self.libelle_transaction = None
+
+    def getlibelletransaction(self):
+        return self.libelle_transaction
 
     def connectProjectRead(self):
         # si le contexte n'est pas encore initialisé
         if self.context is None:
-            self.context = Contexte.getInstance(self, QgsProject)
+            self.context = Contexte.getInstance(self, QgsProject, True)
 
         # S'il n'a y pas de base SQLite
         uri = self.context.getUriDatabaseSqlite()
@@ -151,7 +157,7 @@ class RipartPlugin:
                 reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                              QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    self.context = Contexte.getInstance(self, QgsProject)
+                    # si le contexte n'a pas été récupéré au départ de la fonction
                     if self.context is None:
                         return
                     if self.context.client is None:
@@ -226,6 +232,7 @@ class RipartPlugin:
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        # QGuiApplication.restoreOverrideCursor()
 
     def saveChangesForOneLayer(self, layer):
         global commitLayerResult
@@ -253,19 +260,23 @@ class RipartPlugin:
             # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
             # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
             bNormalWfsPost = False
-            commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
-            messages = "{0}<br/>".format(commitLayerResult['report'])
+            commitLayerResults = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
+            messages = ''
+            for commitLayerResult in commitLayerResults:
+                messages += "{0}<br/>".format(commitLayerResult['report'])
+                if commitLayerResult['status'] == "FAILED":
+                    layer.destroyEditCommand()
+                else:
+                    # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction commitLayer
+                    # n'envoie pas d'exception sinon les modifs sont perdues et l'outil redemande une synchronisation
+                    editBuffer.rollBack()
 
-            if commitLayerResult['status'] == "FAILED":
-                layer.destroyEditCommand()
-            else:
-                # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction commitLayer
-                # n'envoie pas d'exception sinon les modifs sont perdues et l'outil redemande une synchronisation
-                editBuffer.rollBack()
+            self.libelle_transaction = wfsPost.libelle_transaction
+            self.getlibelletransaction()
 
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            QGuiApplication.restoreOverrideCursor()
 
         return messages
 
@@ -517,10 +528,8 @@ class RipartPlugin:
     def chargerGuichet(self):
         try:
             print("Chargement des couches du groupe utilisateur")
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            if not self.__doConnexion():
                 return
-
             dlgChargerGuichet = FormChargerGuichet(self.context)
             # L'utilisateur a cliqué sur le bouton Annuler ou la croix de du dialogue de la fenêtre de connexion
             if dlgChargerGuichet.bRejected:
@@ -538,7 +547,7 @@ class RipartPlugin:
         except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar().pushMessage("Remarque", str(e), level=1, duration=5)
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            QGuiApplication.restoreOverrideCursor()
 
     '''
     def saveChangesForAllLayers(self):
@@ -594,13 +603,8 @@ class RipartPlugin:
         print("Synchroniser les données de toutes les couches")
 
         # Connexion
-        self.context = Contexte.getInstance(self, QgsProject)
-        if self.context is None:
+        if not self.__doConnexion():
             return
-        if self.context.client is None:
-            resCo = self.context.getConnexionRipart(newLogin=True)
-            if not resCo:
-                return
 
         # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
         layersToSynchronize = []
@@ -735,28 +739,30 @@ class RipartPlugin:
             self.iface.removeToolBarIcon(action)
         del self.toolbar
 
+    def __doConnexion(self, bAutomaticConnection=False):
+        if self.context is None:
+            self.context = Contexte.getInstance(self, QgsProject)
+
+        if self.context is None:
+            return False
+
+        # if self.context.client is None or bAutomaticConnection:
+        if bAutomaticConnection:
+            return self.context.getConnexionRipart()
+
+        return True
+
     def run(self):
         """Fenêtre de connexion"""
-
-        res = -1
-        self.context = Contexte.getInstance(self, QgsProject)
-        if self.context is None:
-            return
-
-        if self.context:
-            res = self.context.getConnexionRipart(newLogin=True)
-
-        if not res:
+        if not self.__doConnexion(True):
             self.logger.debug("cancel")
 
     def downloadRemarks(self):
         """Downloads remarks
         """
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            if not self.__doConnexion():
                 return
-
             importRipart = ImporterRipart(self.context)
             result = importRipart.doImport()
             if result == 0:
@@ -769,7 +775,7 @@ class RipartPlugin:
                 pushMessage("Remarque",
                             format(e),
                             level=2, duration=5)
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            QGuiApplication.restoreOverrideCursor()
 
         except Exception as e:
             self.logger.error(format(e))
@@ -777,15 +783,14 @@ class RipartPlugin:
                 pushMessage("Erreur",
                             u"Un problème est survenu dans le téléchargement des signalements",
                             level=2, duration=5)
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            QGuiApplication.restoreOverrideCursor()
 
     def answerToReport(self):
         """
         Répondre à un signalement
         """
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            if not self.__doConnexion():
                 return
             replyReport = ReplyReport(self.context)
             replyReport.do()
@@ -799,10 +804,8 @@ class RipartPlugin:
         """Create a new remark
         """
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            if not self.__doConnexion():
                 return
-
             create = CreerRipart(self.context)
             create.do()
         except Exception as e:
@@ -816,8 +819,7 @@ class RipartPlugin:
         (empty the tables from ripart table of the sqlite DB)
         """
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            if not self.__doConnexion():
                 return
             message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
@@ -833,15 +835,13 @@ class RipartPlugin:
                             u"Un problème est survenu lors de la suppression des signalements",
                             level=2, duration=5)
 
-    def configurePref(self):
+    def configurePref(self, bConnectProjectRead=False):
         """Lance la fenêtre de configuration des préférences 
         """
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            if not self.__doConnexion():
                 return
-
-            self.context.checkConfigFile()
+            self.context.checkConfigFile(bConnectProjectRead)
             self.dlgConfigure = FormConfigure(context=self.context)
             self.dlgConfigure.exec_()
 
@@ -858,8 +858,7 @@ class RipartPlugin:
           On ne peut pas sélectionnner des signalements et des croquis (soit signalements, soit croquis)  
         """
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            if not self.__doConnexion():
                 return
             magicw = Magicwand(self.context)
             magicw.selectRipartObjects()
@@ -871,10 +870,8 @@ class RipartPlugin:
         """Visualisation du signalement (message, réponses et statut)
         """
         try:
-            self.context = Contexte.getInstance(self, QgsProject)
-            if self.context is None:
+            if not self.__doConnexion():
                 return
-
             seeReport = SeeReport(self.context)
             self.SeeReportView = seeReport.do()
 
