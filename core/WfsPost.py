@@ -74,12 +74,12 @@ class WfsPost(object):
                 strActions = res[0:pos - 1]
                 strActions += ']'
                 actionsPackage.append((nb, strActions))
-            elif nb == 39:
+            elif nb == 40:
                 pos = len(res)
                 # Remplacement de la virgule de fin par un crochet fermant
                 strActions = res[0:pos - 1]
                 strActions += ']'
-                actionsPackage.append((40, strActions))
+                actionsPackage.append((nb, strActions))
                 nb = 0
                 res = ''
         return actionsPackage
@@ -176,21 +176,6 @@ class WfsPost(object):
             # d'une couche BDUni
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
-            # Mise à jour de la couche
-            try:
-                self.synchronize()
-            except Exception as e:
-                QMessageBox.information(self.context.iface.mainWindow(), cst.IGNESPACECO, format(e))
-                # Suppression de la couche dans la carte. Virer la table dans SQLite
-                layersID = [self.layer.id()]
-                QgsProject.instance().removeMapLayers(layersID)
-                if SQLiteManager.isTableExist(self.layer.nom):
-                    SQLiteManager.emptyTable(self.layer.nom)
-                    SQLiteManager.deleteTable(self.layer.nom)
-                if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-                    SQLiteManager.emptyTable(cst.TABLEOFTABLES)
-                SQLiteManager.vacuumDatabase()
-                return
             numrec = self.getNumrecFromTransaction(responseWfs['urlTransaction'])
             # Cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
@@ -250,7 +235,7 @@ class WfsPost(object):
 
     def commitLayer(self, currentLayer, editBuffer, bNormalWfsPost):
         totalOftransactions = []
-        self.transactionReport += "<br/>Couche {0}".format(currentLayer)
+        self.transactionReport += "<br/><strong>Couche {0}</strong>".format(currentLayer)
         self.actions.clear()
         addedFeatures = editBuffer.addedFeatures().values()
         changedGeometries = editBuffer.changedGeometries()
@@ -292,13 +277,28 @@ class WfsPost(object):
         nbObjModified = len(self.actions) - (len(deletedFeaturesId) + len(addedFeatures))
         if nbObjModified >= 1:
             self.transactionReport += "<br/>Objets modifiés : {0}".format(nbObjModified)
-        actionsPacket = self.formatItemActions()
+        actionsPackage = self.formatItemActions()
         endReport = self.transactionReport
-        for strActions in actionsPacket:
+        for strActions in actionsPackage:
             endTransaction = self.gcms_post(strActions[1], bNormalWfsPost)
             endReport += self.setEndReport(strActions[0], endTransaction)
             totalOftransactions.append(dict(status=endTransaction['status'], report=endReport))
             endReport = ''
+        # Mise à jour de la couche
+        try:
+            self.synchronize()
+        except Exception as e:
+            QMessageBox.information(self.context.iface.mainWindow(), cst.IGNESPACECO, format(e))
+            # Suppression de la couche dans la carte. Virer la table dans SQLite
+            layersID = [self.layer.id()]
+            QgsProject.instance().removeMapLayers(layersID)
+            if SQLiteManager.isTableExist(self.layer.nom):
+                SQLiteManager.emptyTable(self.layer.nom)
+                SQLiteManager.deleteTable(self.layer.nom)
+            # if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+            # SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+            SQLiteManager.vacuumDatabase()
+            return
         return totalOftransactions
 
     def setEndReport(self, nbObjects, endTransactionMessage):
@@ -310,10 +310,10 @@ class WfsPost(object):
                 endTransactionMessage['urlTransaction']))
             information = '<br/><font color="red">{0} : {1}</font>'.format(status, tmp)
         elif status == 'SUCCESS':
-            information += "<br/>Objets impactés : {0}".format(nbObjects)
             tabInfo = message.split(' : ')
             self.libelle_transaction.append(tabInfo)
-            information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a><br>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
+            information += '<br/>{0} : <a href="{1}" target="_blank">{2}</a>'.format(tabInfo[0], endTransactionMessage['urlTransaction'], tabInfo[1])
+            information += '<br/>Objets impactés : {0}<'.format(nbObjects)
             print(information)
         return information
 

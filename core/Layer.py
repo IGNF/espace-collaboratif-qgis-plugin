@@ -60,3 +60,4 @@ class Layer(object):
         self.srid = -1
         self.layer_id = ""
         self.isStandard = True
+        self.geoservice = {}

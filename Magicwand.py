@@ -54,15 +54,20 @@ class Magicwand(object):
         selectedRemarque = False
         mapLayers = self.context.mapCan.layers()
         for ml in mapLayers:
-            if ml.name() in RipartHelper.croquis_layers and len(ml.selectedFeatures()) > 0:
-                selectedCroquis = True
-            if ml.name() == RipartHelper.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
-                selectedRemarque = True
+            print(ml)
+            print(ml.name())
+            print(ml.selectedFeatures())
+            if ml.name() in RipartHelper.croquis_layers:
+                if len(ml.selectedFeatures()) > 0:
+                    selectedCroquis = True
+            if ml.name() == RipartHelper.nom_Calque_Signalement:
+                if len(ml.selectedFeatures()) > 0:
+                    selectedRemarque = True
 
         if selectedCroquis and selectedRemarque:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Veuillez sélectionner des signalements ou des croquis (mais pas les deux)",
-                                                        level=1, duration=10)
+                                                        level=1, duration=3)
             return None
         elif selectedCroquis:
             return "croquis"
@@ -71,7 +76,7 @@ class Magicwand(object):
         else:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Aucun croquis ou signalement sélectionné",
-                                                        level=1, duration=10)
+                                                        level=1, duration=3)
             return None
 
     """
@@ -91,7 +96,10 @@ class Magicwand(object):
                     noSignalement = feat.attributes()[idx]
                     remNos += str(noSignalement) + ","
                     ml.removeSelection()
-
+        if remNos == "":
+            self.context.iface.messageBar().pushMessage("",
+                                                        u"Pas de signalement associé au(x) croquis sélectionné(s)",
+                                                        level=1, duration=3)
         self.context.selectRemarkByNo(remNos[:-1])
 
     def selectAssociatedCroquis(self):
@@ -108,6 +116,10 @@ class Magicwand(object):
             noSignalement = f.attributes()[idx]
             croquisLays = self.context.getCroquisForRemark(noSignalement, croquisLays)
 
+        if len(croquisLays) == 0:
+            self.context.iface.messageBar().pushMessage("",
+                                                        u"Pas de croquis associé(s) au signalement sélectionné",
+                                                        level=1, duration=3)
         for cr in croquisLays:
             lay = self.context.getLayerByName(cr)
             lay.selectByIds(croquisLays[cr])

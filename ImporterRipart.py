@@ -173,6 +173,7 @@ class ImporterRipart(object):
             self.progress.close()
 
         except Exception as e:
+            self.progress.close()
             raise
 
         finally:

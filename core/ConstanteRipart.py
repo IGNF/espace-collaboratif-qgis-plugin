@@ -113,7 +113,13 @@ WFS = "WFS"
 WMTS = "WMTS"
 WCS = "WCS"
 COLLABORATIF = "collaboratif.ign.fr"
-WXSIGN = "wxs.ign.fr"
+GEOPF = "data.geopf.fr"
+PARTOFURLWMTS = "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"
+APIKEY = "ign_scan_ws"
+# WMS = "geoservice"
+# WFS = "feature-type"
+# WMTS = "geoservice"
+
 
 # Système de coordonnées de référence de Ripart
 EPSGCRS = 4326

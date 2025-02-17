@@ -238,12 +238,8 @@ class RipartPlugin:
         global commitLayerResult
         if layer is None:
             return
-        self.context = Contexte.getInstance(self, QgsProject)
-        if self.context is None:
+        if not self.__doConnexion():
             return
-        if self.context.client is None:
-            if not self.context.getConnexionRipart(newLogin=True):
-                return
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
@@ -659,7 +655,7 @@ class RipartPlugin:
         for layer in layersToSynchronize:
             i += 1
             progress.setValue(i)
-            endMessage += "<br/>{0}\n".format(layer.name())
+            endMessage += "<br/><strong>{0}</strong>".format(layer.name())
             bbox = BBox(self.context)
             parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName),
                           'sridProject': cst.EPSGCRS}

@@ -21,6 +21,8 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsP
 from .core.ClientHelper import ClientHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core import ConstanteRipart as cst
+from .core.SQLiteManager import SQLiteManager
+from qgis.utils import spatialite_connect
 
 
 class RipartHelper:
@@ -627,6 +629,14 @@ class RipartHelper:
             sql += ClientHelper.getValForDB(rem.getAllDocuments()) + "', '"
             sql += rem.getAttribut("autorisation") + "', "
             sql += geom + ")"
+            result = SQLiteManager.isColumnExist(RipartHelper.nom_Calque_Signalement, 'Auteur')
+            if result[0] != 1:
+                SQLiteManager.deleteTable(RipartHelper.nom_Calque_Signalement)
+                dbName = RipartHelper.getConfigFile().replace("xml", "sqlite")
+                dbPath = QgsProject.instance().homePath() + "/" + dbName
+                connexion = spatialite_connect(dbPath)
+                RipartHelper.createRemarqueTable(connexion)
+                SQLiteManager.vacuumDatabase()
             cur.execute(sql)
             rowcount = cur.rowcount
             if rowcount != 1:

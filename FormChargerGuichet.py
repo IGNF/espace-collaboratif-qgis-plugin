@@ -54,7 +54,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         if connexionLayers[0] == "Rejected":
             self.bRejected = True
             return
-            #raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
+            # raise Exception(u"Vous n'appartenez à aucun groupe, il n'y a pas de données à charger.")
 
         profilUser = connexionLayers[2]
 
@@ -129,7 +129,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             if layer.type != cst.WMTS and layer.type != cst.WMS:
                 continue
 
-            if layer.url.find(cst.WXSIGN) == -1:
+            if layer.url.find(cst.GEOPF) == -1:
                 continue
 
             rowPosition = self.tableWidgetFondsGeoportail.rowCount()
@@ -163,7 +163,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             if layer.url.find(cst.COLLABORATIF) != -1:
                 continue
-            if layer.url.find(cst.WXSIGN) != -1:
+            if layer.url.find(cst.GEOPF) != -1:
                 continue
 
             rowPosition = self.tableWidgetAutresGeoservices.rowCount()
@@ -200,14 +200,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Par exemple[['adresse'], ['GEOGRAPHICALGRIDSYSTEMS.MAPS', 'GEOGRAPHICALGRIDSYSTEMS.PLANIGN'], [], []]
         for layerChecked in layersChecked:
             for tmp in layerChecked:
-                # tmp est sous la forme 'troncon_de_voie_ferree' ou 'Cartes IGN (GEOGRAPHICALGRIDSYSTEMS.MAPS)'
-                if '(' in tmp:
-                    tmpName = tmp.split('(')
-                    name = tmpName[0].rstrip()  # pour supprimer l'espace final
-                else:
-                    name = tmp
                 for layer in self.listLayers:
-                    if name == layer.nom:
+                    if tmp.find(layer.nom) != -1:
                         layersQGIS.append(layer)
                         break
 

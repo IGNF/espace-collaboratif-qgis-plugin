@@ -449,7 +449,9 @@ class Contexte(object):
                 '''
                 if layer.type == cst.WMTS:
                     importWmts = importWMTS(self, layer)
+                    print(importWmts)
                     titleLayer_uri = importWmts.getWtmsUrlParams(layer.layer_id)
+                    print(titleLayer_uri)
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                     if not rlayer.isValid():
                         print("Layer {} failed to load !".format(rlayer.name()))
@@ -683,14 +685,17 @@ class Contexte(object):
         try:
             self.conn = spatialite_connect(self.dbPath)
             for table in ripartLayers:
-                RipartHelper.emptyTable(self.conn, table)
-            ripartLayers.pop(RipartHelper.nom_Calque_Signalement, None)
-            self.conn.commit()
+                if not SQLiteManager.isTableExist(table):
+                    RipartHelper.createCroquisTable(self.conn, table, RipartHelper.croquis_layers[table])
+                else:
+                    SQLiteManager.emptyTable(table)
+            if SQLiteManager.isTableExist(RipartHelper.nom_Calque_Signalement):
+                SQLiteManager.emptyTable(RipartHelper.nom_Calque_Signalement)
+            else:
+                RipartHelper.createRemarqueTable(self.conn)
         except RipartException as e:
             self.logger.error(format(e))
             raise
-        finally:
-            self.conn.close()
         self.refresh_layers()
 
     def refresh_layers(self):
