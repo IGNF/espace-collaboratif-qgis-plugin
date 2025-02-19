@@ -28,8 +28,8 @@ class ImporterGuichet(object):
         Constructor
         Initialisation du contexte
 
-        :param context: le contexte de la carte actuelle
-        :type context: Contexte
+        :param context : le contexte de la carte actuelle
+        :type context : Contexte
         """
         self.context = context
 
@@ -45,7 +45,8 @@ class ImporterGuichet(object):
                     return 0
                 if self.context.client is None:  # la connexion a échoué, on ne fait rien
                     self.context.iface.messageBar().pushMessage("",
-                                                                "Un problème de connexion avec le service Espace collaboratif est survenu. Veuillez rééssayer",
+                                                                "Un problème de connexion avec le service Espace "
+                                                                "collaboratif est survenu. Veuillez réessayer",
                                                                 level=2, duration=5)
                     return
 

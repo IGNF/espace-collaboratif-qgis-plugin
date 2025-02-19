@@ -158,8 +158,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         sourcecrs = vlayer.sourceCrs()
         if sourcecrs.isValid() is False:
             return "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez " \
-                      "le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
-                      "assigné]".format(vlayer.name())
+                   "le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
+                   "assigné]".format(vlayer.name())
         return ""
 
     # Bouton Continuer comme le nom de la fonction l'indique ;-)
@@ -255,7 +255,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         nodesGroup = root.findGroups()
         newGroup = None
         for ng in nodesGroup:
-            # Dans le cas ou le nom du groupe actif, du groupe dans le carte et celui stocké dans le xml sont tous
+            # Dans le cas ou le nom du groupe actif, du groupe dans la carte et celui stocké dans le xml sont tous
             # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
             # est de chercher le prefixe
             if ng.name().find(cst.ESPACECO) != -1:
@@ -264,11 +264,11 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 break
 
         # Si l'utilisateur a changé de groupe, on supprime l'ancien (s'il existe dans le projet)
-        # et toutes les couches associées. On supprime la base sqlite et on la recréée
+        # et toutes les couches associées. On supprime la base sqlite et on l'a recrée
         if bNewGroup:
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
-                      "supprimées. Voulez-vous continuer ?".format(newGroup.name())
+                          "supprimées. Voulez-vous continuer ?".format(newGroup.name())
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     root.removeChildNode(newGroup)
@@ -277,7 +277,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 else:
                     self.bCancel = True
                 RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.nameChosenGroup,
-                                        "Serveur")
+                                            "Serveur")
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
         if bNewZone:

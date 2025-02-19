@@ -12,7 +12,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
     QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
-    QgsWkbTypes, QgsLayerTreeGroup, QgsEditorWidgetSetup
+    QgsWkbTypes, QgsLayerTreeGroup
 
 import os.path
 import shutil
@@ -28,7 +28,7 @@ from .core.Point import Point
 from .core.Sketch import Sketch
 from .FormConnection import FormConnectionDialog
 from .core import ConstanteRipart as cst
-from .Import_WMTS import importWMTS
+from .Import_WMTS import ImportWMTS
 from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 from .core.WfsGet import WfsGet
@@ -389,7 +389,7 @@ class Contexte(object):
         global progress
         try:
             # Quelles sont les cartes chargées dans le projet QGIS courant
-            maplayers = self.getAllMapLayers()
+            allMapLayers = self.QgsProject.instance().mapLayers()
             root = self.QgsProject.instance().layerTreeRoot()
 
             # Le groupe existe t-il dans le projet
@@ -417,7 +417,7 @@ class Contexte(object):
 
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
-            if not self.removeLayersFromProject(guichet_layers, maplayers):
+            if not self.removeLayers(guichet_layers, allMapLayers):
                 return
 
             endMessage = ''
@@ -448,10 +448,9 @@ class Contexte(object):
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WMTS:
-                    importWmts = importWMTS(self, layer)
-                    print(importWmts)
+                    importWmts = ImportWMTS(self, layer)
                     titleLayer_uri = importWmts.getWtmsUrlParams(layer.layer_id)
-                    print(titleLayer_uri)
+                    print("titleLayer_uri : {}".format(titleLayer_uri))
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                     if not rlayer.isValid():
                         print("Layer {} failed to load !".format(rlayer.name()))
@@ -489,6 +488,16 @@ class Contexte(object):
         config.setColumns(columns)
         layer.setAttributeTableConfig(config)
 
+    def removeLayers(self, guichet_layers, maplayers, bAskForConfirmation=True):
+        tmp = ''
+        removeLayers = []
+        for layer in guichet_layers:
+            for k, v in maplayers.items():
+                if layer.nom.lower() == v.name().lower():
+                    removeLayers.append(v.name())
+                    tmp += "{}, ".format(v.name())
+        return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
+
     def removeLayersFromProject(self, guichet_layers, maplayers, bAskForConfirmation=True):
         tmp = ''
         removeLayers = []
@@ -504,11 +513,11 @@ class Contexte(object):
 
         if bAskForConfirmation:
             if len(removeLayers) == 1:
-                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(
-                    tmp[:-2])
+                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?"\
+                    .format(tmp[:-2])
             else:
-                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?".format(
-                    tmp[:-2])
+                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?"\
+                    .format(tmp[:-2])
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:
@@ -518,6 +527,8 @@ class Contexte(object):
         for removeLayer in removeLayers:
             listLayers = self.QgsProject.instance().mapLayersByName(removeLayer)
             for lLayer in listLayers:
+                if lLayer.id() in layerIds:
+                    continue
                 layerIds.append(lLayer.id())
 
         self.QgsProject.instance().removeMapLayers(layerIds)

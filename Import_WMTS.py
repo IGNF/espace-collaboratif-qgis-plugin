@@ -7,7 +7,6 @@ version 4.0.1, 15/12/2020
 @author: EPeyrouse, NGremeaux
 """
 
-
 # Imports
 import urllib
 from urllib.parse import urlparse
@@ -43,7 +42,7 @@ except ImportError as e:
     )
 
 
-class importWMTS:
+class ImportWMTS:
 
     def __init__(self, context, layer) -> None:
         self.wmts = None
@@ -64,7 +63,7 @@ class importWMTS:
     # exemple : https://wxs.ign.fr/[cle]/wmts?service=WMTS&request=GetCapabilities
     def __appendUriCapabilities(self) -> None:
         params = {
-            'service': cst.WMTS,
+            # 'service': cst.WMTS,
             'request': 'GetCapabilities'
         }
 
@@ -113,15 +112,8 @@ class importWMTS:
     def getTileUrl(self):
         wmts_lyr_url = self.wmts.getOperationByName("GetTile").methods
         wmts_lyr_url = wmts_lyr_url[0].get("url")
-        print("Available url : {}".format(wmts_lyr_url))
-        return wmts_lyr_url
-
-    def getUrl(self) -> str:
-        if 'private' in self.uri:
-            urlFinal = "{}%26{}".format(self.uri, cst.PARTOFURLWMTS)
-        else:
-            urlFinal = "{}%3F{}".format(self.uri, cst.PARTOFURLWMTS)
-        return urlFinal
+        print("Available url : {}".format(wmts_lyr_url[:len(wmts_lyr_url) - 1]))
+        return wmts_lyr_url[:len(wmts_lyr_url) - 1]
 
     # Style definition
     def getStyles(self):
@@ -182,8 +174,8 @@ class importWMTS:
             return "Exception", "Import_WMTS.getWtmsUrlParams : le nom de la couche géoservices est vide"
 
         if self.getLayer(idGuichetLayerWmts) is None:
-            return "Exception", "Import_WMTS.getWtmsUrlParams.getLayer : géoservices non disponible pour la couche {}"\
-                                .format(idGuichetLayerWmts)
+            return "Exception", "Import_WMTS.getWtmsUrlParams.getLayer : géoservices non disponible pour la couche {}" \
+                .format(idGuichetLayerWmts)
 
         self.getTileMatrixSet()
 
@@ -199,7 +191,8 @@ class importWMTS:
                 "layers": self.layer_id,
                 "styles": self.getStyles(),
                 "tileMatrixSet": self.tile_matrix_set,
-                "url": "{}?{}".format(self.getTileUrl(), "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
+                "url": "{}{}".format(self.getTileUrl(), cst.PARTOFURLWMTS)
+
             }
         else:
             wmts_url_params = {
@@ -210,9 +203,9 @@ class importWMTS:
                 "layers": self.layer_id,
                 "styles": self.getStyles(),
                 "tileMatrixSet": self.tile_matrix_set,
-                "url": "{}?{}{}".format(self.getTileUrl(),
-                                        "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities%26apikey%3D",
-                                        cst.APIKEY)
+                "url": "{}{}%26apikey%3D{}".format(self.getTileUrl(),
+                                                   cst.PARTOFURLWMTS,
+                                                   cst.APIKEY)
             }
         wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
         return self.title_layer, wmts_url_final

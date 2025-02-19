@@ -179,11 +179,11 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     def onClickItem(self, item, column):
         """Clic sur un item =>set de l'état de l'élément parent ou des éléments enfants
         
-        :param item: item de l'arbre sur lequel on a cliqué
-        :type item: QTreeWidgetItem
+        :param item : item de l'arbre sur lequel on a cliqué
+        :type item : QTreeWidgetItem
         
-        :param column: le no de colonne
-        :type column: int 
+        :param column : le no de colonne
+        :type column : int
         """
         state = item.checkState(column)
         if state == Qt.CheckState.Checked:
@@ -200,8 +200,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     def getParentState(self, item):
         """Retourne l'état (coché ou non) du noeud parent
         
-        :param item: l'élément de l'arbre
-        :type item: 
+        :param item : l'élément de l'arbre
+        :type item :
         """
         parent = item.parent()
         childCount = parent.childCount()
@@ -280,16 +280,14 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
     def dateChanged(self):
         """Action lors d'un changement de date
-        =>Modification du nombre de jours
+        →Modification du nombre de jours
        """
-        self.dateSelected = True
         d = self.calendarWidget.selectedDate()
         self.spinBox.setValue(self.getCountDays(d))
 
     def dateMYChanged(self):
         """Action lors d'une modification du mois ou de l'année
         """
-        self.dateMYChanged = True
         qd = self.calendarWidget.selectedDate()
         m = self.calendarWidget.monthShown()
         y = self.calendarWidget.yearShown()
@@ -302,8 +300,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
     def getCountDays(self, qdate):
         """Compte le nombre de jours entre la date donnée et la date d'aujourd'hui
-        :param qdate: la date 
-        :type qdate: QDate
+        :param qdate : la date
+        :type qdate : QDate
         """
         date = qdate.toPyDate()
         dt = datetime.now().date()
