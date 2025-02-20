@@ -1026,7 +1026,6 @@ class Contexte(object):
         rows = cur.execute(sql)
         featIds = []
         for row in rows:
-            print(row[0])
             featIds.append(row[0])
         lay.selectByIds(featIds)
 

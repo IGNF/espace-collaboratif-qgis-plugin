@@ -72,7 +72,8 @@ class ImporterRipart(object):
         # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
         # ne souhaite pas extraire les données France entière et on sort
         if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
-            return
+            raise Exception("Les coordonnées de la box entourant la zone d'extraction sont égales à 0, "
+                            "veuillez importer une nouvelle zone.")
 
         filtreLay = None
         filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text

@@ -774,10 +774,11 @@ class RipartPlugin:
             QGuiApplication.restoreOverrideCursor()
 
         except Exception as e:
+            self.context.iface.messageBar().clearWidgets()
             self.logger.error(format(e))
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
-                            u"Un problème est survenu dans le téléchargement des signalements",
+                            format(e),
                             level=2, duration=5)
             QGuiApplication.restoreOverrideCursor()
 

@@ -54,9 +54,6 @@ class Magicwand(object):
         selectedRemarque = False
         mapLayers = self.context.mapCan.layers()
         for ml in mapLayers:
-            print(ml)
-            print(ml.name())
-            print(ml.selectedFeatures())
             if ml.name() in RipartHelper.croquis_layers:
                 if len(ml.selectedFeatures()) > 0:
                     selectedCroquis = True
