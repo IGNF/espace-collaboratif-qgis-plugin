@@ -231,8 +231,7 @@ class RipartPlugin:
         print(messageInfo)
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
-        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-        # QGuiApplication.restoreOverrideCursor()
+        QGuiApplication.restoreOverrideCursor()
 
     def saveChangesForOneLayer(self, layer):
         global commitLayerResult
@@ -742,8 +741,7 @@ class RipartPlugin:
         if self.context is None:
             return False
 
-        # if self.context.client is None or bAutomaticConnection:
-        if bAutomaticConnection:
+        if self.context.client is None or bAutomaticConnection:
             return self.context.getConnexionRipart()
 
         return True
