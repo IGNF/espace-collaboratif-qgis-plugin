@@ -235,22 +235,25 @@ class RipartPlugin:
 
     def saveChangesForOneLayer(self, layer):
         global commitLayerResult
-        if layer is None:
-            return
-        if not self.__doConnexion():
-            return
-        layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
-        bRes = False
-        for layerTableOfTables in layersTableOfTables:
-            if layer.name() in layerTableOfTables[0]:
-                bRes = True
-                break
-        if not bRes:
-            return
-        editBuffer = layer.editBuffer()
-        if not editBuffer:
-            return
+        ta = "Transaction abandonnée"
         try:
+            if layer is None:
+                raise Exception("Couche inexistante dans le projet. {}".format(ta))
+            if not self.__doConnexion():
+                raise Exception("Problème de connexion. {}".format(ta))
+            layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
+            bRes = False
+            for layerTableOfTables in layersTableOfTables:
+                if layer.name() in layerTableOfTables[0]:
+                    bRes = True
+                    break
+            if not bRes:
+                raise Exception("La couche {} n'est pas présente dans la table des tables "
+                                "de la base SQLite. {}".format(layer.name(), ta))
+            editBuffer = layer.editBuffer()
+            if not editBuffer:
+                raise Exception("Pas de mises à jour enregistrées sur la couche {}. {}".format(layer.name(), ta))
+
             wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
             # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
             # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une 2ème fois sinon plantage
