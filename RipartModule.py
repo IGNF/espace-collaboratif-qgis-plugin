@@ -840,8 +840,8 @@ class RipartPlugin:
             if not self.__doConnexion():
                 return
             self.context.checkConfigFile(bConnectProjectRead)
-            self.dlgConfigure = FormConfigure(context=self.context)
-            self.dlgConfigure.exec_()
+            dlgConfigure = FormConfigure(context=self.context)
+            dlgConfigure.exec_()
 
         except Exception as e:
             self.logger.error(format(e))

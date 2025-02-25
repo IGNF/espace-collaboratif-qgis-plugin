@@ -129,12 +129,16 @@ class ImporterRipart(object):
             remsToKeep = rems
 
         cnt = len(remsToKeep)
+        if cnt == 0:
+            self.progress.close()
+            self.context.iface.messageBar().pushMessage("", "Pas de signalements extraits ou intersectant cette zone.",
+                                                        level=2, duration=5)
+            return
 
         try:
             i = 100
             try:
                 self.context.conn = spatialite_connect(self.context.dbPath)
-
                 for remId in remsToKeep:
 
                     if remId == '618195' or remId == '618197':

@@ -115,7 +115,7 @@ class Contexte(object):
         self.groupeactif = ""
         self.profil = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
-        self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+
 
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata()
@@ -141,6 +141,11 @@ class Contexte(object):
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
             raise
+
+    def crsProject(self):
+        authorityId = self.mapCan.mapSettings().destinationCrs().authid()
+        tmp = authorityId.split(':')
+        return int(tmp[1])
 
     def getMetadata(self):
         config = configparser.RawConfigParser()
@@ -263,6 +268,7 @@ class Contexte(object):
         """
         self.logger.debug("GetConnexionRipart")
         try:
+            self.checkConfigFile(False)
             self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
                                                                 "Serveur").text
             self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
