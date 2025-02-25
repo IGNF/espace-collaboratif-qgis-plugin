@@ -265,7 +265,7 @@ class SQLiteManager(object):
     def deleteRowsInTableBDUni(tableName, keys):
         tmp = ''
         for key in keys:
-            tmp += '"{0}", '.format(key[0])
+            tmp += '"{0}", '.format(key)
         strCleabs = tmp[0:len(tmp) - 2]
         sql = 'DELETE FROM {0} WHERE cleabs IN ({1})'.format(tableName, strCleabs)
         SQLiteManager.executeSQL(sql)
@@ -279,7 +279,7 @@ class SQLiteManager(object):
                 continue
             if data['state'] == 'Update' or data['state'] == 'Delete':
                 cleabss.append(data['feature']['cleabs'])
-        # Si la transaction ne contient que des créations, il n'y a pas d'enregistrements à détruire
+        # Si la transaction ne contient que des créations ou des updates, il n'y a pas d'enregistrements à détruire
         if len(cleabss) > 0:
             SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 

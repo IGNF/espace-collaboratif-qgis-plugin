@@ -176,6 +176,21 @@ class WfsPost(object):
             # d'une couche BDUni
             if not self.layer.isStandard:
                 SQLiteManager.setActionsInTableBDUni(self.layer.name(), self.actions)
+            # Mise à jour de la couche
+            try:
+                self.synchronize()
+            except Exception as e:
+                QMessageBox.information(self.context.iface.mainWindow(), cst.IGNESPACECO, format(e))
+                # Suppression de la couche dans la carte. Virer la table dans SQLite
+                layersID = [self.layer.id()]
+                QgsProject.instance().removeMapLayers(layersID)
+                if SQLiteManager.isTableExist(self.layer.nom):
+                    SQLiteManager.emptyTable(self.layer.nom)
+                    SQLiteManager.deleteTable(self.layer.nom)
+                if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+                    SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+                SQLiteManager.vacuumDatabase()
+                return
             numrec = self.getNumrecFromTransaction(responseWfs['urlTransaction'])
             # Cas des couches standard, il faut mettre numrec à 0
             if numrec is None:
@@ -189,9 +204,10 @@ class WfsPost(object):
         if responseWfs['status'] == 'FAILED':
             responseWfs['message'] = "<br/>Attention, les modifications sur la couche {0} ont été refusées par le " \
                                      "serveur, les données sont corrompues. Veuillez télécharger de nouveau cette " \
-                                      "couche pour pouvoir continuer à la modifier. En cas de besoin, vous pouvez " \
-                                      "contacter le gestionnaire de votre groupe.<br><br>{1}".format(self.layer.name(),
-                                                                                                 responseWfs['message'])
+                                     "couche pour pouvoir continuer à la modifier. En cas de besoin, vous pouvez " \
+                                     "contacter le gestionnaire de votre groupe.<br><br>{1}".format(self.layer.name(),
+                                                                                                    responseWfs[
+                                                                                                        'message'])
         return responseWfs
 
     def getJsonTransaction(self, urlTransaction):
@@ -284,21 +300,6 @@ class WfsPost(object):
             endReport += self.setEndReport(strActions[0], endTransaction)
             totalOftransactions.append(dict(status=endTransaction['status'], report=endReport))
             endReport = ''
-        # Mise à jour de la couche
-        try:
-            self.synchronize()
-        except Exception as e:
-            QMessageBox.information(self.context.iface.mainWindow(), cst.IGNESPACECO, format(e))
-            # Suppression de la couche dans la carte. Virer la table dans SQLite
-            layersID = [self.layer.id()]
-            QgsProject.instance().removeMapLayers(layersID)
-            if SQLiteManager.isTableExist(self.layer.nom):
-                SQLiteManager.emptyTable(self.layer.nom)
-                SQLiteManager.deleteTable(self.layer.nom)
-            # if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-            # SQLiteManager.emptyTable(cst.TABLEOFTABLES)
-            SQLiteManager.vacuumDatabase()
-            return
         return totalOftransactions
 
     def setEndReport(self, nbObjects, endTransactionMessage):

@@ -231,7 +231,8 @@ class RipartPlugin:
         print(messageInfo)
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
-        QGuiApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        # QGuiApplication.restoreOverrideCursor()
 
     def saveChangesForOneLayer(self, layer):
         global commitLayerResult
@@ -274,7 +275,8 @@ class RipartPlugin:
 
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
-            QGuiApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            # QGuiApplication.restoreOverrideCursor()
 
         return messages
 
@@ -545,7 +547,8 @@ class RipartPlugin:
         except Exception as e:
             self.logger.error(format(e))
             self.context.iface.messageBar().pushMessage("Remarque", str(e), level=1, duration=5)
-            QGuiApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            # QGuiApplication.restoreOverrideCursor()
 
     '''
     def saveChangesForAllLayers(self):
@@ -772,7 +775,8 @@ class RipartPlugin:
                 pushMessage("Remarque",
                             format(e),
                             level=2, duration=5)
-            QGuiApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            # QGuiApplication.restoreOverrideCursor()
 
         except Exception as e:
             self.context.iface.messageBar().clearWidgets()
@@ -781,7 +785,8 @@ class RipartPlugin:
                 pushMessage("Erreur",
                             format(e),
                             level=2, duration=5)
-            QGuiApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            # QGuiApplication.restoreOverrideCursor()
 
     def answerToReport(self):
         """
