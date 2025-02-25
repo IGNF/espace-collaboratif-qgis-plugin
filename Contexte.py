@@ -142,11 +142,6 @@ class Contexte(object):
             self.logger.error("init contexte:" + format(e))
             raise
 
-    def crsProject(self):
-        authorityId = self.mapCan.mapSettings().destinationCrs().authid()
-        tmp = authorityId.split(':')
-        return int(tmp[1])
-
     def getMetadata(self):
         config = configparser.RawConfigParser()
         config.read(self.plugin_path + '\\metadata.txt')
