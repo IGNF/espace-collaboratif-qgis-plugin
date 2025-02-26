@@ -839,10 +839,11 @@ class RipartPlugin:
                             level=2, duration=5)
 
     def configurePref(self, bConnectProjectRead=False):
-        """Lance la fenêtre de configuration des préférences 
+        """Lance la fenêtre de configuration des préférences
         """
         try:
-            if not self.__doConnexion():
+            self.context = Contexte.getInstance(self, QgsProject)
+            if self.context is None:
                 return
             self.context.checkConfigFile(bConnectProjectRead)
             dlgConfigure = FormConfigure(context=self.context)
