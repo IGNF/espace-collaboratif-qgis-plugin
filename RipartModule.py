@@ -29,8 +29,6 @@ from builtins import str
 from builtins import range
 import os.path
 
-from PyQt5.QtGui import QGuiApplication
-
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
@@ -60,7 +58,6 @@ from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
 from .ReplyReport import ReplyReport
-from .FieldsJsonView import FieldsJsonView
 
 import logging
 
@@ -859,7 +856,7 @@ class RipartPlugin:
     def magicwand(self):
         """Sélectionne le/les signalement(s) associé(s) au(x) croquis sélectionnés 
           ou le/les croquis associé(s) au signalement sélectionné.
-          On ne peut pas sélectionnner des signalements et des croquis (soit signalements, soit croquis)  
+          On ne peut pas sélectionner des signalements et des croquis (soit signalements, soit croquis)
         """
         try:
             if not self.__doConnexion():

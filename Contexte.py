@@ -29,6 +29,7 @@ from .core.Sketch import Sketch
 from .FormConnection import FormConnectionDialog
 from .core import ConstanteRipart as cst
 from .Import_WMTS import ImportWMTS
+from .Import_WMSR import ImportWMSR
 from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 from .core.WfsGet import WfsGet
@@ -454,7 +455,8 @@ class Contexte(object):
                     print("titleLayer_uri : {}".format(titleLayer_uri))
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                     if not rlayer.isValid():
-                        print("Layer {} failed to load !".format(rlayer.name()))
+                        # print("Layer {} failed to load !".format(rlayer.name()))
+                        endMessage += "Layer {} failed to load !".format(rlayer.name())
                         continue
 
                     self.QgsProject.instance().addMapLayer(rlayer, False)
@@ -462,7 +464,25 @@ class Contexte(object):
                     root.insertLayer(-1, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
                     message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
-                    print(message)
+                    endMessage += message
+
+                '''
+                Ajout des couches WMS-R selectionnées dans "Mon guichet"
+                '''
+                if layer.type == cst.WMS:
+                    importWmsr = ImportWMSR(layer)
+                    titleLayer_uri = importWmsr.getWmsrUrlParams()
+                    print("titleLayer_uri : {}".format(titleLayer_uri))
+                    rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
+                    if not rlayer.isValid():
+                        endMessage += "Layer {} failed to load !".format(rlayer.name())
+                        continue
+
+                    self.QgsProject.instance().addMapLayer(rlayer, False)
+                    # Insertion à la fin avec -1
+                    root.insertLayer(-1, rlayer)
+                    self.logger.debug("Layer {} added to map".format(rlayer.name()))
+                    message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
                     endMessage += message
             progress.close()
 

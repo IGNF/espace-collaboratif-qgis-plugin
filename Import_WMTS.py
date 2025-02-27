@@ -71,7 +71,7 @@ class ImportWMTS:
         Avec l'url https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities,
         la projection proposée est web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
         '''
-        self.crs = "EPSG:3857"
+        self.crs = cst.EPSG3857
         # TODO problème avec la clé 'url'
         self.uri = self.selected_layer.url.format(urllib.parse.unquote(urllib.parse.urlencode(params)))
 
