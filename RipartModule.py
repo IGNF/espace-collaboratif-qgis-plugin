@@ -29,6 +29,7 @@ from builtins import str
 from builtins import range
 import os.path
 
+from PyQt5.QtGui import QGuiApplication
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
 from .core.RipartLoggerCl import RipartLogger
@@ -58,6 +59,7 @@ from .CreerRipart import CreerRipart
 from .Magicwand import Magicwand
 from .RipartHelper import RipartHelper
 from .ReplyReport import ReplyReport
+from .FieldsJsonView import FieldsJsonView
 
 import logging
 
