@@ -10,7 +10,7 @@
 name=IGN_Espace_Collaboratif_DEV
 qgisMinimumVersion=3.0
 description=Service de signalement et contribution de l'IGN, plugin QGIS3
-version=4.3.1
+version=4.3.2
 author=IGN
 email=service-client@ign.fr
 
@@ -27,6 +27,7 @@ date=11/02/2025
 
 # Uncomment the following line and add your changelog:
 changelog=
+    4.3.2 - Correction sur la vérification des fichiers de contexte
     4.3.1 - Ajout téléchargement Flux WMS-R
     4.3.0 - Mise à jour d'un seuil sur les transactions
     4.2.3 - Prise en compte de la migration des géoservices IGN vers la Géoplateforme

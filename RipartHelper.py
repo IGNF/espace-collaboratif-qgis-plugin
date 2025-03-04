@@ -503,28 +503,32 @@ class RipartHelper:
         """
         cur = conn.cursor()
         sql = u"CREATE TABLE Signalement (" + \
-              u"id INTEGER NOT NULL PRIMARY KEY," + \
-              u"NoSignalement INTEGER," + \
+              u"id INTEGER NOT NULL PRIMARY KEY, " + \
+              u"NoSignalement INTEGER, " + \
               u"Auteur TEXT, " + \
               u"Commune TEXT, " + \
               u"Département TEXT, " + \
-              u"Département_id  TEXT," + \
-              u"Date_création TEXT," + \
-              u"Date_MAJ TEXT," + \
-              u"Date_validation TEXT," + \
-              u"Thèmes TEXT ," + \
-              u"Statut TEXT ," + \
-              u"Message TEXT," + \
-              u"Réponses TEXT," + \
-              u"URL TEXT," + \
-              u"URL_privé TEXT ," + \
-              u"Document TEXT," + \
+              u"Département_id  TEXT, " + \
+              u"Date_création TEXT, " + \
+              u"Date_MAJ TEXT, " + \
+              u"Date_validation TEXT, " + \
+              u"Thèmes TEXT, " + \
+              u"Statut TEXT, " + \
+              u"Message TEXT, " + \
+              u"Réponses TEXT, " + \
+              u"URL TEXT, " + \
+              u"URL_privé TEXT, " + \
+              u"Document TEXT, " + \
               u"Autorisation TEXT)"
-        cur.execute(sql)
+        print(sql)
+        res = cur.execute(sql)
+        print(res)
         conn.commit()
         # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('Signalement','geom', " + str(cst.EPSGCRS) + ", 'POINT', 'XY')"
-        cur.execute(sql)
+        sql = "SELECT AddGeometryColumn('Signalement', 'geom', " + str(cst.EPSGCRS) + ", 'POINT', 'XY')"
+        print(sql)
+        res = cur.execute(sql)
+        print(res)
         cur.close()
         conn.commit()
 
@@ -543,19 +547,22 @@ class RipartHelper:
         """
         cur = conn.cursor()
         sql = u"CREATE TABLE " + table + " (" + \
-              u"id INTEGER NOT NULL PRIMARY KEY," + \
-              u"NoSignalement INTEGER," + \
-              u"Nom TEXT ," + \
-              u"Attributs_croquis," + \
+              u"id INTEGER NOT NULL PRIMARY KEY, " + \
+              u"NoSignalement INTEGER, " + \
+              u"Nom TEXT, " + \
+              u"Attributs_croquis, " + \
               u"Lien_objet_BDUNI TEXT) "
-        cur.execute(sql)
-        cur.close()
+        print(sql)
+        res = cur.execute(sql)
+        print(res)
+        conn.commit()
         # creating a POINT Geometry column
-        cursor = conn.cursor()
-        sql = "SELECT AddGeometryColumn('" + table + "',"
-        sql += "'geom'," + str(cst.EPSGCRS) + ",'" + geomType + "', 'XY')"
-        cursor.execute(sql)
-        cursor.close()
+        sql = "SELECT AddGeometryColumn('" + table + "', "
+        sql += "'geom', " + str(cst.EPSGCRS) + ", '" + geomType + "', 'XY')"
+        print(sql)
+        res = cur.execute(sql)
+        print(res)
+        cur.close()
         conn.commit()
 
     @staticmethod

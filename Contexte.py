@@ -100,7 +100,7 @@ class Contexte(object):
     # extension sqlite
     sqlite_ext = ".sqlite"
 
-    def __init__(self, QObject, QgsProject, bConnectProjectRead):
+    def __init__(self, QObject, QgsProject):
         """
         Constructor
 
@@ -126,13 +126,13 @@ class Contexte(object):
             self.setProjectParams()
 
             # contrôle l'existence du fichier de configuration
-            self.checkConfigFile(bConnectProjectRead)
+            self.checkConfigFile()
 
             # set de la base de données
-            self.getOrCreateDatabase(bConnectProjectRead)
+            self.getOrCreateDatabase()
 
             # set des fichiers de style
-            self.copyRipartStyleFiles(bConnectProjectRead)
+            self.copyRipartStyleFiles()
 
             # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
             formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
@@ -156,25 +156,25 @@ class Contexte(object):
         return False
 
     @staticmethod
-    def getInstance(QObject=None, QgsProject=None, bConnectProjectRead=False):
+    def getInstance(QObject=None, QgsProject=None):
         """
         Retourne l'instance du Contexte
         """
-        if not bConnectProjectRead or not Contexte.instance or \
+        if not Contexte.instance or \
                 (Contexte.instance.projectDir != QgsProject.instance().homePath() or
                  ntpath.basename(QgsProject.instance().fileName()) not in [
                      Contexte.instance.projectFileName + ".qgs",
                      Contexte.instance.projectFileName + ".qgz"]):
-            Contexte.instance = Contexte._createInstance(QObject, QgsProject, bConnectProjectRead)
+            Contexte.instance = Contexte._createInstance(QObject, QgsProject)
         return Contexte.instance
 
     @staticmethod
-    def _createInstance(QObject, QgsProject, bConnectProjectRead):
+    def _createInstance(QObject, QgsProject):
         """
         Création de l'instance du contexte
         """
         try:
-            Contexte.instance = Contexte(QObject, QgsProject, bConnectProjectRead)
+            Contexte.instance = Contexte(QObject, QgsProject)
             Contexte.instance.logger.debug("Nouvelle instance de contexte créée")
         except Exception as e:
             Contexte.instance = None
@@ -202,13 +202,10 @@ class Contexte(object):
 
         self.projectFileName = fname[:fname.find(".")]
 
-    def checkConfigFile(self, bConnectProjectRead):
+    def checkConfigFile(self):
         """
         Contrôle de l'existence du fichier de configuration
         """
-        if bConnectProjectRead:
-            return
-
         ripartxml = self.projectDir + os.path.sep + RipartHelper.getConfigFile()
         if not os.path.isfile(ripartxml):
             try:
@@ -223,9 +220,7 @@ class Contexte(object):
                 raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
                                 " n'a pas été trouvé.")
 
-    def copyRipartStyleFiles(self, bConnectProjectRead):
-        if bConnectProjectRead:
-            return
+    def copyRipartStyleFiles(self):
         """
             Copie les fichiers de styles (pour les remarques et croquis ripart)
         """
@@ -264,7 +259,7 @@ class Contexte(object):
         """
         self.logger.debug("GetConnexionRipart")
         try:
-            self.checkConfigFile(False)
+            self.checkConfigFile()
             self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
                                                                 "Serveur").text
             self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
@@ -314,13 +309,11 @@ class Contexte(object):
 
         return connectionResult
 
-    def getOrCreateDatabase(self, bConnectProjectRead):
+    def getOrCreateDatabase(self):
         """
         Retourne la base de données spatialite contenant les tables des remarques et croquis
         Si la BD n'existe pas, elle est créée
         """
-        if bConnectProjectRead:
-            return
         curs = None
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
@@ -710,21 +703,20 @@ class Contexte(object):
 
     def emptyAllRipartLayers(self):
         """
-        Supprime toutes les remarques, vide les tables de la base ripart.sqlite
+        vide, détruit et crée les tables dans la base ripart.sqlite
         """
-        ripartLayers = RipartHelper.croquis_layers
-        ripartLayers[RipartHelper.nom_Calque_Signalement] = "POINT"
         try:
             self.conn = spatialite_connect(self.dbPath)
-            for table in ripartLayers:
-                if not SQLiteManager.isTableExist(table):
-                    RipartHelper.createCroquisTable(self.conn, table, RipartHelper.croquis_layers[table])
-                else:
+            for table in RipartHelper.croquis_layers:
+                if SQLiteManager.isTableExist(table):
                     SQLiteManager.emptyTable(table)
+                else:
+                    RipartHelper.createCroquisTable(self.conn, table, RipartHelper.croquis_layers[table])
             if SQLiteManager.isTableExist(RipartHelper.nom_Calque_Signalement):
                 SQLiteManager.emptyTable(RipartHelper.nom_Calque_Signalement)
             else:
                 RipartHelper.createRemarqueTable(self.conn)
+            SQLiteManager.vacuumDatabase()
         except RipartException as e:
             self.logger.error(format(e))
             raise

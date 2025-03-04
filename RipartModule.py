@@ -132,7 +132,7 @@ class RipartPlugin:
     def connectProjectRead(self):
         # si le contexte n'est pas encore initialisé
         if self.context is None:
-            self.context = Contexte.getInstance(self, QgsProject, True)
+            self.context = Contexte.getInstance(self, QgsProject)
 
         # S'il n'a y pas de base SQLite
         uri = self.context.getUriDatabaseSqlite()
@@ -837,14 +837,14 @@ class RipartPlugin:
                             u"Un problème est survenu lors de la suppression des signalements",
                             level=2, duration=5)
 
-    def configurePref(self, bConnectProjectRead=False):
+    def configurePref(self):
         """Lance la fenêtre de configuration des préférences
         """
         try:
             self.context = Contexte.getInstance(self, QgsProject)
             if self.context is None:
                 return
-            self.context.checkConfigFile(bConnectProjectRead)
+            self.context.checkConfigFile()
             dlgConfigure = FormConfigure(context=self.context)
             dlgConfigure.exec_()
 
