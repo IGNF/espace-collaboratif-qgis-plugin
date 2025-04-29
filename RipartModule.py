@@ -126,6 +126,39 @@ class RipartPlugin:
         QgsProject.instance().layerWasAdded.connect(self.connectLayerWasAdded)
         self.libelle_transaction = None
 
+    def unload(self):
+        logs = logging.Logger.manager.loggerDict
+        for lg in logs:
+            logger = logs[lg]
+            if isinstance(logger, logging.Logger):
+                handlers = logger.handlers
+                cntHandlers = len(logger.handlers)
+                for i in range(cntHandlers - 1, -1, -1):
+                    try:
+                        if os.path.basename(handlers[i].name.baseFilename)[-10:] == u"plugin_espaceco.log":
+                            handlers[i].close()
+                            logger.removeHandler(handlers[i])
+                    except AttributeError as e:
+                        continue
+
+        logdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
+        if os.path.exists(logdir):
+            for f in os.listdir(logdir):
+                file = open(os.path.join(logdir, f), 'r+')
+                file.close()
+                try:
+                    os.remove(os.path.join(logdir, f))
+                except Exception as e:
+                    self.logger.error(format(e))
+
+        """Removes the plugin menu item and icon from QGIS GUI."""
+        for action in self.actions:
+            self.iface.removePluginMenu(
+                self.tr(u'&IGN_Espace_Collaboratif'),
+                action)
+            self.iface.removeToolBarIcon(action)
+        del self.toolbar
+
     def getlibelletransaction(self):
         return self.libelle_transaction
 
@@ -159,7 +192,7 @@ class RipartPlugin:
                     # si le contexte n'a pas été récupéré au départ de la fonction
                     if self.context is None:
                         return
-                    if self.context.client is None:
+                    if self.context.client is None or self.context.profil is None:
                         if not self.context.getConnexionRipart(newLogin=True):
                             return
                 elif reply == QMessageBox.No:
@@ -378,7 +411,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Se connecter a l\'Espace Collaboratif'),
-            callback=self.run,
+            callback=self.runConnexion,
             status_tip=self.tr(u'Se connecter a l\'Espace Collaboratif'),
             parent=self.iface.mainWindow())
 
@@ -386,7 +419,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Télécharger les signalements'),
-            callback=self.downloadRemarks,
+            callback=self.downloadReports,
             status_tip=self.tr(u'Télécharger les signalements'),
             parent=self.iface.mainWindow())
 
@@ -410,7 +443,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Créer un nouveau signalement'),
-            callback=self.createRemark,
+            callback=self.createReport,
             status_tip=self.tr(u'Créer un nouveau signalement'),
             parent=self.iface.mainWindow())
 
@@ -418,7 +451,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Supprimer les signalements de la carte en cours'),
-            callback=self.removeRemarks,
+            callback=self.removeReports,
             status_tip=self.tr(u'Supprimer les signalements de la carte en cours'),
             parent=self.iface.mainWindow())
 
@@ -434,7 +467,7 @@ class RipartPlugin:
         self.add_action(
             icon_path,
             text=self.tr(u'Charger les couches de mon groupe'),
-            callback=self.chargerGuichet,
+            callback=self.loadGuichet,
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
@@ -524,7 +557,135 @@ class RipartPlugin:
                 print("Name:{0}, Type:{1}, Config:{2}".format(name, ews.type(), ews.config()))
     '''
 
-    def chargerGuichet(self):
+    def __doConnexion(self, bAutomaticConnection=False):
+        if self.context is None:
+            self.context = Contexte.getInstance(self, QgsProject)
+
+        if self.context is None:
+            return False
+
+        if self.context.client is None or self.context.profil is None or bAutomaticConnection:
+            return self.context.getConnexionRipart()
+
+        return True
+
+    def runConnexion(self):
+        """Fenêtre de connexion"""
+        if not self.__doConnexion(True):
+            self.logger.debug("cancel")
+
+    def downloadReports(self):
+        """Downloads remarks
+        """
+        try:
+            if not self.__doConnexion():
+                return
+            importRipart = ImporterRipart(self.context)
+            result = importRipart.doImport()
+            if result == 0:
+                return
+
+        except NoProfileException as e:
+            self.context.iface.messageBar().clearWidgets()
+            self.logger.error(format(e))
+            self.context.iface.messageBar(). \
+                pushMessage("Remarque",
+                            format(e),
+                            level=2, duration=5)
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            # QGuiApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            self.context.iface.messageBar().clearWidgets()
+            self.logger.error(format(e))
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            format(e),
+                            level=2, duration=5)
+            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            # QGuiApplication.restoreOverrideCursor()
+
+    def viewReport(self):
+        """Visualisation du signalement (message, réponses et statut)
+        """
+        try:
+            if not self.__doConnexion():
+                return
+            seeReport = SeeReport(self.context)
+            self.SeeReportView = seeReport.do()
+
+        except Exception as e:
+            self.logger.error("SeeReport " + format(e))
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.",
+                            level=2, duration=5)
+
+    def answerToReport(self):
+        """
+        Répondre à un signalement
+        """
+        try:
+            if not self.__doConnexion():
+                return
+            replyReport = ReplyReport(self.context)
+            replyReport.do()
+        except Exception as e:
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            "Problème dans la réponse faite au(x) signalement(s) : {0}".format(str(e)),
+                            level=2, duration=5)
+
+    def createReport(self):
+        """Create a new remark
+        """
+        try:
+            if not self.__doConnexion():
+                return
+            create = CreerRipart(self.context)
+            create.do()
+        except Exception as e:
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            u"Un problème est survenu lors de la création du signalement",
+                            level=2, duration=5)
+
+    def removeReports(self):
+        """Remove all remarks from current map
+        (empty the tables from ripart table of the sqlite DB)
+        """
+        try:
+            if not self.__doConnexion():
+                return
+            message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                         QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.context.emptyAllRipartLayers()
+            else:
+                return
+
+        except Exception as e:
+            self.context.iface.messageBar(). \
+                pushMessage("Erreur",
+                            u"Un problème est survenu lors de la suppression des signalements",
+                            level=2, duration=5)
+
+    def magicwand(self):
+        """Sélectionne le/les signalement(s) associé(s) au(x) croquis sélectionnés
+          ou le/les croquis associé(s) au signalement sélectionné.
+          On ne peut pas sélectionner des signalements et des croquis (soit signalements, soit croquis)
+        """
+        try:
+            if not self.__doConnexion():
+                return
+            magicw = Magicwand(self.context)
+            magicw.selectRipartObjects()
+
+        except Exception as e:
+            self.logger.error("magicWand " + format(e))
+
+    def loadGuichet(self):
         try:
             print("Chargement des couches du groupe utilisateur")
             if not self.__doConnexion():
@@ -548,55 +709,6 @@ class RipartPlugin:
             self.context.iface.messageBar().pushMessage("Remarque", str(e), level=1, duration=5)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
             # QGuiApplication.restoreOverrideCursor()
-
-    '''
-    def saveChangesForAllLayers(self):
-        report = "<b>Contenu de la transaction</b>"
-        self.context = Contexte.getInstance(self, QgsProject)
-        if self.context is None:
-            return
-        if self.context.client is None:
-            if not self.context.getConnexionRipart(newLogin=True):
-                return
-        messages = []
-        # Une transaction par couche modifiée
-        layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
-        for layer in QgsProject.instance().mapLayers().values():
-            bRes = False
-            for layerTableOfTables in layersTableOfTables:
-                if layer.name() in layerTableOfTables[0]:
-                    bRes = True
-                    break
-            if not bRes:
-                continue
-            editBuffer = layer.editBuffer()
-            if not editBuffer:
-                continue
-
-            try:
-                messageProgress = "Synchronisation de la couche {}".format(layer.name())
-                progress = ProgressBar(1, messageProgress)
-                wfsPost = WfsPost(self.context, layer, RipartHelper.load_CalqueFiltrage(self.context.projectDir).text)
-                # Les modifications d'une couche sont envoyées au serveur, il faut donc vider le buffer de la couche
-                # ou sont stockés les changements, c'est un post normal
-                bNormalWfsPost = True
-                progress.setValue(1)
-                messages.append("{0}\n".format(wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)))
-                progress.close()
-
-            except Exception as e:
-                messages.append('<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e))
-
-        # Message de fin de transaction
-        dlgInfo = FormInfo()
-        dlgInfo.textInfo.setText(report)
-        dlgInfo.textInfo.setOpenExternalLinks(True)
-        if len(messages) == 0:
-            dlgInfo.textInfo.append("<br/>Vide")
-        for message in messages:
-            dlgInfo.textInfo.append(message)
-        dlgInfo.exec_()
-    '''
 
     def synchronizeData(self):
         endMessage = '<b>Contenu de la synchronisation</b>'
@@ -706,137 +818,6 @@ class RipartPlugin:
         dlgInfo.textInfo.setText(endMessage)
         dlgInfo.exec_()
 
-    def unload(self):
-        logs = logging.Logger.manager.loggerDict
-        for lg in logs:
-            logger = logs[lg]
-            if isinstance(logger, logging.Logger):
-                handlers = logger.handlers
-                cntHandlers = len(logger.handlers)
-                for i in range(cntHandlers - 1, -1, -1):
-                    try:
-                        if os.path.basename(handlers[i].name.baseFilename)[-10:] == u"plugin_espaceco.log":
-                            handlers[i].close()
-                            logger.removeHandler(handlers[i])
-                    except AttributeError as e:
-                        continue
-
-        logdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
-        if os.path.exists(logdir):
-            for f in os.listdir(logdir):
-                file = open(os.path.join(logdir, f), 'r+')
-                file.close()
-                try:
-                    os.remove(os.path.join(logdir, f))
-                except Exception as e:
-                    self.logger.error(format(e))
-
-        """Removes the plugin menu item and icon from QGIS GUI."""
-        for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr(u'&IGN_Espace_Collaboratif'),
-                action)
-            self.iface.removeToolBarIcon(action)
-        del self.toolbar
-
-    def __doConnexion(self, bAutomaticConnection=False):
-        if self.context is None:
-            self.context = Contexte.getInstance(self, QgsProject)
-
-        if self.context is None:
-            return False
-
-        if self.context.client is None or bAutomaticConnection:
-            return self.context.getConnexionRipart()
-
-        return True
-
-    def run(self):
-        """Fenêtre de connexion"""
-        if not self.__doConnexion(True):
-            self.logger.debug("cancel")
-
-    def downloadRemarks(self):
-        """Downloads remarks
-        """
-        try:
-            if not self.__doConnexion():
-                return
-            importRipart = ImporterRipart(self.context)
-            result = importRipart.doImport()
-            if result == 0:
-                return
-
-        except NoProfileException as e:
-            self.context.iface.messageBar().clearWidgets()
-            self.logger.error(format(e))
-            self.context.iface.messageBar(). \
-                pushMessage("Remarque",
-                            format(e),
-                            level=2, duration=5)
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-            # QGuiApplication.restoreOverrideCursor()
-
-        except Exception as e:
-            self.context.iface.messageBar().clearWidgets()
-            self.logger.error(format(e))
-            self.context.iface.messageBar(). \
-                pushMessage("Erreur",
-                            format(e),
-                            level=2, duration=5)
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-            # QGuiApplication.restoreOverrideCursor()
-
-    def answerToReport(self):
-        """
-        Répondre à un signalement
-        """
-        try:
-            if not self.__doConnexion():
-                return
-            replyReport = ReplyReport(self.context)
-            replyReport.do()
-        except Exception as e:
-            self.context.iface.messageBar(). \
-                pushMessage("Erreur",
-                            "Problème dans la réponse faite au(x) signalement(s) : {0}".format(str(e)),
-                            level=2, duration=5)
-
-    def createRemark(self):
-        """Create a new remark
-        """
-        try:
-            if not self.__doConnexion():
-                return
-            create = CreerRipart(self.context)
-            create.do()
-        except Exception as e:
-            self.context.iface.messageBar(). \
-                pushMessage("Erreur",
-                            u"Un problème est survenu lors de la création du signalement",
-                            level=2, duration=5)
-
-    def removeRemarks(self):
-        """Remove all remarks from current map
-        (empty the tables from ripart table of the sqlite DB)
-        """
-        try:
-            if not self.__doConnexion():
-                return
-            message = u"Êtes-vous sûr de vouloir supprimer les signalements de la carte en cours?"
-            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                self.context.emptyAllRipartLayers()
-            else:
-                return
-
-        except Exception as e:
-            self.context.iface.messageBar(). \
-                pushMessage("Erreur",
-                            u"Un problème est survenu lors de la suppression des signalements",
-                            level=2, duration=5)
-
     def configurePref(self):
         """Lance la fenêtre de configuration des préférences
         """
@@ -853,36 +834,6 @@ class RipartPlugin:
             self.context.iface.messageBar(). \
                 pushMessage("Erreur",
                             u"Un problème est survenu dans le chargement de la configuration." + format(e),
-                            level=2, duration=5)
-
-    def magicwand(self):
-        """Sélectionne le/les signalement(s) associé(s) au(x) croquis sélectionnés 
-          ou le/les croquis associé(s) au signalement sélectionné.
-          On ne peut pas sélectionner des signalements et des croquis (soit signalements, soit croquis)
-        """
-        try:
-            if not self.__doConnexion():
-                return
-            magicw = Magicwand(self.context)
-            magicw.selectRipartObjects()
-
-        except Exception as e:
-            self.logger.error("magicWand " + format(e))
-
-    def viewReport(self):
-        """Visualisation du signalement (message, réponses et statut)
-        """
-        try:
-            if not self.__doConnexion():
-                return
-            seeReport = SeeReport(self.context)
-            self.SeeReportView = seeReport.do()
-
-        except Exception as e:
-            self.logger.error("SeeReport " + format(e))
-            self.context.iface.messageBar(). \
-                pushMessage("Erreur",
-                            u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.",
                             level=2, duration=5)
 
     def ripAbout(self):

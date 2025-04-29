@@ -38,17 +38,6 @@ class CreerRipart(object):
                                             u"point d'application du nouveau signalement à créer.")
                 return    # si pas d'objet sélectionné, on arrête le processus
 
-            if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
-                if not connResult:
-                    return 0
-                # la connexion a échoué, on ne fait rien
-                if self.context.client is None:
-                    self.context.iface.messageBar().pushMessage("", u"Un problème de connexion avec le service est "
-                                                                    u"survenu. Veuillez rééssayer", level=2,
-                                                                duration=5)
-                    return
-
             # Création des croquis à partir de la sélection de features
             listCroquisAndLayers = self.context.makeCroquisFromSelection()
             croquisList = listCroquisAndLayers[0]

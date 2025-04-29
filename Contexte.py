@@ -502,13 +502,26 @@ class Contexte(object):
         config.setColumns(columns)
         layer.setAttributeTableConfig(config)
 
+    def replaceSpecialCharacter(self, replaceTo) -> str:
+        tmp = replaceTo.replace(' ', '')
+        tmp = tmp.replace('-', '')
+        tmp = tmp.replace('_', '')
+        tmp = tmp.replace('+', '')
+        tmp = tmp.replace('.', '')
+        tmp = tmp.replace('(', '')
+        tmp = tmp.replace(')', '')
+        return tmp.lower()
+
     def removeLayers(self, guichet_layers, maplayers, bAskForConfirmation=True):
         tmp = ''
-        removeLayers = []
+        removeLayers = set()
         for layer in guichet_layers:
+            noSpaceInLayerName = self.replaceSpecialCharacter(layer.nom)
+            nameLayerId = self.replaceSpecialCharacter(layer.layer_id)
             for k, v in maplayers.items():
-                if layer.nom.lower() == v.name().lower():
-                    removeLayers.append(v.name())
+                noSpaceInMapLayerName = self.replaceSpecialCharacter(v.name())
+                if (noSpaceInLayerName == noSpaceInMapLayerName) or (nameLayerId.find(noSpaceInMapLayerName) != -1):
+                    removeLayers.add(v.name())
                     tmp += "{}, ".format(v.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 

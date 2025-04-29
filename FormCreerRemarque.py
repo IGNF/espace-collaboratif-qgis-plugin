@@ -11,6 +11,8 @@ version 4.0.1, 15/12/2020
 import os
 
 from PyQt5 import QtGui, QtWidgets, uic
+from qgis.PyQt import QtCore
+
 from .core.RipartLoggerCl import RipartLogger
 
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
@@ -69,6 +71,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.context = context
         self.context.groupeactif = RipartHelper.load_groupeactif(self.context.projectDir).text
 

@@ -11,7 +11,7 @@ version 4.0.1, 15/12/2020
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox
-from qgis.PyQt import uic
+from qgis.PyQt import uic, QtCore
 from .core.RipartLoggerCl import RipartLogger
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtGui import QImage
@@ -66,8 +66,8 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lblPwd.setFont(font)
         self.lblLogin.setFont(font)
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
-
         self.setFixedSize(self.width(), self.height())
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
 
     def setLogin(self, login):
         self.lineEditLogin.setText(login)  

@@ -45,7 +45,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.context = context
         self.listLayers.clear()
         # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur

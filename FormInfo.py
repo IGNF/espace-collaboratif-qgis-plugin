@@ -39,5 +39,5 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         self.resize(511, 200)
         self.setWindowTitle("IGN Espace collaboratif")
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
-        self.setWindowFlag(QtCore.Qt.WindowFlags.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.logo.setOpenExternalLinks(True)

@@ -10,11 +10,10 @@ from builtins import range
 import os
 
 from PyQt5.QtCore import pyqtSlot
-from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt import uic, QtWidgets, QtCore
 
 from .core import ConstanteRipart as cst
 from .core.ClientHelper import ClientHelper
-
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormRepondre_base.ui'))
 
@@ -40,6 +39,7 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.btnSend.clicked.connect(self.sendResponse)
         self.btnCancel.clicked.connect(self.cancel)
         self.btnCancel.button(QtWidgets.QDialogButtonBox.Cancel).setText("Annuler")

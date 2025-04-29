@@ -9,7 +9,7 @@ version 4.0.1, 15/12/2020
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt import uic, QtWidgets, QtCore
 from PyQt5.QtCore import Qt
 from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
 from .RipartHelper import RipartHelper
@@ -39,6 +39,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.context = context
         self.profile = profile
         self.activeGroup = activeGroup
