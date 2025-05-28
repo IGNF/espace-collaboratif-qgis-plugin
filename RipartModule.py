@@ -471,13 +471,13 @@ class RipartPlugin:
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/save.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
-            callback=self.test,
-            status_tip=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
-            parent=self.iface.mainWindow())
+        # icon_path = ':/plugins/RipartPlugin/images/save.png'
+        # self.add_action(
+        #     icon_path,
+        #     text=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
+        #     callback=self.test,
+        #     status_tip=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
+        #     parent=self.iface.mainWindow())
 
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
         self.add_action(
