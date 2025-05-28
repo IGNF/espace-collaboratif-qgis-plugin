@@ -145,7 +145,6 @@ class Client(object):
 
         return profil
 
-
     def getLogoFromService(self, logoPath):
         """
         Requête au service pour le logo du groupe
@@ -163,7 +162,6 @@ class Client(object):
 
         return data.content
 
-
     '''
         Connexion à une base de données et une couche donnée
         La requête est par exemple :
@@ -171,6 +169,7 @@ class Client(object):
         La réponse transformée en json est sous forme de dictionnaire par exemple :
         ...'attributes': 'zone': {...,'listOfValues': [None, 'Zone1', ' Zone2', 'Zone3'],...}...
     '''
+
     def connexionFeatureTypeJson(self, layerUrl, layerName):
         if '&' not in layerUrl:
             raise Exception(ClientHelper.notNoneValue(
@@ -194,6 +193,7 @@ class Client(object):
     '''
         Pour l'item 'style', récupération de la symbologie d'une couche
     '''
+
     def getListOfValuesFromItemStyle(self, dataFeaturetype):
         listOfValues = {}
         tmp = {'children': []}
@@ -259,7 +259,8 @@ class Client(object):
             data = RipartServiceRequest.makeHttpRequest(self.__url + "/api/georem/georems_get.xml",
                                                         authent=self.__auth,
                                                         proxies=self.__proxies,
-                                                        params=parameters)
+                                                        params=parameters,
+                                                        launchBy='__getGeoRemsTotal')
         except Exception as e:
             self.logger.error(str(e))
             raise
@@ -285,7 +286,7 @@ class Client(object):
                 parameters["offset"] = count.__str__()
                 data = RipartServiceRequest.makeHttpRequest(self.__url + "/api/georem/georems_get.xml",
                                                             authent=self.__auth, proxies=self.__proxies,
-                                                            params=parameters)
+                                                            params=parameters, launchBy='__getGeoRemsTotal')
                 xml = XMLResponse(data)
                 count += int(pagination)
                 errMessage2 = xml.checkResponseValidity()
@@ -312,7 +313,8 @@ class Client(object):
 
         uri = self.__url + "/api/georem/georem_get/" + str(idSignalement) + ".xml"
 
-        data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
+        data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies,
+                                                    launchBy='getGeoRem')
 
         xmlResponse = XMLResponse(data)
         errMessage = xmlResponse.checkResponseValidity()
@@ -329,7 +331,8 @@ class Client(object):
         profil = None
         message = ""
         uri = self.__url + "/api/georem/geoaut_switch_profile/" + idProfil
-        data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies)
+        data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies,
+                                                    launchBy='setChangeUserProfil')
         xmlResponse = XMLResponse(data)
         errMessage = xmlResponse.checkResponseValidity()
 
@@ -363,7 +366,7 @@ class Client(object):
             uri = self.__url + "/api/georem/georep_post.xml"
 
             data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies,
-                                                        data=parameters)
+                                                        data=parameters, launchBy='addResponse')
             xmlResponse = XMLResponse(data)
             errMessage = xmlResponse.checkResponseValidity()
             if errMessage['code'] == "OK":
@@ -428,7 +431,7 @@ class Client(object):
             # envoi de la requête
             uri = self.__url + "/api/georem/georem_post.xml"
             data = RipartServiceRequest.makeHttpRequest(uri, authent=self.__auth, proxies=self.__proxies, data=params,
-                                                        files=files)
+                                                        files=files, launchBy='createRemarque')
             xmlResponse = XMLResponse(data)
             errMessage = xmlResponse.checkResponseValidity()
 

@@ -75,7 +75,8 @@ class SQLiteManager(object):
             elif value['name'] == cst.FINGERPRINT or value['name'] == cst.NUMREC:
                 continue
             else:
-                sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
+                tmp = value['name'].replace(' ', '')
+                sqlAttributes += "{0} {1},".format(tmp, self.setSwitchType(value['type']))
         # Anomalie 17196, l'identifiant ID_SQLITE et FINGERPRINT sont positionnés en dernier dans le formulaire
         sqlAttributes += "{0} INTEGER PRIMARY KEY AUTOINCREMENT".format(cst.ID_SQLITE)
         if not layer.isStandard:
@@ -228,6 +229,11 @@ class SQLiteManager(object):
             elif column == cst.ID_SQLITE:
                 tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
             else:
+                # un nom de colonne ne doit pas contenir d'espace
+                if column.find(' ') != -1:
+                    message = "Le nom de colonne [{}] ne doit pas contenir d'espace, il est impossible d'importer " \
+                              "la couche, veuillez demander à revoir la configuration de la table sur le serveur.".format(column)
+                    raise Exception(message)
                 tmpColumns += '{0},'.format(column)
 
             if value is None:

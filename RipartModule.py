@@ -471,15 +471,13 @@ class RipartPlugin:
             status_tip=self.tr(u'Charger les couches de mon groupe'),
             parent=self.iface.mainWindow())
 
-        '''
         icon_path = ':/plugins/RipartPlugin/images/save.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
-            callback=self.saveChangesForAllLayers,
+            callback=self.test,
             status_tip=self.tr(u'Envoyer les modifications à l\'Espace collaboratif'),
             parent=self.iface.mainWindow())
-        '''
 
         icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
         self.add_action(
@@ -544,10 +542,9 @@ class RipartPlugin:
         dlgModifyFieldJson.exec_()
     '''
 
-    '''
     def test(self):
         # Voir les données du formulaire pour chaque attribut
-        layer = self.context.iface.activeLayer()
+        layer = self.iface.activeLayer()
         for f in layer.selectedFeatures():
             fields = f.fields()
             for field in fields:
@@ -555,7 +552,6 @@ class RipartPlugin:
                 index = fields.indexOf(name)
                 ews = layer.editorWidgetSetup(index)
                 print("Name:{0}, Type:{1}, Config:{2}".format(name, ews.type(), ews.config()))
-    '''
 
     def __doConnexion(self, bAutomaticConnection=False):
         if self.context is None:
@@ -563,6 +559,14 @@ class RipartPlugin:
 
         if self.context is None:
             return False
+
+        # si l'utilisateur crée un nouveau projet alors qu'il est déjà connecté sur son projet actuel, il faut
+        # vérifier que les paramètres d'utilisation existent dans le projet
+        self.context.setProjectParams()
+
+        # si l'utilisateur crée un nouveau projet alors qu'il est déjà connecté sur son projet actuel
+        if QgsProject.instance().fileName().find(self.context.projectFileName) == -1:
+            return self.context.getConnexionRipart()
 
         if self.context.client is None or self.context.profil is None or bAutomaticConnection:
             return self.context.getConnexionRipart()

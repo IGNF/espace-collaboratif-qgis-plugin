@@ -38,7 +38,7 @@ class RipartServiceRequest(object):
             return {'status': 'error'}
 
     @staticmethod
-    def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, files=None):
+    def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, files=None, launchBy=None):
         """  Effectue une requête HTTP GET ou POST
         
         :param url: url de base de la requête
@@ -61,15 +61,15 @@ class RipartServiceRequest(object):
                 r = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
                                   data=data, files=files, verify=False)
 
-            if r.status_code != 200:
-                RipartServiceRequest.logger.error(r.text)
-                raise Exception(r.reason)
+            if r.status_code == 500 or r.status_code != 200:
+                message = "{} [{}]".format(launchBy, r.text)
+                RipartServiceRequest.logger.error(message)
+                raise Exception(message)
 
             r.encoding = 'utf-8'
             response = r.text
 
         except Exception as e:
             RipartServiceRequest.logger.error(format(e))
-            raise Exception(u"Connexion impossible.\nVeuillez vérifier les paramètres de connexion\n(Aide>Configurer "
-                            u"le plugin.\nErreur : {0})".format(e))
+            raise Exception(format(e))
         return response

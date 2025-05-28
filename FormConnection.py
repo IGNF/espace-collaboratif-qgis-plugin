@@ -174,14 +174,12 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 dlgInfo = FormInfo()
 
                 # Modification du logo en fonction du groupe
-                if profil.logo != "":
-                    #logoPath = "{0}{1}".format(self.urlhost, profil.logo)
-                    image = QImage()
-                    #image.loadFromData(requests.get(logoPath).content)
-                    image.loadFromData(client.getLogoFromService(profil.logo))
-                    dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-                elif profil.title == "Profil par défaut":
+                if profil.logo == "" or profil.title == "Profil par défaut":
                     dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
+                else:
+                    image = QImage()
+                    image.loadFromData(client.getLogoFromService(client.getProfil().logo))
+                    dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
 
                 dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
                 dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlhost))

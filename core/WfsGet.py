@@ -163,7 +163,8 @@ class WfsGet(object):
         # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
         url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.client.getUrl(),
                                                                          self.databaseName, self.layerName)
-        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy,
+                                                        launchBy='getMaxNumrec : {}'.format(self.layerName))
         data = json.loads(response)
         return data['numrec']
 

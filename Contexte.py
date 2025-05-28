@@ -485,10 +485,13 @@ class Contexte(object):
 
         except Exception as e:
             progress.close()
-            self.logger.error(format(e))
+            message = str(format(e))
+            if message.find('getMaxNumrec') != -1:
+                message = "Attention la table est peut-être vide de données. {}".format(str(e))
+            self.logger.error(message)
             self.iface.messageBar(). \
                 pushMessage("Remarque",
-                            str(e),
+                            message,
                             level=1, duration=10)
             print(str(e))
 
@@ -606,6 +609,7 @@ class Contexte(object):
 
         # Modification de la symbologie de la couche
         listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(structure)
+        print(listOfValuesFromItemStyle)
         newVectorLayer.setModifySymbols(listOfValuesFromItemStyle)
 
         # Affichage des données en fonction de l'échelle

@@ -168,7 +168,7 @@ class WfsPost(object):
         print("Post_action : {}".format(strActions))
         params = dict(actions=strActions, database=self.layer.databasename)
         response = RipartServiceRequest.makeHttpRequest(self.url, authent=self.identification, proxies=self.proxy,
-                                                        data=params)
+                                                        data=params, launchBy='gcms_post')
         xmlResponse = XMLResponse(response)
         responseWfs = xmlResponse.checkResponseWfsTransactions()
         if responseWfs['status'] == 'SUCCESS':
@@ -212,14 +212,16 @@ class WfsPost(object):
 
     def getJsonTransaction(self, urlTransaction):
         url = "{0}.json".format(urlTransaction)
-        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy,
+                                                        launchBy='getJsonTransaction')
         return json.loads(response)
 
     def getNumrecFromTransaction(self, urlTransaction):
         # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281922.json
         # https://espacecollaboratif.ign.fr/gcms/database/test/transaction/281927/action/1130961.json
         url = "{0}.json".format(urlTransaction)
-        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy,
+                                                        launchBy='getNumrecFromTransaction')
         data = json.loads(response)
         return data['numrec']
 
