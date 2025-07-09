@@ -77,7 +77,8 @@ class SQLiteManager(object):
             elif value['name'] == cst.FINGERPRINT or value['name'] == cst.NUMREC:
                 continue
             else:
-                sqlAttributes += "{0} {1},".format(value['name'], self.__setSwitchType(value['type']))
+                tmp = value['name'].replace(' ', '')
+                sqlAttributes += "{0} {1},".format(tmp, self.__setSwitchType(value['type']))
         # Anomalie 17196, l'identifiant ID_SQLITE et FINGERPRINT sont positionnés en dernier dans le formulaire
         sqlAttributes += "{0} INTEGER PRIMARY KEY AUTOINCREMENT".format(cst.ID_SQLITE)
         if not layer.isStandard:
@@ -180,6 +181,12 @@ class SQLiteManager(object):
             elif column == cst.ID_SQLITE:
                 tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
             else:
+                # un nom de colonne ne doit pas contenir d'espace
+                if column.find(' ') != -1:
+                    message = "Le nom de colonne [{}] ne doit pas contenir d'espace, il est impossible d'importer " \
+                              "la couche, veuillez demander à revoir la configuration de la table sur le serveur."\
+                        .format(column)
+                    raise Exception(message)
                 tmpColumns += '{0},'.format(column)
 
             if value is None:
@@ -428,42 +435,42 @@ class SQLiteManager(object):
     # Création de la table des signalements
     def createReportTable() -> None:
         sql = u"CREATE TABLE Signalement (" + \
-              u"id INTEGER NOT NULL PRIMARY KEY," + \
-              u"NoSignalement INTEGER," + \
+              u"id INTEGER NOT NULL PRIMARY KEY, " + \
+              u"NoSignalement INTEGER, " + \
               u"Auteur TEXT, " + \
               u"Commune TEXT, " + \
               u"Insee TEXT, " + \
               u"Département TEXT, " + \
-              u"Département_id  TEXT," + \
-              u"Date_création TEXT," + \
-              u"Date_MAJ TEXT," + \
-              u"Date_validation TEXT," + \
-              u"Thèmes TEXT ," + \
-              u"Statut TEXT ," + \
-              u"Message TEXT," + \
-              u"Réponses TEXT," + \
-              u"URL TEXT," + \
-              u"URL_privé TEXT ," + \
-              u"Document TEXT," + \
+              u"Département_id TEXT, " + \
+              u"Date_création TEXT, " + \
+              u"Date_MAJ TEXT, " + \
+              u"Date_validation TEXT, " + \
+              u"Thèmes TEXT, " + \
+              u"Statut TEXT, " + \
+              u"Message TEXT, " + \
+              u"Réponses TEXT, " + \
+              u"URL TEXT, " + \
+              u"URL_privé TEXT, " + \
+              u"Document TEXT, " + \
               u"Autorisation TEXT)"
         SQLiteManager.executeSQL(sql)
         # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('Signalement','geom', " + str(cst.EPSGCRS4326) + ", 'POINT', 'XY')"
+        sql = "SELECT AddGeometryColumn('Signalement', 'geom', " + str(cst.EPSGCRS4326) + ", 'POINT', 'XY')"
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
     # Création d'une table de croquis
     def createSketchTable(nameTable, geometryType) -> None:
         sql = u"CREATE TABLE " + nameTable + " (" + \
-              u"id INTEGER NOT NULL PRIMARY KEY," + \
-              u"NoSignalement INTEGER," + \
-              u"Nom TEXT ," + \
-              u"Attributs_croquis," + \
+              u"id INTEGER NOT NULL PRIMARY KEY, " + \
+              u"NoSignalement INTEGER, " + \
+              u"Nom TEXT, " + \
+              u"Attributs_croquis, " + \
               u"Lien_objet_BDUNI TEXT) "
         SQLiteManager.executeSQL(sql)
         # creating a POINT or LINE or POLYGON Geometry column
         sql = "SELECT AddGeometryColumn('" + nameTable + "',"
-        sql += "'geom'," + str(cst.EPSGCRS4326) + ",'" + geometryType + "', 'XY')"
+        sql += "'geom', " + str(cst.EPSGCRS4326) + ", '" + geometryType + "', 'XY')"
         SQLiteManager.executeSQL(sql)
 
     @staticmethod

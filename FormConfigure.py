@@ -16,6 +16,7 @@ from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.core import QgsVectorLayer
+from qgis.PyQt import QtCore
 from .PluginHelper import PluginHelper
 from .Contexte import Contexte
 from .core.SQLiteManager import SQLiteManager
@@ -51,9 +52,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         self.context = context
         self.setFocus()
-
         self.setFixedSize(self.width(), self.height())
-
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")

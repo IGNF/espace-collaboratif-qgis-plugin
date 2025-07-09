@@ -154,8 +154,8 @@ class WfsGet(object):
 
         url = "{0}/gcms/api/databases/{1}/tables/{2}/max-numrec".format(self.urlHostEspaceCo, self.databaseid,
                                                                         self.tableid)
-        response = HttpRequest.makeHttpRequest(url, proxies=self.proxy, headers=self.headers)
-        # response = HttpRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
+        response = HttpRequest.makeHttpRequest(url, proxies=self.proxy, headers=self.headers,
+                                               launchBy='getMaxNumrec : {}'.format(self.layerName))
         # Succès : get (code 200) post (code 201)
         if response.status_code == 200 or response.status_code == 201:
             numrec = response.json()

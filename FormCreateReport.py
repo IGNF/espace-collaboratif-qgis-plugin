@@ -7,6 +7,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .core import Constantes as cst
 from .core.Theme import Theme
 from .PluginHelper import PluginHelper
+from qgis.PyQt import QtCore
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreateReport_base.ui'))
 
@@ -50,6 +51,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
+        self.setWindowFlag(QtCore.Qt.WindowState.WindowStaysOnTopHint)
         self.__context = context
 
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")

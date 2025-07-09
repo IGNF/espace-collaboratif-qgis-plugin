@@ -7,6 +7,7 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
+import json
 import os.path
 import shutil
 import ntpath
@@ -21,7 +22,6 @@ from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri
 from .Import_WMTS import importWMTS
-from .FormConnection import FormConnectionDialog
 from .FormChoixGroupe import FormChoixGroupe
 from .FormInfo import FormInfo
 from .PluginHelper import PluginHelper
@@ -298,7 +298,7 @@ class Contexte(object):
                     return True
         return False
 
-    def getConnexionEspaceCollaboratifWithKeycloak(self, bAutomaticConnection) -> None:
+    def getConnexionEspaceCollaboratifWithKeycloak(self, bAutomaticConnection) -> int:
         if bAutomaticConnection and self.__keycloakService is not None:
             self.__keycloakService.logout()
 
@@ -336,9 +336,9 @@ class Contexte(object):
         self.login = r['email']
         # print(r)
         # keycloak_service.logout()
-        self.__connectToService()
+        return self.__connectToService()
 
-    def __connectToService(self):
+    def __connectToService(self) -> int:
         PluginHelper.save_login(self.projectDir, self.login)
         xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
         if xmlgroupeactif is not None:
@@ -381,7 +381,7 @@ class Contexte(object):
             # Bouton Annuler
             elif dlgSelectedCommunities.getCancel():
                 dlgSelectedCommunities.close()
-                return
+                return -1
             # Les informations de connexion sont montrées à l'utilisateur
             self.__setDisplayInformations()
             self.__connectionResult = 1
@@ -623,7 +623,7 @@ class Contexte(object):
 
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
-            if not self.removeLayersFromProject(guichet_layers, maplayers):
+            if not self.removeLayers(guichet_layers, maplayers):
                 return
 
             endMessage = ''
@@ -676,10 +676,14 @@ class Contexte(object):
 
         except Exception as e:
             progress.close()
-            self.logger.error(format(e))
+            message = str(format(e))
+            if message.find('getMaxNumrec') != -1:
+                message = "Attention la table est peut-être vide de données. {}".format(str(e))
+            self.logger.error(message)
             self.iface.messageBar(). \
                 pushMessage("Remarque",
                             str(e),
+                            message,
                             level=1, duration=3)
             print(str(e))
 
@@ -693,13 +697,27 @@ class Contexte(object):
         config.setColumns(columns)
         layer.setAttributeTableConfig(config)
 
-    def removeLayersFromProject(self, guichet_layers, maplayers, bAskForConfirmation=True):
+    def replaceSpecialCharacter(self, replaceTo) -> str:
+        tmp = replaceTo.replace(' ', '')
+        tmp = tmp.replace('-', '')
+        tmp = tmp.replace('_', '')
+        tmp = tmp.replace('+', '')
+        tmp = tmp.replace('.', '')
+        tmp = tmp.replace('(', '')
+        tmp = tmp.replace(')', '')
+        return tmp.lower()
+
+    def removeLayers(self, guichet_layers, maplayers, bAskForConfirmation=True):
         tmp = ''
-        removeLayers = []
+        removeLayers = set()
         for layer in guichet_layers:
-            if layer.name in maplayers:
-                removeLayers.append(layer.name)
-                tmp += "{}, ".format(layer.name)
+            noSpaceInLayerName = self.replaceSpecialCharacter(layer.nom)
+            nameLayerId = self.replaceSpecialCharacter(layer.layer_id)
+            for k, v in maplayers.items():
+                noSpaceInMapLayerName = self.replaceSpecialCharacter(v.name())
+                if (noSpaceInLayerName == noSpaceInMapLayerName) or (nameLayerId.find(noSpaceInMapLayerName) != -1):
+                    removeLayers.add(v.name())
+                    tmp += "{}, ".format(v.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 
     def removeLayersById(self, removeLayers, tmp, bAskForConfirmation):
@@ -1263,3 +1281,22 @@ class Contexte(object):
         uri = QgsDataSourceUri(cst.EPSG4326)
         uri.setDatabase(SQLiteManager.getBaseSqlitePath())
         return uri
+
+    def connexionFeatureTypeJson(self, layerUrl, layerName):
+        if '&' not in layerUrl:
+            raise Exception(ClientHelper.notNoneValue(
+                "{} : l'url fournie ({}) ne permet pas de déterminer le nom de la base données".format(
+                    "connexionFeatureTypeJson", layerUrl)))
+
+        tmp = layerUrl.split('&')
+        dbName = tmp[1].split('=')
+        url = "{}/gcms/api/database/{}/feature-type/{}.json".format(self.urlHostEspaceCo, dbName[1], layerName)
+        self.logger.debug("{0} {1}".format("connexionFeatureTypeJson : ", url))
+        headers = {'Authorization': '{} {}'.format(self.getTokenType(), self.getTokenAccess())}
+        featuretypeResponse = requests.get(url, headers=headers, proxies=self.proxy)
+        if featuretypeResponse.status_code != 200:
+            raise Exception(ClientHelper.notNoneValue(
+                "{} : {}".format(featuretypeResponse.status_code, featuretypeResponse.reason)))
+
+        data = json.loads(featuretypeResponse._content)
+        return data

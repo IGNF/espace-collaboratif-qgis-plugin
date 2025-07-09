@@ -19,7 +19,7 @@ from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
 class GuichetVectorLayer(QgsVectorLayer):
 
     def __init__(self, parameters) -> None:
-        super(GuichetVectorLayer, self).__init__(parameters['uri'], parameters['name'], parameters['genre'])
+        super().__init__(parameters['uri'], parameters['name'], parameters['genre'])
         self.databasename = parameters['databasename']
         self.sqliteManager = parameters['sqliteManager']
         self.srid = -1
@@ -194,16 +194,29 @@ class GuichetVectorLayer(QgsVectorLayer):
         }
         return polygonStyles[strokeDashstyle]
 
-    def __setSymbolPoint(self, fillColor, strokeColor, opacity):
+    def __setSymbolPoint(self, fillColor, strokeColor, fillOpacity):
         if fillColor is None:
             fillColor = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
         if strokeColor is None:
             strokeColor = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
+        if fillOpacity is None:
+            fillOpacity = 1
         pointSymbol = self.__setPointStyle(fillColor, strokeColor)
         symbol = QgsMarkerSymbol().createSimple(pointSymbol)
-        symbol.setOpacity(opacity)
+        symbol.setOpacity(fillOpacity)
         return symbol
 
+    # Example
+    # 'fillColor': None,
+    # 'fillOpacity': None,
+    # 'fillPattern': None,
+    # 'patternColor': None,
+    # 'strokeColor': '#a18552',
+    # 'strokeBorderColor': None,
+    # 'strokeOpacity': 1.0,
+    # 'strokeWidth': 7,
+    # 'strokeLinecap': 'square',
+    # 'strokeDashstyle': 'dash',
     def __setSymbolLine(self, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity):
         lineSymbol = self.__setLineStyle(strokeLinecap, strokeDashstyle, strokeColor, strokeWidth)
         symbol = QgsLineSymbol().createSimple(lineSymbol)
@@ -284,7 +297,7 @@ class GuichetVectorLayer(QgsVectorLayer):
                                                  v['fillOpacity'])
 
             if v['type'] == 'point':
-                symbol = self.__setSymbolPoint(v["fillColor"], v['strokeColor'], 1)
+                symbol = self.__setSymbolPoint(v["fillColor"], v['strokeColor'], v['fillOpacity'])
 
         if symbol is None:
             symbol = QgsSymbol.defaultSymbol(self.geometryType())
@@ -337,31 +350,40 @@ class GuichetVectorLayer(QgsVectorLayer):
                 - Symbole de police
     '''
 
-    def __setLineRule(self, expression, valeurs, strFieldDirection):
+    def setLineRule(self, expression, valeurs, strFieldDirection):
+        otherLineSymbol = None
+        strokeWidth = valeurs['strokeWidth']
+        # Représentation d'une route à deux traits
+        if (valeurs['strokeBorderColor']) is not None:
+            otherLineSymbol = QgsSimpleLineSymbolLayer.create(self.setLineStyle(valeurs['strokeLinecap'],
+                                                                                valeurs['strokeDashstyle'],
+                                                                                valeurs['strokeBorderColor'],
+                                                                                strokeWidth + 2))
+            strokeWidth = strokeWidth - 2
+
         if strFieldDirection is None:
-            lineSymbol = self.__setSymbolLine(valeurs["strokeLinecap"], valeurs["strokeDashstyle"],
-                                              valeurs["strokeColor"], str(valeurs["strokeWidth"]),
-                                              valeurs['strokeOpacity'])
+            lineSymbol = self.setSymbolLine(valeurs["strokeLinecap"], valeurs["strokeDashstyle"],
+                                            valeurs["strokeColor"], str(strokeWidth),
+                                            valeurs['strokeOpacity'])
         else:
             # Ligne
             lineSymbol = QgsLineSymbol()
 
             # Ligne simple (avec la symbologie issue du collaboratif)
-            simpleLineSymbol = QgsSimpleLineSymbolLayer.create(self.__setLineStyle(valeurs['strokeLinecap'],
-                                                                                   valeurs['strokeDashstyle'],
-                                                                                   valeurs['strokeColor'],
-                                                                                   valeurs['strokeWidth']))
-
+            simpleLineSymbol = QgsSimpleLineSymbolLayer.create(self.setLineStyle(valeurs['strokeLinecap'],
+                                                                                 valeurs['strokeDashstyle'],
+                                                                                 valeurs['strokeColor'],
+                                                                                 strokeWidth))
             # Ligne de symboles (le symbole est appliqué sur le point central du tronçon)
-            markerLineSymbol = QgsMarkerLineSymbolLayer.create(self.__setSimpleLineSymbolLayer())
+            markerLineSymbol = QgsMarkerLineSymbolLayer.create(self.setSimpleLineSymbolLayer())
 
             # Symbole
             markerSymlbol = QgsMarkerSymbol()
 
             # Symbole de police (le caractère >)
             # (appliqué pour un champ, expression appliquée sur le caractère choisi < sens inverse ou sens direct >
-            fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.__setMarkerLineSymbolLayer())
-            qgsProperty = self.__setPropertySymbol(strFieldDirection)
+            fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.setMarkerLineSymbolLayer())
+            qgsProperty = self.setPropertySymbol(strFieldDirection)
             if qgsProperty is not None:
                 fontMarkerSymbol.setDataDefinedProperty(QgsSymbolLayer.Property.PropertyCharacter, qgsProperty)
 
@@ -372,6 +394,8 @@ class GuichetVectorLayer(QgsVectorLayer):
             # Il faut enlever la ligne simple par défaut
             lineSymbol.deleteSymbolLayer(0)
             # Combinaison ligne simple/ligne de symboles à la ligne
+            if otherLineSymbol is not None:
+                lineSymbol.appendSymbolLayer(otherLineSymbol)
             lineSymbol.appendSymbolLayer(simpleLineSymbol)
             lineSymbol.appendSymbolLayer(markerLineSymbol)
         # Le tout est mis dans une règle nommée contenue dans la variable expression
@@ -386,7 +410,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         return ruleBasedRendererPolygon
 
     def __setPointRule(self, expression, valeurs):
-        symbolPoint = self.__setSymbolPoint(valeurs["fillColor"], valeurs['strokeColor'], 1)
+        symbolPoint = self.__setSymbolPoint(valeurs["fillColor"], valeurs['strokeColor'], valeurs['fillOpacity'])
         ruleBasedRendererPoint = QgsRuleBasedRenderer.Rule(symbolPoint, 0, 0, expression, valeurs['name'])
         return ruleBasedRendererPoint
 

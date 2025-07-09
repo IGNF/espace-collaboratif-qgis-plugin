@@ -1,6 +1,6 @@
 import os
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt import uic, QtWidgets, QtCore
 from PyQt5.QtCore import Qt
 from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
 from .PluginHelper import PluginHelper
@@ -22,6 +22,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.__context = context
         self.__listNamesIdsCommunities = context.getListNameOfCommunities()
         self.__nameActiveCommunity = context.getActiveCommunityName()
@@ -279,7 +280,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                           " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    self.__context.removeLayersFromProject(layersInProject, layersInTT, False)
+                    self.__context.removeLayers(layersInProject, layersInTT, False)
                     PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
                                                 "Map")
                     self.removeTablesSQLite(layersInProject)

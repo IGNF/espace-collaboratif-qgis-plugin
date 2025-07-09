@@ -33,7 +33,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.__context = context
         self.__logger = RipartLogger("ImporterGuichet").getRipartLogger()
         self.__listLayers = listLayers

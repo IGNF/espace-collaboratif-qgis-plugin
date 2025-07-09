@@ -135,12 +135,14 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         # TODO : si utilisateur sans groupe getUserCommunity est a None, il faut faire un test et changer le code
         # TODO faire une fonction __setDisplayLogo()
         # TODO sai1 sur la qualif par exemple
-        if self.__context.getUserCommunity().getLogo() != "":
+        if self.__context.getUserCommunity().getLogo() == "" \
+                or self.__context.getUserCommunity().getName() == "Profil par défaut":
+            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
+        else:
             image = QImage()
             image.loadFromData(requests.get(self.__context.getUserCommunity().getLogo()).content)
             dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-        elif self.__context.getUserCommunity().getName() == "Profil par défaut":
-            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
+
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.__urlHost))
         dlgInfo.textInfo.append("Login : {}".format(self.__context.login))

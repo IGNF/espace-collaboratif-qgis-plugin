@@ -1,11 +1,12 @@
 import json
 import requests
 from . import requests
+from .RipartLoggerCl import RipartLogger
 
 
 # Classe implémentant une requête HTTP
 class HttpRequest(object):
-
+    logger = RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
     def __init__(self, url, headers, proxies):
         self.__url = url
         self.__headers = headers
@@ -71,16 +72,28 @@ class HttpRequest(object):
             return {'status': 'error'}
 
     @staticmethod
-    # lance une requête HTTP GET ou POST en fonction des vcariables données en entrée
-    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None) -> ():
+    # lance une requête HTTP GET ou POST en fonction des variables données en entrée
+    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> ():
         response = ()
-        if data is None and files is None:
-            response = requests.get(url, proxies=proxies, params=params, headers=headers, verify=False)
-        elif files is None and headers is None:
-            response = requests.post(url, proxies=proxies, data=data, headers=headers, verify=False)
-        elif files is None:
-            response = requests.post(url, proxies=proxies, data=data, headers=headers, verify=False)
-        else:
-            response = requests.post(url, proxies=proxies, data=data, headers=headers, files=files, verify=False)
-        response.encoding = 'utf-8'
+        try:
+            if data is None and files is None:
+                response = requests.get(url, proxies=proxies, params=params, headers=headers, verify=False)
+            elif files is None and headers is None:
+                response = requests.post(url, proxies=proxies, data=data, headers=headers, verify=False)
+            elif files is None:
+                response = requests.post(url, proxies=proxies, data=data, headers=headers, verify=False)
+            else:
+                response = requests.post(url, proxies=proxies, data=data, headers=headers, files=files, verify=False)
+
+            if response.status_code != 200 or response.status_code != 206:
+                message = "{} [{}]".format(launchBy, response.text)
+                HttpRequest.logger.error(message)
+                raise Exception(message)
+
+            response.encoding = 'utf-8'
+
+        except Exception as e:
+            HttpRequest.logger.error(format(e))
+            raise Exception(format(e))
+
         return response

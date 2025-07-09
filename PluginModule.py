@@ -290,18 +290,28 @@ class RipartPlugin:
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         return messages
 
-    def __doConnexion(self, bAutomaticConnection):
+    def __doConnexion(self, bAutomaticConnection) -> int:
         #  bButtonConnect à True : connexion systématique, l'utilisateur a cliqué
         #  sur le bouton "Se connecter à l'Espace Collaboratif"
-        self.__context = Contexte.getInstance(self, QgsProject)
         if self.__context is None:
-            return False
+            self.__context = Contexte.getInstance(self, QgsProject)
+
+        if self.__context is None:
+            return -1
+
+        # si l'utilisateur crée un nouveau projet alors qu'il est déjà connecté sur son projet actuel, il faut
+        # vérifier que les paramètres d'utilisation existent dans le projet
+        self.__context.setProjectParams()
+
+        # si l'utilisateur crée un nouveau projet alors qu'il est déjà connecté sur son projet actuel
+        if QgsProject.instance().fileName().find(self.__context.projectFileName) == -1:
+            return self.__context.getConnexionEspaceCollaboratifWithKeycloak(bAutomaticConnection)
         if bAutomaticConnection:
-            self.__context.getConnexionEspaceCollaboratifWithKeycloak(bAutomaticConnection)
+            return self.__context.getConnexionEspaceCollaboratifWithKeycloak(bAutomaticConnection)
         elif not bAutomaticConnection:
             if self.__context.getUserCommunity() is None:
-                self.__context.getConnexionEspaceCollaboratifWithKeycloak(bAutomaticConnection)
-        return True
+                return self.__context.getConnexionEspaceCollaboratifWithKeycloak(bAutomaticConnection)
+        return 1
 
     def __doPost(self, layer, editBuffer):
         wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
@@ -683,7 +693,7 @@ class RipartPlugin:
     # Lance la fenêtre de configuration des préférences
     def __configurePlugin(self):
         try:
-            if not self.__doConnexion(False):
+            if self.__doConnexion(False) == -1:
                 return
             self.__context.checkConfigFile()
             self.__dlgConfigure = FormConfigure(context=self.__context)
