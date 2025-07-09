@@ -22,6 +22,7 @@ from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri
 from .Import_WMTS import importWMTS
+from .Import_WMSR import ImportWMSR
 from .FormChoixGroupe import FormChoixGroupe
 from .FormInfo import FormInfo
 from .PluginHelper import PluginHelper
@@ -448,89 +449,6 @@ class Contexte(object):
     def getTokenAccess(self):
         return self.__tokenAccess
 
-    # def closeConnexionEspaceCollaboratif(self):
-    #     if self.__keycloakService is None:
-    #         return
-    #     self.__keycloakService.logout()
-
-    # def getConnexionEspaceCollaboratif(self, newLogin=False) -> int:
-    #     """Connexion à l'espace collaboratif
-    #
-    #     :param newLogin: booléen indiquant si on fait un nouveau login
-    #     (fonctionnalité "Connexion à l'espace collaboratif")
-    #     :type newLogin: boolean
-    #
-    #     :return 1 si la connexion a réussi, 0 si elle a échoué, -1 s'il y a eu une erreur (Exception)
-    #     :rtype int
-    #     """
-    #     self.logger.debug("getConnexionEspaceCollaboratif")
-    #     try:
-    #         self.urlHostEspaceCo = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_UrlHost,
-    #                                                               "Serveur").text
-    #         self.logger.debug("this.urlHostEspaceCo " + self.urlHostEspaceCo)
-    #
-    #     except Exception as e:
-    #         self.logger.error("URLHOST inexistant dans fichier configuration")
-    #         PluginHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
-    #                                     u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion "
-    #                                     u"...)")
-    #         return -1
-    #     # TODO ajouter code Noémie sur le proxy
-    #     self.loginWindow = FormConnectionDialog(self)
-    #     self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostEspaceCo))
-    #     loginXmlNode = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur")
-    #     if loginXmlNode is None:
-    #         self.login = ""
-    #     else:
-    #         self.login = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur").text
-    #
-    #     xmlproxy = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_proxy, "Serveur").text
-    #     if xmlproxy is not None and str(xmlproxy).strip() != '':
-    #         self.proxy = {'https': str(xmlproxy).strip()}
-    #     else:
-    #         self.proxy = None
-    #
-    #     xmlproxy = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_proxy, "Serveur").text
-    #     if xmlproxy is not None and str(xmlproxy).strip() != '':
-    #         if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
-    #             PluginHelper.showMessageBox(
-    #                 u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
-    #             return -1
-    #         self.proxy = {'https': str(xmlproxy).strip()}
-    #
-    #         proxy = str(xmlproxy).strip()
-    #
-    #         os.environ['http_proxy'] = proxy
-    #         os.environ['HTTP_PROXY'] = proxy
-    #         os.environ['https_proxy'] = proxy
-    #         os.environ['HTTPS_PROXY'] = proxy
-    #     else:
-    #         self.proxy = None
-    #
-    #     xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
-    #     if xmlgroupeactif is not None:
-    #         self.__activeCommunityName = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
-    #                                                                     "Serveur").text
-    #         if self.__activeCommunityName is not None:
-    #             self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
-    #
-    #     if self.login == "" or self.pwd == "" or newLogin:
-    #         self.loginWindow.setLineEditLogin(self.login)
-    #
-    #     # Le résultat de la connexion est initialisé à -1.
-    #     # Tant qu'il reste à -1, c'est que le formulaire de connexion a renvoyé une exception (mauvais mot de passe, pb
-    #     # de proxy etc.). Dans ce cas-là, on rouvre le formulaire pour que l'utilisateur essaie de se reconnecter.
-    #     connectionResult = -1
-    #     while connectionResult < 0:
-    #         self.loginWindow.exec_()
-    #         connectionResult = self.loginWindow.getConnectionResult()
-    #         self.auth = self.loginWindow.getAuthentification()
-    #         # Si l'utilisateur a cliqué sur le bouton Annuler ou la croix de fermeture de la boite
-    #         # le login et le mot de passe sont vides
-    #         if len(self.auth) == 0:
-    #             return -1
-    #     return connectionResult
-
     # Création de la base de données spatialite si elle n'existe pas
     def createDatabaseSQLite(self):
         if not os.path.isfile(self.dbPath):
@@ -639,6 +557,10 @@ class Contexte(object):
                 Ajout des couches WFS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WFS:
+                    # TODO à vérifier si utile pour la récupération de la structure de la future table
+                    # structure = self.connexionFeatureTypeJson(layer.url, layer.nom)
+                    # if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
+                        # layer.isStandard = False
                     sourceLayer = self.importWFS(layer)
                     if not sourceLayer[0].isValid():
                         endMessage += "Layer {} failed to load !\n".format(layer.name)
@@ -652,7 +574,7 @@ class Contexte(object):
                 if layer.type == cst.WMTS:
                     importWmts = importWMTS(self, layer)
                     titleLayer_uri = importWmts.getWtmsUrlParams(layer.geoservice['layers'])
-                    print(titleLayer_uri)
+                    print("titleLayer_uri : {}".format(titleLayer_uri))
                     if 'Exception' in titleLayer_uri[0]:
                         endMessage += "{0} : {1}\n\n".format(layer.name, titleLayer_uri[1])
                         continue
@@ -664,9 +586,28 @@ class Contexte(object):
                     self.QgsProject.instance().addMapLayer(rlayer, False)
                     # Insertion à la fin avec -1
                     root.insertLayer(-1, rlayer)
+                    tmp = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
+                    self.logger.debug(tmp)
+                    message = tmp
+                    endMessage += message
+
+                '''
+                Ajout des couches WMS-R selectionnées dans "Mon guichet"
+                '''
+                if layer.type == cst.WMS:
+                    importWmsr = ImportWMSR(layer)
+                    titleLayer_uri = importWmsr.getWmsrUrlParams()
+                    print("titleLayer_uri : {}".format(titleLayer_uri))
+                    rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
+                    if not rlayer.isValid():
+                        endMessage += "Layer {} failed to load !".format(rlayer.name())
+                        continue
+
+                    self.QgsProject.instance().addMapLayer(rlayer, False)
+                    # Insertion à la fin avec -1
+                    root.insertLayer(-1, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
                     message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
-                    print(message)
                     endMessage += message
             progress.close()
 
