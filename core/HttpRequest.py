@@ -1,7 +1,6 @@
 import json
 import requests
 from . import requests
-from .requests.auth import HTTPBasicAuth
 
 
 # Classe implémentant une requête HTTP
@@ -11,12 +10,6 @@ class HttpRequest(object):
         self.__url = url
         self.__headers = headers
         self.__proxies = proxies
-
-    # def __init__(self, url, login, pwd, proxies):
-    #     self.__url = url
-    #     self.__login = login
-    #     self.__password = pwd
-    #     self.__proxies = proxies
 
     # Retourne une réponse HTTP GET
     def getResponse(self, partOfUrl, params=None) -> requests.Response:
@@ -91,20 +84,3 @@ class HttpRequest(object):
             response = requests.post(url, proxies=proxies, data=data, headers=headers, files=files, verify=False)
         response.encoding = 'utf-8'
         return response
-
-    # def makeHttpRequest(url, authent=None, proxies=None, params=None, data=None, headers=None, files=None) -> ():
-    #     response = ()
-    #     if data is None and files is None and headers is None:
-    #         response = requests.get(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
-    #                                 params=params, verify=False)
-    #     elif files is None and headers is None:
-    #         response = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
-    #                                  data=data, verify=False)
-    #     elif files is None:
-    #         response = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
-    #                                  data=data, headers=headers, verify=False)
-    #     else:
-    #         response = requests.post(url, auth=HTTPBasicAuth(authent['login'], authent['password']), proxies=proxies,
-    #                                  data=data, headers=headers, files=files, verify=False)
-    #     response.encoding = 'utf-8'
-    #     return response

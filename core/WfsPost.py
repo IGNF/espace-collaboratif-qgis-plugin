@@ -17,8 +17,6 @@ class WfsPost(object):
     def __init__(self, context, layer, filterName) -> None:
         self.__context = context
         self.__layer = layer
-        # self.__url = context.urlHostEspaceCo + '/gcms/api/wfstransactions'
-        self.__identification = context.auth
         self.__proxy = context.proxy
         self.__endReporting = ''
         self.__transactionReporting = ''
@@ -185,6 +183,8 @@ class WfsPost(object):
             self.__layer.reload()
 
         numrec = SQLiteManager.selectNumrecTableOfTables(self.__layer.name())
+        headers = {
+            'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
         parameters = {'databasename': self.__layer.databasename, 'layerName': self.__layer.name(),
                       'geometryName': self.__layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS4326,
                       'sridLayer': self.__layer.srid, 'bbox': self.__bbox.getFromLayer(self.__filterName, False, True),
@@ -192,7 +192,7 @@ class WfsPost(object):
                       'is3D': self.__layer.geometryDimensionForDatabase,
                       'numrec': numrec, 'role': None,
                       'urlHostEspaceCo': self.__context.urlHostEspaceCo,
-                      'authentification': self.__context.auth, 'proxy': self.__context.proxy,
+                      'headers': headers, 'proxy': self.__context.proxy,
                       'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
         numrecmessage = wfsGet.gcms_get()

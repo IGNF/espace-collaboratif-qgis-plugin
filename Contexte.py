@@ -448,88 +448,88 @@ class Contexte(object):
     def getTokenAccess(self):
         return self.__tokenAccess
 
-    def closeConnexionEspaceCollaboratif(self):
-        if self.__keycloakService is None:
-            return
-        self.__keycloakService.logout()
+    # def closeConnexionEspaceCollaboratif(self):
+    #     if self.__keycloakService is None:
+    #         return
+    #     self.__keycloakService.logout()
 
-    def getConnexionEspaceCollaboratif(self, newLogin=False) -> int:
-        """Connexion à l'espace collaboratif
-
-        :param newLogin: booléen indiquant si on fait un nouveau login
-        (fonctionnalité "Connexion à l'espace collaboratif")
-        :type newLogin: boolean
-
-        :return 1 si la connexion a réussi, 0 si elle a échoué, -1 s'il y a eu une erreur (Exception)
-        :rtype int
-        """
-        self.logger.debug("getConnexionEspaceCollaboratif")
-        try:
-            self.urlHostEspaceCo = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_UrlHost,
-                                                                  "Serveur").text
-            self.logger.debug("this.urlHostEspaceCo " + self.urlHostEspaceCo)
-
-        except Exception as e:
-            self.logger.error("URLHOST inexistant dans fichier configuration")
-            PluginHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
-                                        u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion "
-                                        u"...)")
-            return -1
-        # TODO ajouter code Noémie sur le proxy
-        self.loginWindow = FormConnectionDialog(self)
-        self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostEspaceCo))
-        loginXmlNode = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur")
-        if loginXmlNode is None:
-            self.login = ""
-        else:
-            self.login = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur").text
-
-        xmlproxy = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_proxy, "Serveur").text
-        if xmlproxy is not None and str(xmlproxy).strip() != '':
-            self.proxy = {'https': str(xmlproxy).strip()}
-        else:
-            self.proxy = None
-
-        xmlproxy = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_proxy, "Serveur").text
-        if xmlproxy is not None and str(xmlproxy).strip() != '':
-            if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
-                PluginHelper.showMessageBox(
-                    u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
-                return -1
-            self.proxy = {'https': str(xmlproxy).strip()}
-
-            proxy = str(xmlproxy).strip()
-
-            os.environ['http_proxy'] = proxy
-            os.environ['HTTP_PROXY'] = proxy
-            os.environ['https_proxy'] = proxy
-            os.environ['HTTPS_PROXY'] = proxy
-        else:
-            self.proxy = None
-
-        xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
-        if xmlgroupeactif is not None:
-            self.__activeCommunityName = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
-                                                                        "Serveur").text
-            if self.__activeCommunityName is not None:
-                self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
-
-        if self.login == "" or self.pwd == "" or newLogin:
-            self.loginWindow.setLineEditLogin(self.login)
-
-        # Le résultat de la connexion est initialisé à -1.
-        # Tant qu'il reste à -1, c'est que le formulaire de connexion a renvoyé une exception (mauvais mot de passe, pb
-        # de proxy etc.). Dans ce cas-là, on rouvre le formulaire pour que l'utilisateur essaie de se reconnecter.
-        connectionResult = -1
-        while connectionResult < 0:
-            self.loginWindow.exec_()
-            connectionResult = self.loginWindow.getConnectionResult()
-            self.auth = self.loginWindow.getAuthentification()
-            # Si l'utilisateur a cliqué sur le bouton Annuler ou la croix de fermeture de la boite
-            # le login et le mot de passe sont vides
-            if len(self.auth) == 0:
-                return -1
-        return connectionResult
+    # def getConnexionEspaceCollaboratif(self, newLogin=False) -> int:
+    #     """Connexion à l'espace collaboratif
+    #
+    #     :param newLogin: booléen indiquant si on fait un nouveau login
+    #     (fonctionnalité "Connexion à l'espace collaboratif")
+    #     :type newLogin: boolean
+    #
+    #     :return 1 si la connexion a réussi, 0 si elle a échoué, -1 s'il y a eu une erreur (Exception)
+    #     :rtype int
+    #     """
+    #     self.logger.debug("getConnexionEspaceCollaboratif")
+    #     try:
+    #         self.urlHostEspaceCo = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_UrlHost,
+    #                                                               "Serveur").text
+    #         self.logger.debug("this.urlHostEspaceCo " + self.urlHostEspaceCo)
+    #
+    #     except Exception as e:
+    #         self.logger.error("URLHOST inexistant dans fichier configuration")
+    #         PluginHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
+    #                                     u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion "
+    #                                     u"...)")
+    #         return -1
+    #     # TODO ajouter code Noémie sur le proxy
+    #     self.loginWindow = FormConnectionDialog(self)
+    #     self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostEspaceCo))
+    #     loginXmlNode = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur")
+    #     if loginXmlNode is None:
+    #         self.login = ""
+    #     else:
+    #         self.login = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_Login, "Serveur").text
+    #
+    #     xmlproxy = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_proxy, "Serveur").text
+    #     if xmlproxy is not None and str(xmlproxy).strip() != '':
+    #         self.proxy = {'https': str(xmlproxy).strip()}
+    #     else:
+    #         self.proxy = None
+    #
+    #     xmlproxy = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_proxy, "Serveur").text
+    #     if xmlproxy is not None and str(xmlproxy).strip() != '':
+    #         if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
+    #             PluginHelper.showMessageBox(
+    #                 u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
+    #             return -1
+    #         self.proxy = {'https': str(xmlproxy).strip()}
+    #
+    #         proxy = str(xmlproxy).strip()
+    #
+    #         os.environ['http_proxy'] = proxy
+    #         os.environ['HTTP_PROXY'] = proxy
+    #         os.environ['https_proxy'] = proxy
+    #         os.environ['HTTPS_PROXY'] = proxy
+    #     else:
+    #         self.proxy = None
+    #
+    #     xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
+    #     if xmlgroupeactif is not None:
+    #         self.__activeCommunityName = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
+    #                                                                     "Serveur").text
+    #         if self.__activeCommunityName is not None:
+    #             self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
+    #
+    #     if self.login == "" or self.pwd == "" or newLogin:
+    #         self.loginWindow.setLineEditLogin(self.login)
+    #
+    #     # Le résultat de la connexion est initialisé à -1.
+    #     # Tant qu'il reste à -1, c'est que le formulaire de connexion a renvoyé une exception (mauvais mot de passe, pb
+    #     # de proxy etc.). Dans ce cas-là, on rouvre le formulaire pour que l'utilisateur essaie de se reconnecter.
+    #     connectionResult = -1
+    #     while connectionResult < 0:
+    #         self.loginWindow.exec_()
+    #         connectionResult = self.loginWindow.getConnectionResult()
+    #         self.auth = self.loginWindow.getAuthentification()
+    #         # Si l'utilisateur a cliqué sur le bouton Annuler ou la croix de fermeture de la boite
+    #         # le login et le mot de passe sont vides
+    #         if len(self.auth) == 0:
+    #             return -1
+    #     return connectionResult
 
     # Création de la base de données spatialite si elle n'existe pas
     def createDatabaseSQLite(self):
@@ -737,13 +737,13 @@ class Contexte(object):
         newVectorLayer.srid = layer.srid
         newVectorLayer.geometryDimensionForDatabase = layer.is3d
         newVectorLayer.geometryTypeForDatabase = layer.geometryType
-
+        headers = {'Authorization': '{} {}'.format(self.getTokenType(), self.getTokenAccess())}
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.name,
                       'sridLayer': layer.srid, 'role': layer.role, 'isStandard': layer.isStandard,
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
-                      'urlHostEspaceCo': self.urlHostEspaceCo, 'authentification': self.auth,
+                      'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
                       'proxy': self.proxy, 'databaseid': layer.databaseid, 'tableid': layer.tableid
                       }
         wfsGet = WfsGet(parameters)

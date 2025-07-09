@@ -621,6 +621,8 @@ class RipartPlugin:
                             editBuffer.rollBack()
 
             # Synchronisation des couches une par une
+            headers = {
+                'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
             spatialFilterName = PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text
             progress = ProgressBar(len(QgsProject.instance().mapLayers()), cst.UPDATETEXTPROGRESS)
             i = 0
@@ -632,7 +634,7 @@ class RipartPlugin:
                 parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName, False, True),
                               'sridProject': cst.EPSGCRS4326, 'role': None,
                               'urlHostEspaceCo': self.__context.urlHostEspaceCo,
-                              'authentification': self.__context.auth, 'proxy': self.__context.proxy}
+                              'headers': headers, 'proxy': self.__context.proxy}
                 result = SQLiteManager.selectRowsInTableOfTables(layer.name())
                 if len(result) > 0:
                     for r in result:

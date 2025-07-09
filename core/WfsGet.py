@@ -9,8 +9,6 @@ class WfsGet(object):
         if 'urlHostEspaceCo' in parameters:
             self.urlHostEspaceCo = parameters['urlHostEspaceCo']
             self.url = parameters['urlHostEspaceCo'] + '/gcms/api/wfs'
-        if 'authentification' in parameters:
-            self.identification = parameters['authentification']
         if 'proxy' in parameters:
             self.proxy = parameters['proxy']
         if 'headers' in parameters:
@@ -56,7 +54,8 @@ class WfsGet(object):
         # il s'agit de retrouver
         self.__initParametersGcmsGet(True)
         while True:
-            response = HttpRequest.nextRequest(self.url, proxies=self.proxy, params=self.parametersGcmsGet)
+            response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxy,
+                                               params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 break
 
@@ -101,7 +100,8 @@ class WfsGet(object):
 
         sqliteManager = SQLiteManager()
         while True:
-            response = HttpRequest.nextRequest(self.url, proxies=self.proxy, params=self.parametersGcmsGet)
+            response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxy,
+                                               params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
                 break

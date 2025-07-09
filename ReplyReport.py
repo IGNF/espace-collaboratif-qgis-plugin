@@ -67,15 +67,15 @@ class ReplyReport(object):
                 dlgReplyReport = ReplyReportView(replyReports)
                 dlgReplyReport.exec_()
                 if dlgReplyReport.bResponse:
+                    headers = {
+                        'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
                     for report in replyReports:
                         newStatut = cst.CorrespondenceStatusWording[dlgReplyReport.newStatus]
                         newResponse = dlgReplyReport.newResponse
                         # TODO -> Noémie le post d'une réponse à un signalement demande un title
                         #  j'ai mis vide pour l'instant doit-on mettre une valeur style "envoyée de QGIS"
                         parameters = {'reportId': report.getId(),
-                                      'authentification': {'login': self.__context.auth['login'],
-                                                           'password': self.__context.auth['password']},
-                                      'proxy': self.__context.proxy,
+                                      'proxy': self.__context.proxy, 'headers': headers,
                                       'requestBody': {'title': '', 'content': newResponse, 'status': newStatut}}
                         jsonResponse = self.__toolsReport.addResponseToServer(parameters)
                         if jsonResponse is None:

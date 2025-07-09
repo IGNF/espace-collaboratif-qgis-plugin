@@ -214,9 +214,8 @@ class ToolsReport(object):
     def addResponseToServer(self, parameters) -> None:
         idReport = parameters['reportId']
         uri = "{0}/gcms/api/reports/{1}/replies".format(self.__context.urlHostEspaceCo, idReport)
-        headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
         response = HttpRequest.makeHttpRequest(uri, parameters['proxy'], data=parameters['requestBody'],
-                                               headers=headers)
+                                               headers=parameters['headers'])
         # Succès : get (code 200) post (code 201)
         if response.status_code == 200 or response.status_code == 201:
             return response.json()
