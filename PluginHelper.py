@@ -106,7 +106,7 @@ class PluginHelper:
         except Exception as e:
             PluginHelper.logger.error(str(e))
 
-        return urlhost
+        return urlhost.text
 
     @staticmethod
     def load_login(projectDir):

@@ -34,8 +34,7 @@ from .ReplyReport import ReplyReport
 # QGIS Plugin Implementation
 class RipartPlugin:
     def __init__(self, iface):
-        self.__context = None
-        self.__SeeReportView = None
+        self.__context = Contexte.getInstance(self, QgsProject)
         self.__dlgConfigure = None
         self.__ripartLogger = RipartLogger("RipartPlugin")
         self.__logger = self.__ripartLogger.getRipartLogger()
@@ -544,7 +543,7 @@ class RipartPlugin:
             progress = ProgressBar(1, messageProgress)
             progress.setValue(1)
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
-            params = {'url': self.__context.urlHostEspaceCo, 'tokentype': self.__context.geTokenType(),
+            params = {'url': self.__context.urlHostEspaceCo, 'tokentype': self.__context.getTokenType(),
                       'tokenaccess': self.__context.getTokenAccess(), 'proxy': self.__context.proxy}
             community = Community(params)
             page = 1
