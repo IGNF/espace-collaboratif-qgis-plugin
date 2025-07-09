@@ -52,7 +52,6 @@ class Contexte(object):
     # login = ""
     # pwd = ""
 
-    urlHostEspaceCo = ""
     profil = None
 
     # client pour le service RIPart
@@ -60,9 +59,6 @@ class Contexte(object):
 
     # fenêtre de connexion
     loginWindow = None
-
-    # le répertoire du projet qgis
-    projectDir = ""
 
     # le nom du fichier (projet qgis)
     projectFileName = ""
@@ -110,6 +106,8 @@ class Contexte(object):
         """
         self.QObject = QObject
         self.QgsProject = QgsProject
+        # set du répertoire et fichier du projet qgis
+        self.setProjectParams()
         self.mapCan = QObject.iface.mapCanvas()
         self.iface = QObject.iface
         self.login = ""
@@ -133,12 +131,9 @@ class Contexte(object):
         self.__tokenType = ''
         self.__tokenTimerStart = 0
         self.__tokenExpireIn = 0
+        self.__setUrlHostEspaceCo()
 
         try:
-            # set du répertoire et fichier du projet qgis
-            self.setProjectParams()
-            self.urlHostEspaceCo = PluginHelper.load_urlhost(self.projectDir).text
-
             # contrôle l'existence du fichier de configuration
             self.checkConfigFile()
 
@@ -194,6 +189,14 @@ class Contexte(object):
         config = configparser.RawConfigParser()
         config.read(self.plugin_path + '\\metadata.txt')
         return config.get('general', 'version')
+
+    def __setUrlHostEspaceCo(self):
+        url = PluginHelper.load_urlhost(self.projectDir)
+        print(url)
+        if url == '':
+            self.urlHostEspaceCo = 'https://espacecollaboratif.ign.fr'
+        else:
+            self.urlHostEspaceCo = url
 
     @staticmethod
     def IsLayerInMap(layerName):
@@ -427,11 +430,11 @@ class Contexte(object):
                 strEmprises += "{},".format(emprise)
         dlgInfo.textInfo.append("Emprise(s) serveur : {}".format(strEmprises[:-1]))
         # if self.__context.profil.zone == cst.ZoneGeographique.UNDEFINED:
-        #     zoneExtraction = PluginHelper.load_CalqueFiltrage(self.__projectDir).text
+        #     zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
         #     if zoneExtraction == "" or zoneExtraction is None or len(
         #             self.__context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
         #         dlgInfo.textInfo.append("Zone : pas de zone définie")
-        #         PluginHelper.setXmlTagValue(self.__projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
+        #         PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
         #     else:
         #         dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
         #     self.__context.profil.zone = zoneExtraction
