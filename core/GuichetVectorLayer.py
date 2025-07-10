@@ -350,7 +350,7 @@ class GuichetVectorLayer(QgsVectorLayer):
                 - Symbole de police
     '''
 
-    def setLineRule(self, expression, valeurs, strFieldDirection):
+    def __setLineRule(self, expression, valeurs, strFieldDirection):
         otherLineSymbol = None
         strokeWidth = valeurs['strokeWidth']
         # Représentation d'une route à deux traits
@@ -362,7 +362,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             strokeWidth = strokeWidth - 2
 
         if strFieldDirection is None:
-            lineSymbol = self.setSymbolLine(valeurs["strokeLinecap"], valeurs["strokeDashstyle"],
+            lineSymbol = self.__setSymbolLine(valeurs["strokeLinecap"], valeurs["strokeDashstyle"],
                                             valeurs["strokeColor"], str(strokeWidth),
                                             valeurs['strokeOpacity'])
         else:

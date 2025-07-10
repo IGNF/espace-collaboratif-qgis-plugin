@@ -693,7 +693,8 @@ class RipartPlugin:
     # Lance la fenêtre de configuration des préférences
     def __configurePlugin(self):
         try:
-            if self.__doConnexion(False) == -1:
+            self.__context = Contexte.getInstance(self, QgsProject)
+            if self.__context is None:
                 return
             self.__context.checkConfigFile()
             self.__dlgConfigure = FormConfigure(context=self.__context)

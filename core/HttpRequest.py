@@ -78,15 +78,13 @@ class HttpRequest(object):
         try:
             if data is None and files is None:
                 response = requests.get(url, proxies=proxies, params=params, headers=headers, verify=False)
-            elif files is None and headers is None:
-                response = requests.post(url, proxies=proxies, data=data, headers=headers, verify=False)
             elif files is None:
                 response = requests.post(url, proxies=proxies, data=data, headers=headers, verify=False)
             else:
                 response = requests.post(url, proxies=proxies, data=data, headers=headers, files=files, verify=False)
 
-            if response.status_code != 200 or response.status_code != 206:
-                message = "{} [{}]".format(launchBy, response.text)
+            if response.status_code != 200 and response.status_code != 206:
+                message = "{}:makeHttpRequest [{}]".format(launchBy, response.text)
                 HttpRequest.logger.error(message)
                 raise Exception(message)
 

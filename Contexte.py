@@ -510,7 +510,7 @@ class Contexte(object):
         """
         Add guichet layers to the current map
         """
-        global progress
+        progress = None
         try:
             # Quelles sont les cartes chargées dans le projet QGIS courant
             maplayers = self.getAllMapLayers()
@@ -616,7 +616,8 @@ class Contexte(object):
             QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, endMessage)
 
         except Exception as e:
-            progress.close()
+            if progress is not None:
+                progress.close()
             message = str(format(e))
             if message.find('getMaxNumrec') != -1:
                 message = "Attention la table est peut-être vide de données. {}".format(str(e))
@@ -652,11 +653,15 @@ class Contexte(object):
         tmp = ''
         removeLayers = set()
         for layer in guichet_layers:
-            noSpaceInLayerName = self.replaceSpecialCharacter(layer.nom)
-            nameLayerId = self.replaceSpecialCharacter(layer.layer_id)
+            noSpecialCharacterInLayerName = self.replaceSpecialCharacter(layer.name)
+            nameLayerId = ''
+            # Cas particulier des couches WMTS
+            if type(layer.id) is not int:
+                nameLayerId = self.replaceSpecialCharacter(layer.id)
             for k, v in maplayers.items():
-                noSpaceInMapLayerName = self.replaceSpecialCharacter(v.name())
-                if (noSpaceInLayerName == noSpaceInMapLayerName) or (nameLayerId.find(noSpaceInMapLayerName) != -1):
+                noSpecialCharacterInMapLayerName = self.replaceSpecialCharacter(v.name())
+                if (noSpecialCharacterInLayerName == noSpecialCharacterInMapLayerName) or \
+                        (nameLayerId.find(noSpecialCharacterInMapLayerName) != -1):
                     removeLayers.add(v.name())
                     tmp += "{}, ".format(v.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
