@@ -49,12 +49,6 @@ class Contexte(object):
     # instance du Contexte
     instance = None
 
-    # identifiants de connexion
-    # login = ""
-    # pwd = ""
-
-    profil = None
-
     # client pour le service RIPart
     client = None
 
@@ -105,16 +99,13 @@ class Contexte(object):
 
         Initialisation du contexte
         """
+        self.projectDir = None
         self.QObject = QObject
         self.QgsProject = QgsProject
         # set du répertoire et fichier du projet qgis
         self.setProjectParams()
         self.mapCan = QObject.iface.mapCanvas()
         self.iface = QObject.iface
-        self.login = ""
-        self.pwd = ""
-        self.auth = {'login': self.login, 'password': self.pwd}
-        self.profil = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         self.dbPath = SQLiteManager.getBaseSqlitePath()
@@ -132,7 +123,7 @@ class Contexte(object):
         self.__tokenType = ''
         self.__tokenTimerStart = 0
         self.__tokenExpireIn = 0
-        self.__setUrlHostEspaceCo()
+        self.urlHostEspaceCo = ''
 
         try:
             # contrôle l'existence du fichier de configuration
@@ -141,9 +132,6 @@ class Contexte(object):
             # set de la base de données
             self.createDatabaseSQLite()
 
-            # Création des tables de signalements et de croquis
-            # self.createTablesReportsAndSketchs()
-
             # set des fichiers de style
             self.copyRipartStyleFiles()
 
@@ -151,6 +139,8 @@ class Contexte(object):
             formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
             lines = formatFile.readlines()
             self.formats = [x.split("\n")[0] for x in lines]
+
+            self.urlHostEspaceCo = self.__setUrlHostEspaceCo()
 
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
@@ -192,12 +182,10 @@ class Contexte(object):
         return config.get('general', 'version')
 
     def __setUrlHostEspaceCo(self):
-        url = PluginHelper.load_urlhost(self.projectDir)
-        print(url)
+        url = PluginHelper.load_urlhost(self.projectDir).text
         if url == '':
-            self.urlHostEspaceCo = 'https://espacecollaboratif.ign.fr'
-        else:
-            self.urlHostEspaceCo = url
+            url = 'https://espacecollaboratif.ign.fr'
+        return url
 
     @staticmethod
     def IsLayerInMap(layerName):
@@ -235,22 +223,9 @@ class Contexte(object):
         """set des paramètres du projet
         """
         self.projectDir = QgsProject.instance().homePath()
-        if self.projectDir == "":
-            PluginHelper.showMessageBox(
-                u"Votre projet QGIS doit être enregistré avant de pouvoir utiliser le plugin de l'espace collaboratif")
-            raise Exception(u"Projet QGIS non enregistré")
 
         # nom du fichier du projet enregistré
-        fname = ntpath.basename(QgsProject.instance().fileName())
-
-        nbPoints = fname.count(".")
-        if nbPoints != 1:
-            PluginHelper.showMessageBox(
-                u"Le nom de votre projet QGIS ne doit pas contenir de point en dehors de son extension (.qgz). Merci "
-                u"de le renommer.")
-            raise Exception(u"Nom de projet QGIS non valide")
-
-        self.projectFileName = fname[:fname.find(".")]
+        self.fname = ntpath.basename(QgsProject.instance().fileName())
 
     def checkConfigFile(self):
         """
@@ -279,29 +254,13 @@ class Contexte(object):
         PluginHelper.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
                           PluginHelper.qmlStylesDir, styleFilesDir)
 
-    def getVisibilityLayersFromGroupeActif(self):
-        """
-        Retourne True si au moins une couche est éditable
-        False sinon
-        """
-        if self.__activeCommunityName is None or self.__activeCommunityName == "":
-            return False
+    def getConnexionEspaceCollaboratifWithKeycloak(self, bAutomaticConnection) -> bool:
+        if bAutomaticConnection is False:
+            return True
 
-        if self.profil is None:
-            return False
-
-        for infoGeogroup in self.profil.infosGeogroups:
-            if infoGeogroup.getName() != self.__activeCommunityName:
-                continue
-
-            for layer in infoGeogroup.layers:
-                if layer.role == "edit" or layer.role == "ref-edit":
-                    return True
-        return False
-
-    def getConnexionEspaceCollaboratifWithKeycloak(self, bAutomaticConnection) -> int:
-        if bAutomaticConnection and self.__keycloakService is not None:
+        if self.__keycloakService is not None:
             self.__keycloakService.logout()
+            self.__keycloakService = None
 
         self.logger.debug("getConnexionEspaceCollaboratifWithKeycloak")
         self.__tokenTimerStart = time.perf_counter()
@@ -339,7 +298,7 @@ class Contexte(object):
         # keycloak_service.logout()
         return self.__connectToService()
 
-    def __connectToService(self) -> int:
+    def __connectToService(self) -> bool:
         PluginHelper.save_login(self.projectDir, self.login)
         xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
         if xmlgroupeactif is not None:
@@ -382,15 +341,15 @@ class Contexte(object):
             # Bouton Annuler
             elif dlgSelectedCommunities.getCancel():
                 dlgSelectedCommunities.close()
-                return -1
+                return False
             # Les informations de connexion sont montrées à l'utilisateur
             self.__setDisplayInformations()
-            self.__connectionResult = 1
+            self.__connectionResult = True
         except Exception as e:
             self.logger.error(format(e))
             self.client = None
             self.profil = None
-            self.__connectionResult = -1
+            self.__connectionResult = False
             PluginHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
         return self.__connectionResult
 
@@ -554,11 +513,11 @@ class Contexte(object):
                 i += 1
                 progress.setValue(i)
                 '''
-                Ajout des couches WFS selectionnées dans "Mon guichet"
+                Ajout des couches WFS sélectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WFS:
                     # TODO à vérifier si utile pour la récupération de la structure de la future table
-                    # structure = self.connexionFeatureTypeJson(layer.url, layer.nom)
+                    # structure = self.connexionFeatureTypeJson(layer.url, layer.name)
                     # if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
                         # layer.isStandard = False
                     sourceLayer = self.importWFS(layer)
@@ -654,14 +613,12 @@ class Contexte(object):
         removeLayers = set()
         for layer in guichet_layers:
             noSpecialCharacterInLayerName = self.replaceSpecialCharacter(layer.name)
-            nameLayerId = ''
             # Cas particulier des couches WMTS
-            if type(layer.id) is not int:
-                nameLayerId = self.replaceSpecialCharacter(layer.id)
+            nameLayers = self.replaceSpecialCharacter(layer.layers)
             for k, v in maplayers.items():
                 noSpecialCharacterInMapLayerName = self.replaceSpecialCharacter(v.name())
                 if (noSpecialCharacterInLayerName == noSpecialCharacterInMapLayerName) or \
-                        (nameLayerId.find(noSpecialCharacterInMapLayerName) != -1):
+                        (nameLayers.find(noSpecialCharacterInMapLayerName) != -1):
                     removeLayers.add(v.name())
                     tmp += "{}, ".format(v.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
@@ -775,6 +732,7 @@ class Contexte(object):
         maplayers = {}
         for key in layers:
             layer = layers[key]
+            print(layer.id)
             maplayers[layer.name()] = layer
         return maplayers
 

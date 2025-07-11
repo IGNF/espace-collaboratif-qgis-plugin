@@ -132,7 +132,8 @@ class Query(object):
         response = httpRequest.getResponse(self.__partOfUrl, None)
         if response.status_code != 200:
             if response.reason.find('Unauthorized') != -1:
-                message = "Attention, login ou mot de passe erroné."
+                message = "Attention, problème de connexion, veuillez recommencer l'action en cours " \
+                          "ou vous reconnecter."
             else:
                 message = "Query.simple : erreur {} {}".format(response.status_code, response.reason)
             raise Exception(message)

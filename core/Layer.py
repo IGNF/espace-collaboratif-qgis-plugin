@@ -15,12 +15,14 @@ class Layer(object):
 
     def __init__(self):
         # Attributs remplis avec gcms/api/communities/{community_id}/layers
+        self.url = None
         self.databaseid = 0
         self.databasename = ''
         self.tableid = 0
         self.tablename = ''
         self.geoservice = {}
-        self.id = None
+        self.id = 0
+        self.layers = ''
         self.opacity = 1
         self.order = 0
         self.preferred_style = None

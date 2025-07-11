@@ -91,14 +91,14 @@ namespace = {'gml': 'http://www.opengis.net/gml'}
 
 # Constantes pour le chargement des couches du guichet
 # Types de couches, balise <TYPE>
-PARTOFURLWMTS = "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"
-WMS = "geoservice"
-WFS = "feature-type"
-WMTS = "geoservice"
+WMS = "WMS"
+WMTS = "WMTS"
+FEATURE_TYPE = WFS = "feature-type"
+GEOSERVICE = "geoservice"
 WCS = "WCS"
 COLLABORATIF = "collaboratif.ign.fr"
 GEOPF = "data.geopf.fr"
-# WXSIGN = "wxs.ign.fr"
+PARTOFURLWMTS = "%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"
 APIKEY = "ign_scan_ws"
 
 # Système de coordonnées de référence de Ripart
@@ -130,3 +130,5 @@ STATUS_CONFLICTING = 'conflicting'
 STATUS_CANCELLED = 'cancelled'
 STATUS_REPLAYED = 'replayed'
 
+PROJECT_NOREGISTERED = "Votre projet QGIS doit être enregistré avant de pouvoir utiliser les fonctionnalités " \
+                          "du plugin de l'espace collaboratif"

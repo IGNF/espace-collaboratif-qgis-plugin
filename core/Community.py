@@ -105,6 +105,7 @@ class Community(object):
     # Récupère les infos d'une couche (table ou geoservice) et retourne une liste de toutes les couches
     def __getLayers(self, data) -> []:
         layers = []
+        print(data)
         for d in data:
             layer = Layer()
             if self.__keyExist('visibility', d):
@@ -128,9 +129,10 @@ class Community(object):
             if self.__keyExist('table', d):
                 layer.tableid = d['table']
             if self.__keyExist('type', d):
-                if d['type'] == cst.WFS:
+                print("__getLayers type : {}".format(d['type']))
+                if d['type'] == cst.FEATURE_TYPE:
                     self.__getDataLayerFromTable(layer)
-                if d['type'] == cst.WMTS:
+                if d['type'] == cst.GEOSERVICE:
                     if self.__keyExist('geoservice', d):
                         self.__getDataLayerFromGeoservice(layer, d['geoservice'])
             layers.append(layer)
@@ -202,8 +204,13 @@ class Community(object):
     def __getDataFromGeoservice(self, data, layer):
         # il faut copier le nom de la couche pour récupérer les données
         # de la layer dans la boite "Charger le guichet"
+        print(data)
         if self.__keyExist('title', data):
             layer.name = data['title']
+        if self.__keyExist('url', data):
+            layer.url = data['url']
+        if self.__keyExist('layers', data):
+            layer.layers = data['layers']
         layer.geoservice.update(data)
 
     def switchNameToTitleFromThemeAttributes(self, nameAttribute) -> str:

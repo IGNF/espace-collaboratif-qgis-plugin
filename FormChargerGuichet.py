@@ -40,13 +40,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         # Il faut inverser l'ordre pour retrouver le paramétrage de la carte du groupe
         self.__listLayers.reverse()
 
-        # La liste des couches à cocher automatiquement si la table des tables dans SQLite est désynchronisée
-        # self.__listLayersToCheck = listLayersToCheck
-
         # Remplissage des différentes tables de couches
         self.__setTableWidgetMonGuichet()
         self.__setTableWidgetFondsGeoservices()
-        # self.setTableWidgetAutresGeoservices()
 
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.__save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__cancel)
@@ -74,7 +70,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.__listLayers:
-            if layer.type != cst.WFS:
+            if layer.type != cst.FEATURE_TYPE:
                 continue
 
             rowPosition = self.tableWidgetMonGuichet.rowCount()
@@ -91,12 +87,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             else:
                 item = QtWidgets.QTableWidgetItem("Pas de rôle, bizarre !")
             self.tableWidgetMonGuichet.setItem(rowPosition, 1, item)
-
-            # Colonne "Charger"
-            # check = False
-            # for layerToCheck in self.__listLayersToCheck:
-            #     if layerToCheck == layer.name():
-            #         check = True
             self.__setColonneCharger(self.tableWidgetMonGuichet, rowPosition, 2)
 
     def __setTableWidgetFondsGeoservices(self) -> None:
@@ -109,7 +99,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
         # Autres lignes de la table
         for layer in self.__listLayers:
-            if layer.type != cst.WMTS:
+            if layer.type != cst.GEOSERVICE:
                 continue
 
             rowPosition = self.tableWidgetFondsGeoservices.rowCount()
@@ -129,39 +119,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             # Colonne "Charger"
             self.__setColonneCharger(self.tableWidgetFondsGeoservices, rowPosition, 2)
-
-    # TODO à supprimer car non utilisée
-    # def __setTableWidgetAutresGeoservices(self) -> None:
-    #     # Entête
-    #     entete = ["Nom de la couche", "Type", "Charger"]
-    #     self.tableWidgetAutresGeoservices.setHorizontalHeaderLabels(entete)
-    #
-    #     # Autres lignes de la table
-    #     for layer in self.__listLayers:
-    #         if layer.type != cst.WFS and layer.type != cst.WMS:
-    #             continue
-    #
-    #         if layer.url.find(cst.COLLABORATIF) != -1:
-    #             continue
-    #         # TODO il y a surement quelque chose à faire ici
-    #         # if layer.url.find(cst.WXSIGN) != -1:
-    #             # continue
-    #
-    #         rowPosition = self.tableWidgetAutresGeoservices.rowCount()
-    #         self.tableWidgetAutresGeoservices.insertRow(rowPosition)
-    #
-    #         # Colonne "Nom de la couche"
-    #         item = QtWidgets.QTableWidgetItem(layer.name)
-    #         self.tableWidgetAutresGeoservices.setItem(rowPosition, 0, item)
-    #
-    #         # Colonne "Type"
-    #         item = QtWidgets.QTableWidgetItem(layer.type)
-    #         self.tableWidgetAutresGeoservices.setItem(rowPosition, 1, item)
-    #
-    #         # Colonne "Charger"
-    #         self.__setColonneCharger(self.tableWidgetAutresGeoservices, rowPosition, 2)
-    #
-    #     self.tableWidgetAutresGeoservices.resizeColumnsToContents()
 
     def __getLayersSelected(self, tableWidget, numCol) -> []:
         checked_list = []

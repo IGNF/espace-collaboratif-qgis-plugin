@@ -1,6 +1,7 @@
 import urllib.parse
 import uuid
 import webbrowser
+import time
 
 import requests
 
@@ -98,10 +99,11 @@ class KeycloakService:
 
     def logout(self):
         params_encoded = urllib.parse.urlencode({"client_id": self.client_id})
-        logout_url = "{}realms/{}/protocol/openid-connect/logout?{}".format(self.base_uri, self.realm_name, params_encoded)
-
+        logout_url = "{}realms/{}/protocol/openid-connect/logout?{}".format(self.base_uri, self.realm_name,
+                                                                            params_encoded)
         print(
-            "The following link should be opened in your default browser automatically. If not, please visit the link manually to logout."
+            "The following link should be opened in your default browser automatically. "
+            "If not, please visit the link manually to logout."
         )
         print(f"--> '{logout_url}'")
         webbrowser.open(logout_url, new=0, autoraise=True)

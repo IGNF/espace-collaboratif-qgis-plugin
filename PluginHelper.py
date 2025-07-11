@@ -76,8 +76,18 @@ class PluginHelper:
     logger = RipartLogger("PluginHelper").getRipartLogger()
 
     @staticmethod
-    def getConfigFile():
+    def getConfigFile() -> str:
         fname = ntpath.basename(QgsProject.instance().fileName())
+        if fname == '':
+            message = "Veuillez ouvrir un projet avant d'utiliser cette fonctionnalité."
+            PluginHelper.showMessageBox(message)
+            raise Exception(message)
+        nbPoints = fname.count(".")
+        if nbPoints != 1:
+            message = "Le nom de votre projet QGIS ne doit pas contenir de point en dehors de son extension (.qgz). " \
+                      "Merci de le renommer."
+            PluginHelper.showMessageBox(message)
+            raise Exception(message)
         projectFileName = fname[:fname.find(".")]
         return "{}_espaceco.xml".format(projectFileName)
 
@@ -95,7 +105,7 @@ class PluginHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         """
-        urlhost = ""
+        global urlhost
         try:
             tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
@@ -106,7 +116,7 @@ class PluginHelper:
         except Exception as e:
             PluginHelper.logger.error(str(e))
 
-        return urlhost.text
+        return urlhost
 
     @staticmethod
     def load_login(projectDir):
@@ -517,7 +527,7 @@ class PluginHelper:
             sql += rem.dateMiseAJour + "', '"
             sql += rem.dateValidation + "', '"
             # TODO voir avec Noémie si on garde le code JSON
-            #sql += rem.concatenateThemes() + "', '"
+            # sql += rem.concatenateThemes() + "', '"
             sql += rem.themesToJson() + "', '"
             sql += rem.statut.__str__() + "', '"
             sql += rem.getAttribut("commentaire") + "', '"
@@ -675,16 +685,18 @@ class PluginHelper:
         nb = len(list(feats))
         if nb > 1:
             message = "Le filtrage des objets sera impossible car la couche {0} contient plusieurs objets." \
-                      "Il faut une seule zone de travail pour filtrer les objets après extraction des données.".format(nameWorkZone)
+                      "Il faut une seule zone de travail pour filtrer les objets après extraction des données.".format(
+                nameWorkZone)
             QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
             return geometryWorkZone
         for feat in feats:
             geometryWorkZone = feat.geometry()
         if len(list(geometryWorkZone.parts())) > 1:
-             message = "Le filtrage des objets sera impossible car la zone de travail est une surface multiple." \
-                      "Il faut une surface simple pour filtrer les objets après extraction des données.".format(nameWorkZone)
-             QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
-             return geometryWorkZone
+            message = "Le filtrage des objets sera impossible car la zone de travail est une surface multiple." \
+                      "Il faut une surface simple pour filtrer les objets après extraction des données.".format(
+                nameWorkZone)
+            QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
+            return geometryWorkZone
         layerWorkZone[0].rollBack()
         layerWorkZone[0].removeSelection()
         return geometryWorkZone
