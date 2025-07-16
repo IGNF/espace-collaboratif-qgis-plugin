@@ -5,7 +5,8 @@ from urllib.parse import urlparse, parse_qs
 class KeycloakAuthListener:
     @staticmethod
     def listen(ip: str, port: int = 7070):
-        response_ok = b"HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\nOk. You may close this tab and return to the shell.\r\n"
+        response_ok = b"HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\nOk. After closing this tab, you need " \
+                      b"to return to the QGIS application and wait the dialog [Parametres de travail].\r\n"
         response_err = b"HTTP/1.0 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nBad Request\r\n"
 
         timeout = 120

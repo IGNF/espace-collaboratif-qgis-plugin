@@ -267,35 +267,20 @@ class Contexte(object):
         KEYCLOAK_SERVER_URI = "https://sso.geopf.fr/"
         KEYCLOAK_CLIENT_ID = "espaceco-qgis"
         KEYCLOAK_CLIENT_SECRET = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"
-        # KEYCLOAK_SERVER_URI = "https://sso-qua.priv.geopf.fr/"
-        # KEYCLOAK_CLIENT_ID = "cartes-gouv-dev"
-        # KEYCLOAK_CLIENT_SECRET = "mjkWkBruwdsUHsimBclM00tDFfsKgoVq"
         KEYCLOAK_REALM_NAME = "geoplateforme"
         IGN_PROXY = "http://proxy.ign.fr:3128"
         proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
         self.__keycloakService = KeycloakService(KEYCLOAK_SERVER_URI, KEYCLOAK_REALM_NAME, KEYCLOAK_CLIENT_ID,
                                                  client_secret=KEYCLOAK_CLIENT_SECRET, proxies=proxies)
         r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
-        # print(r)
-        # print('-------------')
+        print(r)
         r = self.__keycloakService.get_access_token(r["code"][0])
-        # print(r)
-        # print('-------------')
+        print(r)
         self.__tokenAccess = r["access_token"]
-        # print("access_token : {}".format(r["access_token"]))
-        # print('-------------')
         self.__tokenExpireIn = r["expires_in"]
-        # print("expires_in : {}".format(r["expires_in"]))
-        # print('-------------')
-        # print("timerAccessToken : {}".format(self.__tokenTimerStart))
-        # print('-------------')
         self.__tokenType = r["token_type"]
-        # print("token_type : {}".format(r["token_type"]))
-        # print('-------------')
         r = self.__keycloakService.get_userinfo(r["access_token"])
         self.login = r['email']
-        # print(r)
-        # keycloak_service.logout()
         return self.__connectToService()
 
     def __connectToService(self) -> bool:
@@ -515,7 +500,7 @@ class Contexte(object):
                 '''
                 Ajout des couches WFS sélectionnées dans "Mon guichet"
                 '''
-                if layer.type == cst.WFS:
+                if layer.type == cst.FEATURE_TYPE:
                     # TODO à vérifier si utile pour la récupération de la structure de la future table
                     # structure = self.connexionFeatureTypeJson(layer.url, layer.name)
                     # if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
@@ -527,47 +512,48 @@ class Contexte(object):
                     endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, bbox, sourceLayer[1])
                     endMessage += "\n"
 
-                '''
-                Ajout des couches WMTS selectionnées dans "Mon guichet"
-                '''
-                if layer.type == cst.WMTS:
-                    importWmts = importWMTS(self, layer)
-                    titleLayer_uri = importWmts.getWtmsUrlParams(layer.geoservice['layers'])
-                    print("titleLayer_uri : {}".format(titleLayer_uri))
-                    if 'Exception' in titleLayer_uri[0]:
-                        endMessage += "{0} : {1}\n\n".format(layer.name, titleLayer_uri[1])
-                        continue
-                    rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
-                    if not rlayer.isValid():
-                        endMessage = "Layer {} failed to load !".format(rlayer.name())
-                        continue
+                if layer.type == cst.GEOSERVICE:
+                    '''
+                    Ajout des couches WMTS selectionnées dans "Mon guichet"
+                    '''
+                    if layer.geoservice['type'] == cst.WMTS:
+                        importWmts = importWMTS(self, layer)
+                        titleLayer_uri = importWmts.getWtmsUrlParams(layer.geoservice['layers'])
+                        print("titleLayer_uri : {}".format(titleLayer_uri))
+                        if 'Exception' in titleLayer_uri[0]:
+                            endMessage += "{0} : {1}\n\n".format(layer.name, titleLayer_uri[1])
+                            continue
+                        rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
+                        if not rlayer.isValid():
+                            endMessage = "Layer {} failed to load !".format(rlayer.name())
+                            continue
 
-                    self.QgsProject.instance().addMapLayer(rlayer, False)
-                    # Insertion à la fin avec -1
-                    root.insertLayer(-1, rlayer)
-                    tmp = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
-                    self.logger.debug(tmp)
-                    message = tmp
-                    endMessage += message
+                        self.QgsProject.instance().addMapLayer(rlayer, False)
+                        # Insertion à la fin avec -1
+                        root.insertLayer(-1, rlayer)
+                        tmp = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
+                        self.logger.debug(tmp)
+                        message = tmp
+                        endMessage += message
 
-                '''
-                Ajout des couches WMS-R selectionnées dans "Mon guichet"
-                '''
-                if layer.type == cst.WMS:
-                    importWmsr = ImportWMSR(layer)
-                    titleLayer_uri = importWmsr.getWmsrUrlParams()
-                    print("titleLayer_uri : {}".format(titleLayer_uri))
-                    rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
-                    if not rlayer.isValid():
-                        endMessage += "Layer {} failed to load !".format(rlayer.name())
-                        continue
+                    '''
+                    Ajout des couches WMS-R selectionnées dans "Mon guichet"
+                    '''
+                    if layer.geoservice['type'] == cst.WMS:
+                        importWmsr = ImportWMSR(layer)
+                        titleLayer_uri = importWmsr.getWmsrUrlParams()
+                        print("titleLayer_uri : {}".format(titleLayer_uri))
+                        rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
+                        if not rlayer.isValid():
+                            endMessage += "Layer {} failed to load !".format(rlayer.name())
+                            continue
 
-                    self.QgsProject.instance().addMapLayer(rlayer, False)
-                    # Insertion à la fin avec -1
-                    root.insertLayer(-1, rlayer)
-                    self.logger.debug("Layer {} added to map".format(rlayer.name()))
-                    message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
-                    endMessage += message
+                        self.QgsProject.instance().addMapLayer(rlayer, False)
+                        # Insertion à la fin avec -1
+                        root.insertLayer(-1, rlayer)
+                        self.logger.debug("Layer {} added to map".format(rlayer.name()))
+                        message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
+                        endMessage += message
             progress.close()
 
             # Rafraichissement de la carte
@@ -611,16 +597,25 @@ class Contexte(object):
     def removeLayers(self, guichet_layers, maplayers, bAskForConfirmation=True):
         tmp = ''
         removeLayers = set()
-        for layer in guichet_layers:
-            noSpecialCharacterInLayerName = self.replaceSpecialCharacter(layer.name)
+        for gLayer in guichet_layers:
+            noSpecialCharacterInLayerName = self.replaceSpecialCharacter(gLayer.name)
             # Cas particulier des couches WMTS
-            nameLayers = self.replaceSpecialCharacter(layer.layers)
+            nameLayers = self.replaceSpecialCharacter(gLayer.layers)
             for k, v in maplayers.items():
                 noSpecialCharacterInMapLayerName = self.replaceSpecialCharacter(v.name())
                 if (noSpecialCharacterInLayerName == noSpecialCharacterInMapLayerName) or \
                         (nameLayers.find(noSpecialCharacterInMapLayerName) != -1):
                     removeLayers.add(v.name())
                     tmp += "{}, ".format(v.name())
+        return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
+
+    def removeLayersFromProject(self, guichet_layers, maplayers, bAskForConfirmation=True):
+        tmp = ''
+        removeLayers = []
+        for layer in guichet_layers:
+            if layer.nom in maplayers:
+                removeLayers.append(layer.nom)
+                tmp += "{}, ".format(layer.nom)
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 
     def removeLayersById(self, removeLayers, tmp, bAskForConfirmation):
@@ -845,7 +840,7 @@ class Contexte(object):
         # Recherche tous les objets sélectionnés sur la carte pour les transformer en croquis
         for lay in mapLayers:
             # Quelques vérifications d'usage
-            if type(lay) is not QgsVectorLayer:
+            if type(lay) is not QgsVectorLayer and type(lay) is not GuichetVectorLayer:
                 continue
             if len(lay.selectedFeatures()) == 0:
                 continue

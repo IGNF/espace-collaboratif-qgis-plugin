@@ -83,7 +83,7 @@ class HttpRequest(object):
             else:
                 response = requests.post(url, proxies=proxies, data=data, headers=headers, files=files, verify=False)
 
-            if response.status_code != 200 and response.status_code != 206:
+            if response.status_code != 200 and response.status_code != 201 and response.status_code != 206:
                 message = "{}:makeHttpRequest [{}]".format(launchBy, response.text)
                 HttpRequest.logger.error(message)
                 raise Exception(message)

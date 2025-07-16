@@ -63,7 +63,7 @@ class ToolsReport(object):
     def __getReports(self, date) -> []:
         # filtre spatial
         bbox = BBox(self.__context)
-        box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, False, True)
+        box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, True, True)
         # si la box est à None alors, l'utilisateur veut extraire France entière
         # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
         # ne souhaite pas extraire les données France entière
@@ -103,8 +103,10 @@ class ToolsReport(object):
         data = self.__getReports(date)
 
         # Insertion des signalements dans la base SQLite
-        if len(data) == 0:
+        if data is None or len(data) == 0:
+            self.__progress.close()
             return
+
         self.__insertReportsSketchsIntoSQLite(data)
 
         # Rafraichir la carte

@@ -60,7 +60,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
 
-        self.lineEditUrl.setText(PluginHelper.load_urlhost(context.projectDir))
+        self.lineEditUrl.setText(PluginHelper.load_urlhost(context.projectDir).text)
 
         login = PluginHelper.load_login(context.projectDir).text
         self.lineEditLogin.setText(login)

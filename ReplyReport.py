@@ -89,5 +89,5 @@ class ReplyReport(object):
                     self.__context.iface.messageBar().pushMessage("Succès", information, level=0, duration=5)
 
         except Exception as e:
-            self.__logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
-            raise Exception
+            self.__logger.error(format(e))
+            raise Exception(e)

@@ -280,7 +280,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                           " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    self.__context.removeLayers(layersInProject, layersInTT, False)
+                    self.__context.removeLayersFromProject(layersInProject, layersInTT, False)
                     PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
                                                 "Map")
                     self.removeTablesSQLite(layersInProject)

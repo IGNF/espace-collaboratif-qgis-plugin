@@ -655,16 +655,23 @@ class RipartPlugin:
                               'urlHostEspaceCo': self.__context.urlHostEspaceCo,
                               'headers': headers, 'proxy': self.__context.proxy}
                 result = SQLiteManager.selectRowsInTableOfTables(layer.name())
+                numrec = 0
                 if len(result) > 0:
                     for r in result:
-                        parameters['databasename'] = layer.databasename = r[4]
-                        layer.isStandard = r[3]
-                        parameters['isStandard'] = r[3]
-                        parameters['sridLayer'] = r[5]
+                        # r contient les items suivants :
+                        # id/layer/idName/standard/database/databaseid/srid/geometryName/geometryDimension/geometryType/Numrec/tableid
+                        # exemple :
+                        # 8, 'Lignes', 'id_ligne', 1, 'test', 83, 2154, 'geom', 0, 'LineString', 0, 1531)
                         layer.idNameForDatabase = r[2]
-                        parameters['geometryName'] = r[6]
-                        parameters['is3D'] = r[7]
-                        layer.geometryTypeForDatabase = r[8]
+                        parameters['isStandard'] = layer.isStandard = r[3]
+                        parameters['databasename'] = layer.databasename = r[4]
+                        parameters['databaseid'] = r[5]
+                        parameters['sridLayer'] = r[6]
+                        parameters['geometryName'] = r[7]
+                        parameters['is3D'] = r[8]
+                        layer.geometryTypeForDatabase = r[9]
+                        parameters['numrec'] = numrec = r[10]
+                        parameters['tableid'] = r[11]
 
                 # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
                 bDetruit = True
@@ -676,8 +683,8 @@ class RipartPlugin:
                     SQLiteManager.vacuumDatabase()
                     layer.triggerRepaint()
                 parameters['detruit'] = bDetruit
-                numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
-                parameters['numrec'] = numrec
+                # numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
+                # parameters['numrec'] = numrec
                 wfsGet = WfsGet(parameters)
                 # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser.
                 # Il faut aussi qu'il soit égal à 1, ce numrec correspondant à une table non BDUni
