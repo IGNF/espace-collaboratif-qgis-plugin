@@ -18,7 +18,6 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
-from .core.ClientHelper import ClientHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core import Constantes as cst
 
@@ -79,7 +78,7 @@ class PluginHelper:
     def getConfigFile() -> str:
         fname = ntpath.basename(QgsProject.instance().fileName())
         if fname == '':
-            message = "Veuillez ouvrir un projet avant d'utiliser cette fonctionnalité."
+            message = "Veuillez ouvrir (ou enregistrer) le projet avant d'utiliser cette fonctionnalité."
             PluginHelper.showMessageBox(message)
             raise Exception(message)
         nbPoints = fname.count(".")
@@ -247,7 +246,7 @@ class PluginHelper:
         except Exception as e:
             PluginHelper.logger.error(str(e))
 
-        return ClientHelper.notNoneValue(groupePrefere.text)
+        return PluginHelper.notNoneValue(groupePrefere.text)
 
     @staticmethod
     def save_preferredGroup(projectDir, preferredGroup):
@@ -380,7 +379,7 @@ class PluginHelper:
                 PluginHelper.getXPath(PluginHelper.xml_Themes + "/" + PluginHelper.xml_Theme, "Map"))
 
             for n in prefThs:
-                prefThemes.append(ClientHelper.notNoneValue(n.text))
+                prefThemes.append(PluginHelper.notNoneValue(n.text))
 
         except Exception as e:
             PluginHelper.logger.error(str(e))
@@ -482,96 +481,6 @@ class PluginHelper:
         for c in maptag.findall('Attributs_croquis'):
             maptag.remove(c)
         tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
-
-    @staticmethod
-    def insertRemarques(conn, rem):
-        """Insertion d'une nouvelle remarque dans la table Signalement
-        
-        @param conn: la connexion à la base de données
-        @type conn: 
-        
-        @param rem: la remarque à ajouter
-        @type rem: Remarque  
-        """
-        PluginHelper.logger.debug("insertRemarques")
-        cur = conn.cursor()
-        try:
-            PluginHelper.logger.debug("INSERT rem id:" + str(rem.id))
-
-            ptx = rem.position.longitude
-            pty = rem.position.latitude
-
-            if type(rem.dateCreation) == datetime:
-                rem.dateCreation = PluginHelper.formatDatetime(rem.dateCreation)
-            if type(rem.dateMiseAJour) == datetime:
-                rem.dateMiseAJour = PluginHelper.formatDatetime(rem.dateMiseAJour)
-            if type(rem.dateValidation) == datetime:
-                rem.dateValidation = PluginHelper.formatDatetime(rem.dateValidation)
-
-            if rem.dateValidation is None:
-                rem.dateValidation = ""
-
-            geom = " GeomFromText('POINT(" + str(ptx) + " " + str(pty) + ")', {})".format(cst.EPSGCRS4326)
-
-            sql = u"INSERT INTO " + cst.nom_Calque_Signalement
-            sql += u" (NoSignalement, Auteur, Commune, Insee, Département, Département_id, Date_création, Date_MAJ, "
-            sql += u"Date_validation, Thèmes, Statut, Message, Réponses, URL, URL_privé, Document, Autorisation, geom) "
-            sql += u"VALUES ("
-            sql += str(rem.id) + ", '"
-            sql += ClientHelper.getValForDB(rem.author.name) + "', '"
-            sql += rem.getAttribut("commune") + "', '"
-            sql += rem.getAttribut("insee") + "', '"
-            sql += rem.getAttribut("departement", "name") + "', '"
-            sql += rem.getAttribut("departement", "id") + "', '"
-            sql += rem.dateCreation + "', '"
-            sql += rem.dateMiseAJour + "', '"
-            sql += rem.dateValidation + "', '"
-            # TODO voir avec Noémie si on garde le code JSON
-            # sql += rem.concatenateThemes() + "', '"
-            sql += rem.themesToJson() + "', '"
-            sql += rem.statut.__str__() + "', '"
-            sql += rem.getAttribut("commentaire") + "', '"
-            sql += ClientHelper.getValForDB(rem.concatenateResponse()) + "', '"
-            sql += rem.getAttribut("lien") + "', '"
-            sql += rem.getAttribut("lienPrive") + "', '"
-            sql += ClientHelper.getValForDB(rem.getAllDocuments()) + "', '"
-            sql += rem.getAttribut("autorisation") + "', "
-            sql += geom + ")"
-            cur.execute(sql)
-            rowcount = cur.rowcount
-            if rowcount != 1:
-                PluginHelper.logger.error("No row inserted:" + sql)
-
-            if len(rem.croquis) > 0:
-                croquis = rem.croquis
-                for cr in croquis:
-                    sql = "INSERT INTO %s (NoSignalement, Nom, Attributs_croquis, geom) VALUES "
-                    if len(cr.points) == 0:
-                        return
-
-                    values = "(" + str(rem.id) + ",'" + \
-                             ClientHelper.getValForDB(cr.name) + "', '" + \
-                             ClientHelper.getValForDB(cr.getAttributsInStringFormat()) + "', %s)"
-                    sql += values
-
-                    sgeom = " GeomFromText('%s(%s)', {})".format(cst.EPSGCRS4326)
-                    coord = cr.getCoordinatesFromPoints()
-
-                    if str(cr.type) == "Point" or str(cr.type) == "Texte":
-                        geom = sgeom % ('POINT', coord)
-                        sql = sql % (cst.nom_Calque_Croquis_Point, geom)
-                    elif str(cr.type) == "Ligne" or str(cr.type) == "Fleche":
-                        geom = sgeom % ('LINESTRING', coord)
-                        sql = sql % (cst.nom_Calque_Croquis_Ligne, geom)
-                    elif str(cr.type) == 'Polygone':
-                        geom = sgeom % ('POLYGON(', coord + ")")
-                        sql = sql % (cst.nom_Calque_Croquis_Polygone, geom)
-                    cur.execute(sql)
-
-        except Exception as e:
-            raise e
-        finally:
-            cur.close()
 
     @staticmethod
     def isInGeometry(pt, geomLayer):
@@ -700,3 +609,18 @@ class PluginHelper:
         layerWorkZone[0].rollBack()
         layerWorkZone[0].removeSelection()
         return geometryWorkZone
+
+    @staticmethod
+    def notNoneValue(val):
+        """Retourne une chaine vide si le paramètre = None
+        """
+        if val is None:
+            return ""
+        else:
+            return val
+
+    @staticmethod
+    def keyExist(key, data) -> bool:
+        if key in data:
+            return True
+        return False

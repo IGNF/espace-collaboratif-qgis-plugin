@@ -8,7 +8,7 @@ version 3.0.0 , 26/11/2018
 """
 from .Enum import Enum
 import xml.etree.ElementTree as ET
-from .ClientHelper import ClientHelper
+from ..PluginHelper import PluginHelper
 
 
 class Sketch(object):
@@ -179,8 +179,8 @@ class Sketch(object):
         # les attributs
         xattributs = ET.SubElement(objet, 'attributs')
         for att in self.attributesList:
-            xatt = ET.SubElement(xattributs, 'attribut', {'name': ClientHelper.notNoneValue(att.nom)})
-            xatt.text = ClientHelper.notNoneValue(att.valeur)
+            xatt = ET.SubElement(xattributs, 'attribut', {'name': PluginHelper.notNoneValue(att.nom)})
+            xatt.text = PluginHelper.notNoneValue(att.valeur)
 
         xmlDoc.append(objet)
         return xmlDoc
@@ -193,7 +193,7 @@ class Sketch(object):
             # Anomalie Redmine #14757 : le SQL n'aime pas les %
             attributeName = att.name.replace('%', 'pourcent')
             attributeValue = att.value.replace('%', 'pourcent')
-            satt += ClientHelper.notNoneValue(attributeName) + "='" + ClientHelper.notNoneValue(attributeValue) + "'|"
+            satt += PluginHelper.notNoneValue(attributeName) + "='" + PluginHelper.notNoneValue(attributeValue) + "'|"
 
         if len(satt) > 0:
             satt = satt[:-1]

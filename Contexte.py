@@ -39,7 +39,6 @@ from .core.WfsGet import WfsGet
 from .core.SQLiteManager import SQLiteManager
 from .core.ProgressBar import ProgressBar
 from .core.ign_keycloak.KeycloakService import KeycloakService
-from .core.ClientHelper import ClientHelper
 
 
 class Contexte(object):
@@ -335,7 +334,7 @@ class Contexte(object):
             self.client = None
             self.profil = None
             self.__connectionResult = False
-            PluginHelper.showMessageBox(ClientHelper.notNoneValue(format(e)))
+            PluginHelper.showMessageBox(PluginHelper.notNoneValue(format(e)))
         return self.__connectionResult
 
     def __setDisplayInformations(self):
@@ -1183,7 +1182,7 @@ class Contexte(object):
 
     def connexionFeatureTypeJson(self, layerUrl, layerName):
         if '&' not in layerUrl:
-            raise Exception(ClientHelper.notNoneValue(
+            raise Exception(PluginHelper.notNoneValue(
                 "{} : l'url fournie ({}) ne permet pas de déterminer le nom de la base données".format(
                     "connexionFeatureTypeJson", layerUrl)))
 
@@ -1194,7 +1193,7 @@ class Contexte(object):
         headers = {'Authorization': '{} {}'.format(self.getTokenType(), self.getTokenAccess())}
         featuretypeResponse = requests.get(url, headers=headers, proxies=self.proxy)
         if featuretypeResponse.status_code != 200:
-            raise Exception(ClientHelper.notNoneValue(
+            raise Exception(PluginHelper.notNoneValue(
                 "{} : {}".format(featuretypeResponse.status_code, featuretypeResponse.reason)))
 
         data = json.loads(featuretypeResponse._content)

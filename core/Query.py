@@ -8,92 +8,38 @@ from . import Constantes as cst
 # pour le get d'une Requests Python
 class Query(object):
 
-    def __init__(self, url, proxy):
+    def __init__(self, url, proxy) -> None:
         self.__headers = {}
         self.__url = url
         self.__proxy = proxy
         self.__partOfUrl = ''
         self.__params = {}
 
-    # def __init__(self, url, login, passwd, proxy):
-    #     self.__url = url
-    #     self.__login = login
-    #     self.__password = passwd
-    #     self.__proxy = proxy
-    #     self.__partOfUrl = ''
-    #     self.__params = {}
-
-    def setHeaders(self, tokenType, tokenAccess):
+    # Entete pour passer les tokens d'identification
+    def setHeaders(self, tokenType, tokenAccess) -> None:
         self.__headers['Authorization'] = '{} {}'.format(tokenType, tokenAccess)
 
     # Le complément de l'url générale permettant de constituer la requête HTTP finale
-    def setPartOfUrl(self, partOfUrl):
+    def setPartOfUrl(self, partOfUrl) -> None:
         self.__partOfUrl = partOfUrl
 
-    # Identifiant de l'utilisateur
-    def setAuthor(self, author):
-        self.__params['author'] = author
-
-    # Code du pays des signalements recherchés
-    # TODO demander la liste pour vérifier
-    def setTerritory(self, territory):
-        self.__params['territory'] = territory
-
-    # Code du(des) département(s) des signalements recherchés
-    # TODO demander la liste pour vérifier
-    def setDepartements(self, departements):
-        self.__params['departements'] = departements
-
-    # Code insee de la commune des signalements recherchés
-    # TODO vérifier par une REGEX le code INSEE
-    def setCommune(self, commune):
-        self.__params['commune'] = commune
-
-    # Communauté(s) des signalements recherchés
-    def setCommunities(self, communities):
-        self.__params['communities'] = communities
-
     # Date(s) minimale de création des signalements
-    def setOpeningDate(self, openingDate):
+    def setOpeningDate(self, openingDate) -> None:
         self.__params['opening_date'] = openingDate
 
-    # Date(s) de mise-à-jour des signalements
-    def setUpdatingDate(self, updatingDate):
-        self.__params['updating_date'] = updatingDate
-
-    # Date(s) de cloture des signalements
-    def setClosingDate(self, closingDate):
-        self.__params['closing_date'] = closingDate
-
-    # Émetteur(s) des signalements recherchés
-    # Available values : UNKNOWN, www, SIG-GC, SIG-AG, SIG-QGIS, PHONE, SPOTIT
-    # TODO demander la liste
-    def setInputDevice(self, inputDevice):
-        self.__params['input_device'] = inputDevice
-
-    # Recherche la chaîne dans les signalements. Utilisation du % si incomplet
-    def setComment(self, comment):
-        self.__params['comment'] = comment
-
-    # Liste les status des signalements recherchés
-    # Available values : submit, pending0, pending, pending1, pending2, valid, valid0, reject, reject0, test, dump
-    # TODO demander la liste pour vérification
-    def setStatus(self, status):
-        self.__params['status'] = status
-
     # Emprise géographique de la forme 'lonMin,latMin,lonMax,latMax'
-    def setBox(self, box):
-        self.__params['box'] = "{},{},{},{}".format(box.XMin, box.YMin, box.XMax, box.YMax)
+    def setBox(self, box) -> None:
+        self.__params['box'] = "{},{},{},{}".format(box.getXMin(), box.getYMin(), box.getXMax(), box.getYMax())
 
     # Numéro de la page
-    def setPage(self, page):
+    def setPage(self, page) -> None:
         self.__params['page'] = page
 
     # Limite d'objets par page
-    def setLimit(self, limit):
+    def setLimit(self, limit) -> None:
         self.__params['limit'] = limit
 
-    # Requêtes HTTP multiples (code retour 206)
+    # Requêtes HTTP multiples (code retour 206 pour les requêtes partielles)
     # Retourne une liste de données
     def multiple(self) -> []:
         message = ""
@@ -124,9 +70,12 @@ class Query(object):
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setText(message)
             msgBox.exec_()
-            return
 
-    # Requete HTTP simple
+        return data
+
+    # Requête HTTP simple
+    # Pour toutes les routes, retourne un code 200 pour une lecture OK
+    # retourne une response HTTP
     def simple(self) -> Response:
         httpRequest = HttpRequest(self.__url, self.__headers, self.__proxy)
         response = httpRequest.getResponse(self.__partOfUrl, None)

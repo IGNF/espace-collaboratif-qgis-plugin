@@ -7,7 +7,7 @@ from .Box import Box
 # Classe représentant une bounding box
 class BBox(object):
 
-    def __init__(self, context):
+    def __init__(self, context) -> None:
         self.__context = context
         self.__filterName = None
         self.__layerFilter = None
@@ -29,7 +29,7 @@ class BBox(object):
                     return Box(0.0, 0.0, 0.0, 0.0)
         return box
 
-    # Retourne la boite englobante d'une zone de travail avec transformation ou non des coordonnées
+    # Retourne la boite englobante d'une zone de travail utilisateur avec transformation ou non des coordonnées
     def getSpatialFilter(self, bTransformCoordinates) -> Box:
         if self.__layerFilter is None:
             message = "La carte en cours ne contient pas la couche '" + \
@@ -57,7 +57,7 @@ class BBox(object):
             return Box(layerFilterExtent.xMinimum(), layerFilterExtent.yMinimum(),
                        layerFilterExtent.xMaximum(), layerFilterExtent.yMaximum())
 
-    # Retourne la boite englobante d'une zone de travail sous forme d'une géométrie WKT
+    # Retourne la boite englobante d'une zone de travail utilisateur sous forme d'une géométrie WKT
     def getBBoxAsWkt(self, filterName) -> str:
         if filterName is None or len(filterName) == 0 or filterName == '':
             return ''

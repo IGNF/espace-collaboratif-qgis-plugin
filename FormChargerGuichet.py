@@ -162,7 +162,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # si la box est à None alors, l'utilisateur veut extraire France entière
             # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
             # ne souhaite pas extraire les données France entière
-            if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
+            if box is not None and box.getXMax() == 0.0 and box.getYMax() == 0.0 \
+                    and box.getXMin() == 0.0 and box.getYMin() == 0.0:
                 return
 
             # création de la table des tables

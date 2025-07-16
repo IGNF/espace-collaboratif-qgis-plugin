@@ -25,18 +25,8 @@ class EditFormFieldFromAttributes(object):
         self.data = data
         # couche concernée
         self.layer = layer
-        self.action = Action(layer)
         self.index = None
         self.name = None
-
-    # si le champ est de type 'JsonValue' alors on ajoute une action pour pourvoir le modifier
-    def setAction(self, attributeType, attributeName):
-        if attributeType != 'JsonValue':
-            return
-        actionDescription = "Modifier un champ JSON par l'intermédiaire d'une boite de saisie"
-        actionShortName = "Modifier {0}".format(attributeName)
-        actionCode = self.action.defineActionPython(attributeName)
-        self.action.do(QgsAction.ActionType.GenericPython, actionDescription, actionShortName, actionCode)
 
     '''Lecture des clé/valeurs de l'item 'attributes', par exemple "commentaire_nom": {"crs": null, "default_value": 
     null, "id": 30180, "target_type": null, "name": "commentaire_nom", "short_name": "commentair", 
@@ -56,8 +46,6 @@ class EditFormFieldFromAttributes(object):
             self.index = self.layer.fields().indexOf(self.name)
             self.setFieldTitle(v['title'])
             self.setFieldSwitchType(v['type'], v['default_value'])
-            # TODO désactivé pour l'instant
-            # self.setAction(v['type'], v['name'])
             self.setFieldConstraintNotNull(v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
             constraints = [self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'],

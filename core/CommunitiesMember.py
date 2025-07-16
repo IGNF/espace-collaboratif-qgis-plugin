@@ -1,5 +1,6 @@
 from .Query import Query
 from .Community import Community
+from PluginHelper import PluginHelper
 
 
 class CommunitiesMember(object):
@@ -7,11 +8,8 @@ class CommunitiesMember(object):
     def __init__(self, url, tokenType, tokenAccess, proxy) -> None:
         self.__url = url
         self.__proxy = proxy
-        self.__firstname = ''
-        self.__surname = ''
         self.__id = -1
         self.__username = ''
-        self.__email = ''
         # Liste des communautés de l'utilisateur
         self.__communities = []
         # Liste des thèmes partagés
@@ -47,30 +45,16 @@ class CommunitiesMember(object):
             return []
 
         data = response.json()
-        if self.__keyExist('id', data):
+        if PluginHelper.keyExist('id', data):
             self.__id = data['id']
 
-        if self.__keyExist('username', data):
+        if PluginHelper.keyExist('username', data):
             self.__username = data['username']
 
-        if self.__keyExist('firstname', data):
-            self.__firstname = data['firstname']
-
-        if self.__keyExist('surname', data):
-            self.__surname = data['surname']
-
-        if self.__keyExist('email', data):
-            self.__email = data['email']
-
-        if self.__keyExist('communities_member', data):
+        if PluginHelper.keyExist('communities_member', data):
             self.getDatasCommunities(data['communities_member'])
 
         return self.__listNameOfCommunities
-
-    def __keyExist(self, key, data) -> bool:
-        if key in data:
-            return True
-        return False
 
     def getDatasCommunities(self, datas) -> None:
         if len(datas) == 0:

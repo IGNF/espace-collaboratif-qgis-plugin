@@ -3,6 +3,7 @@ from datetime import datetime
 from .RipartLoggerCl import RipartLogger
 from .SQLiteManager import SQLiteManager
 from . import Constantes as cst
+from ..PluginHelper import PluginHelper
 
 
 class Report(object):
@@ -29,46 +30,46 @@ class Report(object):
     def __init__(self, urlHostEspaceCo, data) -> None:
         self.__logger = RipartLogger("Report").getRipartLogger()
         self.__urlHostEspaceCo = urlHostEspaceCo
-        if self.__keyExist('id', data):
+        if PluginHelper.keyExist('id', data):
             self.__id = data['id']
             self.__url = self.__setUrl(data['id'])
-        if self.__keyExist('author', data):
+        if PluginHelper.keyExist('author', data):
             self.__author = data['author']
-        if self.__keysExists('commune', 'title', data):
+        if PluginHelper.keyExist('commune', 'title', data):
             self.__commune = data['commune']['title']
-        if self.__keysExists('commune', 'name', data):
+        if PluginHelper.keyExist('commune', 'name', data):
             self.__insee = data['commune']['name']
-        if self.__keysExists('departement', 'title', data):
+        if PluginHelper.keyExist('departement', 'title', data):
             self.__departement = data['departement']['title']
-        if self.__keysExists('departement', 'name', data):
+        if PluginHelper.keyExist('departement', 'name', data):
             self.__departementId = data['departement']['name']
-        if self.__keyExist('opening_date', data):
+        if PluginHelper.keyExist('opening_date', data):
             self.__dateCreation = data['opening_date']
-        if self.__keyExist('updating_date', data):
+        if PluginHelper.keyExist('updating_date', data):
             self.__dateMaj = data['updating_date']
-        if self.__keyExist('closing_date', data):
+        if PluginHelper.keyExist('closing_date', data):
             self.__dateValidation = data['closing_date']
-        if self.__keyExist('attributes', data):
+        if PluginHelper.keyExist('attributes', data):
             self.__theme = data['attributes']
-        if self.__keyExist('status', data):
+        if PluginHelper.keyExist('status', data):
             self.__statut = data['status']
-        if self.__keyExist('comment', data):
+        if PluginHelper.keyExist('comment', data):
             self.__message = data['comment']
-        if self.__keyExist('replies', data):
+        if PluginHelper.keyExist('replies', data):
             self.__replies = data['replies']
         self.__urlPrive = ''
-        if self.__keyExist('attachments', data):
+        if PluginHelper.keyExist('attachments', data):
             self.__attachments = data['attachments']
         # TODO les autorisations ne sont plus dans la réponse il faut les déduire...???? dixit Sylvain
         #  résultat : ticket redmine to Madeline
         self.__autorisation = ''
-        if self.__keyExist('input_device', data):
+        if PluginHelper.keyExist('input_device', data):
             self.__inputDevice = data['input_device']
-        if self.__keyExist('geometry', data):
+        if PluginHelper.keyExist('geometry', data):
             self.__geometry = data['geometry']
         # TODO à décoder pour importer les croquis dans la carte
         # self.__sketch_xml = data['sketch_xml']
-        if self.__keyExist('sketch', data):
+        if PluginHelper.keyExist('sketch', data):
             self.__sketch = data['sketch']
         # TODO -> Noémie les variables suivantes sont retournées par l'API, que fait-on ?
         # self.__community = data['community']
@@ -79,17 +80,12 @@ class Report(object):
     def __keysExists(self, keyA, keyB, data) -> bool:
         if data[keyA] is None:
             return False
-        if self.__keyExist(keyA, data):
+        if PluginHelper.keyExist(keyA, data):
             datum = data[keyA]
             if datum[keyB] is None:
                 return False
-            if self.__keyExist(keyB, datum):
+            if PluginHelper.keyExist(keyB, datum):
                 return True
-        return False
-
-    def __keyExist(self, key, data) -> bool:
-        if key in data:
-            return True
         return False
 
     def getId(self) -> int:

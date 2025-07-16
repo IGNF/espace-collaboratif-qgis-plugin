@@ -1,5 +1,5 @@
 from .ThemeAttributes import ThemeAttributes
-
+from ..PluginHelper import PluginHelper
 
 # Classe représentant un thème
 class Theme(object):
@@ -19,15 +19,15 @@ class Theme(object):
         if type(data) is str:
             self.__name = data
         else:
-            if self.__keyExist('theme', data):
+            if PluginHelper.keyExist('theme', data):
                 self.__name = data['theme']
-            if self.__keyExist('global', data):
+            if PluginHelper.keyExist('global', data):
                 self.__global = data['global']
-            if self.__keyExist('database', data):
+            if PluginHelper.keyExist('database', data):
                 self.__database = data['database']
-            if self.__keyExist('featureType', data):
+            if PluginHelper.keyExist('featureType', data):
                 self.__featureType = data['featureType']
-            if self.__keyExist('attributes', data):
+            if PluginHelper.keyExist('attributes', data):
                 self.__setDataAttributes(data['attributes'])
 
     def getCommunityId(self) -> int:
@@ -53,8 +53,3 @@ class Theme(object):
             themeAttributes.setAttributes(data)
             self.__attributes.append(themeAttributes)
             self.__switchNameToTitle.update(themeAttributes.getNameAndTitle())
-
-    def __keyExist(self, key, data) -> bool:
-        if key in data:
-            return True
-        return False

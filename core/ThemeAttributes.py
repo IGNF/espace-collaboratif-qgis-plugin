@@ -1,3 +1,6 @@
+from ..PluginHelper import PluginHelper
+
+
 # Classe représentant un attribut d'un thème
 class ThemeAttributes(object):
 
@@ -16,25 +19,20 @@ class ThemeAttributes(object):
         # self.__original = {}
         self.__switchNameToTitle = {}
 
-    def __keyExist(self, key, data) -> bool:
-        if key in data:
-            return True
-        return False
-
     def setAttributes(self, data) -> None:
-        if self.__keyExist('name', data):
+        if PluginHelper.keyExist('name', data):
             self.__name = data['name']
-        if self.__keyExist('title', data):
+        if PluginHelper.keyExist('title', data):
             self.__title = data['title']
-        if self.__keyExist('type', data):
+        if PluginHelper.keyExist('type', data):
             self.__type = data['type']
-        if self.__keyExist('values', data):
+        if PluginHelper.keyExist('values', data):
             self.__values = data['values']
-        if self.__keyExist('default', data):
+        if PluginHelper.keyExist('default', data):
             self.__default = data['default']
-        if self.__keyExist('required', data):
+        if PluginHelper.keyExist('required', data):
             self.__required = data['required']
-        if self.__keyExist('mandatory', data):
+        if PluginHelper.keyExist('mandatory', data):
             self.__mandatory = data['mandatory']
 
     def getName(self) -> str:
