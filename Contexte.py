@@ -373,17 +373,6 @@ class Contexte(object):
             for emprise in self.getUserCommunity().getEmprises():
                 strEmprises += "{},".format(emprise)
         dlgInfo.textInfo.append("Emprise(s) serveur : {}".format(strEmprises[:-1]))
-        # if self.__context.profil.zone == cst.ZoneGeographique.UNDEFINED:
-        #     zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
-        #     if zoneExtraction == "" or zoneExtraction is None or len(
-        #             self.__context.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
-        #         dlgInfo.textInfo.append("Zone : pas de zone définie")
-        #         PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
-        #     else:
-        #         dlgInfo.textInfo.append("Zone : {}".format(zoneExtraction))
-        #     self.__context.profil.zone = zoneExtraction
-        # else:
-        #     dlgInfo.textInfo.append("Zone : {}".format(self.__context.profil.zone.__str__()))
         dlgInfo.exec_()
 
     def getTokenType(self):

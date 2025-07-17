@@ -50,6 +50,7 @@ class CreateReport(object):
                 # Création du ou des signalements
                 toolsReport = ToolsReport(self.__context)
                 toolsReport.createReport(sketchList)
+            self.__context.mapCan.refresh()
 
         except Exception as e:
             self.__logger.error(format(e))

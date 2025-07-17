@@ -63,30 +63,6 @@ ListWordings = [
     u"Rejeté (hors spéc.)",
     u"Rejeté (hors de propos)"]
 
-ZoneGeographique = Enum("UNDEFINED",
-                        # France métropolitaine (Corse incluse).
-                        "FXX",
-                        # Terres Articques Australes.
-                        "ATF",
-                        # Guadeloupe
-                        "GLP",
-                        # Guyanne
-                        "GUF",
-                        # Martinique
-                        "MTQ",
-                        # Mayotte
-                        "MYT",
-                        # Nouvelle Caledonie
-                        "NCL",
-                        # Polynesie Française
-                        "PYF",
-                        # Réunion
-                        "REU",
-                        # Saint-Pierre et Miquelon
-                        "SPM",
-                        # Wallis et Futuna
-                        "WLF")
-
 namespace = {'gml': 'http://www.opengis.net/gml'}
 
 # Constantes pour le chargement des couches du guichet
