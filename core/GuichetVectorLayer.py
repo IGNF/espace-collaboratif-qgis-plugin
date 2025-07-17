@@ -363,8 +363,7 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         if strFieldDirection is None:
             lineSymbol = self.__setSymbolLine(valeurs["strokeLinecap"], valeurs["strokeDashstyle"],
-                                            valeurs["strokeColor"], str(strokeWidth),
-                                            valeurs['strokeOpacity'])
+                                              valeurs["strokeColor"], str(strokeWidth), valeurs['strokeOpacity'])
         else:
             # Ligne
             lineSymbol = QgsLineSymbol()

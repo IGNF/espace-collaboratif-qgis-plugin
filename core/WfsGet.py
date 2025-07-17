@@ -184,9 +184,9 @@ class WfsGet(object):
     def __setNumrec(self) -> None:
         self.parametersGcmsGet['numrec'] = self.numrec
 
-    def __setFilter(self, filter) -> None:
+    def __setFilter(self, _filter) -> None:
         if self.bDetruit:
-            if filter:
+            if _filter:
                 self.parametersGcmsGet['filter'] = '{"detruit":true}'
             else:
                 self.parametersGcmsGet['filter'] = '{"detruit":false}'

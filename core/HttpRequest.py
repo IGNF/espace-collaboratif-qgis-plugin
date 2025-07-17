@@ -7,6 +7,7 @@ from .RipartLoggerCl import RipartLogger
 # Classe implémentant une requête HTTP
 class HttpRequest(object):
     logger = RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
+
     def __init__(self, url, headers, proxies):
         self.__url = url
         self.__headers = headers

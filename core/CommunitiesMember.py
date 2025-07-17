@@ -1,6 +1,6 @@
 from .Query import Query
 from .Community import Community
-from PluginHelper import PluginHelper
+from ..PluginHelper import PluginHelper
 
 
 class CommunitiesMember(object):

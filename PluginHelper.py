@@ -624,3 +624,15 @@ class PluginHelper:
         if key in data:
             return True
         return False
+
+    @staticmethod
+    def keysExists(keyA, keyB, data) -> bool:
+        if data[keyA] is None:
+            return False
+        if PluginHelper.keyExist(keyA, data):
+            datum = data[keyA]
+            if datum[keyB] is None:
+                return False
+            if PluginHelper.keyExist(keyB, datum):
+                return True
+        return False

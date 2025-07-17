@@ -29,11 +29,11 @@ def Enum(*names):
         def __str__(self):
             return 'enum ' + str(constants)
 
-        def __getitemFromString__(self, strValue):
-            for e in self:
-                if e.__str__() == strValue:
-                    return e
-            return None
+        # def __getitemFromString__(self, strValue):
+        #     for e in self:
+        #         if e.__str__() == strValue:
+        #             return e
+        #     return None
 
     class EnumValue(object):
         __slots__ = '__value'

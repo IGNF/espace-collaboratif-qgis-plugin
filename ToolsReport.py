@@ -307,14 +307,14 @@ class ToolsReport(object):
 
         # Création du ou des signalements
         if formCreate.isSingleReport():
-            contents = self.__createSingleReport(sketchList, filesAttachments)
+            contents = self.createSingleReport(sketchList, filesAttachments)
         else:
             if len(sketchList) == 1:
                 raise Exception("ToolsReport.__createMultiReports : attention, il fallait cocher la case [Créer un "
                                 "signalement unique].")
             contents = self.__createMultiReports(sketchList, filesAttachments)
         if contents is None:
-            raise Exception("ToolsReport.__createSingleReport : erreur dans la création d'un signalement")
+            raise Exception("ToolsReport.createSingleReport : erreur dans la création d'un signalement")
 
         # Insertion des signalements et des croquis dans la base SQLite
         listNewReportIds = self.__insertReportsSketchsIntoSQLite(contents)
@@ -322,7 +322,7 @@ class ToolsReport(object):
         # Message de fin
         self.__sendMessageEndProcess(listNewReportIds)
 
-    def __createSingleReport(self, sketchList, filesAttachments) -> []:
+    def createSingleReport(self, sketchList, filesAttachments) -> []:
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, True)
         self.__datasForRequest['sketch'] = json.dumps(sketchsDatasGeometryReport[0]['sketch'])

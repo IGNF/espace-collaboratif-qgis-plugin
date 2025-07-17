@@ -1,6 +1,7 @@
 from .ThemeAttributes import ThemeAttributes
 from ..PluginHelper import PluginHelper
 
+
 # Classe représentant un thème
 class Theme(object):
 

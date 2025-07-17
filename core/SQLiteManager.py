@@ -20,7 +20,7 @@ class SQLiteManager(object):
         fname = ntpath.basename(QgsProject.instance().fileName())
         projectFileName = fname[:fname.find(".")]
         dbName = "{}_espaceco".format(projectFileName)
-        dbPath = "{0}/{1}.sqlite".format(projectDir,dbName)
+        dbPath = "{0}/{1}.sqlite".format(projectDir, dbName)
         return dbPath
 
     @staticmethod
@@ -105,8 +105,9 @@ class SQLiteManager(object):
     # Création d'une table pour une couche de la carte
     def createTableFromLayer(self, layer) -> bool:
         t = self.__setAttributesTableToSql(layer)
-        if t[0] == "" and t[1] == "" and t[2] == False:
-            raise Exception("SQLite : création de la table {} impossible, un type de colonne est inconnu".format(layer.name))
+        if t[0] == "" and t[1] == "" and t[2] is False:
+            raise Exception("SQLite : création de la table {} impossible, "
+                            "un type de colonne est inconnu".format(layer.name))
         connection = spatialite_connect(self.__dbPath)
         sql = u"CREATE TABLE {0} (".format(layer.name)
         sql += t[0]
@@ -208,7 +209,6 @@ class SQLiteManager(object):
                     for lv in value:
                         for k, v in lv.items():
                             if v is None:
-                                #dict_object[k] = v
                                 dict_object[k] = 'NULL'
                             else:
                                 dict_object[k] = v.replace("'", "''")

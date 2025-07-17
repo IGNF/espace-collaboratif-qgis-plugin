@@ -23,8 +23,8 @@ class Point(object):
         """
         Constructeur à partir d'une longitude/latitude
         
-        :param lon  La longitude (WGS84 en degrés décimaux) du point
-        :param lat  La latitude (WGS84 en degrés décimaux) du point
+        :param lon La longitude (WGS84 en degrés décimaux) du point
+        :param lat La latitude (WGS84 en degrés décimaux) du point
         """
         self.longitude = lon
         self.latitude = lat

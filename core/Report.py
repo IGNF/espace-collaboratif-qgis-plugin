@@ -35,13 +35,13 @@ class Report(object):
             self.__url = self.__setUrl(data['id'])
         if PluginHelper.keyExist('author', data):
             self.__author = data['author']
-        if PluginHelper.keyExist('commune', 'title', data):
+        if PluginHelper.keysExists('commune', 'title', data):
             self.__commune = data['commune']['title']
-        if PluginHelper.keyExist('commune', 'name', data):
+        if PluginHelper.keysExists('commune', 'name', data):
             self.__insee = data['commune']['name']
-        if PluginHelper.keyExist('departement', 'title', data):
+        if PluginHelper.keysExists('departement', 'title', data):
             self.__departement = data['departement']['title']
-        if PluginHelper.keyExist('departement', 'name', data):
+        if PluginHelper.keysExists('departement', 'name', data):
             self.__departementId = data['departement']['name']
         if PluginHelper.keyExist('opening_date', data):
             self.__dateCreation = data['opening_date']
@@ -76,17 +76,6 @@ class Report(object):
         # self.__validator = data['validator']
         # self.__territory = data['territory']
         # self.__comment = data['comment']
-
-    def __keysExists(self, keyA, keyB, data) -> bool:
-        if data[keyA] is None:
-            return False
-        if PluginHelper.keyExist(keyA, data):
-            datum = data[keyA]
-            if datum[keyB] is None:
-                return False
-            if PluginHelper.keyExist(keyB, datum):
-                return True
-        return False
 
     def getId(self) -> int:
         return self.__id

@@ -503,7 +503,7 @@ class Contexte(object):
                     # TODO à vérifier si utile pour la récupération de la structure de la future table
                     # structure = self.connexionFeatureTypeJson(layer.url, layer.name)
                     # if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
-                        # layer.isStandard = False
+                    # layer.isStandard = False
                     sourceLayer = self.importWFS(layer)
                     if not sourceLayer[0].isValid():
                         endMessage += "Layer {} failed to load !\n".format(layer.name)
@@ -1109,41 +1109,6 @@ class Contexte(object):
                 croquisSelFeats[table].append(row[0])
 
         return croquisSelFeats
-
-    # def checkProfilServeurClient(self):
-    #     # Le profil a t'il pu être changé sur le serveur ?
-    #     if self.client is not None:
-    #         nomProfilServeur = self.client.getNomProfil()
-    #         if self.profil.title != nomProfilServeur:
-    #             message = "Votre groupe actif ({} versus {}) semble avoir été modifié par une autre application cliente " \
-    #                       "de l'Espace collaboratif.\nMerci de vous reconnecter via le bouton 'Se connecter à l'Espace " \
-    #                       "collaboratif' pour confirmer dans quel groupe vous souhaitez travailler.\nAttention : si vous " \
-    #                       "avez déjà chargé les couches d'un autre groupe, vous devez les supprimer au préalable ou " \
-    #                       "créer un autre projet QGIS.".format(self.profil.title, nomProfilServeur)
-    #             PluginHelper.showMessageBox(message)
-    #             raise Exception(u"Les projets actifs diffèrent entre le serveur et le client")
-
-    def getLayers(self) -> (str, [], object):
-        # La liste des couches et non la liste de courses ;-)
-        infosLayers = []
-        # Si le client n'existe pas, il faut demander à l'utilisateur de se connecter
-        if self.client is None:
-            connResult = self.getConnexionEspaceCollaboratifWithKeycloak()
-            if connResult == -1:
-                # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
-                return "Rejected", infosLayers
-        # Si malgré la demande de connexion le client n'est toujours pas déterminé
-        if self.client is None:
-            return "Rejected", infosLayers
-        # Récupération du profil lié à l'utilisateur
-        profilUser = self.client.getProfil()
-        print("Profil : {0}, {1}".format(profilUser.geogroup.getId(),
-                                         profilUser.geogroup.getName))
-
-        if len(profilUser.infosGeogroups) == 0:
-            return "Rejected", infosLayers, profilUser
-        # https://espacecollaboratif.ign.fr/gcms/api/communities/375/layers
-        return "Accepted", infosLayers, profilUser
 
     def getInfosLayers(self):
         infosLayers = []

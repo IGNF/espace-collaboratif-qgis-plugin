@@ -7,7 +7,6 @@ version 4.0.1, 15/12/2020
 @author: EPeyrouse, NGremeaux
 """
 from qgis.core import QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue
-from .Action import *
 
 
 class EditFormFieldFromAttributes(object):
