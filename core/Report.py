@@ -67,15 +67,8 @@ class Report(object):
             self.__inputDevice = data['input_device']
         if PluginHelper.keyExist('geometry', data):
             self.__geometry = data['geometry']
-        # TODO à décoder pour importer les croquis dans la carte
-        # self.__sketch_xml = data['sketch_xml']
         if PluginHelper.keyExist('sketch', data):
             self.__sketch = data['sketch']
-        # TODO -> Noémie les variables suivantes sont retournées par l'API, que fait-on ?
-        # self.__community = data['community']
-        # self.__validator = data['validator']
-        # self.__territory = data['territory']
-        # self.__comment = data['comment']
 
     def getId(self) -> int:
         return self.__id
@@ -85,13 +78,6 @@ class Report(object):
 
     def getInsee(self) -> str:
         return self.__insee
-
-    def getDateCreation(self) -> str:
-        # valeur de retour 2023-08-01T14:51:55+02:00
-        return self.__dateCreation
-
-    def setStatut(self, statut):
-        self.__statut = statut
 
     def getStatut(self) -> str:
         return self.__statut
@@ -108,12 +94,9 @@ class Report(object):
     def getSketch(self) -> str:
         return self.__sketch
 
-    # def getSketchXml(self) -> str:
-    #     return self.__sketch_xml
-
     # TODO dans SQLIte, on stoke du json ou une chaine reformatée ?
     #  j'ai pris l'option chaine reformatée
-    def getColumnsForSQlite(self) -> {}:
+    def getColumnsForSQlite(self) -> dict:
         return {
             'NoSignalement': self.__id,
             'Auteur': self.getStrAuthor(),
@@ -136,7 +119,7 @@ class Report(object):
             'geom': self.__geometry
         }
 
-    def InsertSketchIntoSQLite(self):
+    def InsertSketchIntoSQLite(self) -> None:
         if self.getSketch() is None:
             return
 
@@ -163,7 +146,7 @@ class Report(object):
             nbSketch += sqliteManager.insertRowsInTable(parameters, attributesRows)
         print('signalement n° {0}, {1} croquis'.format(self.__id, nbSketch))
 
-    def __getKey(self, datas, key):
+    def __getKey(self, datas, key) -> str:
         if key in datas:
             return datas[key]
         return ''
@@ -186,14 +169,14 @@ class Report(object):
             return strAttributes
 
         for k, v in data['attributes'].items():
-            strAttributes += "{0}='{1}'|".format(self.__notNoneValue(k), self.__notNoneValue(v))
+            strAttributes += "{0}='{1}'|".format(PluginHelper.notNoneValue(k), PluginHelper.notNoneValue(v))
 
         if len(strAttributes) > 0:
             strAttributes = strAttributes[:-1]
 
         return strAttributes
 
-    def __whatGeometryAndTableIs(self, geom) -> ():
+    def __whatGeometryAndTableIs(self, geom) -> tuple:
         if 'POINT' in geom:
             return 'POINT', cst.nom_Calque_Croquis_Point
         if 'LINESTRING' in geom:
@@ -201,12 +184,7 @@ class Report(object):
         if 'POLYGON' in geom:
             return 'POLYGON', cst.nom_Calque_Croquis_Polygone
 
-    def __notNoneValue(self, nodeValue) -> str:
-        if nodeValue is None:
-            return ""
-        return nodeValue
-
-    def __formatDateToStrftime(self, dateToFormat):
+    def __formatDateToStrftime(self, dateToFormat) -> str:
         # valeur en entrée 2023-08-01T14:51:55+02:00
         # valeur de retour 2023-08-01 14:51:55
         if dateToFormat == '':
@@ -215,19 +193,19 @@ class Report(object):
         dtc = dt.strftime('%Y-%m-%d %H:%M:%S')
         return dtc
 
-    def getStrDateCreation(self):
-        dc = self.__notNoneValue(self.__dateCreation)
+    def getStrDateCreation(self) -> str:
+        dc = PluginHelper.notNoneValue(self.__dateCreation)
         return self.__formatDateToStrftime(dc)
 
-    def getStrDateMaj(self):
-        dm = self.__notNoneValue(self.__dateMaj)
+    def getStrDateMaj(self) -> str:
+        dm = PluginHelper.notNoneValue(self.__dateMaj)
         return self.__formatDateToStrftime(dm)
 
-    def getStrDateValidation(self):
-        dv = self.__notNoneValue(self.__dateValidation)
+    def getStrDateValidation(self) -> str:
+        dv = PluginHelper.notNoneValue(self.__dateValidation)
         return self.__formatDateToStrftime(dv)
 
-    def getAuthor(self) -> {}:
+    def getAuthor(self) -> dict:
         # valeur de retour
         # {
         # "id": 676,
@@ -244,23 +222,6 @@ class Report(object):
             return str(self.__author)
         return self.__author
 
-    def getAttachments(self) -> [{}]:
-        # valeur de retour
-        # {
-        # "short_fileName": "Toto.txt",
-        # "id": 7056,
-        # "title": "Toto",
-        # "description": null,
-        # "filename": "IMG/txt/4990fcaa50b7e36c7e4b2b3d04463de5_Toto.txt",
-        # "size": 52,
-        # "width": null,
-        # "height": null,
-        # "date": "2023-08-01T13:01:13+02:00",
-        # "geometry": "POINT(2.53161412208155 48.8635337081288)",
-        # "download_uri": "https://qlf-collaboratif.ign.fr/collaboratif-develop/document/download/7056"
-        # }
-        return self.__attachments
-
     # SQLite, colonne 'Document' : il faut retourner l'url 'download_uri'
     def _getStrAttachments(self) -> str:
         # valeur de retour
@@ -273,7 +234,7 @@ class Report(object):
             documents += "{} ".format(attachment['download_uri'])
         return documents[:-1]
 
-    def getListAttachments(self):
+    def getListAttachments(self) -> list:
         attachments = []
         for attachment in self.__attachments:
             attachments.append(attachment['download_uri'])
@@ -312,7 +273,7 @@ class Report(object):
                     if z == 0:
                         strThemes += "("
                         z += 1
-                    strThemes += "{}={},".format(key, self.__notNoneValue(value))
+                    strThemes += "{}={},".format(key, PluginHelper.notNoneValue(value))
                 if z > 0:
                     strThemes = strThemes[:-1]
                     strThemes += ")"
@@ -332,18 +293,8 @@ class Report(object):
                 continue
             if len(t['attributes']) != 0:
                 for key, value in t['attributes'].items():
-                    strThemes += " {} : {}\n".format(key, self.__notNoneValue(value))
+                    strThemes += " {} : {}\n".format(key, PluginHelper.notNoneValue(value))
         return strThemes
-
-    def getReplies(self) -> [{}]:
-        # valeur de retour
-        # {"author": 3,
-        # "id": 79743,
-        # "title": "test",
-        # "content": "test",
-        # "status": "valid",
-        # "date": "2010-01-07T10:46:04+01:00"}
-        return self.__replies
 
     # Concatène les réponses existantes d'un signalement
     def getStrReplies(self) -> str:

@@ -29,7 +29,7 @@ class Sketch(object):
     typeToWKT = {sketchType.Point: 'POINT', sketchType.Texte: 'POINT', sketchType.Ligne: 'LINESTRING',
                  sketchType.Fleche: 'LINESTRING', sketchType.Polygone: 'POLYGON'}
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Type du croquis
         self.type = self.sketchType.Vide
 
@@ -44,10 +44,10 @@ class Sketch(object):
 
         self.coordinates = ""
 
-    def getAllPoints(self):
+    def getAllPoints(self) -> list:
         return self.__points
 
-    def addPoint(self, point):
+    def addPoint(self, point) -> None:
         """
         Ajoute un point à la liste des points du croquis
 
@@ -55,7 +55,7 @@ class Sketch(object):
         """
         self.__points.append(point)
 
-    def addAttribut(self, attribute):
+    def addAttribut(self, attribute) -> None:
         """Ajoute un attribut à la liste des attributs du croquis
         
         :param attribute : l'objet Attribut
@@ -63,7 +63,7 @@ class Sketch(object):
         """
         self.attributesList.append(attribute)
 
-    def getAttributes(self):
+    def getAttributes(self) -> dict:
         attributes = {}
         for attribute in self.attributesList:
             attributes[attribute.name] = attribute.value
@@ -80,7 +80,7 @@ class Sketch(object):
         """
         return self.__points[i]
 
-    def longitude(self, i):
+    def longitude(self, i) -> float:
         """Retourne la longitude pour le point i
         
         :param i: l'index du point dans la liste
@@ -91,7 +91,7 @@ class Sketch(object):
         """
         return self.getPoint(i).longitude
 
-    def latitude(self, i):
+    def latitude(self, i) -> float:
         """Retourne la latitude pour le point i
         
         :param i: l'index du point dans la liste
@@ -124,13 +124,7 @@ class Sketch(object):
         else:
             return None
 
-    # def isClosed(self):
-    #     """Contrôle si la géométrie est fermée
-    #     rtype:boolean
-    #     """
-    #     return self.firstCoord() == self.lastCoord()
-
-    def isValid(self):
+    def isValid(self) -> bool:
         """Contrôle la validité de la géométrie
         """
         nPoints = len(self.__points)
@@ -140,71 +134,6 @@ class Sketch(object):
                 or (self.type == self.sketchType.Vide and nPoints > 0):
             return False
         return True
-
-    def encodeToXML(self, xmlDoc, ns='gml'):
-        """Transforme les objets géométriques en xml 
-        :param xmlDoc : le document xml représentant le croquis
-        :param ns: le namespace
-        
-        :return le xml au format string
-        """
-        if self.type == self.sketchType.Vide:
-            return xmlDoc
-
-        objet = ET.Element('objet', {"type": self.type.__str__()})
-        nom = ET.SubElement(objet, 'nom')
-        nom.text = self.name
-
-        # la geométrie
-        geom = ET.SubElement(objet, 'geometrie')
-        coord = ""
-
-        for pt in self.__points:
-            coord += pt.longitude.__str__() + "," + pt.latitude.__str__() + " "
-
-        coord = coord[:-1]
-        ingeom = ''
-        if self.type in [self.sketchType.Ligne, self.sketchType.Fleche]:
-            ingeom = ET.SubElement(geom, ns + ':LineString')
-        elif self.type in [self.sketchType.Point, self.sketchType.Texte]:
-            ingeom = ET.SubElement(geom, ns + ':Point')
-        elif self.type == self.sketchType.Polygone:
-            pol = ET.SubElement(geom, ns + ':Polygon')
-            outer = ET.SubElement(pol, ns + ':outerBoundaryIs')
-            ingeom = ET.SubElement(outer, ns + ':LinearRing')
-
-        coordEl = ET.SubElement(ingeom, ns + ':coordinates')
-        coordEl.text = coord
-
-        # les attributs
-        xattributs = ET.SubElement(objet, 'attributs')
-        for att in self.attributesList:
-            xatt = ET.SubElement(xattributs, 'attribut', {'name': PluginHelper.notNoneValue(att.nom)})
-            xatt.text = PluginHelper.notNoneValue(att.valeur)
-
-        xmlDoc.append(objet)
-        return xmlDoc
-
-    def getAttributsInStringFormat(self):
-        """
-        """
-        satt = ""
-        for att in self.attributesList:
-            # Anomalie Redmine #14757 : le SQL n'aime pas les %
-            attributeName = att.name.replace('%', 'pourcent')
-            attributeValue = att.value.replace('%', 'pourcent')
-            satt += PluginHelper.notNoneValue(attributeName) + "='" + PluginHelper.notNoneValue(attributeValue) + "'|"
-
-        if len(satt) > 0:
-            satt = satt[:-1]
-
-        return satt
-
-    def getCoordinatesFromPoints(self):
-        coord = ""
-        for pt in self.__points:
-            coord += str(pt.longitude) + " " + str(pt.latitude) + ","
-        return coord[:-1]
 
     def getCoordinatesFromPointsToPost(self) -> str:
         coord = ""

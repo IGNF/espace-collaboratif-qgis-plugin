@@ -20,7 +20,7 @@ class RipartLogger(object):
     logger = None
     logpath = None
 
-    def __init__(self, param=""):
+    def __init__(self, param="") -> None:
         # trouve le dossier d'installation du plugin et le nom du fichier de log (yyyymmdd_espaceco.log)
         home = expanduser("~")
         logdir = os.path.join(home, ".IGN_plugin_logs")
@@ -55,7 +55,7 @@ class RipartLogger(object):
         """
         return self.logger
 
-    def removeOldLogs(self, logdir):
+    def removeOldLogs(self, logdir) -> None:
         """Supprime les fichiers de logs plus vieux qu'un mois
         
         :param logdir: le répertoire des fichiers de log
@@ -70,5 +70,5 @@ class RipartLogger(object):
                 if f[:8] < last:
                     os.remove(os.path.join(logdir, f))
 
-    def getLogpath(self):
+    def getLogpath(self)-> str:
         return self.logpath
