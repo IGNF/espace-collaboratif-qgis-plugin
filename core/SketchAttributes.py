@@ -17,15 +17,15 @@ class SketchAttributes(object):
     name = ""
     value = ""
 
-    def __init__(self, name="", value=""):
+    def __init__(self, name="", value="") -> None:
         """
         Constructeur
         
-        :param name: le nom de l'attribut
-        :type name:string
+        :param name : le nom de l'attribut
+        :type name : str
         
-        :param value: la valeur de l'attribut
-        :type value:string
+        :param value : la valeur de l'attribut
+        :type value : str
         """
         self.name = name
 

@@ -146,5 +146,5 @@ class Sketch(object):
             geometryWKT = '{0}({1})'.format(self.typeToWKT[self.type], coord[:-2])
         return geometryWKT
 
-    def getTypeEnumInStr(self, typeEnum):
+    def getTypeEnumInStr(self, typeEnum) -> str:
         return self.typeToStr[typeEnum]

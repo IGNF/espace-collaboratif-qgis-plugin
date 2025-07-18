@@ -235,7 +235,6 @@ class ToolsReport(object):
         self.__datasForRequest.update(filesAttachments)
         datas = MultipartEncoder(fields=self.__datasForRequest)
         print(datas)
-        # responseFromServer = self.__sendRequest(filesAttachments)
         responseFromServer = self.__sendRequest(datas)
         if responseFromServer is None:
             return

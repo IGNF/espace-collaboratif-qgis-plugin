@@ -7,15 +7,25 @@ from . import Constantes as cst
 from .Wkt import Wkt
 
 
-# Classe permettant la gestion d'une base SQLite liée à un projet QGIS
 class SQLiteManager(object):
-
+    """
+        Classe permettant la gestion d'une base SQLite liée à un projet QGIS
+    """
     def __init__(self) -> None:
+        """
+        Initialisation de la gestion d'une base SQLite
+
+        """
         self.__dbPath = SQLiteManager.getBaseSqlitePath()
 
     @staticmethod
-    # Retourne le chemin vers la base SQlite
     def getBaseSqlitePath() -> str:
+        """
+        Recherche le chemin complet de la base SQLite.
+        Exemple : .../ProjetQGIS/monprojet_espaceco.sqlite
+
+        :return: retourne le chemin et le nom de la base de la base SQlite.
+        """
         projectDir = QgsProject.instance().homePath()
         fname = ntpath.basename(QgsProject.instance().fileName())
         projectFileName = fname[:fname.find(".")]
@@ -24,8 +34,13 @@ class SQLiteManager(object):
         return dbPath
 
     @staticmethod
-    # Execute un code sql en ouvrant une connexion à la table SQLite
     def executeSQL(sql) -> None:
+        """
+        Execute un code sql en ouvrant/fermant une transaction à la table SQLite
+
+        :param sql: la commande sql à lancer
+        :type sql: str
+        """
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
         cur.execute(sql)
@@ -34,8 +49,16 @@ class SQLiteManager(object):
         connection.close()
 
     @staticmethod
-    # Retourne True si la table existe, False sinon
     def isTableExist(tableName) -> bool:
+        """
+        Vérifie si une table existe dans la base SQLite.
+        Si la base SQLite n'est pas trouvée, retourne False
+
+        :param tableName: le nom de la table à rechercher
+        :type tableName: str
+
+        :return: True si la table existe, False sinon
+       """
         bFind = True
         dbPath = SQLiteManager.getBaseSqlitePath()
         # Si la base SQLite n'existe pas, on passe
@@ -51,9 +74,18 @@ class SQLiteManager(object):
         connection.close()
         return bFind
 
-    # Retourne un tuple contenant le sql de création d'une table, le type de géométrie et un booléen à True
-    # si la colonne détruit existe dans la table (uniquement pour les tables BDUni)
     def __setAttributesTableToSql(self, layer) -> ():
+        """
+        Écrit la partie SQL pour les attributs de la couche passée en paramètres.
+        En déduit le type de géométrie de la couche et si la colonne détruit doit exister dans la table
+        (uniquement pour les tables BDUni).
+
+        :param layer: une couche du projet QGIS
+        :type layer: QgsVectorLayer
+
+        :return: un tuple contenant la commande SQL, le type de géométrie et un booléen à True si c'est une couche BDUni
+        """
+
         columnDetruitExist = False
         typeGeometrie = ''
         sqlAttributes = ''
@@ -86,9 +118,15 @@ class SQLiteManager(object):
             sqlAttributes += ",{0} TEXT".format(cst.FINGERPRINT)
         return sqlAttributes, typeGeometrie, columnDetruitExist
 
-    # Ajout de la colonne géométrie à une table
-    # la variable parameters contient les informations nécessaires à la création
     def __addGeometryColumn(self, parameters) -> str:
+        """
+        Ajout de la colonne géométrie à une table
+
+        :param parameters: dictionnaire contenant le nom de la table, le nom de la géométrie,
+        le système de référence de coordonnées, le type de géométrie et un booléen à True si la couche est 3D.
+
+        :return: la partie de la commande SQL liée à la géométrie
+        """
         # Paramétrage de la colonne géométrie en 2D par défaut
         if parameters['is3D']:
             sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XYZ')".format(parameters['tableName'],
@@ -102,8 +140,15 @@ class SQLiteManager(object):
                                                                                     parameters['geometryType'])
         return sql
 
-    # Création d'une table pour une couche de la carte
     def createTableFromLayer(self, layer) -> bool:
+        """
+        Création d'une table dans la base SQLite du projet en cours pour une couche passée en paramètre.
+
+        :param layer: une couche du projet QGIS
+        :type layer: QgsVectorLayer
+
+        :return: un booléen à True, si c'est une couche BDUni, False sinon
+        """
         t = self.__setAttributesTableToSql(layer)
         if t[0] == "" and t[1] == "" and t[2] is False:
             raise Exception("SQLite : création de la table {} impossible, "
@@ -128,8 +173,16 @@ class SQLiteManager(object):
         SQLiteManager.vacuumDatabase()
         return t[2]
 
-    # Retourne un type de colonne SQLite en fonction d'un type d'attribut passé en entrée
     def __setSwitchType(self, vType) -> str:
+        """
+        Correspondance entre un type d'attribut d'une classe d'objet d'une couche QGIS et un type de colonne d'une table
+        dans SQLite
+
+        :param vType: la valeur d'un type d'attribut
+        :type vType: str
+
+        :return: retourne un type de colonne SQLite
+        """
         if vType == 'Boolean':
             return 'INTEGER'
         elif vType == 'Integer':
@@ -169,9 +222,21 @@ class SQLiteManager(object):
         else:
             return ''
 
-    # Retourne un tuple (colonnes, valeurs) avec les noms/valeurs de chaque enregistrement
-    # contenus dans une liste d'attributs
     def __setColumnsValuesForInsert(self, attributesRow, parameters, wkt) -> ():
+        """
+        Établir la partie insertion colonne/valeur et la partie géométrique d'une requête SQL.
+
+        :param attributesRow: l'ensemble des attributs d'un objet QGIS sous la forme nom/valeur
+        :type attributesRow: dict
+
+        :param parameters: les paramètres nécessaires au codage d'une commande SQL
+        :type parameters: dict
+
+        :param wkt: l'objet permettant de coder la géométrie en WKT
+        :type wkt: Wkt
+
+        :return: tuple contenant les colonnes et les valeurs pour une table SQLite
+        """
         tmpColumns = '('
         tmpValues = '('
         for column, value in attributesRow.items():
