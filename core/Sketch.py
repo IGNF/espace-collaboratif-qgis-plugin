@@ -7,8 +7,6 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 """
 from .Enum import Enum
-import xml.etree.ElementTree as ET
-from ..PluginHelper import PluginHelper
 
 
 class Sketch(object):
