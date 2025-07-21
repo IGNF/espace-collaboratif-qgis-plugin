@@ -2,6 +2,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsP
 
 
 class Wkt(object):
+    """Traitement d'une géométrie au format WKT"""
 
     def __init__(self, parameters) -> None:
         self.sridSource = parameters['sridSource']

@@ -1,8 +1,8 @@
 from ..PluginHelper import PluginHelper
 
 
-# Classe représentant un attribut d'un thème
 class ThemeAttributes(object):
+    """Classe représentant un attribut d'un thème."""
 
     def __init__(self) -> None:
         self.__name = ''
@@ -10,16 +10,17 @@ class ThemeAttributes(object):
         self.__type = None
         self.__values = None
         self.__default = None
-        # self.__inputConstraint = None
-        # self.__jsonSchema = None
-        # self.__help = None
-        # TODO voir avec Noémie la différence entre obligatoire et requis
         self.__required = False
         self.__mandatory = False
-        # self.__original = {}
         self.__switchNameToTitle = {}
 
     def setAttributes(self, data) -> None:
+        """
+        Rempli les attributs d'un thème
+
+        :param data: les données pour les attributs d'un thème
+        :type data: dict
+        """
         if PluginHelper.keyExist('name', data):
             self.__name = data['name']
         if PluginHelper.keyExist('title', data):
@@ -36,27 +37,41 @@ class ThemeAttributes(object):
             self.__mandatory = data['mandatory']
 
     def getName(self) -> str:
+        """
+        :return: le nom du thème
+        """
         return self.__name
 
     def getTitle(self) -> str:
+        """
+        :return: le titre du thème
+        """
         return self.__title
 
     def getType(self) -> None:
+        """
+        :return: le type du thème
+        """
         return self.__type
 
     def getValues(self) -> []:
+        """"""
         return self.__values
 
     def getDefault(self) -> str:
+        """"""
         return self.__default
 
     def getMandatory(self) -> bool:
+        """"""
         return self.__mandatory
 
     def getNameAndTitle(self) -> {}:
+        """"""
         return {self.__name: self.__title}
 
     def switchNameToTitle(self) -> str:
+        """"""
         if self.__title != '':
             return self.__title
         return self.__name

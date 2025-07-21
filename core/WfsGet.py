@@ -4,6 +4,7 @@ from .SQLiteManager import SQLiteManager
 
 
 class WfsGet(object):
+    """Classe implémentant une requête en HTTP GET pour une couche WFS."""
 
     def __init__(self, parameters) -> None:
         if 'urlHostEspaceCo' in parameters:
@@ -33,13 +34,18 @@ class WfsGet(object):
         self.tableid = parameters['tableid']
 
     def __initParametersGcmsGet(self, filterDelete=False) -> None:
+        """
+        Initialisation des paramètres pour une requête HTTP GET
+
+        :param filterDelete: à True, si la requête doit récupérer les objets détruits d'une couche BDUni
+        :type filterDelete: bool
+        """
         offset = 0
         maxFeatures = 5000
         # Passage des paramètres pour l'url
         self.__setService()
         self.__setRequest()
-        # GeoJSON | JSON | CSV | GML (par défaut)
-        self.__setOutputFormat('JSON')
+        self.__setOutputFormat()
         self.__setTypeName()
         if self.numrec != 0:
             self.__setNumrec()
@@ -51,7 +57,10 @@ class WfsGet(object):
         self.__setVersion('1.0.0')
 
     def __makeRequestDeletedObjects(self) -> None:
-        # il s'agit de retrouver
+        """
+        Retrouver les objets détruits d'une table BDUni pour supprimer les enregistrements dans la base SQLite
+        du projet utilisateur.
+        """
         self.__initParametersGcmsGet(True)
         while True:
             response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxy,
@@ -77,18 +86,16 @@ class WfsGet(object):
             if response['stop']:
                 break
 
-    # La requête doit être de type :
-    # https://espacecollaboratif.ign.fr/gcms/api/wfs
-    # ?service=WFS
-    # &request=GetFeature
-    # &typeName=bduni_interne_qualif_fxx:troncon_de_route
-    # &bbox=721962.3431462792,6828963.456591784,722530.9622283925,6829331.475409639
-    # &filter={%22detruit%22:false}
-    # &offset=0
-    # &maxFeatures=200
-    # &version=1.1.0
-    # http://gitlab.dockerforge.ign.fr/rpg/oukile_v2/blob/master/assets/js/oukile/saisie_controle/services/layer-service.js
     def gcms_get(self, bExtraction=False) -> ():
+        """
+        Envoie une requête GET et met à jour les tables SQLite du projet en cours.
+        NB : le dernier numéro de mise à jour (numRec) d'une table est fixé à 0 pour une table différente de la BDUni.
+
+        :param bExtraction: à True quand il s'agit d'extraire les données sur une zone de travail
+        :type bExtraction: bool
+
+        :return: le dernier numéro de mise à jour sur une table et un message de fin
+        """
         message = ""
         self.__initParametersGcmsGet()
         start = time.time()
@@ -149,9 +156,13 @@ class WfsGet(object):
         return maxNumrec, message
 
     def getMaxNumrec(self) -> int:
-        # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
-        # https://qlf-collaboratif.cegedim-hds.fr/collaboratif-4.0/gcms/api/databases/18/tables/479/max-numrec
+        """
+        Requête pour récupérer le dernier numéro de réconciliation (NumRec) d'une table BDUni. Chaque mise à jour
+        d'une table BDUni se fait par l'intermédiaire d'une surface qui entoure les objets mis à jour appelée
+        réconciliation. Chaque réconciliation porte un numéro de séquence, le NumRec.
 
+        :return: le numéro de la mise à jour.
+        """
         url = "{0}/gcms/api/databases/{1}/tables/{2}/max-numrec".format(self.urlHostEspaceCo, self.databaseid,
                                                                         self.tableid)
         response = HttpRequest.makeHttpRequest(url, proxies=self.proxy, headers=self.headers,
@@ -166,25 +177,51 @@ class WfsGet(object):
         return numrec
 
     def __setService(self) -> None:
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'service'"""
         self.parametersGcmsGet['service'] = 'WFS'
 
     def __setVersion(self, version) -> None:
+        """
+        Fixe le numéro de version d'une requête GET en complètant le dictionnaire des paramètres avec l'item 'version'
+
+        :param version: version du protocole HTTP
+        :type version: str
+        """
         self.parametersGcmsGet['version'] = version
 
     def __setRequest(self) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'request' en fixant le type
+        à 'GetFeature'
+        """
         self.parametersGcmsGet['request'] = 'GetFeature'
 
-    def __setOutputFormat(self, outputFormat) -> None:
+    def __setOutputFormat(self, outputFormat='JSON') -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'outputFormat' en fixant le format
+        de retour pour la réponse.
+
+        :param outputFormat: type de réponse attendue, par défaut JSON. Autres formats GeoJSON | CSV | GML
+        :type outputFormat: str
+        """
         self.parametersGcmsGet['outputFormat'] = outputFormat
 
     def __setTypeName(self) -> None:
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'typename'"""
         typename = "{0}:{1}".format(self.databasename, self.layerName)
         self.parametersGcmsGet['typename'] = typename
 
     def __setNumrec(self) -> None:
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'numrec'"""
         self.parametersGcmsGet['numrec'] = self.numrec
 
     def __setFilter(self, _filter) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'filter'
+
+        :param _filter: à True, permet de récupérer les objets détruits dans une table
+        :type _filter: bool
+        """
         if self.bDetruit:
             if _filter:
                 self.parametersGcmsGet['filter'] = '{"detruit":true}'
@@ -192,10 +229,23 @@ class WfsGet(object):
                 self.parametersGcmsGet['filter'] = '{"detruit":false}'
 
     def __setBBox(self) -> None:
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'bbox'"""
         self.parametersGcmsGet['bbox'] = self.bbox.boxToStringWithSrid(self.sridProject, self.sridLayer)
 
     def __setOffset(self, offset) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'offset'
+
+        :param offset: nombre de pages que retourne une requête, initialisé à 0 pour la première.
+        :type offset: int
+        """
         self.parametersGcmsGet['offset'] = offset
 
     def __setMaxFeatures(self, maxFeatures) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'maxFeatures'
+
+        :param maxFeatures: nombre d'objets maximum que retourne une réponse du serveur
+        :type maxFeatures: int
+        """
         self.parametersGcmsGet['maxFeatures'] = maxFeatures
