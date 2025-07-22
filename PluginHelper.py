@@ -507,15 +507,14 @@ class PluginHelper:
         return isWithin
 
     @staticmethod
-    def formatDate(sdate):
+    def formatDate(sdate) -> str:
         """
-        Transforme une date donnée au format dd/MM/yyyy %H:%M:%S en yyyy-MM-dd %H:%M:%S
+        Transforme une date donnée au format dd/MM/yyyy %H:%M:%S en yyyy-MM-dd %H:%M:%S.
         
-        :param sdate la date à tranformer
-        :type sdate: string
+        :param sdate: la date à transformer
+        :type sdate: str
         
-        :return date au format yyyy-MM-dd %H:%M:%S
-        :rtype: string
+        :return: date au format yyyy-MM-dd %H:%M:%S
         """
         rdate = ''
         try:
@@ -529,11 +528,13 @@ class PluginHelper:
         return rdate
 
     @staticmethod
-    def formatDatetime(dt):
-        """Retourne la date au format '%Y-%m-%d %H:%M:%S'
+    def formatDatetime(dt) -> str:
+        """Modifie la date au format '%Y-%m-%d %H:%M:%S'
         
-        :param dt : la date
+        :param dt: la date
         :type dt: datetime
+
+        :return: la date transformée par la fonction strftime
         """
         rdate = dt.strftime('%Y-%m-%d %H:%M:%S')
         return rdate

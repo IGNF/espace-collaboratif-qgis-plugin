@@ -61,7 +61,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             else:
                 item.setCheckState(QtCore.Qt.CheckState.Checked)
 
-    def __checkAllBoxesFondsGeoservices(self):
+    def __checkAllBoxesFondsGeoservices(self) -> None:
         for i in range(self.tableWidgetFondsGeoservices.rowCount()):
             item = self.tableWidgetFondsGeoservices.item(i, 2)
             if item.checkState() == QtCore.Qt.CheckState.Checked:
