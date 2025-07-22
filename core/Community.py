@@ -5,26 +5,28 @@ from .Theme import Theme
 from ..PluginHelper import PluginHelper
 
 
-# Classe permettant de récupérer la description d'une communauté, d'une couche cartographique
 class Community(object):
+    """Classe permettant de récupérer la description d'une communauté et de ses couches cartographiques."""
 
     def __init__(self, params) -> None:
         self.__name = ''
         self.__id = -1
         self.__userId = -1
         self.__emprises = []
-        # self.__role = ''
         self.__theme = []
         self.__active = False
         self.__logo = ''
-        # self.__description = ''
-        # self.__date = None
-        # self.__query = Query(params['url'], params['login'], params['pwd'], params['proxy'])
         self.__tokenType = params['tokentype']
         self.__tokenAccess = params['tokenaccess']
         self.__query = Query(params['url'], params['proxy'])
 
     def getDatas(self, data) -> None:
+        """
+        Remplit les attributs généraux pour une communauté (un groupe).
+
+        :param data: les données liées à une communauté
+        :type data: dict
+        """
         if len(data) == 0:
             return
         if PluginHelper.keyExist('community_name', data):
@@ -39,6 +41,12 @@ class Community(object):
             self.__getDataTheme(data['profile'])
 
     def __getDataTheme(self, datas) -> None:
+        """
+        Initialiser le thème d'une communauté en chargeant ses caractéristiques.
+
+        :param datas: la liste des attributs d'une communauté, notamment le thème
+        :type: list
+        """
         if len(datas) == 0:
             return
         for data in datas:
@@ -57,34 +65,18 @@ class Community(object):
     def getId(self) -> int:
         return self.__id
 
-    def getUserId(self) -> int:
-        return self.__userId
-
     def getEmprises(self) -> []:
         return self.__emprises
 
     def getTheme(self) -> []:
         return self.__theme
 
-    def getActive(self) -> bool:
-        return self.__active
-
     def getLogo(self) -> str:
         return self.__logo
 
-    def getProfil(self, datas):
+    def getProfil(self, datas) -> str:
         # TODO à compléter suivant réponse ligne 38 dans seeReport.py
         return 'utilisateur inconnu'
-
-    # Récupère les informations d'une communauté
-    def getUserProfil(self, community_id) -> None:
-        self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
-        self.__query.setPartOfUrl("gcms/api/communities/{}".format(community_id))
-        response = self.__query.simple()
-        if response is None:
-            return
-        data = response.json()
-        self.getProfil(data)
 
     # Récupère les couches associées à une communauté
     def extractLayers(self, communityId, page, limit) -> []:
@@ -135,7 +127,7 @@ class Community(object):
         return layers
 
     # Récupère les informations d'une table de la base de données correspondant à une couche cartographique
-    def __getDataLayerFromTable(self, layer):
+    def __getDataLayerFromTable(self, layer) -> None:
         self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseid, layer.tableid))
         response = self.__query.simple()
@@ -144,7 +136,7 @@ class Community(object):
         data = response.json()
         self.__getDataFromTable(data, layer)
 
-    def __getDataFromTable(self, data, layer):
+    def __getDataFromTable(self, data, layer) -> None:
         if PluginHelper.keyExist('name', data):
             layer.name = data['name']
             layer.tablename = data['name']
@@ -185,10 +177,14 @@ class Community(object):
                     layer.geometryType = column['type']
                 if PluginHelper.keyExist('srid', column):
                     layer.srid = column['srid']
-        # layer.styles = data['styles']
 
-    # Récupère les informations d'un géoservice
-    def __getDataLayerFromGeoservice(self, layer, geoservice):
+    def __getDataLayerFromGeoservice(self, layer, geoservice) -> None:
+        """
+        Lance une requête GET pour récupérer les informations liées à une couche geoservice.
+
+        :param layer: une couche geoservice du projet QGIS
+        :type layer: Layer
+        """
         self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/geoservices/{}".format(geoservice['id']))
         response = self.__query.simple()
@@ -197,10 +193,16 @@ class Community(object):
         data = response.json()
         self.__getDataFromGeoservice(data, layer)
 
-    def __getDataFromGeoservice(self, data, layer):
-        # il faut copier le nom de la couche pour récupérer les données
-        # de la layer dans la boite "Charger le guichet"
-        print(data)
+    def __getDataFromGeoservice(self, data, layer) -> None:
+        """
+        Initialise la couche geoservice.
+
+        :param data: les informations sur le geoservice
+        :type data: dict
+
+        :param layer: la couche geoservice dans QGIS
+        :type layer: Layer
+        """
         if PluginHelper.keyExist('title', data):
             layer.name = data['title']
         if PluginHelper.keyExist('url', data):
@@ -208,9 +210,3 @@ class Community(object):
         if PluginHelper.keyExist('layers', data):
             layer.layers = data['layers']
         layer.geoservice.update(data)
-
-    def switchNameToTitleFromThemeAttributes(self, nameAttribute) -> str:
-        title = ''
-        for theme in self.__theme:
-            title = theme.getSwitchAttributeNameToTitle(nameAttribute)
-        return title

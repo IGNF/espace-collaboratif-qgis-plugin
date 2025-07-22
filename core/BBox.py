@@ -4,8 +4,8 @@ from . import Constantes as cst
 from .Box import Box
 
 
-# Classe représentant une bounding box
 class BBox(object):
+    """Classe représentant une bounding box."""
 
     def __init__(self, context) -> None:
         self.__context = context

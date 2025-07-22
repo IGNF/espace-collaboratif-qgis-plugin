@@ -24,9 +24,9 @@ class Wkt(object):
 
     def toGetGeometry(self, txtGeometry) -> str:
         """
-        Transforme la géométrie au format texte en une géométrie WKT en changeant de système de coordonnées
+        Transforme la géométrie au format texte en une géométrie WKT en changeant de système de coordonnées.
 
-        :param txtGeometry: la géométri d'un objet sous format texte
+        :param txtGeometry: la géométrie d'un objet sous format texte
         :type txtGeometry: str
 
         :return: la partie géométrie d'une requête SQL en vue d'une insertion dans une table SQLite
@@ -50,14 +50,14 @@ class Wkt(object):
 
     def toPostGeometry(self, qgsGeometryObject, is3D, bBDUni) -> {}:
         """
-        Transformation du système de coordonnées et vérification du type géométrique entre QGIS et le serveur
+        Transformation du système de coordonnées et vérification du type géométrique entre QGIS et le serveur.
 
         Si nécessaire transformation du type comme par exemple : les équipements de transport qui sont
         de type géométrique MULTIPOLYGON Z sur le serveur de l'espace collaboratif alors que QGIS renvoie
-        un type POLYGON Z
+        un type POLYGON Z.
 
         Cas particulier de la BDUni : les Z sont codés à -1000 en cas de création d'objet, ajout de point, déplacement.
-        Voir ticket http://sd-redmine.ign.fr/issues/15746
+        Voir ticket http://sd-redmine.ign.fr/issues/15746.
 
         :param qgsGeometryObject: la géométrie QGIS d'un objet de la carte
         :type qgsGeometryObject: QgsGeometry
@@ -68,7 +68,7 @@ class Wkt(object):
         :param bBDUni: à True si la couche appartient à la BDUni
         :type bBDUni: bool
 
-        :return: dict avec comme clé : le nom de la géométrie et valeur : la géométrie de l'objet au format WKT
+        :return: clé : le nom de la géométrie, valeur : la géométrie de l'objet au format WKT
         """
         serverGeometryType = self.geometryType
         serverGeometryTypePost = serverGeometryType

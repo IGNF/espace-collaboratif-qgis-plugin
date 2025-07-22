@@ -2,21 +2,25 @@ from .ThemeAttributes import ThemeAttributes
 from ..PluginHelper import PluginHelper
 
 
-# Classe représentant un thème
 class Theme(object):
+    """Classe représentant un thème"""
 
     def __init__(self, communityId) -> None:
         self.__communityId = communityId
         self.__name = ''
         self.__global = False
-        # TODO -> Noémie ce help est-il utile ?
-        # self.__help = ''
         self.__database = ''
         self.__featureType = ''
         self.__attributes = []
         self.__switchNameToTitle = {}
 
     def setTheme(self, data) -> None:
+        """
+        Remplit les attributs généraux d'un thème.
+
+        :param data: les données générales d'un thème
+        :type data: dict
+        """
         if type(data) is str:
             self.__name = data
         else:
@@ -32,21 +36,44 @@ class Theme(object):
                 self.__setDataAttributes(data['attributes'])
 
     def getCommunityId(self) -> int:
+        """
+        :return: l'identifiant du groupe auquel appartient l'utilisateur
+        """
         return self.__communityId
 
     def getName(self) -> str:
+        """
+        :return: le nom du thème
+        """
         return self.__name
 
     def getAttributes(self) -> []:
+        """
+        :return: les attributs constituant le thème
+        """
         return self.__attributes
 
     def getSwitchAttributeNameToTitle(self, name) -> str:
+        """
+        Retrouve le titre du thème en fonction de son nom.
+
+        :param name: le nom du thème
+        :type name: str
+
+        :return: le titre du thème
+        """
         title = ''
         if name in self.__switchNameToTitle:
             title = self.__switchNameToTitle[name]
         return title
 
     def __setDataAttributes(self, datas) -> None:
+        """
+        Remplit les attributs d'un thème.
+
+        :param datas: liste des attributs
+        :type datas: list
+        """
         if len(datas) == 0:
             return
         for data in datas:

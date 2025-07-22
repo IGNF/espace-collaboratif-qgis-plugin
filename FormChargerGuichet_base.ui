@@ -236,6 +236,32 @@
     <string/>
    </property>
   </widget>
+  <widget class="QPushButton" name="pushButton_checkAllBoxes_MonGuichet">
+   <property name="geometry">
+    <rect>
+     <x>650</x>
+     <y>30</y>
+     <width>93</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Tout cocher</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_checkAllBoxes_FondsGeoservices">
+   <property name="geometry">
+    <rect>
+     <x>650</x>
+     <y>360</y>
+     <width>93</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Tout cocher</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

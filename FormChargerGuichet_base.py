@@ -96,6 +96,12 @@ class Ui_DialogChargerGuichet(object):
         self.labelGroupeActif.setFont(font)
         self.labelGroupeActif.setText("")
         self.labelGroupeActif.setObjectName("labelGroupeActif")
+        self.pushButton_checkAllBoxes_MonGuichet = QtWidgets.QPushButton(DialogChargerGuichet)
+        self.pushButton_checkAllBoxes_MonGuichet.setGeometry(QtCore.QRect(650, 30, 93, 28))
+        self.pushButton_checkAllBoxes_MonGuichet.setObjectName("pushButton_checkAllBoxes_MonGuichet")
+        self.pushButton_checkAllBoxes_FondsGeoservices = QtWidgets.QPushButton(DialogChargerGuichet)
+        self.pushButton_checkAllBoxes_FondsGeoservices.setGeometry(QtCore.QRect(650, 360, 93, 28))
+        self.pushButton_checkAllBoxes_FondsGeoservices.setObjectName("pushButton_checkAllBoxes_FondsGeoservices")
 
         self.retranslateUi(DialogChargerGuichet)
         QtCore.QMetaObject.connectSlotsByName(DialogChargerGuichet)
@@ -105,3 +111,5 @@ class Ui_DialogChargerGuichet(object):
         DialogChargerGuichet.setWindowTitle(_translate("DialogChargerGuichet", "Charger les couches de mon groupe"))
         self.labelMonGuichet.setText(_translate("DialogChargerGuichet", "Mon guichet"))
         self.labelFondsGeoservices.setText(_translate("DialogChargerGuichet", "Fonds Géoservices"))
+        self.pushButton_checkAllBoxes_MonGuichet.setText(_translate("DialogChargerGuichet", "Tout cocher"))
+        self.pushButton_checkAllBoxes_FondsGeoservices.setText(_translate("DialogChargerGuichet", "Tout cocher"))

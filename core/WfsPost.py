@@ -93,7 +93,7 @@ class WfsPost(object):
 
     def __setGeometries(self, changedGeometries, bBDUni) -> {}:
         """
-        Transformation d'une liste de géométries et qui doivent être envoyées sur le serveur.
+        Transformation d'une liste de géométries pour être envoyées sur le serveur.
 
         :param changedGeometries: géométries modifiées par l'utilisateur
         :type changedGeometries: dict
@@ -158,7 +158,7 @@ class WfsPost(object):
         :param fingerprint: empreinte géométrique d'un objet BDUni
         :type fingerprint: str
 
-        :return: un dictionnaire cle/valeur
+        :return: un dictionnaire clé/valeur
         """
         return {cst.FINGERPRINT: fingerprint}
 
@@ -262,7 +262,7 @@ class WfsPost(object):
     def __synchronize(self) -> int:
         """
         Lance la mise à jour (GET) des couches QGIS après l'envoi sur les tables serveurs (POST) des modifications.
-        NB : pour une table standard (non BDUni), la synchronisation passe SQLite en vidant les tables et en extrayant
+        NB : pour une table standard (non BDUni), la synchronisation vide les tables SQLite du projet et extrait
         de nouveau l'ensemble des objets intersectant la boite englobante de la zone de travail.
 
         :return: le dernier numéro de mises à jour.
@@ -311,7 +311,7 @@ class WfsPost(object):
         :param bNormalWfsPost: à False pour éviter un plantage de QGIS. Il tente de vider un editBuffer qu'il a déjà vidé lors de la sauvegarde (sauvegarde qui lance la synchronisation)
         :type bNormalWfsPost: bool
 
-        :return: la statut de la transaction et le message de fin de transaction
+        :return: le statut de la transaction et le message de fin de transaction
         """
         # Ecriture du rapport de fin de synchronisation
         self.__transactionReporting += "<br/>Couche {0}\n".format(currentLayer)
@@ -371,7 +371,7 @@ class WfsPost(object):
 
     def __setEndReporting(self, endTransactionMessage) -> str:
         """
-        En fonction du status de la transaction, formate le message de fin pour information à l'utilisateur.
+        En fonction du statut de la transaction, formate le message de fin pour information à l'utilisateur.
         NB : le message apparait en rouge, si la transaction a échoué.
 
         :param endTransactionMessage: le message retourné par une transaction
@@ -394,7 +394,7 @@ class WfsPost(object):
         """
         Initialisation d'une action pour la mise à jour d'un objet d'une base serveur.
 
-        :param state: état de l'action 'Insert', 'Delete', 'Update'
+        :param state: état de l'action, peut être : 'Insert', 'Delete', 'Update'
         :type state: str
 
         :return: une action avec son nom de table, son état et ses données (dictionnaire initialisé)
@@ -488,12 +488,15 @@ class WfsPost(object):
     def __pushChangedAttributesAndGeometries(self, changedAttributeValues, changedGeometries, bBDUni) -> None:
         """
         Complète le dictionnaire général des actions (__datasForPost) par une liste d'actions 'Update'
-        sur la mise à jour d'attributs et de géométries.
+        sur la mise à jour d'attributs et de géométries. Attention, un objet peut avoir une double modification
+        géométrique et attributaire. Il se retrouve dans les deux dictionnaires changedAttributeValues
+        et changedGeometries. Quand les deux actions sont créées, il faut donc supprimer les modifications déjà traitées
+        dans les deux dictionnaires.
 
-        :param changedAttributeValues:
+        :param changedAttributeValues: contient l'id des objets et la liste de leurs attributs modifiés
         :type changedAttributeValues: dict
 
-        :param changedGeometries:
+        :param changedGeometries: contient l'id des objets et leurs géométries modifiées
         :type changedGeometries: dict
 
         :param bBDUni: à True si couche BDUni

@@ -47,8 +47,27 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.__save)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__cancel)
 
+        self.pushButton_checkAllBoxes_MonGuichet.clicked.connect(self.__checkAllBoxesMonGuichet)
+        self.pushButton_checkAllBoxes_FondsGeoservices.clicked.connect(self.__checkAllBoxesFondsGeoservices)
+
         self.labelGroupeActif.setText("Communauté active : {}".format(context.getUserCommunity().getName()))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  # #ff0000
+
+    def __checkAllBoxesMonGuichet(self) -> None:
+        for i in range(self.tableWidgetMonGuichet.rowCount()):
+            item = self.tableWidgetMonGuichet.item(i, 2)
+            if item.checkState() == QtCore.Qt.CheckState.Checked:
+                item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+            else:
+                item.setCheckState(QtCore.Qt.CheckState.Checked)
+
+    def __checkAllBoxesFondsGeoservices(self):
+        for i in range(self.tableWidgetFondsGeoservices.rowCount()):
+            item = self.tableWidgetFondsGeoservices.item(i, 2)
+            if item.checkState() == QtCore.Qt.CheckState.Checked:
+                item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+            else:
+                item.setCheckState(QtCore.Qt.CheckState.Checked)
 
     def __setColonneCharger(self, tableWidget, row, column, check=False) -> None:
         itemCheckBox = QtWidgets.QTableWidgetItem()

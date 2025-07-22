@@ -1071,9 +1071,9 @@ class Contexte(object):
 
     def getCroquisForRemark(self, noSignalement, croquisSelFeats):
         """
-        Retourne les croquis associés à une remarque
+        Retourne les croquis associés à un signalement
 
-        :param noSignalement : le no de la remarque
+        :param noSignalement : l'identifiant du signalement
         :type noSignalement : int
 
         :param croquisSelFeats : dictionnaire contenant les croquis
@@ -1081,7 +1081,7 @@ class Contexte(object):
         :type croquisSelFeats : dictionnary
 
         :return : dictionnaire contenant les croquis
-        :rtype : dictionnary
+        :rtype : list
         """
         crlayers = PluginHelper.sketchLayers
         self.conn = spatialite_connect(self.dbPath)
@@ -1099,7 +1099,7 @@ class Contexte(object):
 
         return croquisSelFeats
 
-    def getInfosLayers(self):
+    def getInfosLayers(self) -> ():
         infosLayers = []
 
         if self.client is None:
@@ -1129,12 +1129,17 @@ class Contexte(object):
 
         return "Accepted", infosLayers, profilUser
 
-    def getUriDatabaseSqlite(self):
+    def getUriDatabaseSqlite(self) -> QgsDataSourceUri:
+        """
+        Initialise la structure de connexion à la base SQLite.
+
+        :return: la source de connexion
+        """
         uri = QgsDataSourceUri(cst.EPSG4326)
         uri.setDatabase(SQLiteManager.getBaseSqlitePath())
         return uri
 
-    def connexionFeatureTypeJson(self, layerUrl, layerName):
+    def connexionFeatureTypeJson(self, layerUrl, layerName) -> dict:
         if '&' not in layerUrl:
             raise Exception(PluginHelper.notNoneValue(
                 "{} : l'url fournie ({}) ne permet pas de déterminer le nom de la base données".format(

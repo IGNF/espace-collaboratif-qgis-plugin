@@ -35,7 +35,7 @@ class WfsGet(object):
 
     def __initParametersGcmsGet(self, filterDelete=False) -> None:
         """
-        Initialisation des paramètres pour une requête HTTP GET
+        Initialisation des paramètres pour une requête HTTP GET.
 
         :param filterDelete: à True, si la requête doit récupérer les objets détruits d'une couche BDUni
         :type filterDelete: bool
@@ -177,12 +177,12 @@ class WfsGet(object):
         return numrec
 
     def __setService(self) -> None:
-        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'service'"""
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'service'."""
         self.parametersGcmsGet['service'] = 'WFS'
 
     def __setVersion(self, version) -> None:
         """
-        Fixe le numéro de version d'une requête GET en complètant le dictionnaire des paramètres avec l'item 'version'
+        Fixe le numéro de version d'une requête GET en complètant le dictionnaire des paramètres avec l'item 'version'.
 
         :param version: version du protocole HTTP
         :type version: str
@@ -192,7 +192,7 @@ class WfsGet(object):
     def __setRequest(self) -> None:
         """
         Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'request' en fixant le type
-        à 'GetFeature'
+        à 'GetFeature'.
         """
         self.parametersGcmsGet['request'] = 'GetFeature'
 
@@ -207,17 +207,17 @@ class WfsGet(object):
         self.parametersGcmsGet['outputFormat'] = outputFormat
 
     def __setTypeName(self) -> None:
-        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'typename'"""
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'typename'."""
         typename = "{0}:{1}".format(self.databasename, self.layerName)
         self.parametersGcmsGet['typename'] = typename
 
     def __setNumrec(self) -> None:
-        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'numrec'"""
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'numrec'."""
         self.parametersGcmsGet['numrec'] = self.numrec
 
     def __setFilter(self, _filter) -> None:
         """
-        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'filter'
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'filter'.
 
         :param _filter: à True, permet de récupérer les objets détruits dans une table
         :type _filter: bool
@@ -229,7 +229,7 @@ class WfsGet(object):
                 self.parametersGcmsGet['filter'] = '{"detruit":false}'
 
     def __setBBox(self) -> None:
-        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'bbox'"""
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'bbox'."""
         self.parametersGcmsGet['bbox'] = self.bbox.boxToStringWithSrid(self.sridProject, self.sridLayer)
 
     def __setOffset(self, offset) -> None:
@@ -243,7 +243,7 @@ class WfsGet(object):
 
     def __setMaxFeatures(self, maxFeatures) -> None:
         """
-        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'maxFeatures'
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'maxFeatures'.
 
         :param maxFeatures: nombre d'objets maximum que retourne une réponse du serveur
         :type maxFeatures: int
