@@ -1,6 +1,6 @@
 from ..ToolsReport import ToolsReport
 from PyQt5.QtGui import QColor
-from qgis._core import QgsSettings
+from qgis._core import QgsSettings, QgsPointXY
 from qgis._gui import QgsVertexMarker
 from qgis.gui import QgsMapTool
 from PyQt5.QtCore import Qt
@@ -25,10 +25,9 @@ class MapToolsReport(QgsMapTool):
             clipboard = QApplication.clipboard()
             self.__geometrySingleReport = 'POINT({0} {1})'.format(pt.x(), pt.y())
             clipboard.setText(self.__geometrySingleReport)
-            print(clipboard.text())
         self.__canvas.unsetMapTool(self)
 
-    def snappoint(self, qpoint):
+    def snappoint(self, qpoint) -> QgsPointXY:
         point = None
         if self.__vertex is None:
             point = self.toMapCoordinates(qpoint)

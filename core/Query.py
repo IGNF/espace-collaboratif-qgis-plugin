@@ -21,7 +21,7 @@ class Query(object):
     def setHeaders(self, tokenType, tokenAccess) -> None:
         """
         Fixe l'entête d'autorisation avec les tokens d'authentication pour une connexion sécurisée
-        à l'espace collaboratif
+        à l'espace collaboratif.
 
         :param tokenType: jeton sur le type de compte
         :type tokenType: str
@@ -117,9 +117,9 @@ class Query(object):
 
     def simple(self) -> Response:
         """
-        Requête HTTP simple, envoie une exception si le status de la requête est différent de 200.
+        Requête HTTP simple.
 
-        :return: une réponse HTTP, si la requête a abouti (code 200)
+        :return: la réponse HTTP ou une exception si le status de la requête est différent de 200.
         """
         httpRequest = HttpRequest(self.__url, self.__headers, self.__proxy)
         response = httpRequest.getResponse(self.__partOfUrl, None)

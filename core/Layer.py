@@ -10,10 +10,18 @@ version 4.0.1, 15/12/2020
 
 class Layer(object):
     """
-    Classe représentant les caractéristiques d'une couche
+    Classe représentant les caractéristiques (attributs et symbologie) d'une couche d'un projet QGIS.
+     - Les attributs généraux sont remplis la fonction Community.__getLayers.
+     - Les attributs spécifiques à une couche WFS par la fonction Community.__getDataLayerFromTable.
+     - Les attributs spécifiques à une couche WMS par la fonction Community.__getDataLayerFromGeoservice.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Définit une couche à partir de ses attributs.
+        Cette classe servira à créer une couche de type GuichetVectorLayer dérivée de la classe QgsVectorLayer.
+        """
+
         # Attributs remplis avec gcms/api/communities/{community_id}/layers
         self.url = None
         self.databaseid = 0
@@ -30,6 +38,7 @@ class Layer(object):
         self.snapto = None
         self.type = 'feature-type'
         self.visibility = True
+
         # Attributs remplis avec gcms/api/databases/{database_id}/tables/{table_id}
         self.name = ''
         self.description = ""
@@ -48,10 +57,12 @@ class Layer(object):
         self.style = {}
         self.srid = -1
 
-    '''
-        Pour l'item 'style', récupération de la symbologie d'une couche
-    '''
-    def getListOfValuesFromItemStyle(self):
+    def getListOfValuesFromItemStyle(self) -> {}:
+        """
+        Récupération de la symbologie d'une couche pour l'item 'style'.
+
+        :return: la liste des styles à appliquer à la couche
+        """
         listOfValues = {}
 
         # La couche n'a pas de style défini, QGIS applique une symbologie par défaut
