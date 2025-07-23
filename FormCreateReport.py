@@ -158,6 +158,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     def __displayThemesForCommunity(self, community):
         self.__themesList = community.getTheme()
+        print(community.getTheme()[0])
         if len(self.__themesList) == 0:
             return
         for theme in self.__themesList:

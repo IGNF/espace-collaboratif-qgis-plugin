@@ -1099,36 +1099,6 @@ class Contexte(object):
 
         return croquisSelFeats
 
-    def getInfosLayers(self) -> ():
-        infosLayers = []
-
-        if self.client is None:
-            connResult = self.getConnexionEspaceCollaboratifWithKeycloak(False)
-            if connResult == -1:
-                # la connexion a échoué ou l'utilisateur a cliqué sur Annuler
-                return "Rejected", infosLayers
-
-        if self.client is None:
-            return "Rejected", infosLayers
-
-        profilUser = self.client.getProfil()
-        print("Profil : {0}, {1}".format(profilUser.geogroup.getId(),
-                                         profilUser.geogroup.getName))
-
-        if len(profilUser.infosGeogroups) == 0:
-            return "Rejected", infosLayers
-
-        for infoGeogroup in profilUser.infosGeogroups:
-            if infoGeogroup.group.getId() != profilUser.geogroup.getId():
-                continue
-
-            print("Liste des couches du profil utilisateur")
-            for layersAll in infoGeogroup.layers:
-                print(layersAll.nom)
-                infosLayers.append(layersAll)
-
-        return "Accepted", infosLayers, profilUser
-
     def getUriDatabaseSqlite(self) -> QgsDataSourceUri:
         """
         Initialise la structure de connexion à la base SQLite.

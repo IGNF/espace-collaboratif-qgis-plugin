@@ -60,26 +60,53 @@ class Community(object):
                     self.__theme.append(theme)
 
     def getName(self) -> str:
+        """
+        :return: le nom du groupe
+        """
         return self.__name
 
     def getId(self) -> int:
+        """
+        :return: l'identifiant du groupe
+        """
         return self.__id
 
     def getEmprises(self) -> []:
+        """
+        L'emprise serveur est la partie du territoire sur laquelle l'utilisateur a les droits d'écriture.
+        Cette emprise peut-être FR : la métropole, 38185 : insee de commune ou une autre désignation.
+
+        :return: l'emprise serveur du groupe, variable égale à 0 dans l'immédiat.
+        """
         return self.__emprises
 
     def getTheme(self) -> []:
+        """
+        :return: le thème d'un signalement
+        """
         return self.__theme
 
     def getLogo(self) -> str:
+        """
+        :return: le logo du groupe
+        """
         return self.__logo
 
-    def getProfil(self, datas) -> str:
-        # TODO à compléter suivant réponse ligne 38 dans seeReport.py
-        return 'utilisateur inconnu'
-
-    # Récupère les couches associées à une communauté
     def extractLayers(self, communityId, page, limit) -> []:
+        """
+        À partir d'un identifiant de groupe, extrait par une requête HTTP GET, les couches appartenant à ce groupe.
+
+        :param communityId: l'identifiant d'un groupe
+        :type communityId: int
+
+        :param page: numéro initial de page
+        :type page: int
+
+        :param limit: nombre d'objets par page
+        :type limit: int
+
+        :return: la liste des couches appartenant au groupe de l'utilisateur
+        """
         self.__query.setPage(page)
         self.__query.setLimit(limit)
         self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
@@ -90,10 +117,17 @@ class Community(object):
         layers = self.__getLayers(data)
         return layers
 
-    # Récupère les infos d'une couche (table ou geoservice) et retourne une liste de toutes les couches
     def __getLayers(self, data) -> []:
+        """
+        Récupère les infos générales (symbologie par exemple) et spécifiques WFS : __getDataLayerFromTable et WMS :
+        __getDataLayerFromGeoservice pour l'ensemble des couches d'un groupe.
+
+        :param data: les données d'une couche
+        :type data: dict
+
+        :return: la liste des couches disponibles pour un groupe
+        """
         layers = []
-        print(data)
         for d in data:
             layer = Layer()
             if PluginHelper.keyExist('visibility', d):
@@ -117,7 +151,6 @@ class Community(object):
             if PluginHelper.keyExist('table', d):
                 layer.tableid = d['table']
             if PluginHelper.keyExist('type', d):
-                print("__getLayers type : {}".format(d['type']))
                 if d['type'] == cst.FEATURE_TYPE:
                     self.__getDataLayerFromTable(layer)
                 if d['type'] == cst.GEOSERVICE:
@@ -126,8 +159,15 @@ class Community(object):
             layers.append(layer)
         return layers
 
-    # Récupère les informations d'une table de la base de données correspondant à une couche cartographique
+    #
     def __getDataLayerFromTable(self, layer) -> None:
+        """
+        Récupère les informations d'une table de la base de données correspondant à une couche cartographique (WFS)
+        par une requête HTTP GET.
+
+        :param layer: couche avec les infos permettant la recherche de ses informations spécifiques
+        :type layer: Layer
+        """
         self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseid, layer.tableid))
         response = self.__query.simple()
@@ -137,6 +177,15 @@ class Community(object):
         self.__getDataFromTable(data, layer)
 
     def __getDataFromTable(self, data, layer) -> None:
+        """
+        Initialisation des caractéristiques d'une couche (layer) avec les données en entrée (data).
+
+        :param data: les données retournées par la fonction __getDataLayerFromTable
+        :type: dict
+
+        :param layer: la couche cartographique (WFS) dans QGIS
+        :type layer: Layer
+        """
         if PluginHelper.keyExist('name', data):
             layer.name = data['name']
             layer.tablename = data['name']
@@ -195,7 +244,7 @@ class Community(object):
 
     def __getDataFromGeoservice(self, data, layer) -> None:
         """
-        Initialise la couche geoservice.
+        Initialise des caractéristiques d'une couche geoservice.
 
         :param data: les informations sur le geoservice
         :type data: dict

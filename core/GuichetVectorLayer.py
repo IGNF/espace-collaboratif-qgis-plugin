@@ -48,53 +48,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         expression = self.conditionFactory.create_condition(condition)
         return expression.toSQL()
 
-    '''
-        Récupère la couleur en fonction du type de géométrie
-    '''
-    # TODO à supprimer
-    # def getColorFromType(self, data):
-    #     if data['type'] == 'line':
-    #         return data['strokeColor']
-    #     if data['type'] == 'polygon':
-    #         return data['fillColor']
-    #     # La symbologie d'un point dans l'espace collaboratif est un symbole.
-    #     # Pour l'instant, un point se voit attribuer une couleur aléatoire
-    #     if data['type'] == 'point':
-    #         # il faudrait retourner data['externalGraphic']
-    #         # et puis peut-être
-    #         # "graphicWidth": 25,
-    #         # "graphicHeight": 25,
-    #         # "graphicOpacity": 1,']
-    #         # random color
-    #         random_color_point = f"#{random.randrange(0x1000000):06x}"
-    #         return random_color_point
-    #     return ""
-
-    '''
-        Récupère l'opacité de la couche
-    '''
-    # TODO à supprimer
-    # def getOpacity(self, data):
-    #     if data['type'] == 'line':
-    #         return data['strokeOpacity']
-    #     if data['type'] == 'polygon':
-    #         return data['fillOpacity']
-    #     if data['type'] == 'point':
-    #         # fully opaque
-    #         return 1
-    #     return 1
-
-    '''
-        Récupère la taille du symbole
-    '''
-    # TODO à supprimer
-    # def getWidth(self, data):
-    #     if data['type'] == 'line':
-    #         return str(data['strokeWidth'])
-    #     if data['type'] == 'point':
-    #         return 10
-    #     return ''
-
     def __setPointStyle(self, fillColor, strokeColor):
         return {'angle': '0', 'color': fillColor, 'horizontal_anchor_point': '1',
                 'joinstyle': 'round', 'name': 'circle', 'offset': '0,0',

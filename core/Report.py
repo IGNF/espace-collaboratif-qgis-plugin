@@ -7,6 +7,9 @@ from ..PluginHelper import PluginHelper
 
 
 class Report(object):
+    """
+    Classe implémentant un signalement avec ses attributs
+    """
     # Initialisation des variables utiles à un signalement
     __id = -1
     __author = ''
@@ -28,6 +31,7 @@ class Report(object):
     __geometry = ''
 
     def __init__(self, urlHostEspaceCo, data) -> None:
+
         self.__logger = RipartLogger("Report").getRipartLogger()
         self.__urlHostEspaceCo = urlHostEspaceCo
         if PluginHelper.keyExist('id', data):
@@ -108,7 +112,7 @@ class Report(object):
             'Date_MAJ': self.getStrDateMaj(),
             'Date_validation': self.getStrDateValidation(),
             # TODO faut-il le name ou le title de l'attribut dans SQLite (pour l'instant j'ai pris le name)
-            'Thèmes': self.getStrThemeInJson(),
+            'Thèmes': self.getStrThemeInReformattedString(),
             'Statut': self.__statut,
             'Message': self.__message,
             'Réponses': self.getStrReplies().replace('\n', ' '),
@@ -256,7 +260,14 @@ class Report(object):
         # }]
         return self.__theme
 
-    def getStrThemeInJson(self) -> str:
+    def getStrThemeInReformattedString(self) -> str:
+        """
+        Le thème d'un signalement est remanié sous la forme :
+        'test levé(Revêtu=1,date=2025-07-17,Nb de voies=12,Largeur=5612)'
+        pour le remplissage de la colonne 'Thèmes' de la base SQLite du projet en cours.
+
+        :return: le thème remanié
+        """
         strThemes = ""
         for t in self.__theme:
             # le nom du thème
@@ -281,6 +292,12 @@ class Report(object):
         return strThemes[:-1]
 
     def getStrTheme(self) -> str:
+        """
+        Mise en page de l'attribut 'Thème' d'un signalement en vue de son affichage lorsque l'utilisateur
+        clique sur 'Voir le signalement'
+
+        :return: le thème mis en forme
+        """
         strThemes = ""
         for t in self.__theme:
             # le nom du thème
@@ -296,8 +313,12 @@ class Report(object):
                     strThemes += " {} : {}\n".format(key, PluginHelper.notNoneValue(value))
         return strThemes
 
-    # Concatène les réponses existantes d'un signalement
     def getStrReplies(self) -> str:
+        """
+        Concatène les réponses existantes (__replies) pour un signalement.
+
+        :return: les réponses assemblées.
+        """
         strReplies = ''
         if self.__replies is None or len(self.__replies) == 0:
             return strReplies
@@ -326,7 +347,14 @@ class Report(object):
                     strReplies += "\n{}\n".format(replie['content'])
         return strReplies[:-1]
 
-    # Crée de toutes pieces une url d'accès au signalement
     def __setUrl(self, idReport) -> str:
+        """
+        Crée une route HTTP pour accéder aux informations d'un signalement.
+
+        :param idReport: l'identifiant du signalement
+        :type idReport: str
+
+        :return: l'url d'accès au signalement
+        """
         # TODO -> Noémie faut-il demander l'ajout de cette url dans la réponse de la nouvelle API ?
         return "{0}/gcms/api/reports/{1}".format(self.__urlHostEspaceCo, idReport)
