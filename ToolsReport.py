@@ -30,6 +30,7 @@ class ToolsReport(object):
         self.__progress = None
         self.__progressVal = 0
         self.__datasForRequest = {}
+        self.__crsTransform = self.__setCoordinateTransform()
 
     def __addReportSketchLayersToTheCurrentMap(self) -> None:
         uri = self.__context.getUriDatabaseSqlite()
@@ -172,6 +173,22 @@ class ToolsReport(object):
         setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
         listLayers[0].setEditorWidgetSetup(index, setup)
 
+    def __setCoordinateTransform(self) -> QgsCoordinateTransform:
+        """
+        Construit un QgsCoordinateTransform pour transformer le système de référence de coordonnées source
+        en système de référence de coordonnées de destination.
+
+        :return: un QgsCoordinateTransform
+        """
+        mapCrs = self.__context.mapCan.mapSettings().destinationCrs().authid()
+        sridSource = QgsCoordinateReferenceSystem(mapCrs)
+        crsSource = QgsCoordinateReferenceSystem(sridSource)
+
+        sridTarget = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
+        crsTarget = QgsCoordinateReferenceSystem(sridTarget)
+
+        return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
+
     # NOTE : non utilisée mais peut servir ;-)
     def setMapExtent(self, box) -> None:
         """ Set de l'étendue de la carte
@@ -234,7 +251,7 @@ class ToolsReport(object):
     def __sendReport(self, filesAttachments):
         self.__datasForRequest.update(filesAttachments)
         datas = MultipartEncoder(fields=self.__datasForRequest)
-        print(datas)
+        print("datas : {}".format(datas))
         responseFromServer = self.__sendRequest(datas)
         if responseFromServer is None:
             return
@@ -254,7 +271,7 @@ class ToolsReport(object):
             self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
         return None
 
-    def createReport(self, sketchList):
+    def createReport(self, sketchList, pointFromClipboard):
         # Ouverture du formulaire de création du signalement
         formCreate = FormCreateReport(self.__context, len(sketchList))
         formCreate.exec_()
@@ -305,13 +322,18 @@ class ToolsReport(object):
         filesAttachments = formCreate.getFilesAttachments()
 
         # Création du ou des signalements
-        if formCreate.isSingleReport():
+        if len(sketchList) == 0 and pointFromClipboard != '':
+            tmpPoint = self.__crsTransform.transform(pointFromClipboard)
+            geometrySingleReport = 'POINT({0} {1})'.format(tmpPoint.x(), tmpPoint.y())
+            self.__datasForRequest['geometry'] = geometrySingleReport
+            contents = self.createSingleReportFromClipboard()
+        elif formCreate.isSingleReport():
             contents = self.createSingleReport(sketchList, filesAttachments)
         else:
             if len(sketchList) == 1:
-                raise Exception("ToolsReport.__createMultiReports : attention, il fallait cocher la case [Créer un "
-                                "signalement unique].")
+                raise Exception("ToolsReport.__createMultiReports : attention, il fallait cocher la case [Créer un signalement unique].")
             contents = self.__createMultiReports(sketchList, filesAttachments)
+
         if contents is None:
             raise Exception("ToolsReport.createSingleReport : erreur dans la création d'un signalement")
 
@@ -320,6 +342,13 @@ class ToolsReport(object):
 
         # Message de fin
         self.__sendMessageEndProcess(listNewReportIds)
+
+    def createSingleReportFromClipboard(self) -> []:
+        contents = []
+        filesAttachments = {}
+        print("".format(self.__datasForRequest['geometry']))
+        contents.append(self.__sendReport(filesAttachments))
+        return contents
 
     def createSingleReport(self, sketchList, filesAttachments) -> []:
         contents = []
@@ -351,6 +380,8 @@ class ToolsReport(object):
         """
         barycentreX = 0
         barycentreY = 0
+        if len(listPoints) == 0:
+            raise Exception("Impossible de créer un signalement sans coordonnées, veuillez recommencer.")
         for pt in listPoints:
             barycentreX += pt.longitude
             barycentreY += pt.latitude

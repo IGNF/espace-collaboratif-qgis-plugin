@@ -1,33 +1,56 @@
-from ..ToolsReport import ToolsReport
+from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor
 from qgis._core import QgsSettings, QgsPointXY
 from qgis._gui import QgsVertexMarker
-from qgis.gui import QgsMapTool
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication
+from qgis.gui import QgsMapTool, QgsMapMouseEvent
+
+from ..ToolsReport import ToolsReport
 
 
 class MapToolsReport(QgsMapTool):
+    """
+    Classe dérivée de QgsMapTool pour la création d'un outil de saisie directe d'un signalement
+    sans besoin de joindre un croquis.
+    """
 
     def __init__(self, context) -> None:
+        """
+        Définit en particulier, un nouveau curseur, la couleur rouge du carré matérialisant le pointé à l'écran.
+        """
         self.__context = context
         self.__canvas = context.iface.mapCanvas()
         QgsMapTool.__init__(self, self.__canvas)
         self.setCursor(Qt.CursorShape.CrossCursor)
-        self.__canvas.keyPressed.connect(self.__keyPressed)
         self.__vertex = None
         self.__snapcolor = QgsSettings().value("/qgis/digitizing/snap_color", QColor(Qt.GlobalColor.red))
-        self.__geometrySingleReport = ''
+        self.activate()
 
     def canvasReleaseEvent(self, event) -> None:
-        pt = self.snappoint(event.originalPixelPoint())
-        if pt is not None:
-            clipboard = QApplication.clipboard()
-            self.__geometrySingleReport = 'POINT({0} {1})'.format(pt.x(), pt.y())
-            clipboard.setText(self.__geometrySingleReport)
-        self.__canvas.unsetMapTool(self)
+        """
+        Récupère le pointé de l'utilisateur sur la carte et lance la création d'un signalement.
+
+        :param event: relachement du clic de la souris
+        :type event: QgsMapMouseEvent
+        """
+        screenPoint = self.snappoint(event.originalPixelPoint())
+        if screenPoint is not None:
+            # Création et envoi du signalement sur le serveur
+            toolsReport = ToolsReport(self.__context)
+            # La liste de croquis est vide puisque c'est un pointé sur la carte qui sert à créer le signalement
+            sketchList = []
+            toolsReport.createReport(sketchList, screenPoint)
+            self.endCreateReport()
 
     def snappoint(self, qpoint) -> QgsPointXY:
+        """
+        Transforme le pointé écran en coordonnées de la carte et dessine un carré (QgsVertexMarker) de couleur rouge
+        matérialisant l'emplacement du futur signalement.
+
+        :param qpoint: le point écran original
+        :type qpoint: QPoint
+
+        :return: un point QGIS
+        """
         point = None
         if self.__vertex is None:
             point = self.toMapCoordinates(qpoint)
@@ -39,29 +62,26 @@ class MapToolsReport(QgsMapTool):
             self.__vertex.setCenter(point)
         return point
 
-    def __keyPressed(self, event):
-        if event.key() == Qt.Key.Key_A:
-            # Création et envoi du signalement sur le serveur
-            toolsReport = ToolsReport(self.__context)
-            # La liste de croquis est vide puisque c'est un pointé sur la carte qui sert à créer le signalement
-            sketchList = []
-            toolsReport.createSingleReport(sketchList, self.__geometrySingleReport)
-            self.endCreateReport()
-        else:
-            self.endCreateReport()
-
-    def endCreateReport(self):
-        self.deactivate()
+    def endCreateReport(self) -> None:
+        """
+        Ferme l'outil de saisie directe en fin de création d'un signalement.
+        """
+        self.setOriginalCursor()
         self.removeVertexMarker()
+        self.__canvas.unsetMapTool(self)
         self.__canvas.refresh()
         return
 
-    def removeVertexMarker(self):
+    def removeVertexMarker(self) -> None:
+        """
+        Efface à l'écran le carré rouge matérialisant le pointé de l'utilisateur.
+        """
         if self.__vertex is not None:
             self.__canvas.scene().removeItem(self.__vertex)
             self.__vertex = None
 
-    def deactivate(self) -> None:
+    def setOriginalCursor(self) -> None:
+        """
+        Remet le curseur à son apparence originale.
+        """
         self.setCursor(Qt.CursorShape.ArrowCursor)
-        clipboard = QApplication.clipboard()
-        clipboard.clear()

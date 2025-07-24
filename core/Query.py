@@ -56,7 +56,7 @@ class Query(object):
         L'emprise est de la forme 'lonMin, latMin, lonMax, latMax'.
 
         :param box: boite englobante de la zone de travail
-        :type box: Box
+        :type box: BBox
         """
         self.__params['box'] = "{},{},{},{}".format(box.getXMin(), box.getYMin(), box.getXMax(), box.getYMax())
 

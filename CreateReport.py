@@ -7,8 +7,10 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
+from .core.MapToolsReport import MapToolsReport
 from .core.RipartLoggerCl import RipartLogger
 from .ToolsReport import ToolsReport
+from PyQt5.QtWidgets import QApplication
 from .core import Constantes as cst
 
 
@@ -21,23 +23,23 @@ class CreateReport(object):
         self.__activeLayer = self.__context.iface.activeLayer()
         self.__canvas = self.__context.iface.mapCanvas()
         # TODO réactiver les 2 lignes de code si cela fonctionne correctement
-        # clipboard = QApplication.clipboard()
-        # clipboard.clear()
+        clipboard = QApplication.clipboard()
+        clipboard.clear()
 
     # Création d'un nouveau signalement
     def do(self):
         try:
             # TODO réactiver les 2 lignes de code si cela fonctionne correctement
-            # clipboard = QApplication.clipboard()
-            # clipboard.clear()
+            clipboard = QApplication.clipboard()
+            clipboard.clear()
             hasSelectedFeature = self.__context.hasMapSelectedFeatures()
             # Sans croquis, en cliquant simplement sur la carte
             if not hasSelectedFeature:
                 if self.__activeLayer.name() != cst.nom_Calque_Signalement:
                     return
-                # mapToolsReport = MapToolsReport(self.__context)
-                # mapToolsReport.activate()
-                # self.__canvas.setMapTool(mapToolsReport)
+                mapToolsReport = MapToolsReport(self.__context)
+                mapToolsReport.activate()
+                self.__canvas.setMapTool(mapToolsReport)
                 return
             # Avec croquis
             else:
@@ -49,7 +51,8 @@ class CreateReport(object):
                 self.__logger.debug(str(len(sketchList)) + u" croquis générés")
                 # Création du ou des signalements
                 toolsReport = ToolsReport(self.__context)
-                toolsReport.createReport(sketchList)
+                pointFromClipboard = ''
+                toolsReport.createReport(sketchList, pointFromClipboard)
             self.__context.mapCan.refresh()
 
         except Exception as e:
