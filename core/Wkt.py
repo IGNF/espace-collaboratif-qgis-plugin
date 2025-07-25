@@ -2,9 +2,17 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsP
 
 
 class Wkt(object):
-    """Traitement d'une géométrie au format WKT"""
+    """
+    Traitement d'une géométrie au format WKT
+    """
 
     def __init__(self, parameters) -> None:
+        """
+        Constructeur.
+
+        :param parameters: les paramètres nécessaires à la construction d'une géométrie au format WKT
+        :type parameters: dict
+        """
         self.sridSource = parameters['sridSource']
         self.sridTarget = parameters['sridTarget']
         self.geometryName = parameters['geometryName']
@@ -38,7 +46,7 @@ class Wkt(object):
     @staticmethod
     def toGetLonLatFromGeometry(txtGeometry) -> ():
         """
-        Transforme la géométrie au format texte en une géométrie WKT sous forme de point.
+        Transforme la géométrie au format texte en une géométrie WKT sous forme de point(s).
 
         :param txtGeometry: la géométrie d'un point d'un signalement
         :type txtGeometry: str
@@ -93,7 +101,7 @@ class Wkt(object):
 
     def isBoundingBoxIntersectGeometryObject(self, boundingBoxSpatialFilter, qgsGeometryObject) -> bool:
         """
-        Recherche si la géométrie d'un objet intersecte la zone de travail.
+        Recherche si la géométrie d'un objet intersecte la boite englobante d'une zone de travail.
 
         :param boundingBoxSpatialFilter: la géométrie au format WKT de la boite englobante d'une zone de travail
         :type boundingBoxSpatialFilter: str

@@ -8,9 +8,9 @@ from ..PluginHelper import PluginHelper
 
 class Report(object):
     """
-    Classe implémentant un signalement avec ses attributs
+    Classe implémentant un signalement avec ses attributs.
     """
-    # Initialisation des variables utiles à un signalement
+
     __id = -1
     __author = ''
     __commune = ''
@@ -31,7 +31,15 @@ class Report(object):
     __geometry = ''
 
     def __init__(self, urlHostEspaceCo, data) -> None:
+        """
+        Constructeur.
 
+        :param urlHostEspaceCo: la première partie de l'url (https://espacecollaboratif.ign.fr/)
+        :type urlHostEspaceCo: str
+
+        :param data: les attributs d'un signalement
+        :type data: dict
+        """
         self.__logger = RipartLogger("Report").getRipartLogger()
         self.__urlHostEspaceCo = urlHostEspaceCo
         if PluginHelper.keyExist('id', data):
@@ -356,5 +364,4 @@ class Report(object):
 
         :return: l'url d'accès au signalement
         """
-        # TODO -> Noémie faut-il demander l'ajout de cette url dans la réponse de la nouvelle API ?
         return "{0}/gcms/api/reports/{1}".format(self.__urlHostEspaceCo, idReport)

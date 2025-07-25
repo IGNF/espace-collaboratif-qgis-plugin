@@ -9,6 +9,7 @@ from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
 from .core.ProgressBar import ProgressBar
 from .core.BBox import BBox
+from .core.Box import Box
 from .core.RipartLoggerCl import RipartLogger
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
@@ -53,9 +54,7 @@ class ToolsReport(object):
         self.__context.mapCan.refresh()
 
     def getReport(self, idReport):
-        query = Query(self.__context.urlHostEspaceCo, self.__context.proxy)
-        # query = Query(self.__context.urlHostEspaceCo, self.__context.auth['login'], self.__context.auth['password'],
-        #               self.__context.proxy)
+        query = Query(self.__context.urlHostEspaceCo, self.__context.proxies)
         query.setHeaders(self.__context.getTokenType(), self.__context.getTokenAccess())
         query.setPartOfUrl('gcms/api/reports/{}'.format(idReport))
         response = query.simple()
@@ -71,7 +70,7 @@ class ToolsReport(object):
         if box is not None and box.getXMax() == 0.0 and box.getYMax() == 0.0 \
                 and box.getXMin() == 0.0 and box.getYMin() == 0.0:
             return
-        query = Query(self.__context.urlHostEspaceCo, self.__context.proxy)
+        query = Query(self.__context.urlHostEspaceCo, self.__context.proxies)
         query.setHeaders(self.__context.getTokenType(), self.__context.getTokenAccess())
         query.setPartOfUrl('gcms/api/reports')
         query.setPage(1)
@@ -234,7 +233,7 @@ class ToolsReport(object):
     def addResponseToServer(self, parameters) -> None:
         idReport = parameters['reportId']
         uri = "{0}/gcms/api/reports/{1}/replies".format(self.__context.urlHostEspaceCo, idReport)
-        response = HttpRequest.makeHttpRequest(uri, parameters['proxy'], data=parameters['requestBody'],
+        response = HttpRequest.makeHttpRequest(uri, parameters['proxies'], data=parameters['requestBody'],
                                                headers=parameters['headers'], launchBy='addResponseToServer')
         # Succès : get (code 200) post (code 201)
         if response.status_code == 200 or response.status_code == 201:
@@ -262,7 +261,7 @@ class ToolsReport(object):
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
         headers = {'Content-Type': datas.content_type, 'Authorization': '{} {}'.format(self.__context.getTokenType(),
                                                                                        self.__context.getTokenAccess())}
-        response = HttpRequest.makeHttpRequest(uri, self.__context.proxy, None, datas, headers,
+        response = HttpRequest.makeHttpRequest(uri, self.__context.proxies, None, datas, headers,
                                                launchBy='__sendRequest')
         if response.status_code == 200 or response.status_code == 201:
             return response

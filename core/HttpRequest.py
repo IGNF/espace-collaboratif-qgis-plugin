@@ -1,20 +1,45 @@
 import json
+from .requests import Response
 import requests
 from . import requests
 from .RipartLoggerCl import RipartLogger
 
 
-# Classe implémentant une requête HTTP
 class HttpRequest(object):
+    """
+    # Classe implémentant une requête HTTP.
+    """
     logger = RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
 
     def __init__(self, url, headers, proxies):
+        """
+        Constructeur.
+
+        :param url: la première partie de l'url (https://espacecollaboratif.ign.fr/)
+        :type url:str
+
+        :param headers: l'entête d'autorisation
+        :type headers: dict
+
+        :param proxies: les noms des serveurs proxy
+        :type proxies: dict
+        """
         self.__url = url
         self.__headers = headers
         self.__proxies = proxies
 
-    # Retourne une réponse HTTP GET
     def getResponse(self, partOfUrl, params=None) -> requests.Response:
+        """
+        Lance une requête HTTP GET.
+
+        :param partOfUrl: une partie de l'url finale
+        :type partOfUrl: str
+
+        :param params: paramètres de la requête
+        :type params: dict
+
+        :return: une réponse encodée en utf-8
+        """
         uri = "{}/{}".format(self.__url, partOfUrl)
         if params is not None:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
@@ -30,9 +55,19 @@ class HttpRequest(object):
         response.encoding = 'utf-8'
         return response
 
-    # Retourne un dictionnaire comprenant le status de la réponse HTTP GET, les données et s'il faut relancer
-    # la requête (status_code 206)
+    #
     def getNextResponse(self, partOfUrl, params) -> {}:
+        """
+        Traite les réponses fournies dans le cas d'une requête multiple en utilisant le status de la réponse.
+
+        :param partOfUrl: une partie de l'url finale
+        :type partOfUrl: str
+
+        :param params: paramètres de la requête
+        :type params: dict
+
+        :return: un dictionnaire comprenant le status de la réponse, les données et s'il faut relancer la requête (status_code 206)
+        """
         try:
             response = self.getResponse(partOfUrl, params)
             data = response.json()
@@ -54,6 +89,22 @@ class HttpRequest(object):
     @staticmethod
     # Même requête que précédemment, mais en utilisant les paramètres offset et maxFeatures
     def nextRequest(url, headers=None, proxies=None, params=None) -> {}:
+        """
+        Traite les réponses fournies dans le cas d'une requête multiple en utilisant les paramètres offset
+        et maxFeatures de la réponse.
+
+        :param url: l'url complète
+        :type url:str
+
+        :param headers: l'entête d'autorisation
+        :type headers: dict
+
+        :param proxies: les noms des serveurs proxy
+        :type proxies: dict
+
+        :param params: paramètres de la requête
+        :type params: dict
+        """
         try:
             r = requests.get(url, headers=headers, proxies=proxies,
                              params=params, verify=False)
@@ -73,8 +124,34 @@ class HttpRequest(object):
             return {'status': 'error'}
 
     @staticmethod
-    # lance une requête HTTP GET ou POST en fonction des variables données en entrée
-    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> ():
+    #
+    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> Response:
+        """
+        Lance une requête HTTP GET ou POST en fonction des variables passées en entrée.
+
+        :param url: l'url complète
+        :type url: str
+
+        :param proxies: les noms des serveurs proxy
+        :type proxies: dict
+
+        :param params: paramètres de la requête
+        :type params: dict
+
+        :param data: les données a envoyé sur le serveur
+        :type data: dict
+
+        :param headers: l'entête d'autorisation
+        :type headers: dict
+
+        :param files: fichiers à télécharger
+        :type files: dict
+
+        :param launchBy: indique quelle fonction a lancé
+        :type launchBy: str
+
+        :return: les données
+        """
         response = ()
         try:
             if data is None and files is None:

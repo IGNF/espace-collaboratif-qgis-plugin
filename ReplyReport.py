@@ -75,7 +75,7 @@ class ReplyReport(object):
                         # TODO -> Noémie le post d'une réponse à un signalement demande un title
                         #  j'ai mis vide pour l'instant doit-on mettre une valeur style "envoyée de QGIS"
                         parameters = {'reportId': report.getId(),
-                                      'proxy': self.__context.proxy, 'headers': headers,
+                                      'proxies': self.__context.proxies, 'headers': headers,
                                       'requestBody': {'title': '', 'content': newResponse, 'status': newStatut}}
                         jsonResponse = self.__toolsReport.addResponseToServer(parameters)
                         if jsonResponse is None:

@@ -89,8 +89,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         self.setAttributCroquis()
 
-        proxy = PluginHelper.load_proxy(context.projectDir).text
-        self.lineEditProxy.setText(proxy)
+        proxies = PluginHelper.load_proxy(context.projectDir).text
+        self.lineEditProxy.setText(proxies)
 
         activeCommunityName = PluginHelper.loadActiveCommunityName(context.projectDir).text
         self.lineEditGroupeActif.setText(activeCommunityName)
@@ -248,11 +248,14 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_UrlHost, newUrl, "Serveur")
 
         # Proxy
+        # TODO : revoir le proxy dans la boite de configuration
         if self.checkBoxProxy.isChecked():
-            proxy = self.lineEditProxy.text()
+            tmp = self.lineEditProxy.text()
+            proxies = {'http': tmp, 'https': ''}
         else:
-            proxy = ""
-        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_proxy, proxy, "Serveur")
+            proxies = {}
+        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_proxy, proxies, "Serveur")
+        self.context.proxies = proxies
 
         # date
         if self.checkBoxDate.isChecked():

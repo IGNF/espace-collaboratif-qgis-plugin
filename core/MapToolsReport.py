@@ -3,6 +3,7 @@ from PyQt5.QtGui import QColor
 from qgis._core import QgsSettings, QgsPointXY
 from qgis._gui import QgsVertexMarker
 from qgis.gui import QgsMapTool, QgsMapMouseEvent
+from ..Contexte import Contexte
 
 from ..ToolsReport import ToolsReport
 
@@ -16,6 +17,9 @@ class MapToolsReport(QgsMapTool):
     def __init__(self, context) -> None:
         """
         Définit en particulier, un nouveau curseur, la couleur rouge du carré matérialisant le pointé à l'écran.
+
+        :param context: le contexte du projet QGIS
+        :type context: Contexte
         """
         self.__context = context
         self.__canvas = context.iface.mapCanvas()

@@ -30,6 +30,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.geometryTypeForDatabase = parameters['geometryType']
         self.conditionFactory = ConditionFactory()
         self.correspondanceChampType = None
+        self.name = parameters['name']
 
     '''
         Transformation de la condition en expression QGIS

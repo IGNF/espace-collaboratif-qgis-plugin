@@ -8,7 +8,7 @@ class CommunitiesMember(object):
     Classe implémentant l'appartenance d'un utilisateur à des groupes.
     """
 
-    def __init__(self, url, tokenType, tokenAccess, proxy) -> None:
+    def __init__(self, url, tokenType, tokenAccess, proxies) -> None:
         """
         Constructeur.
 
@@ -21,19 +21,19 @@ class CommunitiesMember(object):
         :param tokenAccess: jeton individuel d'accès
         :type tokenAccess: str
 
-        :param proxy: le nom du serveur proxy
-        :type proxy: str
+        :param proxies: le nom des serveurs proxy
+        :type proxies: {}
 
         """
         self.__url = url
-        self.__proxy = proxy
+        self.__proxies = proxies
         self.__id = -1
         self.__username = ''
         # Liste des communautés de l'utilisateur
         self.__communities = []
         self.__tokenType = tokenType
         self.__tokenAccess = tokenAccess
-        self.__query = Query(url, proxy)
+        self.__query = Query(url, proxies)
         # liste des noms des communautés de l'utilisateur
         self.__listNameOfCommunities = []
 
@@ -85,7 +85,7 @@ class CommunitiesMember(object):
         if len(datas) == 0:
             return
         params = {'url': self.__url, 'tokentype': self.__tokenType, 'tokenaccess': self.__tokenAccess,
-                  'proxy': self.__proxy}
+                  'proxies': self.__proxies}
         for data in datas:
             community = Community(params)
             community.getDatas(data)

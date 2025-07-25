@@ -292,6 +292,10 @@ class SQLiteManager(object):
     @staticmethod
     # Suppression des enregistrements d'une table BDUni en fonction d'une liste de clés primaires données en entrée
     def deleteRowsInTableBDUni(tableName, keys) -> None:
+        if not SQLiteManager.isTableExist(tableName):
+            message = "SQLiteManager.deleteRowsInTableBDUni : la table {} de la base SQLite du projet n'existe pas." \
+                      " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
+            raise Exception(message)
         tmp = ''
         for key in keys:
             tmp += '"{0}", '.format(key[0])
@@ -302,6 +306,10 @@ class SQLiteManager(object):
     @staticmethod
     # Supprime les enregistrements d'une table BDUni en fonction des actions de synchronisation
     def setActionsInTableBDUni(tableName, itemsTransaction) -> None:
+        if not SQLiteManager.isTableExist(tableName):
+            message = "SQLiteManager.setActionsInTableBDUni : la table {} de la base SQLite du projet n'existe pas." \
+                      " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
+            raise Exception(message)
         cleabss = []
         for item in itemsTransaction:
             data = json.loads(item)
@@ -362,7 +370,9 @@ class SQLiteManager(object):
     # Suppression de tous les enregistrements d'une table
     def emptyTable(tableName) -> None:
         if not SQLiteManager.isTableExist(tableName):
-            return
+            message = "SQLiteManager.emptyTable : la table {} de la base SQLite du projet n'existe pas. Il faut " \
+                      "lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
+            raise Exception(message)
         sql = u"DELETE FROM {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} vidée".format(tableName))
@@ -370,6 +380,10 @@ class SQLiteManager(object):
     @staticmethod
     # Suppression d'une table
     def deleteTable(tableName) -> None:
+        if not SQLiteManager.isTableExist(tableName):
+            message = "SQLiteManager.deleleTable : la table {} de la base SQLite du projet n'existe pas. Il faut " \
+                      "lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
+            raise Exception(message)
         sql = u"DROP TABLE {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} détruite".format(tableName))
@@ -377,6 +391,10 @@ class SQLiteManager(object):
     @staticmethod
     # Retourne un tuple dont le premier élément est égale à 1 si la colonne existe dans la table
     def isColumnExist(tableName, columnName) -> ():
+        if not SQLiteManager.isTableExist(tableName):
+            message = "SQLiteManager.isColumnExist : la table {} de la base SQLite du projet n'existe pas. Il faut" \
+                      " lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
+            raise Exception(message)
         sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
@@ -389,6 +407,10 @@ class SQLiteManager(object):
     @staticmethod
     # Retourne la valeur d'une colonne pour une table donnée
     def selectColumnFromTable(tableName, columnName) -> list:
+        if not SQLiteManager.isTableExist(tableName):
+            message = "SQLiteManager.selectColumnFromTable : la table {} de la base SQLite du projet n'existe pas." \
+                      " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
+            raise Exception(message)
         sql = u"SELECT {0} FROM {1}".format(columnName, tableName)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
@@ -402,6 +424,11 @@ class SQLiteManager(object):
     # Retourne la valeur d'une colonne selon une condition d'égalité
     # TODO quelle valeur est retournee ?
     def selectColumnFromTableWithCondition(columnName, tableName, conditionColumn, conditionValue):
+        if not SQLiteManager.isTableExist(tableName):
+            message = "SQLiteManager.selectColumnFromTableWithCondition : la table {} de la base SQLite du projet" \
+                      " n'existe pas. Il faut lancer au moins une extraction de données" \
+                      " pour créer celle-ci.".format(tableName)
+            raise Exception(message)
         sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, conditionColumn, conditionValue)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()

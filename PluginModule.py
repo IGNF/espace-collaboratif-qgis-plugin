@@ -151,7 +151,7 @@ class RipartPlugin:
     def __connectLayerWasAdded(self, layer) -> None:
         if layer is None:
             return
-        if not self.__searchSpecificLayer(layer.name()):
+        if not self.__searchSpecificLayer(layer.name):
             return
         self.__connectSpecificSignals(layer)
 
@@ -248,7 +248,7 @@ class RipartPlugin:
     def __saveEdits(self, editableLayers) -> None:
         allMessages = []
         for layer in editableLayers:
-            messageProgress = "Synchronisation de la couche {}".format(layer.name())
+            messageProgress = "Synchronisation de la couche {}".format(layer.name)
             progress = ProgressBar(len(editableLayers), messageProgress)
             progress.setValue(1)
             allMessages.append(self.__saveChangesForOneLayer(layer))
@@ -281,20 +281,20 @@ class RipartPlugin:
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         for layerTableOfTables in layersTableOfTables:
-            if layer.name() in layerTableOfTables[0]:
+            if layer.name in layerTableOfTables[0]:
                 bRes = True
                 break
         if not bRes:
             return "error : PluginModule:__saveChangesForOneLayer, la table {} n'existe pas " \
-                   "dans la table des tables.".format(layer.name())
+                   "dans la table des tables.".format(layer.name)
         editBuffer = layer.editBuffer()
         if not editBuffer:
             return "error : PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
-                   " pour la couche {}".format(layer.name())
+                   " pour la couche {}".format(layer.name)
         try:
             messages = self.__doPost(layer, editBuffer)
         except Exception as e:
-            messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
+            messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name, e)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         return messages
 
@@ -327,7 +327,7 @@ class RipartPlugin:
         # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
         # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
         bNormalWfsPost = False
-        commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
+        commitLayerResult = wfsPost.commitLayer(layer.name, editBuffer, bNormalWfsPost)
         messages = "{0}\n".format(commitLayerResult['reporting'])
         if commitLayerResult['status'] == "FAILED":
             layer.destroyEditCommand()
@@ -568,7 +568,7 @@ class RipartPlugin:
             progress.setValue(1)
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
             params = {'url': self.__context.urlHostEspaceCo, 'tokentype': self.__context.getTokenType(),
-                      'tokenaccess': self.__context.getTokenAccess(), 'proxy': self.__context.proxy}
+                      'tokenaccess': self.__context.getTokenAccess(), 'proxies': self.__context.proxies}
             community = Community(params)
             page = 1
             limit = 20
@@ -601,8 +601,8 @@ class RipartPlugin:
             layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
             for layer in QgsProject.instance().mapLayers().values():
                 for layerTableOfTables in layersTableOfTables:
-                    if layer.name() in layerTableOfTables[0]:
-                        print('synchronizeData couche : {}'.format(layer.name()))
+                    if layer.name in layerTableOfTables[0]:
+                        print('synchronizeData couche : {}'.format(layer.name))
                         layersToSynchronize.append(layer)
                         break
 
@@ -618,7 +618,7 @@ class RipartPlugin:
                     if layerEditBuffer is not None and (len(layerEditBuffer.allAddedOrEditedFeatures()) > 0
                                                         or len(layerEditBuffer.deletedFeatureIds()) > 0):
                         listEditBuffers.append(layerEditBuffer)
-                        messageLayers += "{0}, ".format(layer.name())
+                        messageLayers += "{0}, ".format(layer.name)
 
                 # Si oui envoi d'un message à l'utilisateur pour qu'il décide de la suite à donner
                 if len(listEditBuffers) > 0:
@@ -648,13 +648,13 @@ class RipartPlugin:
             for layer in layersToSynchronize:
                 i += 1
                 progress.setValue(i)
-                endMessage += "<br/>{0}\n".format(layer.name())
+                endMessage += "<br/>{0}\n".format(layer.name)
                 bbox = BBox(self.__context)
-                parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName, False, True),
+                parameters = {'layerName': layer.name, 'bbox': bbox.getFromLayer(spatialFilterName, False, True),
                               'sridProject': cst.EPSGCRS4326, 'role': None,
                               'urlHostEspaceCo': self.__context.urlHostEspaceCo,
-                              'headers': headers, 'proxy': self.__context.proxy}
-                result = SQLiteManager.selectRowsInTableOfTables(layer.name())
+                              'headers': headers, 'proxies': self.__context.proxies}
+                result = SQLiteManager.selectRowsInTableOfTables(layer.name)
                 numrec = 0
                 if len(result) > 0:
                     for r in result:
@@ -679,7 +679,7 @@ class RipartPlugin:
                 # et il faut vider la table pour éviter de créer un objet à chaque Get
                 if layer.isStandard:
                     bDetruit = False
-                    SQLiteManager.emptyTable(layer.name())
+                    SQLiteManager.emptyTable(layer.name)
                     SQLiteManager.vacuumDatabase()
                     layer.triggerRepaint()
                 parameters['detruit'] = bDetruit
@@ -694,7 +694,7 @@ class RipartPlugin:
                         endMessage += "<br/>Pas de mise à jour\n\n"
                         continue
                 maxNumRecMessage = wfsGet.gcms_get()
-                SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
+                SQLiteManager.updateNumrecTableOfTables(layer.name, maxNumRecMessage[0])
                 SQLiteManager.vacuumDatabase()
                 endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])
             progress.close()

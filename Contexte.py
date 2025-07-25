@@ -81,7 +81,8 @@ class Contexte(object):
     conn = None
 
     # proxy
-    proxy = None
+    proxyHttp = "http://proxy.ign.fr:3128"
+    proxyHttps = "https://proxy.ign.fr:3128"
 
     # le logger
     logger = None
@@ -123,6 +124,10 @@ class Contexte(object):
         self.__tokenTimerStart = 0
         self.__tokenExpireIn = 0
         self.urlHostEspaceCo = ''
+        # PAr défaut dictionnaire des proxies à vide
+        # sinon il doit être rempli avec {"http": "http://proxy.ign.fr:3128", "https": "https://proxy.ign.fr:3128"}
+        # {"http": self.proxyHttp, "https": self.proxyHttps}
+        self.proxies = {}
 
         try:
             # contrôle l'existence du fichier de configuration
@@ -267,10 +272,8 @@ class Contexte(object):
         KEYCLOAK_CLIENT_ID = "espaceco-qgis"
         KEYCLOAK_CLIENT_SECRET = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"
         KEYCLOAK_REALM_NAME = "geoplateforme"
-        IGN_PROXY = "http://proxy.ign.fr:3128"
-        proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
         self.__keycloakService = KeycloakService(KEYCLOAK_SERVER_URI, KEYCLOAK_REALM_NAME, KEYCLOAK_CLIENT_ID,
-                                                 client_secret=KEYCLOAK_CLIENT_SECRET, proxies=proxies)
+                                                 client_secret=KEYCLOAK_CLIENT_SECRET, proxies=self.proxies)
         r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
         print(r)
         r = self.__keycloakService.get_access_token(r["code"][0])
@@ -292,8 +295,7 @@ class Contexte(object):
                 self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
         try:
             # Recherche des communautés
-            communities = CommunitiesMember(self.urlHostEspaceCo, self.__tokenType, self.__tokenAccess,
-                                            self.proxy)
+            communities = CommunitiesMember(self.urlHostEspaceCo, self.__tokenType, self.__tokenAccess, self.proxies)
             communities.extractCommunities()
             self.setCommunity(communities)
             # La liste des communautés à afficher dans la boite de choix des communautés
@@ -648,7 +650,7 @@ class Contexte(object):
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
-                      'proxy': self.proxy, 'databaseid': layer.databaseid, 'tableid': layer.tableid
+                      'proxies': self.proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid
                       }
         wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcms_get(True)
@@ -1120,7 +1122,7 @@ class Contexte(object):
         url = "{}/gcms/api/database/{}/feature-type/{}.json".format(self.urlHostEspaceCo, dbName[1], layerName)
         self.logger.debug("{0} {1}".format("connexionFeatureTypeJson : ", url))
         headers = {'Authorization': '{} {}'.format(self.getTokenType(), self.getTokenAccess())}
-        featuretypeResponse = requests.get(url, headers=headers, proxies=self.proxy)
+        featuretypeResponse = requests.get(url, headers=headers, proxies=self.proxies)
         if featuretypeResponse.status_code != 200:
             raise Exception(PluginHelper.notNoneValue(
                 "{} : {}".format(featuretypeResponse.status_code, featuretypeResponse.reason)))

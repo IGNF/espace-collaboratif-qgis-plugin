@@ -28,6 +28,8 @@ class ProgressBar(QProgressBar):
         QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
     def close(self) -> None:
-        """Fermeture de la patience, le curseur revient à son état d'origine."""
+        """
+        Fermeture de la patience, le curseur revient à son état d'origine.
+        """
         iface.messageBar().clearWidgets()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)

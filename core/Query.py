@@ -8,13 +8,22 @@ from .Box import Box
 class Query(object):
     """
     Classe permettant de lancer une ou plusieurs requêtes HTTP GET et de remplir le fichier de paramètres attendu
-    pour le get d'une requête de la librairie Requests de Python
+    pour le get d'une requête de la librairie Requests de Python.
     """
 
-    def __init__(self, url, proxy) -> None:
+    def __init__(self, url, proxies) -> None:
+        """
+        Constructeur.
+
+        :param url: la première partie de l'url (https://espacecollaboratif.ign.fr/)
+        :type url: str
+
+        :param proxies: le nom des serveurs proxy
+        :type proxies: {}
+        """
         self.__headers = {}
         self.__url = url
-        self.__proxy = proxy
+        self.__proxies = proxies
         self.__partOfUrl = ''
         self.__params = {}
 
@@ -36,7 +45,7 @@ class Query(object):
         Fixe le complément de l'url générale permettant de constituer la requête HTTP finale pour la variable
         __params passée à une requête multiple.
 
-        :param partOfUrl: une partie d'url
+        :param partOfUrl: une partie de l'url finale
         :type partOfUrl: str
         """
         self.__partOfUrl = partOfUrl
@@ -56,7 +65,7 @@ class Query(object):
         L'emprise est de la forme 'lonMin, latMin, lonMax, latMax'.
 
         :param box: boite englobante de la zone de travail
-        :type box: BBox
+        :type box: Box
         """
         self.__params['box'] = "{},{},{},{}".format(box.getXMin(), box.getYMin(), box.getXMax(), box.getYMax())
 
@@ -85,7 +94,7 @@ class Query(object):
         :return: les données sous forme de dictionnaire, si les requêtes ont abouti
         """
         message = ""
-        httpRequest = HttpRequest(self.__url, self.__headers, self.__proxy)
+        httpRequest = HttpRequest(self.__url, self.__headers, self.__proxies)
         data = []
         while True:
             response = httpRequest.getNextResponse(self.__partOfUrl, self.__params)
@@ -121,7 +130,7 @@ class Query(object):
 
         :return: la réponse HTTP ou une exception si le status de la requête est différent de 200.
         """
-        httpRequest = HttpRequest(self.__url, self.__headers, self.__proxy)
+        httpRequest = HttpRequest(self.__url, self.__headers, self.__proxies)
         response = httpRequest.getResponse(self.__partOfUrl, None)
         if response.status_code != 200:
             if response.reason.find('Unauthorized') != -1:

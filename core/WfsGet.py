@@ -1,37 +1,58 @@
 import time
 from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
+from ..PluginHelper import PluginHelper
 
 
 class WfsGet(object):
-    """Classe implémentant une requête en HTTP GET pour une couche WFS."""
+    """
+    Classe implémentant une requête en HTTP GET pour une couche WFS.
+    """
 
     def __init__(self, parameters) -> None:
-        if 'urlHostEspaceCo' in parameters:
+        """
+        Constructeur.
+
+        :param parameters: les paramètres nécessaires pour lancer une requête HTTP GET
+        :type parameters: dict
+        """
+        if PluginHelper.keyExist('urlHostEspaceCo', parameters):
             self.urlHostEspaceCo = parameters['urlHostEspaceCo']
             self.url = parameters['urlHostEspaceCo'] + '/gcms/api/wfs'
-        if 'proxy' in parameters:
-            self.proxy = parameters['proxy']
-        if 'headers' in parameters:
+        if PluginHelper.keyExist('proxies', parameters):
+            self.proxies = parameters['proxies']
+        if PluginHelper.keyExist('headers', parameters):
             self.headers = parameters['headers']
-        self.databasename = parameters['databasename']
-        self.layerName = parameters['layerName']
-        self.geometryName = parameters['geometryName']
-        self.sridProject = parameters['sridProject']
-        self.sridLayer = parameters['sridLayer']
-        self.bbox = parameters['bbox']
+        if PluginHelper.keyExist('databasename', parameters):
+            self.databasename = parameters['databasename']
+        if PluginHelper.keyExist('layerName', parameters):
+            self.layerName = parameters['layerName']
+        if PluginHelper.keyExist('geometryName', parameters):
+            self.geometryName = parameters['geometryName']
+        if PluginHelper.keyExist('sridProject', parameters):
+            self.sridProject = parameters['sridProject']
+        if PluginHelper.keyExist('sridLayer', parameters):
+            self.sridLayer = parameters['sridLayer']
+        if PluginHelper.keyExist('bbox', parameters):
+            self.bbox = parameters['bbox']
         self.parametersGcmsGet = {}
-        self.bDetruit = parameters['detruit']
-        self.isStandard = parameters['isStandard']
-        self.is3D = parameters['is3D']
-        self.numrec = int(parameters['numrec'])
+        if PluginHelper.keyExist('detruit', parameters):
+            self.bDetruit = parameters['detruit']
+        if PluginHelper.keyExist('isStandard', parameters):
+            self.isStandard = parameters['isStandard']
+        if PluginHelper.keyExist('is3D', parameters):
+            self.is3D = parameters['is3D']
+        if PluginHelper.keyExist('numrec', parameters):
+            self.numrec = int(parameters['numrec'])
         # Paramètres pour insérer un objet dans une table SQLite
         self.parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                             'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
                                             'isStandard': self.isStandard, 'is3D': self.is3D,
                                             'geometryType': ""}
-        self.databaseid = parameters['databaseid']
-        self.tableid = parameters['tableid']
+        if PluginHelper.keyExist('databaseid', parameters):
+            self.databaseid = parameters['databaseid']
+        if PluginHelper.keyExist('tableid', parameters):
+            self.tableid = parameters['tableid']
 
     def __initParametersGcmsGet(self, filterDelete=False) -> None:
         """
@@ -63,7 +84,7 @@ class WfsGet(object):
         """
         self.__initParametersGcmsGet(True)
         while True:
-            response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxy,
+            response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxies,
                                                params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 break
@@ -107,7 +128,7 @@ class WfsGet(object):
 
         sqliteManager = SQLiteManager()
         while True:
-            response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxy,
+            response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxies,
                                                params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
@@ -165,7 +186,7 @@ class WfsGet(object):
         """
         url = "{0}/gcms/api/databases/{1}/tables/{2}/max-numrec".format(self.urlHostEspaceCo, self.databaseid,
                                                                         self.tableid)
-        response = HttpRequest.makeHttpRequest(url, proxies=self.proxy, headers=self.headers,
+        response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
                                                launchBy='getMaxNumrec : {}'.format(self.layerName))
         # Succès : get (code 200) post (code 201)
         if response.status_code == 200 or response.status_code == 201:
@@ -207,12 +228,16 @@ class WfsGet(object):
         self.parametersGcmsGet['outputFormat'] = outputFormat
 
     def __setTypeName(self) -> None:
-        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'typename'."""
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'typename'.
+        """
         typename = "{0}:{1}".format(self.databasename, self.layerName)
         self.parametersGcmsGet['typename'] = typename
 
     def __setNumrec(self) -> None:
-        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'numrec'."""
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'numrec'.
+        """
         self.parametersGcmsGet['numrec'] = self.numrec
 
     def __setFilter(self, _filter) -> None:

@@ -6,9 +6,17 @@ from ..PluginHelper import PluginHelper
 
 
 class Community(object):
-    """Classe permettant de récupérer la description d'une communauté et de ses couches cartographiques."""
+    """
+    Classe permettant de récupérer la description d'un groupe (communauté) et de ses couches cartographiques.
+    """
 
     def __init__(self, params) -> None:
+        """
+        Constructeur.
+
+        :param params: les paramètres généraux pour lancer une requête HTTP GET sur une communauté (groupe)
+        :type params: dict
+        """
         self.__name = ''
         self.__id = -1
         self.__userId = -1
@@ -18,7 +26,7 @@ class Community(object):
         self.__logo = ''
         self.__tokenType = params['tokentype']
         self.__tokenAccess = params['tokenaccess']
-        self.__query = Query(params['url'], params['proxy'])
+        self.__query = Query(params['url'], params['proxies'])
 
     def getDatas(self, data) -> None:
         """
@@ -76,7 +84,7 @@ class Community(object):
         L'emprise serveur est la partie du territoire sur laquelle l'utilisateur a les droits d'écriture.
         Cette emprise peut-être FR : la métropole, 38185 : insee de commune ou une autre désignation.
 
-        :return: l'emprise serveur du groupe, variable égale à 0 dans l'immédiat.
+        :return: l'emprise serveur du groupe, variable égale à 0 pour l'immédiat.
         """
         return self.__emprises
 
@@ -159,7 +167,6 @@ class Community(object):
             layers.append(layer)
         return layers
 
-    #
     def __getDataLayerFromTable(self, layer) -> None:
         """
         Récupère les informations d'une table de la base de données correspondant à une couche cartographique (WFS)
@@ -229,10 +236,13 @@ class Community(object):
 
     def __getDataLayerFromGeoservice(self, layer, geoservice) -> None:
         """
-        Lance une requête GET pour récupérer les informations liées à une couche geoservice.
+        Lance une requête GET pour récupérer les informations liées à une couche geoservice (WMS).
 
         :param layer: une couche geoservice du projet QGIS
         :type layer: Layer
+
+        :param geoservice: le numéro du geoservice
+        :type geoservice:dict
         """
         self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/geoservices/{}".format(geoservice['id']))
@@ -244,7 +254,7 @@ class Community(object):
 
     def __getDataFromGeoservice(self, data, layer) -> None:
         """
-        Initialise des caractéristiques d'une couche geoservice.
+        Initialise des caractéristiques d'une couche geoservice (WMS).
 
         :param data: les informations sur le geoservice
         :type data: dict

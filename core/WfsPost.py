@@ -7,17 +7,33 @@ from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
 from .Wkt import Wkt
 from .BBox import BBox
+from .GuichetVectorLayer import GuichetVectorLayer
 from .HttpRequest import HttpRequest
 from . import Constantes as cst
+from ..Contexte import Contexte
 
 
 class WfsPost(object):
-    """Classe implémentant une requête en HTTP POST pour une couche WFS."""
+    """
+    Classe implémentant une requête en HTTP POST pour une couche WFS.
+    """
 
     def __init__(self, context, layer, filterName) -> None:
+        """
+        Constructeur.
+
+        :param context: le contexte du client QGIS
+        :type context: Contexte
+
+        :param layer: la couche QGIS en édition
+        :type layer: GuichetVectorLayer
+
+        :param filterName: le nom de la zone de travail utilisateur
+        :type filterName: str
+        """
         self.__context = context
         self.__layer = layer
-        self.__proxy = context.proxy
+        self.__proxies = context.proxies
         self.__endReporting = ''
         self.__transactionReporting = ''
         '''Il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
@@ -151,9 +167,8 @@ class WfsPost(object):
 
     def __setFingerPrint(self, fingerprint) -> {}:
         """
-        Définir un dictionnaire pour la clé spécifique BDUni 'gcms_fingerprint'. (Il s'agit de l'empreinte géométrique
-        d'un objet qui est mis à jour en fonction de sa modification géométrique. Cette empreinte est toujours
-        croissante).
+        Définir un dictionnaire pour la clé spécifique BDUni 'gcms_fingerprint'. (Il s'agit de la clé MD5 calculée
+        à partir de la sémantique et de la géométrie d'un objet qui est mis à jour).
 
         :param fingerprint: empreinte géométrique d'un objet BDUni
         :type fingerprint: str
@@ -227,7 +242,7 @@ class WfsPost(object):
         """
         print("Post_action : {}".format(json.dumps(self.__datasForPost)))
         headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
-        response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxy, data=json.dumps(self.__datasForPost),
+        response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxies, data=json.dumps(self.__datasForPost),
                                                headers=headers, launchBy='__gcmsPost')
         responseTransactions = self.__checkResponseTransactions(response)
         if responseTransactions['status'] == cst.STATUS_COMMITTED:
@@ -287,7 +302,7 @@ class WfsPost(object):
                       'is3D': self.__layer.geometryDimensionForDatabase,
                       'numrec': numrec, 'role': None,
                       'urlHostEspaceCo': self.__context.urlHostEspaceCo,
-                      'headers': headers, 'proxy': self.__context.proxy,
+                      'headers': headers, 'proxies': self.__context.proxies,
                       'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
         numrecmessage = wfsGet.gcms_get()

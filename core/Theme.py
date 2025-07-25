@@ -3,9 +3,17 @@ from ..PluginHelper import PluginHelper
 
 
 class Theme(object):
-    """Classe représentant un thème"""
+    """
+    Classe représentant un thème.
+    """
 
     def __init__(self, communityId) -> None:
+        """
+        Constructeur.
+
+        :param communityId: l'identifiant de groupe
+        :type communityId: int
+        """
         self.__communityId = communityId
         self.__name = ''
         self.__global = False
