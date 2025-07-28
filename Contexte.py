@@ -675,7 +675,7 @@ class Contexte(object):
 
         # Modification du formulaire d'attributs
         efffa = EditFormFieldFromAttributes(newVectorLayer, layer.attributes)
-        newVectorLayer.correspondanceChampType = efffa.readData()
+        efffa.readDataAndApplyConstraints()
 
         # Modification de la symbologie de la couche
         listOfValuesFromItemStyle = layer.getListOfValuesFromItemStyle()

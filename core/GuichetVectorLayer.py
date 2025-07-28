@@ -29,7 +29,6 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.geometryDimensionForDatabase = parameters['geometryDimension']
         self.geometryTypeForDatabase = parameters['geometryType']
         self.conditionFactory = ConditionFactory()
-        self.correspondanceChampType = None
         self.name = parameters['name']
 
     '''
