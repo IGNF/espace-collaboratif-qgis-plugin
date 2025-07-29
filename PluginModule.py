@@ -535,7 +535,7 @@ class RipartPlugin:
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.Yes:
-                SQLiteManager.setEmptyTablesReportsAndSketchs(PluginHelper.reportSketchLayersName)
+                SQLiteManager.setEmptyTablesReportAndSketchs(PluginHelper.reportSketchLayersName)
                 self.__context.refresh_layers()
             else:
                 return

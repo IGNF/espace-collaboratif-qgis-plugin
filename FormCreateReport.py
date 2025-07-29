@@ -178,7 +178,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if len(theme.getAttributes()) == 0:
                 continue
             for attribute in theme.getAttributes():
-                attLabel = attribute.switchNameToTitle()
+                attLabel = attribute.switchNameToAlias()
                 label = QtWidgets.QLabel(attLabel, self.treeWidget)
                 # Les attributs obligatoires sont en gras
                 if attribute.getMandatory() is True:

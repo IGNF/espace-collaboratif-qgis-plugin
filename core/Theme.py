@@ -20,7 +20,7 @@ class Theme(object):
         self.__database = ''
         self.__featureType = ''
         self.__attributes = []
-        self.__switchNameToTitle = {}
+        self.__switchNameToAlias = {}
 
     def setTheme(self, data) -> None:
         """
@@ -61,19 +61,19 @@ class Theme(object):
         """
         return self.__attributes
 
-    def getSwitchAttributeNameToTitle(self, name) -> str:
+    def getSwitchAttributeNameToAlias(self, name) -> str:
         """
-        Retrouve le titre du thème en fonction de son nom.
+        Retrouve l'alias du thème en fonction de son nom.
 
         :param name: le nom du thème
         :type name: str
 
-        :return: le titre du thème
+        :return: l'alias du thème
         """
-        title = ''
-        if name in self.__switchNameToTitle:
-            title = self.__switchNameToTitle[name]
-        return title
+        alias = ''
+        if name in self.__switchNameToAlias:
+            alias = self.__switchNameToAlias[name]
+        return alias
 
     def __setDataAttributes(self, datas) -> None:
         """
@@ -88,4 +88,4 @@ class Theme(object):
             themeAttributes = ThemeAttributes()
             themeAttributes.setAttributes(data)
             self.__attributes.append(themeAttributes)
-            self.__switchNameToTitle.update(themeAttributes.getNameAndTitle())
+            self.__switchNameToAlias.update(themeAttributes.getNameAndAlias())

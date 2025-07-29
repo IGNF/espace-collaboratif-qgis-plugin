@@ -154,18 +154,18 @@ class EditFormFieldFromAttributes(object):
         setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
         self.layer.setEditorWidgetSetup(self.index, setup)
 
-    def setFieldAlias(self, title) -> None:
+    def setFieldAlias(self, alias) -> None:
         """
         Un attribut QGIS peut porter un 'Alias' [ Couche/Propriétés.../Formulaire d'attributs/Général > Alias ].
         L'item 'title' du collaboratif porte cette valeur qui est appliquée sur le champ QGIS en cours.
         Exemple : le champ 'numero' porte l'alias 'Numéro'.
 
-        :param title: la valeur issue du collaboratif, si None ou vide, sortie de fonction
-        :type title: str
+        :param alias: la valeur issue du collaboratif, si None ou vide, sortie de fonction
+        :type alias: str
         """
-        if title is None or title == '':
+        if alias is None or alias == '':
             return
-        self.layer.setFieldAlias(self.index, title)
+        self.layer.setFieldAlias(self.index, alias)
 
     def setFieldConstraintNotNull(self, bNullable) -> None:
         """

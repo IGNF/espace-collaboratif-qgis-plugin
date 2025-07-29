@@ -2,21 +2,26 @@ from ..PluginHelper import PluginHelper
 
 
 class ThemeAttributes(object):
-    """Classe représentant un attribut d'un thème."""
+    """
+    Classe représentant un attribut d'un thème.
+    """
 
     def __init__(self) -> None:
+        """
+        Initialisation des attributs d'un thème.
+        """
         self.__name = ''
-        self.__title = ''
+        self.__nameAlias = ''
         self.__type = None
         self.__values = None
         self.__default = None
         self.__required = False
         self.__mandatory = False
-        self.__switchNameToTitle = {}
+        self.__switchNameToAlias = {}
 
     def setAttributes(self, data) -> None:
         """
-        Rempli les attributs d'un thème
+        Rempli les attributs d'un thème.
 
         :param data: les données pour les attributs d'un thème
         :type data: dict
@@ -24,7 +29,7 @@ class ThemeAttributes(object):
         if PluginHelper.keyExist('name', data):
             self.__name = data['name']
         if PluginHelper.keyExist('title', data):
-            self.__title = data['title']
+            self.__nameAlias = data['title']
         if PluginHelper.keyExist('type', data):
             self.__type = data['type']
         if PluginHelper.keyExist('values', data):
@@ -42,36 +47,46 @@ class ThemeAttributes(object):
         """
         return self.__name
 
-    def getTitle(self) -> str:
+    def getAlias(self) -> str:
         """
-        :return: le titre du thème
+        :return: l'alias du thème (au sens QGIS)
         """
-        return self.__title
+        return self.__nameAlias
 
     def getType(self) -> None:
         """
-        :return: le type du thème
+        :return: le type du thème (point, ligne ou surface)
         """
         return self.__type
 
     def getValues(self) -> []:
-        """"""
+        """
+        :return: une liste de valeurs (cas d'un champ liste par exemple)
+        """
         return self.__values
 
     def getDefault(self) -> str:
-        """"""
+        """
+        :return: la valeur par défaut que peut prendre un attribut
+        """
         return self.__default
 
     def getMandatory(self) -> bool:
-        """"""
+        """
+        :return: la valeur obligatoire
+        """
         return self.__mandatory
 
-    def getNameAndTitle(self) -> {}:
-        """"""
-        return {self.__name: self.__title}
+    def getNameAndAlias(self) -> {}:
+        """
+        :return: le nom et l'alias de l'attribut
+        """
+        return {self.__name: self.__nameAlias}
 
-    def switchNameToTitle(self) -> str:
-        """"""
-        if self.__title != '':
-            return self.__title
+    def switchNameToAlias(self) -> str:
+        """
+        :return: l'alias si différent de vide
+        """
+        if self.__nameAlias != '':
+            return self.__nameAlias
         return self.__name

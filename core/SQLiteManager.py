@@ -9,12 +9,13 @@ from .Wkt import Wkt
 
 class SQLiteManager(object):
     """
-        Classe permettant la gestion d'une base SQLite liée à un projet QGIS
+    Classe permettant la gestion d'une base SQLite liée à un projet QGIS.
     """
+
     def __init__(self) -> None:
         """
-        Initialisation de la gestion d'une base SQLite
-
+        Initialisation de la gestion d'une base SQLite avec son chemin complet.
+        Par exemple : .../ProjetQGIS/monprojet_espaceco.sqlite
         """
         self.__dbPath = SQLiteManager.getBaseSqlitePath()
 
@@ -23,6 +24,7 @@ class SQLiteManager(object):
         """
         Recherche le chemin complet de la base SQLite.
         Exemple : .../ProjetQGIS/monprojet_espaceco.sqlite
+        NB : le nom est toujours préfixé par '_espaceco'
 
         :return: retourne le chemin et le nom de la base de la base SQlite.
         """
@@ -52,12 +54,11 @@ class SQLiteManager(object):
     def isTableExist(tableName) -> bool:
         """
         Vérifie si une table existe dans la base SQLite.
-        Si la base SQLite n'est pas trouvée, retourne False
 
         :param tableName: le nom de la table à rechercher
         :type tableName: str
 
-        :return: True si la table existe, False sinon
+        :return: True si la table existe, False Si la base SQLite n'est pas trouvée
        """
         bFind = True
         dbPath = SQLiteManager.getBaseSqlitePath()
@@ -120,10 +121,11 @@ class SQLiteManager(object):
 
     def __addGeometryColumn(self, parameters) -> str:
         """
-        Ajout de la colonne géométrie à une table
+        Ajout de la colonne géométrie (2D ou 3D) à une table.
 
         :param parameters: dictionnaire contenant le nom de la table, le nom de la géométrie,
-        le système de référence de coordonnées, le type de géométrie et un booléen à True si la couche est 3D.
+                           le système de référence de coordonnées, le type de géométrie
+                           et un booléen à True si la couche est 3D.
 
         :return: la partie de la commande SQL liée à la géométrie
         """
@@ -143,6 +145,7 @@ class SQLiteManager(object):
     def createTableFromLayer(self, layer) -> bool:
         """
         Création d'une table dans la base SQLite du projet en cours pour une couche passée en paramètre.
+        La base SQLite est compactée après chaque création de table.
 
         :param layer: une couche du projet QGIS
         :type layer: QgsVectorLayer
@@ -175,13 +178,13 @@ class SQLiteManager(object):
 
     def __setSwitchType(self, vType) -> str:
         """
-        Correspondance entre un type d'attribut d'une classe d'objet d'une couche QGIS et un type de colonne d'une table
-        dans SQLite
+        Correspondance entre un type d'attribut d'une classe d'objet d'une couche QGIS
+        et un type de colonne d'une table SQLite.
 
         :param vType: la valeur d'un type d'attribut
         :type vType: str
 
-        :return: retourne un type de colonne SQLite
+        :return: le type de colonne SQLite
         """
         if vType == 'Boolean':
             return 'INTEGER'
@@ -290,8 +293,16 @@ class SQLiteManager(object):
         return strColumns, strValues
 
     @staticmethod
-    # Suppression des enregistrements d'une table BDUni en fonction d'une liste de clés primaires données en entrée
     def deleteRowsInTableBDUni(tableName, keys) -> None:
+        """
+        Suppression des enregistrements d'une table BDUni en fonction d'une liste de clés primaires données en entrée.
+
+        :param tableName: nom de la table dont les enregistrements doivent être supprimés
+        :type tableName: str
+
+        :param keys: liste par table de clés primaires
+        :type keys: list
+        """
         if not SQLiteManager.isTableExist(tableName):
             message = "SQLiteManager.deleteRowsInTableBDUni : la table {} de la base SQLite du projet n'existe pas." \
                       " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
@@ -304,8 +315,16 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    # Supprime les enregistrements d'une table BDUni en fonction des actions de synchronisation
     def setActionsInTableBDUni(tableName, itemsTransaction) -> None:
+        """
+        Supprime les enregistrements d'une table BDUni en fonction des actions (update et delete) de synchronisation.
+
+        :param tableName: nom de la table dont les enregistrements doivent être supprimés
+        :type tableName: str
+
+        :param itemsTransaction: contient les items nécessaires à la suppression des enregistrements
+        :type itemsTransaction: dict
+        """
         if not SQLiteManager.isTableExist(tableName):
             message = "SQLiteManager.setActionsInTableBDUni : la table {} de la base SQLite du projet n'existe pas." \
                       " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
@@ -333,7 +352,6 @@ class SQLiteManager(object):
         for attributesRow in attributesRows:
             columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
-            # print(sql)
             cur.execute(sql)
             totalRows += 1
         cur.close()
@@ -342,9 +360,12 @@ class SQLiteManager(object):
         return totalRows
 
     @staticmethod
-    # Retourne le nom de la clé primaire (et la clé MD5 d'une empreinte) pour une table non BDUni
-    # ou retourne le nom de la clé primaire et la clé MD5 d'une empreinte pour une table BDUni
+    #
     def selectRowsInTable(layer, ids) -> list:
+        """
+        Retourne le nom de la clé primaire (et la clé MD5 d'une empreinte numérique de l'objet) pour une table non BDUni
+        ou retourne le nom de la clé primaire et la clé MD5 d'une empreinte pour une table BDUni.
+        """
         tmp = "("
         for idTmp in ids:
             tmp += "'{}',".format(idTmp)
@@ -367,8 +388,13 @@ class SQLiteManager(object):
         return res
 
     @staticmethod
-    # Suppression de tous les enregistrements d'une table
     def emptyTable(tableName) -> None:
+        """
+        Suppression de tous les enregistrements d'une table.
+
+        :param tableName: nom de la table
+        :type tableName: str
+        """
         if not SQLiteManager.isTableExist(tableName):
             message = "SQLiteManager.emptyTable : la table {} de la base SQLite du projet n'existe pas. Il faut " \
                       "lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
@@ -378,8 +404,13 @@ class SQLiteManager(object):
         print("SQLiteManager : table {0} vidée".format(tableName))
 
     @staticmethod
-    # Suppression d'une table
     def deleteTable(tableName) -> None:
+        """
+        Suppression d'une table dans la base SQLite.
+
+        :param tableName: nom de la table
+        :type tableName: str
+        """
         if not SQLiteManager.isTableExist(tableName):
             message = "SQLiteManager.deleleTable : la table {} de la base SQLite du projet n'existe pas. Il faut " \
                       "lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
@@ -389,8 +420,16 @@ class SQLiteManager(object):
         print("SQLiteManager : table {0} détruite".format(tableName))
 
     @staticmethod
-    # Retourne un tuple dont le premier élément est égale à 1 si la colonne existe dans la table
     def isColumnExist(tableName, columnName) -> ():
+        """
+        :param tableName: nom de la table
+        :type tableName: str
+
+        :param columnName: nom de la colonne
+        :type columnName: str
+
+        :return: un tuple dont le premier élément est égale à 1 si la colonne existe dans la table
+        """
         if not SQLiteManager.isTableExist(tableName):
             message = "SQLiteManager.isColumnExist : la table {} de la base SQLite du projet n'existe pas. Il faut" \
                       " lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
@@ -405,8 +444,16 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
-    # Retourne la valeur d'une colonne pour une table donnée
-    def selectColumnFromTable(tableName, columnName) -> list:
+    def selectColumnFromTable(tableName, columnName) -> ():
+        """
+        :param tableName: nom de la table
+        :type tableName: str
+
+        :param columnName: nom de la colonne
+        :type columnName: str
+
+        :return: la valeur d'une colonne pour une table donnée.
+        """
         if not SQLiteManager.isTableExist(tableName):
             message = "SQLiteManager.selectColumnFromTable : la table {} de la base SQLite du projet n'existe pas." \
                       " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
@@ -421,9 +468,22 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
-    # Retourne la valeur d'une colonne selon une condition d'égalité
-    # TODO quelle valeur est retournee ?
-    def selectColumnFromTableWithCondition(columnName, tableName, conditionColumn, conditionValue):
+    def selectColumnFromTableWithCondition(columnName, tableName, conditionColumn, conditionValue) -> ():
+        """
+        Retourne la valeur d'une colonne selon une condition d'égalité.
+
+        :param columnName: nom de la colonne
+        :type columnName: str
+
+        :param tableName: nom de la table
+        :type tableName: str
+
+        :param conditionColumn: nom de la colonne faisant partie de la condition
+        :type conditionColumn: str
+
+        :param conditionValue: la valeur de la condition d'égalité
+        :type conditionValue: str
+        """
         if not SQLiteManager.isTableExist(tableName):
             message = "SQLiteManager.selectColumnFromTableWithCondition : la table {} de la base SQLite du projet" \
                       " n'existe pas. Il faut lancer au moins une extraction de données" \
@@ -439,20 +499,32 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
-    # Compactage de la base SQLite (Indispensable après le chargement d'une nouvelle couche)
     def vacuumDatabase() -> None:
+        """
+        Compactage de la base SQLite (indispensable après le chargement d'une nouvelle couche).
+        """
         sql = u"VACUUM"
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    # Met à jour le numéro de synchronisation d'une table
     def updateNumrecTableOfTables(layer, numrec) -> None:
+        """
+        Met à jour le numéro de synchronisation pour une couche de la table des tables.
+
+        :param layer: nom de la couche
+        :type layer: str
+
+        :param numrec: numéro de dernière mise à jour d'une base
+        :type numrec: int
+        """
         sql = "UPDATE {0} SET numrec = {1} WHERE layer = '{2}'".format(cst.TABLEOFTABLES, numrec, layer)
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    # Retourne l'ensemble des noms de tables stockées dans la table des tables
     def selectLayersFromTableOfTables() -> list:
+        """
+        :return: l'ensemble des noms de couches stockées dans la table des tables.
+        """
         sql = "SELECT layer FROM {0}".format(cst.TABLEOFTABLES)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
@@ -463,8 +535,13 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
-    # Retourne le dernier numéro de synchronisation pour une couche (à 0 pour une table non BDUni)
     def selectNumrecTableOfTables(layer) -> int:
+        """
+        :param layer: le nom de la couche
+        :type layer: str
+
+        return: le dernier numéro de synchronisation pour une couche BDUni, 0 pour une table standard
+        """
         sql = "SELECT numrec FROM {0} where layer = '{1}'".format(cst.TABLEOFTABLES, layer)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cur = connection.cursor()
@@ -475,9 +552,12 @@ class SQLiteManager(object):
         return result[0]
 
     @staticmethod
-    # Création de la table des tables qui permet de stocker les informations nécessaires
-    # en vue d'une synchronisation vers le serveur par exemple
+    #
     def createTableOfTables() -> None:
+        """
+        Création de la table des tables qui permet de stocker les informations nécessaires en vue d'une synchronisation
+        vers le serveur de l'espace collaboratif.
+        """
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
               u"standard BOOL, database TEXT, databaseid INTEGER, srid INTEGER, geometryName TEXT, " \
               u"geometryDimension INTEGER, geometryType TEXT, numrec INTEGER, " \
@@ -485,9 +565,15 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    # Insérer un enregistrement dans la table des tables
     def InsertIntoTableOfTables(parameters) -> None:
-        # Si l'enregistrement existe déjà, on le détruit avant d'insérer le nouveau
+        """
+        Insère un enregistrement dans la table des tables. Si l'enregistrement existe déjà, on le détruit
+        avant d'insérer le nouveau.
+
+        :param parameters: les clés/valeurs pour une insertion
+        :type parameters: dict
+
+        """
         result = SQLiteManager.selectRowsInTableOfTables(parameters['layer'])
         if len(result) == 1:
             sql = "DELETE FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, parameters['layer'])
@@ -507,8 +593,13 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    # Retourne toutes les colonnes d'un enregistrement d'une table de la table des tables
     def selectRowsInTableOfTables(tableName) -> list:
+        """
+        Retourne toutes les colonnes de la table des tables pour un enregistrement d'une table.
+
+        :param tableName: le nom de la table
+        :type tableName: str
+        """
         result = []
         # Est-ce que la table existe ?
         if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
@@ -524,8 +615,10 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
-    # Création de la table des signalements
     def createReportTable() -> None:
+        """
+        Création de la table des signalements.
+        """
         sql = u"CREATE TABLE Signalement (" + \
               u"id INTEGER NOT NULL PRIMARY KEY, " + \
               u"NoSignalement INTEGER, " + \
@@ -551,8 +644,16 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    # Création d'une table de croquis
     def createSketchTable(nameTable, geometryType) -> None:
+        """
+        Création d'une table de croquis.
+
+        :param nameTable: nom de la table du croquis
+        :type nameTable: str
+
+        :param geometryType: le type de géométrie du croquis
+        :type geometryType: str
+        """
         sql = u"CREATE TABLE " + nameTable + " (" + \
               u"id INTEGER NOT NULL PRIMARY KEY, " + \
               u"NoSignalement INTEGER, " + \
@@ -566,16 +667,23 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
-    # Suppression de tous les enregistrements de toutes les tables d'une liste
-    def setEmptyTablesReportsAndSketchs(tablesList) -> None:
+    def setEmptyTablesReportAndSketchs(tablesList) -> None:
+        """
+        Suppression de tous les enregistrements de toutes les tables d'une liste. (Signalement, Croquis_EC_Polygone,
+        Croquis_EC_Ligne et Croquis_EC_Point.
+        """
         for table in tablesList:
             SQLiteManager.emptyTable(table)
         SQLiteManager.vacuumDatabase()
 
     @staticmethod
-    # Met à jour les colonnes d'un enregistrement d'une table en fonction d'une condition
     def updateTable(parameters) -> None:
+        """
+        Met à jour un enregistrement d'une table en fonction d'une condition.
+
+        :param parameters: les items ('name', 'attributes', 'condition') nécessaires pour la mise à jour d'une table
+        :type parameters: dict
+        """
         sql = "UPDATE {0} SET {1} WHERE {2}".format(parameters['name'], parameters['attributes'],
                                                     parameters['condition'])
-        print(sql)
         SQLiteManager.executeSQL(sql)

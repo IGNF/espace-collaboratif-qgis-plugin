@@ -304,6 +304,21 @@ class GuichetVectorLayer(QgsVectorLayer):
     '''
 
     def __setLineRule(self, expression, valeurs, strFieldDirection):
+        """
+        Applique une règle de symbologie à un point.
+        NB : une condition de l'espace collaboratif est transformée en expression QGIS.
+
+        :param expression: la condition d'affichage de la symbologie
+        :type expression: str
+
+        :param valeurs: les valeurs de symbologie
+        :type valeurs: dict
+
+        :param strFieldDirection: le sens donné à l'attribut, (un sens de circulation peut-être direct ou inverse)
+        :type strFieldDirection: str
+
+        :return: la règle de symbologie de la ligne
+        """
         otherLineSymbol = None
         strokeWidth = valeurs['strokeWidth']
         # Représentation d'une route à deux traits
@@ -335,7 +350,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             # Symbole de police (le caractère >)
             # (appliqué pour un champ, expression appliquée sur le caractère choisi < sens inverse ou sens direct >
             fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.setMarkerLineSymbolLayer())
-            qgsProperty = self.setPropertySymbol(strFieldDirection)
+            qgsProperty = self.__setPropertySymbol(strFieldDirection)
             if qgsProperty is not None:
                 fontMarkerSymbol.setDataDefinedProperty(QgsSymbolLayer.Property.PropertyCharacter, qgsProperty)
 
@@ -355,24 +370,55 @@ class GuichetVectorLayer(QgsVectorLayer):
         return ruleBasedRendererLine
 
     def __setPolygonRule(self, expression, valeurs):
+        """
+        Applique une règle de symbologie à un polygone.
+        NB : une condition de l'espace collaboratif est transformée en expression QGIS.
+
+        :param expression: la condition d'affichage de la symbologie
+        :type expression: str
+
+        :param valeurs: les valeurs de symbologie
+        :type valeurs: dict
+
+        :return: la règle de symbologie du polygone
+        """
         symbolPolygon = self.__setSymbolPolygon(valeurs["fillColor"], valeurs['strokeColor'],
                                                 valeurs['strokeDashstyle'], str(valeurs['strokeWidth']),
                                                 valeurs['fillOpacity'])
         ruleBasedRendererPolygon = QgsRuleBasedRenderer.Rule(symbolPolygon, 0, 0, expression, valeurs['name'])
         return ruleBasedRendererPolygon
 
-    def __setPointRule(self, expression, valeurs):
+    def __setPointRule(self, expression, valeurs) -> QgsRuleBasedRenderer.Rule:
+        """
+        Applique une règle de symbologie à un point.
+        NB : une condition de l'espace collaboratif est transformée en expression QGIS.
+
+        :param expression: la condition d'affichage de la symbologie
+        :type expression: str
+
+        :param valeurs: les valeurs de symbologie
+        :type valeurs: dict
+
+        :return: la règle de symbologie du point
+        """
         symbolPoint = self.__setSymbolPoint(valeurs["fillColor"], valeurs['strokeColor'], valeurs['fillOpacity'])
         ruleBasedRendererPoint = QgsRuleBasedRenderer.Rule(symbolPoint, 0, 0, expression, valeurs['name'])
         return ruleBasedRendererPoint
 
-    '''
-        Symbologie avec règles extraite du style Collaboratif
-    '''
+    def __setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression) -> None:
+        """
+        Applique un ensemble de règles de symbologie extraites du style collaboratif.
+        Une règle au sens QGIS est définie comme suit :
+        Rule (QgsSymbol *symbol, int maximumScale=0, int minimumScale=0, const QString &filterExp=QString(),
+        const QString &label=QString(), const QString &description=QString(), bool elseRule=false)
 
-    def __setModifyWithQgsRuleBasedSymbolRenderer(self, data, bExpression):
-        # Rule (QgsSymbol *symbol, int maximumScale=0, int minimumScale=0, const QString &filterExp=QString(),
-        # const QString &label=QString(), const QString &description=QString(), bool elseRule=false)
+        :param data: les données de symbologie
+        :type data: dict
+
+        :param bExpression: à True, si plusieurs conditions d'affichage sont à transformer en expression.
+                            Chaque expression sera séparée par un ELSE.
+        :type bExpression: bool
+        """
         strDirectionField = None
         if 'default' in data:
             strDirectionField = data['default']['directionField']
@@ -407,11 +453,13 @@ class GuichetVectorLayer(QgsVectorLayer):
         # Refresh layer
         self.triggerRepaint()
 
-    '''
-        Modification de la symbologie
-    '''
+    def setModifySymbols(self, listOfValues) -> None:
+        """
+        Applique une symbologie (listOfValues) à une couche.
 
-    def setModifySymbols(self, listOfValues):
+        :param listOfValues: liste de la (ou des) symbologie(s)
+        :type listOfValues: dict
+        """
 
         # Pas de balise Style, Symbologie = Symbole QGIS par défaut
         if len(listOfValues) == 0:
@@ -425,12 +473,17 @@ class GuichetVectorLayer(QgsVectorLayer):
         if len(listOfValues) > 1:
             self.__setModifyWithQgsRuleBasedSymbolRenderer(listOfValues, True)
 
-    '''
-        Définition de l'échelle minimum et maximum de la couche
+    def setDisplayScale(self, minS, maxS) -> None:
+        """
+        Applique une échelle minimum et maximum pour l'affichage suite à la création d'une couche dans QGIS.
         Source : https://geoservices.ign.fr/documentation/geoservices/wmts.html#taille-des-tuiles-en-pixels
-    '''
 
-    def setDisplayScale(self, minS, maxS):
+        :param minS: échelle minimum
+        :type minS: int
+
+        :param maxS: échelle maximum
+        :type maxS: int
+        """
         # Correspondance zoom des tuiles - échelle approximative
         scale = {
             0: 559082264,
