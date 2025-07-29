@@ -418,7 +418,7 @@ class ToolsReport(object):
     def __calculateRows(self, datas):
         report = Report(self.__context.urlHostEspaceCo, datas)
         report.InsertSketchIntoSQLite()
-        columns = report.getColumnsForSQlite()
+        columns = report.getDatasForSQlite()
         return columns, report.getId()
 
     def __insertReportsSketchsIntoSQLite(self, datas) -> []:

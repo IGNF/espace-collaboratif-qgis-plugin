@@ -34,7 +34,7 @@ class Report(object):
         """
         Constructeur.
 
-        :param urlHostEspaceCo: la première partie de l'url (https://espacecollaboratif.ign.fr/)
+        :param urlHostEspaceCo: la première partie de l'url (https://espacecollaboratif.ign.fr)
         :type urlHostEspaceCo: str
 
         :param data: les attributs d'un signalement
@@ -83,32 +83,73 @@ class Report(object):
             self.__sketch = data['sketch']
 
     def getId(self) -> int:
+        """
+        :return: l'identifiant du signalement sur l'espace collaboratif (et non celui de QGIS)
+        """
         return self.__id
 
     def getCommune(self) -> str:
+        """
+        :return: le nom de la commune
+        """
         return self.__commune
 
     def getInsee(self) -> str:
+        """
+        :return: le numéro insee de la commune
+        """
         return self.__insee
 
     def getStatut(self) -> str:
+        """
+        Le statut d'un signalement peut-être :
+         - "Reçu dans nos services"
+         - "En cours de traitement"
+         - "Demande de qualification"
+         - "En attente de saisie"
+         - "Pris en compte"
+         - "Déjà pris en compte"
+         - "Rejeté (hors spéc.)"
+         - "Rejeté (hors de propos)"
+         - "En attente de validation"
+
+        :return: le statut du signalement
+        """
         return self.__statut
 
     def getMessage(self) -> str:
+        """
+        :return: le message d'informations supplémentaires lié à un signalement
+        """
         return self.__message
 
     def getInputDevice(self) -> str:
+        """
+        Définition du protocole signant auprès du service Collaboratif l'origine de l'interface de saisie.
+        Par exemple pour QGIS : "SIG-QGIS".
+
+        :return: le nom de l'interface de l'utilisateur
+        """
         return self.__inputDevice
 
     def getGeometry(self) -> str:
+        """
+        :return: la géometrie du signalement
+        """
         return self.__geometry
 
     def getSketch(self) -> str:
+        """
+        :return: un croquis lié à un signalement
+        """
         return self.__sketch
 
-    # TODO dans SQLIte, on stoke du json ou une chaine reformatée ?
-    #  j'ai pris l'option chaine reformatée
-    def getColumnsForSQlite(self) -> dict:
+    def getDatasForSQlite(self) -> dict:
+        """
+        NB : pour l'attribut Thème, l'option chaine reformatée a été pris plutôt que du json.
+
+        :return: les données pour remplir les colonnes de la table Signalement de la base SQlite du projet
+        """
         return {
             'NoSignalement': self.__id,
             'Auteur': self.getStrAuthor(),
@@ -132,20 +173,23 @@ class Report(object):
         }
 
     def InsertSketchIntoSQLite(self) -> None:
+        """
+        Insère les données d'un (des) croquis dans une des trois tables de croquis de la base SQLite du projet.
+        """
         if self.getSketch() is None:
             return
 
         jsonDatas = json.loads(self.getSketch())
-        objects = self.__getKey(jsonDatas, 'objects')
+        objects = self.__getKeyValue(jsonDatas, 'objects')
         nbSketch = 0
         for obj in objects:
-            geom = self.__getKey(obj, 'geometry')
-            if geom == '':
+            geom = self.__getKeyValue(obj, 'geometry')
+            if len(geom) == 0:
                 continue
             attributesRows = [{
                 'NoSignalement': self.__id,
-                'Nom': self.__getKey(obj, 'name'),
-                'Attributs_croquis': self.__getAttributes(obj),
+                'Nom': self.__getKeyValue(obj, 'name'),
+                'Attributs_croquis': self.__getSketchAttributes(obj),
                 'Lien_objet_BDUNI': '',
                 'geom': geom
             }]
@@ -158,12 +202,27 @@ class Report(object):
             nbSketch += sqliteManager.insertRowsInTable(parameters, attributesRows)
         print('signalement n° {0}, {1} croquis'.format(self.__id, nbSketch))
 
-    def __getKey(self, datas, key) -> str:
+    def __getKeyValue(self, datas, key) -> dict:
+        """
+        :param datas: les données
+        :type datas: dict
+
+        :param key: la valeur de la clé
+        :type key: str
+
+        :return: la valeur en fonction de la clé donnée en entrée
+        """
         if key in datas:
             return datas[key]
-        return ''
+        return {}
 
-    def __getAttributes(self, datas) -> str:
+    def __getSketchAttributes(self, datas) -> str:
+        """
+        :param datas: les attributs du croquis
+        :type datas: dict
+
+        :return: les attributs d'un croquis séparés par un "|"
+        """
         strAttributes = ''
         data = None
         if 'attributes' in datas:
@@ -189,6 +248,12 @@ class Report(object):
         return strAttributes
 
     def __whatGeometryAndTableIs(self, geom) -> tuple:
+        """
+        :param geom: la géométrie d'un signalement
+        :type geom: dict
+
+        :return: le type de géométrie, le nom de la table du croquis
+        """
         if 'POINT' in geom:
             return 'POINT', cst.nom_Calque_Croquis_Point
         if 'LINESTRING' in geom:
@@ -197,8 +262,14 @@ class Report(object):
             return 'POLYGON', cst.nom_Calque_Croquis_Polygone
 
     def __formatDateToStrftime(self, dateToFormat) -> str:
-        # valeur en entrée 2023-08-01T14:51:55+02:00
-        # valeur de retour 2023-08-01 14:51:55
+        """
+        Transforme une valeur de date en entrée '2023-08-01T14:51:55+02:00' en valeur de retour '2023-08-01 14:51:55'
+
+        :param dateToFormat: la valeur de la date à formatter
+        :type dateToFormat: str
+
+        :return: la date formattée
+        """
         if dateToFormat == '':
             return dateToFormat
         dt = datetime.fromisoformat(dateToFormat)
@@ -206,39 +277,52 @@ class Report(object):
         return dtc
 
     def getStrDateCreation(self) -> str:
+        """
+        :return: une date sous la forme "2023-08-01 14:51:55", une chaine vide si la date de création est à None
+        """
         dc = PluginHelper.notNoneValue(self.__dateCreation)
         return self.__formatDateToStrftime(dc)
 
     def getStrDateMaj(self) -> str:
+        """
+        :return: une date sous la forme "2023-08-01 14:51:55", une chaine vide si la date de mise à jour est à None
+        """
         dm = PluginHelper.notNoneValue(self.__dateMaj)
         return self.__formatDateToStrftime(dm)
 
     def getStrDateValidation(self) -> str:
+        """
+        :return: une date sous la forme "2023-08-01 14:51:55", une chaine vide si la date de validation est à None
+        """
         dv = PluginHelper.notNoneValue(self.__dateValidation)
         return self.__formatDateToStrftime(dv)
 
     def getAuthor(self) -> dict:
-        # valeur de retour
-        # {
-        # "id": 676,
-        # "username": "epeyrouse",
-        # "email": "eric.peyrouse@ign.fr"
-        # }
-        # ou
-        # un entier
+        """
+        Valeur de retour : {"id": 362, "username": "jbono", "email": "jean.bono@ign.fr"}
+
+        :return: les données liées à l'auteur du signalement
+        """
         return self.__author
 
-    # SQLite, colonne 'Auteur' : il faut retourner le nom 'username'
     def getStrAuthor(self) -> str:
+        """
+        NB : SQLite, colonne 'Auteur' : il faut retourner le nom 'username'
+
+        :return: le nom de l'auteur du signalement
+        """
         if type(self.__author) is int:
             return str(self.__author)
         return self.__author
 
-    # SQLite, colonne 'Document' : il faut retourner l'url 'download_uri'
     def _getStrAttachments(self) -> str:
-        # valeur de retour
-        # https://qlf-collaboratif.ign.fr/collaboratif-develop/document/download/7058
-        # si plusieurs documents, insertion d'un espace entre les url
+        """
+        Valeur de retour : " https://qlf-collaboratif.ign.fr/collaboratif-develop/document/download/7058"
+        Si plusieurs documents, insertion d'un espace entre les url
+        NB : SQLite, colonne 'Document' : il faut retourner l'url 'download_uri'
+
+        :return: l'url d'accès au document lié à un signalement
+        """
         documents = ''
         if self.__attachments is None or len(self.__attachments) == 0:
             return documents
@@ -247,25 +331,24 @@ class Report(object):
         return documents[:-1]
 
     def getListAttachments(self) -> list:
+        """
+        :return: la liste des documents attachés au signalement
+        """
         attachments = []
         for attachment in self.__attachments:
             attachments.append(attachment['download_uri'])
         return attachments
 
     def getTheme(self) -> [{}]:
-        # valeur de retour
-        # attributes": [{
-        # "community": 80,
-        # "theme": "Dépose-Repose",
-        # "attributes": {
-        #   "Organisme": "AZERT",
-        #   "Téléphone": "4254777",
-        #   "Adresse mail": "ffss",
-        #   "Disparition RN": "1",
-        #   "Adresse Postale": "123 rue poc",
-        #   "Nom Correspondant": "azert"
-        #   }
-        # }]
+        """
+        Bien qu'un signalement n'a plus qu'un thème lié, retourne une liste de thèmes.
+        Valeur de retour :
+        "attributes": [{"community": 80, "theme": "Dépose-Repose", "attributes": {"Organisme": "AZERT",
+        "Téléphone": "4254777", "Adresse mail": "ffss", "Disparition RN": "1", "Adresse Postale": "123 rue poc",
+        "Nom Correspondant": "azert"}}]
+
+        :return: une liste de thèmes
+        """
         return self.__theme
 
     def getStrThemeInReformattedString(self) -> str:

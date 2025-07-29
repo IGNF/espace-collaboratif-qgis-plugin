@@ -101,7 +101,7 @@ class EditFormFieldFromAttributes(object):
         Passage d'un type de champ de l'espace collaboratif à un type de champ QGIS. Au passage, la valeur par défaut
         est ajoutée.
 
-        :param vType: valeur du type de champ
+        :param vType: valeur du type de champ, si None, sortie de fonction
         :type vType: str
 
         :param default_value: valeur par défaut
@@ -160,7 +160,7 @@ class EditFormFieldFromAttributes(object):
         L'item 'title' du collaboratif porte cette valeur qui est appliquée sur le champ QGIS en cours.
         Exemple : le champ 'numero' porte l'alias 'Numéro'.
 
-        :param title: la valeur issue du collaboratif
+        :param title: la valeur issue du collaboratif, si None ou vide, sortie de fonction
         :type title: str
         """
         if title is None or title == '':
@@ -175,7 +175,7 @@ class EditFormFieldFromAttributes(object):
         - Nullable False --> case cochée (ConstraintNotNull = 1)
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Non nul ]
 
-        :param bNullable: à True si la valeur du champ peut-être nulle, False sinon
+        :param bNullable: si None ou vide, sortie de fonction
         :type bNullable: bool
         """
         if bNullable is None or bNullable is True or bNullable == '' or self.name == self.layer.idNameForDatabase:
@@ -187,7 +187,7 @@ class EditFormFieldFromAttributes(object):
         Applique une contrainte de valeur unique au champ en cours.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Unique ]
 
-        :param bUnique: à True si la valeur du champ doit être unique
+        :param bUnique: à True si la valeur du champ doit être unique, si None ou vide, sortie de fonction
         :type bUnique: bool
         """
         if bUnique is None or bUnique is False or bUnique == '':
@@ -307,10 +307,10 @@ class EditFormFieldFromAttributes(object):
               'Arrêt routier ferroviaire'),"nature_detaillee")
         END
 
-        :param constraintField: la liste des contraintes sur le champ
+        :param constraintField: la liste des contraintes sur le champ, si None, sortie de fonction
         :type constraintField: dict
 
-        :param conditionField: le champ qui porte la condition
+        :param conditionField: le champ qui porte la condition, si None, sortie de fonction
         :type conditionField: str
 
         :return: la contrainte par expression
@@ -339,19 +339,24 @@ class EditFormFieldFromAttributes(object):
         expression += " END"
         return expression
 
-    '''
-    Contraintes > Expression (minLength/maxLength)
-    
-    Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
-    de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
-    Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
-    '''
-
     def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, bNullable) -> str:
         """
+        Applique au champ en cours une contrainte de longueur minimum et maximum.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Expression (minLength/maxLength)
+        Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
+        de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
+        Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
 
-        :return:
+        :param minLength: longueur minimum, si None ou vide : sortie de fonction
+        :type minLength: str
+
+        :param maxLength: longueur maximum, si None ou vide : sortie de fonction
+        :type maxLength: str
+
+        :param bNullable: à True si la valeur peut-être nulle
+        :type bNullable: bool
+
+        :return: l'expression mise en forme
         """
         if (minLength is None and maxLength is None) or \
                 (minLength == '' and maxLength == '') or \
@@ -384,16 +389,25 @@ class EditFormFieldFromAttributes(object):
                                                                                                    expression)
         return expression
 
-    '''
-    Contraintes > Expression
-    
-    Quand nullable = true, ce n'est apparemment pas suffisant pour les attributs de type String
-    de juste laisser la case "Non nul" décochée. La valeur NULL n'est quand même pas acceptée.
-    Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
-    '''
+    def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable) -> str:
+        """
+        Ajout d'un modèle de contrainte sur le champ en cours.
+        Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Expression ]
+        Quand nullable = True, ce n'est apparemment pas suffisant pour les attributs de type String
+        de juste laisser la case "Non null" décochée. La valeur NULL n'est quand même pas acceptée.
+        Il semble qu'il faille rajouter dans la contrainte : xxxxx is null or ...
 
-    def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable):
+        :param pattern: le modèle de contrainte, si None ou vide : sortie de fonction
+        :type pattern: str
 
+        :param vType: le type de champ
+        :type vType: str
+
+        :param bNullable: à True, si la valeur du champ peut-être nulle
+        :type bNullable: bool
+
+        :return: l'expression mise en forme
+        """
         if pattern is None or pattern == '' or self.name == self.layer.idNameForDatabase:
             return 'None'
 
@@ -404,7 +418,7 @@ class EditFormFieldFromAttributes(object):
             expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or {1}".format(self.name, expression)
         return expression
 
-    def setFieldString(self, defaultString):
+    def setFieldString(self, defaultString) -> None:
         """
         Applique au champ en cours, une valeur texte par défaut.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Type d'outil > Edition de texte ]
@@ -423,7 +437,7 @@ class EditFormFieldFromAttributes(object):
 
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultString)))
 
-    def setFieldBoolean(self, defaultState):
+    def setFieldBoolean(self, defaultState) -> None:
         """
         Applique au champ en cours, une valeur par défaut de type case à cocher.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Type d'outil > Case à cocher ]
@@ -447,7 +461,7 @@ class EditFormFieldFromAttributes(object):
             defaultState = '0'
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultState)))
 
-    def setFieldInteger(self, defaultInteger):
+    def setFieldInteger(self, defaultInteger) -> None:
         """
         Applique au champ en cours, une valeur par défaut de type entier. Une regex vérifie que la chaine de caractères
         ne contient que des nombres.

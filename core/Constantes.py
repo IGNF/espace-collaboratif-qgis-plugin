@@ -6,7 +6,7 @@ constantes
 # taille maximale pour un document uploadé
 MAX_TAILLE_UPLOAD_FILE = 16000000
 
-# Définition du protocole signant au près du service Collaboratif l'origine de ce programme.
+# Définition du protocole signant auprès du service Collaboratif l'origine de ce programme.
 CLIENT_INPUT_DEVICE = "SIG-QGIS"
 
 STATUT = Enum("undefined", "submit", "pending", "pending0", "pending1", "valid", "valid0", "reject", "reject0",

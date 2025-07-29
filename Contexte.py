@@ -555,7 +555,8 @@ class Contexte(object):
                 progress.close()
             message = str(format(e))
             if message.find('getMaxNumrec') != -1:
-                message = "Attention la table est peut-être vide de données. {}".format(str(e))
+                message = "Attention la table est peut-être vide de données " \
+                          "ou n'existe pas. Veuillez contacter le gestionnaire de votre groupe. {}".format(str(e))
             self.logger.error(message)
             self.iface.messageBar(). \
                 pushMessage("Remarque",
