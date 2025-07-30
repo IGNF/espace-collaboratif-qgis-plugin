@@ -2,14 +2,14 @@ import json
 from .requests import Response
 import requests
 from . import requests
-from .RipartLoggerCl import RipartLogger
+from .PluginLogger import PluginLogger
 
 
 class HttpRequest(object):
     """
     # Classe implémentant une requête HTTP.
     """
-    logger = RipartLogger("ripart.RipartServiceRequest").getRipartLogger()
+    logger = PluginLogger("HttpRequest").getPluginLogger()
 
     def __init__(self, url, headers, proxies):
         """
@@ -66,7 +66,8 @@ class HttpRequest(object):
         :param params: paramètres de la requête
         :type params: dict
 
-        :return: un dictionnaire comprenant le status de la réponse, les données et s'il faut relancer la requête (status_code 206)
+        :return: un dictionnaire comprenant le status de la réponse, les données et s'il faut relancer la requête
+                 (status_code 206)
         """
         try:
             response = self.getResponse(partOfUrl, params)
@@ -152,7 +153,6 @@ class HttpRequest(object):
 
         :return: les données
         """
-        response = ()
         try:
             if data is None and files is None:
                 response = requests.get(url, proxies=proxies, params=params, headers=headers, verify=False)

@@ -26,7 +26,7 @@ from .Import_WMSR import ImportWMSR
 from .FormChoixGroupe import FormChoixGroupe
 from .FormInfo import FormInfo
 from .PluginHelper import PluginHelper
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
 from .core.Sketch import Sketch
@@ -106,7 +106,7 @@ class Contexte(object):
         self.setProjectParams()
         self.mapCan = QObject.iface.mapCanvas()
         self.iface = QObject.iface
-        self.logger = RipartLogger("Contexte").getRipartLogger()
+        self.logger = PluginLogger("Contexte").getPluginLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         self.dbPath = SQLiteManager.getBaseSqlitePath()
         # version in metadata

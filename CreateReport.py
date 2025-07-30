@@ -8,7 +8,7 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 from .core.MapToolsReport import MapToolsReport
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .ToolsReport import ToolsReport
 from PyQt5.QtWidgets import QApplication
 from .core import Constantes as cst
@@ -18,7 +18,7 @@ from .core import Constantes as cst
 class CreateReport(object):
 
     def __init__(self, context):
-        self.__logger = RipartLogger("CreateReport").getRipartLogger()
+        self.__logger = PluginLogger("CreateReport").getPluginLogger()
         self.__context = context
         self.__activeLayer = self.__context.iface.activeLayer()
         self.__canvas = self.__context.iface.mapCanvas()

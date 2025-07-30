@@ -1,6 +1,6 @@
 from .ToolsReport import ToolsReport
 from .ReplyReportView import ReplyReportView
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 
 
@@ -8,7 +8,7 @@ from .core import Constantes as cst
 class ReplyReport(object):
     def __init__(self, context):
         self.__context = context
-        self.__logger = RipartLogger("ReplyReport").getRipartLogger()
+        self.__logger = PluginLogger("ReplyReport").getPluginLogger()
         # Initialisation des outils de gestion d'un signalement
         self.__toolsReport = ToolsReport(self.__context)
 

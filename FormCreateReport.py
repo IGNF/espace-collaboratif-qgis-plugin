@@ -3,7 +3,7 @@ import os
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 from .core.Theme import Theme
 from .PluginHelper import PluginHelper
@@ -16,7 +16,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
     """
     Formulaire pour la création d'un nouveau signalement
     """
-    logger = RipartLogger("FormCreateReport").getRipartLogger()
+    logger = PluginLogger("FormCreateReport").getPluginLogger()
 
     bSend = False
 

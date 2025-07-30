@@ -1,7 +1,7 @@
 from typing import Optional
 from .ToolsReport import ToolsReport
 from .SeeReportView import SeeReportView
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 
 # Classe pour visualiser un signalement
@@ -9,7 +9,7 @@ class SeeReport(object):
 
     def __init__(self, context) -> None:
         self.__context = context
-        self.__logger = RipartLogger("SeeReport").getRipartLogger()
+        self.__logger = PluginLogger("SeeReport").getPluginLogger()
 
     def do(self) -> Optional[SeeReportView]:
         """

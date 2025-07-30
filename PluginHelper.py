@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 
 
@@ -72,7 +72,7 @@ class PluginHelper:
     defaultPagination = 100
     longueurMaxChamp = 5000
 
-    logger = RipartLogger("PluginHelper").getRipartLogger()
+    logger = PluginLogger("PluginHelper").getPluginLogger()
 
     @staticmethod
     def getConfigFile() -> str:

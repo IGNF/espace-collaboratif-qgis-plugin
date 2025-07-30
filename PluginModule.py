@@ -13,7 +13,7 @@ from qgis.core import QgsProject
 from builtins import str
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core.SQLiteManager import SQLiteManager
 from .core.WfsGet import WfsGet
 from .core.ProgressBar import ProgressBar
@@ -36,8 +36,8 @@ class RipartPlugin:
     def __init__(self, iface) -> None:
         self.__context = Contexte.getInstance(self, QgsProject)
         self.__dlgConfigure = None
-        self.__ripartLogger = RipartLogger("RipartPlugin")
-        self.__logger = self.__ripartLogger.getRipartLogger()
+        self.__ripartLogger = PluginLogger("RipartPlugin")
+        self.__logger = self.__ripartLogger.getPluginLogger()
         # Save reference to the QGIS interface
         self.iface = iface
         self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",

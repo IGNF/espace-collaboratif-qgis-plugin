@@ -2,7 +2,7 @@ import os
 from PyQt5 import QtCore
 from qgis.PyQt import uic, QtWidgets
 from .core.Wkt import Wkt
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'SeeReportView_base.ui'))
@@ -16,7 +16,7 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         super(SeeReportView, self).__init__(None)
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.__logger = RipartLogger("SeeReportView").getRipartLogger()
+        self.__logger = PluginLogger("SeeReportView").getPluginLogger()
         self.__report = None
         self.__activeUserCommunity = activeUserCommunity
 

@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from .RipartLoggerCl import RipartLogger
+from .PluginLogger import PluginLogger
 from .SQLiteManager import SQLiteManager
 from . import Constantes as cst
 from ..PluginHelper import PluginHelper
@@ -40,7 +40,7 @@ class Report(object):
         :param data: les attributs d'un signalement
         :type data: dict
         """
-        self.__logger = RipartLogger("Report").getRipartLogger()
+        self.__logger = PluginLogger("Report").getPluginLogger()
         self.__urlHostEspaceCo = urlHostEspaceCo
         if PluginHelper.keyExist('id', data):
             self.__id = data['id']

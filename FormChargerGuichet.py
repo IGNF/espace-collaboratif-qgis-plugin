@@ -6,7 +6,7 @@ from .PluginHelper import PluginHelper
 from .core.BBox import BBox
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChargerGuichet_base.ui'))
@@ -35,7 +35,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.setFixedSize(self.width(), self.height())
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.__context = context
-        self.__logger = RipartLogger("ImporterGuichet").getRipartLogger()
+        self.__logger = PluginLogger("FormChargerGuichet").getPluginLogger()
         self.__listLayers = listLayers
         # Il faut inverser l'ordre pour retrouver le paramétrage de la carte du groupe
         self.__listLayers.reverse()

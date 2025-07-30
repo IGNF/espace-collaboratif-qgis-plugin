@@ -10,7 +10,7 @@ from .FormCreateReport import FormCreateReport
 from .core.ProgressBar import ProgressBar
 from .core.BBox import BBox
 from .core.Box import Box
-from .core.RipartLoggerCl import RipartLogger
+from .core.PluginLogger import PluginLogger
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .core.Query import Query
@@ -25,7 +25,7 @@ from requests_toolbelt import MultipartEncoder
 class ToolsReport(object):
 
     def __init__(self, context) -> None:
-        self.__logger = RipartLogger("ToolsReport").getRipartLogger()
+        self.__logger = PluginLogger("ToolsReport").getPluginLogger()
         self.__context = context
         # barre de progression des signalements importés
         self.__progress = None

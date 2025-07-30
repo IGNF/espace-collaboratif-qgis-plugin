@@ -60,7 +60,7 @@ class Wkt(object):
         """
         Transformation du système de coordonnées et vérification du type géométrique entre QGIS et le serveur.
 
-        Si nécessaire transformation du type comme par exemple : les équipements de transport qui sont
+        Si nécessaire transformation du type par exemple : les équipements de transport qui sont
         de type géométrique MULTIPOLYGON Z sur le serveur de l'espace collaboratif alors que QGIS renvoie
         un type POLYGON Z.
 
