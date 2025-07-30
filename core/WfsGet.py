@@ -191,7 +191,6 @@ class WfsGet(object):
         # Succès : get (code 200) post (code 201)
         if response.status_code == 200 or response.status_code == 201:
             numrec = response.json()
-            print("database : {} numrec : {}".format(self.databasename, numrec))
         else:
             message = "code : {} raison : {}".format(response.status_code, response.reason)
             raise Exception("WfsGet.getMaxNumrec -> ".format(message))

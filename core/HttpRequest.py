@@ -44,7 +44,6 @@ class HttpRequest(object):
         if params is not None:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
                                     params=params, verify=False)
-            print(response.url)
         else:
             # Ne pas vérifier le certificat en localhost
             if uri.find("localhost.ign.fr") != -1:
@@ -109,7 +108,6 @@ class HttpRequest(object):
         try:
             r = requests.get(url, headers=headers, proxies=proxies,
                              params=params, verify=False)
-            print("HttpRequest.nextRequest.url : {}".format(r.url))
             if r.status_code == 200:
                 r.encoding = 'utf-8'
                 response = json.loads(r.text)

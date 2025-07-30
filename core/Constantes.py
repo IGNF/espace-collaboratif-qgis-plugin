@@ -9,8 +9,8 @@ MAX_TAILLE_UPLOAD_FILE = 16000000
 # Définition du protocole signant auprès du service Collaboratif l'origine de ce programme.
 CLIENT_INPUT_DEVICE = "SIG-QGIS"
 
-STATUT = Enum("undefined", "submit", "pending", "pending0", "pending1", "valid", "valid0", "reject", "reject0",
-              "pending2")
+STATUT = Enum("undefined", "test", "submit", "pending", "pending0", "pending1", "pending2", "valid", "valid0", "reject",
+              "reject0")
 
 openStatut = [STATUT.undefined.__str__(), STATUT.submit.__str__(), STATUT.pending.__str__(), STATUT.pending0.__str__(),
               STATUT.pending1.__str__(), STATUT.pending2.__str__()]

@@ -82,7 +82,7 @@ class RipartPlugin:
         if self.__context is None:
             self.__context = Contexte.getInstance(self, QgsProject)
 
-        # S'il y a une erreur au chargement du projet, le contexte n'est pas chargé, il alors faut sortir
+        # S'il y a une erreur au chargement du projet, le contexte n'est pas chargé, sortie de programme
         if self.__context is None:
             return
 
@@ -260,10 +260,8 @@ class RipartPlugin:
         if len(allMessages) == 0:
             dlgInfo.textInfo.append("<br/>Vide")
         messageInfo = ''
-        print(allMessages)
         for messages in allMessages:
             messageInfo += messages
-        print(messageInfo)
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
@@ -344,7 +342,6 @@ class RipartPlugin:
         self.__context.iface.messageBar().clearWidgets()
         self.__logger.error(format(exception))
         errorMessage = "{} : {}".format(message, str(exception))
-        print(errorMessage)
         self.__context.iface.messageBar().pushMessage("Erreur", errorMessage, level=2, duration=5)
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 

@@ -275,9 +275,8 @@ class Contexte(object):
         self.__keycloakService = KeycloakService(KEYCLOAK_SERVER_URI, KEYCLOAK_REALM_NAME, KEYCLOAK_CLIENT_ID,
                                                  client_secret=KEYCLOAK_CLIENT_SECRET, proxies=self.proxies)
         r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
-        print(r)
         r = self.__keycloakService.get_access_token(r["code"][0])
-        print(r)
+
         self.__tokenAccess = r["access_token"]
         self.__tokenExpireIn = r["expires_in"]
         self.__tokenType = r["token_type"]
@@ -718,7 +717,6 @@ class Contexte(object):
         maplayers = {}
         for key in layers:
             layer = layers[key]
-            print(layer.id)
             maplayers[layer.name()] = layer
         return maplayers
 
@@ -972,16 +970,13 @@ class Contexte(object):
             return None
         try:
             self.conn = spatialite_connect(self.dbPath)
-            print(self.dbPath)
             cur = self.conn.cursor()
 
             sql = u"Drop table if Exists " + tmpTable
-            print(sql)
             cur.execute(sql)
 
             sql = u"CREATE TABLE " + tmpTable + " (" + \
                   u"id INTEGER NOT NULL PRIMARY KEY, textGeom TEXT, centroid TEXT)"
-            print(sql)
             cur.execute(sql)
 
             i = 0
@@ -1006,7 +1001,6 @@ class Contexte(object):
                 textGeom = textGeom[:-1] + textGeomEnd
                 sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom \
                       + "', AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
-                print(sql)
                 cur.execute(sql)
 
             self.conn.commit()
@@ -1068,7 +1062,6 @@ class Contexte(object):
         rows = cur.execute(sql)
         featIds = []
         for row in rows:
-            print(row[0])
             featIds.append(row[0])
         lay.selectByIds(featIds)
 

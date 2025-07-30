@@ -158,7 +158,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     def __displayThemesForCommunity(self, community):
         self.__themesList = community.getTheme()
-        print(community.getTheme()[0])
         if len(self.__themesList) == 0:
             return
         for theme in self.__themesList:
@@ -272,16 +271,12 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """Détecte le groupe choisi et lance l'affiche des thèmes adéquats.
         """
         self.treeWidget.clear()
-        print('__groupIndexChanged')
         userCommunityNameChoice = self.comboBoxGroupe.currentText()
         self.__activeCommunity = userCommunityNameChoice
-        print(userCommunityNameChoice)
         if userCommunityNameChoice is not None:
             community = self.__context.getCommunity()
             for comm in community.getCommunities():
-                print(comm.getName())
                 if comm.getName() == userCommunityNameChoice:
-                    print(comm.getTheme())
                     self.__displayThemesForCommunity(comm)
                     self.__communityIdWhenThemeChanged = comm.getId()
                     break
@@ -551,6 +546,4 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                         self.__files.update({names[len(names) - 1]: (names[len(names) - 1], open(filename, 'rb'))})
                         # Traduction dans la requête
                         # {'save.png': <_io.BufferedReader name='D:/Temp/save.png'>}
-                    # print(fileNameWithSize)
-                    # print(self.__files)
                     self.lblDoc.setText(fileNameWithSize)

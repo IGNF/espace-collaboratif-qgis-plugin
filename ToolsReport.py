@@ -121,22 +121,30 @@ class ToolsReport(object):
 
     def __showImportResult(self) -> None:
         # Résultat de l'import
-        submit = self.__context.countReportsByStatut(cst.STATUT.submit.__str__())
-        pending = self.__context.countReportsByStatut(cst.STATUT.pending.__str__()) + \
-                  self.__context.countReportsByStatut(cst.STATUT.pending0.__str__()) + \
-                  self.__context.countReportsByStatut(cst.STATUT.pending1.__str__()) + \
-                  self.__context.countReportsByStatut(cst.STATUT.pending2.__str__())
+        totalSubmit = self.__context.countReportsByStatut(cst.STATUT.submit.__str__())
+        pending = self.__context.countReportsByStatut(cst.STATUT.pending.__str__())
+        pending0 = self.__context.countReportsByStatut(cst.STATUT.pending0.__str__())
+        pending1 = self.__context.countReportsByStatut(cst.STATUT.pending1.__str__())
+        pending2 = self.__context.countReportsByStatut(cst.STATUT.pending2.__str__())
+        totalPending = pending + pending0 + pending1 + pending2
         reject = self.__context.countReportsByStatut(cst.STATUT.reject.__str__())
-        valid = self.__context.countReportsByStatut(cst.STATUT.valid.__str__()) + self.__context.countReportsByStatut(
-            cst.STATUT.valid0.__str__())
+        reject0 = self.__context.countReportsByStatut(cst.STATUT.reject0.__str__())
+        totalReject = reject + reject0
+        valid = self.__context.countReportsByStatut(cst.STATUT.valid.__str__())
+        valid0 = self.__context.countReportsByStatut(cst.STATUT.valid0.__str__())
+        totalValid = valid + valid0
+        autre = self.__context.countReportsByStatut(cst.STATUT.undefined.__str__())
+        autre0 = self.__context.countReportsByStatut(cst.STATUT.test.__str__())
+        totalAutre = autre + autre0
 
-        resultMessage = "Extraction réussie avec succès de " + str(submit + pending + valid + reject) + \
-                        " signalement(s) depuis le serveur \n" + \
-                        "avec la répartition suivante : \n\n" + \
-                        "- " + str(submit) + " signalement(s) nouveau(x).\n" + \
-                        "- " + str(pending) + " signalement(s) en cours de traitement.\n" + \
-                        "- " + str(valid) + " signalement(s)  validé(s).\n" + \
-                        "- " + str(reject) + " signalement(s) rejeté(s).\n"
+        resultMessage = "Extraction réussie avec succès de " + str(totalSubmit + totalPending + totalValid +
+                                                                   totalReject + totalAutre) + \
+                        " signalement(s) depuis le serveur avec la répartition suivante : \n\n" + \
+                        "- " + str(totalSubmit) + " signalement(s) nouveau(x).\n" + \
+                        "- " + str(totalPending) + " signalement(s) en cours de traitement.\n" + \
+                        "- " + str(totalValid) + " signalement(s)  validé(s).\n" + \
+                        "- " + str(totalReject) + " signalement(s) rejeté(s).\n" + \
+                        "- " + str(totalAutre) + " signalement(s) autre(s)."
 
         PluginHelper.showMessageBox(resultMessage)
 
@@ -250,7 +258,6 @@ class ToolsReport(object):
     def __sendReport(self, filesAttachments):
         self.__datasForRequest.update(filesAttachments)
         datas = MultipartEncoder(fields=self.__datasForRequest)
-        print("datas : {}".format(datas))
         responseFromServer = self.__sendRequest(datas)
         if responseFromServer is None:
             return
@@ -345,7 +352,6 @@ class ToolsReport(object):
     def createSingleReportFromClipboard(self) -> []:
         contents = []
         filesAttachments = {}
-        print("".format(self.__datasForRequest['geometry']))
         contents.append(self.__sendReport(filesAttachments))
         return contents
 

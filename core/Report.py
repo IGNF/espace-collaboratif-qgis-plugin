@@ -200,7 +200,6 @@ class Report(object):
 
             sqliteManager = SQLiteManager()
             nbSketch += sqliteManager.insertRowsInTable(parameters, attributesRows)
-        print('signalement n° {0}, {1} croquis'.format(self.__id, nbSketch))
 
     def __getKeyValue(self, datas, key) -> dict:
         """
