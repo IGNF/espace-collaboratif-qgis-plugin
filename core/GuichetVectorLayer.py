@@ -17,8 +17,42 @@ from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
 
 
 class GuichetVectorLayer(QgsVectorLayer):
+    """
+    Classe dérivée de QgsVectorLayer pour une couche extraite à partir de l'espace collaboratif. Elle définit
+    les paramètres pour :
+     - le lien de connexion avec la base SQLite du projet,
+     - la symbologie des objets qui la composent,
+     - envoyer vers le serveur les données mises à jour.
+
+     NB : pour retrouver un style graphique de QGIS, il faut lancer une commande dans la fenêtre Python de QGIS. Ce sont
+     ces retours de styles qui sont appliqués dans les fonctions de la classe.
+
+     Exemples :
+      - Ligne simple pour la couche BDUni 'troncon_de_route' :
+     Sans règle : print(QgsProject.instance().mapLayersByName("troncon_de_route")[0].renderer().
+     symbols(QgsRenderContext())[13].symbolLayers()[0].properties())
+
+      - Symbole de police pour la couche BDUni 'troncon_de_route' :
+    Sans règle : print(QgsProject.instance().mapLayersByName("troncon_de_route")[0].renderer().
+    symbols(QgsRenderContext())[13].symbolLayers()[1].subSymbol()[0].properties())QgsFontMarkerSymbolLayer
+    Avec règle : print(QgsProject.instance().mapLayersByName("troncon_de_route")[0].renderer().rootRule().
+    children()[13].symbols(QgsRenderContext())[0].symbolLayers()[1].subSymbol()[0].properties())
+
+     - Ligne de symboles pour la couche BDUni 'troncon_de_route' :
+     print(QgsProject.instance().mapLayersByName("troncon_de_route")[0].renderer().symbols(QgsRenderContext())[13]
+     .symbolLayers()[1].properties())
+
+     - etc... Avec un peu de patience et de recherches, les styles sont 'facilement' retrouvables.
+    """
 
     def __init__(self, parameters) -> None:
+        """
+        Constructeur.
+
+        :param parameters: les données nécessaires pour l'extraction de la couche, sa réprésentation graphique
+                           et sa mise à jour
+        :type parameters: dict
+        """
         super().__init__(parameters['uri'], parameters['name'], parameters['genre'])
         self.databasename = parameters['databasename']
         self.sqliteManager = parameters['sqliteManager']
@@ -31,14 +65,20 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.conditionFactory = ConditionFactory()
         self.name = parameters['name']
 
-    '''
-        Transformation de la condition en expression QGIS
+    def __changeConditionToExpression(self, condition, bExpression) -> str:
+        """
+        Transformation d'une condition Espace collaboratif en expression QGIS.
         La condition '{"$and" : [{"zone" : "Zone1"}]}' doit devenir '"zone" LIKE \"Zone1\"'
         et doit se traduire dans QGIS par "zone" LIKE 'Zone1'
-        TODO : manque le traitement du AND, OR, etc...
-    '''
 
-    def __changeConditionToExpression(self, condition, bExpression):
+        :param condition: une condition
+        :type condition: str
+
+        :param bExpression: à True pour ajouter un ELSE en fin d'expression dans le cas de plusieurs conditions
+                            à paramétrer
+        :type bExpression: bool
+        TODO : manque le traitement du AND, OR, etc...
+        """
         # Pas de style pour la couche, style QGIS par défaut
         if bExpression is False and condition is None or condition == '':
             return ''
@@ -48,7 +88,18 @@ class GuichetVectorLayer(QgsVectorLayer):
         expression = self.conditionFactory.create_condition(condition)
         return expression.toSQL()
 
-    def __setPointStyle(self, fillColor, strokeColor):
+    def __setPointStyle(self, fillColor, strokeColor) -> dict:
+        """
+        Défini pour QGIS une représentation graphique d'un point en transformant le style issu du collaboratif.
+
+        :param fillColor: couleur de remplissage
+        :type fillColor: str
+
+        :param strokeColor: couleur du trait entourant le symbole
+        :type strokeColor: str
+
+        :return: un style par défaut pour un point
+        """
         return {'angle': '0', 'color': fillColor, 'horizontal_anchor_point': '1',
                 'joinstyle': 'round', 'name': 'circle', 'offset': '0,0',
                 'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'Pixel',
@@ -58,7 +109,28 @@ class GuichetVectorLayer(QgsVectorLayer):
                 'size_map_unit_scale': '3x:0,0,0,0,0,0', 'size_unit': 'Pixel',
                 'vertical_anchor_point': '1'}
 
-    def __setLineStyle(self, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth):
+    def __setLineStyle(self, strokeDashstyle, strokeColor, strokeWidth) -> dict:
+        """
+        Applique une représentation graphique à une ligne. Plusieurs représentations graphiques sont définies
+        en transformant les styles issus du collaboratif en styles QGIS. Ainsi plusieurs styles sont définis :
+         - 'solid' (Ligne continu → trait continu)
+         - 'dash' (Ligne en tiret → traits courts)
+         - 'dot' (Ligne en pointillé → points)
+         - 'dashdot' (Ligne tiret-point → points/traits courts)
+         - 'longdashdot' (Ligne tiret-point-point → points/traits longs)
+         - 'longdash' (Ligne en tiret → traits longs)
+
+        :param strokeDashstyle: style de trait
+        :type strokeDashstyle: str
+
+        :param strokeColor: couleur du trait bordant la ligne
+        :type strokeColor: str
+
+        :param strokeWidth: taille de trait bordant la ligne
+        :type strokeWidth: str
+
+        :return : le style d'une ligne en fonction de la variable 'strokeDashStyle' donnée en entrée
+        """
         # {'align_dash_pattern': '0', 'capstyle': 'square', 'customdash': '5;2',
         #  'customdash_map_unit_scale': '3x:0,0,0,0,0,0', 'customdash_unit': 'Pixel', 'dash_pattern_offset': '0',
         #  'dash_pattern_offset_map_unit_scale': '3x:0,0,0,0,0,0', 'dash_pattern_offset_unit': 'MM',
@@ -117,7 +189,32 @@ class GuichetVectorLayer(QgsVectorLayer):
         }
         return lineStyles[strokeDashstyle]
 
-    def __setPolygonStyle(self, fillColor, strokeColor, strokeDashstyle, strokeWidth):
+    def __setPolygonStyle(self, fillColor, strokeColor, strokeDashstyle, strokeWidth) -> dict:
+        """
+        Applique une représentation graphique à un polygone. Plusieurs représentations graphiques sont définies pour
+        le style de trait entourant le polygone en transformant les styles issus du collaboratif en styles QGIS.
+        Ainsi plusieurs styles sont définis :
+         - 'solid' (Ligne continu → trait continu)
+         - 'dash' (Ligne en tiret → traits courts)
+         - 'dot' (Ligne en pointillé → points)
+         - 'dashdot' (Ligne tiret-point → points/traits courts)
+         - 'longdashdot' (Ligne tiret-point-point → points/traits longs)
+         - 'longdash' (Ligne en tiret → traits longs)
+
+        :param fillColor: couleur de remplissage
+        :type fillColor: str
+
+        :param strokeColor: couleur du trait entourant le polygone
+        :type strokeColor: str
+
+        :param strokeDashstyle: style de trait
+        :type strokeDashstyle: str
+
+        :param strokeWidth: taille de trait entourant le polygone
+        :type strokeWidth: str
+
+        :return: le style d'un polygone en fonction de la variable 'strokeDashStyle' donnée en entrée
+        """
         polygonStyles = {
             'solid': {'border_width_map_unit_scale': '3x:0,0,0,0,0,0', 'color': fillColor, 'joinstyle': 'miter',
                       'offset': '0,0', 'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'Pixel',
@@ -147,7 +244,21 @@ class GuichetVectorLayer(QgsVectorLayer):
         }
         return polygonStyles[strokeDashstyle]
 
-    def __setSymbolPoint(self, fillColor, strokeColor, fillOpacity):
+    def __setSymbolPoint(self, fillColor, strokeColor, fillOpacity) -> QgsMarkerSymbol:
+        """
+        Applique une représentation graphique à un point.
+
+        :param fillColor: couleur de remplissage
+        :type fillColor: str
+
+        :param strokeColor: couleur du trait entourant le symbole
+        :type strokeColor: str
+
+        :param fillOpacity: opacité de la couleur de remplissage
+        :type fillOpacity: str
+
+        :return: la symbologie appliquée à un point
+        """
         if fillColor is None:
             fillColor = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
         if strokeColor is None:
@@ -170,41 +281,28 @@ class GuichetVectorLayer(QgsVectorLayer):
     # 'strokeWidth': 7,
     # 'strokeLinecap': 'square',
     # 'strokeDashstyle': 'dash',
-    def __setSymbolLine(self, strokeLinecap, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity):
-        lineSymbol = self.__setLineStyle(strokeLinecap, strokeDashstyle, strokeColor, strokeWidth)
+    def __setSymbolLine(self, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity) -> QgsLineSymbol:
+        """
+        Applique une représentation graphique à une ligne.
+        """
+        lineSymbol = self.__setLineStyle(strokeDashstyle, strokeColor, strokeWidth)
         symbol = QgsLineSymbol().createSimple(lineSymbol)
         symbol.setOpacity(strokeOpacity)
         return symbol
 
-    def __setSymbolPolygon(self, fillColor, strokeColor, strokeDashstyle, strokeWidth, fillOpacity):
+    def __setSymbolPolygon(self, fillColor, strokeColor, strokeDashstyle, strokeWidth, fillOpacity) -> QgsFillSymbol:
+        """
+        Applique une représentation graphique à un polygone.
+        """
         polygonSymbol = self.__setPolygonStyle(fillColor, strokeColor, strokeDashstyle, strokeWidth)
         symbol = QgsFillSymbol().createSimple(polygonSymbol)
         symbol.setOpacity(fillOpacity)
         return symbol
 
-    def __setSimpleLineSymbolLayer(self):
-        return {'average_angle_length': '4', 'average_angle_map_unit_scale': '3x:0,0,0,0,0,0',
-                'average_angle_unit': 'MM',
-                'interval': '3', 'interval_map_unit_scale': '3x:0,0,0,0,0,0', 'interval_unit': 'MM', 'offset': '0',
-                'offset_along_line': '0', 'offset_along_line_map_unit_scale': '3x:0,0,0,0,0,0',
-                'offset_along_line_unit': 'MM',
-                'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'MM', 'placement': 'centralpoint',
-                'ring_filter': '0',
-                'rotate': '1'}
-
-    def __setMarkerLineSymbolLayer(self):
-        return {'angle': '0', 'chr': '>', 'color': '0,0,0,255', 'font': 'Arial', 'font_style': 'Normal',
-                'horizontal_anchor_point': '1', 'joinstyle': 'bevel', 'offset': '0,-0.40000000000000002',
-                'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'MM', 'outline_color': '35,35,35,255',
-                'outline_width': '0', 'outline_width_map_unit_scale': '3x:0,0,0,0,0,0', 'outline_width_unit': 'MM',
-                'size': '4',
-                'size_map_unit_scale': '3x:0,0,0,0,0,0', 'size_unit': 'MM', 'vertical_anchor_point': '1'}
-
-    '''
-        Symbologie par défaut extraite du style Collaboratif
-    '''
-
-    def __setModifyWithQgsSingleDefaultSymbolRenderer(self):
+    def __setModifyWithQgsSingleDefaultSymbolRenderer(self) -> None:
+        """
+        Défini une symbologie par défaut pour les trois types de couches (point, ligne, surface).
+        """
         geomType = self.geometryType()
         symbol = None
         color = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
@@ -218,7 +316,7 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         # 'LineString'
         if geomType == 1:
-            symbol = self.__setSymbolLine(color, 'solid', color, '2', 1)
+            symbol = self.__setSymbolLine('solid', color, '2', 1)
 
         if symbol is None:
             symbol = QgsSymbol.defaultSymbol(geomType)
@@ -232,16 +330,18 @@ class GuichetVectorLayer(QgsVectorLayer):
         # Refresh layer
         self.triggerRepaint()
 
-    '''
-        Symbologie simple extraite du style Collaboratif
-    '''
+    def __setModifyWithQgsSingleSymbolRenderer(self, data) -> None:
+        """
+        Défini une symbologie simple extraite du style Collaboratif.
 
-    def __setModifyWithQgsSingleSymbolRenderer(self, data):
+        :param data: les données de symbologie
+        :tupe data: dict
+        """
         symbol = None
         for c, v in data.items():
 
             if v['type'] == 'line':
-                symbol = self.__setSymbolLine(v["strokeLinecap"], v["strokeDashstyle"], v["strokeColor"],
+                symbol = self.__setSymbolLine(v["strokeDashstyle"], v["strokeColor"],
                                               str(v["strokeWidth"]), v['strokeOpacity'])
 
             if v['type'] == 'polygon':
@@ -264,13 +364,14 @@ class GuichetVectorLayer(QgsVectorLayer):
         # Refresh layer
         self.triggerRepaint()
 
-    '''
-        Définir la représentation et la direction du symbole en fonction du champ
-        strFieldDirection est du genre :
-        {"attribute":"sens_de_circulation","sensDirect":"Sens direct","sensInverse":"Sens inverse"}
-    '''
-
     def __setPropertySymbol(self, strFieldDirection):
+        """
+        Défini la représentation et la direction du symbole en fonction du champ.
+
+        :param strFieldDirection: de genre {"attribute":"sens_de_circulation","sensDirect":"Sens direct",
+                                  "sensInverse":"Sens inverse"}
+        :type strFieldDirection: str
+        """
         if strFieldDirection == '':
             return None
         jsonElements = json.loads(strFieldDirection)
@@ -294,19 +395,17 @@ class GuichetVectorLayer(QgsVectorLayer):
         qgsProperty.setExpressionString(expression)
         return qgsProperty
 
-    '''
-    Pour appliquer le style collaboratif et les sens de circulation sur les tronçons de route, il faut combiner
-    - Ligne
-        - Ligne simple
-        - Ligne de symboles
-            - Symbole
-                - Symbole de police
-    '''
-
-    def __setLineRule(self, expression, valeurs, strFieldDirection):
+    def __setLineRule(self, expression, valeurs, strFieldDirection) -> QgsRuleBasedRenderer.Rule:
         """
-        Applique une règle de symbologie à un point.
+        Applique une règle de symbologie à une ligne.
         NB : une condition de l'espace collaboratif est transformée en expression QGIS.
+        NB : Pour appliquer le style collaboratif et les sens de circulation sur les tronçons de route,
+        il faut combiner :
+         Ligne
+          Ligne simple
+           Ligne de symboles
+            Symbole
+             Symbole de police
 
         :param expression: la condition d'affichage de la symbologie
         :type expression: str
@@ -314,7 +413,8 @@ class GuichetVectorLayer(QgsVectorLayer):
         :param valeurs: les valeurs de symbologie
         :type valeurs: dict
 
-        :param strFieldDirection: le sens donné à l'attribut, (un sens de circulation peut-être direct ou inverse)
+        :param strFieldDirection: le sens donné à l'attribut par rapport au sens de saisie de l'objet
+                                  (un sens de circulation peut-être direct ou inverse)
         :type strFieldDirection: str
 
         :return: la règle de symbologie de la ligne
@@ -330,8 +430,8 @@ class GuichetVectorLayer(QgsVectorLayer):
             strokeWidth = strokeWidth - 2
 
         if strFieldDirection is None:
-            lineSymbol = self.__setSymbolLine(valeurs["strokeLinecap"], valeurs["strokeDashstyle"],
-                                              valeurs["strokeColor"], str(strokeWidth), valeurs['strokeOpacity'])
+            lineSymbol = self.__setSymbolLine(valeurs["strokeDashstyle"], valeurs["strokeColor"],
+                                              str(strokeWidth), valeurs['strokeOpacity'])
         else:
             # Ligne
             lineSymbol = QgsLineSymbol()
@@ -369,7 +469,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         ruleBasedRendererLine = QgsRuleBasedRenderer.Rule(lineSymbol, 0, 0, expression, valeurs['name'])
         return ruleBasedRendererLine
 
-    def __setPolygonRule(self, expression, valeurs):
+    def __setPolygonRule(self, expression, valeurs) -> QgsRuleBasedRenderer.Rule:
         """
         Applique une règle de symbologie à un polygone.
         NB : une condition de l'espace collaboratif est transformée en expression QGIS.
