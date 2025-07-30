@@ -21,7 +21,7 @@ class CreateReport(object):
         self.__logger = PluginLogger("CreateReport").getPluginLogger()
         self.__context = context
         self.__activeLayer = self.__context.iface.activeLayer()
-        self.__canvas = self.__context.iface.mapCanvas()
+        # self.__canvas = self.__context.iface.mapCanvas()
         # TODO réactiver les 2 lignes de code si cela fonctionne correctement
         clipboard = QApplication.clipboard()
         clipboard.clear()
@@ -39,7 +39,7 @@ class CreateReport(object):
                     return
                 mapToolsReport = MapToolsReport(self.__context)
                 mapToolsReport.activate()
-                self.__canvas.setMapTool(mapToolsReport)
+                # self.__canvas.setMapTool(mapToolsReport)
                 return
             # Avec croquis
             else:

@@ -452,7 +452,7 @@ class SQLiteManager(object):
         :param columnName: nom de la colonne
         :type columnName: str
 
-        :return: la valeur d'une colonne pour une table donnée.
+        :return: une liste de tuple contenant la valeur d'une colonne pour une table donnée.
         """
         if not SQLiteManager.isTableExist(tableName):
             message = "SQLiteManager.selectColumnFromTable : la table {} de la base SQLite du projet n'existe pas." \

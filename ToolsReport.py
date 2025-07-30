@@ -334,7 +334,7 @@ class ToolsReport(object):
             self.__datasForRequest['geometry'] = geometrySingleReport
             contents = self.createSingleReportFromClipboard()
         elif formCreate.isSingleReport():
-            contents = self.createSingleReport(sketchList, filesAttachments)
+            contents = self.__createSingleReport(sketchList, filesAttachments)
         else:
             if len(sketchList) == 1:
                 raise Exception("ToolsReport.__createMultiReports : attention, il fallait cocher la case [Créer un signalement unique].")
@@ -355,7 +355,7 @@ class ToolsReport(object):
         contents.append(self.__sendReport(filesAttachments))
         return contents
 
-    def createSingleReport(self, sketchList, filesAttachments) -> []:
+    def __createSingleReport(self, sketchList, filesAttachments) -> []:
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, True)
         self.__datasForRequest['sketch'] = json.dumps(sketchsDatasGeometryReport[0]['sketch'])

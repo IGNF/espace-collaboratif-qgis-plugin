@@ -13,6 +13,8 @@ import shutil
 import ntpath
 import configparser
 import time
+from datetime import datetime
+
 import requests
 
 from PyQt5 import QtGui
@@ -279,6 +281,8 @@ class Contexte(object):
 
         self.__tokenAccess = r["access_token"]
         self.__tokenExpireIn = r["expires_in"]
+        print(self.__tokenExpireIn)
+        print(datetime.now())
         self.__tokenType = r["token_type"]
         r = self.__keycloakService.get_userinfo(r["access_token"])
         self.login = r['email']

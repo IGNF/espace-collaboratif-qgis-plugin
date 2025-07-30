@@ -4,8 +4,8 @@ from qgis._core import QgsSettings, QgsPointXY
 from qgis._gui import QgsVertexMarker
 from qgis.gui import QgsMapTool, QgsMapMouseEvent
 from ..Contexte import Contexte
-
 from ..ToolsReport import ToolsReport
+from .PluginLogger import PluginLogger
 
 
 class MapToolsReport(QgsMapTool):
@@ -21,13 +21,15 @@ class MapToolsReport(QgsMapTool):
         :param context: le contexte du projet QGIS
         :type context: Contexte
         """
+        self.__logger = PluginLogger("MapToolsReport").getPluginLogger()
         self.__context = context
         self.__canvas = context.iface.mapCanvas()
         QgsMapTool.__init__(self, self.__canvas)
         self.setCursor(Qt.CursorShape.CrossCursor)
         self.__vertex = None
         self.__snapcolor = QgsSettings().value("/qgis/digitizing/snap_color", QColor(Qt.GlobalColor.red))
-        self.activate()
+        self.__canvas.setMapTool(self)
+        # self.activate()
 
     def canvasReleaseEvent(self, event) -> None:
         """
@@ -36,14 +38,20 @@ class MapToolsReport(QgsMapTool):
         :param event: relachement du clic de la souris
         :type event: QgsMapMouseEvent
         """
-        screenPoint = self.snappoint(event.originalPixelPoint())
-        if screenPoint is not None:
-            # Création et envoi du signalement sur le serveur
-            toolsReport = ToolsReport(self.__context)
-            # La liste de croquis est vide puisque c'est un pointé sur la carte qui sert à créer le signalement
-            sketchList = []
-            toolsReport.createReport(sketchList, screenPoint)
+        try:
+            screenPoint = self.snappoint(event.originalPixelPoint())
+            if screenPoint is not None:
+                # Création et envoi du signalement sur le serveur
+                toolsReport = ToolsReport(self.__context)
+                # La liste de croquis est vide puisque c'est un pointé sur la carte qui sert à créer le signalement
+                sketchList = []
+                toolsReport.createReport(sketchList, screenPoint)
+                self.endCreateReport()
+        except Exception as e:
             self.endCreateReport()
+            self.__logger.error(format(e))
+            self.__context.iface.messageBar().pushMessage("Erreur", u"Problème dans la création de signalement(s) : {}"
+                                                          .format(e), level=2, duration=4)
 
     def snappoint(self, qpoint) -> QgsPointXY:
         """

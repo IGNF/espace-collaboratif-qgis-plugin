@@ -408,7 +408,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if found_att:
                 break
 
-            if att.getTitle() != widg_label:
+            if att.getAlias() != widg_label:
                 continue
 
             # Une fois que l'attribut est trouvé, on remplace si besoin la valeur récupérée sur le formulaire par
@@ -436,7 +436,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
         for att in th.getAttributes():
-            if att.getTitle() != widg_label:
+            if att.getAlias() != widg_label:
                 continue
             key = att.getName()
             return key

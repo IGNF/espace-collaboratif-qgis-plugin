@@ -598,7 +598,7 @@ class RipartPlugin:
             layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
             for layer in QgsProject.instance().mapLayers().values():
                 for layerTableOfTables in layersTableOfTables:
-                    if layer.name in layerTableOfTables[0]:
+                    if layer.name == layerTableOfTables[0]:
                         print('synchronizeData couche : {}'.format(layer.name))
                         layersToSynchronize.append(layer)
                         break
