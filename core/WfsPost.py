@@ -258,9 +258,9 @@ class WfsPost(object):
                 # Suppression de la couche dans la carte. Virer la table dans SQLite
                 layersID = [self.__layer.id()]
                 QgsProject.instance().removeMapLayers(layersID)
-                if SQLiteManager.isTableExist(self.__layer.name):
-                    SQLiteManager.emptyTable(self.__layer.name)
-                    SQLiteManager.deleteTable(self.__layer.name)
+                if SQLiteManager.isTableExist(self.__layer.name()):
+                    SQLiteManager.emptyTable(self.__layer.name())
+                    SQLiteManager.deleteTable(self.__layer.name())
                 if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
                     SQLiteManager.emptyTable(cst.TABLEOFTABLES)
                 SQLiteManager.vacuumDatabase()

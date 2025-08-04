@@ -40,7 +40,7 @@ class Layer(object):
         self.visibility = True
 
         # Attributs remplis avec gcms/api/databases/{database_id}/tables/{table_id}
-        self.name = ''
+        self.__name = ''
         self.description = ""
         self.minzoom = 0
         self.maxzoom = 20
@@ -56,6 +56,12 @@ class Layer(object):
         self.is3d = None
         self.style = {}
         self.srid = -1
+
+    def name(self) -> str:
+        return self.__name
+
+    def setName(self, nameLayer):
+        self.__name = nameLayer
 
     def getListOfValuesFromItemStyle(self) -> {}:
         """

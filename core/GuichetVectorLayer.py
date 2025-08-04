@@ -63,7 +63,13 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.geometryDimensionForDatabase = parameters['geometryDimension']
         self.geometryTypeForDatabase = parameters['geometryType']
         self.conditionFactory = ConditionFactory()
-        self.name = parameters['name']
+        self.__name = parameters['name']
+
+    def name(self) -> str:
+        """
+        :return: le nom de la couche
+        """
+        return self.__name
 
     def __changeConditionToExpression(self, condition, bExpression) -> str:
         """
@@ -255,7 +261,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         :type strokeColor: str
 
         :param fillOpacity: opacité de la couleur de remplissage
-        :type fillOpacity: str
+        :type fillOpacity: float
 
         :return: la symbologie appliquée à un point
         """
@@ -284,6 +290,20 @@ class GuichetVectorLayer(QgsVectorLayer):
     def __setSymbolLine(self, strokeDashstyle, strokeColor, strokeWidth, strokeOpacity) -> QgsLineSymbol:
         """
         Applique une représentation graphique à une ligne.
+
+        :param strokeDashstyle: style de trait
+        :type strokeDashstyle: str
+
+        :param strokeColor: couleur du trait bordant la ligne
+        :type strokeColor: str
+
+        :param strokeWidth: taille de trait bordant la ligne
+        :type strokeWidth: str
+
+        :param strokeOpacity: opacité de la couleur de la ligne
+        :type strokeOpacity: float
+
+        :return: la symbologie appliquée à une ligne
         """
         lineSymbol = self.__setLineStyle(strokeDashstyle, strokeColor, strokeWidth)
         symbol = QgsLineSymbol().createSimple(lineSymbol)
@@ -293,11 +313,46 @@ class GuichetVectorLayer(QgsVectorLayer):
     def __setSymbolPolygon(self, fillColor, strokeColor, strokeDashstyle, strokeWidth, fillOpacity) -> QgsFillSymbol:
         """
         Applique une représentation graphique à un polygone.
+
+        :param fillColor: couleur de remplissage
+        :type fillColor: str
+
+        :param strokeColor: couleur du trait entourant le polygone
+        :type strokeColor: str
+
+        :param strokeDashstyle: style de trait
+        :type strokeDashstyle: str
+
+        :param strokeWidth: taille de trait entourant le polygone
+        :type strokeWidth: str
+
+        :param fillOpacity: taille de trait entourant le polygone
+        :type fillOpacity: float
+
+        :return: le style d'un polygone en fonction de la variable 'strokeDashStyle' donnée en entrée
         """
         polygonSymbol = self.__setPolygonStyle(fillColor, strokeColor, strokeDashstyle, strokeWidth)
         symbol = QgsFillSymbol().createSimple(polygonSymbol)
         symbol.setOpacity(fillOpacity)
         return symbol
+
+    def __setSimpleLineSymbolLayer(self):
+        return {'average_angle_length': '4', 'average_angle_map_unit_scale': '3x:0,0,0,0,0,0',
+                'average_angle_unit': 'MM',
+                'interval': '3', 'interval_map_unit_scale': '3x:0,0,0,0,0,0', 'interval_unit': 'MM', 'offset': '0',
+                'offset_along_line': '0', 'offset_along_line_map_unit_scale': '3x:0,0,0,0,0,0',
+                'offset_along_line_unit': 'MM',
+                'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'MM', 'placement': 'centralpoint',
+                'ring_filter': '0',
+                'rotate': '1'}
+
+    def __setMarkerLineSymbolLayer(self):
+        return {'angle': '0', 'chr': '>', 'color': '0,0,0,255', 'font': 'Arial', 'font_style': 'Normal',
+                'horizontal_anchor_point': '1', 'joinstyle': 'bevel', 'offset': '0,-0.40000000000000002',
+                'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'MM', 'outline_color': '35,35,35,255',
+                'outline_width': '0', 'outline_width_map_unit_scale': '3x:0,0,0,0,0,0', 'outline_width_unit': 'MM',
+                'size': '4',
+                'size_map_unit_scale': '3x:0,0,0,0,0,0', 'size_unit': 'MM', 'vertical_anchor_point': '1'}
 
     def __setModifyWithQgsSingleDefaultSymbolRenderer(self) -> None:
         """
@@ -423,10 +478,9 @@ class GuichetVectorLayer(QgsVectorLayer):
         strokeWidth = valeurs['strokeWidth']
         # Représentation d'une route à deux traits
         if (valeurs['strokeBorderColor']) is not None:
-            otherLineSymbol = QgsSimpleLineSymbolLayer.create(self.setLineStyle(valeurs['strokeLinecap'],
-                                                                                valeurs['strokeDashstyle'],
-                                                                                valeurs['strokeBorderColor'],
-                                                                                strokeWidth + 2))
+            otherLineSymbol = QgsSimpleLineSymbolLayer.create(self.__setLineStyle(valeurs['strokeDashstyle'],
+                                                                                  valeurs['strokeBorderColor'],
+                                                                                  strokeWidth + 2))
             strokeWidth = strokeWidth - 2
 
         if strFieldDirection is None:
@@ -437,19 +491,17 @@ class GuichetVectorLayer(QgsVectorLayer):
             lineSymbol = QgsLineSymbol()
 
             # Ligne simple (avec la symbologie issue du collaboratif)
-            simpleLineSymbol = QgsSimpleLineSymbolLayer.create(self.setLineStyle(valeurs['strokeLinecap'],
-                                                                                 valeurs['strokeDashstyle'],
-                                                                                 valeurs['strokeColor'],
-                                                                                 strokeWidth))
+            simpleLineSymbol = QgsSimpleLineSymbolLayer.create(self.__setLineStyle(valeurs['strokeDashstyle'],
+                                                                                   valeurs['strokeColor'], strokeWidth))
             # Ligne de symboles (le symbole est appliqué sur le point central du tronçon)
-            markerLineSymbol = QgsMarkerLineSymbolLayer.create(self.setSimpleLineSymbolLayer())
+            markerLineSymbol = QgsMarkerLineSymbolLayer.create(self.__setSimpleLineSymbolLayer())
 
             # Symbole
             markerSymlbol = QgsMarkerSymbol()
 
             # Symbole de police (le caractère >)
             # (appliqué pour un champ, expression appliquée sur le caractère choisi < sens inverse ou sens direct >
-            fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.setMarkerLineSymbolLayer())
+            fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.__setMarkerLineSymbolLayer())
             qgsProperty = self.__setPropertySymbol(strFieldDirection)
             if qgsProperty is not None:
                 fontMarkerSymbol.setDataDefinedProperty(QgsSymbolLayer.Property.PropertyCharacter, qgsProperty)

@@ -416,15 +416,15 @@ class Contexte(object):
 
         # Si la table du nom de la couche existe,
         # elle est vidée, détruite et recréée
-        if SQLiteManager.isTableExist(layer.name):
-            SQLiteManager.emptyTable(layer.name)
-            SQLiteManager.deleteTable(layer.name)
+        if SQLiteManager.isTableExist(layer.name()):
+            SQLiteManager.emptyTable(layer.name())
+            SQLiteManager.deleteTable(layer.name())
         bColumnDetruitExist = sqliteManager.createTableFromLayer(layer)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
         self.logger.debug(uri.uri())
-        uri.setDataSource('', layer.name, layer.geometryName)
+        uri.setDataSource('', layer.name(), layer.geometryName)
         uri.setSrid(str(cst.EPSGCRS4326))
         geomDim = ""
         geomType = ""
@@ -433,7 +433,7 @@ class Contexte(object):
                 continue
             geomDim = attribute['is3d']
             geomType = attribute['type']
-        parameters = {'uri': uri.uri(), 'name': layer.name, 'genre': 'spatialite', 'databasename': layer.databasename,
+        parameters = {'uri': uri.uri(), 'name': layer.name(), 'genre': 'spatialite', 'databasename': layer.databasename,
                       'sqliteManager': sqliteManager, 'idName': layer.idName,
                       'geometryName': layer.geometryName, 'geometryDimension': geomDim,
                       'geometryType': geomType}
@@ -500,7 +500,7 @@ class Contexte(object):
                     # layer.isStandard = False
                     sourceLayer = self.importWFS(layer)
                     if not sourceLayer[0].isValid():
-                        endMessage += "Layer {} failed to load !\n".format(layer.name)
+                        endMessage += "Layer {} failed to load !\n".format(layer.name())
                         continue
                     endMessage += self.formatLayer(layer, sourceLayer[0], nodeGroup, bbox, sourceLayer[1])
                     endMessage += "\n"
@@ -514,7 +514,7 @@ class Contexte(object):
                         titleLayer_uri = importWmts.getWtmsUrlParams(layer.geoservice['layers'])
                         print("titleLayer_uri : {}".format(titleLayer_uri))
                         if 'Exception' in titleLayer_uri[0]:
-                            endMessage += "{0} : {1}\n\n".format(layer.name, titleLayer_uri[1])
+                            endMessage += "{0} : {1}\n\n".format(layer.name(), titleLayer_uri[1])
                             continue
                         rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                         if not rlayer.isValid():
@@ -592,7 +592,7 @@ class Contexte(object):
         tmp = ''
         removeLayers = set()
         for gLayer in guichet_layers:
-            noSpecialCharacterInLayerName = self.replaceSpecialCharacter(gLayer.name)
+            noSpecialCharacterInLayerName = self.replaceSpecialCharacter(gLayer.name())
             # Cas particulier des couches WMTS
             nameLayers = self.replaceSpecialCharacter(gLayer.layers)
             for k, v in maplayers.items():
@@ -649,7 +649,7 @@ class Contexte(object):
         newVectorLayer.geometryTypeForDatabase = layer.geometryType
         headers = {'Authorization': '{} {}'.format(self.getTokenType(), self.getTokenAccess())}
         # Remplissage de la table SQLite liée à la couche
-        parameters = {'databasename': layer.databasename, 'layerName': layer.name,
+        parameters = {'databasename': layer.databasename, 'layerName': layer.name(),
                       'sridLayer': layer.srid, 'role': layer.role, 'isStandard': layer.isStandard,
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
@@ -667,7 +667,7 @@ class Contexte(object):
         if layer.is3d:
             dim = 1
 
-        parametersForTableOfTables = {'layer': layer.name, 'idName': idNameForDatabase, 'standard': valStandard,
+        parametersForTableOfTables = {'layer': layer.name(), 'idName': idNameForDatabase, 'standard': valStandard,
                                       'database': layer.databasename, 'databaseid': layer.databaseid,
                                       'srid': layer.srid, 'geometryName': geometryName, 'geometryDimension': dim,
                                       'geometryType': layer.geometryType, 'numrec': maxNumrecMessage[0],
@@ -714,7 +714,7 @@ class Contexte(object):
     def getAllMapLayers(self):
         """
         Return the list of layer names which are loaded in the map
-        :return dictionnaire des couches chargées sur la carte (key: layer name, value: layer id)
+        :return dictionnaire des couches chargées sur la carte (key: layer name, value: layer)
         :rtype dictionary
         """
         layers = self.QgsProject.instance().mapLayers()

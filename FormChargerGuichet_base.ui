@@ -220,7 +220,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>301</width>
+     <width>621</width>
      <height>21</height>
     </rect>
    </property>
@@ -246,7 +246,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Tout cocher</string>
+    <string>Tout charger</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_checkAllBoxes_FondsGeoservices">
@@ -259,7 +259,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Tout cocher</string>
+    <string>Tout charger</string>
    </property>
   </widget>
  </widget>

@@ -155,20 +155,20 @@ class SQLiteManager(object):
         t = self.__setAttributesTableToSql(layer)
         if t[0] == "" and t[1] == "" and t[2] is False:
             raise Exception("SQLite : création de la table {} impossible, "
-                            "un type de colonne est inconnu".format(layer.name))
+                            "un type de colonne est inconnu".format(layer.name()))
         connection = spatialite_connect(self.__dbPath)
-        sql = u"CREATE TABLE {0} (".format(layer.name)
+        sql = u"CREATE TABLE {0} (".format(layer.name())
         sql += t[0]
         sql += ')'
         cur = connection.cursor()
         cur.execute(sql)
-        parameters_geometry_column = {'tableName': layer.name, 'geometryName': layer.geometryName,
+        parameters_geometry_column = {'tableName': layer.name(), 'geometryName': layer.geometryName,
                                       'crs': cst.EPSGCRS4326, 'geometryType': t[1], 'is3D': layer.is3d}
         sqlGeometryColumn = self.__addGeometryColumn(parameters_geometry_column)
         cur.execute(sqlGeometryColumn)
-        if not SQLiteManager.isTableExist(layer.name):
-            raise Exception("SQLiteManager : création de la table {} impossible.".format(layer.name))
-        print("SQLiteManager : table {} créée.".format(layer.name))
+        if not SQLiteManager.isTableExist(layer.name()):
+            raise Exception("SQLiteManager : création de la table {} impossible.".format(layer.name()))
+        print("SQLiteManager : table {} créée.".format(layer.name()))
         connection.commit()
         cur.close()
         connection.close()

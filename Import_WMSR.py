@@ -17,7 +17,7 @@ class ImportWMSR:
         self.__url = layer.url
         self.__layerID = layer.layers
         self.__crs = cst.EPSG4326
-        self.__titleLayer = layer.name
+        self.__titleLayer = layer.name()
         self.__format = "image/jpeg"
 
     # La requete doit être de la forme :

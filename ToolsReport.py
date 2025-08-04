@@ -39,7 +39,7 @@ class ToolsReport(object):
         maplayers = self.__context.getAllMapLayers()
         root = QgsProject.instance().layerTreeRoot()
         for table in PluginHelper.reportSketchLayersName:
-            if table not in maplayers:
+            if not PluginHelper.keyExist(table, maplayers):
                 uri.setDataSource('', table, 'geom')
                 uri.setSrid(str(cst.EPSGCRS4326))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')

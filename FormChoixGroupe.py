@@ -230,9 +230,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # Récupération de l'ensemble des noms des couches chargées dans le projet QGIS
         projectLayers = self.__context.getAllMapLayers()
         layersInProject = []
-        for lp in projectLayers:
+        for c, v in projectLayers.items():
             tmp = Layer()
-            tmp.nom = lp
+            tmp.setName(c)
             layersInProject.append(tmp)
 
         # On regarde si le projet QGIS contient des couches Espace co
@@ -289,9 +289,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     def removeTablesSQLite(self, layers) -> None:
         for layer in layers:
-            if SQLiteManager.isTableExist(layer.name):
-                SQLiteManager.emptyTable(layer.name)
-                SQLiteManager.deleteTable(layer.name)
+            if SQLiteManager.isTableExist(layer.name()):
+                SQLiteManager.emptyTable(layer.name())
+                SQLiteManager.deleteTable(layer.name())
         if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             SQLiteManager.emptyTable(cst.TABLEOFTABLES)
         SQLiteManager.vacuumDatabase()

@@ -96,7 +96,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             self.tableWidgetMonGuichet.insertRow(rowPosition)
 
             # Colonne "Nom de la couche"
-            item = QtWidgets.QTableWidgetItem(layer.name)
+            item = QtWidgets.QTableWidgetItem(layer.name())
             self.tableWidgetMonGuichet.setItem(rowPosition, 0, item)
 
             # Colonne "Rôle"
@@ -157,7 +157,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         for layerChecked in layersChecked:
             for tmp in layerChecked:
                 for layer in self.__listLayers:
-                    if tmp == layer.name:
+                    if tmp == layer.name():
                         layersQGIS.append(layer)
                         break
         # Téléchargement et import des couches du guichet sur la carte

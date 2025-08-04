@@ -194,7 +194,7 @@ class Community(object):
         :type layer: Layer
         """
         if PluginHelper.keyExist('name', data):
-            layer.name = data['name']
+            layer.setName(data['name'])
             layer.tablename = data['name']
         if PluginHelper.keyExist('description', data):
             layer.description = data['description']
@@ -263,7 +263,7 @@ class Community(object):
         :type layer: Layer
         """
         if PluginHelper.keyExist('title', data):
-            layer.name = data['title']
+            layer.setName(data['title'])
         if PluginHelper.keyExist('url', data):
             layer.url = data['url']
         if PluginHelper.keyExist('layers', data):

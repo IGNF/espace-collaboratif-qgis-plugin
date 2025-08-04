@@ -95,9 +95,11 @@ class WfsGet(object):
             # ou un update après un post (enregistrement des couches actives)
             else:
                 for feature in response['features']:
-                    conditionTable = "{0} WHERE cleabs = '{1}'".format(self.layerName, feature['cleabs'])
-                    cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
-                    if len(cleabs) == 0:
+                    #conditionTable = "{0} WHERE cleabs = '{1}'".format(self.layerName, feature['cleabs'])
+                    #cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
+                    #if len(cleabs) == 0:
+                    cleabs = SQLiteManager.selectColumnFromTableWithCondition("cleabs", self.layerName, "cleabs", feature['cleabs'])
+                    if cleabs is None:
                         continue
                     else:
                         # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
@@ -144,9 +146,11 @@ class WfsGet(object):
             # ou un update après un post (enregistrement des couches actives)
             else:
                 for feature in response['features']:
-                    conditionTable = "{0} WHERE cleabs = '{1}'".format(self.layerName, feature['cleabs'])
-                    cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
-                    if len(cleabs) == 0:
+                    #conditionTable = "{0} WHERE cleabs = '{1}'".format(self.layerName, feature['cleabs'])
+                    cleabs = SQLiteManager.selectColumnFromTableWithCondition("cleabs", self.layerName, "cleabs", feature['cleabs'])
+                    # cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
+                    #if len(cleabs) == 0:
+                    if cleabs == None:
                         # création d'un nouvel objet
                         totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
                     else:
