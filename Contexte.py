@@ -679,6 +679,7 @@ class Contexte(object):
 
         # Modification du formulaire d'attributs
         efffa = EditFormFieldFromAttributes(newVectorLayer, layer.attributes)
+        print("layer.attributes:\n{}".format(layer.attributes))
         efffa.readDataAndApplyConstraints()
 
         # Modification de la symbologie de la couche

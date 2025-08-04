@@ -33,18 +33,46 @@ class EditFormFieldFromAttributes(object):
         self.index = None
         self.name = None
 
-    '''Lecture des clé/valeurs de l'item 'attributes', par exemple "commentaire_nom": {"crs": null, "default_value": 
-    null, "id": 30180, "target_type": null, "name": "commentaire_nom", "short_name": "commentair", 
-    "title": "commentaire_nom", "description": "Ceci est un commentaire à remplir par l'utilisateur.", "min_length": 
-    null, "max_length": 255, "nullable": true, "unique": false, "srid": null, "position": 3, "listOfValues": "", 
-    "min_value": null, "max_value": null, "pattern": null, "is3d": false, "readOnly": false, "condition": null, 
-    "condition_field": null, "computed": false, "automatic": false, "formula": null, "queryable": false, "required": 
-    false, "mime_types": null, "type": "String"} '''
-
     def readDataAndApplyConstraints(self) -> None:
         """
         Lecture des données pour appliquer les contraintes des attributs de l'espace collaboratif
-        sur les champs d'une couche QGIS.
+        sur les champs d'une couche QGIS. Par exemple :
+        {
+            'table_id': 4362,
+            'crs': None,
+            'enum': None,
+            'default_value': None,
+            'read_only': False,
+            'id': 71688,
+            'type': 'String',
+            'target_table': None,
+            'target_entity': None,
+            'name': 'cleabs',
+            'short_name': 'ID',
+            'title': 'Cleabs',
+            'description': "Identifiant unique de l'objet. ",
+            'min_length': None,
+            'max_length': 24,
+            'nullable': False,
+            'unique': False,
+            'srid': None,
+            'position': 1,
+            'min_value': None,
+            'max_value': None,
+            'pattern': None,
+            'is3d': False,
+            'constraint': None,
+            'condition_field': None,
+            'computed': False,
+            'automatic': False,
+            'custom_id': False,
+            'formula': None,
+            'json_schema': None,
+            'jeux_attributs': None,
+            'queryable': True,
+            'required': False,
+            'mime_types': None
+        }
         """
         for v in self.data:
             if v['name'] is None:
@@ -63,8 +91,8 @@ class EditFormFieldFromAttributes(object):
                            self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'])]
             self.setFieldAllConstraints(constraints, v['nullable'])
             self.setFieldListOfValues(v['enum'], v['default_value'])
-            # TODO voir Madeline pour le readOnly
-            self.setFieldReadOnly(v['computed'])
+            self.setFieldReadOnly(v['read_only'])
+            # self.setFieldReadOnly(v['computed'])
 
     def setFieldAllConstraints(self, constraints, bNullable) -> None:
         """
@@ -79,27 +107,49 @@ class EditFormFieldFromAttributes(object):
         """
         expressionAllConstraints = ''
 
-        if bNullable:
-            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1}) AND ".format(
-                self.name, expressionAllConstraints)
-
         for c in constraints:
             if c == 'None':
                 continue
             expressionAllConstraints += "({}) AND ".format(c)
 
-        if expressionAllConstraints == '':
-            return
-
-        # Suppression du dernier AND inutile
-        expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 5]
-
-        self.layer.setConstraintExpression(self.index, expressionAllConstraints)
+        if expressionAllConstraints != '' and bNullable:
+            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' " \
+                                       "or ({1})".format(self.name, expressionAllConstraints)
+            # Suppression du dernier AND inutile
+            expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 6]
+            expressionAllConstraints += ')'
+            self.layer.setConstraintExpression(self.index, expressionAllConstraints)
+        elif expressionAllConstraints == '' and bNullable:
+            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL'".format(self.name)
+            self.layer.setConstraintExpression(self.index, expressionAllConstraints)
+        elif expressionAllConstraints != '' and not bNullable:
+            # Suppression du dernier AND inutile
+            expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 6]
+            expressionAllConstraints += ')'
+            self.layer.setConstraintExpression(self.index, expressionAllConstraints)
 
     def setFieldSwitchType(self, vType, default_value) -> None:
         """
         Passage d'un type de champ de l'espace collaboratif à un type de champ QGIS. Au passage, la valeur par défaut
         est ajoutée.
+
+        La liste des types :
+        'Boolean', 'DateTime', 'Date', 'Double', 'Integer', 'JsonValue', 'Document', 'Like', 'String', 'Year',
+        'YearMonth', 'Geometry', 'GeometryCollection', 'Point', 'MultiPoint', 'LineString', 'MultiLineString',
+        'Polygon', 'MultiPolygon'
+
+        Pour retrouver un widget particulier sur un champ QGIS, voici un bout de code bien utile.
+        (Exemple : Type d'outil/Edition de texte = TextEdit ou Type d'outil/Liste de valeurs = ValueMap)
+
+        layer = self.context.iface.activeLayer()
+        fields = layer.fields()
+        for field in fields:
+        name = field.name()
+        if name != 'test': continue
+        index = fields.indexOf(name)
+        ews = layer.editorWidgetSetup(index)
+        print("Type: {}".format(ews.type()))
+        print("Config: {}".format(ews.config()))
 
         :param vType: valeur du type de champ, si None, sortie de fonction
         :type vType: str
@@ -125,17 +175,20 @@ class EditFormFieldFromAttributes(object):
         elif vType == 'Integer':
             self.setFieldInteger(default_value)
 
+        elif vType == 'JsonValue':
+            self.setJsonValue()
+
+        elif vType == 'Document':
+            self.setDocument()
+
         elif vType == 'String':
             self.setFieldString(default_value)
-
-        elif vType == 'YearMonth':
-            self.setFieldYearMonth(default_value)
 
         elif vType == 'Year':
             self.setFieldYear(default_value)
 
-        elif vType == 'JsonValue':
-            self.setJsonValue()
+        elif vType == 'YearMonth':
+            self.setFieldYearMonth(default_value)
 
         else:
             return
@@ -194,17 +247,17 @@ class EditFormFieldFromAttributes(object):
             return
         self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
 
-    def setFieldReadOnly(self, bComputed) -> None:
+    def setFieldReadOnly(self, bReadOnly) -> None:
         """
         Applique au champ en cours une valeur d'édition.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Général > Editable ]
         La fonction 'setReadOnly' doit être mis à True pour que le champ ne soit pas éditable.
-        Cas particulier du champ 'id', il n'est pas éditable.
+        Cas particulier du champ 'idNameForDatabase', il n'est pas éditable. L'id par exemple.
 
-        :param bComputed: à True si le champ ne doit pas être éditable
-        :type bComputed: bool
+        :param bReadOnly: à True si le champ ne doit pas être éditable
+        :type bReadOnly: bool
         """
-        if self.name == self.layer.idNameForDatabase or bComputed:
+        if self.name == self.layer.idNameForDatabase or bReadOnly:
             formConfig = self.layer.editFormConfig()
             formConfig.setReadOnly(self.index, True)
             self.layer.setEditFormConfig(formConfig)
@@ -558,6 +611,9 @@ class EditFormFieldFromAttributes(object):
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue('now()'))
         else:
             self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultDateTime)))
+
+    def setDocument(self) -> None:
+        return
 
     def setJsonValue(self) -> None:
         """
