@@ -447,6 +447,14 @@ class RipartPlugin:
             status_tip=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
 
+        # icon_path = ':/plugins/RipartPlugin/images/save.png'
+        # self.__addAction(
+        #     icon_path,
+        #     text=self.__translate(u'Menu test'),
+        #     callback=self.__test,
+        #     status_tip=self.__translate(u'Menu test'),
+        #     parent=self.iface.mainWindow())
+
         self.config.triggered.connect(self.__configurePlugin)
         self.config.setStatusTip(self.__translate(u"Ouvre la fenêtre de configuration du plugin."))
         self.about.triggered.connect(self.__ripAbout)
@@ -465,6 +473,39 @@ class RipartPlugin:
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
+
+    def __test(self):
+        layer = Contexte.getInstance(self, QgsProject).iface.activeLayer()
+        for field in layer.fields():
+            idx = layer.fields().indexOf(field.name())
+            setup = layer.editorWidgetSetup(idx)
+            widget_type = setup.type()
+            config = setup.config()
+            print(f"Champ : {field.name()}")
+            print(f"  Type de widget : {widget_type}")
+            print(f"  Configuration : {config}")
+            # Résultats :
+            # Champ : importance
+            #     Type de widget : ValueMap
+            #     Configuration : {'map': [{'': 'NULL'}, {'1': '1'}, {'2': '2'}, {'3': '3'}, {'4': '4'}, {'5': '5'},
+            #                       {'6': '6'}]}
+            #
+            # Champ : fictif
+            #     Type de widget : ValueMap
+            #     Configuration : {'map': {'': 'NULL', 'Non': '0', 'Oui': '1'}}
+
+        # fields = layer.fields()
+        # for field in fields:
+        #     name = field.name()
+        #     if name != 'importance':
+        #         continue
+        #     index = fields.indexOf(name)
+        #     ews = layer.editorWidgetSetup(index)
+        #     print("Type: {}".format(ews.type()))
+        #     # Résultat : Type: ValueMap
+        #     print("Config: {}".format(ews.config()))
+        #     # Résultat : Config: {'map': [{'': 'NULL'}, {'1': '1'}, {'2': '2'}, {'3': '3'}, {'4': '4'}, {'5': '5'}, {'6': '6'}]}
+        #     break
 
     # Connexion à l'Espace collaboratif
     def __runConnexion(self) -> None:

@@ -123,8 +123,9 @@ class EditFormFieldFromAttributes(object):
         print(keysToProcess)
         return list(keysToProcess)
 
-    def setFieldDefault(self, attributesSets, default_value) -> []:
+    def setFieldDefault(self, attributesSets, default_value):
         """
+        Coder un ensemble de valeur de champs à partir
         Exemple d'un Jeu d'attributs (attributesSets):
         {
             'Chemin':
@@ -168,14 +169,10 @@ class EditFormFieldFromAttributes(object):
 
         :param attributesSets: la liste des champs/valeurs à coder automatiquement en fonction d'une valeur de champ
         :type attributesSets: dict
-
-        :return: la liste des valeurs par défaut remplie ou vide
         """
-        listDefaultValues = []
         if attributesSets is None or len(attributesSets) == 0:
-            tmp = (self.name, self.index, default_value)
-            return listDefaultValues.append(tmp)
-
+            return
+        listDefaultValues = []
         fieldsToProcess = self.getAllKeys(attributesSets)
         for fieldName in fieldsToProcess:
             expression = "CASE"
@@ -192,23 +189,12 @@ class EditFormFieldFromAttributes(object):
             fieldIndex = self.layer.fields().indexOf(fieldName)
             tmpFieldCaseEnd = (fieldIndex, expression)
             listDefaultValues.append(tmpFieldCaseEnd)
-            print(listDefaultValues)
         for tmp in listDefaultValues:
             self.layer.setDefaultValueDefinition(tmp[0], QgsDefaultValue("{}".format(tmp[1])))
-            form_config = self.layer.editFormConfig()
-            form_config.setApplyDefaultValueOnUpdate(self.index, True)
-            self.layer.setEditFormConfig(form_config)
-
-        # for k, v in attributesSets.items():
-        #     for fieldName, FieldNameValue in v.items():
-        #         ValueCaseEnd = "CASE WHEN \"{0}\" = '{1}' THEN {2} END".format(self.name, k, FieldNameValue)
-        #         fieldIndex = self.layer.fields().indexOf(fieldName)
-        #         self.layer.setDefaultValueDefinition(fieldIndex, QgsDefaultValue("{}".format(ValueCaseEnd)))
-        #         tmpFieldCaseEnd = (fieldName, fieldIndex, ValueCaseEnd)
-        #         print(tmpFieldCaseEnd)
-        #         listDefaultValues.append(tmpFieldCaseEnd)
-
-        return listDefaultValues
+            # TODO remettre le code en service dès l'installation d'une version de QGIS > 3.26
+            # form_config = self.layer.editFormConfig()
+            # form_config.setApplyDefaultValueOnUpdate(self.index, True)
+            # self.layer.setEditFormConfig(form_config)
 
     def setFieldSwitchType(self, vType, default_value, attributesSets) -> None:
         """
