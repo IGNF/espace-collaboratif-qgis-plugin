@@ -131,7 +131,7 @@ class Query(object):
         :return: la réponse HTTP ou une exception si le status de la requête est différent de 200.
         """
         httpRequest = HttpRequest(self.__url, self.__headers, self.__proxies)
-        response = httpRequest.getResponse(self.__partOfUrl, None)
+        response = httpRequest.getResponse(self.__partOfUrl)
         if response.status_code != 200:
             if response.reason.find('Unauthorized') != -1:
                 message = "Attention, problème de connexion, veuillez recommencer l'action en cours " \

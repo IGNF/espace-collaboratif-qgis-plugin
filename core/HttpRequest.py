@@ -41,6 +41,7 @@ class HttpRequest(object):
         :return: une réponse encodée en utf-8
         """
         uri = "{}/{}".format(self.__url, partOfUrl)
+        print(uri)
         if params is not None:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
                                     params=params, verify=False)

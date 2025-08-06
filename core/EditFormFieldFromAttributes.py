@@ -80,58 +80,140 @@ class EditFormFieldFromAttributes(object):
             self.name = v['name']
             self.index = self.layer.fields().indexOf(self.name)
             self.setFieldAlias(v['title'])
-            self.setFieldSwitchType(v['type'], v['default_value'])
+            self.setFieldSwitchType(v['type'], v['default_value'], v['jeux_attributs'])
             self.setFieldConstraintNotNull(v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
-            constraints = [self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'],
-                                                                         v['nullable']),
-                           self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type'],
-                                                                        v['name']),
-                           self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable']),
-                           self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'])]
-            self.setFieldAllConstraints(constraints, v['nullable'])
+            constraints = [self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length']),
+                           self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type']),
+                           self.setFieldExpressionConstraintPattern(v['pattern']),
+                           self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field']),
+                           self.setFieldExpressionConstraintAttributesSets(v['jeux_attributs'])]
+            self.setFieldAllConstraints(constraints)
             self.setFieldListOfValues(v['enum'], v['default_value'])
             self.setFieldReadOnly(v['read_only'])
-            # self.setFieldReadOnly(v['computed'])
 
-    def setFieldAllConstraints(self, constraints, bNullable) -> None:
+    def setFieldAllConstraints(self, constraints) -> None:
         """
         Applique une liste de contraintes (dont la valeur 'NULL') à un champ en les concaténant sous forme d'expression.
         Ces contraintes sont séparées par un AND.
 
         :param constraints: l'ensemble des contraintes d'un attribut
         :type constraints: list
-
-        :param bNullable: indique si un champ peut contenir la valeur nulle
-        :type bNullable: bool
         """
         expressionAllConstraints = ''
-
         for c in constraints:
             if c == 'None':
                 continue
             expressionAllConstraints += "({}) AND ".format(c)
 
-        if expressionAllConstraints != '' and bNullable:
-            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' " \
-                                       "or ({1})".format(self.name, expressionAllConstraints)
-            # Suppression du dernier AND inutile
-            expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 6]
-            expressionAllConstraints += ')'
-            self.layer.setConstraintExpression(self.index, expressionAllConstraints)
-        elif expressionAllConstraints == '' and bNullable:
-            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL'".format(self.name)
-            self.layer.setConstraintExpression(self.index, expressionAllConstraints)
-        elif expressionAllConstraints != '' and not bNullable:
-            # Suppression du dernier AND inutile
-            expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 6]
-            expressionAllConstraints += ')'
-            self.layer.setConstraintExpression(self.index, expressionAllConstraints)
+        if expressionAllConstraints == '':
+            return
 
-    def setFieldSwitchType(self, vType, default_value) -> None:
+        # Il faut enlever le dernier AND inutile
+        expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 5]
+        self.layer.setConstraintExpression(self.index, expressionAllConstraints)
+
+    def getAllKeys(self, attributesSets) -> list:
+        """
+        Récupérer toutes les clés présentes dans au moins un sous-dictionnaire
+        """
+        keysToProcess = set()
+        for sous_dico in attributesSets.values():
+            keysToProcess.update(sous_dico.keys())
+        print(keysToProcess)
+        return list(keysToProcess)
+
+    def setFieldDefault(self, attributesSets, default_value) -> []:
+        """
+        Exemple d'un Jeu d'attributs (attributesSets):
+        {
+            'Chemin':
+            {
+            'importance': '5',
+            'acces_pieton': 'Libre',
+            'nombre_de_voies': 'Sans objet',
+            'itineraire_vert': False,
+            'sens_de_circulation': 'Double sens',
+            'largeur_de_chaussee': None,
+            'restriction_de_hauteur': None,
+            'acces_vehicule_leger': 'Libre',
+            'restriction_de_poids_total': None
+            },
+            'Sentier':
+            {
+            'importance': '6',
+            'acces_pieton': 'Libre',
+            'nombre_de_voies':
+            'Sans objet',
+            'itineraire_vert': False,
+            'sens_de_circulation': 'Sans objet',
+            'largeur_de_chaussee': None,
+            'restriction_de_hauteur': None,
+            'acces_vehicule_leger': 'Physiquement impossible',
+            'restriction_de_poids_total': None
+            },
+            'Rond-point':
+            {
+            'sens_de_circulation': 'Sens direct'
+            },
+            'Route empierrée':
+            {
+            'nombre_de_voies': 'Sans objet',
+            'itineraire_vert': False,
+            'largeur_de_chaussee': None,
+            'restriction_de_hauteur': None,
+            'restriction_de_poids_total': None
+            }
+        }
+
+        :param attributesSets: la liste des champs/valeurs à coder automatiquement en fonction d'une valeur de champ
+        :type attributesSets: dict
+
+        :return: la liste des valeurs par défaut remplie ou vide
+        """
+        listDefaultValues = []
+        if attributesSets is None or len(attributesSets) == 0:
+            tmp = (self.name, self.index, default_value)
+            return listDefaultValues.append(tmp)
+
+        fieldsToProcess = self.getAllKeys(attributesSets)
+        for fieldName in fieldsToProcess:
+            expression = "CASE"
+            for typ, vals in attributesSets.items():
+                val = vals.get(fieldName)
+                if val is None:
+                    expr_val = "NULL"
+                elif isinstance(val, bool):
+                    expr_val = 'TRUE' if val else 'FALSE'
+                else:
+                    expr_val = f"'{val}'"
+                expression += f' WHEN "{self.name}" = \'{typ}\' THEN {expr_val} '
+            expression += "END"
+            fieldIndex = self.layer.fields().indexOf(fieldName)
+            tmpFieldCaseEnd = (fieldIndex, expression)
+            listDefaultValues.append(tmpFieldCaseEnd)
+            print(listDefaultValues)
+        for tmp in listDefaultValues:
+            self.layer.setDefaultValueDefinition(tmp[0], QgsDefaultValue("{}".format(tmp[1])))
+            form_config = self.layer.editFormConfig()
+            form_config.setApplyDefaultValueOnUpdate(self.index, True)
+            self.layer.setEditFormConfig(form_config)
+
+        # for k, v in attributesSets.items():
+        #     for fieldName, FieldNameValue in v.items():
+        #         ValueCaseEnd = "CASE WHEN \"{0}\" = '{1}' THEN {2} END".format(self.name, k, FieldNameValue)
+        #         fieldIndex = self.layer.fields().indexOf(fieldName)
+        #         self.layer.setDefaultValueDefinition(fieldIndex, QgsDefaultValue("{}".format(ValueCaseEnd)))
+        #         tmpFieldCaseEnd = (fieldName, fieldIndex, ValueCaseEnd)
+        #         print(tmpFieldCaseEnd)
+        #         listDefaultValues.append(tmpFieldCaseEnd)
+
+        return listDefaultValues
+
+    def setFieldSwitchType(self, vType, default_value, attributesSets) -> None:
         """
         Passage d'un type de champ de l'espace collaboratif à un type de champ QGIS. Au passage, la valeur par défaut
-        est ajoutée.
+        est ajoutée (valeur unique ou valeur par jeux d'attributs).
 
         La liste des types :
         'Boolean', 'DateTime', 'Date', 'Double', 'Integer', 'JsonValue', 'Document', 'Like', 'String', 'Year',
@@ -156,9 +238,14 @@ class EditFormFieldFromAttributes(object):
 
         :param default_value: valeur par défaut
         :type default_value: str
+
+        :param attributesSets: la liste des champs/valeurs à coder automatiquement en fonction d'une valeur de champ
+        :type attributesSets: dict
         """
         if vType is None:
             return
+
+        listDefaultValues = self.setFieldDefault(attributesSets, default_value)
 
         if vType == 'Boolean':
             self.setFieldBoolean(default_value)
@@ -245,6 +332,9 @@ class EditFormFieldFromAttributes(object):
         """
         if bUnique is None or bUnique is False or bUnique == '':
             return
+        print('setFieldConstraintUnique')
+        print("name : {}".format(self.name))
+        print("bUnique : {}".format(bUnique))
         self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
 
     def setFieldReadOnly(self, bReadOnly) -> None:
@@ -261,6 +351,9 @@ class EditFormFieldFromAttributes(object):
             formConfig = self.layer.editFormConfig()
             formConfig.setReadOnly(self.index, True)
             self.layer.setEditFormConfig(formConfig)
+            print('setFieldReadOnly')
+            print("name : {}".format(self.name))
+            print("bReadOnly : {}".format(bReadOnly))
 
     '''
     Contraintes > Expression (min_value/max_value)
@@ -277,7 +370,7 @@ class EditFormFieldFromAttributes(object):
     Il faut avoir : "date_nom" >= '2020-06-01' and "date_nom" <= '2021-06-30' 
     '''
 
-    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, vName) -> str:
+    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType) -> str:
         """
         Applique une contrainte d'expression de valeurs minimale et maximale au champ en cours.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Expression (min_value/max_value) ]
@@ -302,13 +395,10 @@ class EditFormFieldFromAttributes(object):
         :param vType: valeur du type de champ
         :type vType: str
 
-        :param vName: valeur du champ
-        :type vName: str
-
         :return: l'expression mise en forme
         """
-        expTmp = None
-        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == vName:
+        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or \
+                self.name == self.layer.idNameForDatabase:
             return 'None'
 
         if vType == 'DateTime':
@@ -323,7 +413,7 @@ class EditFormFieldFromAttributes(object):
                 expTmp = "\"{}\" >= \'{}\'".format(self.name, minValue)
             else:
                 expTmp = "\"{}\" >= {}".format(self.name, minValue)
-        listExpressions.append(expTmp)
+            listExpressions.append(expTmp)
 
         # maxValue
         if maxValue is not None and maxValue != '':
@@ -331,7 +421,7 @@ class EditFormFieldFromAttributes(object):
                 expTmp = "\"{}\" <= \'{}\'".format(self.name, maxValue)
             else:
                 expTmp = "\"{}\" <= {}".format(self.name, maxValue)
-        listExpressions.append(expTmp)
+            listExpressions.append(expTmp)
 
         if len(listExpressions) == 0:
             return 'None'
@@ -339,6 +429,11 @@ class EditFormFieldFromAttributes(object):
             expression = listExpressions[0]
         else:
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
+        print('setFieldExpressionConstraintMinMaxValue')
+        print("name : {}".format(self.name))
+        print("minValue : {}".format(minValue))
+        print("maxValue : {}".format(maxValue))
+        print("expression : {}".format(expression))
         return expression
 
     def setFieldExpressionConstraintMapping(self, constraintField, conditionField) -> str:
@@ -368,8 +463,9 @@ class EditFormFieldFromAttributes(object):
 
         :return: la contrainte par expression
         """
-        if constraintField is None and conditionField is None:
+        if constraintField is None and conditionField is None or self.name == self.layer.idNameForDatabase:
             return 'None'
+        print("constraintField['type'] : {}".format(constraintField['type']))
         if constraintField['type'] != 'mapping':
             return 'None'
         expression = 'CASE'
@@ -390,9 +486,25 @@ class EditFormFieldFromAttributes(object):
                 # si array_contains retourne true, alors la valeur affectée au champ est bien contenue dans le tableau
                 expression += ' THEN array_contains(array({}),"{}")'.format(values[0:len(values) - 1], self.name)
         expression += " END"
+
+        print('setFieldExpressionConstraintMapping')
+        print("name : {}".format(self.name))
+        print("constraintField : {}".format(constraintField))
+        print("conditionField : {}".format(conditionField))
+        print("expression : {}".format(expression))
         return expression
 
-    def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, bNullable) -> str:
+    def setFieldExpressionConstraintAttributesSets(self, attributesSets) -> str:
+        expression = 'None'
+
+        if attributesSets is None or attributesSets == '':
+            return expression
+        print('setFieldExpressionConstraintAttributesSets')
+        print("name : {}".format(self.name))
+        print("attributesSets : {}".format(attributesSets))
+        return expression
+
+    def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength) -> str:
         """
         Applique au champ en cours une contrainte de longueur minimum et maximum.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Expression (minLength/maxLength)
@@ -405,9 +517,6 @@ class EditFormFieldFromAttributes(object):
 
         :param maxLength: longueur maximum, si None ou vide : sortie de fonction
         :type maxLength: str
-
-        :param bNullable: à True si la valeur peut-être nulle
-        :type bNullable: bool
 
         :return: l'expression mise en forme
         """
@@ -437,12 +546,17 @@ class EditFormFieldFromAttributes(object):
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
 
         # Cas particulier des string nullable
-        if bNullable is True:
-            expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name,
-                                                                                                   expression)
+        # if bNullable is True:
+        #     expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name,
+        #                                                                                            expression)
+        print('setFieldExpressionConstraintMinMaxLength')
+        print("name : {}".format(self.name))
+        print("minLength : {}".format(minLength))
+        print("maxLength : {}".format(maxLength))
+        print("expression : {}".format(expression))
         return expression
 
-    def setFieldExpressionConstraintPattern(self, pattern, vType, bNullable) -> str:
+    def setFieldExpressionConstraintPattern(self, pattern) -> str:
         """
         Ajout d'un modèle de contrainte sur le champ en cours.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Expression ]
@@ -453,12 +567,6 @@ class EditFormFieldFromAttributes(object):
         :param pattern: le modèle de contrainte, si None ou vide : sortie de fonction
         :type pattern: str
 
-        :param vType: le type de champ
-        :type vType: str
-
-        :param bNullable: à True, si la valeur du champ peut-être nulle
-        :type bNullable: bool
-
         :return: l'expression mise en forme
         """
         if pattern is None or pattern == '' or self.name == self.layer.idNameForDatabase:
@@ -467,8 +575,13 @@ class EditFormFieldFromAttributes(object):
         newPattern = pattern.replace('\\', '\\\\')
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
 
-        if vType == 'String' and bNullable is True:
-            expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or {1}".format(self.name, expression)
+        # if vType == 'String' and bNullable is True:
+        #     expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or {1}".format(self.name, expression)
+        if expression == '':
+            expression = None
+        else:
+            print('setFieldExpressionConstraintPattern')
+            print("expression : {}".format(expression))
         return expression
 
     def setFieldString(self, defaultString) -> None:
@@ -505,7 +618,6 @@ class EditFormFieldFromAttributes(object):
         # Config: {'map': {'A compléter': 'NR', 'Coupe rase': 'C', 'Peuplement sain': 'S'}}
         QgsEWS_config = {'map': attribute_values}
         self.setFormEditor(QgsEWS_type, QgsEWS_config)
-
         if defaultState is None or defaultState == '':
             defaultState = 'NULL'
         elif defaultState == 'true':
@@ -666,6 +778,7 @@ class EditFormFieldFromAttributes(object):
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultYearMonth)))
 
     def setFieldListOfValues(self, listOfValues, defaultListValue) -> None:
+        # TODO :prendre en compte le fait que la valeur par défaut n'est peut-être pas vide
         """
         Applique sur le champ en cours une liste de valeurs.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Type d'outil > Liste de valeurs ]
