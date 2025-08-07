@@ -190,6 +190,28 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 thItem.addChild(attItem)
                 self.treeWidget.setItemWidget(attItem, 0, label)
                 self.treeWidget.setItemWidget(attItem, 1, item_value)
+                # Ajout connexion pour tous les types de widgets attributs
+                if isinstance(item_value, QtWidgets.QCheckBox):
+                    item_value.stateChanged.connect(
+                        lambda state, parent_item=thItem: self.__checkParentOnChildChecked(state, parent_item))
+                elif isinstance(item_value, QtWidgets.QComboBox):
+                    item_value.currentIndexChanged.connect(
+                        lambda idx, parent_item=thItem, combo=item_value: self.__checkParentOnComboChanged(parent_item,
+                                                                                                           combo))
+                elif isinstance(item_value, QtWidgets.QLineEdit):
+                    item_value.textChanged.connect(
+                        lambda text, parent_item=thItem, lineedit=item_value: self.__checkParentOnLineEditChanged(
+                            parent_item, lineedit))
+                elif isinstance(item_value, QDateEdit):
+                    item_value.dateChanged.connect(
+                        lambda date, parent_item=thItem, dateedit=item_value: self.__checkParentOnDateEditChanged(
+                            parent_item, dateedit))
+                elif isinstance(item_value, QDateTimeEdit):
+                    item_value.dateTimeChanged.connect(lambda datetime,
+                                                       parent_item=thItem,
+                                                       datetimeedit=item_value:
+                                                       self.__checkParentOnDateTimeEditChanged(parent_item,
+                                                                                               datetimeedit))
 
     def __displayThemes(self, community):
         """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
@@ -263,6 +285,78 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             item_value.setText(attDefaultval)
 
         return item_value
+
+    def __checkParentOnChildChecked(self, state, parent_item):
+        """
+        Fonction pour cocher/décocher le thème quand un attribut est coche
+        """
+        if state == Qt.CheckState.Checked:
+            parent_item.setCheckState(0, Qt.CheckState.Checked)
+        else:
+            # Vérifier si toutes les cases attributs sont décochées
+            all_unchecked = True
+            for i in range(parent_item.childCount()):
+                child_item = parent_item.child(i)
+                widget = self.treeWidget.itemWidget(child_item, 1)
+                if isinstance(widget, QtWidgets.QCheckBox) and widget.isChecked():
+                    all_unchecked = False
+                    break
+            if all_unchecked:
+                parent_item.setCheckState(0, Qt.CheckState.Unchecked)
+
+    def __checkParentOnComboChanged(self, parent_item, combo):
+        if combo.currentText().strip() != "":
+            parent_item.setCheckState(0, Qt.CheckState.Checked)
+        else:
+            self.__checkAllChildrenEmpty(parent_item)
+
+    def __checkParentOnLineEditChanged(self, parent_item, lineedit):
+        if lineedit.text().strip() != "":
+            parent_item.setCheckState(0, Qt.CheckState.Checked)
+        else:
+            self.__checkAllChildrenEmpty(parent_item)
+
+    def __checkParentOnDateEditChanged(self, parent_item, dateedit):
+        min_date = QDate(1900, 1, 1)
+        if dateedit.date() != min_date:
+            parent_item.setCheckState(0, Qt.CheckState.Checked)
+        else:
+            self.__checkAllChildrenEmpty(parent_item)
+
+    def __checkParentOnDateTimeEditChanged(self, parent_item, datetimeedit):
+        min_datetime = QDateTime(QDate(1900, 1, 1), QTime(0, 0, 0))
+        if datetimeedit.dateTime() != min_datetime:
+            parent_item.setCheckState(0, Qt.CheckState.Checked)
+        else:
+            self.__checkAllChildrenEmpty(parent_item)
+
+    def __checkAllChildrenEmpty(self, parent_item):
+        all_empty = True
+        for i in range(parent_item.childCount()):
+            child_item = parent_item.child(i)
+            widget = self.treeWidget.itemWidget(child_item, 1)
+            if isinstance(widget, QtWidgets.QCheckBox):
+                if widget.isChecked():
+                    all_empty = False
+                    break
+            elif isinstance(widget, QtWidgets.QComboBox):
+                if widget.currentText().strip() != "":
+                    all_empty = False
+                    break
+            elif isinstance(widget, QtWidgets.QLineEdit):
+                if widget.text().strip() != "":
+                    all_empty = False
+                    break
+            elif isinstance(widget, QDateEdit):
+                if widget.date() != QDate(1900, 1, 1):
+                    all_empty = False
+                    break
+            elif isinstance(widget, QDateTimeEdit):
+                if widget.dateTime() != QDateTime(QDate(1900, 1, 1), QTime(0, 0, 0)):
+                    all_empty = False
+                    break
+        if all_empty:
+            parent_item.setCheckState(0, Qt.CheckState.Unchecked)
 
     def getCommunityIdWhenThemeChanged(self):
         return self.__communityIdWhenThemeChanged
@@ -523,8 +617,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     sizeFilename = os.path.getsize(filename)
                     if sizeFilename > self.docMaxSize:
                         message += u"Le fichier {0} ne peut être envoyé à l'Espace collaboratif, car sa taille " \
-                                   u"({1}Ko) dépasse celle maximale autorisée ({2}Ko).\n"\
-                                .format(filename, str(sizeFilename / 1000), str(self.docMaxSize / 1000))
+                                   u"({1}Ko) dépasse celle maximale autorisée ({2}Ko).\n" \
+                            .format(filename, str(sizeFilename / 1000), str(self.docMaxSize / 1000))
                 if message != '':
                     PluginHelper.showMessageBox(message)
                     self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
