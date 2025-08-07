@@ -242,7 +242,8 @@ class WfsPost(object):
         """
         print("Post_action : {}".format(json.dumps(self.__datasForPost)))
         headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
-        response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxies, data=json.dumps(self.__datasForPost),
+        #response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxies, data=json.dumps(self.__datasForPost),
+        response=HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxies, data=self.__datasForPost,
                                                headers=headers, launchBy='__gcmsPost')
         responseTransactions = self.__checkResponseTransactions(response)
         if responseTransactions['status'] == cst.STATUS_COMMITTED:

@@ -299,9 +299,16 @@ class Report(object):
     def getAuthor(self) -> dict:
         """
         Valeur de retour : {"id": 362, "username": "jbono", "email": "jean.bono@ign.fr"}
-
+        Si l'auteur est None, alors le dictionnaire est rempli avec des valeurs suivantes :
+         - "id": 0,
+         - "username": "inconnu",
+         - "email": ""
+        Pourquoi l'auteur est inconnu ? alors là mystère...
         :return: les données liées à l'auteur du signalement
         """
+        if self.__author is None:
+            self.__author = {"id": 0, "username": "inconnu", "email": ""}
+
         return self.__author
 
     def getStrAuthor(self) -> str:
