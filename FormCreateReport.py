@@ -232,13 +232,13 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 # L'utilisateur a tendance à travailler sur les attributs et oublie de cocher le thème.
                 # Avec l'ajout d'une connexion pour tous les types de "widgets attributs", le thème est coché
                 # automatiquement.
+                # Le signal stateChanged est appelé à chaque coche/décoche
                 if isinstance(item_value, QtWidgets.QCheckBox):
                     item_value.stateChanged.connect(
-                        lambda state, parent_item=thItem: self.__checkParentOnCheckBoxChanged(parent_item, state))
-                    item_value.stateChanged.connect(lambda state, widg=item_value, label=attLabel,
-                                                           theme_name=thItem.text(0): self.__removeRedIfValid(widg,
-                                                                                                              label,
-                                                                                                              theme_name))
+                        lambda state, parent_item=thItem, widg=item_value, label=attLabel,
+                                theme_name=thItem.text(0): (
+                            self.__checkParentOnCheckBoxChanged(parent_item, state),
+                            self.__removeRedIfValid(widg, label, theme_name)))
                 # Le signal currentIndexChanged est appelé à chaque changement de sélection
                 elif isinstance(item_value, QtWidgets.QComboBox):
                     item_value.currentIndexChanged.connect(
