@@ -139,7 +139,7 @@ class HttpRequest(object):
         :type params: dict
 
         :param data: les données a envoyé sur le serveur
-        :type data: dict
+        :type data: str
 
         :param headers: l'entête d'autorisation
         :type headers: dict

@@ -268,7 +268,7 @@ class ToolsReport(object):
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
         headers = {'Content-Type': datas.content_type, 'Authorization': '{} {}'.format(self.__context.getTokenType(),
                                                                                        self.__context.getTokenAccess())}
-        response = HttpRequest.makeHttpRequest(uri, self.__context.proxies, datas, headers,
+        response = HttpRequest.makeHttpRequest(uri, self.__context.proxies, {}, datas, headers,
                                                launchBy='__sendRequest')
         if response.status_code == 200 or response.status_code == 201:
             return response

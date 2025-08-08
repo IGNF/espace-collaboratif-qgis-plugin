@@ -1,12 +1,20 @@
 import json
 import os
+
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
+
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 from .core.Theme import Theme
+from .core.CommunitiesMember import CommunitiesMember
+from .core.Community import Community
+from .core.ThemeAttributes import ThemeAttributes
+
 from .PluginHelper import PluginHelper
+from .Contexte import Contexte
+
 from qgis.PyQt import QtCore
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreateReport_base.ui'))
@@ -14,7 +22,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCrea
 
 class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
     """
-    Formulaire pour la création d'un nouveau signalement
+    Classe du formulaire qui s'affiche dès la création d'un nouveau signalement.
     """
     logger = PluginLogger("FormCreateReport").getPluginLogger()
 
@@ -40,9 +48,17 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     __communityIdWhenThemeChanged = None
 
-    def __init__(self, context, nbSketch, parent=None):
-        """Constructor."""
+    def __init__(self, context, nbSketch, parent=None) -> None:
+        """
+        Constructor.
 
+        :param context: le contexte du projet et ses cartes
+        :type context: Contexte
+
+        :param nbSketch: le nombre de croquis à joindre lors de la création d'un signalement, à 0 si pas de croquis dans
+                         le cas d'une création d'un signalement avec un clic sur la carte
+        :type nbSketch: int
+        """
         super(FormCreateReport, self).__init__(parent)
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
@@ -98,7 +114,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.setColumnWidth(0, 160)
         self.treeWidget.setColumnWidth(1, 150)
         self.treeWidget.itemChanged.connect(self.__onItemChanged)
-        # self.treeWidget.itemClicked.connect(self.__onItemClicked)
 
         # Affichage des thèmes du groupe de l'utilisateur
         self.__displayThemes(self.__context.getCommunity())
@@ -122,12 +137,25 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         self.__files = {}
 
     def __setComboBoxGroup(self) -> None:
+        """
+        Initialisation de la liste déroulante en ajoutant tous les groupes de l'utilisateur. Le groupe actif de
+        l'utilisateur est placé en tête de liste.
+        """
         for nameid in self.__context.getListNameOfCommunities():
             self.comboBoxGroupe.addItem(nameid['name'])
         if self.__activeCommunity is not None and self.__activeCommunity != "":
             self.comboBoxGroupe.setCurrentText(self.__activeCommunity)
 
-    def __onItemChanged(self, item, column):
+    def __onItemChanged(self, item, column) -> None:
+        """
+        Ouverture/fermeture des attributs hiérarchisés dès que l'utilisateur clique sur la case à cocher du thème.
+
+        :param item: le thème sous forme de case à cocher
+        :type item: QTreeWidgetItem
+
+        :param column: les attributs du thème hiérarchisés sous forme de colonne
+        :type column: int
+        """
         if column != 0:
             return
         self.__toggle(item)
@@ -137,16 +165,14 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         else:
             self.treeWidget.collapseItem(item)
 
-    def __onItemClicked(self, item, column):
-        for j in range(item.childCount()):
-            att = item.child(j)
-            widg = self.treeWidget.itemWidget(att, 0)
-            if widg.hasSelectedText():
-                state = item.checkState(0)
-                if state == Qt.CheckState.Unchecked:
-                    item.checkState(Qt.CheckState.Checked)
+    def __toggle(self, item) -> None:
+        """
+        Sélection unique d’un thème dans l'arborescence Thème/Attributs en s'assurant qu’un seul élément "thème"
+        soit coché à la fois.
 
-    def __toggle(self, item):
+        :param item: le thème sous forme de case à cocher
+        :type item: QTreeWidgetItem
+        """
         state = item.checkState(0)
         if state == Qt.CheckState.Unchecked:
             return
@@ -156,7 +182,20 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if tlItem != item:
                 tlItem.setCheckState(0, Qt.CheckState.Unchecked)
 
-    def __displayThemesForCommunity(self, community):
+    def __removeRedIfValid(self, widg, label, theme_name):
+        key = self.__getKeyFromAttributeValue(label, theme_name)
+        val = self.__getValueFromWidget(widg, label, theme_name)
+        errorMessage = self.__correctValue(theme_name, key, val)
+        if errorMessage == '':
+            widg.setStyleSheet("")
+
+    def __displayThemesForCommunity(self, community) -> None:
+        """
+        Initialisation de l'arborescence pour les thèmes/attributs.
+
+        :param community: groupe utilisateur avec ses informations (les thèmes liés au groupe par exemple)
+        :type community: Community
+        """
         self.__themesList = community.getTheme()
         if len(self.__themesList) == 0:
             return
@@ -185,53 +224,91 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     myFont.setBold(True)
                     label.setFont(myFont)
                 # Construction de l'attribut en fonction de son type
-                item_value = self.__getItemValueFromType(attribute)
+                item_value = self.__getQtWidgetsFromTypeAttribute(attribute)
                 attItem = QtWidgets.QTreeWidgetItem()
                 thItem.addChild(attItem)
                 self.treeWidget.setItemWidget(attItem, 0, label)
                 self.treeWidget.setItemWidget(attItem, 1, item_value)
-                # Ajout connexion pour tous les types de widgets attributs
+                # L'utilisateur a tendance à travailler sur les attributs et oublie de cocher le thème.
+                # Avec l'ajout d'une connexion pour tous les types de "widgets attributs", le thème est coché
+                # automatiquement.
                 if isinstance(item_value, QtWidgets.QCheckBox):
                     item_value.stateChanged.connect(
-                        lambda state, parent_item=thItem: self.__checkParentOnChildChecked(state, parent_item))
+                        lambda state, parent_item=thItem: self.__checkParentOnCheckBoxChanged(parent_item, state))
+                # Le signal currentIndexChanged est appelé à chaque changement de sélection
                 elif isinstance(item_value, QtWidgets.QComboBox):
                     item_value.currentIndexChanged.connect(
                         lambda idx, parent_item=thItem, combo=item_value: self.__checkParentOnComboChanged(parent_item,
                                                                                                            combo))
+                # Le signal textChanged est appelé à chaque modification du texte
                 elif isinstance(item_value, QtWidgets.QLineEdit):
                     item_value.textChanged.connect(
                         lambda text, parent_item=thItem, lineedit=item_value: self.__checkParentOnLineEditChanged(
                             parent_item, lineedit))
+                # Le signal dateChanged est appelé à chaque modification de date
                 elif isinstance(item_value, QDateEdit):
                     item_value.dateChanged.connect(
                         lambda date, parent_item=thItem, dateedit=item_value: self.__checkParentOnDateEditChanged(
                             parent_item, dateedit))
+                # Le signal dateTimeChanged est appelé à chaque modification de dateTime
                 elif isinstance(item_value, QDateTimeEdit):
                     item_value.dateTimeChanged.connect(lambda datetime,
                                                        parent_item=thItem,
                                                        datetimeedit=item_value:
                                                        self.__checkParentOnDateTimeEditChanged(parent_item,
                                                                                                datetimeedit))
+                if isinstance(item_value, QtWidgets.QCheckBox):
+                    item_value.stateChanged.connect(lambda state, widg=item_value, label=attLabel,
+                                                           theme_name=thItem.text(0): self.__removeRedIfValid(widg,
+                                                                                                              label,
+                                                                                                              theme_name))
+                elif isinstance(item_value, QtWidgets.QComboBox):
+                    item_value.currentIndexChanged.connect(
+                        lambda idx, widg=item_value, label=attLabel, theme_name=thItem.text(0): self.__removeRedIfValid(
+                            widg, label, theme_name))
+                elif isinstance(item_value, QtWidgets.QLineEdit):
+                    item_value.textChanged.connect(lambda text, widg=item_value, label=attLabel,
+                                                          theme_name=thItem.text(0): self.__removeRedIfValid(widg,
+                                                                                                             label,
+                                                                                                             theme_name))
+                elif isinstance(item_value, QDateEdit):
+                    item_value.dateChanged.connect(lambda date, widg=item_value, label=attLabel,
+                                                          theme_name=thItem.text(0): self.__removeRedIfValid(widg,
+                                                                                                             label,
+                                                                                                             theme_name))
+                elif isinstance(item_value, QDateTimeEdit):
+                    item_value.dateTimeChanged.connect(lambda datetime, widg=item_value, label=attLabel,
+                                                              theme_name=thItem.text(0): self.__removeRedIfValid(widg,
+                                                                                                                 label,
+                                                                                                                 theme_name))
 
-    def __displayThemes(self, community):
-        """Affiche les thèmes dans le formulaire en fonction du groupe choisi.
+    def __displayThemes(self, community) -> None:
+        """
+        Affiche les thèmes et leurs attributs sous forme d'arborescence dans le formulaire en fonction
+        du groupe choisi par l'utilisateur.
+
+        :param community: liste des groupes (avec leurs caractéristiques) de l'utilisateur
+        :type community: CommunitiesMember
         """
         for c in community.getCommunities():
             if self.__activeCommunity == c.getName():
                 self.__displayThemesForCommunity(c)
                 break
 
-    '''
-    Renvoie le type d'item pré-rempli avec sa valeur par défaut à afficher en face de chaque
-    attribut du thème de signalement.
-    '''
+    def __getQtWidgetsFromTypeAttribute(self, att) -> QtWidgets:
+        """
+        Choisi en fonction du type d'attribut, le QtWidgets correspondant et le rempli avec la valeur
+        par défaut de l'attribut.
 
-    def __getItemValueFromType(self, att):
+        :param att:
+        :type att: ThemeAttributes
 
+        :return: le type de QtWidgets ((QLineEdit, QComboBox, QCheckBox, QDateEdit, QDateTimeEdit)
+        """
         attType = att.getType()
         attDefaultval = att.getDefault()
 
-        if attType == "checkbox":
+        if attType == 'checkbox':
             item_value = QtWidgets.QCheckBox(self.treeWidget)
             item_value.setChecked(False)
             if attDefaultval == '1' \
@@ -286,14 +363,23 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         return item_value
 
-    def __checkParentOnChildChecked(self, state, parent_item):
+    def __checkParentOnCheckBoxChanged(self, parent_item, state) -> None:
         """
-        Fonction pour cocher/décocher le thème quand un attribut est coche
+        Fonction pour cocher/décocher automatiquement la case de la colonne "thème" (case mère) lorsque l’utilisateur
+        coche la QCheckBox dans la colonne "attribut" (case fille). Signal "stateChanged".
+        NB : quand une case fille est décochée, vérifie si toutes les cases filles sont décochées, et si oui,
+        décoche la case mère.
+
+        :param parent_item: case mère, QCheckBox du thème
+        :type parent_item: QTreeWidgetItem
+
+        :param state: état de la QCheckBox (case mère), cochée/non cochée
+        :type state: bool
         """
         if state == Qt.CheckState.Checked:
             parent_item.setCheckState(0, Qt.CheckState.Checked)
         else:
-            # Vérifier si toutes les cases attributs sont décochées
+            # Vérifier si toutes les cases filles sont décochées
             all_unchecked = True
             for i in range(parent_item.childCount()):
                 child_item = parent_item.child(i)
@@ -301,36 +387,91 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 if isinstance(widget, QtWidgets.QCheckBox) and widget.isChecked():
                     all_unchecked = False
                     break
+
             if all_unchecked:
                 parent_item.setCheckState(0, Qt.CheckState.Unchecked)
 
-    def __checkParentOnComboChanged(self, parent_item, combo):
+    def __checkParentOnComboChanged(self, parent_item, combo) -> None:
+        """
+        Fonction pour cocher/décocher automatiquement la case de la colonne "thème" (case mère) lorsque l’utilisateur
+        change la valeur de la QComboBox dans la colonne "attribut" (case fille). Signal "currentIndexChanged"
+        NB : si tous les attributs enfants sont vides/non sélectionnés, le thème parent est décoché.
+
+        :param parent_item: case mère, QcheckBox du thème
+        :type parent_item: QTreeWidgetItem
+
+        :param combo: zone de liste déroulante
+        :type combo: QComboBox
+        """
         if combo.currentText().strip() != "":
             parent_item.setCheckState(0, Qt.CheckState.Checked)
         else:
             self.__checkAllChildrenEmpty(parent_item)
 
-    def __checkParentOnLineEditChanged(self, parent_item, lineedit):
+    def __checkParentOnLineEditChanged(self, parent_item, lineedit) -> None:
+        """
+        Fonction pour cocher/décocher automatiquement la case de la colonne "thème" (case mère) lorsque l’utilisateur
+        change la valeur de la QLineEdit dans la colonne "attribut" (case fille). Signal "textChanged"
+        NB : si tous les attributs enfants sont vides/non sélectionnés, le thème parent est décoché.
+
+        :param parent_item: case mère, QcheckBox du thème
+        :type parent_item: QTreeWidgetItem
+
+        :param lineedit: la zone de texte
+        :type lineedit: QLineEdit
+        """
         if lineedit.text().strip() != "":
             parent_item.setCheckState(0, Qt.CheckState.Checked)
         else:
+            # Si toutes les cases filles sont décochées, décoche la case mère
             self.__checkAllChildrenEmpty(parent_item)
 
-    def __checkParentOnDateEditChanged(self, parent_item, dateedit):
+    def __checkParentOnDateEditChanged(self, parent_item, dateedit) -> None:
+        """
+        Fonction pour cocher/décocher automatiquement la case de la colonne "thème" (case mère) lorsque l’utilisateur
+        change la valeur de la QDateEdit dans la colonne "attribut" (case fille). Signal "dateChanged"
+        NB : si tous les attributs enfants sont vides/non sélectionnés, le thème parent est décoché.
+
+        :param parent_item: case mère, QcheckBox du thème
+        :type parent_item: QTreeWidgetItem
+
+        :param dateedit: la zone de texte de la date
+        :type dateedit: QDateEdit
+        """
         min_date = QDate(1900, 1, 1)
         if dateedit.date() != min_date:
             parent_item.setCheckState(0, Qt.CheckState.Checked)
         else:
+            # Si toutes les cases filles sont décochées, décoche la case mère
             self.__checkAllChildrenEmpty(parent_item)
 
-    def __checkParentOnDateTimeEditChanged(self, parent_item, datetimeedit):
+    def __checkParentOnDateTimeEditChanged(self, parent_item, datetimeedit) -> None:
+        """
+        Fonction pour cocher/décocher automatiquement la case de la colonne "thème" (case mère) lorsque l’utilisateur
+        change la valeur de la QDateTimeEdit dans la colonne "attribut" (case fille). Signal "dateTimeChanged"
+        NB : si tous les attributs enfants sont vides/non sélectionnés, le thème parent est décoché.
+
+        :param parent_item: case mère, QcheckBox du thème
+        :type parent_item: QTreeWidgetItem
+
+        :param datetimeedit: la zone de texte de la dateTime
+        :type datetimeedit: QDateTimeEdit
+        """
         min_datetime = QDateTime(QDate(1900, 1, 1), QTime(0, 0, 0))
         if datetimeedit.dateTime() != min_datetime:
             parent_item.setCheckState(0, Qt.CheckState.Checked)
         else:
+            # Si toutes les cases filles sont décochées, décoche la case mère
             self.__checkAllChildrenEmpty(parent_item)
 
-    def __checkAllChildrenEmpty(self, parent_item):
+    def __checkAllChildrenEmpty(self, parent_item) -> None:
+        """
+        Fonction utilitaire pour décocher le parent (case à cocher thème) si tous les attributs
+        sont vides/non sélectionnés.
+
+        :param parent_item: case mère, QcheckBox du thème
+        :type parent_item: QTreeWidgetItem
+        """
         all_empty = True
         for i in range(parent_item.childCount()):
             child_item = parent_item.child(i)
@@ -385,11 +526,15 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """
         return self.textEditMessage.toPlainText()
 
-    def getUserSelectedThemeWithAttributes(self):
-        """Retourne la liste des thèmes (objets de type THEME) sélectionnés
-        dans le formulaire de création du signalement
+    def getUserSelectedThemeWithAttributes(self) -> ():
+        """
+        Retourne la liste des thèmes (objets de type THEME) sélectionnés
+        dans le formulaire de création du signalement.
+        Retourne aussi la liste des erreurs de validation.
         """
         data = {}
+        # errors = list of tuples: (error_message, widget)
+        errors = []
         root = self.treeWidget.invisibleRootItem()
         for i in range(root.childCount()):
             thItem = root.child(i)
@@ -418,12 +563,14 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 widg = self.treeWidget.itemWidget(att, 1)
                 val = self.__getValueFromWidget(widg, label, thItem.text(0))
                 errorMessage += self.__correctValue(thItem.text(0), key, val)
+                if errorMessage != '':
+                    errors.append((errorMessage, widg))
                 valueChangedIfTypeAttributeIsJson = self.__getJsonValue(thItem.text(0), key, val)
                 selectedAttributes[key] = str(valueChangedIfTypeAttributeIsJson)
                 if errorMessage != '':
                     raise Exception(errorMessage)
             data['attributes'] = selectedAttributes
-        return data
+        return data, errors
 
     def __correctValue(self, groupName, attributeName, value) -> str:
         errorMessage = ''
@@ -571,13 +718,45 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 nb = 1
         # Pas de thème sélectionné
         if nb == 0:
-            PluginHelper.showMessageBox("Attention, il manque la sélection du thème.")
+            self.lblMessageError.setText("Attention, il manque la sélection du thème.")
             self.bSend = False
+            return
         # Commentaire de 10 caractères minimum
         if len(self.textEditMessage.toPlainText()) < 10:
-            PluginHelper.showMessageBox("Attention, le commentaire doit être de 10 caractères minimum.")
+            self.lblMessageError.setText("Attention, le commentaire doit être de 10 caractères minimum.")
             self.bSend = False
+            return
 
+        # Nouvelle logique : récupération des données et des erreurs
+        try:
+            _, errors = self.getUserSelectedThemeWithAttributes()
+        except Exception as e:
+            # Gestion d'erreur imprévue
+            self.lblMessageError.setText(f"Erreur interne: {str(e)}")
+            self.bSend = False
+            return
+
+        # Retire le rouge de tous les widgets avant nouvelle validation
+        root = self.treeWidget.invisibleRootItem()
+        for i in range(root.childCount()):
+            thItem = root.child(i)
+            for j in range(thItem.childCount()):
+                att = thItem.child(j)
+                widg = self.treeWidget.itemWidget(att, 1)
+                if widg:
+                    widg.setStyleSheet("")
+
+        if errors:
+            # Colore en rouge les widgets invalides
+            for msg, widg in errors:
+                if widg:
+                    widg.setStyleSheet("border: 2px solid red;")
+            # Affiche toutes les erreurs dans lblMessageError, séparées par des retours à la ligne
+            self.lblMessageError.setText("\n".join(errors))
+            self.bSend = False
+            return
+
+        # Si pas d'erreur, on ferme le dialogue
         self.bSend = True
         self.close()
 
