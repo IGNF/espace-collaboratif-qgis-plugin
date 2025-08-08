@@ -235,52 +235,38 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 if isinstance(item_value, QtWidgets.QCheckBox):
                     item_value.stateChanged.connect(
                         lambda state, parent_item=thItem: self.__checkParentOnCheckBoxChanged(parent_item, state))
-                # Le signal currentIndexChanged est appelé à chaque changement de sélection
-                elif isinstance(item_value, QtWidgets.QComboBox):
-                    item_value.currentIndexChanged.connect(
-                        lambda idx, parent_item=thItem, combo=item_value: self.__checkParentOnComboChanged(parent_item,
-                                                                                                           combo))
-                # Le signal textChanged est appelé à chaque modification du texte
-                elif isinstance(item_value, QtWidgets.QLineEdit):
-                    item_value.textChanged.connect(
-                        lambda text, parent_item=thItem, lineedit=item_value: self.__checkParentOnLineEditChanged(
-                            parent_item, lineedit))
-                # Le signal dateChanged est appelé à chaque modification de date
-                elif isinstance(item_value, QDateEdit):
-                    item_value.dateChanged.connect(
-                        lambda date, parent_item=thItem, dateedit=item_value: self.__checkParentOnDateEditChanged(
-                            parent_item, dateedit))
-                # Le signal dateTimeChanged est appelé à chaque modification de dateTime
-                elif isinstance(item_value, QDateTimeEdit):
-                    item_value.dateTimeChanged.connect(lambda datetime,
-                                                       parent_item=thItem,
-                                                       datetimeedit=item_value:
-                                                       self.__checkParentOnDateTimeEditChanged(parent_item,
-                                                                                               datetimeedit))
-                if isinstance(item_value, QtWidgets.QCheckBox):
                     item_value.stateChanged.connect(lambda state, widg=item_value, label=attLabel,
                                                            theme_name=thItem.text(0): self.__removeRedIfValid(widg,
                                                                                                               label,
                                                                                                               theme_name))
+                # Le signal currentIndexChanged est appelé à chaque changement de sélection
                 elif isinstance(item_value, QtWidgets.QComboBox):
                     item_value.currentIndexChanged.connect(
-                        lambda idx, widg=item_value, label=attLabel, theme_name=thItem.text(0): self.__removeRedIfValid(
-                            widg, label, theme_name))
+                        lambda idx, parent_item=thItem, combo=item_value, widg=item_value, label=attLabel,
+                               theme_name=thItem.text(0): (
+                            self.__checkParentOnComboChanged(parent_item, combo),
+                            self.__removeRedIfValid(widg, label, theme_name)))
+                # Le signal textChanged est appelé à chaque modification du texte
                 elif isinstance(item_value, QtWidgets.QLineEdit):
-                    item_value.textChanged.connect(lambda text, widg=item_value, label=attLabel,
-                                                          theme_name=thItem.text(0): self.__removeRedIfValid(widg,
-                                                                                                             label,
-                                                                                                             theme_name))
+                    item_value.textChanged.connect(
+                        lambda text, parent_item=thItem, lineedit=item_value, widg=item_value, label=attLabel,
+                               theme_name=thItem.text(0): (
+                            self.__checkParentOnLineEditChanged(parent_item, lineedit),
+                            self.__removeRedIfValid(widg, label, theme_name)))
+                # Le signal dateChanged est appelé à chaque modification de date
                 elif isinstance(item_value, QDateEdit):
-                    item_value.dateChanged.connect(lambda date, widg=item_value, label=attLabel,
-                                                          theme_name=thItem.text(0): self.__removeRedIfValid(widg,
-                                                                                                             label,
-                                                                                                             theme_name))
+                    item_value.dateChanged.connect(
+                        lambda date, parent_item=thItem, dateedit=item_value, widg=item_value, label=attLabel,
+                               theme_name=thItem.text(0): (
+                            self.__checkParentOnDateEditChanged(parent_item, dateedit),
+                            self.__removeRedIfValid(widg, label, theme_name)))
+                # Le signal dateTimeChanged est appelé à chaque modification de dateTime
                 elif isinstance(item_value, QDateTimeEdit):
-                    item_value.dateTimeChanged.connect(lambda datetime, widg=item_value, label=attLabel,
-                                                              theme_name=thItem.text(0): self.__removeRedIfValid(widg,
-                                                                                                                 label,
-                                                                                                                 theme_name))
+                    item_value.dateTimeChanged.connect(
+                        lambda datetime, parent_item=thItem, datetimeedit=item_value, widg=item_value, label=attLabel,
+                               theme_name=thItem.text(0): (
+                            self.__checkParentOnDateTimeEditChanged(parent_item, datetimeedit),
+                            self.__removeRedIfValid(widg, label, theme_name)))
 
     def __displayThemes(self, community) -> None:
         """
@@ -573,6 +559,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         return data, errors
 
     def __correctValue(self, groupName, attributeName, value) -> str:
+        # TODO corriger le message par le nom affiché et non par le nom interne exemple
+        # L'attribut website n'est pas valide par L'attribut Site web n'est pas valide
+        # TODO il faut envoyer une liste de messages et non un par un
         errorMessage = ''
         for theme in self.__themesList:
             if theme.getName() != groupName:
