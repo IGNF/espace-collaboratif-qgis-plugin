@@ -20,6 +20,7 @@ import requests
 from PyQt5 import QtGui
 from PyQt5.QtGui import QImage
 from qgis.PyQt.QtWidgets import QMessageBox
+from qgis._core import QgsMapLayerType, QgsLayerTreeLayer
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri
@@ -401,9 +402,8 @@ class Contexte(object):
     def createTablesReportsAndSketchs(self):
         # Création de la table des signalements et de croquis
         for table in PluginHelper.reportSketchLayersName:
-            if SQLiteManager.isTableExist(table):
-                SQLiteManager.emptyTable(table)
-                SQLiteManager.deleteTable(table)
+            SQLiteManager.emptyTable(table)
+            SQLiteManager.deleteTable(table)
             if table == cst.nom_Calque_Signalement:
                 SQLiteManager.createReportTable()
             elif table in PluginHelper.sketchLayers:
@@ -607,9 +607,28 @@ class Contexte(object):
         tmp = ''
         removeLayers = []
         for layer in guichet_layers:
-            if layer.nom in maplayers:
-                removeLayers.append(layer.nom)
-                tmp += "{}, ".format(layer.nom)
+            # DAns ce cas précis, maplayers représente la liste des noms de couche présente
+            if layer.name() not in maplayers or len(maplayers) == 0:
+                listLayers = QgsProject.instance().mapLayersByName(layer.name())
+                if len(listLayers) == 1:
+                    if listLayers[0].type() != QgsMapLayerType.RasterLayer:
+                        root = QgsProject.instance().layerTreeRoot()
+                        nodesGroup = root.findGroups()
+                        searchedGroup = None
+                        for ng in nodesGroup:
+                            if ng.name().find(cst.ESPACECO) != -1:
+                                searchedGroup = ng
+                                break
+                        if searchedGroup is not None:
+                            for child in searchedGroup.children():
+                                # Vérifie si l'enfant est une couche et si c'est celle recherchée
+                                if isinstance(child, QgsLayerTreeLayer) and child.layerId() == listLayers[0].id():
+                                    print("{0} : {1}".format(layer.name(), len(list(listLayers[0].getFeatures()))))
+                                    removeLayers.append((layer.name()))
+                                    tmp += "{}, ".format(layer.name())
+            else:
+                removeLayers.append(layer.name())
+                tmp += "{}, ".format(layer.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 
     def removeLayersById(self, removeLayers, tmp, bAskForConfirmation):

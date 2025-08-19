@@ -104,7 +104,7 @@ class PluginHelper:
         :param projectDir: le chemin vers le répertoire du projet
         :type projectDir: string
         """
-        global urlhost
+        urlhost = None
         try:
             tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
             xmlroot = tree.getroot()
@@ -290,7 +290,7 @@ class PluginHelper:
     @staticmethod
     def load_ripartXmlTag(projectDir, tag, parent=None):
         """Recherche un élément (tag) dans le fichier xml.
-        Si l'élément n'existe pas ,il est créé
+        Si l'élément n'existe pas, il est créé
         
         :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
         :type projectDir: string
@@ -397,7 +397,7 @@ class PluginHelper:
         :type prefThemes: list de Theme
         """
         # first load Themes_prefs tag (create the tag if the tag doesn't exist yet)
-        themesNode = PluginHelper.load_ripartXmlTag(projectDir, PluginHelper.xml_Themes, "Map")
+        PluginHelper.load_ripartXmlTag(projectDir, PluginHelper.xml_Themes, "Map")
         PluginHelper.removeNode(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes)
         for th in prefThemes:
             PluginHelper.addXmlElement(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes,
@@ -596,7 +596,7 @@ class PluginHelper:
         if nb > 1:
             message = "Le filtrage des objets sera impossible car la couche {0} contient plusieurs objets." \
                       "Il faut une seule zone de travail pour filtrer les objets après extraction des données.".format(
-                nameWorkZone)
+                        nameWorkZone)
             QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
             return geometryWorkZone
         for feat in feats:
@@ -604,7 +604,7 @@ class PluginHelper:
         if len(list(geometryWorkZone.parts())) > 1:
             message = "Le filtrage des objets sera impossible car la zone de travail est une surface multiple." \
                       "Il faut une surface simple pour filtrer les objets après extraction des données.".format(
-                nameWorkZone)
+                        nameWorkZone)
             QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
             return geometryWorkZone
         layerWorkZone[0].rollBack()

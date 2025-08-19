@@ -2,7 +2,6 @@ import logging
 import os.path
 import configparser
 
-
 from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
 from . import resources
@@ -76,6 +75,23 @@ class RipartPlugin:
         # - quand des mises à jour ont été effectuées sur la couche
         self.iface.projectRead.connect(self.__connectProjectRead)
         QgsProject.instance().layerWasAdded.connect(self.__connectLayerWasAdded)
+        QgsProject.instance().layerRemoved.connect(self.__connectLayerRemoved)
+
+    def __connectLayerRemoved(self, layerId) -> None:
+        """
+        Quand l'utilisateur détruit une couche en passant par QGIS, il faut détruire les tables dans la base
+        SQLite du projet.
+
+        :param layerId: l'identifiant de la couche QGIS
+        :type layerId: str
+        """
+        layer = QgsProject.instance().mapLayer(layerId)
+        # Attention la couche n'existe peut-être plus
+        if layer is None:
+            return
+        SQLiteManager.emptyTable(layer.name())
+        SQLiteManager.deleteTable(layer.name())
+        SQLiteManager.vacuumDatabase()
 
     def __connectProjectRead(self) -> None:
         # si le contexte n'est pas encore initialisé
@@ -504,7 +520,8 @@ class RipartPlugin:
         #     print("Type: {}".format(ews.type()))
         #     # Résultat : Type: ValueMap
         #     print("Config: {}".format(ews.config()))
-        #     # Résultat : Config: {'map': [{'': 'NULL'}, {'1': '1'}, {'2': '2'}, {'3': '3'}, {'4': '4'}, {'5': '5'}, {'6': '6'}]}
+        #     # Résultat : Config: {'map': [{'': 'NULL'}, {'1': '1'}, {'2': '2'}, {'3': '3'}, {'4': '4'}, {'5': '5'},
+        #     {'6': '6'}]}
         #     break
 
     # Connexion à l'Espace collaboratif

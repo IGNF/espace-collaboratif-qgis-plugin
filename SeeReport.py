@@ -4,6 +4,7 @@ from .SeeReportView import SeeReportView
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 
+
 # Classe pour visualiser un signalement
 class SeeReport(object):
 

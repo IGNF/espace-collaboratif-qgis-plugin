@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_dlgCreateRem(object):
     def setupUi(self, dlgCreateRem):
         dlgCreateRem.setObjectName("dlgCreateRem")
-        dlgCreateRem.resize(432, 592)
+        dlgCreateRem.resize(432, 639)
         font = QtGui.QFont()
         font.setPointSize(7)
         dlgCreateRem.setFont(font)
@@ -24,7 +24,7 @@ class Ui_dlgCreateRem(object):
         dlgCreateRem.setToolTipDuration(-4)
         dlgCreateRem.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
         self.groupBoxProfil = QtWidgets.QGroupBox(dlgCreateRem)
-        self.groupBoxProfil.setGeometry(QtCore.QRect(10, 20, 411, 531))
+        self.groupBoxProfil.setGeometry(QtCore.QRect(10, 20, 411, 581))
         font = QtGui.QFont()
         font.setPointSize(7)
         font.setBold(False)
@@ -98,7 +98,7 @@ class Ui_dlgCreateRem(object):
         self.label.setFont(font)
         self.label.setObjectName("label")
         self.lblMessageError = QtWidgets.QLabel(self.groupBoxProfil)
-        self.lblMessageError.setGeometry(QtCore.QRect(10, 480, 391, 31))
+        self.lblMessageError.setGeometry(QtCore.QRect(10, 480, 391, 101))
         self.lblMessageError.setText("")
         self.lblMessageError.setObjectName("lblMessageError")
         self.label_2 = QtWidgets.QLabel(self.groupBoxProfil)
@@ -113,7 +113,7 @@ class Ui_dlgCreateRem(object):
         self.comboBoxGroupe.setGeometry(QtCore.QRect(10, 70, 251, 21))
         self.comboBoxGroupe.setObjectName("comboBoxGroupe")
         self.buttonBox = QtWidgets.QDialogButtonBox(dlgCreateRem)
-        self.buttonBox.setGeometry(QtCore.QRect(170, 560, 101, 23))
+        self.buttonBox.setGeometry(QtCore.QRect(170, 610, 101, 23))
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
 

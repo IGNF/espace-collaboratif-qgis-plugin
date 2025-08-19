@@ -241,7 +241,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         nodesGroup = root.findGroups()
         newGroup = None
         for ng in nodesGroup:
-            # Dans le cas ou le nom du groupe actif, du groupe dans le carte et celui stocké dans le xml sont tous
+            # Dans le cas ou le nom du groupe actif, du groupe dans la carte et celui stocké dans le xml sont tous
             # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
             # est de chercher le prefixe
             if ng.name().find(cst.ESPACECO) != -1:
@@ -250,7 +250,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 break
 
         # Si l'utilisateur a changé de groupe, on supprime l'ancien (s'il existe dans le projet)
-        # et toutes les couches associées. On supprime la base sqlite et on la recréée
+        # et toutes les couches associées. On supprime la base SQLlite et on la recrée
         if bNewGroup:
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
@@ -270,7 +270,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             # Récupération de l'ensemble des noms des couches chargées dans la table des tables
             layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
             layersInTT = []
+            print("Couches présentes dans la table des tables\n")
             for lftot in layersFromTableOfTables:
+                print("{}".format(lftot[0]))
                 layersInTT.append(lftot[0])
 
             # Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe,
@@ -281,8 +283,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     self.__context.removeLayersFromProject(layersInProject, layersInTT, False)
-                    PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
-                                                "Map")
+                    PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
+                                                userWorkZone, "Map")
                     self.removeTablesSQLite(layersInProject)
                 else:
                     self.__bCancel = True

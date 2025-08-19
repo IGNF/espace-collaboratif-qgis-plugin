@@ -42,7 +42,6 @@ class BBox(object):
                     return Box(0.0, 0.0, 0.0, 0.0)
         return box
 
-    #
     def getSpatialFilter(self, bTransformCoordinates) -> Box:
         """
         Retourne la boite englobante d'une zone de travail utilisateur avec transformation ou non des coordonnées.

@@ -114,7 +114,9 @@ class importWMTS:
         styles = self.wmts_lyr.styles
         '''
             La variable styles est de type dict cle:valeur, exemple :
-            normal:{'isDefault': True, 'title': 'Légende générique', 'abstract': 'Fichier de légende générique – pour la compatibilité avec certains systèmes', 'legend': 'https://wxs.ign.fr/static/legends/LEGEND.jpg', 'width': '200', 'height': '200', 'format': 'image/jpeg', 'keywords': ['Défaut']}
+            normal:{'isDefault': True, 'title': 'Légende générique', 'abstract': 'Fichier de légende générique – 
+            pour la compatibilité avec certains systèmes', 'legend': 'https://wxs.ign.fr/static/legends/LEGEND.jpg', 
+            'width': '200', 'height': '200', 'format': 'image/jpeg', 'keywords': ['Défaut']}
             ou cle = normal
             et valeur = {'isDefault': True, 'title': 'Légende générique', 'abstract': 'Fichier de légende générique...}
         '''

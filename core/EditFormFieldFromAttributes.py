@@ -123,7 +123,7 @@ class EditFormFieldFromAttributes(object):
         print(keysToProcess)
         return list(keysToProcess)
 
-    def setFieldDefault(self, attributesSets, default_value):
+    def setFieldDefault(self, attributesSets):
         """
         Coder un ensemble de valeur de champs à partir
         Exemple d'un Jeu d'attributs (attributesSets):
@@ -231,7 +231,7 @@ class EditFormFieldFromAttributes(object):
         if vType is None:
             return
 
-        listDefaultValues = self.setFieldDefault(attributesSets, default_value)
+        self.setFieldDefault(attributesSets)
 
         if vType == 'Boolean':
             self.setFieldBoolean(default_value)
@@ -432,8 +432,8 @@ class EditFormFieldFromAttributes(object):
         La contrainte est de type :
            CASE
             - WHEN "nature" = 'Aérogare' THEN array_contains(array('NULL'),"nature_detaillee")
-            - WHEN "nature" = 'Aire de repos ou de service' THEN array_contains(array('Aire de repos','Aire de service'),
-              "nature_detaillee")
+            - WHEN "nature" = 'Aire de repos ou de service' THEN array_contains(array('Aire de repos',
+              'Aire de service'), "nature_detaillee")
             - WHEN "nature" = 'Aire de triage' THEN ''
             - WHEN "nature" = 'Carrefour' THEN array_contains(array('Echangeur','Rond-point','Echangeur complet',
               'Echangeur partiel'),"nature_detaillee")
@@ -562,7 +562,8 @@ class EditFormFieldFromAttributes(object):
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
 
         # if vType == 'String' and bNullable is True:
-        #     expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or {1}".format(self.name, expression)
+        #     expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or {1}".format(self.name,
+        #     expression)
         if expression == '':
             expression = None
         else:

@@ -1,7 +1,6 @@
 import urllib.parse
 import uuid
 import webbrowser
-import time
 
 import requests
 
@@ -109,5 +108,6 @@ class KeycloakService:
         webbrowser.open(logout_url, new=0, autoraise=True)
 
     def get_well_known_config(self) -> dict:
-        response = self.session.get("{}realms/{}/.well-known/openid-configuration".format(self.base_uri, self.realm_name))
+        response = self.session.get("{}realms/{}/.well-known/openid-configuration".format(self.base_uri,
+                                                                                          self.realm_name))
         return response.json()

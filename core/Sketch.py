@@ -151,7 +151,7 @@ class Sketch(object):
         """
         coord = ""
         for pt in self.__points:
-            coord += str(pt.longitude) + " " + str(pt.latitude) + ", "
+            coord += str(pt.getLongitude()) + " " + str(pt.getLatitude()) + ", "
         if self.type not in self.typeToWKT:
             return ''
         # Cas particulier pour les polygones

@@ -48,7 +48,8 @@ class ReplyReport(object):
                     # TODO -> Noémie voir ticket redmine http://sd-redmine.ign.fr/issues/18058
                     # bAuthorisation = True
                     # if report.autorisation not in ["RW", "RW+", "RW-"]:
-                    #     messageReportNoValid += "Vous n'êtes pas autorisé à modifier le signalement n°{0}\n".format(idReport)
+                    #     messageReportNoValid += "Vous n'êtes pas autorisé à modifier le signalement n°{0}\n".
+                    #     format(idReport)
                     #     bAuthorisation = False
                     # if pos != -1 and bAuthorisation:
                     #     replyReports.append(report)
@@ -78,7 +79,7 @@ class ReplyReport(object):
                                       'proxies': self.__context.proxies, 'headers': headers,
                                       'requestBody': {'title': '', 'content': newResponse, 'status': newStatut}}
                         jsonResponse = self.__toolsReport.addResponseToServer(parameters)
-                        if jsonResponse is None:
+                        if jsonResponse == '':
                             raise Exception("toolsReport.addResponse a renvoyé une erreur")
                         self.__toolsReport.updateReportIntoSQLite(jsonResponse)
                     information = "Votre réponse "

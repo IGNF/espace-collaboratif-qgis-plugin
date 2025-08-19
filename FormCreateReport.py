@@ -135,6 +135,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         # La liste des fichiers joints au signalement
         self.__files = {}
+        # les données liées au signalement à envoyer au serveur
+        self.__datas = {}
 
     def __setComboBoxGroup(self) -> None:
         """
@@ -235,38 +237,37 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 # Le signal stateChanged est appelé à chaque coche/décoche
                 if isinstance(item_value, QtWidgets.QCheckBox):
                     item_value.stateChanged.connect(
-                        lambda state, parent_item=thItem, widg=item_value, label=attLabel,
-                                theme_name=thItem.text(0): (
+                        lambda state, parent_item=thItem, widg=item_value, lab=attLabel, theme_name=thItem.text(0): (
                             self.__checkParentOnCheckBoxChanged(parent_item, state),
-                            self.__removeRedIfValid(widg, label, theme_name)))
+                            self.__removeRedIfValid(widg, lab, theme_name)))
                 # Le signal currentIndexChanged est appelé à chaque changement de sélection
                 elif isinstance(item_value, QtWidgets.QComboBox):
                     item_value.currentIndexChanged.connect(
-                        lambda idx, parent_item=thItem, combo=item_value, widg=item_value, label=attLabel,
-                               theme_name=thItem.text(0): (
+                        lambda idx, parent_item=thItem, combo=item_value, widg=item_value, lab=attLabel,
+                        theme_name=thItem.text(0): (
                             self.__checkParentOnComboChanged(parent_item, combo),
-                            self.__removeRedIfValid(widg, label, theme_name)))
+                            self.__removeRedIfValid(widg, lab, theme_name)))
                 # Le signal textChanged est appelé à chaque modification du texte
                 elif isinstance(item_value, QtWidgets.QLineEdit):
                     item_value.textChanged.connect(
-                        lambda text, parent_item=thItem, lineedit=item_value, widg=item_value, label=attLabel,
-                               theme_name=thItem.text(0): (
+                        lambda text, parent_item=thItem, lineedit=item_value, widg=item_value, lab=attLabel,
+                        theme_name=thItem.text(0): (
                             self.__checkParentOnLineEditChanged(parent_item, lineedit),
-                            self.__removeRedIfValid(widg, label, theme_name)))
+                            self.__removeRedIfValid(widg, lab, theme_name)))
                 # Le signal dateChanged est appelé à chaque modification de date
                 elif isinstance(item_value, QDateEdit):
                     item_value.dateChanged.connect(
-                        lambda date, parent_item=thItem, dateedit=item_value, widg=item_value, label=attLabel,
-                               theme_name=thItem.text(0): (
+                        lambda date, parent_item=thItem, dateedit=item_value, widg=item_value, lab=attLabel,
+                        theme_name=thItem.text(0): (
                             self.__checkParentOnDateEditChanged(parent_item, dateedit),
-                            self.__removeRedIfValid(widg, label, theme_name)))
+                            self.__removeRedIfValid(widg, lab, theme_name)))
                 # Le signal dateTimeChanged est appelé à chaque modification de dateTime
                 elif isinstance(item_value, QDateTimeEdit):
                     item_value.dateTimeChanged.connect(
-                        lambda datetime, parent_item=thItem, datetimeedit=item_value, widg=item_value, label=attLabel,
-                               theme_name=thItem.text(0): (
+                        lambda datetime, parent_item=thItem, datetimeedit=item_value, widg=item_value, lab=attLabel,
+                        theme_name=thItem.text(0): (
                             self.__checkParentOnDateTimeEditChanged(parent_item, datetimeedit),
-                            self.__removeRedIfValid(widg, label, theme_name)))
+                            self.__removeRedIfValid(widg, lab, theme_name)))
 
     def __displayThemes(self, community) -> None:
         """
@@ -486,10 +487,14 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             parent_item.setCheckState(0, Qt.CheckState.Unchecked)
 
     def getCommunityIdWhenThemeChanged(self):
+        """
+
+        """
         return self.__communityIdWhenThemeChanged
 
     def __groupIndexChanged(self):
-        """Détecte le groupe choisi et lance l'affiche des thèmes adéquats.
+        """
+        Détecte le groupe choisi et lance l'affiche des thèmes adéquats.
         """
         self.treeWidget.clear()
         userCommunityNameChoice = self.comboBoxGroupe.currentText()
@@ -503,22 +508,23 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     break
 
     def isSingleReport(self):
-        """Indique si l'option de création d'une remarque unique a été choisie.
+        """
+        Indique si l'option de création d'une remarque unique a été choisie.
         """
         return self.radioBtnUnique.isChecked()
 
     def getComment(self):
-        """Retourne le commentaire entré par l'utilisateur (partie Commentaire)
+        """
+        :return: le texte entré par l'utilisateur (partie Commentaire)
         """
         return self.textEditMessage.toPlainText()
 
-    def getUserSelectedThemeWithAttributes(self) -> ():
+    def getUserSelectedThemeWithAttributes(self) -> []:
         """
         Retourne la liste des thèmes (objets de type THEME) sélectionnés
         dans le formulaire de création du signalement.
-        Retourne aussi la liste des erreurs de validation.
+        :return: la liste de la liste des erreurs de validation par attribut.
         """
-        data = {}
         # errors = list of tuples: (error_message, widget)
         errors = []
         root = self.treeWidget.invisibleRootItem()
@@ -533,47 +539,59 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             bFind = False
             for theme in self.__themesList:
                 if theme.getName() == themeName:
-                    data['community'] = theme.getCommunityId()
+                    self.__datas['community'] = theme.getCommunityId()
                     bFind = True
                     break
             if not bFind:
-                data['community'] = -1
-            data['theme'] = themeName
+                self.__datas['community'] = -1
+            self.__datas['theme'] = themeName
             # Les attributs du theme remplis par l'utilisateur
             selectedAttributes = {}
-            errorMessage = ''
             for j in range(thItem.childCount()):
                 att = thItem.child(j)
                 label = self.treeWidget.itemWidget(att, 0).text()
                 key = self.__getKeyFromAttributeValue(label, thItem.text(0))
                 widg = self.treeWidget.itemWidget(att, 1)
                 val = self.__getValueFromWidget(widg, label, thItem.text(0))
-                errorMessage += self.__correctValue(thItem.text(0), key, val)
+                errorMessage = self.__correctValue(thItem.text(0), key, val)
                 if errorMessage != '':
                     errors.append((errorMessage, widg))
                 valueChangedIfTypeAttributeIsJson = self.__getJsonValue(thItem.text(0), key, val)
                 selectedAttributes[key] = str(valueChangedIfTypeAttributeIsJson)
-                if errorMessage != '':
-                    raise Exception(errorMessage)
-            data['attributes'] = selectedAttributes
-        return data, errors
+            if len(errors) == 0:
+                self.__datas['attributes'] = selectedAttributes
+        return errors
 
     def __correctValue(self, groupName, attributeName, value) -> str:
         # TODO corriger le message par le nom affiché et non par le nom interne exemple
         # L'attribut website n'est pas valide par L'attribut Site web n'est pas valide
         # TODO il faut envoyer une liste de messages et non un par un
-        errorMessage = ''
+        """
+        :return: le message d'erreur pour l'attribut passé en entrée
+        """
+        error = ''
         for theme in self.__themesList:
             if theme.getName() != groupName:
                 continue
             for attribute in theme.getAttributes():
-                if attribute.getType() == 'int' or attribute.getType() == 'float':
+                bError = False
+                if attribute.getName() != attributeName:
+                    continue
+                if attribute.getType() == 'integer':
                     if value != '' and not value.isdigit():
-                        errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
+                        bError = True
+                if attribute.getType == 'double' or attribute.getType == 'float':
+                    if value != '' and not value.replace('.', '').isdigit():
+                        bError = True
                 if attribute.getMandatory() is True:
-                    if value == '' or value is None:
-                        errorMessage = u"L'attribut {0} n'est pas valide.".format(attributeName)
-        return errorMessage
+                    if value == '' or value is None or value == '0':
+                        bError = True
+                if bError:
+                    error = "L'attribut {0} n'est pas valide.".format(attribute.getAlias())
+                # Si le break est atteint l'attribut a été contrôlé, inutile de continuer
+                break
+            break
+        return error
 
     def __getJsonValue(self, groupName, attributeName, value):
         valueChangedIfTypeAttributeIsJson = value
@@ -593,7 +611,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         Récupération au format adapté de la valeur saisie dans le formulaire pour chaque widget
         correspondant à un attribut du thème de signalement sélectionné.
         """
-
         if type(widg) == QtWidgets.QCheckBox:
             state = widg.checkState()
             if state == 0:
@@ -696,6 +713,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         else:
             return {}
 
+    def getDatasForRequest(self):
+        return self.__datas
+
     # Envoi de la requête de création à l'espace collaboratif
     def __onSend(self):
         # Il faut au moins un theme coché
@@ -718,7 +738,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         # Nouvelle logique : récupération des données et des erreurs
         try:
-            _, errors = self.getUserSelectedThemeWithAttributes()
+            errors = self.getUserSelectedThemeWithAttributes()
         except Exception as e:
             # Gestion d'erreur imprévue
             self.lblMessageError.setText(f"Erreur interne: {str(e)}")
@@ -736,12 +756,14 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     widg.setStyleSheet("")
 
         if errors:
-            # Colore en rouge les widgets invalides
+            messages = ''
             for msg, widg in errors:
                 if widg:
+                    # Colore en rouge les widgets invalides
                     widg.setStyleSheet("border: 2px solid red;")
-            # Affiche toutes les erreurs dans lblMessageError, séparées par des retours à la ligne
-            self.lblMessageError.setText("\n".join(errors))
+                messages += "{}\n".format(msg)
+            # Affiche les erreurs dans lblMessageError séparées par des retours à la ligne
+            self.lblMessageError.setText(messages)
             self.bSend = False
             return
 

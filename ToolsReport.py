@@ -9,7 +9,6 @@ from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
 from .core.ProgressBar import ProgressBar
 from .core.BBox import BBox
-from .core.Box import Box
 from .core.PluginLogger import PluginLogger
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
@@ -75,7 +74,8 @@ class ToolsReport(object):
         query.setPartOfUrl('gcms/api/reports')
         query.setPage(1)
         query.setLimit(100)
-        query.setBox(box)
+        if box is not None:
+            query.setBox(box)
         query.setOpeningDate(date)
         data = query.multiple()
         return data
@@ -238,7 +238,7 @@ class ToolsReport(object):
         SQLiteManager.updateTable(parameters)
 
     # Ajoute une réponse à un signalement
-    def addResponseToServer(self, parameters) -> None:
+    def addResponseToServer(self, parameters) -> str:
         idReport = parameters['reportId']
         uri = "{0}/gcms/api/reports/{1}/replies".format(self.__context.urlHostEspaceCo, idReport)
         response = HttpRequest.makeHttpRequest(uri, parameters['proxies'], data=parameters['requestBody'],
@@ -249,21 +249,23 @@ class ToolsReport(object):
         elif response.status_code == 403:
             PluginHelper.showMessageBox("Vous n'avez pas les droits pour modifier "
                                         "le signalement {}.".format(idReport))
-            return None
+            return ''
         else:
             message = "code : {} raison : {}".format(response.status_code, response.reason)
             self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
-            return
+            return ''
 
     def __sendReport(self, filesAttachments):
         self.__datasForRequest.update(filesAttachments)
-        datas = MultipartEncoder(fields=self.__datasForRequest)
+        datas = MultipartEncoder(fields=json.dumps(self.__datasForRequest))
+        print(datas)
         responseFromServer = self.__sendRequest(datas)
         if responseFromServer is None:
             return
         return responseFromServer.json()
 
     def __sendRequest(self, datas):
+        print("_sendRequest:datas : '}".format(datas))
         # envoi de la requête
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
         headers = {'Content-Type': datas.content_type, 'Authorization': '{} {}'.format(self.__context.getTokenType(),
@@ -310,19 +312,12 @@ class ToolsReport(object):
         communityId = formCreate.getCommunityIdWhenThemeChanged()
         if communityId is None:
             communityId = self.__context.getUserCommunity().getId()
-        self.__datasForRequest = {
-            'community': str(communityId),  # champ obligatoire
-            'comment': formCreate.getComment(),
-            'input_device': cst.CLIENT_INPUT_DEVICE
-        }
-
         # Le thème sélectionné et ses attributs
-        themeWithAttributes = formCreate.getUserSelectedThemeWithAttributes()
-        if len(themeWithAttributes) == 0:
-            message = "Impossible de créer un signalement sans thème. Veuillez en sélectionner un."
-            QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
-            return
-        self.__datasForRequest['attributes'] = json.dumps(themeWithAttributes)
+        self.__datasForRequest = {'community': str(communityId),
+                                  'comment': formCreate.getComment(),
+                                  'input_device': cst.CLIENT_INPUT_DEVICE,
+                                  'attributes': formCreate.getDatasForRequest()}
+        print("ToolsReport.createReport.datas : {}".format(self.__datasForRequest))
 
         # Récupération du (ou des) fichier(s) joint(s) (max 4) au signalement
         filesAttachments = formCreate.getFilesAttachments()
@@ -337,7 +332,8 @@ class ToolsReport(object):
             contents = self.__createSingleReport(sketchList, filesAttachments)
         else:
             if len(sketchList) == 1:
-                raise Exception("ToolsReport.__createMultiReports : attention, il fallait cocher la case [Créer un signalement unique].")
+                raise Exception("ToolsReport.__createMultiReports : attention, "
+                                "il fallait cocher la case [Créer un signalement unique].")
             contents = self.__createMultiReports(sketchList, filesAttachments)
 
         if contents is None:
@@ -353,23 +349,28 @@ class ToolsReport(object):
         contents = []
         filesAttachments = {}
         contents.append(self.__sendReport(filesAttachments))
+        print("ToolsReport.createSingleReportFromClipboard.datas : {}".format(self.__datasForRequest))
         return contents
 
     def __createSingleReport(self, sketchList, filesAttachments) -> []:
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, True)
-        self.__datasForRequest['sketch'] = json.dumps(sketchsDatasGeometryReport[0]['sketch'])
+        # self.__datasForRequest['sketch'] = json.dumps(sketchsDatasGeometryReport[0]['sketch'])
+        self.__datasForRequest['sketch'] = sketchsDatasGeometryReport[0]['sketch']
         self.__datasForRequest['geometry'] = sketchsDatasGeometryReport[0]['geometryReport']  # obligatoire
         contents.append(self.__sendReport(filesAttachments))
+        print("ToolsReport.__createSingleReport.datas : {}".format(self.__datasForRequest))
         return contents
 
     def __createMultiReports(self, sketchList, filesAttachments) -> []:
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, False)
         for sketchDataGeometryReport in sketchsDatasGeometryReport:
-            self.__datasForRequest['sketch'] = json.dumps(sketchDataGeometryReport['sketch'])
+            # self.__datasForRequest['sketch'] = json.dumps(sketchDataGeometryReport['sketch'])
+            self.__datasForRequest['sketch'] = sketchDataGeometryReport['sketch']
             self.__datasForRequest['geometry'] = sketchDataGeometryReport['geometryReport']
             contents.append(self.__sendReport(filesAttachments))
+        print("ToolsReport.__createMultiReports.datas : {}".format(self.__datasForRequest))
         return contents
 
     def __getBarycentreInWkt(self, listPoints):
@@ -388,8 +389,8 @@ class ToolsReport(object):
         if len(listPoints) == 0:
             raise Exception("Impossible de créer un signalement sans coordonnées, veuillez recommencer.")
         for pt in listPoints:
-            barycentreX += pt.longitude
-            barycentreY += pt.latitude
+            barycentreX += pt.getLongitude()
+            barycentreY += pt.getLatitude()
         ptX = barycentreX / len(listPoints)
         ptY = barycentreY / len(listPoints)
         barycentre = 'POINT({0} {1})'.format(ptX, ptY)

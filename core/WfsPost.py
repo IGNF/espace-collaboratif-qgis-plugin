@@ -87,7 +87,7 @@ class WfsPost(object):
     def __setPostGeometry(self, geometry, bBDUni) -> {}:
         """
         Transforme une géométrie QGIS en une géométrie WKT pour une requête POST. Vérifie si la géométrie de l'objet
-        intersecte la boite englobante de le zone de travail utilisateur.
+        intersecte la boite englobante de la zone de travail utilisateur.
 
         :param geometry: la géométrie QGIS de l'objet à envoyer sur la base serveur
         :type geometry: QgsGeometry
@@ -323,7 +323,8 @@ class WfsPost(object):
         :param editBuffer: stockage mémoire des modifications des couches d'un projet
         :type editBuffer: QgsVectorLayerEditBuffer
 
-        :param bNormalWfsPost: à False pour éviter un plantage de QGIS. Il tente de vider un editBuffer qu'il a déjà vidé lors de la sauvegarde (sauvegarde qui lance la synchronisation)
+        :param bNormalWfsPost: à False pour éviter un plantage de QGIS. Il tente de vider un editBuffer qu'il a déjà
+                               vidé lors de la sauvegarde (sauvegarde qui lance la synchronisation)
         :type bNormalWfsPost: bool
 
         :return: le statut de la transaction et le message de fin de transaction
