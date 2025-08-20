@@ -172,10 +172,9 @@ class RipartPlugin:
         self.__connectSpecificSignals(layer)
 
     def __searchSpecificLayer(self, layerName) -> bool:
-        if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-            if SQLiteManager.selectColumnFromTableWithCondition("layer", cst.TABLEOFTABLES, "layer", layerName) \
-                    is not None:
-                return True
+        if SQLiteManager.selectColumnFromTableWithCondition("layer", cst.TABLEOFTABLES, "layer", layerName) \
+                is not None:
+            return True
         return False
 
     def __connectSpecificSignals(self, layer) -> None:
@@ -294,10 +293,11 @@ class RipartPlugin:
                    " avec l'espace collaboratif."
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
-        for layerTableOfTables in layersTableOfTables:
-            if layer.name() in layerTableOfTables[0]:
-                bRes = True
-                break
+        if layersTableOfTables is not None:
+            for layerTableOfTables in layersTableOfTables:
+                if layer.name() in layerTableOfTables[0]:
+                    bRes = True
+                    break
         if not bRes:
             return "error : PluginModule:__saveChangesForOneLayer, la table {} n'existe pas " \
                    "dans la table des tables.".format(layer.name())
@@ -654,12 +654,13 @@ class RipartPlugin:
             # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
             layersToSynchronize = []
             layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
-            for layer in QgsProject.instance().mapLayers().values():
-                for layerTableOfTables in layersTableOfTables:
-                    if layer.name() == layerTableOfTables[0]:
-                        print('synchronizeData couche : {}'.format(layer.name()))
-                        layersToSynchronize.append(layer)
-                        break
+            if layersTableOfTables is not None:
+                for layer in QgsProject.instance().mapLayers().values():
+                    for layerTableOfTables in layersTableOfTables:
+                        if layer.name() == layerTableOfTables[0]:
+                            print('synchronizeData couche : {}'.format(layer.name()))
+                            layersToSynchronize.append(layer)
+                            break
 
             # S'il n'y a pas de couches, la synchronisation est vide
             if len(layersToSynchronize) == 0:

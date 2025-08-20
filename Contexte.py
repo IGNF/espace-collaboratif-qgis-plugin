@@ -416,9 +416,8 @@ class Contexte(object):
 
         # Si la table du nom de la couche existe,
         # elle est vidée, détruite et recréée
-        if SQLiteManager.isTableExist(layer.name()):
-            SQLiteManager.emptyTable(layer.name())
-            SQLiteManager.deleteTable(layer.name())
+        SQLiteManager.emptyTable(layer.name())
+        SQLiteManager.deleteTable(layer.name())
         bColumnDetruitExist = sqliteManager.createTableFromLayer(layer)
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
@@ -607,10 +606,12 @@ class Contexte(object):
         tmp = ''
         removeLayers = []
         for layer in guichet_layers:
-            # DAns ce cas précis, maplayers représente la liste des noms de couche présente
+            # Dans ce cas précis, "maplayers" représente la liste des couches présentent dans la table des tables
+            # même si "mapLayers" est vide, les couches peuvent encore exister dans le projet
             if layer.name() not in maplayers or len(maplayers) == 0:
                 listLayers = QgsProject.instance().mapLayersByName(layer.name())
                 if len(listLayers) == 1:
+                    # Vérifie si la couche appartient à un groupe ESPACECO ?
                     if listLayers[0].type() != QgsMapLayerType.RasterLayer:
                         root = QgsProject.instance().layerTreeRoot()
                         nodesGroup = root.findGroups()
@@ -637,10 +638,10 @@ class Contexte(object):
 
         if bAskForConfirmation:
             if len(removeLayers) == 1:
-                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(
+                message = "La couche [{}] existe déjà, elle va être supprimée.\nVoulez-vous continuer ?".format(
                     tmp[:-2])
             else:
-                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?"\
+                message = "Les couches [{}] existent déjà, elles vont être supprimées.\nVoulez-vous continuer ?"\
                     .format(tmp[:-2])
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)

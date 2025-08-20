@@ -257,18 +257,17 @@ class ToolsReport(object):
 
     def __sendReport(self, filesAttachments):
         self.__datasForRequest.update(filesAttachments)
-        datas = MultipartEncoder(fields=json.dumps(self.__datasForRequest))
-        print(datas)
+        datas = json.dumps(self.__datasForRequest)
+        print("ToolsReport.__sendReport.datas : {}".format(datas))
         responseFromServer = self.__sendRequest(datas)
         if responseFromServer is None:
             return
         return responseFromServer.json()
 
     def __sendRequest(self, datas):
-        print("_sendRequest:datas : '}".format(datas))
         # envoi de la requête
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
-        headers = {'Content-Type': datas.content_type, 'Authorization': '{} {}'.format(self.__context.getTokenType(),
+        headers = {'Content-Type': 'application/json', 'Authorization': '{} {}'.format(self.__context.getTokenType(),
                                                                                        self.__context.getTokenAccess())}
         response = HttpRequest.makeHttpRequest(uri, self.__context.proxies, {}, datas, headers,
                                                launchBy='__sendRequest')
@@ -349,7 +348,6 @@ class ToolsReport(object):
         contents = []
         filesAttachments = {}
         contents.append(self.__sendReport(filesAttachments))
-        print("ToolsReport.createSingleReportFromClipboard.datas : {}".format(self.__datasForRequest))
         return contents
 
     def __createSingleReport(self, sketchList, filesAttachments) -> []:
@@ -359,7 +357,6 @@ class ToolsReport(object):
         self.__datasForRequest['sketch'] = sketchsDatasGeometryReport[0]['sketch']
         self.__datasForRequest['geometry'] = sketchsDatasGeometryReport[0]['geometryReport']  # obligatoire
         contents.append(self.__sendReport(filesAttachments))
-        print("ToolsReport.__createSingleReport.datas : {}".format(self.__datasForRequest))
         return contents
 
     def __createMultiReports(self, sketchList, filesAttachments) -> []:
@@ -370,7 +367,6 @@ class ToolsReport(object):
             self.__datasForRequest['sketch'] = sketchDataGeometryReport['sketch']
             self.__datasForRequest['geometry'] = sketchDataGeometryReport['geometryReport']
             contents.append(self.__sendReport(filesAttachments))
-        print("ToolsReport.__createMultiReports.datas : {}".format(self.__datasForRequest))
         return contents
 
     def __getBarycentreInWkt(self, listPoints):

@@ -270,9 +270,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             # Récupération de l'ensemble des noms des couches chargées dans la table des tables
             layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
             layersInTT = []
-            print("Couches présentes dans la table des tables\n")
             for lftot in layersFromTableOfTables:
-                print("{}".format(lftot[0]))
                 layersInTT.append(lftot[0])
 
             # Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe,
@@ -291,9 +289,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     def removeTablesSQLite(self, layers) -> None:
         for layer in layers:
-            if SQLiteManager.isTableExist(layer.name()):
                 SQLiteManager.emptyTable(layer.name())
                 SQLiteManager.deleteTable(layer.name())
-        if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-            SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+        SQLiteManager.emptyTable(cst.TABLEOFTABLES)
         SQLiteManager.vacuumDatabase()

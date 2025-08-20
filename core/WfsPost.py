@@ -258,11 +258,9 @@ class WfsPost(object):
                 # Suppression de la couche dans la carte. Virer la table dans SQLite
                 layersID = [self.__layer.id()]
                 QgsProject.instance().removeMapLayers(layersID)
-                if SQLiteManager.isTableExist(self.__layer.name()):
-                    SQLiteManager.emptyTable(self.__layer.name())
-                    SQLiteManager.deleteTable(self.__layer.name())
-                if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-                    SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+                SQLiteManager.emptyTable(self.__layer.name())
+                SQLiteManager.deleteTable(self.__layer.name())
+                SQLiteManager.emptyTable(cst.TABLEOFTABLES)
                 SQLiteManager.vacuumDatabase()
                 return
             # Mise à jour du numrec pour la couche dans la table des tables
@@ -356,8 +354,9 @@ class WfsPost(object):
         # Est-ce une table BDUni
         result = SQLiteManager.isColumnExist(currentLayer, cst.FINGERPRINT)
         bBDUni = False
-        if result[0] == 1:
-            bBDUni = True
+        if result is not None:
+            if result[0] == 1:
+                bBDUni = True
 
         # Traitement des ajouts
         if len(addedFeatures) != 0:

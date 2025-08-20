@@ -304,9 +304,7 @@ class SQLiteManager(object):
         :type keys: list
         """
         if not SQLiteManager.isTableExist(tableName):
-            message = "SQLiteManager.deleteRowsInTableBDUni : la table {} de la base SQLite du projet n'existe pas." \
-                      " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
-            raise Exception(message)
+            return
         tmp = ''
         for key in keys:
             tmp += '"{0}", '.format(key[0])
@@ -326,9 +324,7 @@ class SQLiteManager(object):
         :type itemsTransaction: dict
         """
         if not SQLiteManager.isTableExist(tableName):
-            message = "SQLiteManager.setActionsInTableBDUni : la table {} de la base SQLite du projet n'existe pas." \
-                      " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
-            raise Exception(message)
+            return
         cleabss = []
         for item in itemsTransaction:
             data = json.loads(item)
@@ -366,6 +362,7 @@ class SQLiteManager(object):
         Retourne le nom de la clé primaire (et la clé MD5 d'une empreinte numérique de l'objet) pour une table non BDUni
         ou retourne le nom de la clé primaire et la clé MD5 d'une empreinte pour une table BDUni.
         """
+        res = []
         tmp = "("
         for idTmp in ids:
             tmp += "'{}',".format(idTmp)
@@ -373,6 +370,8 @@ class SQLiteManager(object):
         listId = tmp[0:pos - 1]
         listId += ')'
         result = SQLiteManager.isColumnExist(layer.name(), cst.FINGERPRINT)
+        if result is None:
+            return res
         if result[0] == 1:
             sql = "SELECT {0}, {1} FROM {2} WHERE {3} IN {4}".format(layer.idNameForDatabase, cst.FINGERPRINT,
                                                                      layer.name(), cst.ID_SQLITE, listId)
@@ -396,9 +395,7 @@ class SQLiteManager(object):
         :type tableName: str
         """
         if not SQLiteManager.isTableExist(tableName):
-            message = "SQLiteManager.emptyTable : la table {} de la base SQLite du projet n'existe pas. Il faut " \
-                      "lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
-            raise Exception(message)
+            return
         sql = u"DELETE FROM {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} vidée".format(tableName))
@@ -412,12 +409,9 @@ class SQLiteManager(object):
         :type tableName: str
         """
         if not SQLiteManager.isTableExist(tableName):
-            message = "SQLiteManager.deleleTable : la table {} de la base SQLite du projet n'existe pas. Il faut " \
-                      "lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
-            raise Exception(message)
+            return
         sql = u"DROP TABLE {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
-        print("SQLiteManager : table {0} détruite".format(tableName))
 
     @staticmethod
     def isColumnExist(tableName, columnName) -> ():
@@ -430,10 +424,9 @@ class SQLiteManager(object):
 
         :return: un tuple dont le premier élément est égale à 1 si la colonne existe dans la table
         """
+        result = None
         if not SQLiteManager.isTableExist(tableName):
-            message = "SQLiteManager.isColumnExist : la table {} de la base SQLite du projet n'existe pas. Il faut" \
-                      " lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
-            raise Exception(message)
+            return result
         sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
@@ -454,10 +447,9 @@ class SQLiteManager(object):
 
         :return: une liste de tuple contenant la valeur d'une colonne pour une table donnée.
         """
+        result = None
         if not SQLiteManager.isTableExist(tableName):
-            message = "SQLiteManager.selectColumnFromTable : la table {} de la base SQLite du projet n'existe pas." \
-                      " Il faut lancer au moins une extraction de données pour créer celle-ci.".format(tableName)
-            raise Exception(message)
+            return result
         sql = u"SELECT {0} FROM {1}".format(columnName, tableName)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
@@ -484,11 +476,9 @@ class SQLiteManager(object):
         :param conditionValue: la valeur de la condition d'égalité
         :type conditionValue: str
         """
+        result = None
         if not SQLiteManager.isTableExist(tableName):
-            message = "SQLiteManager.selectColumnFromTableWithCondition : la table {} de la base SQLite du projet" \
-                      " n'existe pas. Il faut lancer au moins une extraction de données" \
-                      " pour créer celle-ci.".format(tableName)
-            raise Exception(message)
+            return result
         sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, conditionColumn, conditionValue)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()

@@ -581,13 +581,15 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     if value != '' and not value.isdigit():
                         bError = True
                 if attribute.getType == 'double' or attribute.getType == 'float':
-                    if value != '' and not value.replace('.', '').isdigit():
-                        bError = True
+                    if value != '':
+                        tmp = value.replace('.', '')
+                        if not tmp.isdigit():
+                            bError = True
                 if attribute.getMandatory() is True:
                     if value == '' or value is None or value == '0':
                         bError = True
                 if bError:
-                    error = "L'attribut {0} n'est pas valide.".format(attribute.getAlias())
+                    error = "L'attribut {0} n'est pas valide.".format(attribute.switchNameToAlias())
                 # Si le break est atteint l'attribut a été contrôlé, inutile de continuer
                 break
             break
@@ -655,7 +657,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if found_att:
                 break
 
-            if att.getAlias() != widg_label:
+            if att.switchNameToAlias() != widg_label:
                 continue
 
             # Une fois que l'attribut est trouvé, on remplace si besoin la valeur récupérée sur le formulaire par
@@ -683,7 +685,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
         for att in th.getAttributes():
-            if att.getAlias() != widg_label:
+            if att.switchNameToAlias() != widg_label:
                 continue
             key = att.getName()
             return key
