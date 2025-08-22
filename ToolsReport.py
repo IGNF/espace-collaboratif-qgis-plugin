@@ -255,22 +255,54 @@ class ToolsReport(object):
             self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
             return ''
 
+    def serialize_for_multipart(self, obj):
+        if isinstance(obj, (dict, list)):
+            return json.dumps(obj, ensure_ascii=False)
+        return json.dumps(obj)
+
+    def serialize_dicts_recursively(self, obj):
+        """
+        Parcourt récursivement l'objet et convertit tous les sous-dictionnaires en chaînes JSON.
+        """
+        if isinstance(obj, dict):
+            # On sérialise le dictionnaire entier en JSON
+            return json.dumps({k: self.serialize_dicts_recursively(v) for k, v in obj.items()})
+        elif isinstance(obj, list):
+            # On parcourt chaque élément de la liste
+            return [self.serialize_dicts_recursively(item) for item in obj]
+        else:
+            # Les autres types restent inchangés
+            return obj
+
     def __sendReport(self, filesAttachments):
-        self.__datasForRequest.update(filesAttachments)
+        # self.__datasForRequest.update(filesAttachments)
+        # data = self.__datasForRequest.copy()
+        # On utilise la fonction de sérialisation globale pour chaque élément racine
+        # fields = {}
+        # for key, value in data.items():
+            # if isinstance(value, (dict, list)):
+                # fields[key] = self.serialize_dicts_recursively(value)
+            # else:
+                # fields[key] = value
+
+        # datas = MultipartEncoder(fields=fields)
+        #fields = {k: self.serialize_for_multipart(v) for k, v in self.__datasForRequest.items()}
+        #datas = MultipartEncoder(fields=fields)
+        #datas = MultipartEncoder(self.__datasForRequest)
+        #print("datas : {}".format(datas.to_string()))
         datas = json.dumps(self.__datasForRequest)
-        print("ToolsReport.__sendReport.datas : {}".format(datas))
-        responseFromServer = self.__sendRequest(datas)
+        responseFromServer = self.__sendRequest(datas, filesAttachments)
         if responseFromServer is None:
             return
         return responseFromServer.json()
 
-    def __sendRequest(self, datas):
+    def __sendRequest(self, datas, filesAttachments):
         # envoi de la requête
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
-        headers = {'Content-Type': 'application/json', 'Authorization': '{} {}'.format(self.__context.getTokenType(),
-                                                                                       self.__context.getTokenAccess())}
-        response = HttpRequest.makeHttpRequest(uri, self.__context.proxies, {}, datas, headers,
-                                               launchBy='__sendRequest')
+        # 'Content-Type': 'application/json',
+        headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
+        response = HttpRequest.makeHttpRequest(uri, proxies=self.__context.proxies, params={}, data=datas,
+                                               headers=headers, files=filesAttachments, launchBy='__sendRequest')
         if response.status_code == 200 or response.status_code == 201:
             return response
         else:
@@ -316,9 +348,9 @@ class ToolsReport(object):
                                   'comment': formCreate.getComment(),
                                   'input_device': cst.CLIENT_INPUT_DEVICE,
                                   'attributes': formCreate.getDatasForRequest()}
-        print("ToolsReport.createReport.datas : {}".format(self.__datasForRequest))
 
-        # Récupération du (ou des) fichier(s) joint(s) (max 4) au signalement
+        # Récupération du (ou des) fichier(s) joint(s) (maximum 4) au signalement sous la forme
+        # {'save.png': open('D:/Temp/save.png', 'rb')}
         filesAttachments = formCreate.getFilesAttachments()
 
         # Création du ou des signalements
@@ -326,7 +358,7 @@ class ToolsReport(object):
             tmpPoint = self.__crsTransform.transform(pointFromClipboard)
             geometrySingleReport = 'POINT({0} {1})'.format(tmpPoint.x(), tmpPoint.y())
             self.__datasForRequest['geometry'] = geometrySingleReport
-            contents = self.createSingleReportFromClipboard()
+            contents = self.createSingleReportFromClipboard(filesAttachments)
         elif formCreate.isSingleReport():
             contents = self.__createSingleReport(sketchList, filesAttachments)
         else:
@@ -344,16 +376,14 @@ class ToolsReport(object):
         # Message de fin
         self.__sendMessageEndProcess(listNewReportIds)
 
-    def createSingleReportFromClipboard(self) -> []:
+    def createSingleReportFromClipboard(self, filesAttachments) -> []:
         contents = []
-        filesAttachments = {}
         contents.append(self.__sendReport(filesAttachments))
         return contents
 
     def __createSingleReport(self, sketchList, filesAttachments) -> []:
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, True)
-        # self.__datasForRequest['sketch'] = json.dumps(sketchsDatasGeometryReport[0]['sketch'])
         self.__datasForRequest['sketch'] = sketchsDatasGeometryReport[0]['sketch']
         self.__datasForRequest['geometry'] = sketchsDatasGeometryReport[0]['geometryReport']  # obligatoire
         contents.append(self.__sendReport(filesAttachments))
@@ -363,7 +393,6 @@ class ToolsReport(object):
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, False)
         for sketchDataGeometryReport in sketchsDatasGeometryReport:
-            # self.__datasForRequest['sketch'] = json.dumps(sketchDataGeometryReport['sketch'])
             self.__datasForRequest['sketch'] = sketchDataGeometryReport['sketch']
             self.__datasForRequest['geometry'] = sketchDataGeometryReport['geometryReport']
             contents.append(self.__sendReport(filesAttachments))

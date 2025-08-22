@@ -18,10 +18,13 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo
 
 class FormInfo(QtWidgets.QDialog, FORM_CLASS):
     """
-    Dialogue donnant des informations sur le résultat
-    des actions effectuées par l'utilisateur
+    Classe de dialogue qui affiche les informations sur le résultat des actions effectuées par l'utilisateur.
+    Par exemple, les informations de connexion à l'espace collaboratif.
     """
     def __init__(self, parent=None) -> None:
+        """
+        Constructeur de la boite de dialogue "IGN Espace collaboratif"
+        """
         super(FormInfo, self).__init__(parent)
 
         self.setupUi(self)

@@ -154,11 +154,11 @@ class HttpRequest(object):
         """
         try:
             if data is None and files is None:
-                response = requests.get(url, proxies=proxies, params=params, headers=headers, verify=False)
+                response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=False)
             elif files is None:
-                response = requests.post(url, proxies=proxies, data=data, headers=headers, verify=False)
+                response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=False)
             else:
-                response = requests.post(url, proxies=proxies, data=data, headers=headers, files=files, verify=False)
+                response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=False)
 
             if response.status_code != 200 and response.status_code != 201 and response.status_code != 206:
                 message = "{}:makeHttpRequest [{}]".format(launchBy, response.text)

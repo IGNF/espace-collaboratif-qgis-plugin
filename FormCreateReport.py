@@ -580,7 +580,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 if attribute.getType() == 'integer':
                     if value != '' and not value.isdigit():
                         bError = True
-                if attribute.getType == 'double' or attribute.getType == 'float':
+                if attribute.getType() == 'double' or attribute.getType() == 'float':
                     if value != '':
                         tmp = value.replace('.', '')
                         if not tmp.isdigit():
@@ -706,9 +706,10 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         return None
 
     def getFilesAttachments(self) -> {}:
-        """Retourne une (ou plusieurs) chaine(s) binaire(s)
+        """
+        Retourne une (ou plusieurs) chaine(s) binaire(s)
         
-        :return la liste des fichiers transformés en string($binary)
+        :return: la liste des fichiers transformés en string($binary)
         """
         if self.checkBoxAttDoc.isChecked():
             return self.__files
@@ -829,7 +830,10 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                         names = filename.split('/')
                         # self.__files.update({names[len(names) - 1]: open(filename, 'rb')}) # fonctionne à garder
                         # exemple requests_toolbelt : 'field2': ('filename', open('file.py', 'rb'), 'text/plain')
-                        self.__files.update({names[len(names) - 1]: (names[len(names) - 1], open(filename, 'rb'))})
+                        # self.__files.update({names[len(names) - 1]: (names[len(names) - 1], open(filename, 'rb'))})
+                        # {'file': ('example.txt', open('example.txt', 'rb'), 'multipart/form-data')}
+                        self.__files.update({names[len(names) - 1]: (names[len(names) - 1], open(filename, 'rb'),
+                                                                     'multipart/form-data')})
                         # Traduction dans la requête
                         # {'save.png': <_io.BufferedReader name='D:/Temp/save.png'>}
                     self.lblDoc.setText(fileNameWithSize)

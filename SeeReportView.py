@@ -3,6 +3,7 @@ from PyQt5 import QtCore
 from qgis.PyQt import uic, QtWidgets
 from .core.Wkt import Wkt
 from .core.PluginLogger import PluginLogger
+from .core.Report import Report
 from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'SeeReportView_base.ui'))
@@ -10,9 +11,12 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'SeeRepor
 
 class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
     """
-    Forme de visualisation de l'historique de la remarque + sélection/déselection croquis + ouverture document joint
+    Classe du dialogue de visualisation d'un signalement qui essaye de coller au plus près à celui du site.
     """
     def __init__(self, activeUserCommunity) -> None:
+        """
+        Constructeur de la boite de dialogue "Voir un signalement"
+        """
         super(SeeReportView, self).__init__(None)
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
@@ -21,6 +25,18 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         self.__activeUserCommunity = activeUserCommunity
 
     def setReport(self, report) -> None:
+        """
+        Affiche dans le dialogue les "métadonnées" liées à un signalement.
+         - Numéro du signalement
+         - Informations générales
+         - Thèmes
+         - Description
+         - Document(s) joint(s)
+         - Réponses
+
+         :param report: le signalement dont on veut afficher les caractéristiques
+         :type report: Report
+        """
         try:
             self.__report = report
             self.lbl_contentNumberReport.setText("Signalement n°{0}".format(report.getId()))
@@ -36,9 +52,15 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
             raise e
 
     def __displayGeneralInformation(self) -> str:
+        """
+        Affiche les informations générales d'un signalement.
+
+        :return: les informations générales formatées (une information par ligne)
+        """
         generalInformation = "Groupe : {0}\n".format(self.__activeUserCommunity.getName())
-        # TODO -> sur le guichet pour l'affichage d'un signalement sur l'auteur il y a un (ign.fr)
-        # doit-on le déduire de l'adresse mail ?
+        # TODO Mélanie
+        #  sur le guichet pour l'affichage d'un signalement sur l'auteur il y a un (ign.fr)
+        #  doit-on le déduire de l'adresse mail ?
         generalInformation += "Auteur : {0}\n".format(self.__report.getAuthor()['username'])
         generalInformation += "Commune : {0}\n".format(self.__displayTown())
         generalInformation += "Posté le : {0}\n".format(self.__report.getStrDateCreation())
@@ -48,9 +70,15 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         return generalInformation
 
     def __displayTown(self) -> str:
+        """
+        :return: les informations sur la commune de création d'un signalement
+        """
         return "{0} ({1})".format(self.__report.getCommune(), self.__report.getInsee())
 
     def __displayStatus(self) -> str:
+        """
+        :return: le statut du signalement. (Si le statut est inconnu, retourne "Indéfini")
+        """
         correspondance = {
             cst.STATUT.submit.__str__(): "Reçu dans nos services",
             cst.STATUT.pending.__str__(): "En cours de traitement",
@@ -67,6 +95,9 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         return "Indéfini"
 
     def __displaySource(self) -> str:
+        """
+        :return: la source de saisie du signalement. (Si la source est inconnue, retourne "Indéfini")
+        """
         sources = {
             "UNKNOWN": "Soumise via l\'API",
             "www": "Saisie sur le site web",
@@ -81,6 +112,9 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         return "Indéfini"
 
     def __displayLocation(self) -> str:
+        """
+        :return: la position du signalement en latitude/longitude
+        """
         lonlat = Wkt.toGetLonLatFromGeometry(self.__report.getGeometry())
         dirLon = "E"
         dirLat = "N"
@@ -91,9 +125,16 @@ class SeeReportView(QtWidgets.QDialog, FORM_CLASS):
         return "{0}°{1}, {2}°{3}".format(str(lonlat[0]), dirLon, str(lonlat[1]), dirLat)
 
     def __displayThemes(self) -> str:
+        """
+        :return: le thème lié au signalement
+        """
         return self.__report.getStrTheme()
 
     def __displayFilesAttached(self) -> None:
+        """
+        Affiche le lien vers le (ou les) documents(s) (maximum 4) lié au signalement. Le lien est cliquable
+        par l'utilisateur pour visualiser le contenu du fichier.
+        """
         allDocuments = self.__report.getListAttachments()
         htmlDocuments = ''
         for document in allDocuments:

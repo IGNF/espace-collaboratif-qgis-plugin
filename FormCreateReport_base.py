@@ -41,7 +41,7 @@ class Ui_dlgCreateRem(object):
         self.tabTheme = QtWidgets.QWidget()
         self.tabTheme.setObjectName("tabTheme")
         self.treeWidget = QtWidgets.QTreeWidget(self.tabTheme)
-        self.treeWidget.setGeometry(QtCore.QRect(0, 0, 391, 231))
+        self.treeWidget.setGeometry(QtCore.QRect(0, 0, 391, 211))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
