@@ -118,7 +118,7 @@ class Ui_dlgCreateRem(object):
         self.buttonBox.setObjectName("buttonBox")
 
         self.retranslateUi(dlgCreateRem)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(dlgCreateRem)
 
     def retranslateUi(self, dlgCreateRem):
