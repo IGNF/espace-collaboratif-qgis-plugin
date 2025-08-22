@@ -523,6 +523,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """
         Retourne la liste des thèmes (objets de type THEME) sélectionnés
         dans le formulaire de création du signalement.
+
         :return: la liste de la liste des erreurs de validation par attribut.
         """
         # errors = list of tuples: (error_message, widget)
@@ -697,7 +698,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         :param themeName: le nom du thème
         :type themeName: string
         
-        :return l'objet Theme
+        :return: l'objet Theme
         :rtype: Theme
         """
         for th in self.__themesList:

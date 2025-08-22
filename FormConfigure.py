@@ -15,6 +15,7 @@ import calendar
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
+from qgis._core import QgsProject
 from qgis.core import QgsVectorLayer
 from qgis.PyQt import QtCore
 from .PluginHelper import PluginHelper
@@ -22,34 +23,24 @@ from .Contexte import Contexte
 from .core.SQLiteManager import SQLiteManager
 from .core import Constantes as cst
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigure_base.ui'))
 
 
 class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     """
-    Dialogue pour la configuration des préférences de téléchargement des remarques
+    Classe de dialogue pour la configuration des préférences de téléchargement des signalements.
     """
-    # le contexte
-    context = None
-
-    def __init__(self, context, parent=None):
+    def __init__(self, context, parent=None) -> None:
         """
-        Constructor
+        Constructeur de la boite "Configuration du plugin Espace Collaboratif".
+        Pré-remplissage des champs d'après le fichier de configuration "espaceco.xml"
         
-        Pré-remplissage des champs d'après le fichier de configuration
-        
-        :param context le contexte 
-        :type context Contexte
+        :param context: le contexte
+        :type context: Contexte
         """
         super(FormConfigure, self).__init__(parent)
-        # Set up the user interface from Designer.
-        # After setupUI you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
-        self.setupUi(self)
-        # Save reference to the QGIS interface
 
+        self.setupUi(self)
         self.context = context
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
@@ -84,9 +75,9 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         self.spinBox.setValue(cntDays)
         self.spinBox.valueChanged.connect(self.spinboxChanged)
-
+        # Affiche le nom de la couche du polygone d'extraction dans l'item "Zone de travail".
         self.setWorkArea()
-
+        # Affiche les couches sources et champs à mettre en attribut pour les nouveaux croquis
         self.setAttributCroquis()
 
         proxies = PluginHelper.load_proxy(context.projectDir).text
@@ -95,31 +86,29 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         activeCommunityName = PluginHelper.loadActiveCommunityName(context.projectDir).text
         self.lineEditGroupeActif.setText(activeCommunityName)
 
-    def setWorkArea(self):
-        # Par défaut l'item Zone de travail est vidée
+    def setWorkArea(self) -> None:
+        """
+        Affiche le nom de la couche du polygone d'extraction dans l'item "Zone de travail".
+        À vide par défaut ou si la couche n'existe pas dans le projet
+        """
         self.lineEditWorkArea.setText('')
         workArea = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
-        layersName = self.context.getAllMapLayers()
-        bFind = False
-        for layerName in layersName:
-            if layerName == workArea:
-                bFind = True
-        # Si la couche existe toujours dans le projet, la ligne Zone de travail est mise à jour du nom de la couche
-        if bFind:
-            self.lineEditWorkArea.setText(workArea)
+        listLayers = QgsProject.instance().mapLayersByName(workArea)
+        if len(listLayers) == 1:
+            if listLayers[0].name() == workArea:
+                # Si la couche existe toujours dans le projet, la ligne Zone de travail est mise à jour
+                # du nom de la couche
+                self.lineEditWorkArea.setText(workArea)
 
     def setAttributCroquis(self):
         """
-        Set des atttributs des croquis dans le treeWidget
+        Affiche les couches sources et champs à mettre en attribut pour les nouveaux croquis.
         """
         attCroq = PluginHelper.load_attCroquis(self.context.projectDir)
         if len(attCroq) > 0:
             self.checkBoxAttributs.setChecked(True)
-
         maplayers = self.context.mapCan.layers()
-
         topItems = []
-
         for lay in maplayers:
             if type(lay) is QgsVectorLayer and not lay.name() in PluginHelper.reportSketchLayersName:
                 item = QTreeWidgetItem()
@@ -274,22 +263,23 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     
     def keyPressEvent(self, event):
         """
-        Pour désactiver la fermeture de la fenêtre lors d'un clic sur "Enter"
+        Pour désactiver la fermeture de la fenêtre si l'utilisateur appuie sur la touche du clavier "Enter" ou "Return"
         """
         key = event.key()
         if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             pass
 
     def dateChanged(self):
-        """Action lors d'un changement de date
-        =>Modification du nombre de jours
-       """
+        """
+        Si l'utilisateur choisi une nouvelle date d'extraction alors le nombre de jours est modifié en conséquence.
+        """
         self.dateSelected = True
         d = self.calendarWidget.selectedDate()
         self.spinBox.setValue(self.getCountDays(d))
 
-    def dateMYChanged(self):
-        """Action lors d'une modification du mois ou de l'année
+    def dateMYChanged(self) -> None:
+        """
+        Si l'utilisateur modifie le mois ou l'année d'extraction alors la date est modifiée dans le calendrier.
         """
         self.dateMYChanged = True
         qd = self.calendarWidget.selectedDate()
@@ -302,19 +292,24 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             date = QDate(y, m, maxday)
         self.calendarWidget.setSelectedDate(date)
 
-    def getCountDays(self, qdate):
-        """Compte le nombre de jours entre la date donnée et la date d'aujourd'hui
-        :param qdate: la date 
+    def getCountDays(self, qdate) -> int:
+        """
+        Compte le nombre de jours entre la date donnée et la date du jour d'extraction.
+
+        :param qdate: la date de début d'extraction
         :type qdate: QDate
+
+        :return: le nombre de jours décomptés
         """
         date = qdate.toPyDate()
         dt = datetime.now().date()
-        cntDays = abs((dt-date).days)
-        return cntDays
+        countDays = abs((dt-date).days)
+        return countDays
 
-    def spinboxChanged(self):
-        """Action lors d'un changement du nb de jours
-           =>Modification de la date
+    def spinboxChanged(self) -> None:
+        """
+        Si l'utilisateur change le nombre de jours pour l'extraction alors la date d'extraction est modifiée
+        en conséquence dans le calendrier.
         """
         delta = self.spinBox.value()
         now = datetime.now().date()

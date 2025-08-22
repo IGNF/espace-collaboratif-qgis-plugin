@@ -45,7 +45,7 @@ class Sketch(object):
 
     def getAllPoints(self) -> list:
         """
-        :returns: la liste de points de type Point constituant le croquis
+        :return: la liste de points de type Point constituant le croquis
         """
         return self.__points
 

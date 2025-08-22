@@ -62,7 +62,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tabTheme">
      <attribute name="title">
@@ -123,12 +123,12 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>151</width>
+        <width>251</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
-       <string>Joindre un document</string>
+       <string>Joindre un document (4 au maximum)</string>
       </property>
      </widget>
      <widget class="QLabel" name="lblDoc">

@@ -57,7 +57,7 @@ class Ui_dlgCreateRem(object):
         self.checkBoxJoinCroquis.setChecked(True)
         self.checkBoxJoinCroquis.setObjectName("checkBoxJoinCroquis")
         self.checkBoxAttDoc = QtWidgets.QCheckBox(self.tabOption)
-        self.checkBoxAttDoc.setGeometry(QtCore.QRect(10, 30, 151, 20))
+        self.checkBoxAttDoc.setGeometry(QtCore.QRect(10, 30, 251, 20))
         self.checkBoxAttDoc.setObjectName("checkBoxAttDoc")
         self.lblDoc = QtWidgets.QLabel(self.tabOption)
         self.lblDoc.setGeometry(QtCore.QRect(10, 60, 371, 71))
@@ -118,7 +118,7 @@ class Ui_dlgCreateRem(object):
         self.buttonBox.setObjectName("buttonBox")
 
         self.retranslateUi(dlgCreateRem)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(dlgCreateRem)
 
     def retranslateUi(self, dlgCreateRem):
@@ -128,7 +128,7 @@ class Ui_dlgCreateRem(object):
         self.treeWidget.headerItem().setText(1, _translate("dlgCreateRem", "attribut"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTheme), _translate("dlgCreateRem", "Thèmes"))
         self.checkBoxJoinCroquis.setText(_translate("dlgCreateRem", "Joindre un croquis"))
-        self.checkBoxAttDoc.setText(_translate("dlgCreateRem", "Joindre un document"))
+        self.checkBoxAttDoc.setText(_translate("dlgCreateRem", "Joindre un document (4 au maximum)"))
         self.radioBtnUnique.setText(_translate("dlgCreateRem", "Créer un signalement unique"))
         self.radioBtnMultiple.setText(_translate("dlgCreateRem", "Créer xx signalements"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabOption), _translate("dlgCreateRem", "Options"))
