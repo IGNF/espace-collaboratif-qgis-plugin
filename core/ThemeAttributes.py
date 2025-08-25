@@ -53,9 +53,9 @@ class ThemeAttributes(object):
         """
         return self.__nameAlias
 
-    def getType(self) -> None:
+    def getType(self) -> str:
         """
-        :return: le type du thème (point, ligne ou surface)
+        :return: le type de widgets ('checkbox', 'date', 'datetime', 'list') à créer pour initialiser le thème
         """
         return self.__type
 

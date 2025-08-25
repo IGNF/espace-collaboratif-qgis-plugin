@@ -23,7 +23,7 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
     """
     def __init__(self, parent=None) -> None:
         """
-        Constructeur de la boite de dialogue "IGN Espace collaboratif"
+        Constructeur de la boite de dialogue d'informations intitulée "IGN Espace collaboratif"
         """
         super(FormInfo, self).__init__(parent)
 

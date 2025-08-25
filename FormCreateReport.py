@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Optional
 
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
@@ -50,7 +51,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     def __init__(self, context, nbSketch, parent=None) -> None:
         """
-        Constructor.
+        Constructeur du dialogue de création de signalement(s) "Créer un signalement"
 
         :param context: le contexte du projet et ses cartes
         :type context: Contexte
@@ -89,15 +90,15 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         title = "{0} ({1})".format(self.__context.getUserNameCommunity(), profil)
         self.groupBoxProfil.setTitle(title)
 
-        # les noms des thèmes préférés (du fichier de configuration)
-        # TODO le theme prefere est-ils encore d'actualité ?
-        # self.preferredThemes = PluginHelper.load_preferredThemes(self.__context.projectDir)
+        # Le nom du thème préféré (du fichier de configuration)
         preferredGroup = PluginHelper.load_preferredGroup(self.__context.projectDir)
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
         self.__setComboBoxGroup()
 
         # Valeur par défaut : groupe actif
+        # TODO Mélanie : la boite de configuration ne contient plus d'item sur le groupe préféré, si on supprime
+        #  cette idée les cinq lignes qui suivent sont à supprimer
         bInListNameOfCommunities = False
         for nameid in self.__context.getListNameOfCommunities():
             if preferredGroup == nameid['name']:
@@ -105,12 +106,12 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 bInListNameOfCommunities = True
         if self.__activeCommunity is not None and self.__activeCommunity != "" and not bInListNameOfCommunities:
             self.comboBoxGroupe.setCurrentText(self.__activeCommunity)
-        # TODO voir Noémie pour savoir si l'utilisateur peut être sans groupe
+        # TODO Mélanie : un utilisateur peut n'appartenir à aucun groupe ?
         # else:
         # self.__activeCommunity = 'Aucun'
         # self.comboBoxGroupe.setCurrentText('Aucun')
 
-        # largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
+        # Largeur des colonnes du treeview pour la liste des thèmes et de leurs attributs
         self.treeWidget.setColumnWidth(0, 160)
         self.treeWidget.setColumnWidth(1, 150)
         self.treeWidget.itemChanged.connect(self.__onItemChanged)
@@ -118,14 +119,14 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # Affichage des thèmes du groupe de l'utilisateur
         self.__displayThemes(self.__context.getCommunity())
 
-        # liste des thèmes du profil (objets Theme)
+        # Liste des thèmes du profil (objets Theme)
         __themesList = []
 
         # Modification des thèmes proposés en fonction du groupe sélectionné
         self.comboBoxGroupe.currentIndexChanged.connect(self.__groupIndexChanged)
-        # self.groupIndexChanged(self.comboBoxGroupe.currentIndex())
 
-        # TODO dans quel cas, on affiche tous les themes (je suppose de tous les groupes ?) profil aucun
+        # TODO Mélanie : dans quel cas, doit on afficher tous les thèmes
+        #  (je suppose de tous les groupes ?) profil "Aucun" par exemple ?
         # self.profilThemesList = profil.allThemes
 
         self.docMaxSize = cst.MAX_TAILLE_UPLOAD_FILE
@@ -135,7 +136,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         # La liste des fichiers joints au signalement
         self.__files = {}
-        # les données liées au signalement à envoyer au serveur
+        # Les données liées au signalement à envoyer au serveur
         self.__datas = {}
 
     def __setComboBoxGroup(self) -> None:
@@ -184,12 +185,25 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             if tlItem != item:
                 tlItem.setCheckState(0, Qt.CheckState.Unchecked)
 
-    def __removeRedIfValid(self, widg, label, theme_name):
-        key = self.__getKeyFromAttributeValue(label, theme_name)
-        val = self.__getValueFromWidget(widg, label, theme_name)
-        errorMessage = self.__correctValue(theme_name, key, val)
+    def __removeRedIfValid(self, widgetAttribut, labelValue, themeName) -> None:
+        """
+        Vérification du bon remplissage de l'attribut (__correctValue). S'il est rempli correctement, suppression
+        de l'encadré rouge.
+
+        :param widgetAttribut: le nom de l'attribut
+        :type widgetAttribut: str
+
+        :param labelValue: la valeur donnée par l'utilisateur à l'attribut
+        :type labelValue: str
+
+        :param themeName: le nom du thème
+        :type themeName: str
+        """
+        keyNameAttribute = self.__getKeyFromAttributeValue(labelValue, themeName)
+        valueFromAttribute = self.__getValueFromWidget(widgetAttribut, labelValue, themeName)
+        errorMessage = self.__correctValue(themeName, keyNameAttribute, valueFromAttribute)
         if errorMessage == '':
-            widg.setStyleSheet("")
+            widgetAttribut.setStyleSheet("")
 
     def __displayThemesForCommunity(self, community) -> None:
         """
@@ -208,7 +222,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             thItem.setText(1, '')
             self.treeWidget.addTopLevelItem(thItem)
 
-            # Pour masquer la 2ème colonne TODO comprendre le pourquoi ???????
+            # Pour masquer la 2ème colonne
             thItem.setForeground(1, QtGui.QBrush(Qt.GlobalColor.white))
 
             # Il faut mettre une case à cocher devant chaque theme
@@ -290,7 +304,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         :param att:
         :type att: ThemeAttributes
 
-        :return: le type de QtWidgets ((QLineEdit, QComboBox, QCheckBox, QDateEdit, QDateTimeEdit)
+        :return: le type de QtWidgets mis en forme ((QLineEdit, QComboBox, QCheckBox, QDateEdit, QDateTimeEdit)
         """
         attType = att.getType()
         attDefaultval = att.getDefault()
@@ -550,29 +564,38 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             selectedAttributes = {}
             for j in range(thItem.childCount()):
                 att = thItem.child(j)
-                label = self.treeWidget.itemWidget(att, 0).text()
-                key = self.__getKeyFromAttributeValue(label, thItem.text(0))
-                widg = self.treeWidget.itemWidget(att, 1)
-                val = self.__getValueFromWidget(widg, label, thItem.text(0))
-                errorMessage = self.__correctValue(thItem.text(0), key, val)
+                itemWidgetAttribute = self.treeWidget.itemWidget(att, 0).text()
+                nameAttributeFromItemWidget = self.__getKeyFromAttributeValue(itemWidgetAttribute, thItem.text(0))
+                widgetValue = self.treeWidget.itemWidget(att, 1)
+                valueFromWidget = self.__getValueFromWidget(widgetValue, itemWidgetAttribute, thItem.text(0))
+                errorMessage = self.__correctValue(thItem.text(0), nameAttributeFromItemWidget, valueFromWidget)
                 if errorMessage != '':
-                    errors.append((errorMessage, widg))
-                valueChangedIfTypeAttributeIsJson = self.__getJsonValue(thItem.text(0), key, val)
-                selectedAttributes[key] = str(valueChangedIfTypeAttributeIsJson)
+                    errors.append((errorMessage, widgetValue))
+                valueChangedIfTypeAttributeIsJson = self.__convertJsonValue(thItem.text(0), nameAttributeFromItemWidget,
+                                                                            valueFromWidget)
+                selectedAttributes[nameAttributeFromItemWidget] = str(valueChangedIfTypeAttributeIsJson)
             if len(errors) == 0:
                 self.__datas['attributes'] = selectedAttributes
         return errors
 
-    def __correctValue(self, groupName, attributeName, value) -> str:
-        # TODO corriger le message par le nom affiché et non par le nom interne exemple
-        # L'attribut website n'est pas valide par L'attribut Site web n'est pas valide
-        # TODO il faut envoyer une liste de messages et non un par un
+    def __correctValue(self, themeName, attributeName, value) -> str:
         """
+        Vérifie que la valeur choisie par l'utilisateur est correcte et si elle est obligatoire.
+
+        :param themeName: le nom du thème
+        :type themeName: str
+
+        :param attributeName: le nom de l'attribut
+        :type attributeName: str
+
+        :param value: la valeur de l'attribut
+        :type value: str
+
         :return: le message d'erreur pour l'attribut passé en entrée
         """
         error = ''
         for theme in self.__themesList:
-            if theme.getName() != groupName:
+            if theme.getName() != themeName:
                 continue
             for attribute in theme.getAttributes():
                 bError = False
@@ -596,48 +619,73 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             break
         return error
 
-    def __getJsonValue(self, groupName, attributeName, value):
-        valueChangedIfTypeAttributeIsJson = value
+    def __convertJsonValue(self, themeName, attributeName, attributeValue) -> {}:
+        """
+        Convertit la valeur d'un attribut de type 'jsonvalue' en un dictionnaire Python.
+
+        :param themeName: le nom du thème
+        :type themeName: str
+
+        :param attributeName: le nom de l'attribut
+        :type attributeName: str
+
+        :param attributeValue: la valeur prise par l'attribut
+        :type attributeValue: str
+
+        :return: cette même valeur sous forme de dictionnaire
+        """
+        valueChangedIfTypeAttributeIsJson = attributeValue
         for theme in self.__themesList:
-            if theme.getName() != groupName:
+            if theme.getName() != themeName:
                 continue
             for attribute in theme.getAttributes():
                 if attribute.getName() != attributeName:
                     continue
                 if attribute.getType() != 'jsonvalue':
                     continue
-                valueChangedIfTypeAttributeIsJson = json.loads(value)
+                valueChangedIfTypeAttributeIsJson = json.loads(attributeValue)
         return valueChangedIfTypeAttributeIsJson
 
-    def __getValueFromWidget(self, widg, widg_label, theme_name):
+    def __getValueFromWidget(self, widgetAttributeName, widgetAttributeValue, themeName) -> str:
         """
         Récupération au format adapté de la valeur saisie dans le formulaire pour chaque widget
-        correspondant à un attribut du thème de signalement sélectionné.
+        correspondant à un attribut/valeur du thème du signalement sélectionné.
+
+        :param widgetAttributeName: le nom de l'attribut
+        :type widgetAttributeName: str
+
+        :param widgetAttributeValue: la valeur prise par l'attribut
+        :type widgetAttributeValue: str
+
+        :param themeName: le nom du thème lié à l'attribut
+        :type themeName: str
+
+        :return: la valeur de l'attribut sélectionnée par l'utilisateur
         """
-        if type(widg) == QtWidgets.QCheckBox:
-            state = widg.checkState()
+        if type(widgetAttributeName) == QtWidgets.QCheckBox:
+            state = widgetAttributeName.checkState()
             if state == 0:
                 val = "0"
             else:
                 val = "1"
 
-        elif type(widg) == QtWidgets.QLineEdit:
-            val = widg.text()
+        elif type(widgetAttributeName) == QtWidgets.QLineEdit:
+            val = widgetAttributeName.text()
 
-        elif type(widg) == QtWidgets.QDateEdit:
-            date = widg.date()
+        elif type(widgetAttributeName) == QtWidgets.QDateEdit:
+            date = widgetAttributeName.date()
             val = date.toString('yyyy-MM-dd')
 
-        elif type(widg) == QtWidgets.QDateTimeEdit:
-            datetime = widg.dateTime()
+        elif type(widgetAttributeName) == QtWidgets.QDateTimeEdit:
+            datetime = widgetAttributeName.dateTime()
             val = datetime.toString('yyyy-MM-dd hh:mm:ss')
 
-        elif type(widg) == QtWidgets.QComboBox:
-            form_value = widg.currentText()
-            val = self.__getKeyFromListOfValues(form_value, widg_label, theme_name)
+        elif type(widgetAttributeName) == QtWidgets.QComboBox:
+            form_value = widgetAttributeName.currentText()
+            val = self.__getKeyFromListOfValues(form_value, widgetAttributeValue, themeName)
 
         else:
-            val = widg.currentText()
+            val = widgetAttributeName.currentText()
 
         return val
 
@@ -673,33 +721,42 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         return form_value
 
-    def __getKeyFromAttributeValue(self, widg_label, theme_name):
-        """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans le formulaire
-         par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
-         récupérée dans le formulaire est directement utilisée.
+    def __getKeyFromAttributeValue(self, widgetAttribute, themeName) -> str:
+        """
+        Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans le formulaire
+        par la clé correspondante. Si la liste n'est en fait pas définie sous forme de <clés, valeurs>, la valeur
+        récupérée dans le formulaire est directement utilisée.
+
+        :param widgetAttribute: le nom du QWidget de l'attribut
+        :type widgetAttribute: str
+
+        :param themeName: le nom de thème
+        :type themeName: str
+
+        :return: le nom de l'attribut
         """
 
         # Récupération de l'objet Thème correspondant au nom du thème coché dans le formulaire
-        th = self.__getThemeObject(theme_name)
+        th = self.__getThemeObject(themeName)
         if th is None:
-            return widg_label
+            return widgetAttribute
 
-        # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widg_label
+        # On parcourt les attributs du thème jusqu'à trouver celui qui correspond à widgetAttribute
         for att in th.getAttributes():
-            if att.switchNameToAlias() != widg_label:
+            if att.switchNameToAlias() != widgetAttribute:
                 continue
             key = att.getName()
             return key
-        return widg_label
+        return widgetAttribute
 
-    def __getThemeObject(self, themeName):
-        """Retourne l'objet THEME à partir de son nom
+    def __getThemeObject(self, themeName) -> Optional[Theme]:
+        """
+        Retourne l'objet THEME à partir de son nom.
         
         :param themeName: le nom du thème
         :type themeName: string
         
         :return: l'objet Theme
-        :rtype: Theme
         """
         for th in self.__themesList:
             if th.getName() == themeName:
@@ -708,21 +765,29 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
     def getFilesAttachments(self) -> {}:
         """
-        Retourne une (ou plusieurs) chaine(s) binaire(s)
-        
-        :return: la liste des fichiers transformés en string($binary)
+        :return: la liste des fichiers sous la forme
+                 {'save.png': ('save.png', open('D:/Temp/save.png', 'rb'), 'multipart/form-data')}
         """
         if self.checkBoxAttDoc.isChecked():
             return self.__files
         else:
             return {}
 
-    def getDatasForRequest(self):
+    def getDatasForRequest(self) -> {}:
+        """
+        :return: les données d'un signalement en vue d'une requête POST vers le serveur de l'espace collaboratif
+        """
         return self.__datas
 
-    # Envoi de la requête de création à l'espace collaboratif
-    def __onSend(self):
-        # Il faut au moins un theme coché
+    def __onSend(self) -> None:
+        """
+        Indique par un booléen si la requête de création d'un signalement peut-être lancée (bSend).
+        La fermeture de la boite de dialogue "Créer un signalement" est conditionnée à :
+         - si au moins un thème lié au signalement est coché
+         - si le commentaire du signalement est rempli avec un minimum de 10 caractères
+         - si les données sont correctes avant d'être récupérées (getUserSelectedThemeWithAttributes)
+           et placées dans le dictionnaire (__datas)
+        """
         nb = 0
         root = self.treeWidget.invisibleRootItem()
         for i in range(root.childCount()):
@@ -740,7 +805,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             self.bSend = False
             return
 
-        # Nouvelle logique : récupération des données et des erreurs
+        # Contrôle et récupération des données avant la fermeture de la boite
         try:
             errors = self.getUserSelectedThemeWithAttributes()
         except Exception as e:
@@ -775,11 +840,23 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         self.bSend = True
         self.close()
 
-    def __truncate(self, n, decimals=0):
+    def __truncate(self, n, decimals=0) -> float:
+        """
+        :return: la taille d'un fichier en Mo
+        """
         multiplier = 10 ** decimals
         return int(n * multiplier) / multiplier
 
-    def __openFileDialog(self):
+    def __openFileDialog(self) -> None:
+        """
+        Si l'utilisateur coche la case "Joindre un document" :
+        - lance la boite de chargement de fichiers
+        - vérifie le nombre de fichiers à charger (4 max)
+        - vérifie si le type de fichiers est autorisé
+        - vérifie la taille du fichier
+        - stocke le (ou les) fichier(s) dans une liste __files
+        - affiche le nom du fichier dans le dialogue
+        """
         self.__files.clear()
         if not self.checkBoxAttDoc.isChecked():
             self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
@@ -792,8 +869,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                       u"Textes (*.DOC;*.DOCX;*.ODT;*.PDF;*.TXT);;" + \
                       u"Tableurs (*.CSV;*.KML;*.ODS;*XLS;*.XLSX);;" + \
                       u"Compressés (*.ZIP;*.7Z)"
-            filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(self, 'Document à joindre à la remarque', '.',
-                                                                  filters)
+            filenames, _ = QtWidgets.QFileDialog.getOpenFileNames(self, 'Document(s) à joindre au(x) signalement(s)',
+                                                                  '.', filters)
             if len(filenames) == 0:
                 self.checkBoxAttDoc.setCheckState(Qt.CheckState.Unchecked)
             message = ''
