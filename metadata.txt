@@ -16,14 +16,14 @@ email=service-client@ign.fr
 
 about=
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/IGNF/espace-collaboratif-qgis-plugin/issues
+repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin.git
 # End of mandatory metadata
 
 # Recommended items:
 
 # Optional items:
-date=11/02/2025
+date=26/08/2025
 
 # Uncomment the following line and add your changelog:
 changelog=
