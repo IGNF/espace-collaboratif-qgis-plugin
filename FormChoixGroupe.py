@@ -23,6 +23,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         Constructeur de la boite de dialogue intitulée "Paramètres de travail"
         Initialisation des paramètres connus à partir du projet ou du fichier xml de configuration.
 
+        NB : appeler dans Contexte.py, fonction : __connectToService
+
         :param context: le contexte du projet
         :type context: Contexte
         """

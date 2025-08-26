@@ -1,37 +1,41 @@
 # -*- coding: utf-8 -*-
 """
 Created on 27 oct. 2015
-Updated on 30 nov. 2020
-
-version 4.0.1, 15/12/2020
+Updated on 26 aout 2025
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 from .core.MapToolsReport import MapToolsReport
 from .core.PluginLogger import PluginLogger
-from .ToolsReport import ToolsReport
-from PyQt5.QtWidgets import QApplication
 from .core import Constantes as cst
+from .ToolsReport import ToolsReport
+from .Contexte import Contexte
 
 
-# Classe pour la création d'un nouveau signalement
 class CreateReport(object):
+    """
+    Classe pour la création d'un nouveau signalement sans (ou avec) croquis.
+    Dans le cas de la création sans croquis, les coordonnées du signalement sont issues de la récupération du clic
+    sur la carte (voir core.MapToolsReport qui dérive de QgsMapTool).
+    """
+    def __init__(self, context) -> None:
+        """
+        Constructeur.
 
-    def __init__(self, context):
+        :param context: le contexte du projet QGIS
+        :type context: Contexte
+        """
         self.__logger = PluginLogger("CreateReport").getPluginLogger()
         self.__context = context
         self.__activeLayer = self.__context.iface.activeLayer()
-        # self.__canvas = self.__context.iface.mapCanvas()
-        # TODO réactiver les 2 lignes de code si cela fonctionne correctement
-        clipboard = QApplication.clipboard()
-        clipboard.clear()
 
-    # Création d'un nouveau signalement
-    def do(self):
+    def do(self) -> None:
+        """
+        Création d'un nouveau signalement avec ou sans croquis.
+        Si un objet est sélectionné création avec croquis, si pas d'objet(s) sélectionné(s) création d'un signalement.
+        NB : appeler dans PluginModule.py, fonction : __createReport
+        """
         try:
-            # TODO réactiver les 2 lignes de code si cela fonctionne correctement
-            clipboard = QApplication.clipboard()
-            clipboard.clear()
             hasSelectedFeature = self.__context.hasMapSelectedFeatures()
             # Sans croquis, en cliquant simplement sur la carte
             if not hasSelectedFeature:
@@ -39,7 +43,6 @@ class CreateReport(object):
                     return
                 mapToolsReport = MapToolsReport(self.__context)
                 mapToolsReport.activate()
-                # self.__canvas.setMapTool(mapToolsReport)
                 return
             # Avec croquis
             else:
@@ -51,6 +54,7 @@ class CreateReport(object):
                 self.__logger.debug(str(len(sketchList)) + u" croquis générés")
                 # Création du ou des signalements
                 toolsReport = ToolsReport(self.__context)
+                # Pas de point écran puisque création avec croquis
                 pointFromClipboard = ''
                 toolsReport.createReport(sketchList, pointFromClipboard)
             self.__context.mapCan.refresh()

@@ -35,6 +35,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         Constructeur de la boite "Configuration du plugin Espace Collaboratif".
         Pré-remplissage des champs d'après le fichier de configuration "espaceco.xml"
+
+        NB : appeler dans PluginModule.py, fonction : __configurePlugin
         
         :param context: le contexte
         :type context: Contexte

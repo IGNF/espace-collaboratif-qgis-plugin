@@ -16,7 +16,8 @@ class MapToolsReport(QgsMapTool):
 
     def __init__(self, context) -> None:
         """
-        Définit en particulier, un nouveau curseur, la couleur rouge du carré matérialisant le pointé à l'écran.
+        Définit en particulier, un nouveau curseur (une croix noire), un carré de couleur rouge matérialisant
+        le pointé à l'écran.
 
         :param context: le contexte du projet QGIS
         :type context: Contexte

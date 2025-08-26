@@ -22,6 +22,8 @@ class ReplyReport(object):
     def do(self) -> None:
         """
         Affichage du dialogue de réponse à un signalement.
+
+        NB : appeler dans PluginModule.py, fonction : __replyToReport
         """
         self.__logger.debug("ReplyReport.do")
         try:

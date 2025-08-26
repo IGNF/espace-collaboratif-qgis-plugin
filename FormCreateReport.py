@@ -53,6 +53,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """
         Constructeur du dialogue de création de signalement(s) "Créer un signalement"
 
+        NB : appeler dans ToolsReport.py, fonction : createReport
+
         :param context: le contexte du projet et ses cartes
         :type context: Contexte
 
