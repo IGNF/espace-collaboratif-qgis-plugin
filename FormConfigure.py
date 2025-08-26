@@ -12,6 +12,7 @@ import os.path
 from datetime import datetime, timedelta
 import calendar
 
+import PyQt5.QtCore
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
@@ -40,6 +41,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         super(FormConfigure, self).__init__(parent)
 
+        self.dateMYChanged = None
+        self.dateSelected = None
         self.setupUi(self)
         self.context = context
         self.setFocus()
@@ -89,7 +92,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     def setWorkArea(self) -> None:
         """
         Affiche le nom de la couche du polygone d'extraction dans l'item "Zone de travail".
-        À vide par défaut ou si la couche n'existe pas dans le projet
+        À vide par défaut ou si la couche n'existe pas dans le projet.
         """
         self.lineEditWorkArea.setText('')
         workArea = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
@@ -100,7 +103,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                 # du nom de la couche
                 self.lineEditWorkArea.setText(workArea)
 
-    def setAttributCroquis(self):
+    def setAttributCroquis(self) -> None:
         """
         Affiche les couches sources et champs à mettre en attribut pour les nouveaux croquis.
         """
@@ -137,7 +140,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.insertTopLevelItems(0, topItems)
         self.treeWidget.itemClicked.connect(self.onClickItem)
 
-    def addSubItems(self, item, layer, attList):
+    def addSubItems(self, item, layer, attList) -> None:
         """
         Adds subitems to the tree view
         The subitems are the attributes of the layers 
@@ -163,13 +166,14 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                 subItem.setCheckState(0, Qt.CheckState.Unchecked)
             item.addChild(subItem)
 
-    def onClickItem(self, item, column):
-        """Clic sur un item =>set de l'état de l'élément parent ou des éléments enfants
+    def onClickItem(self, item, column) -> None:
+        """
+        Clic sur un item, modifie l'état (coché/décoché) de l'élément parent ou des éléments enfants
         
         :param item: item de l'arbre sur lequel on a cliqué
         :type item: QTreeWidgetItem
         
-        :param column: le no de colonne
+        :param column: le numéro de colonne
         :type column: int 
         """
         state = item.checkState(column)
@@ -184,34 +188,35 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             parent = item.parent()
             parent.setCheckState(0, self.getParentState(item))
 
-    def getParentState(self, item):
-        """Retourne l'état (coché ou non) du noeud parent
-        
+    def getParentState(self, item) -> PyQt5.QtCore.Qt.CheckState:
+        """
         :param item: l'élément de l'arbre
-        :type item: 
+        :type item: QTreeWidgetItem
+
+        :return: l'état (coché ou non) du nœud parent
         """
         parent = item.parent()
         childCount = parent.childCount()
-        pstate = item.checkState(0)
-        if pstate == Qt.CheckState.Checked:
-            pstate = Qt.CheckState.Checked
+        parentState = item.checkState(0)
+        if parentState == Qt.CheckState.Checked:
+            parentState = Qt.CheckState.Checked
             for i in range(0, childCount):
                 if parent.child(i).checkState(0) == Qt.CheckState.Unchecked:
-                    pstate = Qt.CheckState.PartiallyChecked
+                    parentState = Qt.CheckState.PartiallyChecked
                     break
         else:  
-            pstate = Qt.CheckState.Unchecked
+            parentState = Qt.CheckState.Unchecked
             for i in range(0, childCount):
                 child = parent.child(i)
                 if child.checkState(0) == Qt.CheckState.Checked:
-                    pstate = Qt.CheckState.PartiallyChecked
+                    parentState = Qt.CheckState.PartiallyChecked
                     break
 
-        return pstate
+        return parentState
 
-    def getCheckedTreeItems(self):
+    def getCheckedTreeItems(self) -> {}:
         """
-        Retourne les items de l'arbre des attributs qui sont cochés
+        :return: les items (attributs) de l'arbre qui sont cochés
         """
         tree = self.treeWidget
         checkedItems = {}
@@ -225,9 +230,9 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                         checkedItems[item.text(0)].append(subitem.text(0))
         return checkedItems
 
-    def save(self):
+    def save(self) -> None:
         """
-        Sauvegarde la configuration des différents paramètres dans le fichier xml
+        Sauvegarde la configuration des différents paramètres remplis par l'utilisateur dans le fichier xml.
         """
         # Url, si l'Url a changé, il faut vider la table des tables
         oldUrl = PluginHelper.load_urlhost(self.context.projectDir).text

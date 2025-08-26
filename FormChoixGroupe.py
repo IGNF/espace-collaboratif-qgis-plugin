@@ -4,6 +4,7 @@ from qgis.PyQt import uic, QtWidgets, QtCore
 from PyQt5.QtCore import Qt
 from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
 from .PluginHelper import PluginHelper
+from .Contexte import Contexte
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
 from .core import Constantes as cst
@@ -13,11 +14,18 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoi
 
 class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     """
-    Dialogue pour le choix du groupe après la connexion au serveur
-    et récupération du profil utilisateur
+    Classe du dialogue pour le choix du groupe après la connexion au serveur
+    et récupération du profil utilisateur.
     """
 
     def __init__(self, context, parent=None) -> None:
+        """
+        Constructeur de la boite de dialogue intitulée "Paramètres de travail"
+        Initialisation des paramètres connus à partir du projet ou du fichier xml de configuration.
+
+        :param context: le contexte du projet
+        :type context: Contexte
+        """
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
@@ -41,15 +49,28 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setButtonsTextAndConnect()
 
     def getCancel(self) -> int:
+        """
+        Clic de l'utilisateur sur le bouton Annuler ou sur la croix de fermeture de la boite de dialogue.
+
+        :return: 1 si l'utilisateur a fermé le dialogue, 0 sinon.
+        """
         return self.__bCancel
 
     def setComboBoxGroup(self) -> None:
+        """
+        Remplissage de la liste déroulante "Groupe" avec les noms des groupes appartenant à l'utilisateur.
+        """
         for nameid in self.__listNamesIdsCommunities:
             self.comboBoxGroup.addItem(nameid['name'])
         if self.__nameActiveCommunity is not None and self.__nameActiveCommunity != "":
             self.comboBoxGroup.setCurrentText(self.__nameActiveCommunity)
 
     def setComboBoxWorkZone(self) -> None:
+        """
+        Remplissage de la liste déroulante "Zone de travail" avec les noms des couches de type polygone présentes
+        dans le projet. Le nom de la couche issue du fichier xml de configuration est mis en premier dans la liste
+        si elle existe dans la carte, vide sinon.
+        """
         index = -1
         polyLayers = self.__context.getMapPolygonLayers()
         polyList = [val for key, val in polyLayers.items() if val != cst.nom_Calque_Croquis_Polygone]
@@ -69,6 +90,13 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             self.comboBoxWorkZone.setCurrentIndex(index)
 
     def setButtonsTextAndConnect(self) -> None:
+        """
+        Modification de l'intitulé des boutons Save et Cancel.
+        Connexion des signaux en réaction au clic sur un des boutons :
+        - save, l'utilisateur veut continuer
+        - cancel, l'utilisateur stoppe la procédure
+        - shapeFile, l'utilisateur veut importer une couche shapefile comme zone de travail
+        """
         self.buttonBox.button(QDialogButtonBox.Save).setText("Continuer")
         self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
@@ -76,6 +104,13 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.toolButtonShapeFile.clicked.connect(self.openShapeFile)
 
     def openShapeFile(self) -> None:
+        """
+        L'utilisateur veut importer sa zone de travail à partir d'un fichier shapefile.
+        L'outil propose l'import et vérifie si les conditions d'import d'une nouvelle zone sont respectées :
+         - si c'est un fichier .shp
+         - si la zone contenue dan sle fichier est de type polygone
+         - si la zone existe déjà dans le projet
+        """
         self.__newShapefilesDict.clear()
         formats = ["shp", "SHP"]
         filters = u"ESRI Shapefile (*.shp; *.SHP);;"
@@ -129,6 +164,14 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             self.comboBoxWorkZone.setCurrentIndex(0)
 
     def importShapefile(self, shapefileLayerName) -> str:
+        """
+        Import du fichier shapefile avec quelques vérifications :
+        - est-ce que le fichier existe ?
+        - est ce que QGIS arrive à créer la couche QgsVectorLayer ?
+        - est-ce que le système de coordonnées est renseigné ?
+
+        :return: un message d'erreur correspondant aux vérifications, vide si l'import s'est bien passé
+        """
         shapefilePath = self.__newShapefilesDict[shapefileLayerName]
         if shapefilePath is None:
             return "Impossible d'importer le fichier {0}".format(shapefilePath)
@@ -152,8 +195,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             PluginHelper.showMessageBox(message)
         return ""
 
-    # Bouton Continuer comme le nom de la fonction l'indique ;-)
     def save(self) -> None:
+        """
+        Bouton Continuer de la boite de dialogue comme le nom de la fonction l'indique ;-)
+        Remarques :
+         - Si le nom de la zone de travail est vide → extraction complete
+         - Si changement de groupe ou de zone de travail, suppression du groupe et de ses couches associées
+         - Si import d'un shapefile, sauvegarde du nom de la zone de travail dans le fichier xml de configuration
+          - Si l'import s'est mal passé, envoi d'une exception
+        """
         # Si le nom de la zone de travail est vide → extraction complete
         spatialFilterLayerName = self.comboBoxWorkZone.currentText()
         if spatialFilterLayerName == '':
@@ -198,20 +248,29 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             print(message)
             raise Exception(message)
 
-    """
-    Retourne l'identifiant du groupe de l'utilisateur
-    en fonction de son choix
-    """
-
     def getIdAndNameFromSelectedCommunity(self) -> ():
+        """
+        :return: l'identifiant et le nom du groupe de l'utilisateur en fonction de son choix
+        """
         return self.__idSelectedCommunity, self.__nameSelectedCommunity
 
-    # bouton Annuler
     def cancel(self) -> None:
+        """
+        En réaction au clic sur le bouton Annuler
+        """
         self.__bCancel = True
         self.reject()
 
     def deleteLayersAndGroup(self, userWorkZone) -> None:
+        """
+        Suppression du groupe et de ses couches associées, si nouvelle zone de travail ou nouveau groupe.
+        NB : les couches d'un projet sont rassemblées sous un groupe dont le nom est préfixé par "[ESPACE CO] xxxx"
+        NB : mise à jour du xml de configuration si nouvelle zone ou nouveau groupe
+
+        :param userWorkZone: la zone de travail de l'utilisateur (un surfacique permettant de limiter
+                             une extraction de données
+        :type userWorkZone: str
+        """
         # Si c'est un projet nouvellement créé, il faut vérifier si la table des tables existe
         if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             return
@@ -250,7 +309,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 break
 
         # Si l'utilisateur a changé de groupe, on supprime l'ancien (s'il existe dans le projet)
-        # et toutes les couches associées. On supprime la base SQLlite et on la recrée
+        # et toutes les couches associées. On supprime la base SQLite et on la recrée
         if bNewGroup:
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
@@ -288,8 +347,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                     self.__bCancel = True
 
     def removeTablesSQLite(self, layers) -> None:
+        """
+        Vide et supprime une (ou plusieurs) table(s) de la base SQLite du projet.
+        NB : les tables portent le nom des couches par simplification.
+
+        :param layers: liste des tables à supprimer
+        :type layers: list
+        """
         for layer in layers:
-                SQLiteManager.emptyTable(layer.name())
-                SQLiteManager.deleteTable(layer.name())
+            SQLiteManager.emptyTable(layer.name())
+            SQLiteManager.deleteTable(layer.name())
         SQLiteManager.emptyTable(cst.TABLEOFTABLES)
         SQLiteManager.vacuumDatabase()
