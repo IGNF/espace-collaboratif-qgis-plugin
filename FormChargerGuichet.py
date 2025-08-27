@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QDialogButtonBox, QTableWidget
 from PyQt5 import QtCore
 from qgis.PyQt import uic, QtWidgets
 from .PluginHelper import PluginHelper
-from .Contexte import Contexte
 from .core.BBox import BBox
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
@@ -37,7 +36,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         NB : appeler dans PluginModule.py, fonction : __downloadLayersFromMyCommunity
 
         :param context: le contexte du projet
-        :type context: Contexte
 
         :param listLayers: la liste des couches disponibles (Guichet et Fonds Geoservices) dans le profil
                            de l'utilisateur

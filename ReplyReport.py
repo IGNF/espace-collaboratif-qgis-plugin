@@ -14,6 +14,8 @@ class ReplyReport(object):
         Constructeur.
         Initialise le contexte, les outils de gestion d'un signalement (ToolsReport).
         Récupère le fichier de log.
+
+        :param context: le contexte du projet
         """
         self.__context = context
         self.__logger = PluginLogger("ReplyReport").getPluginLogger()

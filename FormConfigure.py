@@ -20,7 +20,6 @@ from qgis._core import QgsProject
 from qgis.core import QgsVectorLayer
 from qgis.PyQt import QtCore
 from .PluginHelper import PluginHelper
-from .Contexte import Contexte
 from .core.SQLiteManager import SQLiteManager
 from .core import Constantes as cst
 
@@ -39,7 +38,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         NB : appeler dans PluginModule.py, fonction : __configurePlugin
         
         :param context: le contexte
-        :type context: Contexte
         """
         super(FormConfigure, self).__init__(parent)
 

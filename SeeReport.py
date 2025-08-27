@@ -13,6 +13,8 @@ class SeeReport(object):
         """
         Constructeur.
         Initialisation du Contexte et récupération du fichier de log.
+
+        :param context: le contexte du projet
         """
         self.__context = context
         self.__logger = PluginLogger("SeeReport").getPluginLogger()

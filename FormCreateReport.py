@@ -1,22 +1,18 @@
 import json
 import os
 from typing import Optional
-
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
-
+from qgis.PyQt import QtCore
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 from .core.Theme import Theme
 from .core.CommunitiesMember import CommunitiesMember
 from .core.Community import Community
 from .core.ThemeAttributes import ThemeAttributes
-
 from .PluginHelper import PluginHelper
-from .Contexte import Contexte
 
-from qgis.PyQt import QtCore
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreateReport_base.ui'))
 
@@ -56,7 +52,6 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         NB : appeler dans ToolsReport.py, fonction : createReport
 
         :param context: le contexte du projet et ses cartes
-        :type context: Contexte
 
         :param nbSketch: le nombre de croquis à joindre lors de la création d'un signalement, à 0 si pas de croquis dans
                          le cas d'une création d'un signalement avec un clic sur la carte

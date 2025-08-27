@@ -15,6 +15,9 @@ class ReplyReportView(QtWidgets.QDialog, FORM_CLASS):
 
         :param reports: la liste du (ou des) signalement(s) qui méritent une réponse
         :type reports: list
+
+        :param nbReportsSelected: le nombre de signalement(s) sélectionné(s)
+        :type nbReportsSelected: int
         """
         super(ReplyReportView, self).__init__(None)
         self.setupUi(self)

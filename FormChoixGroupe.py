@@ -168,7 +168,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         """
         Import du fichier shapefile avec quelques vérifications :
         - est-ce que le fichier existe ?
-        - est ce que QGIS arrive à créer la couche QgsVectorLayer ?
+        - est-ce que QGIS arrive à créer la couche QgsVectorLayer ?
         - est-ce que le système de coordonnées est renseigné ?
 
         :return: un message d'erreur correspondant aux vérifications, vide si l'import s'est bien passé
@@ -257,7 +257,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
     def cancel(self) -> None:
         """
-        En réaction au clic sur le bouton Annuler
+        En réaction au clic sur le bouton Annuler, la boite de dialogue peut être fermée
         """
         self.__bCancel = True
         self.reject()

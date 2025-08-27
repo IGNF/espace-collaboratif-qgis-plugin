@@ -9,7 +9,6 @@ from .core.MapToolsReport import MapToolsReport
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 from .ToolsReport import ToolsReport
-from .Contexte import Contexte
 
 
 class CreateReport(object):
@@ -23,7 +22,6 @@ class CreateReport(object):
         Constructeur.
 
         :param context: le contexte du projet QGIS
-        :type context: Contexte
         """
         self.__logger = PluginLogger("CreateReport").getPluginLogger()
         self.__context = context
