@@ -10,7 +10,6 @@ from .BBox import BBox
 from .GuichetVectorLayer import GuichetVectorLayer
 from .HttpRequest import HttpRequest
 from . import Constantes as cst
-from ..Contexte import Contexte
 
 
 class WfsPost(object):
@@ -23,7 +22,6 @@ class WfsPost(object):
         Constructeur.
 
         :param context: le contexte du client QGIS
-        :type context: Contexte
 
         :param layer: la couche QGIS en édition
         :type layer: GuichetVectorLayer

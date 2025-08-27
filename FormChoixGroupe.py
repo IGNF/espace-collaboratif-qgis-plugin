@@ -1,13 +1,12 @@
 import os
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-from qgis.PyQt import uic, QtWidgets, QtCore
 from PyQt5.QtCore import Qt
+from qgis.PyQt import uic, QtWidgets, QtCore
 from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
-from .PluginHelper import PluginHelper
-from .Contexte import Contexte
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
 from .core import Constantes as cst
+from .PluginHelper import PluginHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 
@@ -26,8 +25,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         NB : appeler dans Contexte.py, fonction : __connectToService
 
         :param context: le contexte du projet
-        :type context: Contexte
         """
+        from .Contexte import Contexte
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()

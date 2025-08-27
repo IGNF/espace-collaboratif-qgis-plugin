@@ -25,10 +25,6 @@ from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri
 from .Import_WMTS import importWMTS
-from .Import_WMSR import ImportWMSR
-from .FormChoixGroupe import FormChoixGroupe
-from .FormInfo import FormInfo
-from .PluginHelper import PluginHelper
 from .core.PluginLogger import PluginLogger
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
@@ -42,6 +38,10 @@ from .core.WfsGet import WfsGet
 from .core.SQLiteManager import SQLiteManager
 from .core.ProgressBar import ProgressBar
 from .core.ign_keycloak.KeycloakService import KeycloakService
+from .Import_WMSR import ImportWMSR
+from .PluginHelper import PluginHelper
+from .FormInfo import FormInfo
+from .FormChoixGroupe import FormChoixGroupe
 
 
 class Contexte(object):

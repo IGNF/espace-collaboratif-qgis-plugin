@@ -18,10 +18,10 @@ from .core.WfsGet import WfsGet
 from .core.ProgressBar import ProgressBar
 from .core.Community import Community
 from .core import Constantes as cst
+from .Contexte import Contexte
 from .FormChargerGuichet import FormChargerGuichet
 from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
-from .Contexte import Contexte
 from .ToolsReport import ToolsReport
 from .SeeReport import SeeReport
 from .CreateReport import CreateReport
