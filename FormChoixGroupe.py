@@ -78,7 +78,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.comboBoxWorkZone.clear()
         self.comboBoxWorkZone.addItem("")
         self.comboBoxWorkZone.addItems(polyList)
-        zone = PluginHelper.load_ripartXmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
+        zone = PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
         if zone is None:
             self.comboBoxWorkZone.setCurrentIndex(0)
         else:
@@ -277,8 +277,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             return
 
         # Le nom de la zone stockée dans le xml .../xxx_espaceco.xml
-        storedWorkZone = PluginHelper.load_ripartXmlTag(self.__context.projectDir,
-                                                        PluginHelper.xml_Zone_extraction,
+        storedWorkZone = PluginHelper.load_XmlTag(self.__context.projectDir,
+                                                  PluginHelper.xml_Zone_extraction,
                                                         "Map").text
 
         bNewGroup = self.__nameActiveCommunity != self.__nameSelectedCommunity

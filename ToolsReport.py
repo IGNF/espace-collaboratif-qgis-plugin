@@ -17,8 +17,6 @@ from .core.Report import Report
 from .core.HttpRequest import HttpRequest
 from .core import Constantes as cst
 
-from requests_toolbelt import MultipartEncoder
-
 
 # Importation des signalements dans le projet QGIS
 class ToolsReport(object):
@@ -99,7 +97,7 @@ class ToolsReport(object):
         self.__addReportSketchLayersToTheCurrentMap()
 
         # Téléchargement des signalements
-        date = PluginHelper.load_ripartXmlTag(self.__context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
+        date = PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
         date = PluginHelper.formatDate(date)
         data = self.__getReports(date)
 

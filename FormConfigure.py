@@ -59,7 +59,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         login = PluginHelper.load_login(context.projectDir).text
         self.lineEditLogin.setText(login)
 
-        date = PluginHelper.load_ripartXmlTag(context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
+        date = PluginHelper.load_XmlTag(context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
         if date is not None:
             date = PluginHelper.formatDate(date)
             dt = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
@@ -95,7 +95,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         À vide par défaut ou si la couche n'existe pas dans le projet.
         """
         self.lineEditWorkArea.setText('')
-        workArea = PluginHelper.load_ripartXmlTag(self.context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
+        workArea = PluginHelper.load_XmlTag(self.context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
         listLayers = QgsProject.instance().mapLayersByName(workArea)
         if len(listLayers) == 1:
             if listLayers[0].name() == workArea:

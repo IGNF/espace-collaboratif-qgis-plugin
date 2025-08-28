@@ -291,9 +291,9 @@ class Contexte(object):
 
     def __connectToService(self) -> bool:
         PluginHelper.save_login(self.projectDir, self.login)
-        xmlgroupeactif = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
+        xmlgroupeactif = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
         if xmlgroupeactif is not None:
-            self.__activeCommunityName = PluginHelper.load_ripartXmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
+            self.__activeCommunityName = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
                                                                         "Serveur").text
             if self.__activeCommunityName is not None:
                 self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
@@ -324,7 +324,7 @@ class Contexte(object):
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
                 formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
                 if formPreferredGroup != idNameCommunity[1]:
-                    # TODO voir avec Noémie, il s'agit bien des themes utilisateur (ceux dans community)
+                    #TODO Mélanie, il s'agit bien des themes utilisateur (ceux dans community)
                     #  et non activeThemes ou shared_themes ?
                     PluginHelper.save_preferredThemes(self.projectDir, self.getUserCommunity().getTheme())
                 PluginHelper.save_preferredGroup(self.projectDir, idNameCommunity[1])
