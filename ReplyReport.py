@@ -76,7 +76,7 @@ class ReplyReport(object):
                                   'proxies': self.__context.proxies, 'headers': headers,
                                   'requestBody': {'title': '', 'content': newResponse, 'status': newStatut}}
                     # Requête de mise à jour
-                    jsonResponse = self.__toolsReport.addResponseToServer(parameters)
+                    jsonResponse = self.__toolsReport.sendResponseToServer(parameters)
                     if jsonResponse == '':
                         raise Exception("toolsReport.addResponse a renvoyé une erreur")
                     # Mise à jour de la base SQLite

@@ -1,10 +1,12 @@
 import json
 import os.path
+from typing import Optional
 
 from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
-    QgsEditorWidgetSetup
+    QgsEditorWidgetSetup, QgsRectangle, QgsPointXY
 
+from core.requests import Response
 from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
 from .core.ProgressBar import ProgressBar
@@ -18,19 +20,32 @@ from .core.HttpRequest import HttpRequest
 from .core import Constantes as cst
 
 
-# Importation des signalements dans le projet QGIS
 class ToolsReport(object):
+    """
+    Classe d'utilitaires servant à l'importation, la création, la mise à jour des signalements dans un projet QGIS.
+    """
 
     def __init__(self, context) -> None:
+        """
+        Constructeur.
+
+        :param context: le contexte du projet utilisateur
+        """
         self.__logger = PluginLogger("ToolsReport").getPluginLogger()
         self.__context = context
-        # barre de progression des signalements importés
+        # Barre de progression des signalements importés
         self.__progress = None
         self.__progressVal = 0
+        # Le stockage des données nécessaires à l'envoi d'un signalement vers le serveur de l'espace collaboratif
         self.__datasForRequest = {}
+        # Initialisation d'un système de transformation de coordonnées (QgsCoordinateTransform)
         self.__crsTransform = self.__setCoordinateTransform()
 
     def __addReportSketchLayersToTheCurrentMap(self) -> None:
+        """
+        Ajoute les couches 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne', 'Croquis_EC_Polygone'
+        dans le projet courant ainsi que les liens de connexion vers la base SQLite 'nomProjet_espaceco.sqlite'
+        """
         uri = self.__context.getUriDatabaseSqlite()
         self.__logger.debug(uri.uri())
         maplayers = self.__context.getAllMapLayers()
@@ -50,7 +65,16 @@ class ToolsReport(object):
                 vlayer.loadNamedStyle(style)
         self.__context.mapCan.refresh()
 
-    def getReport(self, idReport):
+    def getReport(self, idReport) -> Report:
+        """
+        Lance une requête ver le serveur de l'espace collaboratif pour récupérer les caractéristiques du signalement
+        en fonction de son identifiant.
+
+        :param idReport: l'identifiant du signalement sur l'espace collaboratif (pas celui de QGIS)
+        :type idReport: int
+
+        :return: le signalement initialisé avec les données issues de la requête
+        """
         query = Query(self.__context.urlHostEspaceCo, self.__context.proxies)
         query.setHeaders(self.__context.getTokenType(), self.__context.getTokenAccess())
         query.setPartOfUrl('gcms/api/reports/{}'.format(idReport))
@@ -58,6 +82,15 @@ class ToolsReport(object):
         return Report(self.__context.urlHostEspaceCo, response.json())
 
     def __getReports(self, date) -> []:
+        """
+        Lance l'extraction des signalements/croquis à partir d'une date et intersectant
+        la zone de travail de l'utilisateur.
+
+        :param date: la date d'extraction à partir de laquelle doit commencer la recherche des signalements
+                    sur le serveur
+
+        :return: la liste de signalements/croquis avec leurs caractéristiques
+        """
         # filtre spatial
         bbox = BBox(self.__context)
         box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, True, True)
@@ -78,8 +111,13 @@ class ToolsReport(object):
         data = query.multiple()
         return data
 
-    # Téléchargement et import des signalements sur la carte
     def download(self) -> None:
+        """
+         - Création des tables 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne' et 'Croquis_EC_Polygone'
+         et des liens de connexion dans la base SQLite.
+        - Téléchargement et import des signalements/croquis dans le projet.
+        - Insertion des données téléchargées dans la base SQLite.
+        """
         self.__logger.debug("ToolsReport.download")
 
         # l'utilisateur n'a pas de profil actif, impossible pour lui de travailler
@@ -118,6 +156,9 @@ class ToolsReport(object):
         self.__showImportResult()
 
     def __showImportResult(self) -> None:
+        """
+        Montre à l'utilisateur le résultat de l'import des signalements dans son projet.
+        """
         # Résultat de l'import
         totalSubmit = self.__context.countReportsByStatut(cst.STATUT.submit.__str__())
         pending = self.__context.countReportsByStatut(cst.STATUT.pending.__str__())
@@ -146,8 +187,11 @@ class ToolsReport(object):
 
         PluginHelper.showMessageBox(resultMessage)
 
-    # NOTE : non utilisée mais peut servir ;-)
     def setFormAttributes(self) -> None:
+        """
+        Mise en forme d'un attribut au format json.
+        NOTE : non utilisée mais peut servir ;-)
+        """
         listLayers = QgsProject.instance().mapLayersByName(cst.nom_Calque_Signalement)
         if len(listLayers) == 0:
             return
@@ -180,7 +224,7 @@ class ToolsReport(object):
 
     def __setCoordinateTransform(self) -> QgsCoordinateTransform:
         """
-        Construit un QgsCoordinateTransform pour transformer le système de référence de coordonnées source
+        Construit un QgsCoordinateTransform pour modifier le système de référence de coordonnées source
         en système de référence de coordonnées de destination.
 
         :return: un QgsCoordinateTransform
@@ -194,11 +238,13 @@ class ToolsReport(object):
 
         return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
 
-    # NOTE : non utilisée mais peut servir ;-)
     def setMapExtent(self, box) -> None:
-        """ Set de l'étendue de la carte
+        """
+        Détermine les limites maximum de la zone de travail.
+        NOTE : non utilisée mais peut servir ;-)
 
         :param box : bounding box
+        :type box: QgsRectangle
         """
         source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
 
@@ -216,6 +262,14 @@ class ToolsReport(object):
         self.__context.mapCan.setExtent(new_box.buffered(dist))
 
     def updateReportIntoSQLite(self, jsonResponse) -> None:
+        """
+        Mise à jour d'un signalement dans la base SQLite dans le cadre d'une réponse apportée à celui-ci.
+
+        Appelée dans ReplyReport.py fonction do.
+
+        :param jsonResponse: les données de la réponse faite par le serveur
+        :type jsonResponse: dict
+        """
         # TODO "ancien code" remis au gout du jour
         # attributes = "Date_MAJ = '{}', Date_validation = '{}', Réponses = '{}', Statut ='{}'".format(
         #     jsonResponse['updating_date'], jsonResponse['closing_date'], jsonResponse['replies']['content'],
@@ -236,7 +290,16 @@ class ToolsReport(object):
         SQLiteManager.updateTable(parameters)
 
     # Ajoute une réponse à un signalement
-    def addResponseToServer(self, parameters) -> str:
+    def sendResponseToServer(self, parameters) -> {}:
+        """
+        Envoi les données de réponse de l'utilisateur à un signalement.
+        Cette réponse est faite par l'intermédiaire de la boite de dialogue définit dans ReplyReportView.py.
+
+        :param parameters: les données nécessaires pour permettre la mise à jour du signalement
+        :type parameters: dict
+
+        :return: les données de mise à jour retournées par le serveur de l'espace collaboratif
+        """
         idReport = parameters['reportId']
         uri = "{0}/gcms/api/reports/{1}/replies".format(self.__context.urlHostEspaceCo, idReport)
         response = HttpRequest.makeHttpRequest(uri, parameters['proxies'], data=parameters['requestBody'],
@@ -254,6 +317,9 @@ class ToolsReport(object):
             return ''
 
     def serialize_for_multipart(self, obj):
+        """
+
+        """
         if isinstance(obj, (dict, list)):
             return json.dumps(obj, ensure_ascii=False)
         return json.dumps(obj)
@@ -273,6 +339,14 @@ class ToolsReport(object):
             return obj
 
     def __sendReport(self, filesAttachments):
+        """
+        Envoi de la requête POST de création de signalement(s).
+
+        :param filesAttachments: le (ou les) fichier(s) joint(s)
+        :type filesAttachments: dict
+
+        :return: la réponse encodée au format json
+        """
         # self.__datasForRequest.update(filesAttachments)
         # data = self.__datasForRequest.copy()
         # On utilise la fonction de sérialisation globale pour chaque élément racine
@@ -294,8 +368,18 @@ class ToolsReport(object):
             return
         return responseFromServer.json()
 
-    def __sendRequest(self, datas, filesAttachments):
-        # envoi de la requête
+    def __sendRequest(self, datas, filesAttachments) -> Optional[Response]:
+        """
+        Envoi de la requête POST de création de signalement(s) avec ou sans croquis.
+
+        :param datas: les données de signalement et croquis
+        :type datas: str
+
+        :param filesAttachments: le (ou les) fichier(s) joint(s)
+        :type filesAttachments: dict
+
+        :return: la réponse du serveur espace collaboratif
+        """
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
         # 'Content-Type': 'application/json',
         headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
@@ -309,6 +393,21 @@ class ToolsReport(object):
         return None
 
     def createReport(self, sketchList, pointFromClipboard):
+        """
+        Fonction générale de création de signalement avec ou sans croquis avec différentes phases :
+        - Ouverture du formulaire de création du signalement
+        - Envoi (ou pas) vers le serveur
+        - Initialisation des données pour la requête
+        - Création d'un ou plusieurs signalements avec ou sans croquis
+        - Insertion des données dans la base SQLite
+        - Message de fin
+
+        :param sketchList: la liste des croquis, vide dans le cas d'une création sans croquis
+        :type sketchList: list
+
+        :param pointFromClipboard: le pointé sur la couche Signalement transformé en coordonnées
+        :type pointFromClipboard: QgsPointXY
+        """
         # Ouverture du formulaire de création du signalement
         formCreate = FormCreateReport(self.__context, len(sketchList))
         formCreate.exec_()
@@ -337,7 +436,7 @@ class ToolsReport(object):
         }
         """
         self.__datasForRequest.clear()
-        # Si l'utilisateur a choisi un thème n'appartenant pas à sa community
+        # Si l'utilisateur a choisi un thème n'appartenant pas à son groupe
         communityId = formCreate.getCommunityIdWhenThemeChanged()
         if communityId is None:
             communityId = self.__context.getUserCommunity().getId()
@@ -352,7 +451,7 @@ class ToolsReport(object):
         filesAttachments = formCreate.getFilesAttachments()
 
         # Création du ou des signalements
-        if len(sketchList) == 0 and pointFromClipboard != '':
+        if len(sketchList) == 0 and pointFromClipboard.asWkt() != '':
             tmpPoint = self.__crsTransform.transform(pointFromClipboard)
             geometrySingleReport = 'POINT({0} {1})'.format(tmpPoint.x(), tmpPoint.y())
             self.__datasForRequest['geometry'] = geometrySingleReport
@@ -375,11 +474,31 @@ class ToolsReport(object):
         self.__sendMessageEndProcess(listNewReportIds)
 
     def createSingleReportFromClipboard(self, filesAttachments) -> []:
-        contents = []
-        contents.append(self.__sendReport(filesAttachments))
+        """
+        Mise au format des données de création d'un signalement SANS croquis lié(s) en vue
+        d'une requête POST vers le serveur espace collaboratif.
+
+        :param filesAttachments: le (ou les) fichier(s) attachés aux signalements
+        :type filesAttachments: dict
+
+        :return: les données d'insertion du signalement et de croquis pour la base SQLite
+        """
+        contents = [self.__sendReport(filesAttachments)]
         return contents
 
     def __createSingleReport(self, sketchList, filesAttachments) -> []:
+        """
+        Mise au format des données de création d'un signalement avec ou sans croquis lié(s) en vue
+        d'une requête POST vers le serveur espace collaboratif.
+
+        :param sketchList: les données de croquis
+        :type sketchList: list
+
+        :param filesAttachments: le (ou les) fichier(s) attachés aux signalements
+        :type filesAttachments: dict
+
+        :return: les données d'insertion du signalement et de croquis pour la base SQLite
+        """
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, True)
         self.__datasForRequest['sketch'] = sketchsDatasGeometryReport[0]['sketch']
@@ -388,6 +507,18 @@ class ToolsReport(object):
         return contents
 
     def __createMultiReports(self, sketchList, filesAttachments) -> []:
+        """
+        Mise au format des données de création de plusieurs signalements avec ou sans croquis lié(s) en vue
+        d'une requête POST vers le serveur espace collaboratif.
+
+        :param sketchList: les données de croquis
+        :type sketchList: list
+
+        :param filesAttachments: le (ou les) fichier(s) attachés aux signalements
+        :type filesAttachments: dict
+
+        :return: les données d'insertion des signalements et de croquis pour la base SQLite
+        """
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, False)
         for sketchDataGeometryReport in sketchsDatasGeometryReport:
@@ -396,16 +527,15 @@ class ToolsReport(object):
             contents.append(self.__sendReport(filesAttachments))
         return contents
 
-    def __getBarycentreInWkt(self, listPoints):
+    def __getBarycentreInWkt(self, listPoints) -> str:
         """
         Retourne les coordonnées du signalement en WKT en calculant le barycentre en fonction
-        d'une liste de points représentant la géométrie du croquis
+        d'une liste de points représentant la géométrie du croquis.
 
         :param listPoints : la géométrie sous forme d'une liste de points du croquis
         :type listPoints : list
 
-        :return : le barycentre
-        :rtype : Point
+        :return : le barycentre au format WKT
         """
         barycentreX = 0
         barycentreY = 0
@@ -420,6 +550,18 @@ class ToolsReport(object):
         return barycentre
 
     def __createReportWithSketchs(self, sketchList, bOneReport) -> []:
+        """
+        Mise au format des données de création d'un (ou plusieurs) croquis lié(s) au signalement en vue
+        d'une requête POST vers le serveur espace collaboratif.
+
+        :param sketchList: les données de croquis
+        :type sketchList: list
+
+        :param bOneReport: True pour un signalement, False pour la création de plusieurs signalements
+        :type bOneReport: bool
+
+        :return: les données de création de croquis
+        """
         datas = []
         if bOneReport:
             points = []
@@ -445,32 +587,63 @@ class ToolsReport(object):
                 datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(sk.getAllPoints())})
         return datas
 
-    def __calculateRows(self, datas):
+    def __calculateRowsForInsertInTable(self, datas) -> ():
+        """
+        Création d'un nouveau signalement.
+
+        Insertion du ou des croquis dans la (ou les) table(s) SQLite.
+
+        Mise en forme des données du signalement au format d'insertion dans la table SQLite.
+
+        :param datas: les données de création d'UN signalement avec ou croquis
+        :type datas: dict
+
+        :return: les données d'enregistrement d'un signalement pour la table Signalement dans SQLite,
+                 le nouvel identifiant du signalement
+        """
         report = Report(self.__context.urlHostEspaceCo, datas)
         report.InsertSketchIntoSQLite()
         columns = report.getDatasForSQlite()
         return columns, report.getId()
 
     def __insertReportsSketchsIntoSQLite(self, datas) -> []:
-        parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
-                      'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
+        """
+        Insertion des données dans les tables 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne'
+        et 'Croquis_EC_Polygone'.
+
+        :param datas: les données de création d'un signalement avec ou croquis
+        :type datas: list
+
+        :return: la liste des nouveaux identifiants de signalements
+        """
         attributesRows = []
         idsReports = []
         if type(datas) is list:
             for data in datas:
-                rows = self.__calculateRows(data)
+                rows = self.__calculateRowsForInsertInTable(data)
                 attributesRows.append(rows[0])
                 idsReports.append(rows[1])
-        if type(datas) is dict:
-            rows = self.__calculateRows(datas)
-            attributesRows.append(rows[0])
-            idsReports.append(rows[1])
+        # elif type(datas) is dict and len(datas) == 1:
+        #     rows = self.__calculateRowsForInsertInTable(datas)
+        #     attributesRows.append(rows[0])
+        #     idsReports.append(rows[1])
+        else:
+            raise Exception("ToolsReport.__insertReportsSketchsIntoSQLite : problème dans la création "
+                            "de signalement(s). Cas non prévu. Veuillez contacter l'équipe support.")
         # Insertion des signalements dans la base SQLite
+        parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
+                      'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
         sqliteManager = SQLiteManager()
         sqliteManager.insertRowsInTable(parameters, attributesRows)
         return idsReports
 
-    def __sendMessageEndProcess(self, listNewReportIds):
+    def __sendMessageEndProcess(self, listNewReportIds) -> None:
+        """
+        Message de fin de création d'un ou plusieurs signalement(s) avec les nouveaux numéros d'identifiants.
+
+        :param listNewReportIds: la listes des nouveaux identifiants
+        :type listNewReportIds: list
+        """
         message = "Succès, création "
         if len(listNewReportIds) == 1:
             message += "d'un nouveau signalement : {0}".format(listNewReportIds[0])

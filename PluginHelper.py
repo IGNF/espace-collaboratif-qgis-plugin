@@ -107,13 +107,13 @@ class PluginHelper:
     @staticmethod
     def getXPath(tagName, parentTag) -> str:
         """
-        La balise principale 'Serveur' contient les sous balises suivantes :
+        La balise principale 'Serveur' peut contenir les sous balises suivantes :
          - URLHost
          - groupe_actif
          - groupe_prefere
          - Login
          - Proxy
-        La balise principale 'Map' contient les sous balises suivantes :
+        La balise principale 'Map' peut contenir les sous balises suivantes :
          - Date_extraction
          - Pagination
          - Zone_extraction
@@ -368,8 +368,9 @@ class PluginHelper:
     @staticmethod
     def load_XmlTag(projectDir, tag, parent=None) -> Optional[Element]:
         """
-        Recherche un élément (tag) dans le fichier xml.
-        Si l'élément n'existe pas, il est créé.
+        Recherche un élément (tag) dans le fichier xml. Si l'élément n'existe pas, il est créé.
+
+        NB : une exception est envoyée, si la recherche du nœud xml a échoué.
         
         :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
         :type projectDir: string
@@ -398,8 +399,7 @@ class PluginHelper:
     @staticmethod
     def addXmlElement(projectDir, elem, parentElem, value=None) -> Element:
         """
-        Ajoute un élément (tag) dans le fichier xml.
-        Si l'élément n'existe pas, il est créé.
+        Ajoute un élément (tag) dans le fichier xml. Si l'élément n'existe pas, il est créé.
 
         :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
         :type projectDir: string
@@ -436,6 +436,8 @@ class PluginHelper:
     @staticmethod
     def load_attCroquis(projectDir) -> {}:
         """
+        NB : une exception est envoyée, si la recherche du nœud xml a échoué.
+
         :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
         :type projectDir: str
 
@@ -462,6 +464,8 @@ class PluginHelper:
     @staticmethod
     def load_preferredThemes(projectDir) -> []:
         """
+        NB : une exception est envoyée, si la recherche du nœud xml a échoué.
+
         :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
         :type projectDir: str
 
@@ -504,7 +508,8 @@ class PluginHelper:
     def addNode(projectDir, tag, value, parentTag=None):
         """
         Ajoute un nœud dans le fichier xml de configuration.
-        NB: une exception est envoyée si l'ajout dans le fichier xml est impossible.
+
+        NB : une exception est envoyée si l'ajout dans le fichier xml est impossible.
 
         :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
         :type projectDir: str
@@ -513,7 +518,7 @@ class PluginHelper:
         :type tag: str
 
         :param value: valeur prise par la sous balise
-        :param value: str
+        :type value: str
 
         :param parentTag: balise principale
         :type parentTag: str
@@ -538,7 +543,8 @@ class PluginHelper:
     def removeNode(projectDir, tag, parentTag=None) -> None:
         """
         Supprime un nœud dans le fichier xml de configuration.
-        NB: une exception est envoyée si la suppression dans le fichier xml est impossible.
+
+        NB : une exception est envoyée si la suppression dans le fichier xml est impossible.
 
         :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
         :type projectDir: str
@@ -569,6 +575,7 @@ class PluginHelper:
     def setXmlTagValue(projectDir, tag, value, parentTag=None) -> None:
         """
         Enregistre une valeur à un tag dans le fichier xml de configuration en fonction d'une balise principale.
+
         NB : une exception est envoyée si l'écriture dans le fichier xml est impossible.
 
         :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
@@ -578,7 +585,7 @@ class PluginHelper:
         :type tag: str
 
         :param value: valeur prise par la sous balise
-        :param value: str
+        :type value: str
 
         :param parentTag: balise principale
         :type parentTag: str
@@ -647,6 +654,8 @@ class PluginHelper:
     def formatDate(sdate) -> str:
         """
         Transforme une date donnée au format dd/MM/yyyy %H:%M:%S en yyyy-MM-dd %H:%M:%S.
+
+        NB : une exception de type ValueError est envoyée si la transformation s'est mal passée.
         
         :param sdate: la date à transformer
         :type sdate: str

@@ -5,6 +5,7 @@ Updated on 26 aout 2025
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
+from qgis.core import QgsPointXY
 from .core.MapToolsReport import MapToolsReport
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
@@ -53,7 +54,7 @@ class CreateReport(object):
                 # Création du ou des signalements
                 toolsReport = ToolsReport(self.__context)
                 # Pas de point écran puisque création avec croquis
-                pointFromClipboard = ''
+                pointFromClipboard = QgsPointXY()
                 toolsReport.createReport(sketchList, pointFromClipboard)
             self.__context.mapCan.refresh()
 

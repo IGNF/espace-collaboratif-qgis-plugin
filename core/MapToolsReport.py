@@ -1,8 +1,7 @@
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor
-from qgis._core import QgsSettings, QgsPointXY
-from qgis._gui import QgsVertexMarker
-from qgis.gui import QgsMapTool, QgsMapMouseEvent
+from qgis.core import QgsSettings, QgsPointXY
+from qgis.gui import QgsMapTool, QgsMapMouseEvent, QgsVertexMarker
 from ..Contexte import Contexte
 from ..ToolsReport import ToolsReport
 from .PluginLogger import PluginLogger
