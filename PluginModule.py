@@ -606,7 +606,7 @@ class RipartPlugin:
             if not self.__doConnexion(False):
                 return
             magicw = Magicwand(self.__context)
-            magicw.selectRipartObjects()
+            magicw.selectReportOrSketchObjects()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__magicwand', e)
 

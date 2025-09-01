@@ -6,51 +6,49 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
+from typing import Optional
 
-# standard_library.install_aliases()
 from .PluginHelper import PluginHelper
 from .core import Constantes as cst
 
 
 class Magicwand(object):
     """
-        Baguette magique: sélection des objets ripart associés
+    Baguette magique : sélection du (des) croquis associés au signalement et vice-versa.
     """
     context = None
 
-    def __init__(self, context):
+    def __init__(self, context) -> None:
         """
-        Constructor
+        Constructeur.
+
+        :param context: le contexte du projet QGIS de l'utilisateur
         """
         self.context = context
 
-    """
-        Sélection des croquis associés a une ou des remarque(s) 
-        ou les remarques associées à un ou plusieurs croquis
-    """
-
-    def selectRipartObjects(self):
+    def selectReportOrSketchObjects(self) -> None:
+        """
+        Sélection des croquis associés à un ou plusieurs signalement(s)
+        ou le signalement associé à un ou plusieurs croquis.
+        """
         res = self.checkObjectSelection()
         if res is None:
             return
         elif res == "croquis":
-            self.selectAssociatedRemarks()
-        elif res == "remarque":
+            self.selectAssociatedReports()
+        elif res == "signalement":
             self.selectAssociatedCroquis()
 
-    """
-        Contrôle si un des cas suivants est vrai:
-            1) un ou plusieurs croquis sélectionnés
-            2) une ou plusieurs remarques sélectionnées
+    def checkObjectSelection(self) -> Optional[str]:
+        """
+        Contrôle si un des cas suivants est vrai :
+         - un ou plusieurs croquis sélectionnés
+         - un ou plusieurs signalements sélectionnés
 
-            :return: None si  pas de sélection de croquis ou remarque ou sélection des 2 types d'objets, 
-                    "croquis" si des croquis sont sélectionnés, 
-                    "remarque" si des remarques sont sélectionnées
-            :rtype: string
-
-    """
-
-    def checkObjectSelection(self):
+        :return: None si pas de sélection de croquis ou signalement ou sélection des deux types d'objets,
+                 "croquis" si des croquis sont sélectionnés,
+                 "signalement" si des remarques sont sélectionnées
+        """
         selectedCroquis = False
         selectedRemarque = False
         mapLayers = self.context.mapCan.layers()
@@ -69,25 +67,23 @@ class Magicwand(object):
         elif selectedCroquis:
             return "croquis"
         elif selectedRemarque:
-            return "remarque"
+            return "signalement"
         else:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Aucun croquis ou signalement sélectionné",
                                                         level=1, duration=3)
             return None
 
-    """
-        Sélectionne les remarques associées aux croquis sélectionnés 
-    """
-
-    def selectAssociatedRemarks(self):
+    def selectAssociatedReports(self) -> None:
+        """
+        Sélectionne le signalement associé au croquis sélectionné.
+        """
         # identifiant de la remarque (No de remarque)
         remNos = ""
         mapLayers = self.context.mapCan.layers()
 
         for ml in mapLayers:
             if ml.name() in PluginHelper.sketchLayers and len(ml.selectedFeatures()) > 0:
-
                 for feat in ml.selectedFeatures():
                     idx = ml.fields().lookupField("NoSignalement")
                     noSignalement = feat.attributes()[idx]
@@ -96,8 +92,9 @@ class Magicwand(object):
 
         self.context.selectRemarkByNo(remNos[:-1])
 
-    def selectAssociatedCroquis(self):
-        """Sélectionne les croquis associés aux remarques sélectionnées et déselectionne les remarques
+    def selectAssociatedCroquis(self) -> None:
+        """
+        Sélectionne les croquis associés au signalement sélectionnés et désélectionne le signalement.
         """
         # key: layer name, value: noSignalement
         croquisLays = {}
