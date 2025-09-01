@@ -661,6 +661,8 @@ class SQLiteManager(object):
         """
         Suppression de tous les enregistrements de toutes les tables d'une liste. (Signalement, Croquis_EC_Polygone,
         Croquis_EC_Ligne et Croquis_EC_Point.
+
+        NB : appeler dans PluginModule.py, fonction : __removeReportsAndSketchs
         """
         for table in tablesList:
             SQLiteManager.emptyTable(table)

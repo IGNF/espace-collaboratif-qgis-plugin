@@ -8,7 +8,7 @@ from . import resources
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import QgsProject
+from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer
 from builtins import str
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
@@ -32,7 +32,17 @@ from .ReplyReport import ReplyReport
 
 # QGIS Plugin Implementation
 class RipartPlugin:
+    """
+    Classe d'implémentation du plugin espace collaboratif (ex Ripart).
+    """
     def __init__(self, iface) -> None:
+        """
+        Constructeur.
+
+        :param iface: interface du plugin
+        """
+        self.toolButton2 = None
+        self.helpMenu = None
         self.__context = Contexte.getInstance(self, QgsProject)
         self.__dlgConfigure = None
         self.__ripartLogger = PluginLogger("RipartPlugin")
@@ -139,17 +149,17 @@ class RipartPlugin:
                 elif reply == QMessageBox.No:
                     projectLayers = QgsProject.instance().mapLayers()
                     for k, v in projectLayers.items():
-                        if not self.__searchSpecificLayer(v.name()):
+                        if not self.__searchSpecificLayerInSQLite(v.name()):
                             continue
                         self.__connectSpecificSignals(v)
             break
 
-        # TODO voir avec Noémie
+        # TODO voir avec Mélanie
         # Est-ce que la base SQLite est désynchronisée avec le project ?
         # La liste des layers du projet se retrouve bien dans la table des tables pour la base SQLite ?
         # self.__doSynchroWithTableOfTables()
 
-        # TODO voir avec Noémie
+        # TODO voir avec Mélanie
         # S'il reste des objets non envoyés sur l'espace collaboratif
         # objectsAddedNotCommitted = self.__isObjectsAddedNotCommitted()
         # if len(objectsAddedNotCommitted) >= 1:
@@ -165,25 +175,50 @@ class RipartPlugin:
         #         return
 
     def __connectLayerWasAdded(self, layer) -> None:
+        """
+        Si une couche est ajoutée au projet QGIS de l'utilisateur et qu'elle se trouve dans la table des tables
+        dans SQLite (ce qui veut dire que l'utilisateur a extrait cette couche par l'outil) alors la connexion
+        des signaux spécifiques est possible.
+
+        :param layer: la couche qui vient d'être ajoutée
+        :type layer: QgsMapLayer
+        """
         if layer is None:
             return
-        if not self.__searchSpecificLayer(layer.name()):
+        if not self.__searchSpecificLayerInSQLite(layer.name()):
             return
         self.__connectSpecificSignals(layer)
 
-    def __searchSpecificLayer(self, layerName) -> bool:
+    def __searchSpecificLayerInSQLite(self, layerName) -> bool:
+        """
+        Vérifie dans SQLite si un enregistrement dans la table des tables est présent pour le nom de la couche
+        donnée en entrée.
+
+        :param layerName: le nom de la couche à chercher
+        :type layerName: str
+
+        :return: True si l'enregistrement existe, False sinon
+        """
         if SQLiteManager.selectColumnFromTableWithCondition("layer", cst.TABLEOFTABLES, "layer", layerName) \
                 is not None:
             return True
         return False
 
     def __connectSpecificSignals(self, layer) -> None:
+        """
+        Connexion de deux signaux spécifiques :
+         - QgsMalLayer.nameChanged, le nom de la couche a changé
+         - QgsVectorLayer.beforeCommitChanges, juste avant d'envoyer les données vers le serveur
+
+        :param layer: la couche modifiée
+        :type layer: Optional[QgsMapLayer, QgsVectorLayer]
+        """
         if layer is None:
             return
         layer.nameChanged.connect(self.__connectNameChanged)
         layer.beforeCommitChanges.connect(self.__connectBeforeCommitChanges)
 
-    # TODO remettre en service ? Voir avec Noémie
+    # TODO Mélanie remettre en service ?
     def __doSynchroWithTableOfTables(self) -> None:
         listLayersNotInTable = self.__isLayersInTableOfTables()
         if len(listLayersNotInTable) != 0:
@@ -194,7 +229,7 @@ class RipartPlugin:
             if reply == QMessageBox.Yes:
                 self.__downloadLayersFromMyCommunity()
 
-    # TODO remettre en service ? Voir avec Noémie
+    # TODO Mélanie remettre en service ?
     def __isLayersInTableOfTables(self) -> list:
         layersNotInTable = []
         root = QgsProject.instance().layerTreeRoot()
@@ -218,7 +253,7 @@ class RipartPlugin:
         #     if result is None:
         #         message += "{0}\n".format(v.name())
 
-    # TODO remettre en service ? Voir avec Noémie
+    # TODO Mélanie remettre en service ?
     def __isObjectsAddedNotCommitted(self) -> dict:
         objNotCommitted = {}
         projectLayers = QgsProject.instance().mapLayers()
@@ -233,17 +268,25 @@ class RipartPlugin:
         return objNotCommitted
 
     def __connectNameChanged(self) -> None:
+        """
+        Connexion du signal layer.connectNameChanged pour interdire la modification du nom d'une couche
+        qui a été extraite.
+        """
         activeLayer = self.iface.activeLayer()
-        if not self.__searchSpecificLayer(activeLayer.name()):
+        if not self.__searchSpecificLayerInSQLite(activeLayer.name()):
             QMessageBox.warning(self.iface.mainWindow(), cst.IGNESPACECO,
                                 "Action interdite ! Veuillez renommer la couche de son nom initial.")
         return
 
     def __connectBeforeCommitChanges(self) -> None:
+        """
+        Connexion du signal layer.beforeCommitChanges pour lancer la sauvegarde (requête POST) des données modifiées
+        sur l'ensemble des couches en édition.
+        """
         editLayers = []
         editableLayers = self.iface.editableLayers()
         for editableLayer in editableLayers:
-            if not self.__searchSpecificLayer(editableLayer.name()):
+            if not self.__searchSpecificLayerInSQLite(editableLayer.name()):
                 continue
             if self.__isLayerEditBuffered(editableLayer) is True:
                 editLayers.append(editableLayer)
@@ -252,6 +295,14 @@ class RipartPlugin:
                 return
 
     def __isLayerEditBuffered(self, layer) -> bool:
+        """
+        Vérifie si une couche a été modifiée : objets supprimés, modifiés ou ajoutés.
+
+        :param layer: la couche qui a pu être mise à jour
+        :type layer: QgsMapLayer
+
+        :return: True, si la couche a été modifiée, False sinon
+        """
         if layer is None:
             return False
         layerEditBuffer = layer.editBuffer()
@@ -261,6 +312,13 @@ class RipartPlugin:
         return False
 
     def __saveEdits(self, editableLayers) -> None:
+        """
+        Sauvegarde des mises à jour effectuées sur les couches quand l'utilisateur a cliqué sur la disquette (save)
+        dans l'application QGIS.
+
+        :param editableLayers: liste des couches modifiées
+        :type editableLayers: list[QgsMapLayer]
+        """
         allMessages = []
         for layer in editableLayers:
             messageProgress = "Synchronisation de la couche {}".format(layer.name())
@@ -284,6 +342,15 @@ class RipartPlugin:
             return
 
     def __saveChangesForOneLayer(self, layer) -> str:
+        """
+        Sauvegarde des modifications d'UNE couche dans le projet QGIS par l'envoi d'une requête POST
+        vers le serveur de l'espace collaboratif.
+
+        :param layer: la couche qui doit être sauvegardée
+        :type layer: QgsMapLayer
+
+        :return: le message de fin de transaction avec le serveur
+        """
         if layer is None:
             return "error : PluginModule:__saveChangesForOneLayer, la couche n'est pas valable (None)."
         # Connexion à l'Espace collaboratif
@@ -313,8 +380,15 @@ class RipartPlugin:
         return messages
 
     def __doConnexion(self, bAutomaticConnection) -> bool:
-        #  bAutomaticConnection à True : connexion systématique, l'utilisateur a cliqué
-        #  sur le bouton "Se connecter à l'Espace Collaboratif"
+        """
+        Connexion à l'espace collaboratif par l'authentification Keycloak.
+
+        :param bAutomaticConnection: à True (connexion systématique), l'utilisateur a cliqué sur le bouton
+                                     "Se connecter à l'Espace Collaboratif", False dans les autres cas.
+        :type bAutomaticConnection: bool
+
+        :return: True si la connexion a été établie, False sinon
+        """
         if PluginHelper.getConfigFile() == '':
             PluginHelper.showMessageBox(cst.PROJECT_NOREGISTERED)
             return False
@@ -337,6 +411,18 @@ class RipartPlugin:
         return True
 
     def __doPost(self, layer, editBuffer) -> str:
+        """
+        Envoi par une requête POST, les mises à jour d'une couche vers le serveur de l'espace collaboratif.
+        Ces mises à jour sont stockées par QGIS avec la classe QgsVectorLayerEditBuffer.
+
+        :param layer: la couche mise à jour par l'utilisateur
+        :type layer: QgsMapLayer
+
+        :param editBuffer: les mises à jour stockées en mémoire pas QGIS
+        :type editBuffer: QgsVectorLayerEditBuffer
+
+        :return: message de fin de transaction
+        """
         wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
         # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
         # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
@@ -353,6 +439,16 @@ class RipartPlugin:
         return messages
 
     def __sendMessageBarException(self, message, exception) -> None:
+        """
+        Envoi d'un message d'erreur formaté avec l'exception à l'utilisateur sur la barre de message QGIS
+        et dans le fichier de log.
+
+        :param message: le message d'erreur
+        :type message: str
+
+        :param exception: le message d'exception
+        :type exception: Exception
+        """
         if self.__context is None:
             return
         self.__context.iface.messageBar().clearWidgets()
@@ -362,11 +458,16 @@ class RipartPlugin:
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def __translate(self, message) -> str:
+        """
+        Fonction de traduction des noms de menus.
+        """
         return QCoreApplication.translate('RipartPlugin', message)
 
-    # Add a toolbar icon to the toolbar
     def __addAction(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True,
                     status_tip=None, whats_this=None, parent=None) -> QAction:
+        """
+        Add a toolbar icon to the toolbar
+        """
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
@@ -390,7 +491,9 @@ class RipartPlugin:
         return action
 
     def initGui(self) -> None:
-        """Create the menu entries and toolbar icons inside the QGIS GUI."""
+        """
+        Create the menu entries and toolbar icons inside the QGIS GUI.
+        """
         icon_path = ':/plugins/RipartPlugin/images/connect.png'
         self.__addAction(
             icon_path,
@@ -491,6 +594,10 @@ class RipartPlugin:
         self.toolbar.addWidget(self.toolButton2)
 
     def __test(self):
+        """
+        Comme son nom l'indique, fonction de test pour des fonctionnalités QGIS.
+        Désactivée pour l'instant.
+        """
         layer = Contexte.getInstance(self, QgsProject).iface.activeLayer()
         for field in layer.fields():
             idx = layer.fields().indexOf(field.name())
@@ -524,16 +631,20 @@ class RipartPlugin:
         #     {'6': '6'}]}
         #     break
 
-    # Connexion à l'Espace collaboratif
     def __runConnexion(self) -> None:
+        """
+        Connexion à l'Espace collaboratif.
+        """
         try:
             if not self.__doConnexion(True):
                 return
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__runConnexion', e)
 
-    # Téléchargement des signalements
     def __downloadReports(self) -> None:
+        """
+        Téléchargement des signalements et croquis associés pour le groupe et la zone de travail de l'utilisateur.
+        """
         try:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
@@ -544,8 +655,10 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__downloadReports', e)
 
-    # Visualisation du signalement
     def __viewReport(self) -> None:
+        """
+        Visualisation des caractéristiques d'un signalement.
+        """
         try:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
@@ -556,8 +669,10 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__viewReport', e)
 
-    # Répondre à un signalement
     def __replyToReport(self) -> None:
+        """
+        Envoyer une réponse à un signalement.
+        """
         try:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
@@ -567,8 +682,10 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__replyToReport', e)
 
-    # Création d'un signalement géolocalisé
     def __createReport(self) -> None:
+        """
+        Création d'un signalement géolocalisé avec ou sans croquis associé(s).
+        """
         try:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
@@ -579,8 +696,10 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__createReport', e)
 
-    # Suppression de tous les signalements et croquis de la carte courante
     def __removeReportsAndSketchs(self) -> None:
+        """
+        Suppression de tous les signalements et croquis de la carte courante du projet de l'utilisateur.
+        """
         try:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
@@ -597,10 +716,12 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__removeReportsAndSketchs', e)
 
-    # Sélectionne le/les signalement(s) associé(s) au(x) croquis sélectionnés
-    # ou le/les croquis associé(s) au signalement sélectionné.
-    # On ne peut pas sélectionner des signalements et des croquis (soit signalements, soit croquis)
     def __magicwand(self) -> None:
+        """
+        Sélectionne le/les signalement(s) associé(s) au(x) croquis sélectionnés ou le/les croquis associé(s)
+        au signalement sélectionné.
+        On ne peut pas sélectionner des signalements et des croquis (soit signalements, soit croquis)
+        """
         try:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
@@ -610,8 +731,11 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__magicwand', e)
 
-    # Téléchargement des couches appartenant au groupe de l'utilisateur
     def __downloadLayersFromMyCommunity(self) -> None:
+        """
+        Téléchargement des couches de travail en proposant un choix de couches téléchargeables appartenant
+        au groupe de l'utilisateur.
+        """
         try:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
@@ -642,8 +766,11 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__downloadLayersFromMyCommunity', e)
 
-    # Synchroniser les mises à jour de toutes les couches de la carte
     def __synchronizeDataFromAllLayers(self) -> None:
+        """
+        Synchroniser les mises à jour de toutes les couches en édition/visualisation de la carte du projet utilisateur.
+        """
+        # TODO eric : réduire les lignes de code par des fonctions, code trop long
         try:
             endMessage = '<b>Contenu de la synchronisation</b>'
 
@@ -762,8 +889,10 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__synchronizeDataFromAllLayers', e)
 
-    # Lance la fenêtre de configuration des préférences
     def __configurePlugin(self) -> None:
+        """
+        Lance la fenêtre de configuration des préférences de l'utilisateur.
+        """
         try:
             self.__context = Contexte.getInstance(self, QgsProject)
             self.__context.checkConfigFile()
@@ -772,8 +901,10 @@ class RipartPlugin:
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__configurePlugin', e)
 
-    # Montre la fenêtre "about" avec les informations de version du plugin
     def __ripAbout(self) -> None:
+        """
+        Montre à l'utilisateur, la fenêtre (de classe FormInfo) avec les informations de version du plugin.
+        """
         version = '0.'
         date = '2018'
 
@@ -798,19 +929,25 @@ class RipartPlugin:
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
         dlgInfo.exec_()
 
-    # Ouvre le document d'aide utilisateur
     def __showHelp(self) -> None:
+        """
+        Ouvre le document d'aide utilisateur du plugin.
+        """
         file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "files", PluginHelper.ripart_help_file))
         PluginHelper.open_file(file_path)
 
-    # Ouvre le dernier fichier de log
     def __showLog(self) -> None:
+        """
+        Ouvre le dernier fichier de log.
+        """
         logpath = self.__ripartLogger.getLogpath()
         if logpath is not None:
             PluginHelper.open_file(logpath)
 
-    # Fonction nécessaire au bon chargement du plugin
     def unload(self) -> None:
+        """
+        Fonction nécessaire au bon chargement du plugin
+        """
         logs = logging.Logger.manager.loggerDict
         for lg in logs:
             logger = logs[lg]

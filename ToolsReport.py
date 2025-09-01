@@ -117,6 +117,8 @@ class ToolsReport(object):
          et des liens de connexion dans la base SQLite.
         - Téléchargement et import des signalements/croquis dans le projet.
         - Insertion des données téléchargées dans la base SQLite.
+
+         NB : appeler dans PluginModule.py, fonction : __downloadReports
         """
         self.__logger.debug("ToolsReport.download")
 

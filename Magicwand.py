@@ -30,6 +30,8 @@ class Magicwand(object):
         """
         Sélection des croquis associés à un ou plusieurs signalement(s)
         ou le signalement associé à un ou plusieurs croquis.
+
+        NB : appeler dans PluginModule.py, fonction : __magicwand
         """
         res = self.checkObjectSelection()
         if res is None:

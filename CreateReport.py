@@ -32,6 +32,7 @@ class CreateReport(object):
         """
         Création d'un nouveau signalement avec ou sans croquis.
         Si un objet est sélectionné création avec croquis, si pas d'objet(s) sélectionné(s) création d'un signalement.
+
         NB : appeler dans PluginModule.py, fonction : __createReport
         """
         try:

@@ -1,7 +1,7 @@
 import json
 
 import qgis.core
-from qgis.core import QgsProject, QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer
+from qgis.core import QgsProject, QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer, QgsMapLayer
 from qgis.PyQt.QtWidgets import QMessageBox
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
@@ -24,7 +24,7 @@ class WfsPost(object):
         :param context: le contexte du client QGIS
 
         :param layer: la couche QGIS en édition
-        :type layer: GuichetVectorLayer
+        :type layer: QgsMapLayer
 
         :param filterName: le nom de la zone de travail utilisateur
         :type filterName: str
