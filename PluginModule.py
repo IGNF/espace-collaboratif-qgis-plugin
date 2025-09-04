@@ -104,6 +104,11 @@ class RipartPlugin:
         SQLiteManager.vacuumDatabase()
 
     def __connectProjectRead(self) -> None:
+        """
+        Connexion de signaux spécifiques sur les couches utilisateurs qui appartiennent à un groupe préfixé "ESPACECO_"
+        et qui ont été extraites avec le plugin. Les noms de ces couches se retrouvent dans la table des tables.
+        dans la base SQLite.
+        """
         # si le contexte n'est pas encore initialisé
         if self.__context is None:
             self.__context = Contexte.getInstance(self, QgsProject)
