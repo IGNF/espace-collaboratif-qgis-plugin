@@ -33,7 +33,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setFixedSize(self.width(), self.height())
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         self.__context = context
-        self.__listNamesIdsCommunities = context.getListNameOfCommunities()
+        self.__listNamesIdsCommunities = context.getListNameIdFromAllUserCommunities()
         self.__nameActiveCommunity = context.getActiveCommunityName()
         self.__newShapefilesDict = {}
         self.__bCancel = True

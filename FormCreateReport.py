@@ -97,7 +97,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # TODO Mélanie : la boite de configuration ne contient plus d'item sur le groupe préféré, si on supprime
         #  cette idée les cinq lignes qui suivent sont à supprimer
         bInListNameOfCommunities = False
-        for nameid in self.__context.getListNameOfCommunities():
+        for nameid in self.__context.getListNameIdFromAllUserCommunities():
             if preferredGroup == nameid['name']:
                 self.comboBoxGroupe.setCurrentText(preferredGroup)
                 bInListNameOfCommunities = True
@@ -114,7 +114,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.itemChanged.connect(self.__onItemChanged)
 
         # Affichage des thèmes du groupe de l'utilisateur
-        self.__displayThemes(self.__context.getCommunity())
+        self.__displayThemes(self.__context.getCommunities())
 
         # Liste des thèmes du profil (objets Theme)
         __themesList = []
@@ -141,7 +141,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         Initialisation de la liste déroulante en ajoutant tous les groupes de l'utilisateur. Le groupe actif de
         l'utilisateur est placé en tête de liste.
         """
-        for nameid in self.__context.getListNameOfCommunities():
+        for nameid in self.__context.getListNameIdFromAllUserCommunities():
             self.comboBoxGroupe.addItem(nameid['name'])
         if self.__activeCommunity is not None and self.__activeCommunity != "":
             self.comboBoxGroupe.setCurrentText(self.__activeCommunity)
@@ -280,7 +280,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                             self.__checkParentOnDateTimeEditChanged(parent_item, datetimeedit),
                             self.__removeRedIfValid(widg, lab, theme_name)))
 
-    def __displayThemes(self, community) -> None:
+    def __displayThemes(self, communities) -> None:
         """
         Affiche les thèmes et leurs attributs sous forme d'arborescence dans le formulaire en fonction
         du groupe choisi par l'utilisateur.
@@ -288,7 +288,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         :param community: liste des groupes (avec leurs caractéristiques) de l'utilisateur
         :type community: CommunitiesMember
         """
-        for c in community.getCommunities():
+        for c in communities:
             if self.__activeCommunity == c.getName():
                 self.__displayThemesForCommunity(c)
                 break
@@ -511,8 +511,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         userCommunityNameChoice = self.comboBoxGroupe.currentText()
         self.__activeCommunity = userCommunityNameChoice
         if userCommunityNameChoice is not None:
-            community = self.__context.getCommunity()
-            for comm in community.getCommunities():
+            for comm in self.__context.getCommunities():
                 if comm.getName() == userCommunityNameChoice:
                     self.__displayThemesForCommunity(comm)
                     self.__communityIdWhenThemeChanged = comm.getId()

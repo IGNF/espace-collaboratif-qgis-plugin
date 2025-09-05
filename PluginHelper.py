@@ -37,7 +37,7 @@ class PluginHelper:
     nom_Fichier_Parametres_Ripart = "espaceco.xml"
 
     # dossier des fichiers de style .qml
-    qmlStylesDir = "espacecoStyles"
+    qmlStylesDirectory = "espacecoStyles"
 
     sketchLayers = {cst.nom_Calque_Croquis_Polygone: 'POLYGON', cst.nom_Calque_Croquis_Ligne: 'LINESTRING',
                     cst.nom_Calque_Croquis_Point: 'POINT'}

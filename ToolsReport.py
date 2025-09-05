@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsEditorWidgetSetup, QgsRectangle, QgsPointXY
 
-from core.requests import Response
+from .core.requests import Response
 from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
 from .core.ProgressBar import ProgressBar
@@ -149,7 +149,7 @@ class ToolsReport(object):
         self.__insertReportsSketchsIntoSQLite(data)
 
         # Rafraichir la carte
-        self.__context.refresh_layers()
+        self.__context.refreshLayers()
 
         # Fermer la patience
         self.__progress.close()

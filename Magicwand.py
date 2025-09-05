@@ -28,7 +28,7 @@ class Magicwand(object):
 
     def selectReportOrSketchObjects(self) -> None:
         """
-        Sélection des croquis associés à un ou plusieurs signalement(s)
+        Sélection des croquis associés à un signalement
         ou le signalement associé à un ou plusieurs croquis.
 
         NB : appeler dans PluginModule.py, fonction : __magicwand
@@ -37,7 +37,7 @@ class Magicwand(object):
         if res is None:
             return
         elif res == "croquis":
-            self.selectAssociatedReports()
+            self.selectAssociatedReport()
         elif res == "signalement":
             self.selectAssociatedCroquis()
 
@@ -45,22 +45,22 @@ class Magicwand(object):
         """
         Contrôle si un des cas suivants est vrai :
          - un ou plusieurs croquis sélectionnés
-         - un ou plusieurs signalements sélectionnés
+         - un signalement sélectionné
 
         :return: None si pas de sélection de croquis ou signalement ou sélection des deux types d'objets,
                  "croquis" si des croquis sont sélectionnés,
-                 "signalement" si des remarques sont sélectionnées
+                 "signalement" si un signalement est sélectionné
         """
         selectedCroquis = False
-        selectedRemarque = False
+        selectedReport = False
         mapLayers = self.context.mapCan.layers()
         for ml in mapLayers:
             if ml.name() in PluginHelper.sketchLayers and len(ml.selectedFeatures()) > 0:
                 selectedCroquis = True
             if ml.name() == cst.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
-                selectedRemarque = True
+                selectedReport = True
 
-        if selectedCroquis and selectedRemarque:
+        if selectedCroquis and selectedReport:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Veuillez sélectionner un signalement ou un croquis"
                                                         u" (mais pas les deux)",
@@ -68,7 +68,7 @@ class Magicwand(object):
             return None
         elif selectedCroquis:
             return "croquis"
-        elif selectedRemarque:
+        elif selectedReport:
             return "signalement"
         else:
             self.context.iface.messageBar().pushMessage("",
@@ -76,11 +76,11 @@ class Magicwand(object):
                                                         level=1, duration=3)
             return None
 
-    def selectAssociatedReports(self) -> None:
+    def selectAssociatedReport(self) -> None:
         """
         Sélectionne le signalement associé au croquis sélectionné.
         """
-        # identifiant de la remarque (No de remarque)
+        # identifiant du signalement (Numéro de signalement)
         remNos = ""
         mapLayers = self.context.mapCan.layers()
 
@@ -92,11 +92,11 @@ class Magicwand(object):
                     remNos += str(noSignalement) + ","
                     ml.removeSelection()
 
-        self.context.selectRemarkByNo(remNos[:-1])
+        self.context.selectReportByNumero(remNos[:-1])
 
     def selectAssociatedCroquis(self) -> None:
         """
-        Sélectionne les croquis associés au signalement sélectionnés et désélectionne le signalement.
+        Sélectionne les croquis associés au signalement sélectionné puis le désélectionne.
         """
         # key: layer name, value: noSignalement
         croquisLays = {}
@@ -107,7 +107,7 @@ class Magicwand(object):
         for f in feats:
             idx = remarqueLay.fields().lookupField("NoSignalement")
             noSignalement = f.attributes()[idx]
-            croquisLays = self.context.getCroquisForRemark(noSignalement, croquisLays)
+            croquisLays = self.context.getCroquisForReport(noSignalement, croquisLays)
 
         for cr in croquisLays:
             lay = self.context.getLayerByName(cr)

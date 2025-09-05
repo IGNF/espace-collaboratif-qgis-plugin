@@ -1,3 +1,5 @@
+from typing import Optional
+
 from .Query import Query
 from .Community import Community
 from ..PluginHelper import PluginHelper
@@ -34,17 +36,17 @@ class CommunitiesMember(object):
         self.__tokenType = tokenType
         self.__tokenAccess = tokenAccess
         self.__query = Query(url, proxies)
-        # liste des noms des communautés de l'utilisateur
-        self.__listNameOfCommunities = []
+        # liste des groupes de l'utilisateur sous la forme ({name:communityName, id:communityId})
+        self.__listNameIdFromAllUserCommunities = []
 
-    def getUserCommunity(self, communityToFind) -> None:
+    def getUserCommunity(self, communityToFind) -> Optional[Community]:
         """
-        Indique si un groupe appartient à l'utilisateur
+        Indique si un groupe appartient à l'utilisateur.
 
         :param communityToFind: le nom du groupe
         :type communityToFind: str
 
-        :return: le nom du groupe ou None si l'utilisateur n'appartient pas au groupe cherché
+        :return: le nom du groupe si l'utilisateur appartient au groupe cherché, None sinon
         """
         for community in self.__communities:
             if community.getName() == communityToFind:
@@ -73,7 +75,7 @@ class CommunitiesMember(object):
         if PluginHelper.keyExist('communities_member', data):
             self.getDatasCommunities(data['communities_member'])
 
-        return self.__listNameOfCommunities
+        return self.__listNameIdFromAllUserCommunities
 
     def getDatasCommunities(self, datas) -> None:
         """
@@ -90,7 +92,7 @@ class CommunitiesMember(object):
             community = Community(params)
             community.getDatas(data)
             self.__communities.append(community)
-            self.__listNameOfCommunities.append({'name': community.getName(), 'id': community.getId()})
+            self.__listNameIdFromAllUserCommunities.append({'name': community.getName(), 'id': community.getId()})
 
     def getId(self) -> int:
         """
@@ -110,8 +112,8 @@ class CommunitiesMember(object):
         """
         return self.__communities
 
-    def getListNameOfCommunities(self) -> []:
+    def getListNameIdFromAllUserCommunities(self) -> []:
         """
-        :return: la liste des noms de groupes de l'utilisateur
+        :return: la liste des groupes de l'utilisateur sous la forme ({name: communityName, id: communityId}]
         """
-        return self.__listNameOfCommunities
+        return self.__listNameIdFromAllUserCommunities

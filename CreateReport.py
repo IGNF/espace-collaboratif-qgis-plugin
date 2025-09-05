@@ -36,9 +36,9 @@ class CreateReport(object):
         NB : appeler dans PluginModule.py, fonction : __createReport
         """
         try:
-            hasSelectedFeature = self.__context.hasMapSelectedFeatures()
+            bSelectedFeature = self.__context.asSelectedFeaturesInMap()
             # Sans croquis, en cliquant simplement sur la carte
-            if not hasSelectedFeature:
+            if not bSelectedFeature:
                 if self.__activeLayer.name() != cst.nom_Calque_Signalement:
                     return
                 mapToolsReport = MapToolsReport(self.__context)
@@ -46,8 +46,8 @@ class CreateReport(object):
                 return
             # Avec croquis
             else:
-                # Création des croquis à partir de la sélection de features
-                sketchList = self.__context.makeSketchsFromSelection()
+                # Création du ou des croquis à partir de la sélection de features
+                sketchList = self.__context.makeSketchFromSelection()
                 # Il y a eu un problème à la génération des croquis, on sort
                 if len(sketchList) == 0:
                     return

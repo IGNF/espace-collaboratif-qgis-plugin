@@ -7,23 +7,23 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-import json
 import os.path
 import shutil
 import ntpath
 import configparser
 import time
 from datetime import datetime
+from typing import Optional
 
 import requests
 
 from PyQt5 import QtGui
 from PyQt5.QtGui import QImage
 from qgis.PyQt.QtWidgets import QMessageBox
-from qgis._core import QgsMapLayerType, QgsLayerTreeLayer
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
-    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri
+    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri, QgsMapLayerType,\
+    QgsLayerTreeLayer, QgsMapLayer
 from .Import_WMTS import importWMTS
 from .core.PluginLogger import PluginLogger
 from .core.SketchAttributes import SketchAttributes
@@ -46,7 +46,7 @@ from .FormChoixGroupe import FormChoixGroupe
 
 class Contexte(object):
     """
-    Contexte et initialisation de la "session"
+    Classe de contexte du projet.
     """
     # instance du Contexte
     instance = None
@@ -98,9 +98,9 @@ class Contexte(object):
 
     def __init__(self, QObject, QgsProject):
         """
-        Constructor
+        Constructeur.
 
-        Initialisation du contexte
+        Initialisation du contexte et de la session utilisateur.
         """
         self.projectDir = None
         self.QObject = QObject
@@ -112,14 +112,12 @@ class Contexte(object):
         self.logger = PluginLogger("Contexte").getPluginLogger()
         self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
         self.dbPath = SQLiteManager.getBaseSqlitePath()
-        # version in metadata
-        cst.RIPART_CLIENT_VERSION = self.getMetadata()
         self.__userCommunity = None
         self.__activeCommunityName = ''
         self.__userName = ''
         self.__listNameOfCommunities = None
         self.__mapToolsReport = None
-        self.__community = None
+        self.__communities = None
         # Connexion avec keycloack
         self.__keycloakService = None
         self.__tokenAccess = ''
@@ -137,7 +135,7 @@ class Contexte(object):
             self.checkConfigFile()
 
             # set de la base de données
-            self.createDatabaseSQLite()
+            self.copySQLiteDatabase()
 
             # set des fichiers de style
             self.copyRipartStyleFiles()
@@ -153,49 +151,97 @@ class Contexte(object):
             self.logger.error("init contexte:" + format(e))
             raise
 
-    def getCommunity(self):
-        return self.__community
+    def getCommunities(self) -> []:
+        """
+        :return: les groupes de l'utilisateur
+        """
+        return self.__communities
 
-    def setCommunity(self, community):
-        self.__community = community
+    def setCommunities(self, communities):
+        """
+        Affecte les groupes de l'utilisateur au contexte.
+        """
+        self.__communities = communities
 
-    def getListNameOfCommunities(self) -> []:
-        return self.__listNameOfCommunities
+    def getListNameIdFromAllUserCommunities(self) -> []:
+        """
+        :return: la liste des noms de groupes de l'utilisateur
+        """
+        return self.__listNameIdFromAllUserCommunities
 
-    def setListNameOfCommunities(self, listNameOfCommunities) -> None:
-        self.__listNameOfCommunities = listNameOfCommunities
+    def setListNameIdFromAllUserCommunities(self, listNameIdFromAllUserCommunities) -> None:
+        """
+        Affecte la liste des noms de groupes de l'utilisateur au contexte.
+
+        :param listNameIdFromAllUserCommunities: la liste des groupes utilisateur paramétrée dans l'espace collaboratif
+        :type listNameIdFromAllUserCommunities: list
+        """
+        self.__listNameIdFromAllUserCommunities = listNameIdFromAllUserCommunities
 
     def getUserNameCommunity(self) -> str:
+        """
+        :return: le nom de l'utilisateur du groupe actif auquel il appartient
+        """
         return self.__userName
 
     def setUserNameCommunity(self, userName) -> None:
+        """
+        Affecte le nom de l'utilisateur du groupe actif au Contexte.
+
+        :param userName: le nom de l'utilisateur
+        :type userName: str
+        """
         self.__userName = userName
 
     def getUserCommunity(self) -> Community:
+        """
+        :return: le groupe de l'utilisateur
+        """
         return self.__userCommunity
 
     def setUserCommunity(self, community) -> None:
+        """
+        Affecte le groupe de l'utilisateur au Contexte.
+
+        :param community: le groupe de l'utilisateur et ses caractéristiques
+        :type community: Community
+        """
         self.__userCommunity = community
 
     def setActiveCommunityName(self, name) -> None:
+        """
+        Affecte le nom du groupe actif de l'utilisateur au Contexte.
+
+        :param name: le nom du groupe actif
+        :type name: str
+        """
         self.__activeCommunityName = name
 
     def getActiveCommunityName(self) -> str:
+        """
+        :return: le nom du groupe actif de l'utilisateur
+        """
         return self.__activeCommunityName
 
-    def getMetadata(self):
-        config = configparser.RawConfigParser()
-        config.read(self.plugin_path + '\\metadata.txt')
-        return config.get('general', 'version')
-
-    def __setUrlHostEspaceCo(self):
+    def __setUrlHostEspaceCo(self) -> str:
+        """
+        Affecte le nom de l'url host au contexte. Si vide ou None donne un nom par défaut.
+        """
         url = PluginHelper.load_urlhost(self.projectDir).text
-        if url == '':
+        if url == '' or url is None:
             url = 'https://espacecollaboratif.ign.fr'
         return url
 
     @staticmethod
-    def IsLayerInMap(layerName):
+    def IsLayerInMap(layerName) -> bool:
+        """
+        Recherche une couche dans le projet.
+
+        :param layerName: le nom de la couche
+        :type layerName: str
+
+        :return: True, si la couche existe dans le projet, False sinon
+        """
         for layer in QgsProject.instance().mapLayers().values():
             if layer.name() == layerName:
                 return True
@@ -236,7 +282,9 @@ class Contexte(object):
 
     def checkConfigFile(self):
         """
-        Contrôle de l'existence du fichier de configuration
+        Contrôle de l'existence du fichier de configuration.
+
+        NB : une exception est envoyée si le fichier n'est pas trouvé dans le répertoire du projet
         """
         ripartxml = self.projectDir + os.path.sep + PluginHelper.getConfigFile()
         if not os.path.isfile(ripartxml):
@@ -254,14 +302,26 @@ class Contexte(object):
 
     def copyRipartStyleFiles(self):
         """
-        Copie les fichiers de styles (pour les remarques et croquis ripart)
+        Copie les fichiers de styles (pour les signalements et croquis) à l'emplacement suivant :
+        - projet/espacecoStyles/Croquis_EC_Point.qml
+        - projet/espacecoStyles/Croquis_EC_Ligne.qml
+        - projet/espacecoStyles/Croquis_EC_Polygone.qml
+        - projet/espacecoStyles/Signalement.qml
         """
-        styleFilesDir = self.projectDir + os.path.sep + PluginHelper.qmlStylesDir
-
+        styleFilesDir = self.projectDir + os.path.sep + PluginHelper.qmlStylesDirectory
         PluginHelper.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
-                          PluginHelper.qmlStylesDir, styleFilesDir)
+                          PluginHelper.qmlStylesDirectory, styleFilesDir)
 
     def getConnexionEspaceCollaboratifWithKeycloak(self, bAutomaticConnection) -> bool:
+        """
+        Lance la connexion au service de l'espace collaboratif en utilisant les fonctionnalités
+        d’authentification et d’autorisation de Keycloak.
+
+        :param bAutomaticConnection: à True dans le cas d'une connexion obligatoire, False sinon
+        :type bAutomaticConnection: bool
+
+        :return: True si la connexion à l'espace collaboratif est établie, False sinon
+        """
         if bAutomaticConnection is False:
             return True
 
@@ -301,9 +361,9 @@ class Contexte(object):
             # Recherche des communautés
             communities = CommunitiesMember(self.urlHostEspaceCo, self.__tokenType, self.__tokenAccess, self.proxies)
             communities.extractCommunities()
-            self.setCommunity(communities)
+            self.setCommunities(communities.getCommunities())
             # La liste des communautés à afficher dans la boite de choix des communautés
-            self.setListNameOfCommunities(communities.getListNameOfCommunities())
+            self.setListNameIdFromAllUserCommunities(communities.getListNameIdFromAllUserCommunities())
             self.setUserNameCommunity(communities.getUserName())
             dlgSelectedCommunities = FormChoixGroupe(self)
             dlgSelectedCommunities.exec_()
@@ -331,9 +391,10 @@ class Contexte(object):
             # Bouton Annuler
             elif dlgSelectedCommunities.getCancel():
                 dlgSelectedCommunities.close()
-                return False
+                self.__connectionResult = False
+                return self.__connectionResult
             # Les informations de connexion sont montrées à l'utilisateur
-            self.__setDisplayInformations()
+            self.__displayLoginInformationsOnScreen()
             self.__connectionResult = True
         except Exception as e:
             self.logger.error(format(e))
@@ -343,8 +404,10 @@ class Contexte(object):
             PluginHelper.showMessageBox(PluginHelper.notNoneValue(format(e)))
         return self.__connectionResult
 
-    def __setDisplayInformations(self):
-        # Les infos de connexion présentée à l'utilisateur
+    def __displayLoginInformationsOnScreen(self) -> None:
+        """
+        Affiche à l'écran les informations de connexion à l'espace collaboratif.
+        """
         dlgInfo = FormInfo()
         # Modification du logo en fonction du groupe
         # TODO : si utilisateur sans groupe getUserCommunity est a None, il faut faire un test et changer le code
@@ -387,8 +450,12 @@ class Contexte(object):
     def getTokenAccess(self):
         return self.__tokenAccess
 
-    # Création de la base de données spatialite si elle n'existe pas
-    def createDatabaseSQLite(self):
+    def copySQLiteDatabase(self) -> None:
+        """
+        Copie de la base de données spatialite si elle n'existe pas dans le répertoire du projet.
+
+        NB : envoi une Exception si la copie est impossible.
+        """
         if not os.path.isfile(self.dbPath):
             try:
                 shutil.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
@@ -398,9 +465,10 @@ class Contexte(object):
                 self.logger.error("no espaceco.sqlite found in plugin directory" + format(e))
                 raise e
 
-    # Création des tables de signalements et de croquis
-    def createTablesReportsAndSketchs(self):
-        # Création de la table des signalements et de croquis
+    def createTablesReportsAndSketchs(self) -> None:
+        """
+        Création des tables de signalements et de croquis dans la base SQLite du projet.
+        """
         for table in PluginHelper.reportSketchLayersName:
             SQLiteManager.emptyTable(table)
             SQLiteManager.deleteTable(table)
@@ -410,7 +478,16 @@ class Contexte(object):
                 SQLiteManager.createSketchTable(table, PluginHelper.sketchLayers[table])
         SQLiteManager.vacuumDatabase()
 
-    def importWFS(self, layer):
+    def importWFS(self, layer) -> ():
+        """
+        Import des couches WFS sélectionnées dans la boite de dialogue "Charger les couches de mon groupe"
+        dans le projet QGIS de l'utilisateur.
+
+        :param layer: la couche à importer dans le projet
+        :type layer: QgsVectorLayer
+
+        :return: la nouvelle couche type GuichetVectorLayer créée et un booléen indiquant si la colonne détruit existe
+        """
         # Création éventuelle de la table SQLite liée à la couche
         sqliteManager = SQLiteManager()
 
@@ -420,7 +497,7 @@ class Contexte(object):
         SQLiteManager.deleteTable(layer.name())
         bColumnDetruitExist = sqliteManager.createTableFromLayer(layer)
 
-        # Création de la source pour la couche dans la carte liée à la table SQLite
+        # Création de la source de données pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
         self.logger.debug(uri.uri())
         uri.setDataSource('', layer.name(), layer.geometryName)
@@ -493,10 +570,6 @@ class Contexte(object):
                 Ajout des couches WFS sélectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.FEATURE_TYPE:
-                    # TODO à vérifier si utile pour la récupération de la structure de la future table
-                    # structure = self.connexionFeatureTypeJson(layer.url, layer.name)
-                    # if structure['database_type'] == 'bduni' and structure['database_versioning'] is True:
-                    # layer.isStandard = False
                     sourceLayer = self.importWFS(layer)
                     if not sourceLayer[0].isValid():
                         endMessage += "Layer {} failed to load !\n".format(layer.name())
@@ -567,7 +640,18 @@ class Contexte(object):
                             level=1, duration=3)
             print(str(e))
 
-    def hideColumn(self, layer, columnName):
+    def hideColumn(self, layer, columnName) -> None:
+        """
+        Masquer un champ dans le formulaire d'attributs de QGIS pour une couche donnée en entrée.
+
+        NB : fonction pas encore utilisée
+
+        :param layer: la couche dont on doit masquer le champ
+        :type layer: QgsVectorLayer
+
+        :param columnName: le nom du champ
+        :type columnName: str
+        """
         config = layer.attributeTableConfig()
         columns = config.columns()
         for column in columns:
@@ -578,6 +662,14 @@ class Contexte(object):
         layer.setAttributeTableConfig(config)
 
     def replaceSpecialCharacter(self, replaceTo) -> str:
+        """
+        Remplace une liste de caractères spéciaux par une chaine vide et la passe en minuscules.
+
+        :param replaceTo: la chaine de caractères supposée contenir des caractères spéciaux.
+        :type replaceTo: str
+
+        :return: la chaine de caractères en minuscules sans caractères spéciaux
+        """
         tmp = replaceTo.replace(' ', '')
         tmp = tmp.replace('-', '')
         tmp = tmp.replace('_', '')
@@ -587,7 +679,23 @@ class Contexte(object):
         tmp = tmp.replace(')', '')
         return tmp.lower()
 
-    def removeLayers(self, guichet_layers, maplayers, bAskForConfirmation=True):
+    def removeLayers(self, guichet_layers, maplayers, bAskForConfirmation=True) -> bool:
+        """
+        Supprime les couches WFS et WMS présentent dans le projet en fonction de la sélection de l'utilisateur
+        dans la boite "Charger les couches de mon groupe".
+
+        :param guichet_layers: liste des couches sélectionnées par l'utilisateur dans la boite
+                               "Charger les couches de mon groupe"
+        :type guichet_layers: list
+
+        :param maplayers: la liste des couches présentes dans le projet
+        :type maplayers: dict
+
+        :param bAskForConfirmation: à True s'il faut demander l'avis utilisateur, False sinon
+        :type bAskForConfirmation: bool
+
+        :return: True si la suppression a pu s'effectuer, False si l'utilisateur change d'avis
+        """
         tmp = ''
         removeLayers = set()
         for gLayer in guichet_layers:
@@ -602,13 +710,34 @@ class Contexte(object):
                     tmp += "{}, ".format(v.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 
-    def removeLayersFromProject(self, guichet_layers, maplayers, bAskForConfirmation=True):
+    def removeLayersFromProject(self, guichet_layers, layersInTableOfTables, bAskForConfirmation=True):
+        """
+        À partir de la liste des couches présentent dans "guichet_layers", supprime les couches WFS (présentent
+        dans la table des tables de la base SQLite du projet et pour le groupe préfixé "[ESPACE CO] ") et WMS
+        présentent dans le projet.
+
+        NB : si la couche n'est pas retrouvée dans la table des tables mais qu'elle existe dans le projet,
+        alors, elle est supprimée
+
+        :param guichet_layers: liste des couches sélectionnées par l'utilisateur dans la boite
+                               "Charger les couches de mon groupe"
+        :type guichet_layers: list
+
+        :param layersInTableOfTables: la liste des couches présentes dans la table des tables
+                                      dans la base SQLite du projet
+        :type layersInTableOfTables: list
+
+        :param bAskForConfirmation: à True s'il faut demander l'avis utilisateur, False sinon
+        :type bAskForConfirmation: bool
+
+        :return: True si la suppression a pu s'effectuer, False si l'utilisateur change d'avis
+        """
         tmp = ''
-        removeLayers = []
+        removeLayers = set()
         for layer in guichet_layers:
             # Dans ce cas précis, "maplayers" représente la liste des couches présentent dans la table des tables
             # même si "mapLayers" est vide, les couches peuvent encore exister dans le projet
-            if layer.name() not in maplayers or len(maplayers) == 0:
+            if layer.name() not in layersInTableOfTables or len(layersInTableOfTables) == 0:
                 listLayers = QgsProject.instance().mapLayersByName(layer.name())
                 if len(listLayers) == 1:
                     # Vérifie si la couche appartient à un groupe ESPACECO ?
@@ -625,14 +754,29 @@ class Contexte(object):
                                 # Vérifie si l'enfant est une couche et si c'est celle recherchée
                                 if isinstance(child, QgsLayerTreeLayer) and child.layerId() == listLayers[0].id():
                                     print("{0} : {1}".format(layer.name(), len(list(listLayers[0].getFeatures()))))
-                                    removeLayers.append((layer.name()))
+                                    removeLayers.add((layer.name()))
                                     tmp += "{}, ".format(layer.name())
             else:
-                removeLayers.append(layer.name())
+                removeLayers.add(layer.name())
                 tmp += "{}, ".format(layer.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 
-    def removeLayersById(self, removeLayers, tmp, bAskForConfirmation):
+    def removeLayersById(self, removeLayers, tmp, bAskForConfirmation) -> bool:
+        """
+        Suppression de couche(s) dans un projet par identifiant QGIS.
+
+        :param removeLayers: les liste des couches à supprimer
+        :type removeLayers: set
+
+        :param tmp: la liste des noms de couches à supprimer séparés par une virgule pour le texte du message
+                    d'avertissement à l'utilisateur
+        :type tmp: str
+
+        :param bAskForConfirmation: à True s'il faut demander l'avis utilisateur, False sinon
+        :type bAskForConfirmation: bool
+
+        :return: True si la suppression a pu s'effectuer, False si l'utilisateur change d'avis
+        """
         if len(removeLayers) == 0:
             return True
 
@@ -732,11 +876,11 @@ class Contexte(object):
         print(message)
         return message
 
-    def getAllMapLayers(self):
+    def getAllMapLayers(self) -> {}:
         """
-        Return the list of layer names which are loaded in the map
-        :return dictionnaire des couches chargées sur la carte (key: layer name, value: layer)
-        :rtype dictionary
+        Recherche l'ensemble des couches d'un projet.
+
+        :return: l'ensemble des couches chargées sous la forme {key: layer name, value: QgsMapLayer}
         """
         layers = self.QgsProject.instance().mapLayers()
         maplayers = {}
@@ -745,11 +889,11 @@ class Contexte(object):
             maplayers[layer.name()] = layer
         return maplayers
 
-    def getMapPolygonLayers(self):
+    def getMapPolygonLayers(self) -> {}:
         """
-        Retourne les calques qui sont de type polygon ou multipolygon
-        :return dictionnaire des couches de type polygon(key: layer id, value: layer name)
-        :rtype dictionary
+        Recherche dans le projet les couches qui sont de type polygon ou multipolygon.
+
+        :return: les couches trouvées sous la forme {key: layer id, value: layer name}
         """
         polylayers = {}
         layers = self.QgsProject.instance().mapLayers()
@@ -761,18 +905,17 @@ class Contexte(object):
             geometryType = layer.geometryType()
             if geometryType is not None and geometryType != QgsWkbTypes.GeometryType.PolygonGeometry:
                 continue
-            print("{0} {1}".format(layer.name(), geometryType))
             polylayers[layer.id()] = layer.name()
         return polylayers
 
-    def getLayerByName(self, layName):
+    def getLayerByName(self, layName) -> Optional[QgsMapLayer]:
         """
-        Retourne le calque donné par son nom
-        :param layName: le nom du calque
-        :type layName: string
+        Recherche dans le projet la couche donnée par son nom en paramètre.
 
-        :return: le premier calque ayant pour nom celui donné en paramètre
-        :rtype: QgsVectorLayer
+        :param layName: le nom de la couche
+        :type layName: str
+
+        :return: la PREMIERE couche trouvée, None sinon
         """
         mapByName = self.QgsProject.instance().mapLayersByName(layName)
         if len(mapByName) > 0:
@@ -780,59 +923,32 @@ class Contexte(object):
         else:
             return None
 
-    def refresh_layers(self):
+    def refreshLayers(self) -> None:
         """
-        Rafraichissement de la carte
+        Rafraichissement de l'ensemble des couches du projet.
         """
         for layer in self.mapCan.layers():
             layer.triggerRepaint()
 
-    # TODO à supprimer car non utilisée
-    # def updateRemarqueInSqlite(self, rem):
-    #     """
-    #     Met à jour une remarque (après l'ajout d'une réponse)
-    #     :param rem : la remarque à mettre à jour
-    #     :type rem: Remarque
-    #     """
-    #     curs = None
-    #     try:
-    #         # self.conn= sqlite3.connect(self.__dbPath)
-    #         self.conn = spatialite_connect(self.dbPath)
-    #
-    #         sql = "UPDATE " + cst.nom_Calque_Signalement + " SET "
-    #         sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
-    #         sql += " Date_validation= '" + rem.getAttribut("dateValidation") + "',"
-    #         sql += " Réponses= '" + ClientHelper.getValForDB(rem.concatenateResponse()) + "', "
-    #         sql += " Statut='" + rem.statut + "' "
-    #         sql += " WHERE NoSignalement = " + rem.id
-    #
-    #         curs = self.conn.cursor()
-    #         curs.execute(sql)
-    #         self.conn.commit()
-    #
-    #     except Exception as e:
-    #         self.logger.error(format(e))
-    #         raise
-    #     finally:
-    #         curs.close()
-    #         self.conn.close()
-
     def countReportsByStatut(self, statut):
         """
-        Retourne le nombre de signalements ayant le statut donné en paramètre
-        :param statut: le statut du signalement (=code renvoyé par le service)
-        :type statut: string
+        Lance une QgsFeatureRequest pour sélectionner les signalements avec un statut donné en paramètre.
+
+        :param statut: le statut du signalement
+        :type statut: str
+
+        :return: le nombre de signalements sélectionnés dans la couche 'Signalement'
         """
         remLay = self.getLayerByName(cst.nom_Calque_Signalement)
         expression = '"Statut" = \'' + statut + '\''
         filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
         return len(list(filtFeatures))
 
-    def hasMapSelectedFeatures(self):
+    def asSelectedFeaturesInMap(self) -> bool:
         """
-        Vérifie s'il y a des objets sélectionnés
-        :return true si de objets sont sélectionnés, false sinon
-        :rtype boolean
+        Vérifie si la sélection comporte un ou plusieurs objets sans distinction de classes.
+
+        :return: True si la sélection contient un ou plusieurs objets, False sinon
         """
         mapLayers = self.mapCan.layers()
         for layer in mapLayers:
@@ -841,8 +957,11 @@ class Contexte(object):
                     return True
         return False
 
-    # Les objets sélectionnés sont transformés en croquis
-    def makeSketchsFromSelection(self):
+    def makeSketchFromSelection(self) -> []:
+        """
+        Transformation en croquis du (ou des) objet(s) sélectionné(s) par l'utilisateur.
+        :return: la liste des croquis
+        """
         # Chargement à partir du fichier de configuration des attributs de l'objet sélectionné.
         # Ces attributs deviendront les attributs du croquis.
         # attCroquis est un dictionnaire : key: nom calque, value: liste des attributs
@@ -878,19 +997,19 @@ class Contexte(object):
                 if isMultipart and ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
                     for poly in geom.asMultiPolygon():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPolygonXY(poly), ftype, lay.crs(),
+                            self.makeSketch(QgsGeometry.fromPolygonXY(poly), ftype, lay.crs(),
                                              f[0]))
                 elif isMultipart and ftype == QgsWkbTypes.GeometryType.LineGeometry:
                     for line in geom.asMultiPolyline():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPolylineXY(line), ftype, lay.crs(),
+                            self.makeSketch(QgsGeometry.fromPolylineXY(line), ftype, lay.crs(),
                                              f[0]))
                 elif isMultipart and ftype == QgsWkbTypes.GeometryType.PointGeometry:
                     for pt in geom.asMultiPoint():
                         croquiss.append(
-                            self.makeCroquis(QgsGeometry.fromPointXY(pt), ftype, lay.crs(), f[0]))
+                            self.makeSketch(QgsGeometry.fromPointXY(pt), ftype, lay.crs(), f[0]))
                 else:
-                    croquiss.append(self.makeCroquis(geom, ftype, lay.crs(), f[0]))
+                    croquiss.append(self.makeSketch(geom, ftype, lay.crs(), f[0]))
 
                 # Transfert vers le croquis des éventuels attributs de l'objet sélectionné
                 # Ajout du croquis temporaire vers la liste définitive
@@ -904,16 +1023,18 @@ class Contexte(object):
 
         return listCroquis
 
-    def makeCroquis(self, geom, ftype, layerCrs, fId):
+    def makeSketch(self, geom, ftype, layerCrs, fId) -> Optional[Sketch]:
         """
-        Génère un croquis à partir d'une géométrie
-        Les coordonnées des points du croquis doivent être transformées dans le crs de l'espace collaboratif (4326)
+        Génère un croquis à partir d'une géométrie.
+        Les coordonnées des points du croquis doivent être transformées dans le crs de l'espace collaboratif (4326).
 
-        :param geom: la géométrie à transformer en croquis
+        NB : une exception est envoyée vers le fichier de log, si problème dans la création du croquis.
+
+        :param geom: la géométrie du futur croquis
         :type geom: QgsGeometry
 
         :param ftype: le type de l'objet géométrique
-        :param type ftype: QGis.WkbType
+        :type ftype: QgsWkbTypes
 
         :param layerCrs: le syst de coordonnées de référence du calque dont provient le feature
         :type layerCrs: QgsCoordinateReferenceSystem
@@ -921,8 +1042,7 @@ class Contexte(object):
         :param fId: l'id de l'objet géométrique (valeur du premier attribut du feature)
         :type fId: int
 
-        :return le croquis créé
-        :rtype Croquis ou None s'il y a eu une erreur
+        :return: le croquis créé ou NOne si problème dans la création du croquis
         """
         newSketch = Sketch()
         geomPoints = []
@@ -955,159 +1075,41 @@ class Contexte(object):
 
         return newSketch
 
-    def getPositionRemarque(self, listCroquis):
+    def selectReportByNumero(self, noSignalements) -> None:
         """
-        Recherche et retourne la position de la remarque (point).
-        La position est calculée à partir des croquis associés à la remarque
+        Sélection des signalements par leur numéro (identifiant espace collaboratif).
 
-        :param listCroquis: la liste des croquis
-        :type listCroquis: list de Croquis
-
-        :return la position de la remarque
-        :rtype Point
-        """
-        # crée la table temporaire dans spatialite et calcule les centroides de chaque croquis
-        res = self._createTempCroquisTable(listCroquis)
-
-        # trouve le barycentre de l'ensemble des centroïdes
-        if type(res) == list:
-            barycentre = self._getBarycentre()
-            return barycentre
-        else:
-            return None
-
-    def _createTempCroquisTable(self, listCroquis):
-        """
-        Crée une table temporaire dans sqlite pour les nouveaux croquis
-        La table contient la géométrie des croquis au format texte (WKT).
-        Retourne la liste des points des croquis
-
-        :param listCroquis : la liste des nouveaux croquis
-        :type listCroquis: list
-
-        :return une liste contenant tous les points des croquis
-        :rtype: list de Point
-        """
-        cur = None
-        tmpTable = "tmpTable"
-        allCroquisPoints = []
-        if len(listCroquis) == 0:
-            return None
-        try:
-            self.conn = spatialite_connect(self.dbPath)
-            cur = self.conn.cursor()
-
-            sql = u"Drop table if Exists " + tmpTable
-            cur.execute(sql)
-
-            sql = u"CREATE TABLE " + tmpTable + " (" + \
-                  u"id INTEGER NOT NULL PRIMARY KEY, textGeom TEXT, centroid TEXT)"
-            cur.execute(sql)
-
-            i = 0
-            textGeom = ""
-            textGeomEnd = ""
-            for cr in listCroquis:
-                i += 1
-                if cr.type == cr.sketchType.Ligne:
-                    textGeom = "LINESTRING("
-                    textGeomEnd = ")"
-                elif cr.type == cr.sketchType.Polygone:
-                    textGeom = "POLYGON(("
-                    textGeomEnd = "))"
-                elif cr.type == cr.sketchType.Point:
-                    textGeom = "POINT("
-                    textGeomEnd = ")"
-
-                for pt in cr.points:
-                    textGeom += str(pt.longitude) + " " + str(pt.latitude) + ","
-                    allCroquisPoints.append(pt)
-
-                textGeom = textGeom[:-1] + textGeomEnd
-                sql = "INSERT INTO " + tmpTable + "(id,textGeom,centroid) VALUES (" + str(i) + ",'" + textGeom \
-                      + "', AsText(centroid( ST_GeomFromText('" + textGeom + "'))))"
-                cur.execute(sql)
-
-            self.conn.commit()
-
-        except Exception as e:
-            self.logger.error("_createTempCroquisTable " + format(e))
-            return False
-        finally:
-            cur.close()
-            self.conn.close()
-
-        return allCroquisPoints
-
-    def _getBarycentre(self):
-        """
-        Calcul du barycentre de l'ensemble des croquis à partir des centroides de chaque croquis;
-        ces centroides sont stockés dans la table temporaire "tmpTable"
-
-        :return: le barycentre
-        :rtype: Point
-        """
-        barycentre = None
-        tmpTable = "tmpTable"
-        try:
-            self.conn = spatialite_connect(self.dbPath)
-            cur = self.conn.cursor()
-
-            sql = "SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from " + tmpTable
-            cur.execute(sql)
-
-            rows = cur.fetchall()
-            sumX = 0
-            sumY = 0
-            for row in rows:
-                sumX += row[0]
-                sumY += row[1]
-            ptX = sumX / float(len(rows))
-            ptY = sumY / float(len(rows))
-            barycentre = Point(ptX, ptY)
-
-        except Exception as e:
-            self.logger.error("getBarycentre " + format(e))
-
-        return barycentre
-
-    '''magicwand'''
-
-    def selectRemarkByNo(self, noSignalements):
-        """
-        Sélection des remarques données par leur no
-        :param noSignalements : les no de signalements à sélectionner
-        :type noSignalements : list de string
+        :param noSignalements: contient les numéros de signalements formatés pour la condition IN
+                               en vue d'une requête SQL
+        :type noSignalements: str
         """
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
         table = cst.nom_Calque_Signalement
         lay = self.getLayerByName(table)
-        sql = "SELECT * FROM " + table + "  WHERE noSignalement in (" + noSignalements + ")"
+        sql = "SELECT * FROM " + table + "  WHERE noSignalement IN (" + noSignalements + ")"
         rows = cur.execute(sql)
         featIds = []
         for row in rows:
             featIds.append(row[0])
         lay.selectByIds(featIds)
 
-    def getCroquisForRemark(self, noSignalement, croquisSelFeats):
+    def getCroquisForReport(self, noSignalement, croquisSelFeats) -> {}:
         """
-        Retourne les croquis associés à un signalement
+        Retourne le (ou les) croquis associé(s) à un signalement.
 
-        :param noSignalement : l'identifiant du signalement
-        :type noSignalement : int
+        :param noSignalement: l'identifiant du signalement
+        :type noSignalement: int
 
-        :param croquisSelFeats : dictionnaire contenant les croquis
+        :param croquisSelFeats: dictionnaire contenant les croquis
                                  (key: le nom de la table du croquis, value: liste des identifiants de croquis)
-        :type croquisSelFeats : dictionnary
+        :type croquisSelFeats: dict
 
-        :return : dictionnaire contenant les croquis
-        :rtype : list
+        :return: dictionnaire contenant les croquis ou vide si pas de croquis associé(s) au signalement
         """
         crlayers = PluginHelper.sketchLayers
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
-
         for table in crlayers:
             sql = "SELECT * FROM " + table + "  WHERE noSignalement= " + str(noSignalement)
             rows = cur.execute(sql)
@@ -1117,34 +1119,13 @@ class Contexte(object):
                 if table not in croquisSelFeats:
                     croquisSelFeats[table] = []
                 croquisSelFeats[table].append(row[0])
-
         return croquisSelFeats
 
     def getUriDatabaseSqlite(self) -> QgsDataSourceUri:
         """
         Initialise la structure de connexion à la base SQLite.
-
         :return: la source de connexion
         """
         uri = QgsDataSourceUri(cst.EPSG4326)
         uri.setDatabase(SQLiteManager.getBaseSqlitePath())
         return uri
-
-    def connexionFeatureTypeJson(self, layerUrl, layerName) -> dict:
-        if '&' not in layerUrl:
-            raise Exception(PluginHelper.notNoneValue(
-                "{} : l'url fournie ({}) ne permet pas de déterminer le nom de la base données".format(
-                    "connexionFeatureTypeJson", layerUrl)))
-
-        tmp = layerUrl.split('&')
-        dbName = tmp[1].split('=')
-        url = "{}/gcms/api/database/{}/feature-type/{}.json".format(self.urlHostEspaceCo, dbName[1], layerName)
-        self.logger.debug("{0} {1}".format("connexionFeatureTypeJson : ", url))
-        headers = {'Authorization': '{} {}'.format(self.getTokenType(), self.getTokenAccess())}
-        featuretypeResponse = requests.get(url, headers=headers, proxies=self.proxies)
-        if featuretypeResponse.status_code != 200:
-            raise Exception(PluginHelper.notNoneValue(
-                "{} : {}".format(featuretypeResponse.status_code, featuretypeResponse.reason)))
-
-        data = json.loads(featuretypeResponse._content)
-        return data
