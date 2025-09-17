@@ -8,7 +8,6 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 import os.path
-import shutil
 import ntpath
 import time
 from datetime import datetime
@@ -37,6 +36,7 @@ from .core.WfsGet import WfsGet
 from .core.SQLiteManager import SQLiteManager
 from .core.ProgressBar import ProgressBar
 from .core.ign_keycloak.KeycloakService import KeycloakService
+from .core.FlagProject import FlagProject
 from .Import_WMSR import ImportWMSR
 from .PluginHelper import PluginHelper
 from .FormInfo import FormInfo
@@ -108,12 +108,10 @@ class Contexte(object):
         """
         self.login = None
         self.__listNameIdFromAllUserCommunities = None
-        self.projectDir = None
-        self.projectFileName = None
+        self.projectDir = QgsProject.instance().homePath()
+        self.projectFileName = ntpath.basename(QgsProject.instance().fileName())
         self.QObject = QObject
         self.QgsProject = QgsProject
-        # set du répertoire et fichier du projet qgis
-        self.setProjectParams()
         self.mapCan = QObject.iface.mapCanvas()
         self.iface = QObject.iface
         self.logger = PluginLogger("Contexte").getPluginLogger()
@@ -138,15 +136,6 @@ class Contexte(object):
         self.proxies = {}
 
         try:
-            # contrôle l'existence du fichier de configuration
-            self.checkConfigFile()
-
-            # set de la base de données
-            self.copySQLiteDatabase()
-
-            # set des fichiers de style
-            self.copyStyleFiles()
-
             # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
             formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
             lines = formatFile.readlines()
@@ -259,25 +248,37 @@ class Contexte(object):
         return False
 
     @staticmethod
-    def getInstance(QObject=None, QgsProject=None):
+    def getInstance(QObject=None, QgsProject=None, bFlag=False):
         """
         :param QObject: classe fondamentale de Qt
-        :type QObject: QObject
 
         :param QgsProject: le projet en cours
-        :type QgsProject: QgsProject
+
+        :param bFlag: indique si l'utilisateur a cliqué sur les boutons de connexion ou sur l'aide du plugin
+        :type bFlag: bool
 
         :return: l'instance unique du Contexte.
         """
+        # Si l'utilisateur a cliqué sur le bouton de connexion ou sur l'aide du plugin alors le projet doit être
+        # marqué comme tel. Les fichiers de paramètres sont alors copiés dans le répertoire du projet utilisateur.
+        if bFlag:
+            flp = FlagProject()
+            bResBoolEntry = flp.isBoolEntryInProject()
+            if not bResBoolEntry:
+                flp.setWriteBoolEntryInProject()
+            bResCopyFiles = flp.AreFilesCopiedInProject()
+            if not bResCopyFiles:
+                flp.copyFilesToProject()
+
         if not Contexte.instance or (Contexte.instance.projectDir != QgsProject.instance().homePath() or
                                      ntpath.basename(QgsProject.instance().fileName()) not in [
                                          Contexte.instance.projectFileName + ".qgs",
                                          Contexte.instance.projectFileName + ".qgz"]):
-            Contexte.instance = Contexte._createInstance(QObject, QgsProject)
+            Contexte.instance = Contexte.__createInstance(QObject, QgsProject)
         return Contexte.instance
 
     @staticmethod
-    def _createInstance(QObject, QgsProject):
+    def __createInstance(QObject, QgsProject):
         """
         Création de l'instance du contexte du projet.
 
@@ -295,48 +296,6 @@ class Contexte(object):
         except Exception as e:
             return None
         return Contexte.instance
-
-    def setProjectParams(self):
-        """
-        Enregistrement des paramètres du projet (répertoire et nom).
-        """
-        self.projectDir = QgsProject.instance().homePath()
-        # nom du fichier du projet enregistré
-        self.projectFileName = ntpath.basename(QgsProject.instance().fileName())
-
-    def checkConfigFile(self):
-        """
-        Contrôle l'existence du fichier de configuration (nomProjet_espaceco.xml) dans le répertoire du projet (fichier
-        nomProjet.qgz).
-
-        NB : une exception est envoyée si le fichier n'est pas trouvé dans le répertoire du projet
-        """
-        ripartxml = self.projectDir + os.path.sep + PluginHelper.getConfigFile()
-        if not os.path.isfile(ripartxml):
-            try:
-                shutil.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
-                            PluginHelper.nom_Fichier_Parametres_Ripart, ripartxml)
-                self.logger.debug("Copy {}".format(PluginHelper.nom_Fichier_Parametres_Ripart))
-                new_file = os.path.join(self.projectDir, PluginHelper.getConfigFile())
-                os.rename(ripartxml, new_file)
-            except Exception as e:
-                self.logger.error(
-                    "No {} found in plugin directory".format(PluginHelper.nom_Fichier_Parametres_Ripart) + format(e))
-                raise Exception("Le fichier de configuration " + PluginHelper.nom_Fichier_Parametres_Ripart +
-                                " n'a pas été trouvé.")
-
-    def copyStyleFiles(self):
-        """
-        Copie les fichiers de styles (pour la représentation graphique des signalements et croquis) à l'emplacement
-        suivant :
-        - projet/espacecoStyles/Croquis_EC_Point.qml
-        - projet/espacecoStyles/Croquis_EC_Ligne.qml
-        - projet/espacecoStyles/Croquis_EC_Polygone.qml
-        - projet/espacecoStyles/Signalement.qml
-        """
-        styleFilesDir = self.projectDir + os.path.sep + PluginHelper.qmlStylesDirectory
-        PluginHelper.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
-                          PluginHelper.qmlStylesDirectory, styleFilesDir)
 
     def getConnexionEspaceCollaboratifWithKeycloak(self, bAutomaticConnection) -> bool:
         """
@@ -493,21 +452,6 @@ class Contexte(object):
         :return: le jeton d'authentification à l'espace collaboratif
         """
         return self.__tokenAccess
-
-    def copySQLiteDatabase(self) -> None:
-        """
-        Copie du fichier de la base de données SQLite si elle n'existe pas dans le répertoire du projet.
-
-        NB : envoi une Exception si la copie est impossible.
-        """
-        if not os.path.isfile(self.dbPath):
-            try:
-                shutil.copy(self.plugin_path + os.path.sep + PluginHelper.ripart_files_dir + os.path.sep +
-                            PluginHelper.ripart_db, self.dbPath)
-                self.logger.debug("copy espaceco.sqlite")
-            except Exception as e:
-                self.logger.error("no espaceco.sqlite found in plugin directory" + format(e))
-                raise e
 
     def createTablesReportsAndSketchs(self) -> None:
         """

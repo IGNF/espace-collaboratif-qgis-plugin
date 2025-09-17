@@ -57,7 +57,6 @@ class CreateReport(object):
                 # Pas de point écran puisque création avec croquis
                 pointFromClipboard = QgsPointXY()
                 toolsReport.createReport(sketchList, pointFromClipboard)
-            self.__context.mapCan.refresh()
 
         except Exception as e:
             self.__logger.error(format(e))

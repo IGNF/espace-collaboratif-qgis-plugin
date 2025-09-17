@@ -43,7 +43,7 @@ class RipartPlugin:
         """
         self.toolButton2 = None
         self.helpMenu = None
-        self.__context = Contexte.getInstance(self, QgsProject)
+        self.__context = None
         self.__dlgConfigure = None
         self.__ripartLogger = PluginLogger("RipartPlugin")
         self.__logger = self.__ripartLogger.getPluginLogger()
@@ -146,7 +146,7 @@ class RipartPlugin:
                 reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                              QMessageBox.No)
                 if reply == QMessageBox.Yes:
-                    self.__context = Contexte.getInstance(self, QgsProject)
+                    self.__context = Contexte.getInstance(self, QgsProject, True)
                     if self.__context is None:
                         return
                     if self.__context.getUserCommunity() is None:
@@ -399,11 +399,7 @@ class RipartPlugin:
             return False
 
         if self.__context is None:
-            self.__context = Contexte.getInstance(self, QgsProject)
-
-        # si l'utilisateur crée un nouveau projet alors qu'il est déjà connecté sur son projet actuel, il faut
-        # vérifier que les paramètres d'utilisation existent dans le projet
-        self.__context.setProjectParams()
+            self.__context = Contexte.getInstance(self, QgsProject, True)
 
         # si l'utilisateur crée un nouveau projet alors qu'il est déjà connecté sur son projet actuel
         if QgsProject.instance().fileName().find(self.__context.projectFileName) == -1:
@@ -899,8 +895,7 @@ class RipartPlugin:
         Lance la fenêtre de configuration des préférences de l'utilisateur.
         """
         try:
-            self.__context = Contexte.getInstance(self, QgsProject)
-            self.__context.checkConfigFile()
+            self.__context = Contexte.getInstance(self, QgsProject, True)
             self.__dlgConfigure = FormConfigure(context=self.__context)
             self.__dlgConfigure.exec_()
         except Exception as e:

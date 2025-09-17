@@ -265,21 +265,18 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     def deleteLayersAndGroup(self, userWorkZone) -> None:
         """
         Suppression du groupe et de ses couches associées, si nouvelle zone de travail ou nouveau groupe.
+
         NB : les couches d'un projet sont rassemblées sous un groupe dont le nom est préfixé par "[ESPACE CO] xxxx"
         NB : mise à jour du xml de configuration si nouvelle zone ou nouveau groupe
 
-        :param userWorkZone: la zone de travail de l'utilisateur (un surfacique permettant de limiter
-                             une extraction de données
+        :param userWorkZone: le nom de la zone de travail de l'utilisateur, un surfacique permettant de limiter
+                             une extraction de données, peut-être vide
         :type userWorkZone: str
         """
-        # Si c'est un projet nouvellement créé, il faut vérifier si la table des tables existe
-        if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-            return
-
         # Le nom de la zone stockée dans le xml .../xxx_espaceco.xml
         storedWorkZone = PluginHelper.load_XmlTag(self.__context.projectDir,
                                                   PluginHelper.xml_Zone_extraction,
-                                                        "Map").text
+                                                  "Map").text
 
         bNewGroup = self.__nameActiveCommunity != self.__nameSelectedCommunity
         bNewZone = storedWorkZone != userWorkZone
@@ -314,7 +311,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if bNewGroup:
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
-                      "supprimées. Voulez-vous continuer ?".format(newGroup.name())
+                          "supprimées. Voulez-vous continuer ?".format(newGroup.name())
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     root.removeChildNode(newGroup)
@@ -327,11 +324,13 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
         if bNewZone:
-            # Récupération de l'ensemble des noms des couches chargées dans la table des tables
-            layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
+            # Si c'est un projet nouvellement créé, il faut vérifier si la table des tables existe
             layersInTT = []
-            for lftot in layersFromTableOfTables:
-                layersInTT.append(lftot[0])
+            if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+                # Récupération de l'ensemble des noms des couches chargées dans la table des tables
+                layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
+                for lftot in layersFromTableOfTables:
+                    layersInTT.append(lftot[0])
 
             # Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe,
             # on l'informe
@@ -341,11 +340,11 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     self.__context.removeLayersFromProject(layersInProject, layersInTT, False)
-                    PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
-                                                userWorkZone, "Map")
                     self.removeTablesSQLite(layersInProject)
                 else:
                     self.__bCancel = True
+            PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
+                                        "Map")
 
     def removeTablesSQLite(self, layers) -> None:
         """

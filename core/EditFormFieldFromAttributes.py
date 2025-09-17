@@ -172,7 +172,6 @@ class EditFormFieldFromAttributes(object):
         """
         if attributesSets is None or len(attributesSets) == 0:
             return
-        listDefaultValues = []
         fieldsToProcess = self.getAllKeys(attributesSets)
         for fieldName in fieldsToProcess:
             expression = "CASE"
@@ -187,14 +186,9 @@ class EditFormFieldFromAttributes(object):
                 expression += f' WHEN "{self.name}" = \'{typ}\' THEN {expr_val} '
             expression += "END"
             fieldIndex = self.layer.fields().indexOf(fieldName)
-            tmpFieldCaseEnd = (fieldIndex, expression)
-            listDefaultValues.append(tmpFieldCaseEnd)
-        for tmp in listDefaultValues:
-            self.layer.setDefaultValueDefinition(tmp[0], QgsDefaultValue("{}".format(tmp[1])))
-            # TODO remettre le code en service dès l'installation d'une version de QGIS > 3.26
-            # form_config = self.layer.editFormConfig()
-            # form_config.setApplyDefaultValueOnUpdate(self.index, True)
-            # self.layer.setEditFormConfig(form_config)
+            default_value = QgsDefaultValue(expression)
+            default_value.setApplyOnUpdate(True)
+            self.layer.setDefaultValueDefinition(fieldIndex, default_value)
 
     def setFieldSwitchType(self, vType, default_value, attributesSets) -> None:
         """

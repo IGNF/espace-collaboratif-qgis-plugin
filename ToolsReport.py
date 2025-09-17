@@ -103,6 +103,7 @@ class ToolsReport(object):
         query = Query(self.__context.urlHostEspaceCo, self.__context.proxies)
         query.setHeaders(self.__context.getTokenType(), self.__context.getTokenAccess())
         query.setPartOfUrl('gcms/api/reports')
+        query.setCommunity(self.__context.getUserCommunity().getId())
         query.setPage(1)
         query.setLimit(100)
         if box is not None:
@@ -474,6 +475,9 @@ class ToolsReport(object):
 
         # Message de fin
         self.__sendMessageEndProcess(listNewReportIds)
+
+        # Rafraichissement de la carte pour faire afficher le (ou les) signalements nouvellement créés
+        self.__context.mapCan.refresh()
 
     def createSingleReportFromClipboard(self, filesAttachments) -> []:
         """

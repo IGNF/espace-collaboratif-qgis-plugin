@@ -479,7 +479,9 @@ class SQLiteManager(object):
         result = None
         if not SQLiteManager.isTableExist(tableName):
             return result
-        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, conditionColumn, conditionValue)
+        tName = SQLiteManager.echap(tableName)
+        cValue = SQLiteManager.echap(conditionValue)
+        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tName, conditionColumn, cValue)
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
         cursor = connection.cursor()
         cursor.execute(sql)
@@ -487,6 +489,13 @@ class SQLiteManager(object):
         cursor.close()
         connection.close()
         return result
+
+    @staticmethod
+    def echap(strToEchap):
+        if strToEchap.find('\'') != -1:
+            tmp = strToEchap.replace('\'', '\'\'')
+            return tmp
+        return strToEchap
 
     @staticmethod
     def vacuumDatabase() -> None:

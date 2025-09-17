@@ -50,6 +50,15 @@ class Query(object):
         """
         self.__partOfUrl = partOfUrl
 
+    def setCommunity(self, id) -> None:
+        """
+        Fixe l'identifiant du groupe pour la variable __params passée à une requête multiple.
+
+        :param id: identifiant du groupe choisi par l'utilisateur
+        :type id: int
+        """
+        self.__params['communities'] = id
+
     def setOpeningDate(self, openingDate) -> None:
         """
         Fixe la date minimale d'extraction pour la variable __params passée à une requête multiple.

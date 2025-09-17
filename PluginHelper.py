@@ -92,7 +92,7 @@ class PluginHelper:
         """
         fname = ntpath.basename(QgsProject.instance().fileName())
         if fname == '':
-            message = "Veuillez ouvrir (ou enregistrer) le projet avant d'utiliser cette fonctionnalité."
+            message = "Veuillez ouvrir (ou enregistrer) un projet avant d'utiliser cette fonctionnalité."
             PluginHelper.showMessageBox(message)
             raise Exception(message)
         nbPoints = fname.count(".")
@@ -694,29 +694,6 @@ class PluginHelper:
         msgBox.setIcon(QMessageBox.Warning)
         msgBox.setText(message)
         msgBox.exec_()
-
-    @staticmethod
-    def copy(src, dest) -> None:
-        """
-        Copie un fichier ou un répertoire. Une OSError est envoyée si la copie n'est pas possible.
-        
-        :param src: le fichier ou répertoire source
-        :type src: str
-        
-        :param dest : le fichier ou répertoire de destination
-        :type dest: str
-        """
-        try:
-            if not os.path.exists(dest):
-                shutil.copytree(src, dest)
-
-        except OSError as e:
-            # If the error was caused because the source wasn't a directory
-            if e.errno == errno.ENOTDIR:
-                if not os.path.exists(dest):
-                    shutil.copy(src, dest)
-            else:
-                print('Directory not copied. Error: %s' % e)
 
     @staticmethod
     def open_file(filename) -> None:

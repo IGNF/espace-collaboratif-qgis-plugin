@@ -40,9 +40,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         :param context: le contexte
         """
         super(FormConfigure, self).__init__(parent)
-
-        self.dateMYChanged = None
-        self.dateSelected = None
         self.setupUi(self)
         self.context = context
         self.setFocus()
@@ -278,7 +275,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         Si l'utilisateur choisi une nouvelle date d'extraction alors le nombre de jours est modifié en conséquence.
         """
-        self.dateSelected = True
         d = self.calendarWidget.selectedDate()
         self.spinBox.setValue(self.getCountDays(d))
 
@@ -286,7 +282,6 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         Si l'utilisateur modifie le mois ou l'année d'extraction alors la date est modifiée dans le calendrier.
         """
-        self.dateMYChanged = True
         qd = self.calendarWidget.selectedDate()
         m = self.calendarWidget.monthShown()
         y = self.calendarWidget.yearShown()
