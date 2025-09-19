@@ -101,11 +101,13 @@ class FlagProject:
         if not os.path.isfile(self.__dbPath):
             return False
 
-        if not os.path.isfile(self.__styleFilesDir):
-            return False
+        if os.path.isdir(self.__styleFilesDir):
+            if len(os.listdir(self.__styleFilesDir)) != 4:
+                return False
 
         if not os.path.isfile(self.__espacecoxml):
             return False
+
         return True
 
     def checkConfigFile(self):

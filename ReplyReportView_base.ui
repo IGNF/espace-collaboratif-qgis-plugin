@@ -107,10 +107,10 @@
   <widget class="QPlainTextEdit" name="pte_NewResponse">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>90</y>
-     <width>381</width>
-     <height>151</height>
+     <x>20</x>
+     <y>100</y>
+     <width>361</width>
+     <height>141</height>
     </rect>
    </property>
    <property name="sizePolicy">

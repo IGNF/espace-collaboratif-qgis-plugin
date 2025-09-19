@@ -46,7 +46,7 @@ class Ui_ReplyReportView(object):
         self.lbl_numberReportLabel.setIndent(-1)
         self.lbl_numberReportLabel.setObjectName("lbl_numberReportLabel")
         self.pte_NewResponse = QtWidgets.QPlainTextEdit(ReplyReportView)
-        self.pte_NewResponse.setGeometry(QtCore.QRect(10, 90, 381, 151))
+        self.pte_NewResponse.setGeometry(QtCore.QRect(20, 100, 361, 141))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
