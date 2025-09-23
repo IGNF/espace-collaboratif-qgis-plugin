@@ -107,7 +107,7 @@ class WfsGet(object):
             if response['stop']:
                 break
 
-    def gcms_get(self, bExtraction=False) -> ():
+    def gcmsGet(self, bExtraction=False) -> ():
         """
         Envoie une requête GET et met à jour les tables SQLite du projet en cours.
         NB : le dernier numéro de mise à jour (numRec) d'une table est fixé à 0 pour une table différente de la BDUni.

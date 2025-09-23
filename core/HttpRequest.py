@@ -127,7 +127,7 @@ class HttpRequest(object):
     #
     def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> Response:
         """
-        Lance une requête HTTP GET ou POST en fonction des variables passées en entrée.
+        Lance une requête HTTP GET, POST ou PATCH en fonction des variables passées en entrée.
 
         :param url: l'url complète
         :type url: str
@@ -147,13 +147,15 @@ class HttpRequest(object):
         :param files: fichiers à télécharger
         :type files: dict
 
-        :param launchBy: indique quelle fonction a lancé
+        :param launchBy: indique quelle fonction a lancé la requête
         :type launchBy: str
 
         :return: les données
         """
         try:
-            if data is None and files is None:
+            if launchBy == 'gcmsPatch':
+                response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=False)
+            elif data is None and files is None:
                 response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=False)
             elif files is None:
                 response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=False)

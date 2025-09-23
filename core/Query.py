@@ -29,7 +29,7 @@ class Query(object):
 
     def setHeaders(self, tokenType, tokenAccess) -> None:
         """
-        Fixe l'entête d'autorisation avec les tokens d'authentication pour une connexion sécurisée
+        Fixe l'entête d'autorisation avec les tokens d'authentification pour une connexion sécurisée
         à l'espace collaboratif.
 
         :param tokenType: jeton sur le type de compte

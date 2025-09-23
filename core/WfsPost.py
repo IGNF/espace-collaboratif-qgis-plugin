@@ -301,7 +301,7 @@ class WfsPost(object):
                       'headers': headers, 'proxies': self.__context.proxies,
                       'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
-        numrecmessage = wfsGet.gcms_get()
+        numrecmessage = wfsGet.gcmsGet()
         if 'error' in numrecmessage[1]:
             message = "Vos modifications ont bien été prises en compte mais la couche n'a pas pu être rechargée " \
                       "dans QGIS. Il faut la ré-importer. En cas de problème, veuillez contacter le gestionnaire " \

@@ -853,7 +853,7 @@ class Contexte(object):
                       'proxies': self.proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid
                       }
         wfsGet = WfsGet(parameters)
-        maxNumrecMessage = wfsGet.gcms_get(True)
+        maxNumrecMessage = wfsGet.gcmsGet(True)
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1

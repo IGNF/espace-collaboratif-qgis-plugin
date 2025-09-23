@@ -15,6 +15,7 @@ from .core.WfsPost import WfsPost
 from .core.PluginLogger import PluginLogger
 from .core.SQLiteManager import SQLiteManager
 from .core.WfsGet import WfsGet
+from .core.WfsPatch import WfsPatch
 from .core.ProgressBar import ProgressBar
 from .core.Community import Community
 from .core import Constantes as cst
@@ -185,13 +186,21 @@ class RipartPlugin:
         dans SQLite (ce qui veut dire que l'utilisateur a extrait cette couche par l'outil) alors la connexion
         des signaux spécifiques est possible.
 
+        Si la couche ajoutée est celle des signalements alors il faut ajouter le signal geometryChanged afin d'envoyer
+        une requête de type PATCH quand un signalement est déplacé.
+
         :param layer: la couche qui vient d'être ajoutée
         :type layer: QgsMapLayer
         """
         if layer is None:
             return
+
+        if layer.name() == cst.nom_Calque_Signalement:
+            self.__ConnectSpecificSignalToLayer(layer)
+
         if not self.__searchSpecificLayerInSQLite(layer.name()):
             return
+
         self.__connectSpecificSignals(layer)
 
     def __searchSpecificLayerInSQLite(self, layerName) -> bool:
@@ -208,6 +217,41 @@ class RipartPlugin:
                 is not None:
             return True
         return False
+
+    def __ConnectSpecificSignalToLayer(self, layer) -> None:
+        """
+        Connexion du signal geometryChanged à la couche Signalement donnée en entrée.
+        Si un signalement est déplacé, une requête de type request.PATCH sera envoyé vers le serveur de l'espace
+        collaboratif.
+
+        :param layer: la couche 'Signalement' ajoutée au projet
+        :type layer: QgsMapLayer
+        """
+        layer.geometryChanged.connect(self.__geometryChanged)
+
+    def __geometryChanged(self) -> None:
+        """
+        La géométrie d'un signalement à changé (déplacement), il faut envoyer sa mise à jour vers le serveur
+        de l'espace collaboratif.
+        """
+        # Vérification de la connexion à l'Espace collaboratif
+        if not self.__doConnexion(False):
+            return
+        activeLayer = self.iface.activeLayer()
+        if activeLayer is None:
+            return
+        message = "Le signalement a été déplacé ! Voulez-vous envoyer sa mise à jour vers l'espace collaboratif ?"
+        reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
+                                     QMessageBox.No)
+        # L'utilisateur a changé d'avis
+        if reply == QMessageBox.No:
+            activeLayer.editBuffer().rollBack()
+            activeLayer.triggerRepaint()
+            return
+
+        # Mise à jour du signalement déplacé vers le serveur de l'espace collaboratif
+        wfspatch = WfsPatch(self.__context, activeLayer)
+        wfspatch.gcmsPatch()
 
     def __connectSpecificSignals(self, layer) -> None:
         """
@@ -650,9 +694,16 @@ class RipartPlugin:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
                 return
+            # Désactiver la fonction de détection de changement de géométrie pour un signalement
+            activeLayer = self.iface.activeLayer()
+            if activeLayer is not None and activeLayer.name() != cst.nom_Calque_Signalement:
+                activeLayer.geometryChanged.disconnect(self.__geometryChanged)
             # Téléchargement des signalements
             toolsReport = ToolsReport(self.__context)
             toolsReport.download()
+            # Réactiver la fonction de détection de changement de géométrie pour un signalement
+            if activeLayer is not None and activeLayer.name() != cst.nom_Calque_Signalement:
+                activeLayer.geometryChanged.connect(self.__geometryChanged)
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__downloadReports', e)
 
@@ -877,7 +928,7 @@ class RipartPlugin:
                     if numrec == maxNumrec:
                         endMessage += "<br/>Pas de mise à jour\n\n"
                         continue
-                maxNumRecMessage = wfsGet.gcms_get()
+                maxNumRecMessage = wfsGet.gcmsGet()
                 SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
                 SQLiteManager.vacuumDatabase()
                 endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])

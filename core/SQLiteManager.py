@@ -687,4 +687,5 @@ class SQLiteManager(object):
         """
         sql = "UPDATE {0} SET {1} WHERE {2}".format(parameters['name'], parameters['attributes'],
                                                     parameters['condition'])
+        print(sql)
         SQLiteManager.executeSQL(sql)

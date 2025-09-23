@@ -477,7 +477,8 @@ class ToolsReport(object):
         self.__sendMessageEndProcess(listNewReportIds)
 
         # Rafraichissement de la carte pour faire afficher le (ou les) signalements nouvellement créés
-        self.__context.mapCan.refresh()
+        #self.__context.mapCan.refresh()
+        self.__context.iface.activeLayer().triggerRepaint()
 
     def createSingleReportFromClipboard(self, filesAttachments) -> []:
         """
