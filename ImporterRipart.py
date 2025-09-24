@@ -130,12 +130,14 @@ class ImporterRipart(object):
             i = 100
             try:
                 self.context.conn = spatialite_connect(self.context.dbPath)
+                bCommit = False
                 for remId in remsToKeep:
 
                     if remId == '618195' or remId == '618197':
                         debug = True
-
-                    RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
+                    if i == 200:
+                        bCommit = True
+                    RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId], bCommit)
                     i += 1
                     if cnt > 0:
                         self.progressVal = int(round(i * 100 / cnt))

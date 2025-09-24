@@ -583,14 +583,17 @@ class RipartHelper:
             cur.close()
 
     @staticmethod
-    def insertRemarques(conn, rem):
+    def insertRemarques(conn, rem, bCommit=False):
         """Insertion d'une nouvelle remarque dans la table Signalement
         
         @param conn: la connexion à la base de données
         @type conn: 
         
         @param rem: la remarque à ajouter
-        @type rem: Remarque  
+        @type rem: Remarque
+
+        @param bCommit: fait une transaction tous les 200 objets
+        @type bCommit: bool
         """
         RipartHelper.logger.debug("insertRemarques")
         cur = conn.cursor()
@@ -649,7 +652,8 @@ class RipartHelper:
             if rowcount != 1:
                 RipartHelper.logger.error("No row inserted:" + sql)
             ###################
-            conn.commit()
+            if bCommit:
+                conn.commit()
             ###################
             if len(rem.croquis) > 0:
                 croquis = rem.croquis
@@ -677,7 +681,8 @@ class RipartHelper:
                         sql = sql % (RipartHelper.nom_Calque_Croquis_Polygone, geom)
                     cur.execute(sql)
                 ###################
-                conn.commit()
+                if bCommit:
+                    conn.commit()
                 ###################
 
         except Exception as e:
