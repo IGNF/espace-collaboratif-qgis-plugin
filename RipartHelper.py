@@ -583,7 +583,7 @@ class RipartHelper:
             cur.close()
 
     @staticmethod
-    def insertRemarques(conn, rem, bCommit=False):
+    def insertRemarques(conn, rem, bCommit):
         """Insertion d'une nouvelle remarque dans la table Signalement
         
         @param conn: la connexion à la base de données
