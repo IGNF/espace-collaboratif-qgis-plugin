@@ -648,7 +648,9 @@ class RipartHelper:
             rowcount = cur.rowcount
             if rowcount != 1:
                 RipartHelper.logger.error("No row inserted:" + sql)
-
+            ###################
+            conn.commit()
+            ###################
             if len(rem.croquis) > 0:
                 croquis = rem.croquis
                 for cr in croquis:
@@ -674,6 +676,9 @@ class RipartHelper:
                         geom = sgeom % ('POLYGON(', coord + ")")
                         sql = sql % (RipartHelper.nom_Calque_Croquis_Polygone, geom)
                     cur.execute(sql)
+                ###################
+                conn.commit()
+                ###################
 
         except Exception as e:
             raise e
