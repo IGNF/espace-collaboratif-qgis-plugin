@@ -115,7 +115,7 @@ class Contexte(object):
         self.mapCan = QObject.iface.mapCanvas()
         self.iface = QObject.iface
         self.logger = PluginLogger("Contexte").getPluginLogger()
-        self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        self.spatialRef = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326)
         self.dbPath = SQLiteManager.getBaseSqlitePath()
         self.__userCommunity = None
         self.__activeCommunityName = ''
@@ -137,9 +137,9 @@ class Contexte(object):
 
         try:
             # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
-            formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
-            lines = formatFile.readlines()
-            self.formats = [x.split("\n")[0] for x in lines]
+            with open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r') as formatFile:
+                lines = formatFile.readlines()
+                self.formats = [x.split("\n")[0] for x in lines]
 
             self.urlHostEspaceCo = self.__setUrlHostEspaceCo()
 
@@ -505,7 +505,7 @@ class Contexte(object):
 
         vlayer = GuichetVectorLayer(parameters)
         # vlayer = QgsVectorLayer(uri.uri(), layer.name, 'spatialite')
-        vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+        vlayer.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326))
         return vlayer, bColumnDetruitExist
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup) -> None:
@@ -1079,7 +1079,7 @@ class Contexte(object):
         newSketch = Sketch()
         geomPoints = []
         try:
-            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
+            destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326)
             transformer = QgsCoordinateTransform(layerCrs, destCrs, self.QgsProject.instance())
             if ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
                 geomPoints = geom.asPolygon()

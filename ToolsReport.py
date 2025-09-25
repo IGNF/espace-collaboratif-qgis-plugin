@@ -55,8 +55,7 @@ class ToolsReport(object):
                 uri.setDataSource('', table, 'geom')
                 uri.setSrid(str(cst.EPSGCRS4326))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(
-                    QgsCoordinateReferenceSystem(cst.EPSGCRS4326, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+                vlayer.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326))
                 QgsProject.instance().addMapLayer(vlayer, False)
                 root.insertLayer(0, vlayer)
                 self.__logger.debug("Layer " + vlayer.name() + " added to map")
@@ -232,13 +231,8 @@ class ToolsReport(object):
 
         :return: un QgsCoordinateTransform
         """
-        mapCrs = self.__context.mapCan.mapSettings().destinationCrs().authid()
-        sridSource = QgsCoordinateReferenceSystem(mapCrs)
-        crsSource = QgsCoordinateReferenceSystem(sridSource)
-
-        sridTarget = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
-        crsTarget = QgsCoordinateReferenceSystem(sridTarget)
-
+        crsSource = self.__context.mapCan.mapSettings().destinationCrs()
+        crsTarget = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
         return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
 
     def setMapExtent(self, box) -> None:
@@ -249,13 +243,12 @@ class ToolsReport(object):
         :param box : bounding box
         :type box: QgsRectangle
         """
-        source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
-
-        mapCrs = self.__context.mapCan.mapSettings().destinationCrs().authid()
-        dest_crs = QgsCoordinateReferenceSystem(mapCrs)
+        source_crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326)
+        mapCrs = self.__context.mapCan.mapSettings().destinationCrs()
+        psgCode = mapCrs.postgisSrid()
+        dest_crs = QgsCoordinateReferenceSystem.fromEpsgId(psgCode)
         if not dest_crs.isValid():
             return
-
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         new_box = transform.transformBoundingBox(box)
 

@@ -5,6 +5,7 @@ import configparser
 from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
 from . import resources
+
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon

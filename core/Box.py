@@ -63,8 +63,8 @@ class Box(object):
 
         :return: les coordonnées de la boite sous la forme : 'XMin,YMin,XMax,YMax'
         """
-        crsProject = QgsCoordinateReferenceSystem(sridProject)
-        crsLayer = QgsCoordinateReferenceSystem(sridLayer)
+        crsProject = QgsCoordinateReferenceSystem.fromEpsgId(sridProject)
+        crsLayer = QgsCoordinateReferenceSystem.fromEpsgId(sridLayer)
         transformer = QgsCoordinateTransform(crsProject, crsLayer, QgsProject.instance())
         mini = transformer.transform(self.__XMin, self.__YMin)
         maxi = transformer.transform(self.__XMax, self.__YMax)

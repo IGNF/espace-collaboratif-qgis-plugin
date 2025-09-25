@@ -26,8 +26,8 @@ class Wkt(object):
 
         :return: un QgsCoordinateTransform
         """
-        crsSource = QgsCoordinateReferenceSystem(self.sridSource)
-        crsTarget = QgsCoordinateReferenceSystem(self.sridTarget)
+        crsSource = QgsCoordinateReferenceSystem.fromEpsgId(self.sridSource)
+        crsTarget = QgsCoordinateReferenceSystem.fromEpsgId(self.sridTarget)
         return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
 
     def toGetGeometry(self, txtGeometry) -> str:
