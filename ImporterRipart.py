@@ -216,11 +216,10 @@ class ImporterRipart(object):
         
         :param box: bounding box
         """
-        source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
-
+        source_crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
         mapCrs = self.context.mapCan.mapSettings().destinationCrs().authid()
-        dest_crs = QgsCoordinateReferenceSystem(mapCrs)
-
+        psgCode = int(mapCrs.split(":")[1])
+        dest_crs = QgsCoordinateReferenceSystem.fromEpsgId(psgCode)
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         new_box = transform.transformBoundingBox(box)
 

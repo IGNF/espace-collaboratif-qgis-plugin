@@ -90,7 +90,7 @@ class WfsPost(object):
     def getGeometryWorkingArea(self):
         self.layerWorkingArea = self.context.getLayerByName(self.filterName)
         layerWorkingAreaCrs = self.layerWorkingArea.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
         coordTransform = QgsCoordinateTransform(layerWorkingAreaCrs, destCrs, QgsProject.instance())
         featureIds = self.layerWorkingArea.selectedFeatureIds()
         geomWorkingArea = self.layerWorkingArea.getGeometry(featureIds[0])

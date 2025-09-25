@@ -135,9 +135,9 @@ class Contexte(object):
             self.copyRipartStyleFiles()
 
             # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
-            formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
-            lines = formatFile.readlines()
-            self.formats = [x.split("\n")[0] for x in lines]
+            with open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r') as formatFile:
+                lines = formatFile.readlines()
+                self.formats = [x.split("\n")[0] for x in lines]
 
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
@@ -372,9 +372,9 @@ class Contexte(object):
                       'geometryType': structure['attributes'][geometryName]['type']}
 
         vlayer = GuichetVectorLayer(parameters)
-        # plugin_layer = PluginGuichetLayer()
-        # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
-        vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+        crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
+        vlayer.setCrs(crs)
+
         return vlayer, bColumnDetruitExist
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
@@ -659,7 +659,8 @@ class Contexte(object):
                 uri.setDataSource('', table, 'geom')
                 uri.setSrid(str(cst.EPSGCRS))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+                crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
+                vlayer.setCrs(crs)
                 self.QgsProject.instance().addMapLayer(vlayer, False)
                 root.insertLayer(0, vlayer)
                 self.logger.debug("Layer " + vlayer.name() + " added to map")
@@ -890,7 +891,7 @@ class Contexte(object):
         geomPoints = []
 
         try:
-            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
+            destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
             transformer = QgsCoordinateTransform(layerCrs, destCrs, self.QgsProject.instance())
             if ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
                 geomPoints = geom.asPolygon()

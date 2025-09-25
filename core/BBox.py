@@ -52,8 +52,7 @@ class BBox(object):
                           "Veuillez le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
                           "assigné]".format(self.filterName)
                 raise Exception(message)
-
-            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+            destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
             coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
             newLayerFilterExtent = coordTransform.transform(layerFilterExtent)
             return Box(newLayerFilterExtent.xMinimum(), newLayerFilterExtent.yMinimum(),
@@ -67,7 +66,7 @@ class BBox(object):
         self.layerFilter = self.context.getLayerByName(filterName)
         qgsRectangle = self.layerFilter.extent()
         layerFilterCrs = self.layerFilter.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
         coordTransform = QgsCoordinateTransform(layerFilterCrs, destCrs, QgsProject.instance())
         newQgsRectangle = coordTransform.transform(qgsRectangle)
         return newQgsRectangle.asWktPolygon()

@@ -651,10 +651,8 @@ class RipartHelper:
             rowcount = cur.rowcount
             if rowcount != 1:
                 RipartHelper.logger.error("No row inserted:" + sql)
-            ###################
             if bCommit:
                 conn.commit()
-            ###################
             if len(rem.croquis) > 0:
                 croquis = rem.croquis
                 for cr in croquis:
@@ -680,10 +678,8 @@ class RipartHelper:
                         geom = sgeom % ('POLYGON(', coord + ")")
                         sql = sql % (RipartHelper.nom_Calque_Croquis_Polygone, geom)
                     cur.execute(sql)
-                ###################
                 if bCommit:
                     conn.commit()
-                ###################
 
         except Exception as e:
             raise e
@@ -701,7 +697,7 @@ class RipartHelper:
         :param geomLayer: QgsVectorlayer
         """
         layerCrs = geomLayer.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
         xform = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
         featsPoly = geomLayer.getFeatures()
         isWithin = False
