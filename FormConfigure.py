@@ -12,13 +12,11 @@ import os.path
 from datetime import datetime, timedelta
 import calendar
 
-import PyQt5.QtCore
-from PyQt5 import uic, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
-from qgis._core import QgsProject
-from qgis.core import QgsVectorLayer
-from qgis.PyQt import QtCore
+from qgis.PyQt import uic
+from qgis.core import QgsVectorLayer, QgsProject
 from .PluginHelper import PluginHelper
 from .core.SQLiteManager import SQLiteManager
 from .core import Constantes as cst
@@ -185,7 +183,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             parent = item.parent()
             parent.setCheckState(0, self.getParentState(item))
 
-    def getParentState(self, item) -> PyQt5.QtCore.Qt.CheckState:
+    def getParentState(self, item):
         """
         :param item: l'élément de l'arbre
         :type item: QTreeWidgetItem
@@ -236,17 +234,16 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         newUrl = self.lineEditUrl.text()
         if oldUrl != newUrl:
             SQLiteManager.emptyTable(cst.TABLEOFTABLES)
-        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_UrlHost, newUrl, "Serveur")
+        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_UrlHost, newUrl, PluginHelper.xml_Serveur)
 
         # Proxy
-        # TODO : revoir le proxy dans la boite de configuration
         if self.checkBoxProxy.isChecked():
             tmp = self.lineEditProxy.text()
-            proxies = {'http': tmp, 'https': ''}
+            if tmp != '':
+                PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_proxy, tmp,
+                                            PluginHelper.xml_Serveur)
         else:
-            proxies = {}
-        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_proxy, proxies, "Serveur")
-        self.context.proxies = proxies
+            PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_proxy, "", PluginHelper.xml_Serveur)
 
         # date
         if self.checkBoxDate.isChecked():
@@ -254,7 +251,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             sdate = d.toString('dd/MM/yyyy') + " 00:00:00"
         else:
             sdate = ""
-        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_DateExtraction, sdate, "Map")
+        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_DateExtraction, sdate,
+                                    PluginHelper.xml_Map)
 
         # attributs croquis
         PluginHelper.removeAttCroquis(self.context.projectDir)
@@ -262,6 +260,8 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             checkedItems = self.getCheckedTreeItems()
             for calque in checkedItems:
                 PluginHelper.setAttributsCroquis(self.context.projectDir, calque, checkedItems[calque])
+
+        self.close()
     
     def keyPressEvent(self, event):
         """

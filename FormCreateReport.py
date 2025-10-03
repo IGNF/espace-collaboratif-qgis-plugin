@@ -1,14 +1,13 @@
 import json
 import os
 from typing import Optional
-from PyQt5 import QtGui, QtWidgets, uic
+from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
 from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
-from qgis.PyQt import QtCore
+from qgis.PyQt import uic
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 from .core.Theme import Theme
-from .core.CommunitiesMember import CommunitiesMember
 from .core.Community import Community
 from .core.ThemeAttributes import ThemeAttributes
 from .PluginHelper import PluginHelper
@@ -88,7 +87,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         self.groupBoxProfil.setTitle(title)
 
         # Le nom du thème préféré (du fichier de configuration)
-        preferredGroup = PluginHelper.load_preferredGroup(self.__context.projectDir)
+        preferredGroup = PluginHelper.load_preferredGroup(self.__context.projectDir).text
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
         self.__setComboBoxGroup()
@@ -285,8 +284,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         Affiche les thèmes et leurs attributs sous forme d'arborescence dans le formulaire en fonction
         du groupe choisi par l'utilisateur.
 
-        :param community: liste des groupes (avec leurs caractéristiques) de l'utilisateur
-        :type community: CommunitiesMember
+        :param communities: liste des groupes (avec leurs caractéristiques) de l'utilisateur
+        :type communities: list
         """
         for c in communities:
             if self.__activeCommunity == c.getName():

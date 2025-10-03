@@ -1,5 +1,5 @@
-from qgis.PyQt.QtWidgets import QProgressBar, QApplication
-from qgis.PyQt.QtCore import Qt
+from PyQt5.QtWidgets import QProgressBar, QApplication
+from PyQt5.QtCore import Qt
 from qgis.utils import iface
 
 

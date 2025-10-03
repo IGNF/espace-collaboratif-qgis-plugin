@@ -1,13 +1,11 @@
 import json
-
 import qgis.core
-from qgis.core import QgsProject, QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer, QgsMapLayer
-from qgis.PyQt.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox
+from qgis.core import QgsProject, QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
 from .Wkt import Wkt
 from .BBox import BBox
-from .GuichetVectorLayer import GuichetVectorLayer
 from .HttpRequest import HttpRequest
 from . import Constantes as cst
 
@@ -24,14 +22,14 @@ class WfsPost(object):
         :param context: le contexte du client QGIS
 
         :param layer: la couche QGIS en édition
-        :type layer: QgsMapLayer
+        :type layer: QgsVectorLayer
 
         :param filterName: le nom de la zone de travail utilisateur
         :type filterName: str
         """
         self.__context = context
         self.__layer = layer
-        self.__proxies = context.proxies
+        self.__proxies = context.getProxies()
         self.__endReporting = ''
         self.__transactionReporting = ''
         '''Il faut recharger certains paramètres de la couche quand l'utilisateur a fermé QGIS
@@ -298,7 +296,7 @@ class WfsPost(object):
                       'is3D': self.__layer.geometryDimensionForDatabase,
                       'numrec': numrec, 'role': None,
                       'urlHostEspaceCo': self.__context.urlHostEspaceCo,
-                      'headers': headers, 'proxies': self.__context.proxies,
+                      'headers': headers, 'proxies': self.__context.getProxies(),
                       'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
         numrecmessage = wfsGet.gcmsGet()
@@ -355,6 +353,7 @@ class WfsPost(object):
         if result is not None:
             if result[0] == 1:
                 bBDUni = True
+                self.__isTableStandard = False
 
         # Traitement des ajouts
         if len(addedFeatures) != 0:

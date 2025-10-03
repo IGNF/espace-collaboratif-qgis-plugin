@@ -5,6 +5,7 @@ from qgis.utils import spatialite_connect
 from qgis.core import QgsProject
 from . import Constantes as cst
 from .Wkt import Wkt
+from ..PluginHelper import PluginHelper
 
 
 class SQLiteManager(object):
@@ -259,11 +260,13 @@ class SQLiteManager(object):
                 tmpColumns += '{0},'.format(column)
 
             if value is None:
-                tmpValues += "'NULL',"
+                tmpValues += "NULL,"
             else:
                 if type(value) is dict:
                     if 'username' in value:
                         value = value['username']
+                    else:
+                        value = json.dumps(value, sort_keys=True, indent=2)
                 elif type(value) is str:
                     value = value.replace("'", "''")
                 elif type(value) is bool:
@@ -307,7 +310,7 @@ class SQLiteManager(object):
             return
         tmp = ''
         for key in keys:
-            tmp += '"{0}", '.format(key[0])
+            tmp += '"{0}", '.format(key)
         strCleabs = tmp[0:len(tmp) - 2]
         sql = 'DELETE FROM {0} WHERE cleabs IN ({1})'.format(tableName, strCleabs)
         SQLiteManager.executeSQL(sql)
@@ -327,11 +330,14 @@ class SQLiteManager(object):
             return
         cleabss = []
         for item in itemsTransaction:
-            data = json.loads(item)
-            if data['state'] == 'Insert':
+            print("item : {}".format(item))
+            if type(item) is not dict:
+                item = json.loads(item)
+            if item['state'] == 'Insert':
                 continue
-            if data['state'] == 'Update' or data['state'] == 'Delete':
-                cleabss.append(data['feature']['cleabs'])
+            if item['state'] == 'Update' or item['state'] == 'Delete':
+                if PluginHelper.keyExist('data', item):
+                    cleabss.append(item['data']['cleabs'])
         # Si la transaction ne contient que des créations, il n'y a pas d'enregistrements à détruire
         if len(cleabss) > 0:
             SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
@@ -346,8 +352,10 @@ class SQLiteManager(object):
         connection = spatialite_connect(self.__dbPath)
         cur = connection.cursor()
         for attributesRow in attributesRows:
+            print(attributesRow)
             columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
+            print(sql)
             cur.execute(sql)
             totalRows += 1
         cur.close()

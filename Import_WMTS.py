@@ -9,6 +9,7 @@ version 4.0.1, 15/12/2020
 
 # Imports
 import urllib
+import owslib
 from urllib.parse import urlparse
 from .core import Constantes as cst
 from qgis.core import QgsDataSourceUri
@@ -16,15 +17,12 @@ from qgis.core import QgsDataSourceUri
 try:
     from owslib.wmts import WebMapTileService
     from owslib.util import ServiceException
-    import owslib
-
     print("Dependencies - owslib version: {}".format(owslib.__version__))
 except ImportError as e:
     print("Dependencies - owslib is not present")
 
 try:
     from owslib.util import HTTPError
-
     print("Dependencies - HTTPError within owslib")
 except ImportError as e:
     print(

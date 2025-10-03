@@ -1,8 +1,9 @@
 import os
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
 from PyQt5.QtCore import Qt
-from qgis.PyQt import uic, QtWidgets, QtCore
-from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
+from qgis.PyQt import uic
+from qgis.core import QgsProject, QgsVectorLayer
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
 from .core import Constantes as cst
@@ -26,7 +27,6 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
         :param context: le contexte du projet
         """
-        from .Contexte import Contexte
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
@@ -130,7 +130,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
                 # On vérifie que le shapefile est surfacique
                 vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
-                if vlayer.geometryType() != QgsWkbTypes.GeometryType.PolygonGeometry:
+                if vlayer.geometryType() != 2:  # 2 = Polygon
                     QMessageBox.warning(self, cst.IGNESPACECO, "La zone de travail ne peut être définie "
                                                                "qu'à partir d'une couche d'objets "
                                                                "surfaciques.")
@@ -236,13 +236,11 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             message = self.importShapefile(spatialFilterLayerName)
             # Sauvegarde du nom de la nouvelle zone de travail
             PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
-                                        spatialFilterLayerName,
-                                        "Map")
+                                        spatialFilterLayerName, PluginHelper.xml_Map)
         # si spatialFilterLayerName est rempli, la zone existe déjà
         elif spatialFilterLayerName != '':
             PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
-                                        spatialFilterLayerName,
-                                        "Map")
+                                        spatialFilterLayerName, PluginHelper.xml_Map)
 
         # si l'import s'est mal passé, envoi d'une exception
         if message != "":
@@ -320,7 +318,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 else:
                     self.__bCancel = True
                 PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_GroupeActif,
-                                            self.__nameSelectedCommunity, "Serveur")
+                                            self.__nameSelectedCommunity, PluginHelper.xml_Serveur)
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
         if bNewZone:
@@ -344,7 +342,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 else:
                     self.__bCancel = True
             PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
-                                        "Map")
+                                        PluginHelper.xml_Map)
 
     def removeTablesSQLite(self, layers) -> None:
         """

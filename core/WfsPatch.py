@@ -1,8 +1,6 @@
 import json
-
+from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsProject, QgsWkbTypes
-from qgis.PyQt.QtWidgets import QMessageBox
-
 from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
 from . import Constantes as cst
@@ -25,7 +23,7 @@ class WfsPatch(object):
         """
         self.__context = context
         self.__layer = layer
-        self.__proxies = context.proxies
+        self.__proxies = context.getProxies()
         self.__headers = {}
         self.__url = None
         self.__datas = {}
@@ -120,7 +118,7 @@ class WfsPatch(object):
         if self.__url is None:
             message = "WfsPatch.gcmsPatch : impossible d'envoyer la mise à jour du signalement vers le serveur car " \
                       "l'url de la requête n'est pas remplie."
-            QMessageBox.critical(self, cst.IGNESPACECO, message)
+            QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
             return
         data = json.dumps(self.__datas)
         response = HttpRequest.makeHttpRequest(self.__url, headers=self.__headers, proxies=self.__proxies,

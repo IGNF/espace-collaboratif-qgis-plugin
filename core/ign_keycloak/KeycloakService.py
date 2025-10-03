@@ -21,12 +21,11 @@ class KeycloakService:
         self.realm_name = realm_name
         self.client_id = client_id
         self.client_secret = client_secret
-
         self.session = requests.Session()
         self.session.verify = ssl_verify
-
         if proxies is not None:
             self.session.proxies.update(proxies)
+            print("session.proxies : {}".format(self.session.proxies))
 
         self.ip = "127.0.0.1"
         self.port = 7070
@@ -60,10 +59,8 @@ class KeycloakService:
 
         webbrowser.open(auth_url, new=0, autoraise=True)
         keycloak_response = KeycloakAuthListener.listen(self.ip, self.port)
-
         if state != keycloak_response["state"][0]:
             raise Exception("Authentication failed, invalid state")
-
         return keycloak_response
 
     def get_access_token(self, authorization_code: str):
@@ -78,7 +75,6 @@ class KeycloakService:
             data["client_secret"] = self.client_secret
 
         token_url = "{}realms/{}/protocol/openid-connect/token".format(self.base_uri, self.realm_name)
-
         response = self.session.post(token_url, data=data)
         if response.status_code != 200:
             raise Exception("Failed to get access token")
@@ -87,9 +83,7 @@ class KeycloakService:
 
     def get_userinfo(self, access_token: str):
         data = {"access_token": access_token}
-
         userinfo_url = "{}realms/{}/protocol/openid-connect/userinfo".format(self.base_uri, self.realm_name)
-
         response = self.session.post(userinfo_url, data=data)
         if response.status_code != 200:
             raise Exception("Failed to get user info")

@@ -11,7 +11,7 @@ import json
 from PyQt5.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, \
     QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes, QgsMarkerLineSymbolLayer, QgsSimpleLineSymbolLayer, \
-    QgsFontMarkerSymbolLayer, QgsSymbolLayer, QgsProperty
+    QgsFontMarkerSymbolLayer, QgsSymbolLayer, QgsProperty, Qgis
 
 from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
 
@@ -378,7 +378,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             symbol.setColor(color)
             symbol.setOpacity(1)
 
-        symbol.setOutputUnit(QgsUnitTypes.RenderUnit.RenderPixels)
+        symbol.setOutputUnit(Qgis.RenderUnit.Pixels)
         renderer = QgsSingleSymbolRenderer(symbol)
         # apply the renderer to the layer
         self.setRenderer(renderer)
@@ -412,7 +412,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             symbol.setColor(QColor('238,153,0,255'))
             symbol.setOpacity(1)
 
-        symbol.setOutputUnit(QgsUnitTypes.RenderUnit.RenderPixels)
+        symbol.setOutputUnit(Qgis.RenderUnit.Pixels)
         renderer = QgsSingleSymbolRenderer(symbol)
         # apply the renderer to the layer
         self.setRenderer(renderer)
@@ -504,7 +504,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             fontMarkerSymbol = QgsFontMarkerSymbolLayer.create(self.__setMarkerLineSymbolLayer())
             qgsProperty = self.__setPropertySymbol(strFieldDirection)
             if qgsProperty is not None:
-                fontMarkerSymbol.setDataDefinedProperty(QgsSymbolLayer.Property.PropertyCharacter, qgsProperty)
+                fontMarkerSymbol.setDataDefinedProperty(QgsSymbolLayer.Property.Character, qgsProperty)
 
             # Remplacement du symbole par défaut
             markerSymlbol.changeSymbolLayer(0, fontMarkerSymbol)

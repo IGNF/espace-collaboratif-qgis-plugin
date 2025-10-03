@@ -4,7 +4,7 @@ from typing import Optional
 
 from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
-    QgsEditorWidgetSetup, QgsRectangle, QgsPointXY
+    QgsRectangle, QgsPointXY
 
 from .core.requests import Response
 from .PluginHelper import PluginHelper
@@ -74,7 +74,7 @@ class ToolsReport(object):
 
         :return: le signalement initialisé avec les données issues de la requête
         """
-        query = Query(self.__context.urlHostEspaceCo, self.__context.proxies)
+        query = Query(self.__context.urlHostEspaceCo, self.__context.getProxies())
         query.setHeaders(self.__context.getTokenType(), self.__context.getTokenAccess())
         query.setPartOfUrl('gcms/api/reports/{}'.format(idReport))
         response = query.simple()
@@ -99,7 +99,7 @@ class ToolsReport(object):
         if box is not None and box.getXMax() == 0.0 and box.getYMax() == 0.0 \
                 and box.getXMin() == 0.0 and box.getYMin() == 0.0:
             return
-        query = Query(self.__context.urlHostEspaceCo, self.__context.proxies)
+        query = Query(self.__context.urlHostEspaceCo, self.__context.getProxies())
         query.setHeaders(self.__context.getTokenType(), self.__context.getTokenAccess())
         query.setPartOfUrl('gcms/api/reports')
         query.setCommunity(self.__context.getUserCommunity().getId())
@@ -189,40 +189,40 @@ class ToolsReport(object):
 
         PluginHelper.showMessageBox(resultMessage)
 
-    def setFormAttributes(self) -> None:
-        """
-        Mise en forme d'un attribut au format json.
-        NOTE : non utilisée mais peut servir ;-)
-        """
-        listLayers = QgsProject.instance().mapLayersByName(cst.nom_Calque_Signalement)
-        if len(listLayers) == 0:
-            return
-        features = None
-        for layer in listLayers:
-            features = layer.getFeatures()
-            break
-        fields = None
-        for feature in features:
-            fields = feature.fields()
-            break
-        if fields is None or len(fields) == 0:
-            return
-        index = -1
-        for field in fields:
-            name = field.name()
-            if name == 'Thèmes':
-                index = fields.indexOf(name)
-                break
-        # Si l'attribut "Thèmes" n'existe pas, on ne fait rien, on laisse faire QGIS
-        if index == -1:
-            return
-        # modification du formulaire QGIS pour l'attribut "Thèmes"
-        # Type:JsonEdit
-        QgsEWS_type = 'JsonEdit'
-        # Config:{'DefaultView': 1, 'FormatJson': 0}
-        QgsEWS_config = {'DefaultView': 1, 'FormatJson': 0}
-        setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
-        listLayers[0].setEditorWidgetSetup(index, setup)
+    # def setFormAttributes(self) -> None:
+    #     """
+    #     Mise en forme d'un attribut au format json.
+    #     NOTE : non utilisée mais peut servir ;-)
+    #     """
+    #     listLayers = QgsProject.instance().mapLayersByName(cst.nom_Calque_Signalement)
+    #     if len(listLayers) == 0:
+    #         return
+    #     features = None
+    #     for layer in listLayers:
+    #         features = layer.getFeatures()
+    #         break
+    #     fields = None
+    #     for feature in features:
+    #         fields = feature.fields()
+    #         break
+    #     if fields is None or len(fields) == 0:
+    #         return
+    #     index = -1
+    #     for field in fields:
+    #         name = field.name()
+    #         if name == 'Thèmes':
+    #             index = fields.indexOf(name)
+    #             break
+    #     # Si l'attribut "Thèmes" n'existe pas, on ne fait rien, on laisse faire QGIS
+    #     if index == -1:
+    #         return
+    #     # modification du formulaire QGIS pour l'attribut "Thèmes"
+    #     # Type:JsonEdit
+    #     QgsEWS_type = 'JsonEdit'
+    #     # Config:{'DefaultView': 1, 'FormatJson': 0}
+    #     QgsEWS_config = {'DefaultView': 1, 'FormatJson': 0}
+    #     setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
+    #     listLayers[0].setEditorWidgetSetup(index, setup)
 
     def __setCoordinateTransform(self) -> QgsCoordinateTransform:
         """
@@ -232,7 +232,7 @@ class ToolsReport(object):
         :return: un QgsCoordinateTransform
         """
         crsSource = self.__context.mapCan.mapSettings().destinationCrs()
-        crsTarget = QgsCoordinateReferenceSystem(cst.EPSGCRS4326)
+        crsTarget = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326)
         return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
 
     def setMapExtent(self, box) -> None:
@@ -379,7 +379,7 @@ class ToolsReport(object):
         uri = '{0}/gcms/api/reports'.format(self.__context.urlHostEspaceCo)
         # 'Content-Type': 'application/json',
         headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
-        response = HttpRequest.makeHttpRequest(uri, proxies=self.__context.proxies, params={}, data=datas,
+        response = HttpRequest.makeHttpRequest(uri, proxies=self.__context.getProxies(), params={}, data=datas,
                                                headers=headers, files=filesAttachments, launchBy='__sendRequest')
         if response.status_code == 200 or response.status_code == 201:
             return response
@@ -414,7 +414,8 @@ class ToolsReport(object):
 
         # TODO voir Noémie pour les thèmes préférés
         # PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
-        PluginHelper.save_preferredGroup(self.__context.projectDir, formCreate.preferredGroup)
+        PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_GroupePrefere,
+                                    formCreate.preferredGroup, PluginHelper.xml_Serveur)
 
         # Pour joindre un fichier à un signalement avec Request HTTP library,
         # une partie des données doit être de type dictionnaire l'autre transformée en json (sketch et attributes)

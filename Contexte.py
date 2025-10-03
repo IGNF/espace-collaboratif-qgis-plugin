@@ -10,18 +10,15 @@ version 4.0.1, 15/12/2020
 import os.path
 import ntpath
 import time
-from datetime import datetime
 from typing import Optional
-
 import requests
-
 from PyQt5 import QtGui
 from PyQt5.QtGui import QImage
-from qgis.PyQt.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
-    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri, QgsMapLayerType,\
-    QgsLayerTreeLayer, QgsMapLayer
+    QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
+    QgsLayerTreeLayer, Qgis
 from .Import_WMTS import importWMTS
 from .core.PluginLogger import PluginLogger
 from .core.SketchAttributes import SketchAttributes
@@ -82,10 +79,6 @@ class Contexte(object):
     # connexion à la base de données
     conn = None
 
-    # proxy
-    proxyHttp = "http://proxy.ign.fr:3128"
-    proxyHttps = "https://proxy.ign.fr:3128"
-
     # le logger
     logger = None
 
@@ -106,7 +99,7 @@ class Contexte(object):
         :param QgsProject: le projet en cours
         :type QgsProject: QgsProject
         """
-        self.login = None
+        # self.login = None
         self.__listNameIdFromAllUserCommunities = None
         self.projectDir = QgsProject.instance().homePath()
         self.projectFileName = ntpath.basename(QgsProject.instance().fileName())
@@ -130,22 +123,44 @@ class Contexte(object):
         self.__tokenTimerStart = 0
         self.__tokenExpireIn = 0
         self.urlHostEspaceCo = ''
-        # Par défaut dictionnaire des proxies à vide
+        # Par défaut dictionnaire des proxies à None
         # sinon il doit être rempli avec {"http": "http://proxy.ign.fr:3128", "https": "https://proxy.ign.fr:3128"}
         # {"http": self.proxyHttp, "https": self.proxyHttps}
-        self.proxies = {}
+        self.__proxies = None
 
         try:
             # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
             with open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r') as formatFile:
                 lines = formatFile.readlines()
                 self.formats = [x.split("\n")[0] for x in lines]
-
             self.urlHostEspaceCo = self.__setUrlHostEspaceCo()
-
+            self.__setProxies()
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
             raise
+
+    def getProxies(self) -> {}:
+        """
+        Retourne le contenu du dictionnaire des proxys
+        """
+        return self.__proxies
+
+    def __setProxies(self) -> None:
+        """
+        Fixe le proxies si le xml est rempli.
+        Supprime et recrée les variables d'environnement
+        """
+        xmlproxy = PluginHelper.load_proxy(self.projectDir).text
+        if xmlproxy is not None and xmlproxy != '':
+            proxy = str(xmlproxy).strip()
+            if proxy.startswith("http://") or proxy.startswith("https://"):
+                self.__proxies = {'http': proxy, 'https': xmlproxy}
+            for var in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]:
+                os.environ.pop(var, None)  # Ne lève pas d'erreur si elle n'existe pas
+            os.environ['http_proxy'] = proxy
+            os.environ['HTTP_PROXY'] = proxy
+            os.environ['https_proxy'] = proxy
+            os.environ['HTTPS_PROXY'] = proxy
 
     def getCommunities(self) -> []:
         """
@@ -320,17 +335,18 @@ class Contexte(object):
         KEYCLOAK_CLIENT_ID = "espaceco-qgis"
         KEYCLOAK_CLIENT_SECRET = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"
         KEYCLOAK_REALM_NAME = "geoplateforme"
+        # IGN_PROXY = "http://proxy.ign.fr:3128"
+        # proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
         self.__keycloakService = KeycloakService(KEYCLOAK_SERVER_URI, KEYCLOAK_REALM_NAME, KEYCLOAK_CLIENT_ID,
-                                                 client_secret=KEYCLOAK_CLIENT_SECRET, proxies=self.proxies)
+                                                 client_secret=KEYCLOAK_CLIENT_SECRET, proxies=self.__proxies)
         r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
         r = self.__keycloakService.get_access_token(r["code"][0])
         self.__tokenAccess = r["access_token"]
         self.__tokenExpireIn = r["expires_in"]
-        print(self.__tokenExpireIn)
-        print(datetime.now())
         self.__tokenType = r["token_type"]
-        r = self.__keycloakService.get_userinfo(r["access_token"])
-        self.login = r['email']
+        # TODO à supprimer
+        # r = self.__keycloakService.get_userinfo(r["access_token"])
+        # self.login = r['email']
         return self.__connectToService()
 
     def __connectToService(self) -> bool:
@@ -347,8 +363,8 @@ class Contexte(object):
 
         :return: True si la connexion est établie et si l'utilisateur n'a pas annulé son choix, False sinon
         """
-        PluginHelper.save_login(self.projectDir, self.login)
-        xmlgroupeactif = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur")
+        # PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Login, self.login, PluginHelper.xml_Serveur)
+        xmlgroupeactif = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur").text
         if xmlgroupeactif is not None:
             self.__activeCommunityName = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
                                                                   "Serveur").text
@@ -356,7 +372,7 @@ class Contexte(object):
                 self.logger.debug("Contexte.__activeCommunityName " + self.__activeCommunityName)
         try:
             # Recherche des communautés
-            communities = CommunitiesMember(self.urlHostEspaceCo, self.__tokenType, self.__tokenAccess, self.proxies)
+            communities = CommunitiesMember(self.urlHostEspaceCo, self.__tokenType, self.__tokenAccess, self.__proxies)
             communities.extractCommunities()
             self.setCommunities(communities.getCommunities())
             # La liste des communautés à afficher dans la boite de choix des communautés
@@ -374,17 +390,19 @@ class Contexte(object):
                 self.setActiveCommunityName(idNameCommunity[1])
 
                 # Sauvegarde du groupe actif dans le xml du projet utilisateur
-                PluginHelper.saveActiveCommunityName(self.projectDir, idNameCommunity[1])
+                PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_GroupeActif, idNameCommunity[1],
+                                            PluginHelper.xml_Serveur)
                 self.setActiveCommunityName(idNameCommunity[1])
 
                 # On enregistre le groupe comme groupe préféré pour la création de signalement
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
-                formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir)
+                formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir).text
                 if formPreferredGroup != idNameCommunity[1]:
                     # TODO Mélanie, il s'agit bien des themes utilisateur (ceux dans community)
                     #  et non activeThemes ou shared_themes ?
                     PluginHelper.save_preferredThemes(self.projectDir, self.getUserCommunity().getTheme())
-                PluginHelper.save_preferredGroup(self.projectDir, idNameCommunity[1])
+                PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_GroupePrefere, idNameCommunity[1],
+                                            PluginHelper.xml_Serveur)
             # Bouton Annuler
             elif dlgSelectedCommunities.getCancel():
                 dlgSelectedCommunities.close()
@@ -418,13 +436,13 @@ class Contexte(object):
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))
-        dlgInfo.textInfo.append("Login : {}".format(self.login))
+        # dlgInfo.textInfo.append("Login : {}".format(self.login))
         dlgInfo.textInfo.append("Groupe : {}".format(self.getUserCommunity().getName()))
         zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
         if zoneExtraction == "" or zoneExtraction is None or len(
                 self.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
             dlgInfo.textInfo.append("Zone de travail : pas de zone définie")
-            PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", "Map")
+            PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Zone_extraction, "", PluginHelper.xml_Map)
         else:
             dlgInfo.textInfo.append("Zone de travail : {}".format(zoneExtraction))
         # TODO faut-il contrôler (mais de quelle manière ?) la zone de travail de l'utilisateur
@@ -472,7 +490,7 @@ class Contexte(object):
         dans le projet QGIS de l'utilisateur.
 
         :param layer: la couche à importer dans le projet
-        :type layer: QgsVectorLayer
+        :type layer: Layer
 
         :return: la nouvelle couche de type GuichetVectorLayer créée et un booléen indiquant si la colonne
                  'détruit' existe (couche BDUni)
@@ -744,10 +762,10 @@ class Contexte(object):
             # Dans ce cas précis, "maplayers" représente la liste des couches présentent dans la table des tables
             # même si "mapLayers" est vide, les couches peuvent encore exister dans le projet
             if layer.name() not in layersInTableOfTables or len(layersInTableOfTables) == 0:
-                listLayers = QgsProject.instance().mapLayersByName(layer.name())
-                if len(listLayers) == 1:
+                lay = self.getLayerByName(layer.name())
+                if lay is not None:
                     # Vérifie si la couche appartient à un groupe ESPACECO ?
-                    if listLayers[0].type() != QgsMapLayerType.RasterLayer:
+                    if lay.type() != Qgis.LayerType.Raster:
                         root = QgsProject.instance().layerTreeRoot()
                         nodesGroup = root.findGroups()
                         searchedGroup = None
@@ -758,8 +776,8 @@ class Contexte(object):
                         if searchedGroup is not None:
                             for child in searchedGroup.children():
                                 # Vérifie si l'enfant est une couche et si c'est celle recherchée
-                                if isinstance(child, QgsLayerTreeLayer) and child.layerId() == listLayers[0].id():
-                                    print("{0} : {1}".format(layer.name(), len(list(listLayers[0].getFeatures()))))
+                                if isinstance(child, QgsLayerTreeLayer) and child.layerId() == lay.id():
+                                    print("{0} : {1}".format(layer.name(), len(list(lay.getFeatures()))))
                                     removeLayers.add((layer.name()))
                                     tmp += "{}, ".format(layer.name())
             else:
@@ -850,7 +868,7 @@ class Contexte(object):
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
-                      'proxies': self.proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid
+                      'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid
                       }
         wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcmsGet(True)
@@ -887,7 +905,7 @@ class Contexte(object):
 
         # Une couche en visualisation est non modifiable
         if layer.role == 'visu' or layer.role == 'ref':
-            newVectorLayer.setReadOnly()
+            newVectorLayer.setReadOnly(True)
 
         # Ajout de la couche dans la carte
         self.QgsProject.instance().addMapLayer(newVectorLayer, False)
@@ -935,25 +953,25 @@ class Contexte(object):
             if layerType is not QgsVectorLayer:
                 continue
             geometryType = layer.geometryType()
-            if geometryType is not None and geometryType != QgsWkbTypes.GeometryType.PolygonGeometry:
+            if geometryType is not None and geometryType != 2:
                 continue
             polylayers[layer.id()] = layer.name()
         return polylayers
 
-    def getLayerByName(self, layName) -> Optional[QgsMapLayer]:
+    def getLayerByName(self, layName) -> Optional[QgsVectorLayer]:
         """
         Recherche dans le projet la couche donnée par son nom en paramètre.
 
         :param layName: le nom de la couche
         :type layName: str
 
-        :return: la PREMIERE couche trouvée, None sinon
+        :return: la couche dont le nom correspond à celui donné en entrée, None sinon
         """
-        mapByName = self.QgsProject.instance().mapLayersByName(layName)
-        if len(mapByName) > 0:
-            return mapByName[0]
-        else:
-            return None
+        mapLayers = self.mapCan.layers()
+        for ml in mapLayers:
+            if ml.name() == layName:
+                return ml
+        return None
 
     def refreshLayers(self) -> None:
         """
@@ -1028,15 +1046,18 @@ class Contexte(object):
                 geom = f.geometry()
                 isMultipart = geom.isMultipart()
                 # if geom.isMultipart() => explode to single parts
-                if isMultipart and ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
+                # Polygon
+                if isMultipart and ftype == 2:
                     for poly in geom.asMultiPolygon():
                         croquiss.append(
                             self.makeSketch(QgsGeometry.fromPolygonXY(poly), ftype, lay.crs(), f[0]))
-                elif isMultipart and ftype == QgsWkbTypes.GeometryType.LineGeometry:
+                # Line
+                elif isMultipart and ftype == 1:
                     for line in geom.asMultiPolyline():
                         croquiss.append(
                             self.makeSketch(QgsGeometry.fromPolylineXY(line), ftype, lay.crs(), f[0]))
-                elif isMultipart and ftype == QgsWkbTypes.GeometryType.PointGeometry:
+                # Point
+                elif isMultipart and ftype == 0:
                     for pt in geom.asMultiPoint():
                         croquiss.append(
                             self.makeSketch(QgsGeometry.fromPointXY(pt), ftype, lay.crs(), f[0]))
@@ -1081,17 +1102,17 @@ class Contexte(object):
         try:
             destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326)
             transformer = QgsCoordinateTransform(layerCrs, destCrs, self.QgsProject.instance())
-            if ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
+            if ftype == 2:
                 geomPoints = geom.asPolygon()
                 if len(geomPoints) > 0:
                     geomPoints = geomPoints[0]  # les points du polygone
                 else:
                     self.logger.debug(u"geomPoints problem " + str(fId))
                 newSketch.type = newSketch.sketchType.Polygone
-            elif ftype == QgsWkbTypes.GeometryType.LineGeometry:
+            elif ftype == 1:
                 geomPoints = geom.asPolyline()
                 newSketch.type = newSketch.sketchType.Ligne
-            elif ftype == QgsWkbTypes.GeometryType.PointGeometry:
+            elif ftype == 0:
                 geomPoints = [geom.asPoint()]
                 newSketch.type = newSketch.sketchType.Point
             else:
@@ -1118,12 +1139,12 @@ class Contexte(object):
         self.conn = spatialite_connect(self.dbPath)
         cur = self.conn.cursor()
         table = cst.nom_Calque_Signalement
-        lay = self.getLayerByName(table)
         sql = "SELECT * FROM " + table + "  WHERE noSignalement IN (" + noSignalements + ")"
         rows = cur.execute(sql)
         featIds = []
         for row in rows:
             featIds.append(row[0])
+        lay = self.getLayerByName(table)
         lay.selectByIds(featIds)
 
     def getCroquisForReport(self, noSignalement, croquisSelFeats) -> {}:

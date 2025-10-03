@@ -1,5 +1,6 @@
 import os
-from qgis.PyQt import uic, QtWidgets
+from PyQt5 import QtWidgets
+from qgis.PyQt import uic
 from .core import Constantes as cst
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ReplyReportView_base.ui'))

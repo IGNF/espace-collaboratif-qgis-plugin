@@ -6,9 +6,9 @@ from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
 from . import resources
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
-from qgis.PyQt.QtGui import QIcon
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from PyQt5.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
+from PyQt5.QtGui import QIcon
 from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer
 from builtins import str
 from .core.BBox import BBox
@@ -74,7 +74,7 @@ class RipartPlugin:
             self.translator.load(locale_path)
 
             if qVersion() > '4.3.3':
-                QCoreApplication.installTranslator(self.translator)
+                QCoreApplication.installTranslator(messageFile=self.translator)
 
         # La toolbar du plugin
         self.actions = []
@@ -86,10 +86,10 @@ class RipartPlugin:
         # - quand le nom de la couche est changé
         # - quand des mises à jour ont été effectuées sur la couche
         self.iface.projectRead.connect(self.__connectProjectRead)
-        QgsProject.instance().layerWasAdded.connect(self.__connectLayerWasAdded)
-        QgsProject.instance().layerRemoved.connect(self.__connectLayerRemoved)
+        QgsProject.instance().layerWasAdded.connect(self._connectLayerWasAdded)
+        QgsProject.instance().layerRemoved.connect(self._connectLayerRemoved)
 
-    def __connectLayerRemoved(self, layerId) -> None:
+    def _connectLayerRemoved(self, layerId) -> None:
         """
         Quand l'utilisateur détruit une couche en passant par QGIS, il faut détruire les tables dans la base
         SQLite du projet.
@@ -137,6 +137,8 @@ class RipartPlugin:
 
         root = QgsProject.instance().layerTreeRoot()
         nodesGroup = root.findGroups()
+        if len(nodesGroup) == 0:
+            return
         for ng in nodesGroup:
             # Dans le cas ou le nom du groupe actif, du groupe dans la carte et celui stocké dans le xml sont tous
             # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
@@ -181,7 +183,7 @@ class RipartPlugin:
         #             messages = self.__doPost(objectAddedNotCommitted[0], qgsVectorLayerEditBuffer)
         #         return
 
-    def __connectLayerWasAdded(self, layer) -> None:
+    def _connectLayerWasAdded(self, layer) -> None:
         """
         Si une couche est ajoutée au projet QGIS de l'utilisateur et qu'elle se trouve dans la table des tables
         dans SQLite (ce qui veut dire que l'utilisateur a extrait cette couche par l'outil) alors la connexion
@@ -191,18 +193,24 @@ class RipartPlugin:
         une requête de type PATCH quand un signalement est déplacé.
 
         :param layer: la couche qui vient d'être ajoutée
-        :type layer: QgsMapLayer
+        :type layer: QgsVectorLayer
         """
-        if layer is None:
-            return
+        try:
+            if layer is None:
+                return
 
-        if layer.name() == cst.nom_Calque_Signalement:
-            self.__ConnectSpecificSignalToLayer(layer)
+            if layer.providerType() != 'spatialite':
+                return
 
-        if not self.__searchSpecificLayerInSQLite(layer.name()):
-            return
+            if not self.__searchSpecificLayerInSQLite(layer.name()):
+                return
 
-        self.__connectSpecificSignals(layer)
+            self.__connectSpecificSignals(layer)
+            if layer.name() == cst.nom_Calque_Signalement:
+                self.__ConnectSpecificSignalToLayer(layer)
+
+        except Exception as e:
+            raise Exception(e)
 
     def __searchSpecificLayerInSQLite(self, layerName) -> bool:
         """
@@ -226,7 +234,7 @@ class RipartPlugin:
         collaboratif.
 
         :param layer: la couche 'Signalement' ajoutée au projet
-        :type layer: QgsMapLayer
+        :type layer: QgsVectorLayer
         """
         layer.geometryChanged.connect(self.__geometryChanged)
 
@@ -349,7 +357,7 @@ class RipartPlugin:
         Vérifie si une couche a été modifiée : objets supprimés, modifiés ou ajoutés.
 
         :param layer: la couche qui a pu être mise à jour
-        :type layer: QgsMapLayer
+        :type layer: QgsVectorLayer
 
         :return: True, si la couche a été modifiée, False sinon
         """
@@ -397,7 +405,7 @@ class RipartPlugin:
         vers le serveur de l'espace collaboratif.
 
         :param layer: la couche qui doit être sauvegardée
-        :type layer: QgsMapLayer
+        :type layer: QgsVectorLayer
 
         :return: le message de fin de transaction avec le serveur
         """
@@ -462,7 +470,7 @@ class RipartPlugin:
         Ces mises à jour sont stockées par QGIS avec la classe QgsVectorLayerEditBuffer.
 
         :param layer: la couche mise à jour par l'utilisateur
-        :type layer: QgsMapLayer
+        :type layer: QgsVectorLayer
 
         :param editBuffer: les mises à jour stockées en mémoire pas QGIS
         :type editBuffer: QgsVectorLayerEditBuffer
@@ -697,13 +705,16 @@ class RipartPlugin:
                 return
             # Désactiver la fonction de détection de changement de géométrie pour un signalement
             activeLayer = self.iface.activeLayer()
-            if activeLayer is not None and activeLayer.name() != cst.nom_Calque_Signalement:
-                activeLayer.geometryChanged.disconnect(self.__geometryChanged)
+            if activeLayer is not None and activeLayer.name() == cst.nom_Calque_Signalement:
+                try:
+                    activeLayer.geometryChanged.disconnect(self.__geometryChanged)
+                except TypeError:
+                    pass  # La méthode self.__geometryChanged n'était pas connectée
             # Téléchargement des signalements
             toolsReport = ToolsReport(self.__context)
             toolsReport.download()
             # Réactiver la fonction de détection de changement de géométrie pour un signalement
-            if activeLayer is not None and activeLayer.name() != cst.nom_Calque_Signalement:
+            if activeLayer is not None and activeLayer.name() == cst.nom_Calque_Signalement:
                 activeLayer.geometryChanged.connect(self.__geometryChanged)
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__downloadReports', e)
@@ -800,7 +811,7 @@ class RipartPlugin:
             progress.setValue(1)
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
             params = {'url': self.__context.urlHostEspaceCo, 'tokentype': self.__context.getTokenType(),
-                      'tokenaccess': self.__context.getTokenAccess(), 'proxies': self.__context.proxies}
+                      'tokenaccess': self.__context.getTokenAccess(), 'proxies': self.__context.getProxies()}
             community = Community(params)
             page = 1
             limit = 20
@@ -889,7 +900,7 @@ class RipartPlugin:
                 parameters = {'layerName': layer.name(), 'bbox': bbox.getFromLayer(spatialFilterName, False, True),
                               'sridProject': cst.EPSGCRS4326, 'role': None,
                               'urlHostEspaceCo': self.__context.urlHostEspaceCo,
-                              'headers': headers, 'proxies': self.__context.proxies}
+                              'headers': headers, 'proxies': self.__context.getProxies()}
                 result = SQLiteManager.selectRowsInTableOfTables(layer.name())
                 numrec = 0
                 if len(result) > 0:

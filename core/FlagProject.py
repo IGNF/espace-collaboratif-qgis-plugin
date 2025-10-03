@@ -120,7 +120,7 @@ class FlagProject:
         global nameFile
         if not os.path.isfile(self.__espacecoxml):
             try:
-                nameFile = self.__storageDirectory + PluginHelper.nom_Fichier_Parametres_Ripart
+                nameFile = self.__storageDirectory + PluginHelper.nom_Fichier_Parametres_EspaceCo
                 shutil.copy(nameFile, self.__espacecoxml)
                 self.__logger.debug("Copy {}".format(nameFile))
             except Exception as e:
@@ -170,12 +170,12 @@ class FlagProject:
         try:
             # QGIS 3.x
             from qgis.core import Qgis
-            version = Qgis.version() if hasattr(Qgis, 'version') else Qgis.QGIS_VERSION_INT
+            version = Qgis.version() if hasattr(Qgis, 'version') else Qgis.versionInt()
             message = "QGIS {} détecté".format(version)
         except ImportError:
             # QGIS 2.x
-            from qgis.core import QGis as Qgis
-            version = Qgis.QGIS_VERSION_INT
+            from qgis.core import Qgis as Qgis
+            version = Qgis.versionInt()
             message = "QGIS {} détecté".format(version)
         print(message)
         self.__logger.debug(message)

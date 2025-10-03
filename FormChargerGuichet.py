@@ -1,7 +1,7 @@
 import os
 from PyQt5.QtWidgets import QDialogButtonBox, QTableWidget
-from PyQt5 import QtCore
-from qgis.PyQt import uic, QtWidgets
+from PyQt5 import QtCore, QtWidgets
+from qgis.PyQt import uic
 from .PluginHelper import PluginHelper
 from .core.BBox import BBox
 from .core.NoProfileException import NoProfileException

@@ -7,20 +7,16 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-
-import errno
 import os
-import shutil
 import subprocess
 import sys
 import ntpath
-import xml.etree.ElementTree as ET
+import Lib.xml.etree.ElementTree as ET
+from Lib.xml.etree.ElementTree import Element
 from datetime import datetime
 from typing import Optional
-
-from Lib.xml.etree.ElementTree import Element
-from qgis.PyQt.QtWidgets import QMessageBox
-from qgis.core import QgsProject, QgsGeometry
+from PyQt5.QtWidgets import QMessageBox
+from qgis.core import QgsProject
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 
@@ -31,10 +27,10 @@ class PluginHelper:
     """
     ripart_files_dir = "files"
     ripart_db = "espaceco.sqlite"
-    ripart_help_file = "ENR_Espace_co_Add-in_ArcGIS_Pro_2_0_0.pdf"
+    ripart_help_file = "ENR_Espace_co_plugin_pour_qgis.pdf"
 
     # fichier de configuration
-    nom_Fichier_Parametres_Ripart = "espaceco.xml"
+    nom_Fichier_Parametres_EspaceCo = "espaceco.xml"
 
     # dossier des fichiers de style .qml
     qmlStylesDirectory = "espacecoStyles"
@@ -47,10 +43,8 @@ class PluginHelper:
                               cst.nom_Calque_Croquis_Point, cst.nom_Calque_Signalement]
 
     calque_Signalement_Lyr = "Signalement.lyr"
-
-    xmlServeur = "Serveur"
-    xmlMap = "Map"
-
+    xml_Serveur = "Serveur"
+    xml_Map = "Map"
     xml_UrlHost = "URLHost"
     xml_Login = "Login"
     xml_DateExtraction = "Date_extraction"
@@ -60,16 +54,14 @@ class PluginHelper:
     xml_Zone_extraction = "Zone_extraction"
     xml_AfficherCroquis = "Afficher_Croquis"
     xml_AttributsCroquis = "Attributs_croquis"
-
     xml_BaliseNomCalque = "Calque_Nom"
     xml_BaliseChampCalque = "Calque_Champ"
     # xml_Group = "./Map/Import_pour_groupe"
     xml_Group = "Import_pour_groupe"
-    xml_Map = "./Map"
-
     xml_proxy = "Proxy"
     xml_GroupeActif = "groupe_actif"
     xml_GroupePrefere = "groupe_prefere"
+    xml_Root = "root"
 
     defaultDate = "1900-01-01 00:00:00"
     defaultPagination = 100
@@ -102,7 +94,7 @@ class PluginHelper:
             PluginHelper.showMessageBox(message)
             raise Exception(message)
         projectFileName = fname[:fname.find(".")]
-        return "{}_espaceco.xml".format(projectFileName)
+        return "{}_{}".format(projectFileName, PluginHelper.nom_Fichier_Parametres_EspaceCo)
 
     @staticmethod
     def getXPath(tagName, parentTag) -> str:
@@ -133,7 +125,20 @@ class PluginHelper:
         return xpath
 
     @staticmethod
-    def load_urlhost(projectDir) -> str:
+    def checkXmlFile(projectDir) -> Optional[ET.ElementTree]:
+        xmlFileDirectory = "{}/{}".format(projectDir, PluginHelper.getConfigFile())
+        try:
+            tree = ET.parse(xmlFileDirectory)
+            return tree
+        except ET.ParseError as e:
+            message = "PluginHelper.checkXmlFile, erreur d'analyse : {0} sur le fichier {1}. " \
+                      "Il est corrompu, veuillez contacter le support.".format(e, xmlFileDirectory)
+            PluginHelper.logger.info(message)
+            PluginHelper.showMessageBox(message)
+            return
+
+    @staticmethod
+    def load_urlhost(projectDir) -> Element:
         """
         NB : une exception est envoyée, si la recherche du nœud xml a échoué.
 
@@ -142,21 +147,19 @@ class PluginHelper:
 
         :return: l'url sauvegardée dans le fichier xml, une chaine vide si la balise principale 'Serveur' n'existe pas
         """
-        urlhost = ""
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
-            urlhost = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_UrlHost, "Serveur"))
+            urlhost = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_UrlHost, PluginHelper.xml_Serveur))
             if urlhost is None:
-                urlhost = PluginHelper.addXmlElement(projectDir, "URLHost", "Serveur")
-
+                urlhost = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_UrlHost, PluginHelper.xml_Serveur)
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return urlhost
 
     @staticmethod
-    def load_login(projectDir) -> str:
+    def load_login(projectDir) -> Element:
         """
         NB : une exception est envoyée, si la recherche du nœud xml a échoué.
 
@@ -165,44 +168,19 @@ class PluginHelper:
 
         :return: le login sauvegardé dans le fichier xml, une chaine vide si la balise principale 'Serveur' n'existe pas
         """
-        login = ""
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
-            login = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_Login, "Serveur"))
+            login = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_Login, PluginHelper.xml_Serveur))
             if login is None:
-                login = PluginHelper.addXmlElement(projectDir, "Login", "Serveur")
-
+                login = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_Login, PluginHelper.xml_Serveur)
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return login
 
     @staticmethod
-    def save_login(projectDir, login) -> None:
-        """
-        Enregistre le login dans le fichier xml de configuration.
-
-        NB : une exception est envoyée, si l'enregistrement du nœud xml a échoué.
-        
-        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
-        :type projectDir: str
-        
-        :param login: le nom du login utilisateur
-        :type login: str
-        """
-        try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
-            xmlroot = tree.getroot()
-            xlogin = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_Login, "Serveur"))
-            xlogin.text = login
-            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
-
-        except Exception as e:
-            PluginHelper.logger.error(format(e))
-
-    @staticmethod
-    def load_proxy(projectDir):
+    def load_proxy(projectDir) -> Element:
         """
         NB : une exception est envoyée, si la recherche du nœud xml a échoué.
 
@@ -211,45 +189,19 @@ class PluginHelper:
 
         :return: le proxy sauvegardé dans le fichier xml, une chaine vide si la balise principale 'Serveur' n'existe pas
         """
-        proxy = ""
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
-            proxy = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_proxy, "Serveur"))
+            proxy = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_proxy, PluginHelper.xml_Serveur))
             if proxy is None:
-                proxy = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_proxy, "Serveur")
-
+                proxy = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_proxy, PluginHelper.xml_Serveur)
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return proxy
 
     @staticmethod
-    def save_proxy(projectDir, proxy):
-        """
-        Enregistre le proxy dans le fichier xml de configuration.
-
-        NB : une exception est envoyée, si l'enregistrement du nœud xml a échoué.
-
-        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
-        :type projectDir: str
-
-        :param proxy: le nom du proxy
-        :type proxy: str
-        """
-        try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
-            xmlroot = tree.getroot()
-            xproxy = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_proxy, "Serveur"))
-            xproxy.text = proxy
-
-            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
-
-        except Exception as e:
-            PluginHelper.logger.error(format(e))
-
-    @staticmethod
-    def loadActiveCommunityName(projectDir):
+    def loadActiveCommunityName(projectDir) -> Element:
         """
         NB : une exception est envoyée, si la recherche du nœud xml a échoué.
 
@@ -259,44 +211,21 @@ class PluginHelper:
         :return: le nom de la communauté active sauvegardée dans le fichier xml, (groupe utilisé par l'utilisateur
                  pour travailler) une chaine vide si la balise principale 'Serveur' n'existe pas
         """
-        activeCommunity = ""
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
-            activeCommunity = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif, "Serveur"))
+            activeCommunity = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif,
+                                                                 PluginHelper.xml_Serveur))
             if activeCommunity is None:
-                activeCommunity = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_GroupeActif, "Serveur")
-
+                activeCommunity = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_GroupeActif,
+                                                             PluginHelper.xml_Serveur)
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return activeCommunity
 
     @staticmethod
-    def saveActiveCommunityName(projectDir, activeCommunity):
-        """
-        Enregistre le groupe actif dans le fichier xml de configuration.
-
-        NB : une exception est envoyée, si l'enregistrement du nœud xml a échoué.
-
-        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
-        :type projectDir: str
-
-        :param activeCommunity: le nom du groupe actif
-        :type activeCommunity: str
-        """
-        try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
-            xmlroot = tree.getroot()
-            xActiveCommunity = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupeActif, "Serveur"))
-            xActiveCommunity.text = activeCommunity
-            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
-
-        except Exception as e:
-            PluginHelper.logger.error(format(e))
-
-    @staticmethod
-    def load_preferredGroup(projectDir):
+    def load_preferredGroup(projectDir) -> Element:
         """
         NB : une exception est envoyée, si la recherche du nœud xml a échoué.
 
@@ -306,45 +235,21 @@ class PluginHelper:
         :return: le nom du groupe préféré sauvegardé dans le fichier xml, (groupe utilisé le plus souvent
                  par l'utilisateur pour travailler) une chaine vide si la balise principale 'Serveur' n'existe pas
         """
-        groupePrefere = ""
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
-            groupePrefere = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupePrefere, "Serveur"))
+            groupePrefere = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupePrefere,
+                                                               PluginHelper.xml_Serveur))
             if groupePrefere is None:
-                groupePrefere = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_GroupePrefere, "Serveur")
-
+                groupePrefere = PluginHelper.addXmlElement(projectDir, PluginHelper.xml_GroupePrefere,
+                                                           PluginHelper.xml_Serveur)
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return groupePrefere
 
     @staticmethod
-    def save_preferredGroup(projectDir, preferredGroup):
-        """
-        Enregistre le groupe préféré de l'utilisateur dans le fichier xml de configuration.
-
-        NB : une exception est envoyée, si l'enregistrement du nœud xml a échoué.
-
-        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
-        :type projectDir: str
-
-        :param preferredGroup: le nom du groupe préféré
-        :type preferredGroup: str
-        """
-        try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
-            xmlroot = tree.getroot()
-            xgroupePrefere = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_GroupePrefere, "Serveur"))
-            xgroupePrefere.text = preferredGroup
-
-            tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
-
-        except Exception as e:
-            PluginHelper.logger.error(format(e))
-
-    @staticmethod
-    def load_CalqueFiltrage(projectDir):
+    def load_CalqueFiltrage(projectDir) -> Element:
         """
         NB : une exception est envoyée, si la recherche du nœud xml a échoué.
 
@@ -354,19 +259,17 @@ class PluginHelper:
         :return: le nom du calque de filtrage sauvegardé dans le fichier xml, une chaine vide si la balise principale
                  'Serveur' n'existe pas
         """
-        calque = ""
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
-            calque = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_Zone_extraction, "Map"))
-
+            calque = xmlroot.find(PluginHelper.getXPath(PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map))
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return calque
 
     @staticmethod
-    def load_XmlTag(projectDir, tag, parent=None) -> Optional[Element]:
+    def load_XmlTag(projectDir, tag, parent=None) -> Element:
         """
         Recherche un élément (tag) dans le fichier xml. Si l'élément n'existe pas, il est créé.
 
@@ -383,17 +286,15 @@ class PluginHelper:
         
         :return: l'élément xml recherché
         """
-        node = None
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
             node = xmlroot.find(PluginHelper.getXPath(tag, parent))
             if node is None:
                 node = PluginHelper.addXmlElement(projectDir, tag, parent)
-
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return node
 
     @staticmethod
@@ -415,22 +316,18 @@ class PluginHelper:
 
         :return: le xNode de l'élément ajouté
         """
-        tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+        tree = PluginHelper.checkXmlFile(projectDir)
         xmlroot = tree.getroot()
-        if parentElem != "root":
+        if parentElem != PluginHelper.xml_Root:
             parentNode = xmlroot.find(parentElem)
         else:
             parentNode = xmlroot
         if parentNode is None:
-            parentNode = PluginHelper.addXmlElement(projectDir, parentElem, "root")
-
+            parentNode = PluginHelper.addXmlElement(projectDir, parentElem, PluginHelper.xml_Root)
         elementNode = ET.SubElement(parentNode, elem)
-
         if value is not None:
             elementNode.text = value
-
         tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
-
         return elementNode
 
     @staticmethod
@@ -445,20 +342,18 @@ class PluginHelper:
         """
         attCroquis = {}
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
-            nodes = xmlroot.findall(PluginHelper.getXPath(PluginHelper.xml_AttributsCroquis, "Map"))
-
+            nodes = xmlroot.findall(PluginHelper.getXPath(PluginHelper.xml_AttributsCroquis, PluginHelper.xml_Map))
             for cr in nodes:
                 nomCalque = cr.find(PluginHelper.xml_BaliseNomCalque).text
                 attCroquis[nomCalque] = []
                 fields = cr.iter(PluginHelper.xml_BaliseChampCalque)
                 for f in fields:
                     attCroquis[nomCalque].append(f.text)
-
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return attCroquis
 
     @staticmethod
@@ -473,39 +368,20 @@ class PluginHelper:
         """
         prefThemes = []
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
-
             prefThs = xmlroot.findall(
-                PluginHelper.getXPath(PluginHelper.xml_Themes + "/" + PluginHelper.xml_Theme, "Map"))
-
+                PluginHelper.getXPath(PluginHelper.xml_Themes + "/" + PluginHelper.xml_Theme + "/"
+                                      + PluginHelper.xml_Map, PluginHelper.xml_Map))
             for n in prefThs:
                 prefThemes.append(PluginHelper.notNoneValue(n.text))
-
         except Exception as e:
             PluginHelper.logger.error(str(e))
-
+            raise Exception(e)
         return prefThemes
 
     @staticmethod
-    def save_preferredThemes(projectDir, prefThemes) -> None:
-        """
-        Enregistre les thèmes préférés de l'utilisateur dans le fichier xml de configuration.
-        
-        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
-        :type projectDir: str
-        
-        :param prefThemes: la liste des thèmes
-        :type prefThemes: list
-        """
-        PluginHelper.load_XmlTag(projectDir, PluginHelper.xml_Themes, "Map")
-        PluginHelper.removeNode(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes)
-        for th in prefThemes:
-            PluginHelper.addXmlElement(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes,
-                                       th.getName())
-
-    @staticmethod
-    def addNode(projectDir, tag, value, parentTag=None):
+    def addNode(projectDir, tag, value, parentTag=None) -> None:
         """
         Ajoute un nœud dans le fichier xml de configuration.
 
@@ -524,7 +400,7 @@ class PluginHelper:
         :type parentTag: str
         """
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
             if parentTag is None:
                 parentNode = xmlroot
@@ -538,6 +414,7 @@ class PluginHelper:
 
         except Exception as e:
             PluginHelper.logger.error(format(e))
+            raise Exception(e)
 
     @staticmethod
     def removeNode(projectDir, tag, parentTag=None) -> None:
@@ -556,7 +433,7 @@ class PluginHelper:
         :type parentTag: str
         """
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
             if parentTag is None:
                 parentNode = xmlroot
@@ -570,6 +447,24 @@ class PluginHelper:
 
         except Exception as e:
             PluginHelper.logger.error(format(e))
+            raise Exception(e)
+
+    @staticmethod
+    def save_preferredThemes(projectDir, prefThemes) -> None:
+        """
+        Enregistre les thèmes préférés de l'utilisateur dans le fichier xml de configuration.
+
+        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
+        :type projectDir: str
+
+        :param prefThemes: la liste des thèmes
+        :type prefThemes: list
+        """
+        PluginHelper.load_XmlTag(projectDir, PluginHelper.xml_Themes, "Map")
+        PluginHelper.removeNode(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes)
+        for th in prefThemes:
+            PluginHelper.addXmlElement(projectDir, PluginHelper.xml_Theme, "Map/" + PluginHelper.xml_Themes,
+                                       th.getName())
 
     @staticmethod
     def setXmlTagValue(projectDir, tag, value, parentTag=None) -> None:
@@ -591,15 +486,15 @@ class PluginHelper:
         :type parentTag: str
         """
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
             node = xmlroot.find(PluginHelper.getXPath(tag, parentTag))
             node.text = value
-
             tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:
             PluginHelper.logger.error(format(e))
+            raise Exception(e)
 
     @staticmethod
     def setAttributsCroquis(projectDir, calqueName, values):
@@ -619,21 +514,20 @@ class PluginHelper:
         :type values: list
         """
         try:
-            tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+            tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
             mapNode = xmlroot.find(PluginHelper.xml_Map)
-
-            nodeAtributsCroquis = ET.SubElement(mapNode, 'Attributs_croquis')
-            nodeNom = ET.SubElement(nodeAtributsCroquis, 'Calque_Nom')
+            nodeAtributsCroquis = ET.SubElement(mapNode, PluginHelper.xml_AttributsCroquis)
+            nodeNom = ET.SubElement(nodeAtributsCroquis, PluginHelper.xml_BaliseNomCalque)
             nodeNom.text = calqueName
             for val in values:
-                field = ET.SubElement(nodeAtributsCroquis, 'Calque_Champ')
+                field = ET.SubElement(nodeAtributsCroquis, PluginHelper.xml_BaliseChampCalque)
                 field.text = val
 
             tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
         except Exception as e:
-            # fix_print_with_import
-            print(format(e))
+            PluginHelper.logger.error(format(e))
+            raise Exception(e)
 
     @staticmethod
     def removeAttCroquis(projectDir) -> None:
@@ -643,10 +537,10 @@ class PluginHelper:
         :param projectDir: le chemin complet du fichier de configuration
         :type projectDir: str
         """
-        tree = ET.parse(projectDir + "/" + PluginHelper.getConfigFile())
+        tree = PluginHelper.checkXmlFile(projectDir)
         xmlroot = tree.getroot()
-        maptag = xmlroot.find('Map')
-        for c in maptag.findall('Attributs_croquis'):
+        maptag = xmlroot.find(PluginHelper.xml_Map)
+        for c in maptag.findall(PluginHelper.xml_AttributsCroquis):
             maptag.remove(c)
         tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
@@ -711,46 +605,46 @@ class PluginHelper:
 
     @staticmethod
     # TODO Mélanie : cette fonction n'est pas mis en service ? Dois-je l'intégrer au code ?
-    def getGeometryWorkZone(projectDir) -> Optional[QgsGeometry]:
-        """
-        Vérifie si la zone de travail est conforme aux exigences de filtrage des objets après extraction
-        de signalements ou de données provenant de l'espace collaboratif.
-
-        :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
-        :type projectDir: str
-
-        :return: la géométrie de la zone de travail ou None
-        """
-        geometryWorkZone = None
-        nameWorkZone = PluginHelper.load_CalqueFiltrage(projectDir).text
-        layerWorkZone = QgsProject.instance().mapLayersByName(nameWorkZone)
-        if len(layerWorkZone) > 1:
-            message = "Le filtrage des objets sera impossible car plusieurs couches portent le même nom " \
-                      "dans le projet. Il faut une seule couche représentant la zone de travail pour filtrer" \
-                      " les objets après extraction des données.".format(nameWorkZone)
-            QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
-            return geometryWorkZone
-        layerWorkZone[0].startEditing()
-        layerWorkZone[0].selectAll()
-        feats = layerWorkZone[0].selectedFeatures()
-        nb = len(list(feats))
-        if nb > 1:
-            message = "Le filtrage des objets sera impossible car la couche {0} contient plusieurs objets." \
-                      "Il faut une seule zone de travail pour filtrer les objets après extraction des données.".format(
-                        nameWorkZone)
-            QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
-            return geometryWorkZone
-        for feat in feats:
-            geometryWorkZone = feat.geometry()
-        if len(list(geometryWorkZone.parts())) > 1:
-            message = "Le filtrage des objets sera impossible car la zone de travail est une surface multiple." \
-                      "Il faut une surface simple pour filtrer les objets après extraction des données.".format(
-                        nameWorkZone)
-            QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
-            return geometryWorkZone
-        layerWorkZone[0].rollBack()
-        layerWorkZone[0].removeSelection()
-        return geometryWorkZone
+    # def getGeometryWorkZone(projectDir) -> Optional[QgsGeometry]:
+    #     """
+    #     Vérifie si la zone de travail est conforme aux exigences de filtrage des objets après extraction
+    #     de signalements ou de données provenant de l'espace collaboratif.
+    #
+    #     :param projectDir: le répertoire dans lequel est enregistré le projet QGIS
+    #     :type projectDir: str
+    #
+    #     :return: la géométrie de la zone de travail ou None
+    #     """
+    #     geometryWorkZone = None
+    #     nameWorkZone = PluginHelper.load_CalqueFiltrage(projectDir).text
+    #     layerWorkZone = QgsProject.instance().mapLayersByName(nameWorkZone)
+    #     if len(layerWorkZone) > 1:
+    #         message = "Le filtrage des objets sera impossible car plusieurs couches portent le même nom " \
+    #                   "dans le projet. Il faut une seule couche représentant la zone de travail pour filtrer" \
+    #                   " les objets après extraction des données.".format(nameWorkZone)
+    #         QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
+    #         return geometryWorkZone
+    #     layerWorkZone[0].layer.startEditing()
+    #     layerWorkZone[0].selectAll()
+    #     feats = layerWorkZone[0].selectedFeatures()
+    #     nb = len(list(feats))
+    #     if nb > 1:
+    #         message = "Le filtrage des objets sera impossible car la couche {0} contient plusieurs objets." \
+    #                   "Il faut une seule zone de travail pour filtrer les objets après extraction des données.".format(
+    #                     nameWorkZone)
+    #         QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=3)
+    #         return geometryWorkZone
+    #     for feat in feats:
+    #         geometryWorkZone = feat.geometry()
+    #     if len(list(geometryWorkZone.parts())) > 1:
+    #         message = "Le filtrage des objets sera impossible car la zone de travail est une surface multiple." \
+    #                   "Il faut une surface simple pour filtrer les objets après extraction des données.".format(
+    #                     nameWorkZone)
+    #         QgsProject.instance().fa.iface.messageBar().pushMessage("", message, level=2, duration=3)
+    #         return geometryWorkZone
+    #     layerWorkZone[0].rollBack()
+    #     layerWorkZone[0].removeSelection()
+    #     return geometryWorkZone
 
     @staticmethod
     def notNoneValue(val):

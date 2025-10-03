@@ -73,7 +73,7 @@ class ReplyReport(object):
                     #  j'ai mis vide pour l'instant doit-on mettre une valeur style "envoyée de QGIS",
                     #  y a t'il un standard ?
                     parameters = {'reportId': report.getId(),
-                                  'proxies': self.__context.proxies, 'headers': headers,
+                                  'proxies': self.__context.getProxies(), 'headers': headers,
                                   'requestBody': {'title': '', 'content': newResponse, 'status': newStatut}}
                     # Requête de mise à jour
                     jsonResponse = self.__toolsReport.sendResponseToServer(parameters)
