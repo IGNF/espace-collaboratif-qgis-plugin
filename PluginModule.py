@@ -396,8 +396,10 @@ class RipartPlugin:
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
         QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
-        if 'error' in messageInfo:
-            return
+        errors = ['error', '400', '401', '402', '403', '404', '500']
+        for error in errors:
+            if error in messageInfo:
+                return
 
     def __saveChangesForOneLayer(self, layer) -> str:
         """
@@ -435,6 +437,7 @@ class RipartPlugin:
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            return messages
         return messages
 
     def __doConnexion(self, bAutomaticConnection) -> bool:

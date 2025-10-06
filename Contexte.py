@@ -821,8 +821,8 @@ class Contexte(object):
             listLayers = self.QgsProject.instance().mapLayersByName(removeLayer)
             for lLayer in listLayers:
                 layerIds.append(lLayer.id())
-
-        self.QgsProject.instance().removeMapLayers(layerIds)
+        if len(layerIds) >= 1:
+            self.QgsProject.instance().removeMapLayers(layerIds)
         return True
 
     def getAndFormatLayer(self, layer, newVectorLayer, nodeGroup, bbox, bColumnDetruitExist) -> str:

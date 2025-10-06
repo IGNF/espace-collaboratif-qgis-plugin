@@ -458,8 +458,11 @@ class EditFormFieldFromAttributes(object):
                 # le champ à valider peut-être vide
                 expression += ' THEN array_contains(array(\'NULL\'),"{}")'.format(self.name)
             else:
-                values = ''
-                for tmp in v:
+                # La liste de valeurs ne contient pas la valeur nulle, il faut donc l'ajouter
+                values = "'NULL',"
+                # Il peut arriver qu'il y ait des doublons dans la liste
+                sansDoublons = list(set(v))
+                for tmp in sansDoublons:
                     # Le caractère apostrophe est doublé
                     val = tmp.replace("'", "''")
                     values += "'{}',".format(val)

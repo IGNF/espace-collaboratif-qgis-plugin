@@ -258,6 +258,8 @@ class WfsPost(object):
                 SQLiteManager.deleteTable(self.__layer.name())
                 SQLiteManager.emptyTable(cst.TABLEOFTABLES)
                 SQLiteManager.vacuumDatabase()
+                # Il faut vider l'editbuffer de la couche active
+                self.__layer.rollBack()
                 return
             # Mise à jour du numrec pour la couche dans la table des tables
             SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
