@@ -10,7 +10,7 @@
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
 description=Service de signalement et contribution de l'IGN, plugin QGIS3
-version=4.3.0
+version=4.3.1
 author=IGN
 email=service-client@ign.fr
 
@@ -23,10 +23,11 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin.git
 # Recommended items:
 
 # Optional items:
-date=26/08/2025
+date=07/10/2025
 
 # Uncomment the following line and add your changelog:
 changelog=
+    4.3.1 - Modification du chargement des signalements
     4.3.0 - Mise à jour d'un seuil sur les transactions/Ajout téléchargement Flux WMS-R
     4.2.3 - Prise en compte de la migration des géoservices IGN vers la Géoplateforme
     4.2.2 - Correction proxy
