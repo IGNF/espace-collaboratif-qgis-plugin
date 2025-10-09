@@ -19,6 +19,7 @@ from .core.WfsGet import WfsGet
 from .core.WfsPatch import WfsPatch
 from .core.ProgressBar import ProgressBar
 from .core.Community import Community
+from .core.FlagProject import FlagProject
 from .core import Constantes as cst
 from .Contexte import Contexte
 from .FormChargerGuichet import FormChargerGuichet
@@ -124,9 +125,11 @@ class RipartPlugin:
             raise Exception(u"Projet QGIS non enregistré")
 
         # S'il n'a y pas de base SQLite
-        uri = self.__context.getUriDatabaseSqlite()
-        if uri is None:
-            return
+        if not os.path.isfile(SQLiteManager.getBaseSqlitePath()):
+            flp = FlagProject()
+            flp.copySQLiteDatabase()
+            SQLiteManager.createTableOfTables()
+            self.__context.createTablesReportsAndSketchs()
 
         # S'il n'y a pas de table des tables
         if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
@@ -189,9 +192,6 @@ class RipartPlugin:
         dans SQLite (ce qui veut dire que l'utilisateur a extrait cette couche par l'outil) alors la connexion
         des signaux spécifiques est possible.
 
-        Si la couche ajoutée est celle des signalements alors il faut ajouter le signal geometryChanged afin d'envoyer
-        une requête de type PATCH quand un signalement est déplacé.
-
         :param layer: la couche qui vient d'être ajoutée
         :type layer: QgsVectorLayer
         """
@@ -202,12 +202,8 @@ class RipartPlugin:
             if layer.providerType() != 'spatialite':
                 return
 
-            if not self.__searchSpecificLayerInSQLite(layer.name()):
-                return
-
-            self.__connectSpecificSignals(layer)
-            if layer.name() == cst.nom_Calque_Signalement:
-                self.__ConnectSpecificSignalToLayer(layer)
+            if self.__searchSpecificLayerInSQLite(layer.name()):
+                self.__connectSpecificSignals(layer)
 
         except Exception as e:
             raise Exception(e)
@@ -223,44 +219,9 @@ class RipartPlugin:
         :return: True si l'enregistrement existe, False sinon
         """
         if SQLiteManager.selectColumnFromTableWithCondition("layer", cst.TABLEOFTABLES, "layer", layerName) \
-                is not None:
+                is not None or layerName == cst.nom_Calque_Signalement:
             return True
         return False
-
-    def __ConnectSpecificSignalToLayer(self, layer) -> None:
-        """
-        Connexion du signal geometryChanged à la couche Signalement donnée en entrée.
-        Si un signalement est déplacé, une requête de type request.PATCH sera envoyé vers le serveur de l'espace
-        collaboratif.
-
-        :param layer: la couche 'Signalement' ajoutée au projet
-        :type layer: QgsVectorLayer
-        """
-        layer.geometryChanged.connect(self.__geometryChanged)
-
-    def __geometryChanged(self) -> None:
-        """
-        La géométrie d'un signalement à changé (déplacement), il faut envoyer sa mise à jour vers le serveur
-        de l'espace collaboratif.
-        """
-        # Vérification de la connexion à l'Espace collaboratif
-        if not self.__doConnexion(False):
-            return
-        activeLayer = self.iface.activeLayer()
-        if activeLayer is None:
-            return
-        message = "Le signalement a été déplacé ! Voulez-vous envoyer sa mise à jour vers l'espace collaboratif ?"
-        reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                     QMessageBox.No)
-        # L'utilisateur a changé d'avis
-        if reply == QMessageBox.No:
-            activeLayer.editBuffer().rollBack()
-            activeLayer.triggerRepaint()
-            return
-
-        # Mise à jour du signalement déplacé vers le serveur de l'espace collaboratif
-        wfspatch = WfsPatch(self.__context, activeLayer)
-        wfspatch.gcmsPatch()
 
     def __connectSpecificSignals(self, layer) -> None:
         """
@@ -591,6 +552,14 @@ class RipartPlugin:
             status_tip=self.__translate(u'Créer un nouveau signalement'),
             parent=self.iface.mainWindow())
 
+        icon_path = ':/plugins/RipartPlugin/images/disk.png'
+        self.__addAction(
+            icon_path,
+            text=self.__translate(u"Enregistrer le déplacement d'un signalement"),
+            callback=self.__saveMoveReport,
+            status_tip=self.__translate(u"Enregistrer le déplacement d'un signalement"),
+            parent=self.iface.mainWindow())
+
         icon_path = ':/plugins/RipartPlugin/images/cleaning.png'
         self.__addAction(
             icon_path,
@@ -623,14 +592,6 @@ class RipartPlugin:
             status_tip=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
 
-        # icon_path = ':/plugins/RipartPlugin/images/save.png'
-        # self.__addAction(
-        #     icon_path,
-        #     text=self.__translate(u'Menu test'),
-        #     callback=self.__test,
-        #     status_tip=self.__translate(u'Menu test'),
-        #     parent=self.iface.mainWindow())
-
         self.config.triggered.connect(self.__configurePlugin)
         self.config.setStatusTip(self.__translate(u"Ouvre la fenêtre de configuration du plugin."))
         self.about.triggered.connect(self.__ripAbout)
@@ -650,20 +611,32 @@ class RipartPlugin:
 
         self.toolbar.addWidget(self.toolButton2)
 
-    def __test(self):
-        """
-        Comme son nom l'indique, fonction de test pour des fonctionnalités QGIS.
-        Désactivée pour l'instant.
-        """
-        layer = Contexte.getInstance(self, QgsProject).iface.activeLayer()
-        for field in layer.fields():
-            idx = layer.fields().indexOf(field.name())
-            setup = layer.editorWidgetSetup(idx)
-            widget_type = setup.type()
-            config = setup.config()
-            print(f"Champ : {field.name()}")
-            print(f"  Type de widget : {widget_type}")
-            print(f"  Configuration : {config}")
+    def __saveMoveReport(self):
+        if not self.__doConnexion(False):
+            return
+        activeLayer = self.iface.activeLayer()
+        if activeLayer is None:
+            return
+        if activeLayer.name() != cst.nom_Calque_Signalement:
+            return
+        # Mise à jour du signalement déplacé vers le serveur de l'espace collaboratif
+        wfspatch = WfsPatch(self.__context, activeLayer)
+        wfspatch.gcmsPatch()
+
+    # def __test(self):
+    #     """
+    #     Comme son nom l'indique, fonction de test pour des fonctionnalités QGIS.
+    #     Désactivée pour l'instant.
+    #     """
+    #     layer = Contexte.getInstance(self, QgsProject).iface.activeLayer()
+    #     for field in layer.fields():
+    #         idx = layer.fields().indexOf(field.name())
+    #         setup = layer.editorWidgetSetup(idx)
+    #         widget_type = setup.type()
+    #         config = setup.config()
+    #         print(f"Champ : {field.name()}")
+    #         print(f"  Type de widget : {widget_type}")
+    #         print(f"  Configuration : {config}")
             # Résultats :
             # Champ : importance
             #     Type de widget : ValueMap

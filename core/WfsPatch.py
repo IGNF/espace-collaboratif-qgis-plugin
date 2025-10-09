@@ -1,10 +1,10 @@
 import json
 from PyQt5.QtWidgets import QMessageBox
-from qgis.core import QgsProject, QgsWkbTypes
 from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
+from .PluginLogger import PluginLogger
+from .ProgressBar import ProgressBar
 from . import Constantes as cst
-from .Wkt import Wkt
 
 
 class WfsPatch(object):
@@ -31,6 +31,7 @@ class WfsPatch(object):
         self.__reportId = None
         self.__originalFeatureId = None
         self.__editBuffer = None
+        self.__logger = PluginLogger("WfsPatch").getPluginLogger()
 
     def __setReportIdAndGeometry(self) -> None:
         """
@@ -51,6 +52,7 @@ class WfsPatch(object):
                           " car son statut n'est pas valide. " \
                           "Il est clôturé depuis le {}.".format(originalFeature['Date_validation'])
                 QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+                self.__logger.info(message)
                 self.__editBuffer.rollBack()
                 return
             self.__reportId = originalFeature['NoSignalement']
@@ -79,15 +81,9 @@ class WfsPatch(object):
         self.__datas['community'] = self.__context.getUserCommunity().getId()
 
     def __setGeometry(self) -> None:
-    #     parameters = {'geometryName': 'geometry', 'sridSource': cst.EPSGCRS4326,
-    #                   'sridTarget': QgsProject.instance().crs().postgisSrid(),
-    #                   'geometryType': QgsWkbTypes.displayString(self.__layer.wkbType())}
-    #     wkt = Wkt(parameters)
-    #     if self.__geometryReportModified is None:
-    #         message = "WfsPatch.gcmsPatch : impossible d'envoyer la mise à jour du signalement vers le serveur car " \
-    #                   "sa nouvelle géométrie n'a pas pu être récupérée."
-    #         QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
-    #         return
+        """
+        Fixe la géométrie du signalement déplacé
+        """
         self.__datas['geometry'] = self.__geometryReportModified.replace('Point', 'POINT')
 
     def __setInputDevice(self):
@@ -96,39 +92,93 @@ class WfsPatch(object):
         """
         self.__datas['input_device'] = cst.CLIENT_INPUT_DEVICE
 
-    def __updateReportIntoSQLite(self, jsonResponse):
-        parameters = {'geometryName': 'geom', 'sridSource': cst.EPSGCRS4326,
-                      'sridTarget': QgsProject.instance().crs().postgisSrid(),
-                      'geometryType': QgsWkbTypes.displayString(self.__layer.wkbType())}
-        wkt = Wkt(parameters)
-        geomToSqlite = wkt.toGetGeometry(jsonResponse['geometry'])
-        attributes = "geom = {} Date_MAJ = '{}'".format(geomToSqlite, jsonResponse['updating_date'])
+    def __updateReportIntoSQLite(self, jsonResponse) -> None:
+        """
+        Mise à jour de la base SQLite du projet de l'utilisateur
+
+        :param jsonResponse: la réponse du serveur après la requête vers le serveur
+        :type: dict
+        """
+        attributes = "geom = '{}', Date_MAJ = '{}'".format(jsonResponse['geometry'], jsonResponse['updating_date'])
         condition = "NoSignalement = {}".format(jsonResponse['id'])
         parameters = {'name': cst.nom_Calque_Signalement, 'attributes': attributes, 'condition': condition}
         SQLiteManager.updateTable(parameters)
+        SQLiteManager.vacuumDatabase()
 
     def gcmsPatch(self):
-        self.__setReportIdAndGeometry()
-        self.__setUrl()
-        self.__setHeaders()
-        self.__setCommunity()
-        self.__setGeometry()
-        self.__setInputDevice()
-        # Si le principal paramètre de la requête n'est pas rempli, il faut sortir
-        if self.__url is None:
-            message = "WfsPatch.gcmsPatch : impossible d'envoyer la mise à jour du signalement vers le serveur car " \
-                      "l'url de la requête n'est pas remplie."
+        """
+
+        """
+        progress = ProgressBar(1, "Enregistrement du déplacement du signalement")
+        try:
+            self.__setReportIdAndGeometry()
+            self.__setUrl()
+            self.__setHeaders()
+            self.__setCommunity()
+            self.__setGeometry()
+            self.__setInputDevice()
+
+            # Vérification de l'URL
+            if self.__url is None:
+                message = ("WfsPatch.gcmsPatch : impossible d'envoyer la mise à jour du signalement vers le serveur "
+                           "car l'URL de la requête n'est pas remplie.")
+                QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+                self.__logger.critical(message)
+                progress.close()
+                return
+
+            # Sérialisation des données
+            try:
+                data = json.dumps(self.__datas)
+            except (TypeError, ValueError) as e:
+                message = f"WfsPatch.gcmsPatch : erreur lors de la sérialisation des données : {str(e)}"
+                QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+                self.__logger.critical(message)
+                progress.close()
+                return
+
+            # Envoi de la requête HTTP
+            try:
+                response = HttpRequest.makeHttpRequest(self.__url, headers=self.__headers,
+                                                       proxies=self.__proxies, data=data, launchBy='gcmsPatch')
+            except Exception as e:
+                message = f"WfsPatch.gcmsPatch : erreur réseau lors de l'envoi de la requête : {str(e)}"
+                QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+                self.__logger.critical(message)
+                progress.close()
+                return
+
+            # Vérification du code de réponse
+            if response.status_code != 200:
+                message = f"WfsPatch.gcmsPatch.HttpRequest.makeHttpRequest, " \
+                          f"la requête a renvoyé un code d'erreur : [{response.reason}]"
+                self.__logger.exception(message)
+                progress.close()
+                raise Exception(message)
+
+            # Traitement du JSON retourné
+            try:
+                json_data = response.json()
+            except ValueError:
+                message = f"WfsPatch.gcmsPatch : réponse du serveur invalide, JSON non parsable"
+                QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+                self.__logger.critical(message)
+                progress.close()
+                return
+
+            # Mise à jour de la base locale
+            progress.setValue(1)
+            self.__updateReportIntoSQLite(json_data)
+            self.__layer.reload()
+            self.__layer.triggerRepaint()
+            progress.close()
+
+            # Message de fin
+            message = "Le signalement a été déplacé."
+            QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+
+        except Exception as e:
+            message = f"WfsPatch.gcmsPatch : une erreur inattendue est survenue : {str(e)}"
             QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
-            return
-        data = json.dumps(self.__datas)
-        response = HttpRequest.makeHttpRequest(self.__url, headers=self.__headers, proxies=self.__proxies,
-                                               data=data, launchBy='gcmsPatch')
-        # Si tout s'est bien passé, il faut mettre à jour la base SQLite
-        if response.status_code != 200:
-            message = "WfsPatch.gcmsPatch:makeHttpRequest, la requête a renvoyé " \
-                      "un code d'erreur : [{}]".format(response.reason)
-            raise Exception(message)
-        # self.__updateReportIntoSQLite(response.json())
-        self.__layer.commitChanges()
-        self.__layer.triggerRepaint()
-        self.__editBuffer.rollBack()
+            self.__logger.critical(message)
+            progress.close()

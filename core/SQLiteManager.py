@@ -1,6 +1,8 @@
 import ntpath
 import json
 import os.path
+from sqlite3 import OperationalError
+
 from qgis.utils import spatialite_connect
 from qgis.core import QgsProject
 from . import Constantes as cst
@@ -30,10 +32,10 @@ class SQLiteManager(object):
         :return: retourne le chemin et le nom de la base de la base SQlite.
         """
         projectDir = QgsProject.instance().homePath()
-        fname = ntpath.basename(QgsProject.instance().fileName())
-        projectFileName = fname[:fname.find(".")]
-        dbName = "{}_espaceco".format(projectFileName)
-        dbPath = "{0}/{1}.sqlite".format(projectDir, dbName)
+        fname = os.path.basename(QgsProject.instance().fileName())
+        projectFileName = os.path.splitext(fname)[0]
+        dbName = f"{projectFileName}_espaceco"
+        dbPath = os.path.join(projectDir, f"{dbName}.sqlite")
         return dbPath
 
     @staticmethod
@@ -45,11 +47,38 @@ class SQLiteManager(object):
         :type sql: str
         """
         connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
-        cur = connection.cursor()
-        cur.execute(sql)
-        cur.close()
-        connection.commit()
-        connection.close()
+        try:
+            cur = connection.cursor()
+            cur.execute(sql)
+            connection.commit()
+            cur.close()
+        except Exception as e:
+            if connection:
+                connection.rollback()
+            print(f"Erreur SQL : {e}", "SQLiteManager")
+            # raise Exception(e)
+        finally:
+            connection.close()
+
+    @staticmethod
+    def executeSQLWithParams(sql: str, params: tuple) -> None:
+        """
+        Exécute une requête SQL avec des paramètres, en toute sécurité.
+
+        :param sql: la requête SQL avec des placeholders '?'
+        :param params: un tuple contenant les valeurs à insérer dans la requête
+        """
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        try:
+            cursor = connection.cursor()
+            cursor.execute(sql, params)
+            connection.commit()
+        except Exception as e:
+            if connection:
+                connection.rollback()
+            print(f"Erreur SQL : {e}", "SQLiteManager")
+        finally:
+            connection.close()
 
     @staticmethod
     def isTableExist(tableName) -> bool:
@@ -93,6 +122,8 @@ class SQLiteManager(object):
         sqlAttributes = ''
         for value in layer.attributes:
             if self.__setSwitchType(value['type']) == '':
+                print("Type de colonne inconnu pour la base SQLite : {}. "
+                      "Veuillez contacter le support.".format(value['type']))
                 return "", "", False
             if value['name'] == "detruit":
                 columnDetruitExist = True
@@ -156,7 +187,7 @@ class SQLiteManager(object):
         t = self.__setAttributesTableToSql(layer)
         if t[0] == "" and t[1] == "" and t[2] is False:
             raise Exception("SQLite : création de la table {} impossible, "
-                            "un type de colonne est inconnu".format(layer.name()))
+                            "un type de colonne est inconnu : {}".format(layer.name(), layer.attributes))
         connection = spatialite_connect(self.__dbPath)
         sql = u"CREATE TABLE {0} (".format(layer.name())
         sql += t[0]
@@ -306,6 +337,8 @@ class SQLiteManager(object):
         :param keys: liste par table de clés primaires
         :type keys: list
         """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
         if not SQLiteManager.isTableExist(tableName):
             return
         tmp = ''
@@ -402,6 +435,8 @@ class SQLiteManager(object):
         :param tableName: nom de la table
         :type tableName: str
         """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
         if not SQLiteManager.isTableExist(tableName):
             return
         sql = u"DELETE FROM {0}".format(tableName)
@@ -416,6 +451,8 @@ class SQLiteManager(object):
         :param tableName: nom de la table
         :type tableName: str
         """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
         if not SQLiteManager.isTableExist(tableName):
             return
         sql = u"DROP TABLE {0}".format(tableName)
@@ -510,8 +547,9 @@ class SQLiteManager(object):
         """
         Compactage de la base SQLite (indispensable après le chargement d'une nouvelle couche).
         """
-        sql = u"VACUUM"
-        SQLiteManager.executeSQL(sql)
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
+        SQLiteManager.executeSQL("VACUUM")
 
     @staticmethod
     def updateNumrecTableOfTables(layer, numrec) -> None:
@@ -524,6 +562,8 @@ class SQLiteManager(object):
         :param numrec: numéro de dernière mise à jour d'une base
         :type numrec: int
         """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
         sql = "UPDATE {0} SET numrec = {1} WHERE layer = '{2}'".format(cst.TABLEOFTABLES, numrec, layer)
         SQLiteManager.executeSQL(sql)
 
@@ -565,6 +605,8 @@ class SQLiteManager(object):
         Création de la table des tables qui permet de stocker les informations nécessaires en vue d'une synchronisation
         vers le serveur de l'espace collaboratif.
         """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
               u"standard BOOL, database TEXT, databaseid INTEGER, srid INTEGER, geometryName TEXT, " \
               u"geometryDimension INTEGER, geometryType TEXT, numrec INTEGER, " \
@@ -581,6 +623,8 @@ class SQLiteManager(object):
         :type parameters: dict
 
         """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
         result = SQLiteManager.selectRowsInTableOfTables(parameters['layer'])
         if len(result) == 1:
             sql = "DELETE FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, parameters['layer'])
@@ -626,6 +670,8 @@ class SQLiteManager(object):
         """
         Création de la table des signalements.
         """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
         sql = u"CREATE TABLE Signalement (" + \
               u"id INTEGER NOT NULL PRIMARY KEY, " + \
               u"NoSignalement INTEGER, " + \
@@ -661,6 +707,8 @@ class SQLiteManager(object):
         :param geometryType: le type de géométrie du croquis
         :type geometryType: str
         """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
         sql = u"CREATE TABLE " + nameTable + " (" + \
               u"id INTEGER NOT NULL PRIMARY KEY, " + \
               u"NoSignalement INTEGER, " + \
@@ -693,7 +741,39 @@ class SQLiteManager(object):
         :param parameters: les items ('name', 'attributes', 'condition') nécessaires pour la mise à jour d'une table
         :type parameters: dict
         """
+        # Est-ce la base est verrouillée ?
+        # SQLiteManager.findAndDeleteLock()
         sql = "UPDATE {0} SET {1} WHERE {2}".format(parameters['name'], parameters['attributes'],
                                                     parameters['condition'])
         print(sql)
         SQLiteManager.executeSQL(sql)
+        # sql = "INSERT INTO zones (nom, surface) VALUES (?, ?)"
+        # params = ("Zone industrielle", 12500.5)
+        # SQLiteManager.executeSQLWithParams(sql, params)
+
+    @staticmethod
+    def findAndDeleteLock():
+        """
+        Si la base est verrouillée, supprime le fichier journal.
+        """
+        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        try:
+            connection.execute("BEGIN EXCLUSIVE")
+            connection.close()
+        except OperationalError as e:
+            print(f"Erreur SQLite : {e}")
+            # Suppression du fichier journal si présent
+            baseLock = "{}-journal".format(SQLiteManager.getBaseSqlitePath())
+            if os.path.exists(baseLock):
+                try:
+                    os.remove(baseLock)
+                    print("Fichier journal SQLite supprimé.")
+                except Exception as err:
+                    print(f"Erreur lors de la suppression du fichier journal : {err}")
+            else:
+                print("Pas de fichier journal à supprimer.")
+            # Fermeture de la connexion si elle est encore ouverte
+            try:
+                connection.close()
+            except:
+                pass
