@@ -4,7 +4,7 @@ from typing import Optional
 
 from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
-    QgsRectangle, QgsPointXY
+    QgsRectangle, QgsPointXY, QgsGeometry
 
 from .core.requests import Response
 from .PluginHelper import PluginHelper
@@ -111,6 +111,33 @@ class ToolsReport(object):
         data = query.multiple()
         return data
 
+    def __filterObjectsWithWorkArea(self, datas) -> list:
+        """
+        Filtrer les objets en cherchant ceux qui intersectent la zone de travail.
+
+        :params datas: les objets retournés par la requête
+        :type datas: list
+        :return: la liste des objets intersectant la géométrie réelle de la zone de travail
+        """
+
+        # Fusion de toutes les géométries de la zone de travail en une seule
+        layerFilter = self.__context.getLayerByName(
+            PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
+        geometries = [f.geometry() for f in layerFilter.getFeatures()]
+        filterGeom = QgsGeometry.unaryUnion(geometries)
+
+        intersectingDatas = []
+        for data in datas:
+            if PluginHelper.keyExist('geometry', data):
+                try:
+                    geom_data = QgsGeometry.fromWkt(data['geometry'])
+                    if geom_data and geom_data.intersects(filterGeom):
+                        intersectingDatas.append(data)
+                except Exception as e:
+                    self.__logger.warning(f"Erreur WKT : {e}")
+
+        return intersectingDatas
+
     def download(self) -> None:
         """
          - Création des tables 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne' et 'Croquis_EC_Polygone'
@@ -123,7 +150,7 @@ class ToolsReport(object):
         self.__logger.debug("ToolsReport.download")
 
         message = "Extraction des signalements : initialisation et vérification"
-        self.__progress = DynamicProgressBar(2, message)
+        self.__progress = DynamicProgressBar(3, message)
 
         # l'utilisateur n'a pas de profil actif, impossible pour lui de travailler
         if self.__context.getUserCommunity() is None or self.__context.getActiveCommunityName() == '':
@@ -149,8 +176,12 @@ class ToolsReport(object):
             return
 
         self.__progress.setValue(1)
+        self.__progress.updateMessage("Extraction des signalements : filtrage fin sur la zone de travail")
+        filteredData = self.__filterObjectsWithWorkArea(data)
+
+        self.__progress.setValue(1)
         self.__progress.updateMessage("Extraction des signalements : mise à jour de la base SQLite")
-        self.__insertReportsSketchsIntoSQLite(data)
+        self.__insertReportsSketchsIntoSQLite(filteredData)
 
         # Rafraichir la carte
         self.__context.refreshLayers()

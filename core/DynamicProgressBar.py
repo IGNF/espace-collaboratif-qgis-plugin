@@ -29,7 +29,7 @@ class DynamicProgressBar(QProgressBar):
         # Calcul de la largeur du message pour ajuster la taille de la barre
         font_metrics = QFontMetrics(self.label.font())
         message_width = font_metrics.horizontalAdvance(message)
-        total_width = 400  # largeur totale disponible dans la MessageBar
+        total_width = 600  # largeur totale disponible dans la MessageBar
         bar_width = max(200, total_width - message_width - 20)  # marge de sécurité
 
         # Fixer une largeur raisonnable pour éviter qu'elle prenne trop de place
