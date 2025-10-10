@@ -17,7 +17,7 @@ from .core.PluginLogger import PluginLogger
 from .core.SQLiteManager import SQLiteManager
 from .core.WfsGet import WfsGet
 from .core.WfsPatch import WfsPatch
-from .core.ProgressBar import ProgressBar
+from .core.DynamicProgressBar import DynamicProgressBar
 from .core.Community import Community
 from .core.FlagProject import FlagProject
 from .core import Constantes as cst
@@ -340,11 +340,7 @@ class RipartPlugin:
         """
         allMessages = []
         for layer in editableLayers:
-            messageProgress = "Synchronisation de la couche {}".format(layer.name())
-            progress = ProgressBar(len(editableLayers), messageProgress)
-            progress.setValue(1)
             allMessages.append(self.__saveChangesForOneLayer(layer))
-            progress.close()
         # Message de fin de transaction
         dlgInfo = FormInfo()
         dlgInfo.textInfo.setText("<b>Contenu de la transaction</b>")
@@ -379,6 +375,11 @@ class RipartPlugin:
         if not self.__doConnexion(False):
             return "error : PluginModule:__saveChangesForOneLayer, pas de connexion, pas de transaction" \
                    " avec l'espace collaboratif."
+
+        if layer.name() == cst.nom_Calque_Signalement:
+            if self.__saveMoveReport():
+                return "Le signalement a été déplacé."
+
         layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
         bRes = False
         if layersTableOfTables is not None:
@@ -552,13 +553,13 @@ class RipartPlugin:
             status_tip=self.__translate(u'Créer un nouveau signalement'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/disk.png'
-        self.__addAction(
-            icon_path,
-            text=self.__translate(u"Enregistrer le déplacement d'un signalement"),
-            callback=self.__saveMoveReport,
-            status_tip=self.__translate(u"Enregistrer le déplacement d'un signalement"),
-            parent=self.iface.mainWindow())
+        # icon_path = ':/plugins/RipartPlugin/images/disk.png'
+        # self.__addAction(
+        #     icon_path,
+        #     text=self.__translate(u"Enregistrer le déplacement d'un signalement"),
+        #     callback=self.__saveMoveReport,
+        #     status_tip=self.__translate(u"Enregistrer le déplacement d'un signalement"),
+        #     parent=self.iface.mainWindow())
 
         icon_path = ':/plugins/RipartPlugin/images/cleaning.png'
         self.__addAction(
@@ -611,17 +612,17 @@ class RipartPlugin:
 
         self.toolbar.addWidget(self.toolButton2)
 
-    def __saveMoveReport(self):
+    def __saveMoveReport(self) -> bool:
         if not self.__doConnexion(False):
-            return
+            return False
         activeLayer = self.iface.activeLayer()
         if activeLayer is None:
-            return
+            return False
         if activeLayer.name() != cst.nom_Calque_Signalement:
-            return
+            return False
         # Mise à jour du signalement déplacé vers le serveur de l'espace collaboratif
         wfspatch = WfsPatch(self.__context, activeLayer)
-        wfspatch.gcmsPatch()
+        return wfspatch.gcmsPatch()
 
     # def __test(self):
     #     """
@@ -681,17 +682,9 @@ class RipartPlugin:
                 return
             # Désactiver la fonction de détection de changement de géométrie pour un signalement
             activeLayer = self.iface.activeLayer()
-            if activeLayer is not None and activeLayer.name() == cst.nom_Calque_Signalement:
-                try:
-                    activeLayer.geometryChanged.disconnect(self.__geometryChanged)
-                except TypeError:
-                    pass  # La méthode self.__geometryChanged n'était pas connectée
             # Téléchargement des signalements
             toolsReport = ToolsReport(self.__context)
             toolsReport.download()
-            # Réactiver la fonction de détection de changement de géométrie pour un signalement
-            if activeLayer is not None and activeLayer.name() == cst.nom_Calque_Signalement:
-                activeLayer.geometryChanged.connect(self.__geometryChanged)
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__downloadReports', e)
 
@@ -781,10 +774,9 @@ class RipartPlugin:
             if not self.__doConnexion(False):
                 return
             # Les requêtes peuvent être longues
-            messageProgress = "Groupe {} : récupération des couches".format(
+            messageProgress = "Récupération des couches pour le groupe {}".format(
                 self.__context.getUserCommunity().getName())
-            progress = ProgressBar(1, messageProgress)
-            progress.setValue(1)
+            progress = DynamicProgressBar(1, messageProgress)
             # Il faut aller chercher les layers appartenant au groupe de l'utilisateur
             params = {'url': self.__context.urlHostEspaceCo, 'tokentype': self.__context.getTokenType(),
                       'tokenaccess': self.__context.getTokenAccess(), 'proxies': self.__context.getProxies()}
@@ -792,7 +784,7 @@ class RipartPlugin:
             page = 1
             limit = 20
             listLayers = community.extractLayers(self.__context.getUserCommunity().getId(), page, limit)
-            progress.close()
+            progress.setValue(1)
             if len(listLayers) == 0:
                 raise Exception(u"Votre communauté n'a pas paramétré sa carte, il n'y a pas de données à charger.")
             # et les présenter à l'utilisateur pour qu'il fasse son choix de travail
@@ -802,6 +794,7 @@ class RipartPlugin:
                 return
             # Affichage de la boite
             dlgChargerGuichet.exec_()
+            progress.close()
 
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__downloadLayersFromMyCommunity', e)
@@ -819,6 +812,8 @@ class RipartPlugin:
                 return
 
             # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
+            message = "{} : initialisation".format(cst.UPDATETEXTPROGRESS)
+            progress = DynamicProgressBar(len(QgsProject.instance().mapLayers()) + 1, message)
             layersToSynchronize = []
             layersTableOfTables = SQLiteManager.selectColumnFromTable(cst.TABLEOFTABLES, 'layer')
             if layersTableOfTables is not None:
@@ -863,13 +858,14 @@ class RipartPlugin:
                             editBuffer.rollBack()
 
             # Synchronisation des couches une par une
+            progress.setValue(1)
             headers = {
                 'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
             spatialFilterName = PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text
-            progress = ProgressBar(len(QgsProject.instance().mapLayers()), cst.UPDATETEXTPROGRESS)
             i = 0
             for layer in layersToSynchronize:
                 i += 1
+                progress.updateMessage("{} : {}".format(cst.UPDATETEXTPROGRESS, layer.name()))
                 progress.setValue(i)
                 endMessage += "<br/>{0}\n".format(layer.name())
                 bbox = BBox(self.__context)

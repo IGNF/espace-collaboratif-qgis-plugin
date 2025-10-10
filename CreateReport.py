@@ -54,7 +54,7 @@ class CreateReport(object):
                 self.__logger.debug(str(len(sketchList)) + u" croquis générés")
                 # Création du ou des signalements
                 toolsReport = ToolsReport(self.__context)
-                # Pas de point écran puisque création avec croquis
+                # Initialisation d'un point écran vide puisque création avec croquis
                 pointFromClipboard = QgsPointXY()
                 toolsReport.createReport(sketchList, pointFromClipboard)
 

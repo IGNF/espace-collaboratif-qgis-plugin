@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QMessageBox
 from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
 from .PluginLogger import PluginLogger
-from .ProgressBar import ProgressBar
+from .DynamicProgressBar import DynamicProgressBar
 from . import Constantes as cst
 
 
@@ -105,11 +105,14 @@ class WfsPatch(object):
         SQLiteManager.updateTable(parameters)
         SQLiteManager.vacuumDatabase()
 
-    def gcmsPatch(self):
+    def gcmsPatch(self) -> bool:
         """
+        Envoi une requête PATCH vers le serveur de l'espace collaboratif lorsque un signalement
+        a été déplacé par l'utilisateur
 
+        :return: True si l'enregistrement sur le serveur et dans la base SQLite locale a pu se faire, False sinon
         """
-        progress = ProgressBar(1, "Enregistrement du déplacement du signalement")
+        progress = DynamicProgressBar(2, "Déplacement du signalement : initialisation")
         try:
             self.__setReportIdAndGeometry()
             self.__setUrl()
@@ -125,7 +128,7 @@ class WfsPatch(object):
                 QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
                 self.__logger.critical(message)
                 progress.close()
-                return
+                return False
 
             # Sérialisation des données
             try:
@@ -135,9 +138,11 @@ class WfsPatch(object):
                 QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
                 self.__logger.critical(message)
                 progress.close()
-                return
+                return False
 
             # Envoi de la requête HTTP
+            progress.setValue(1)
+            progress.updateMessage("Déplacement du signalement : envoi de la requête HTTPS")
             try:
                 response = HttpRequest.makeHttpRequest(self.__url, headers=self.__headers,
                                                        proxies=self.__proxies, data=data, launchBy='gcmsPatch')
@@ -146,15 +151,16 @@ class WfsPatch(object):
                 QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
                 self.__logger.critical(message)
                 progress.close()
-                return
+                return False
 
             # Vérification du code de réponse
             if response.status_code != 200:
                 message = f"WfsPatch.gcmsPatch.HttpRequest.makeHttpRequest, " \
                           f"la requête a renvoyé un code d'erreur : [{response.reason}]"
+                QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
                 self.__logger.exception(message)
                 progress.close()
-                raise Exception(message)
+                return False
 
             # Traitement du JSON retourné
             try:
@@ -164,21 +170,21 @@ class WfsPatch(object):
                 QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
                 self.__logger.critical(message)
                 progress.close()
-                return
+                return False
 
             # Mise à jour de la base locale
             progress.setValue(1)
+            progress.updateMessage("Déplacement du signalement : mise à jour de la base SQLite")
             self.__updateReportIntoSQLite(json_data)
             self.__layer.reload()
             self.__layer.triggerRepaint()
             progress.close()
-
-            # Message de fin
-            message = "Le signalement a été déplacé."
-            QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+            # Tout est OK
+            return True
 
         except Exception as e:
             message = f"WfsPatch.gcmsPatch : une erreur inattendue est survenue : {str(e)}"
             QMessageBox.critical(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
             self.__logger.critical(message)
             progress.close()
+            return False

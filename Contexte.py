@@ -31,7 +31,7 @@ from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 from .core.WfsGet import WfsGet
 from .core.SQLiteManager import SQLiteManager
-from .core.ProgressBar import ProgressBar
+from .core.DynamicProgressBar import DynamicProgressBar
 from .core.ign_keycloak.KeycloakService import KeycloakService
 from .core.FlagProject import FlagProject
 from .Import_WMSR import ImportWMSR
@@ -547,7 +547,7 @@ class Contexte(object):
         :param nameGroup: le nom du groupe utilisateur
         :type nameGroup: str
         """
-        progress = None
+        progress = DynamicProgressBar(len(guichet_layers) + 1, "{} : initialisation".format(cst.LOADINGTEXTPROGRESS))
         try:
             # Quelles sont les cartes chargées dans le projet QGIS courant
             maplayers = self.getAllMapLayers()
@@ -585,10 +585,11 @@ class Contexte(object):
             if len(guichet_layers) == 0:
                 endMessage = 'Pas de couches sélectionnées, fin du chargement.\n'
 
-            progress = ProgressBar(len(guichet_layers), cst.LOADINGTEXTPROGRESS)
+            progress.setValue(1)
             i = 0
             for layer in guichet_layers:
                 i += 1
+                progress.updateMessage("{} : {}".format(cst.LOADINGTEXTPROGRESS, layer.name()))
                 progress.setValue(i)
                 '''
                 Ajout des couches WFS sélectionnées dans "Mon guichet"

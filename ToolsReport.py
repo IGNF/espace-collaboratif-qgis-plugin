@@ -9,7 +9,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsV
 from .core.requests import Response
 from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
-from .core.ProgressBar import ProgressBar
+from .core.DynamicProgressBar import DynamicProgressBar
 from .core.BBox import BBox
 from .core.PluginLogger import PluginLogger
 from .core.NoProfileException import NoProfileException
@@ -122,6 +122,9 @@ class ToolsReport(object):
         """
         self.__logger.debug("ToolsReport.download")
 
+        message = "Extraction des signalements : initialisation et vérification"
+        self.__progress = DynamicProgressBar(2, message)
+
         # l'utilisateur n'a pas de profil actif, impossible pour lui de travailler
         if self.__context.getUserCommunity() is None or self.__context.getActiveCommunityName() == '':
             raise NoProfileException(
@@ -130,13 +133,12 @@ class ToolsReport(object):
         # Création des tables de signalements et de croquis
         self.__context.createTablesReportsAndSketchs()
 
-        message = "Placement des signalements sur la carte"
-        self.__progress = ProgressBar(200, message)
-
         # Création des couches dans QGIS et des liens vers la base SQLite
         self.__addReportSketchLayersToTheCurrentMap()
 
         # Téléchargement des signalements
+        self.__progress.setValue(1)
+        self.__progress.updateMessage("Extraction des signalements : envoi de la requête HTTPS")
         date = PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
         date = PluginHelper.formatDate(date)
         data = self.__getReports(date)
@@ -146,6 +148,8 @@ class ToolsReport(object):
             self.__progress.close()
             return
 
+        self.__progress.setValue(1)
+        self.__progress.updateMessage("Extraction des signalements : mise à jour de la base SQLite")
         self.__insertReportsSketchsIntoSQLite(data)
 
         # Rafraichir la carte
@@ -471,7 +475,7 @@ class ToolsReport(object):
         self.__sendMessageEndProcess(listNewReportIds)
 
         # Rafraichissement de la carte pour faire afficher le (ou les) signalements nouvellement créés
-        #self.__context.mapCan.refresh()
+        self.__context.iface.activeLayer().reload()
         self.__context.iface.activeLayer().triggerRepaint()
 
     def createSingleReportFromClipboard(self, filesAttachments) -> []:
