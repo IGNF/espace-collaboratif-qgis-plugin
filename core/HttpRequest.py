@@ -124,7 +124,6 @@ class HttpRequest(object):
             return {'status': 'error'}
 
     @staticmethod
-    #
     def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> Response:
         """
         Lance une requête HTTP GET, POST ou PATCH en fonction des variables passées en entrée.
@@ -150,9 +149,11 @@ class HttpRequest(object):
         :param launchBy: indique quelle fonction a lancé la requête
         :type launchBy: str
 
-        :return: les données
+        :return: les données retournées par le serveur
         """
         try:
+            print("HttpRequest.makeHttpRequest.files : {}".format(files))
+            print("HttpRequest.makeHttpRequest.data : {}".format(data))
             if launchBy == 'gcmsPatch':
                 response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=False)
             elif data is None and files is None:

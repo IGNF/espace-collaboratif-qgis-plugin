@@ -352,7 +352,7 @@ class RipartPlugin:
             messageInfo += messages
         dlgInfo.textInfo.append(messageInfo)
         dlgInfo.exec_()
-        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        PluginHelper.setCursor()
         errors = ['error', '400', '401', '402', '403', '404', '500']
         for error in errors:
             if error in messageInfo:
@@ -398,7 +398,7 @@ class RipartPlugin:
             messages = self.__doPost(layer, editBuffer)
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
-            QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+            PluginHelper.setCursor()
             return messages
         return messages
 
@@ -474,7 +474,7 @@ class RipartPlugin:
         self.__logger.error(format(exception))
         errorMessage = "{} : {}".format(message, str(exception))
         self.__context.iface.messageBar().pushMessage("Erreur", errorMessage, level=2, duration=5)
-        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        PluginHelper.setCursor()
 
     def __translate(self, message) -> str:
         """
@@ -685,6 +685,7 @@ class RipartPlugin:
             # Téléchargement des signalements
             toolsReport = ToolsReport(self.__context)
             toolsReport.download()
+            PluginHelper.refreshAllLayers()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__downloadReports', e)
 
@@ -794,6 +795,7 @@ class RipartPlugin:
                 return
             # Affichage de la boite
             dlgChargerGuichet.exec_()
+            PluginHelper.refreshAllLayers()
             progress.close()
 
         except Exception as e:

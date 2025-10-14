@@ -385,10 +385,8 @@ class SQLiteManager(object):
         connection = spatialite_connect(self.__dbPath)
         cur = connection.cursor()
         for attributesRow in attributesRows:
-            print(attributesRow)
             columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
-            print(sql)
             cur.execute(sql)
             totalRows += 1
         cur.close()
@@ -745,7 +743,6 @@ class SQLiteManager(object):
         # SQLiteManager.findAndDeleteLock()
         sql = "UPDATE {0} SET {1} WHERE {2}".format(parameters['name'], parameters['attributes'],
                                                     parameters['condition'])
-        print(sql)
         SQLiteManager.executeSQL(sql)
         # sql = "INSERT INTO zones (nom, surface) VALUES (?, ?)"
         # params = ("Zone industrielle", 12500.5)

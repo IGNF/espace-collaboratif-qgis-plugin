@@ -120,7 +120,6 @@ class EditFormFieldFromAttributes(object):
         keysToProcess = set()
         for sous_dico in attributesSets.values():
             keysToProcess.update(sous_dico.keys())
-        print(keysToProcess)
         return list(keysToProcess)
 
     def setFieldDefault(self, attributesSets):
@@ -312,9 +311,9 @@ class EditFormFieldFromAttributes(object):
         """
         if bUnique is None or bUnique is False or bUnique == '':
             return
-        print('setFieldConstraintUnique')
-        print("name : {}".format(self.name))
-        print("bUnique : {}".format(bUnique))
+        # print('setFieldConstraintUnique')
+        # print("name : {}".format(self.name))
+        # print("bUnique : {}".format(bUnique))
         self.layer.setFieldConstraint(self.index, QgsFieldConstraints.Constraint.ConstraintUnique)
 
     def setFieldReadOnly(self, bReadOnly) -> None:
@@ -331,9 +330,9 @@ class EditFormFieldFromAttributes(object):
             formConfig = self.layer.editFormConfig()
             formConfig.setReadOnly(self.index, True)
             self.layer.setEditFormConfig(formConfig)
-            print('setFieldReadOnly')
-            print("name : {}".format(self.name))
-            print("bReadOnly : {}".format(bReadOnly))
+            # print('setFieldReadOnly')
+            # print("name : {}".format(self.name))
+            # print("bReadOnly : {}".format(bReadOnly))
 
     '''
     Contraintes > Expression (min_value/max_value)
@@ -409,11 +408,11 @@ class EditFormFieldFromAttributes(object):
             expression = listExpressions[0]
         else:
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
-        print('setFieldExpressionConstraintMinMaxValue')
-        print("name : {}".format(self.name))
-        print("minValue : {}".format(minValue))
-        print("maxValue : {}".format(maxValue))
-        print("expression : {}".format(expression))
+        # print('setFieldExpressionConstraintMinMaxValue')
+        # print("name : {}".format(self.name))
+        # print("minValue : {}".format(minValue))
+        # print("maxValue : {}".format(maxValue))
+        # print("expression : {}".format(expression))
         return expression
 
     def setFieldExpressionConstraintMapping(self, constraintField, conditionField) -> str:
@@ -445,7 +444,7 @@ class EditFormFieldFromAttributes(object):
         """
         if constraintField is None and conditionField is None or self.name == self.layer.idNameForDatabase:
             return 'None'
-        print("constraintField['type'] : {}".format(constraintField['type']))
+        # print("constraintField['type'] : {}".format(constraintField['type']))
         if constraintField['type'] != 'mapping':
             return 'None'
         expression = 'CASE'
@@ -470,11 +469,11 @@ class EditFormFieldFromAttributes(object):
                 expression += ' THEN array_contains(array({}),"{}")'.format(values[0:len(values) - 1], self.name)
         expression += " END"
 
-        print('setFieldExpressionConstraintMapping')
-        print("name : {}".format(self.name))
-        print("constraintField : {}".format(constraintField))
-        print("conditionField : {}".format(conditionField))
-        print("expression : {}".format(expression))
+        # print('setFieldExpressionConstraintMapping')
+        # print("name : {}".format(self.name))
+        # print("constraintField : {}".format(constraintField))
+        # print("conditionField : {}".format(conditionField))
+        # print("expression : {}".format(expression))
         return expression
 
     def setFieldExpressionConstraintAttributesSets(self, attributesSets) -> str:

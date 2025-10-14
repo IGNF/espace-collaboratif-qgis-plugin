@@ -3,6 +3,8 @@ from PyQt5.QtWidgets import QProgressBar, QLabel, QApplication
 from PyQt5.QtCore import Qt
 from qgis.utils import iface
 
+from ..PluginHelper import PluginHelper
+
 
 class DynamicProgressBar(QProgressBar):
     """
@@ -59,4 +61,4 @@ class DynamicProgressBar(QProgressBar):
         Ferme la barre de progression et rétablit le curseur.
         """
         iface.messageBar().clearWidgets()
-        QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+        PluginHelper.setCursor()

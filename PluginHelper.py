@@ -15,7 +15,7 @@ import Lib.xml.etree.ElementTree as ET
 from Lib.xml.etree.ElementTree import Element
 from datetime import datetime
 from typing import Optional
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QApplication
 from qgis.core import QgsProject
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
@@ -701,3 +701,39 @@ class PluginHelper:
             if PluginHelper.keyExist(keyB, datum):
                 return True
         return False
+
+    @staticmethod
+    def refreshAllLayers():
+        """
+        Rafraîchit toutes les couches du projet QGIS :
+        - Recompte les entités
+        - Rafraîchit l'affichage
+        - Recharge les données si nécessaire
+        """
+        project = QgsProject.instance()
+        for layer in project.mapLayers().values():
+            if layer.isValid():
+                if layer.providerType() != 'spatialite':
+                    continue
+                layer.triggerRepaint()
+                layer.reload()  # recharge les données depuis la source
+                print(f"{layer.name()} → {layer.featureCount()} entités")
+            else:
+                print(f"{layer.name()} → couche invalide")
+
+    @staticmethod
+    def setCursor():
+        """
+        Restaure tous les curseurs empilés en fonction du nombre réel de curseurs empilés
+        """
+        count = 0
+        alertThreshold = 50  # seuil au-delà duquel on considère qu'il y a un problème
+        while QApplication.overrideCursor() is not None:
+            QApplication.restoreOverrideCursor()
+            count += 1
+            if count > alertThreshold:
+                print(
+                    f"Alerte : plus de {alertThreshold} curseurs restaurés. Comportement potentiellement anormal.")
+                break
+        print(f"{count} curseur(s) restauré(s).")
+

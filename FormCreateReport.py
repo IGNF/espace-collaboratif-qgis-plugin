@@ -905,8 +905,14 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                         # exemple requests_toolbelt : 'field2': ('filename', open('file.py', 'rb'), 'text/plain')
                         # self.__files.update({names[len(names) - 1]: (names[len(names) - 1], open(filename, 'rb'))})
                         # {'file': ('example.txt', open('example.txt', 'rb'), 'multipart/form-data')}
-                        self.__files.update({names[len(names) - 1]: (names[len(names) - 1], open(filename, 'rb'),
-                                                                     'multipart/form-data')})
+                        # with open(filename, "rb") as f:
+                        #     files = {names[len(names) - 1]: (names[len(names) - 1], f, "multipart/form-data")}
+                        files = {names[len(names) - 1]: (names[len(names) - 1], open(filename, "rb"),
+                                                         "multipart/form-data")}
+                        self.__files.update(files)
+
+                        #self.__files.update({names[len(names) - 1]: (names[len(names) - 1], open(filename, 'rb'),
+                                                                     #'multipart/form-data')})
                         # Traduction dans la requête
                         # {'save.png': <_io.BufferedReader name='D:/Temp/save.png'>}
                     self.lblDoc.setText(fileNameWithSize)

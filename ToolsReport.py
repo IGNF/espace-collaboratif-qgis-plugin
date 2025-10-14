@@ -393,8 +393,10 @@ class ToolsReport(object):
         #datas = MultipartEncoder(fields=fields)
         #datas = MultipartEncoder(self.__datasForRequest)
         #print("datas : {}".format(datas.to_string()))
-        datas = json.dumps(self.__datasForRequest)
-        responseFromServer = self.__sendRequest(datas, filesAttachments)
+
+        # datas = json.dumps(self.__datasForRequest)
+        #responseFromServer = self.__sendRequest(datas, filesAttachments)
+        responseFromServer = self.__sendRequest(self.__datasForRequest, filesAttachments)
         if responseFromServer is None:
             return
         return responseFromServer.json()
@@ -404,7 +406,7 @@ class ToolsReport(object):
         Envoi de la requête POST de création de signalement(s) avec ou sans croquis.
 
         :param datas: les données de signalement et croquis
-        :type datas: str
+        :type datas: dict
 
         :param filesAttachments: le (ou les) fichier(s) joint(s)
         :type filesAttachments: dict
@@ -476,7 +478,7 @@ class ToolsReport(object):
         self.__datasForRequest = {'community': str(communityId),
                                   'comment': formCreate.getComment(),
                                   'input_device': cst.CLIENT_INPUT_DEVICE,
-                                  'attributes': formCreate.getDatasForRequest()}
+                                  'attributes': json.dumps(formCreate.getDatasForRequest())}
 
         # Récupération du (ou des) fichier(s) joint(s) (maximum 4) au signalement sous la forme
         # {'save.png': open('D:/Temp/save.png', 'rb')}
@@ -537,7 +539,7 @@ class ToolsReport(object):
         """
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, True)
-        self.__datasForRequest['sketch'] = sketchsDatasGeometryReport[0]['sketch']
+        self.__datasForRequest['sketch'] = json.dumps(sketchsDatasGeometryReport[0]['sketch'])
         self.__datasForRequest['geometry'] = sketchsDatasGeometryReport[0]['geometryReport']  # obligatoire
         contents.append(self.__sendReport(filesAttachments))
         return contents
@@ -558,7 +560,7 @@ class ToolsReport(object):
         contents = []
         sketchsDatasGeometryReport = self.__createReportWithSketchs(sketchList, False)
         for sketchDataGeometryReport in sketchsDatasGeometryReport:
-            self.__datasForRequest['sketch'] = sketchDataGeometryReport['sketch']
+            self.__datasForRequest['sketch'] = json.dumps(sketchDataGeometryReport['sketch'])
             self.__datasForRequest['geometry'] = sketchDataGeometryReport['geometryReport']
             contents.append(self.__sendReport(filesAttachments))
         return contents
