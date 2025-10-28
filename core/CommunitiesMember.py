@@ -2,6 +2,7 @@ from typing import Optional
 
 from .Query import Query
 from .Community import Community
+from . import Constantes as cst
 from ..PluginHelper import PluginHelper
 
 
@@ -73,9 +74,25 @@ class CommunitiesMember(object):
             self.__username = data['username']
 
         if PluginHelper.keyExist('communities_member', data):
-            self.getDatasCommunities(data['communities_member'])
+            # Si la clé existe mais que les données sont vides, il s'agit d'un utilisateur sans groupe
+            if len(data['communities_member']) == 0:
+                self.setDefaultCommunity(data)
+            else:
+                self.getDatasCommunities(data['communities_member'])
 
         return self.__listNameIdFromAllUserCommunities
+
+    def setDefaultCommunity(self, datas):
+        if len(datas) == 0:
+            return
+        params = {'url': self.__url, 'tokentype': self.__tokenType, 'tokenaccess': self.__tokenAccess,
+                  'proxies': self.__proxies}
+        community = Community(params)
+        if PluginHelper.keyExist('id', datas):
+            community.setUserId(datas['id'])
+        community.getDatas(datas)
+        self.__communities.append(community)
+        self.__listNameIdFromAllUserCommunities.append({'name': cst.DEFAULTPROFILE, 'id': -1})
 
     def getDatasCommunities(self, datas) -> None:
         """

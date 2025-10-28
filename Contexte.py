@@ -400,7 +400,8 @@ class Contexte(object):
                 if formPreferredGroup != idNameCommunity[1]:
                     # TODO Mélanie, il s'agit bien des themes utilisateur (ceux dans community)
                     #  et non activeThemes ou shared_themes ?
-                    PluginHelper.save_preferredThemes(self.projectDir, self.getUserCommunity().getTheme())
+                    if self.getUserCommunity() is not None:
+                        PluginHelper.save_preferredThemes(self.projectDir, self.getUserCommunity().getTheme())
                 PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_GroupePrefere, idNameCommunity[1],
                                             PluginHelper.xml_Serveur)
             # Bouton Annuler
@@ -428,11 +429,16 @@ class Contexte(object):
         # TODO : si utilisateur sans groupe getUserCommunity est a None, il faut faire un test et changer le code
         # TODO faire une fonction __setDisplayLogo()
         # TODO sai1 sur la qualif par exemple
+        if self.getUserCommunity() is None:
+            message = "Contexte.__displayLoginInformationOnScreen : la récupération du profil utilisateur a échoué, " \
+                      "veuillez contacter le support."
+            self.logger.error(message)
+            raise Exception(message)
         if self.getUserCommunity().getLogo() != "":
             image = QImage()
             image.loadFromData(requests.get(self.getUserCommunity().getLogo()).content)
             dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-        elif self.getUserCommunity().getName() == "Profil par défaut":
+        elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))

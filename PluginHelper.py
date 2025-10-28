@@ -708,6 +708,7 @@ class PluginHelper:
         Rafraîchit toutes les couches du projet QGIS :
         - Recompte les entités
         - Rafraîchit l'affichage
+        - Réinitialise la source de données
         - Recharge les données si nécessaire
         """
         project = QgsProject.instance()
@@ -715,6 +716,8 @@ class PluginHelper:
             if layer.isValid():
                 if layer.providerType() != 'spatialite':
                     continue
+                uri = layer.dataProvider().dataSourceUri()
+                layer.setDataSource(uri, layer.name(), "spatialite")
                 layer.triggerRepaint()
                 layer.reload()  # recharge les données depuis la source
                 print(f"{layer.name()} → {layer.featureCount()} entités")

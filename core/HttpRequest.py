@@ -55,7 +55,6 @@ class HttpRequest(object):
         response.encoding = 'utf-8'
         return response
 
-    #
     def getNextResponse(self, partOfUrl, params) -> {}:
         """
         Traite les réponses fournies dans le cas d'une requête multiple en utilisant le status de la réponse.

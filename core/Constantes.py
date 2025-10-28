@@ -63,3 +63,5 @@ STATUS_COMMITTED = 'committed'
 
 PROJECT_NOREGISTERED = "Votre projet QGIS doit être enregistré avant de pouvoir utiliser les fonctionnalités " \
                           "du plugin de l'espace collaboratif"
+
+DEFAULTPROFILE = "Profil par défaut"

@@ -1,3 +1,5 @@
+from PyQt5.QtWidgets import QMessageBox
+
 from .FormInfo import FormInfo
 from .ToolsReport import ToolsReport
 from .ReplyReportView import ReplyReportView
@@ -29,6 +31,14 @@ class ReplyReport(object):
         """
         self.__logger.debug("ReplyReport.do")
         try:
+            # Un utilisateur sans groupe ne peut pas répondre à un signalement
+            if self.__context.getUserCommunity() is None or self.__context.getUserCommunity().getId() == -1:
+                message = "Action impossible, un utilisateur sans groupe ne peut pas répondre à un signalement."
+                messageLogger = "ReplyReport.do : {}".format(message)
+                self.__logger.warning(messageLogger)
+                QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+                return
+
             # Est-ce que la couche Signalement existe ?
             if not self.__isLayerExist():
                 return

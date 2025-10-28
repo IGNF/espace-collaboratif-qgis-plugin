@@ -17,7 +17,7 @@ class Community(object):
         :param params: les paramètres généraux pour lancer une requête HTTP GET sur une communauté (groupe)
         :type params: dict
         """
-        self.__name = ''
+        self.__name = cst.DEFAULTPROFILE
         self.__id = -1
         self.__userId = -1
         self.__emprises = []
@@ -27,6 +27,9 @@ class Community(object):
         self.__tokenType = params['tokentype']
         self.__tokenAccess = params['tokenaccess']
         self.__query = Query(params['url'], params['proxies'])
+
+    def setUserId(self, userId):
+        self.__userId = userId
 
     def getDatas(self, data) -> None:
         """
@@ -47,6 +50,8 @@ class Community(object):
             self.__emprises = data['emprises']
         if PluginHelper.keyExist('profile', data):
             self.__getDataTheme(data['profile'])
+        if PluginHelper.keyExist('shared_themes', data):
+            self.__getDataTheme(data['shared_themes'])
 
     def __getDataTheme(self, datas) -> None:
         """

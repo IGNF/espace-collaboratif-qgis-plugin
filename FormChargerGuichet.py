@@ -69,6 +69,11 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.labelGroupeActif.setText("Communauté active : {}".format(context.getUserCommunity().getName()))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  # #ff0000
 
+        self.__selectedlayers = []
+
+    def getSelectedLayers(self):
+        return self.__selectedlayers
+
     def __checkAllBoxesMonGuichet(self) -> None:
         """
         Si l'utilisateur clique sur un des boutons "Tout charger", l'ensemble des couches de "Mon guichet" sont cochées.
@@ -220,6 +225,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                 for layer in self.__listLayers:
                     if tmp == layer.name():
                         layersQGIS.append(layer)
+                        self.__selectedlayers.append(layer)
                         break
         # Téléchargement et import des couches du guichet sur la carte
         self.__doImport(layersQGIS)

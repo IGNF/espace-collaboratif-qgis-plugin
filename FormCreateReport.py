@@ -80,7 +80,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         self.__activeCommunity = self.__context.getActiveCommunityName()
         if self.__activeCommunity is None:
-            profil = 'Profil par défaut'
+            profil = cst.DEFAULTPROFILE
         else:
             profil = self.__activeCommunity
         title = "{0} ({1})".format(self.__context.getUserNameCommunity(), profil)

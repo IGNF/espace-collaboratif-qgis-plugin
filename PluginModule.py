@@ -556,9 +556,9 @@ class RipartPlugin:
         # icon_path = ':/plugins/RipartPlugin/images/disk.png'
         # self.__addAction(
         #     icon_path,
-        #     text=self.__translate(u"Enregistrer le déplacement d'un signalement"),
-        #     callback=self.__saveMoveReport,
-        #     status_tip=self.__translate(u"Enregistrer le déplacement d'un signalement"),
+        #     text=self.__translate(u"Test extraction/écriture geopackage"),
+        #     callback=self.__testProcessAndWriteToGpkg,
+        #     status_tip=self.__translate(u"Test extraction/écriture geopackage"),
         #     parent=self.iface.mainWindow())
 
         icon_path = ':/plugins/RipartPlugin/images/cleaning.png'
@@ -611,6 +611,12 @@ class RipartPlugin:
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
+
+    # def __testProcessAndWriteToGpkg(self):
+    #     if not self.__doConnexion(False):
+    #         return False
+    #     gpkg = GpkgProcess(self.__context)
+    #     gpkg.do()
 
     def __saveMoveReport(self) -> bool:
         if not self.__doConnexion(False):
@@ -774,6 +780,14 @@ class RipartPlugin:
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
                 return
+            # Un utilisateur sans groupe ne peut télécharger les couches de contribution directe
+            if self.__context.getUserCommunity() is None or self.__context.getUserCommunity().getId() == -1:
+                message = "Action impossible, un utilisateur sans groupe ne peut pas télécharger de couches " \
+                          "de contribution directe."
+                messageLogger = "PluginModule.__downloadLayersFromMyCommunity : {}".format(message)
+                self.__logger.warning(messageLogger)
+                QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
+                return
             # Les requêtes peuvent être longues
             messageProgress = "Récupération des couches pour le groupe {}".format(
                 self.__context.getUserCommunity().getName())
@@ -811,6 +825,15 @@ class RipartPlugin:
 
             # Connexion à l'Espace collaboratif
             if not self.__doConnexion(False):
+                return
+
+            # Un utilisateur sans groupe ne peut télécharger les couches de contribution directe
+            if self.__context.getUserCommunity() is None or self.__context.getUserCommunity().getId() == -1:
+                message = "Action impossible, un utilisateur sans groupe ne peut pas synchroniser de couches " \
+                          "de contribution directe."
+                messageLogger = "PluginModule.__synchronizeDataFromAllLayers : {}".format(message)
+                self.__logger.warning(messageLogger)
+                QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, message)
                 return
 
             # Il faut trouver parmi toutes les couches de la carte celles qui sont à synchroniser
