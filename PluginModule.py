@@ -800,7 +800,7 @@ class RipartPlugin:
             limit = 20
             listLayers = community.extractLayers(self.__context.getUserCommunity().getId(), page, limit)
             progress.setValue(1)
-            if len(listLayers) == 0:
+            if listLayers is None or len(listLayers) == 0:
                 raise Exception(u"Votre communauté n'a pas paramétré sa carte, il n'y a pas de données à charger.")
             # et les présenter à l'utilisateur pour qu'il fasse son choix de travail
             dlgChargerGuichet = FormChargerGuichet(self.__context, listLayers)

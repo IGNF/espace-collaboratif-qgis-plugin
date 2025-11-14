@@ -174,6 +174,7 @@ class SQLiteManager(object):
                                                                                     parameters['geometryType'])
         return sql
 
+    # TODO reporter modif branche master sur l'ajout de la colonne géométrie
     def createTableFromLayer(self, layer) -> bool:
         """
         Création d'une table dans la base SQLite du projet en cours pour une couche passée en paramètre.

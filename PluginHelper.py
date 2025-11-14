@@ -11,8 +11,8 @@ import os
 import subprocess
 import sys
 import ntpath
-import Lib.xml.etree.ElementTree as ET
-from Lib.xml.etree.ElementTree import Element
+import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import Element
 from datetime import datetime
 from typing import Optional
 from PyQt5.QtWidgets import QMessageBox, QApplication
