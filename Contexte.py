@@ -18,6 +18,7 @@ import os.path
 import shutil
 import ntpath
 import configparser
+import sqlite3
 
 from .RipartException import RipartException
 from .RipartHelper import RipartHelper
@@ -328,7 +329,10 @@ class Contexte(object):
                 raise e
         try:
             # creating a Cursor
-            self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
+            # self.conn = spatialite_connect(self.dbPath)
             curs = self.conn.cursor()
             # create layer Signalement
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
@@ -724,7 +728,10 @@ class Contexte(object):
         vide, détruit et crée les tables dans la base ripart.sqlite
         """
         try:
-            self.conn = spatialite_connect(self.dbPath)
+            # self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
             for table in RipartHelper.croquis_layers:
                 if SQLiteManager.isTableExist(table):
                     SQLiteManager.emptyTable(table)
@@ -756,7 +763,10 @@ class Contexte(object):
         curs = None
         try:
             # self.conn= sqlite3.connect(self.dbPath)
-            self.conn = spatialite_connect(self.dbPath)
+            #self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
 
             sql = "UPDATE " + RipartHelper.nom_Calque_Signalement + " SET "
             sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
@@ -962,7 +972,10 @@ class Contexte(object):
 
         cr = listCroquis[0]
         try:
-            self.conn = spatialite_connect(self.dbPath)
+            # self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
             cur = self.conn.cursor()
 
             sql = u"Drop table if Exists " + tmpTable
@@ -1020,7 +1033,10 @@ class Contexte(object):
         try:
             dbName = self.projectFileName + "_espaceco"
             self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
-            self.conn = spatialite_connect(self.dbPath)
+            # self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
             cur = self.conn.cursor()
 
             sql = "SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from " + tmpTable
@@ -1049,7 +1065,10 @@ class Contexte(object):
         :param noSignalements : les no de signalements à sélectionner
         :type noSignalements: list de string
         """
-        self.conn = spatialite_connect(self.dbPath)
+        # self.conn = spatialite_connect(self.dbPath)
+        self.conn = sqlite3.connect(self.dbPath)
+        self.conn.enable_load_extension(True)
+        self.conn.execute("SELECT load_extension('mod_spatialite')")
         cur = self.conn.cursor()
         table = RipartHelper.nom_Calque_Signalement
         lay = self.getLayerByName(table)
@@ -1075,7 +1094,10 @@ class Contexte(object):
         :rtype: dictionnary
         """
         crlayers = RipartHelper.croquis_layers
-        self.conn = spatialite_connect(self.dbPath)
+        # self.conn = spatialite_connect(self.dbPath)
+        self.conn = sqlite3.connect(self.dbPath)
+        self.conn.enable_load_extension(True)
+        self.conn.execute("SELECT load_extension('mod_spatialite')")
         cur = self.conn.cursor()
 
         for table in crlayers:

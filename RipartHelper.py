@@ -15,6 +15,7 @@ import subprocess
 import sys
 import ntpath
 import xml.etree.ElementTree as ET
+import sqlite3
 from datetime import datetime
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
@@ -644,7 +645,10 @@ class RipartHelper:
                 SQLiteManager.deleteTable(RipartHelper.nom_Calque_Signalement)
                 dbName = RipartHelper.getConfigFile().replace("xml", "sqlite")
                 dbPath = QgsProject.instance().homePath() + "/" + dbName
-                connexion = spatialite_connect(dbPath)
+                # connexion = spatialite_connect(dbPath)
+                connexion = sqlite3.connect(dbPath)
+                connexion.enable_load_extension(True)
+                connexion.execute("SELECT load_extension('mod_spatialite')")
                 RipartHelper.createRemarqueTable(connexion)
                 SQLiteManager.vacuumDatabase()
             cur.execute(sql)

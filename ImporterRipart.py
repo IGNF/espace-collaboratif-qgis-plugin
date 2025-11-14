@@ -7,6 +7,7 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 """
 
+import sqlite3
 from .core.RipartLoggerCl import RipartLogger
 from PyQt5.QtWidgets import QProgressBar, QApplication
 from PyQt5.QtCore import Qt
@@ -130,7 +131,10 @@ class ImporterRipart(object):
             i = 100
             nbRem = 0
             try:
-                self.context.conn = spatialite_connect(self.context.dbPath)
+                # self.context.conn = spatialite_connect(self.context.dbPath)
+                self.context.conn = sqlite3.connect(self.context.dbPath)
+                self.context.conn.enable_load_extension(True)
+                self.context.conn.execute("SELECT load_extension('mod_spatialite')")
                 for remId in remsToKeep:
                     bCommit = False
                     if remId == '618195' or remId == '618197':

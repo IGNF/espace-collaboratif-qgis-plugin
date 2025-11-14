@@ -160,7 +160,7 @@ class CreerRipart(object):
 
         self.logger.info(u"Succès de la création du nouveau signalement n°" + str(remarqueNouvelle.id))
         
-        RipartHelper.insertRemarques(self.context.conn, remarqueNouvelle)
+        RipartHelper.insertRemarques(self.context.conn, remarqueNouvelle, True)
         self.context.conn.commit()
             
         return remarqueNouvelle
