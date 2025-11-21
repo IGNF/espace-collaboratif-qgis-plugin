@@ -1,4 +1,4 @@
-﻿
+
 ## Plugin IGN_Espace_collaboratif pour QGIS
 
 **Version 5.0**
@@ -191,35 +191,35 @@ NB : le nom du projet QGIS dans lequel sera utilisé le plugin Espace collaborat
 
 Pour installer le plugin, suivre les étapes suivantes :
 - Ouvrir QGIS et se rendre dans le menu **Extension** > **Installer/Gérer les extensions**
-! [Image1](Image1.png "Figure 1  : le menu de gestion des extensions")
+![Image1](Image1.png "Figure 1  : le menu de gestion des extensions")
 Figure 1  : le menu de gestion des extensions
 
 - Se rendre dans l’onglet **Paramètres** et cliquer sur « Ajouter… »
 - Ajouter le dépôt avec l’URL : **https://espacecollaboratif.ign.fr/plugins/plugin-qgis.xml**
-	! [Image2](Image2.png "Figure 2  : configuration du dépôt d’extensions")
+	![Image2](Image2.png "Figure 2  : configuration du dépôt d’extensions")
 Figure 2  : configuration du dépôt d’extensions
 
 - Une fois ajouté, s’assurer que les extensions expérimentales sont affichées et que le statut du dépôt Espace collaboratif est « connecté » :
-! [Image3](Image3.png "Figure 3 : Affichage des extensions expérimentales")
+![Image3](Image3.png "Figure 3 : Affichage des extensions expérimentales")
 Figure 3 : Affichage des extensions expérimentales
 
 - **IGN_Espace_collaboratif** apparait dans l’onglet **Nouvelles**. Il est possible de l’installer en cliquant sur «  Installer l’extension ». Il vous sera alors demandé de vous connecter en utilisant le login et le mot de passe de votre compte Espace collaboratif :
-! [Image4](Image4.png "Figure 4 : Connexion au compte Espace collaboratif pour installation")
+![Image4](Image4.png "Figure 4 : Connexion au compte Espace collaboratif pour installation")
 Figure 4 : Connexion au compte Espace collaboratif pour installation
 
 - **IGN_Espace_collaboratif apparait alors dans la liste des extensions installées.**
-! [Image5](Image5.png "Figure 5 : Installation du plugin IGN_Espace_collaboratif")
+![Image5](Image5.png "Figure 5 : Installation du plugin IGN_Espace_collaboratif")
 Figure 5: Installation du plugin IGN_Espace_collaboratif
 
 - La barre d’outils IGN_Espace_collaboratif est maintenant présente :
-! [Image6](Image6.png "Figure 6 : la barre d'outils du plugin IGN_Espace_collaboratif dans QGIS")
+![Image6](Image6.png "Figure 6 : la barre d'outils du plugin IGN_Espace_collaboratif dans QGIS")
 Figure 6 : la barre d'outils du plugin IGN_Espace_collaboratif dans QGIS
 
 _Remarque  : Si elle n’apparait pas directement, aller dans «_  _Extensions > Installer/Gérer les extensions_  _», dans l’onglet «_  _Installées », désélectionner puis re-sélectionner la coche devant l’extension «_  _IGN_Espace_collaboratif »_
 
 
 ## 4.2 La barre d’outils IGN_Espace_collaboratif
-! [Image7](Image7.png "Figure 7 : la barre d'outils du plugin IGN_Espace_collaboratif dans QGIS")
+![Image7](Image7.png "Figure 7 : la barre d'outils du plugin IGN_Espace_collaboratif dans QGIS")
 Figure 7 : la barre d'outils du plugin IGN_Espace_collaboratif dans QGIS
 
 La barre d’outils du plugin IGN_Espace_collaboratif est composée des outils suivants :
@@ -241,7 +241,7 @@ Lors du premier chargement des signalements, le plugin ajoute dans la carte 6 co
 
 **Attention :** Si la carte QGIS contient encore la couche **Remarques_Ripart** (c’est-à-dire qu’il s’agit d’une carte commencée avec la version 1.2 du plugin), il faut supprimer cette couche avant de **télécharger les signalements.** Les 4 couches destinées à contenir les différents objets seront créés à nouveau lors du téléchargement.
 
-! [Image8](Image8.png "Figure 8 : Couches ajoutées par le plugin dans le projet QGIS")
+![Image8](Image8.png "Figure 8 : Couches ajoutées par le plugin dans le projet QGIS")
 Figure 8  : Couches ajoutées par le plugin dans le projet QGIS
 
 Ces couches dédiées se nomment :
@@ -252,9 +252,9 @@ Ces couches dédiées se nomment :
 
 Ces 4 couches utilisent le même système géographique de coordonnées que celui utilisé par le service Espace collaboratif (WGS84, coordonnées géographique en degrés décimaux). Néanmoins, l'utilisateur peut utiliser n’importe quel système géographique de coordonnées qui lui convient. Le plugin IGN_Espace_collaboratif et le SIG QGIS assurent de façon automatique et transparente le changement de projection à la volée et dans les deux sens.
 
-Le plugin propose une symbologie par défaut pour les signalements en fonction de la valeur du champ statut [^1] .
+Le plugin propose une symbologie par défaut pour les signalements en fonction de la valeur du champ statut[^1].
 
-[^1]:Cf. Tableau 3 : Valeurs et signification des statuts
+[^1]: Cf. Tableau 3 : Valeurs et signification des statuts
 
 Cette symbologie est définie dans les fichiers **xx.qml** qui se trouvent dans le dossier **espacecoStyles**. Néanmoins, l’utilisateur peut utiliser tout autre symbologie à sa convenance.
 
@@ -268,7 +268,7 @@ Ce fichier étant nécessaire à son fonctionnement, le plugin le génère autom
 
 ## 5.1 Connexion au service
 
-! [Image9](Image9.png)
+![Image9](Image9.png)
 
 Toute interaction entre QGIS et le service nécessite une authentification auprès de ce dernier avec un compte utilisateur existant.
 
@@ -278,7 +278,7 @@ Dans tous les cas, cela provoque l'ouverture d’une page web d’authentificati
 
 **L’authentification via FranceConnect ou ProConnect n’est pas encore fonctionnelle.**
 
-! [Image10](Image10.png "Figure 9 : Formulaire de connexion web au service Espace collaboratif")
+![Image10](Image10.png "Figure 9 : Formulaire de connexion web au service Espace collaboratif")
 
 Figure 9  : Formulaire de connexion web au service Espace collaboratif
 
@@ -287,9 +287,9 @@ Les champs **Nom d’utilisateur ou courriel / Votre mot de passe** corresponden
 Dans le cas où la connexion se passe bien :
 
 1. vous avez la fenêtre web suivante, vous indiquant que vous pouvez fermer la fenêtre web et retourner dans QGIS :
-! [Image10-1](Image10-1.png) 
+![Image10-1](Image10-1.png) 
 2. suivi, par la fenêtre de paramétrage QGIS du groupe et de l’emprise.
-! [Image11](Image11.png) 
+![Image11](Image11.png) 
 
 La fermeture de QGIS interrompt la connexion au service. Il faut donc la rétablir lors de l’utilisation suivante du SIG.
 
@@ -298,14 +298,14 @@ La fermeture de QGIS interrompt la connexion au service. Il faut donc la rétabl
 ###  5.1.1  Cas d'un utilisateur appartenant à aucun groupe
 
 Au clic sur le bouton « Connecter », une fenêtre de confirmation apparaît :
-! [Image12](Image12.png "Figure 10  : Fenêtre de confirmation de connexion pour un utilisateur sans groupe") 
+![Image12](Image12.png "Figure 10  : Fenêtre de confirmation de connexion pour un utilisateur sans groupe") 
 Figure 10  : Fenêtre de confirmation de connexion pour un utilisateur sans groupe
 
 
 ### 5.1.2  Cas d’un utilisateur appartenant à au moins un groupe
 
 Au clic sur le bouton « Connecter », une nouvelle fenêtre permettant de paramétrer l’utilisation du plugin apparaît :
-! [Image13](Image13.png "Figure 13  : Fenêtre de paramétrage du groupe") 
+![Image13](Image13.png "Figure 13  : Fenêtre de paramétrage du groupe") 
 Figure 13  : Fenêtre de paramétrage du groupe
 
 - Si l’utilisateur appartient à plusieurs groupes, un menu déroulant lui permet de choisir celui dans lequel il souhaite travailler. S’il n’appartient qu’à un seul groupe, celui-ci est sélectionné par défaut.
@@ -313,20 +313,20 @@ Figure 13  : Fenêtre de paramétrage du groupe
 - L’utilisateur peut choisir sa zone de travail en utilisant le menu déroulant pour sélectionner une couche surfacique déjà présente dans la carte ou le bouton parcourir pour sélectionner un fichier shape sur l’ordinateur.
 
 Après avoir cliqué sur le bouton « Enregistrer », une fenêtre de confirmation de connexion, reprenant le paramétrage choisi par l’utilisateur, est affichée :
-! [Image14](Image14.png "Figure 12 : Fenêtre de confirmation de connexion pour un utilisateur avec groupe")
+![Image14](Image14.png "Figure 12 : Fenêtre de confirmation de connexion pour un utilisateur avec groupe")
 Figure 12 : Fenêtre de confirmation de connexion pour un utilisateur avec groupe
 
 
 ## 5.2 Import des signalements
 
-! [Image15](Image15.png)
+![Image15](Image15.png)
 Cliquer sur le bouton **Télécharger les signalements** pour lancer la procédure de téléchargement des signalements depuis l’espace collaboratif IGN.
 
 La procédure efface préalablement tous les objets des calques spécifiques au fonctionnement du plugin IGN_Espace_collaboratif présents sur la carte. Les signalements importés sont mis dans le calque **Signalement**. Lorsqu’ils sont accompagnés de croquis, ces derniers sont importés dans les différents calques **Croquis_EC**.
 
-Le plugin propose dans le formulaire de configuration, deux options pour filtrer [^2]  l'import des signalements selon les besoins de l'utilisateur :
+Le plugin propose dans le formulaire de configuration, deux options pour filtrer[^2] l'import des signalements selon les besoins de l'utilisateur :
 
-[^2]:Il existe également un filtrage thématique paramétrable sur l’espace collaboratif pour importer des signalements sur des thèmes précis.
+[^2]: Il existe également un filtrage thématique paramétrable sur l’espace collaboratif pour importer des signalements sur des thèmes précis.
 
 -   Le **filtrage spatial** : on choisit le calque contenant l’emprise à utiliser pour filtrer les signalements à importer.
 -   Le **filtrage chronologique** : l’utilisateur précise une date et seuls les signalements mis à jour depuis cette date seront importés.
@@ -337,7 +337,7 @@ Le plugin propose dans le formulaire de configuration, deux options pour filtrer
 L'import de tous les signalements depuis le service Espace collaboratif peut prendre un certain temps en fonction du nombre de signalements et de la qualité de la connexion réseau. C'est pourquoi il est judicieux d'utiliser les options de filtrage pour limiter le nombre de signalements à télécharger.
 
 À l'issue du téléchargement, une fenêtre annonce le succès de l'opération et détaille la répartition des signalements importés selon leur statut.
-! [Image16](Image16.png "Figure 13 : Fenêtre annonçant la réussite du téléchargement des signalements depuis l’Espace collaboratif")
+![Image16](Image16.png "Figure 13 : Fenêtre annonçant la réussite du téléchargement des signalements depuis l’Espace collaboratif")
 Figure 13 : Fenêtre annonçant la réussite du téléchargement des signalements depuis l’Espace collaboratif
 
 
