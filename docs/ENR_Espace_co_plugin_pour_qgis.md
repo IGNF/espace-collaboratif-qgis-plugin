@@ -6,90 +6,86 @@
 
 
 
-# 1. Sommaire
+## 1. Sommaire
 
-[1.  Sommaire](#sommaire)
+[1.  Sommaire](#1-sommaire)
 
-[2. Versions](#versions)
+[2. Versions](#2-versions)
 
-[3.  Préambule](#préambule)
+[3.  Préambule](#3-preambule)
 
-[3.1  Présentation du service](#présentation-du-service)
+[3.1  Présentation du service](#31-presentation-du-service)
 
- [Signalement ](#signalement)
+[3.2  Rôle du plugin Espace collaboratif pour QGIS](#32-role-du-plugin-espace-collaboratif-pour-qgis)
 
-[Contribution directe](#contribution-directe)
+[3.3  Prérequis](#33-prerequis)
 
-[3.2  Rôle du plugin Espace collaboratif pour QGIS](#rôle-du-plugin-espace-collaboratif-pour-qgis)
+[4.  Installation et principes de fonctionnement](#4-installation-et-principes-de-fonctionnement)
 
-[3.3  Prérequis](#prérequis)
+[4.1  Procédure d'installation](#41-procedure-dinstallation)
 
-[4.  Installation et principes de fonctionnement](#installation-et-principes-de-fonctionnement)
+[4.2  La barre d’outils IGN_Espace_collaboratif ](#42-barre-doutils)
 
-[4.1  Procédure d'installation](#procédure-dinstallation)
+[4.3  Les calques gérés par le plugin](#43-calques-geres-par-le-plugin)
 
-[4.2  La barre d’outils IGN_Espace_collaboratif ](#la-barre-doutils-ign_espace_collaboratif")
+[4.4  Configuration du plugin](#44-configuration-du-plugin)
 
-[4.3  Les calques gérés par le plugin](#les-calques-gérés-par-le-plugin)
+[5. Utilisation](#5-utilisation)
 
-[4.4  Configuration du plugin](#configuration-du-plugin)
+[5.1  Connexion au service](#51-connexion-au-service)
 
-[5. Utilisation](#utilisation)
+[5.1.1 Cas d'un utilisateur appartenant à aucun groupe](#511-cas-dun-utilisateur-appartenant-a-aucun-groupe)
 
-[5.1  Connexion au service](#connexion-au-service)
+[5.1.2  Cas d’un utilisateur appartenant à au moins un groupe](#512-cas-dun-utilisateur-appartenant-a-au-moins-un-groupe)
 
-[5.1.1 Cas d'un utilisateur appartenant à aucun groupe](#cas-dun-utilisateur-appartenant-à-aucun-groupe)
+[5.2  Import des signalements](#52-import-des-signalements)
 
-[5.1.2  Cas d’un utilisateur appartenant à au moins un groupe](#cas-dun-utilisateur-appartenant-à-au-moins-un-groupe)
+[5.3  Visualisation d’un signalement](#53-visualisation-dun-signalement)
 
-[5.2  Import des signalements](#import-des-signalements)
+[5.4  Déplacer un signalement – Nouveau ! ](#54-deplacer-un-signalement)
 
-[5.3  Visualisation d’un signalement](#visualisation-dun-signalement)
+[5.5  Visualisation des attributs d’un croquis](#55-visualisation-des-attributs-dun-croquis)
 
-[5.4  Déplacer un signalement – Nouveau ! ](#déplacer-un-signalement---nouveau)
+[5.6  Répondre à un signalement](#56-repondre-a-un-signalement)
 
-[5.5  Visualisation des attributs d’un croquis](#visualisation-des-attributs-dun-croquis)
+[5.7  Création d’un nouveau signalement](#57-creation-nouveau-signalement)
 
-[5.6  Répondre à un signalement](#répondre-à-un-signalement)
+[5.8  Nettoyage de la carte](#58-nettoyage-carte)
 
-[5.7  Création d’un nouveau signalement](#_Toc212473716)
+[5.9  Visualiser les objets associés](#59-visualiser-objets-associes)
 
-[5.8  Nettoyage de la carte](#_Toc212473717)
+[5.10  Charger les couches de son groupe actif – Evolution ](#510-charger-couches-groupe-actif)
 
-[5.9  Visualiser les objets associés](#_Toc212473718)
+[5.11  Editer les couches du groupe (contribution directe)](#511-editer-couches-groupe)
 
-[5.10  Charger les couches de son groupe actif – Evolution ](#_Toc212473719)
+[5.12  Mettre à jour les couches Espace collaboratif](#512-maj-couches-espace-co)
 
-[5.11  Editer les couches du groupe (contribution directe)](#_Toc212473720)
+[5.13  Configurer le plugin IGN_Espace_collaboratif](#513-configurer-plugin)
 
-[5.12  Mettre à jour les couches Espace collaboratif](#_Toc212473721)
+[5.14  Accéder au manuel utilisateur](#514-acceder-manuel-utilisateur)
 
-[5.13  Configurer le plugin IGN_Espace_collaboratif](#_Toc212473722)
+[5.15  Afficher le fichier journal du plugin](#515-afficher-journal)
 
-[5.14  Accéder au manuel utilisateur](#_Toc212473723)
+[5.16  Le menu À propos du plugin IGN_Espace_collaboratif](#516-menu)
 
-[5.15  Afficher le fichier journal du plugin](#_Toc212473724)
+[5.17  Changement d’utilisateur ou de groupe](#517-changement-utilisateur)
 
-[5.16  Le menu À propos du plugin IGN_Espace_collaboratif](#_Toc212473725)
+[6.  Annexes](#6annexes)
 
-[5.17  Changement d’utilisateur ou de groupe](#_Toc212473726)
+[6.1  Tableau 1 : champs du calque Signalement](#61-tableau-calque-signalement)
 
-[6.  Annexes](#_Toc212473727)
+[6.2  Tableau 1 : champs des calques Croquis_EC](#62-tableau-calque-croquis)
 
-[6.1  Tableau 1 : champs du calque Signalement](#_Toc212473728)
+[6.3  Tableau 3 : Valeurs et signification des statuts d’un signalement](#63-valeurs-significations-statut-signalement)
 
-[6.2  Tableau 1 : champs des calques Croquis_EC](#_Toc212473729)
+[6.4  Formats acceptés pour les documents joints](#64-formats)
 
-[6.3  Tableau 3 : Valeurs et signification des statuts d’un signalement](#_Toc212473730)
+[6.5  Fichiers nécessaires au fonctionnement du plugin](#65-fichiers-necessaires)
 
-[6.4  Formats acceptés pour les documents joints](#_Toc212473731)
-
-[6.5  Fichiers nécessaires au fonctionnement du plugin](#_Toc212473732)
-
-[6.6  Exemple de contenu du fichier de configuration espaceco.xml](#_Toc212473733)
+[6.6  Exemple de contenu du fichier de configuration espaceco.xml](#66-exemple-configuration)
 
 ---
-# 2. Versions
+## 2. Versions
 
 | Numéro | Commentaire  | Date |
 |--|--|--|
@@ -121,11 +117,10 @@
 ||Évolution filtrage des signalements selon le groupe.||
 ||Contribution directe : Ajout de contraintes entre champs||
 ||Corrections diverses||
-||
 
 
 
-# 3. Préambule
+## 3. Préambule
 
 ## 3.1 Présentation du service
 
@@ -185,7 +180,7 @@ Le plugin IGN_Espace_collaboratif ne fonctionne qu'en association avec un projet
 NB : le nom du projet QGIS dans lequel sera utilisé le plugin Espace collaboratif ne doit pas contenir de point en dehors de son extension (.qgz).
 
 
-# 4. Installation et principes de fonctionnement
+## 4. Installation et principes de fonctionnement
 
 ## 4.1 Procédure d'installation
 
@@ -264,7 +259,7 @@ Pour son fonctionnement, le plugin stocke tous ses paramètres de configuration 
 
 Ce fichier étant nécessaire à son fonctionnement, le plugin le génère automatiquement s’il n’existe pas déjà. Le paramétrage du plugin se fait via la fenêtre de configuration qui s’ouvre depuis le menu **[Aide > Configurer le plugin]**  de la barre d'outils. Les nouveaux paramètres saisis sont ensuite automatiquement enregistrés dans ce fichier XML.
 
-# 5. Utilisation
+## 5. Utilisation
 
 ## 5.1 Connexion au service
 
@@ -295,14 +290,14 @@ La fermeture de QGIS interrompt la connexion au service. Il faut donc la rétabl
 
 **Note :** En cas d’échec de la connexion (message : « la connexion a échoué »), il peut s’agir d’un problème d’accès au serveur dû au proxy. Il peut être nécessaire de spécifier un proxy dans la configuration du plugin (menu Aide du plugin > Configurer le proxy), cf. §5.12. Attention, la définition d’un proxy dans l’interface de QGIS (menu Préférences > Options > Réseau) ne suffit pas. Une autre solution consiste à définir des variables d’environnement HTTP_PROXY et HTTPS_PROXY avec les valeurs ad-hoc (dépendant de votre établissement) peut régler le problème.
 
-###  5.1.1  Cas d'un utilisateur appartenant à aucun groupe
+##  5.1.1  Cas d'un utilisateur appartenant à aucun groupe
 
 Au clic sur le bouton « Connecter », une fenêtre de confirmation apparaît :
 ![Image12](Image12.png "Figure 10  : Fenêtre de confirmation de connexion pour un utilisateur sans groupe") 
 Figure 10  : Fenêtre de confirmation de connexion pour un utilisateur sans groupe
 
 
-### 5.1.2  Cas d’un utilisateur appartenant à au moins un groupe
+## 5.1.2  Cas d’un utilisateur appartenant à au moins un groupe
 
 Au clic sur le bouton « Connecter », une nouvelle fenêtre permettant de paramétrer l’utilisation du plugin apparaît :
 ![Image13](Image13.png "Figure 13  : Fenêtre de paramétrage du groupe") 
