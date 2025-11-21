@@ -24,7 +24,7 @@
 
 [4.1  Procédure d'installation](#41-procedure-dinstallation)
 
-[4.2  La barre d’outils IGN_Espace_collaboratif ](#42-barre-doutils)
+[4.2  La barre d’outils IGN_Espace_collaboratif ](#42-la-barre-doutils-ign_espace_collaboratif)
 
 [4.3  Les calques gérés par le plugin](#43-calques-geres-par-le-plugin)
 
@@ -34,7 +34,7 @@
 
 [5.1  Connexion au service](#51-connexion-au-service)
 
-[5.1.1 Cas d'un utilisateur appartenant à aucun groupe](#511-cas-dun-utilisateur-appartenant-a-aucun-groupe)
+[5.1.1 Cas d'un utilisateur n'appartenant à aucun groupe](#511-cas-dun-utilisateur-appartenant-a-aucun-groupe)
 
 [5.1.2  Cas d’un utilisateur appartenant à au moins un groupe](#512-cas-dun-utilisateur-appartenant-a-au-moins-un-groupe)
 
@@ -48,41 +48,41 @@
 
 [5.6  Répondre à un signalement](#56-repondre-a-un-signalement)
 
-[5.7  Création d’un nouveau signalement](#57-creation-nouveau-signalement)
+[5.7  Création d’un nouveau signalement](#57-creation-dun-nouveau-signalement)
 
-[5.8  Nettoyage de la carte](#58-nettoyage-carte)
+[5.8  Nettoyage de la carte](#58-nettoyage-de-la-carte)
 
-[5.9  Visualiser les objets associés](#59-visualiser-objets-associes)
+[5.9  Visualiser les objets associés](#59-visualiser-les-objets-associes)
 
-[5.10  Charger les couches de son groupe actif – Evolution ](#510-charger-couches-groupe-actif)
+[5.10  Charger les couches de son groupe actif – Evolution ](#510-charger-les-couches-de-son-groupe-actif)
 
-[5.11  Editer les couches du groupe (contribution directe)](#511-editer-couches-groupe)
+[5.11  Éditer les couches du groupe (contribution directe)](#511-editer-couches-groupe)
 
-[5.12  Mettre à jour les couches Espace collaboratif](#512-maj-couches-espace-co)
+[5.12  Mettre à jour les couches Espace collaboratif](#512-mettre-a-jour-les-couches-espace-collaboratif)
 
-[5.13  Configurer le plugin IGN_Espace_collaboratif](#513-configurer-plugin)
+[5.13  Configurer le plugin IGN_Espace_collaboratif](#513-configurer-le-plugin-ign_espace_collaboratif)
 
-[5.14  Accéder au manuel utilisateur](#514-acceder-manuel-utilisateur)
+[5.14  Accéder au manuel utilisateur](#514-acceder-au-manuel-utilisateur)
 
-[5.15  Afficher le fichier journal du plugin](#515-afficher-journal)
+[5.15  Afficher le fichier journal du plugin](#515-afficher-le-fichier-journal-du-plugin)
 
-[5.16  Le menu À propos du plugin IGN_Espace_collaboratif](#516-menu)
+[5.16  Le menu À propos du plugin IGN_Espace_collaboratif](#516-le-menu-a-propos-du-plugin-ign_espace_collaboratif)
 
-[5.17  Changement d’utilisateur ou de groupe](#517-changement-utilisateur)
+[5.17  Changement d’utilisateur ou de groupe](#517-changement-dutilisateur-ou-de-groupe)
 
-[6.  Annexes](#6annexes)
+[6.  Annexes](#6-annexes)
 
 [6.1  Tableau 1 : champs du calque Signalement](#61-tableau-calque-signalement)
 
-[6.2  Tableau 1 : champs des calques Croquis_EC](#62-tableau-calque-croquis)
+[6.2  Tableau 2 : champs des calques Croquis_EC](#62-tableau-2--champs-des-calques-croquis_ec)
 
-[6.3  Tableau 3 : Valeurs et signification des statuts d’un signalement](#63-valeurs-significations-statut-signalement)
+[6.3  Tableau 3 : Valeurs et signification des statuts d’un signalement](#63-tableau-3--valeurs-et-signification-des-statuts-dun-signalement)
 
-[6.4  Formats acceptés pour les documents joints](#64-formats)
+[6.4  Formats acceptés pour les documents joints](#64-formats-acceptes-pour-les-documents-joints)
 
-[6.5  Fichiers nécessaires au fonctionnement du plugin](#65-fichiers-necessaires)
+[6.5  Fichiers nécessaires au fonctionnement du plugin](#65-fichiers-necessaires-au-fonctionnement-du-plugin)
 
-[6.6  Exemple de contenu du fichier de configuration espaceco.xml](#66-exemple-configuration)
+[6.6  Exemple de contenu du fichier de configuration espaceco.xml](#66-exemple-de-contenu-du-fichier-de-configuration-espacecoxml)
 
 ---
 ## 2. Versions
