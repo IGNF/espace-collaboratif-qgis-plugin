@@ -4,7 +4,6 @@ import os.path
 import re
 import sqlite3
 
-from qgis.utils import spatialite_connect
 from qgis.core import QgsProject, QgsGeometry
 from . import ConstanteRipart as cst
 from .Wkt import Wkt
@@ -92,9 +91,6 @@ class SQLiteManager(object):
         # ordre d'insertion geometrie, gcms_fingerprint
         self.geometryType = typeGeometrie
         return sqlAttributes, typeGeometrie, columnDetruitExist
-
-    import re
-    import sqlite3
 
     def sanitize_identifier(self, identifier):
         """
