@@ -125,12 +125,14 @@ class ToolsReport(object):
         """
 
         # Fusion de toutes les géométries de la zone de travail en une seule
+        intersectingDatas = []
         layerFilter = self.__context.getLayerByName(
             PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
+        if layerFilter is None:
+            return intersectingDatas
         geometries = [f.geometry() for f in layerFilter.getFeatures()]
         filterGeom = QgsGeometry.unaryUnion(geometries)
 
-        intersectingDatas = []
         for data in datas:
             if PluginHelper.keyExist('geometry', data):
                 try:

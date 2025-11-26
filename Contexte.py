@@ -997,6 +997,8 @@ class Contexte(object):
         :return: le nombre de signalements sélectionnés dans la couche 'Signalement'
         """
         remLay = self.getLayerByName(cst.nom_Calque_Signalement)
+        if remLay is None:
+            return 0
         expression = '"Statut" = \'' + statut + '\''
         filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
         return len(list(filtFeatures))
