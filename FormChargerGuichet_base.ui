@@ -52,12 +52,12 @@
     <string>Mon guichet</string>
    </property>
   </widget>
-  <widget class="QLabel" name="labelFondsGeoportail">
+  <widget class="QLabel" name="labelFondsGeoservices">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>370</y>
-     <width>131</width>
+     <width>151</width>
      <height>21</height>
     </rect>
    </property>
@@ -69,7 +69,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Fonds Géoportail</string>
+    <string>Fonds Géoservices</string>
    </property>
   </widget>
   <widget class="QTableWidget" name="tableWidgetMonGuichet">
@@ -120,14 +120,14 @@
    <attribute name="horizontalHeaderCascadingSectionResizes">
     <bool>true</bool>
    </attribute>
+   <attribute name="horizontalHeaderMinimumSectionSize">
+    <number>30</number>
+   </attribute>
    <attribute name="horizontalHeaderDefaultSectionSize">
     <number>225</number>
    </attribute>
    <attribute name="horizontalHeaderHighlightSections">
     <bool>false</bool>
-   </attribute>
-   <attribute name="horizontalHeaderMinimumSectionSize">
-    <number>30</number>
    </attribute>
    <attribute name="horizontalHeaderStretchLastSection">
     <bool>false</bool>
@@ -138,14 +138,14 @@
    <attribute name="verticalHeaderCascadingSectionResizes">
     <bool>true</bool>
    </attribute>
+   <attribute name="verticalHeaderMinimumSectionSize">
+    <number>37</number>
+   </attribute>
    <attribute name="verticalHeaderDefaultSectionSize">
     <number>37</number>
    </attribute>
    <attribute name="verticalHeaderHighlightSections">
     <bool>false</bool>
-   </attribute>
-   <attribute name="verticalHeaderMinimumSectionSize">
-    <number>37</number>
    </attribute>
    <attribute name="verticalHeaderStretchLastSection">
     <bool>false</bool>
@@ -154,7 +154,7 @@
    <column/>
    <column/>
   </widget>
-  <widget class="QTableWidget" name="tableWidgetFondsGeoportail">
+  <widget class="QTableWidget" name="tableWidgetFondsGeoservices">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -187,14 +187,14 @@
    <attribute name="horizontalHeaderCascadingSectionResizes">
     <bool>true</bool>
    </attribute>
+   <attribute name="horizontalHeaderMinimumSectionSize">
+    <number>30</number>
+   </attribute>
    <attribute name="horizontalHeaderDefaultSectionSize">
     <number>225</number>
    </attribute>
    <attribute name="horizontalHeaderHighlightSections">
     <bool>false</bool>
-   </attribute>
-   <attribute name="horizontalHeaderMinimumSectionSize">
-    <number>30</number>
    </attribute>
    <attribute name="horizontalHeaderStretchLastSection">
     <bool>false</bool>
@@ -220,7 +220,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>301</width>
+     <width>621</width>
      <height>21</height>
     </rect>
    </property>
@@ -234,6 +234,32 @@
    </property>
    <property name="text">
     <string/>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_checkAllBoxes_MonGuichet">
+   <property name="geometry">
+    <rect>
+     <x>650</x>
+     <y>30</y>
+     <width>93</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Tout charger</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_checkAllBoxes_FondsGeoservices">
+   <property name="geometry">
+    <rect>
+     <x>650</x>
+     <y>360</y>
+     <width>93</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Tout charger</string>
    </property>
   </widget>
  </widget>

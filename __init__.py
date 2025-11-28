@@ -32,5 +32,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     type iface: QgsInterface
     """
     #
-    from .RipartModule import RipartPlugin
+    from .PluginModule import RipartPlugin
     return RipartPlugin(iface)
