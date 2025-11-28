@@ -10,25 +10,28 @@ version 4.0.6, 30/12/2021
 
 import os
 
-from PyQt5 import QtCore
-from qgis.PyQt import uic, QtWidgets
+from PyQt6 import QtCore, QtWidgets
+from qgis.PyQt import uic
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo_base.ui'))
 
 
 class FormInfo(QtWidgets.QDialog, FORM_CLASS):
     """
-    Dialogue donnant des informations sur le résultat
-    des actions effectuées par l'utilisateur
+    Classe de dialogue qui affiche les informations sur le résultat des actions effectuées par l'utilisateur.
+    Par exemple, les informations de connexion à l'espace collaboratif.
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
+        """
+        Constructeur de la boite de dialogue d'informations intitulée "IGN Espace collaboratif"
+        """
         super(FormInfo, self).__init__(parent)
 
         self.setupUi(self)
 
         # +20 en hauteur sinon le bouton OK est coupé
         self.setFixedSize(self.width(), self.height()+20)
-
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.textInfo.setText("")
         self.textInfo.setGeometry(QtCore.QRect(150, 10, 341, 151))
 

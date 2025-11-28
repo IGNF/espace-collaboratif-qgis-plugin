@@ -12,65 +12,55 @@ import os.path
 from datetime import datetime, timedelta
 import calendar
 
-from PyQt5 import uic, QtWidgets
-from PyQt5.QtCore import Qt, QDate
-from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
-from qgis.core import QgsVectorLayer
-from .RipartHelper import RipartHelper
-from .Contexte import Contexte
+from PyQt6 import QtCore, QtWidgets
+from qgis.PyQt.QtCore import Qt, QDate
+from qgis.PyQt.QtWidgets import QTreeWidgetItem, QDialogButtonBox
+from qgis.PyQt import uic
+from qgis.core import QgsVectorLayer, QgsProject
+from .PluginHelper import PluginHelper
+from .core.SQLiteManager import SQLiteManager
+from .core import Constantes as cst
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigure_base.ui'))
 
 
 class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
     """
-    Dialogue pour la configuration des préférences de téléchargement des remarques
+    Classe de dialogue pour la configuration des préférences de téléchargement des signalements.
     """
-    # le contexte
-    context = None
-
-    def __init__(self, context, parent=None):
+    def __init__(self, context, parent=None) -> None:
         """
-        Constructor
+        Constructeur de la boite "Configuration du plugin Espace Collaboratif".
+        Pré-remplissage des champs d'après le fichier de configuration "espaceco.xml"
+
+        NB : appeler dans PluginModule.py, fonction : __configurePlugin
         
-        Pré-remplissage des champs d'après le fichier de configuration
-        
-        :param context le contexte 
-        :type context Contexte
+        :param context: le contexte
         """
         super(FormConfigure, self).__init__(parent)
-        # Set up the user interface from Designer.
-        # After setupUI you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-        # Save reference to the QGIS interface
-
         self.context = context
         self.setFocus()
-
         self.setFixedSize(self.width(), self.height())
-
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setText("Enregistrer")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(self.save)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setText("Annuler")
 
-        self.lineEditUrl.setText(RipartHelper.load_urlhost(context.projectDir).text)
+        self.lineEditUrl.setText(PluginHelper.load_urlhost(context.projectDir).text)
 
-        login = RipartHelper.load_login(context.projectDir).text
+        login = PluginHelper.load_login(context.projectDir).text
         self.lineEditLogin.setText(login)
 
-        date = RipartHelper.load_ripartXmlTag(context.projectDir, RipartHelper.xml_DateExtraction, "Map").text
+        date = PluginHelper.load_XmlTag(context.projectDir, PluginHelper.xml_DateExtraction, "Map").text
         if date is not None:
-            date = RipartHelper.formatDate(date)
+            date = PluginHelper.formatDate(date)
             dt = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
             self.checkBoxDate.setChecked(True)
         else:
             dt = datetime.now()
-            self.checkBoxDate.setChecked(False)
 
         qdate = QDate(dt.year, dt.month, dt.day)
         self.calendarWidget.setSelectedDate(qdate)
@@ -83,45 +73,42 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
 
         self.spinBox.setValue(cntDays)
         self.spinBox.valueChanged.connect(self.spinboxChanged)
-
+        # Affiche le nom de la couche du polygone d'extraction dans l'item "Zone de travail".
         self.setWorkArea()
-
+        # Affiche les couches sources et champs à mettre en attribut pour les nouveaux croquis
         self.setAttributCroquis()
 
-        proxy = RipartHelper.load_proxy(context.projectDir).text
-        if proxy is not None:
-            self.lineEditProxy.setText(proxy)
+        proxies = PluginHelper.load_proxy(context.projectDir).text
+        self.lineEditProxy.setText(proxies)
 
-        groupeactif = RipartHelper.load_groupeactif(context.projectDir).text
-        self.lineEditGroupeActif.setText(groupeactif)
+        activeCommunityName = PluginHelper.loadActiveCommunityName(context.projectDir).text
+        self.lineEditGroupeActif.setText(activeCommunityName)
 
-    def setWorkArea(self):
-        # Par défaut l'item Zone de travail est vidée
+    def setWorkArea(self) -> None:
+        """
+        Affiche le nom de la couche du polygone d'extraction dans l'item "Zone de travail".
+        À vide par défaut ou si la couche n'existe pas dans le projet.
+        """
         self.lineEditWorkArea.setText('')
-        workArea = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
-        layersName = self.context.getAllMapLayers()
-        bFind = False
-        for layerName in layersName:
-            if layerName == workArea:
-                bFind = True
-        # Si la couche existe toujours dans le projet, la ligne Zone de travail est mise à jour du nom de la couche
-        if bFind:
-            self.lineEditWorkArea.setText(workArea)
+        workArea = PluginHelper.load_XmlTag(self.context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
+        listLayers = QgsProject.instance().mapLayersByName(workArea)
+        if len(listLayers) == 1:
+            if listLayers[0].name() == workArea:
+                # Si la couche existe toujours dans le projet, la ligne Zone de travail est mise à jour
+                # du nom de la couche
+                self.lineEditWorkArea.setText(workArea)
 
-    def setAttributCroquis(self):
+    def setAttributCroquis(self) -> None:
         """
-        Set des atttributs des croquis dans le treeWidget
+        Affiche les couches sources et champs à mettre en attribut pour les nouveaux croquis.
         """
-        attCroq = RipartHelper.load_attCroquis(self.context.projectDir)
+        attCroq = PluginHelper.load_attCroquis(self.context.projectDir)
         if len(attCroq) > 0:
             self.checkBoxAttributs.setChecked(True)
-
         maplayers = self.context.mapCan.layers()
-
         topItems = []
-
         for lay in maplayers:
-            if type(lay) is QgsVectorLayer and not lay.name() in RipartHelper.croquis_layers_name:
+            if type(lay) is QgsVectorLayer and not lay.name() in PluginHelper.reportSketchLayersName:
                 item = QTreeWidgetItem()
                 item.setText(0, str(lay.name()))
                 inConfig = lay.name() in attCroq
@@ -148,7 +135,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.treeWidget.insertTopLevelItems(0, topItems)
         self.treeWidget.itemClicked.connect(self.onClickItem)
 
-    def addSubItems(self, item, layer, attList):
+    def addSubItems(self, item, layer, attList) -> None:
         """
         Adds subitems to the tree view
         The subitems are the attributes of the layers 
@@ -174,13 +161,14 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                 subItem.setCheckState(0, Qt.CheckState.Unchecked)
             item.addChild(subItem)
 
-    def onClickItem(self, item, column):
-        """Clic sur un item =>set de l'état de l'élément parent ou des éléments enfants
+    def onClickItem(self, item, column) -> None:
+        """
+        Clic sur un item, modifie l'état (coché/décoché) de l'élément parent ou des éléments enfants
         
         :param item: item de l'arbre sur lequel on a cliqué
         :type item: QTreeWidgetItem
         
-        :param column: le no de colonne
+        :param column: le numéro de colonne
         :type column: int 
         """
         state = item.checkState(column)
@@ -196,33 +184,34 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             parent.setCheckState(0, self.getParentState(item))
 
     def getParentState(self, item):
-        """Retourne l'état (coché ou non) du noeud parent
-        
+        """
         :param item: l'élément de l'arbre
-        :type item: 
+        :type item: QTreeWidgetItem
+
+        :return: l'état (coché ou non) du nœud parent
         """
         parent = item.parent()
         childCount = parent.childCount()
-        pstate = item.checkState(0)
-        if pstate == Qt.CheckState.Checked:
-            pstate = Qt.CheckState.Checked
+        parentState = item.checkState(0)
+        if parentState == Qt.CheckState.Checked:
+            parentState = Qt.CheckState.Checked
             for i in range(0, childCount):
                 if parent.child(i).checkState(0) == Qt.CheckState.Unchecked:
-                    pstate = Qt.CheckState.PartiallyChecked
+                    parentState = Qt.CheckState.PartiallyChecked
                     break
         else:  
-            pstate = Qt.CheckState.Unchecked
+            parentState = Qt.CheckState.Unchecked
             for i in range(0, childCount):
                 child = parent.child(i)
                 if child.checkState(0) == Qt.CheckState.Checked:
-                    pstate = Qt.CheckState.PartiallyChecked
+                    parentState = Qt.CheckState.PartiallyChecked
                     break
 
-        return pstate
+        return parentState
 
-    def getCheckedTreeItems(self):
+    def getCheckedTreeItems(self) -> {}:
         """
-        Retourne les items de l'arbre des attributs qui sont cochés
+        :return: les items (attributs) de l'arbre qui sont cochés
         """
         tree = self.treeWidget
         checkedItems = {}
@@ -236,17 +225,25 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
                         checkedItems[item.text(0)].append(subitem.text(0))
         return checkedItems
 
-    def save(self):
+    def save(self) -> None:
         """
-        Sauvegarde la configuration des différents paramètres dans le fichier xml
+        Sauvegarde la configuration des différents paramètres remplis par l'utilisateur dans le fichier xml.
         """
-        # Url
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_UrlHost, self.lineEditUrl.text(), "Serveur")
+        # Url, si l'Url a changé, il faut vider la table des tables
+        oldUrl = PluginHelper.load_urlhost(self.context.projectDir).text
+        newUrl = self.lineEditUrl.text()
+        if oldUrl != newUrl:
+            SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_UrlHost, newUrl, PluginHelper.xml_Serveur)
 
         # Proxy
-        proxy = self.lineEditProxy.text()
-        if proxy is not None and proxy.strip() != '':
-            RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_proxy, proxy, "Serveur")
+        if self.checkBoxProxy.isChecked():
+            tmp = self.lineEditProxy.text()
+            if tmp != '':
+                PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_proxy, tmp,
+                                            PluginHelper.xml_Serveur)
+        else:
+            PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_proxy, "", PluginHelper.xml_Serveur)
 
         # date
         if self.checkBoxDate.isChecked():
@@ -254,35 +251,37 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             sdate = d.toString('dd/MM/yyyy') + " 00:00:00"
         else:
             sdate = ""
-        RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_DateExtraction, sdate, "Map")
+        PluginHelper.setXmlTagValue(self.context.projectDir, PluginHelper.xml_DateExtraction, sdate,
+                                    PluginHelper.xml_Map)
 
         # attributs croquis
-        RipartHelper.removeAttCroquis(self.context.projectDir)
+        PluginHelper.removeAttCroquis(self.context.projectDir)
         if self.checkBoxAttributs.isChecked():
             checkedItems = self.getCheckedTreeItems()
             for calque in checkedItems:
-                RipartHelper.setAttributsCroquis(self.context.projectDir, calque, checkedItems[calque])
+                PluginHelper.setAttributsCroquis(self.context.projectDir, calque, checkedItems[calque])
+
+        self.close()
     
     def keyPressEvent(self, event):
         """
-        Pour désactiver la fermeture de la fenêtre lors d'un clic sur "Enter"
+        Pour désactiver la fermeture de la fenêtre si l'utilisateur appuie sur la touche du clavier "Enter" ou "Return"
         """
         key = event.key()
         if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             pass
 
     def dateChanged(self):
-        """Action lors d'un changement de date
-        =>Modification du nombre de jours
-       """
-        self.dateSelected = True
+        """
+        Si l'utilisateur choisi une nouvelle date d'extraction alors le nombre de jours est modifié en conséquence.
+        """
         d = self.calendarWidget.selectedDate()
         self.spinBox.setValue(self.getCountDays(d))
 
-    def dateMYChanged(self):
-        """Action lors d'une modification du mois ou de l'année
+    def dateMYChanged(self) -> None:
         """
-        self.dateMYChanged = True
+        Si l'utilisateur modifie le mois ou l'année d'extraction alors la date est modifiée dans le calendrier.
+        """
         qd = self.calendarWidget.selectedDate()
         m = self.calendarWidget.monthShown()
         y = self.calendarWidget.yearShown()
@@ -293,19 +292,24 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
             date = QDate(y, m, maxday)
         self.calendarWidget.setSelectedDate(date)
 
-    def getCountDays(self, qdate):
-        """Compte le nombre de jours entre la date donnée et la date d'aujourd'hui
-        :param qdate: la date 
+    def getCountDays(self, qdate) -> int:
+        """
+        Compte le nombre de jours entre la date donnée et la date du jour d'extraction.
+
+        :param qdate: la date de début d'extraction
         :type qdate: QDate
+
+        :return: le nombre de jours décomptés
         """
         date = qdate.toPyDate()
         dt = datetime.now().date()
-        cntDays = abs((dt-date).days)
-        return cntDays
+        countDays = abs((dt-date).days)
+        return countDays
 
-    def spinboxChanged(self):
-        """Action lors d'un changement du nb de jours
-           =>Modification de la date
+    def spinboxChanged(self) -> None:
+        """
+        Si l'utilisateur change le nombre de jours pour l'extraction alors la date d'extraction est modifiée
+        en conséquence dans le calendrier.
         """
         delta = self.spinBox.value()
         now = datetime.now().date()

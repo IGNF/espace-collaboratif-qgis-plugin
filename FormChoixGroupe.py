@@ -1,48 +1,44 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 25 nov. 2020
-
-version 4.0.1, 15/12/2020
-
-@author: EPeyrouse, NGremeaux
-"""
 import os
-
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-from qgis.PyQt import uic, QtWidgets
-from PyQt5.QtCore import Qt
-from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
-from .RipartHelper import RipartHelper
+from PyQt6 import QtWidgets, QtCore
+from qgis.PyQt.QtWidgets import QDialogButtonBox, QMessageBox
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt import uic
+from qgis.core import QgsProject, QgsVectorLayer
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
-from .core import ConstanteRipart as cst
+from .core import Constantes as cst
+from .PluginHelper import PluginHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 
 
 class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
     """
-    Dialogue pour le choix du groupe après la connexion au serveur
-    et récupération du profil utilisateur
+    Classe du dialogue pour le choix du groupe après la connexion au serveur
+    et récupération du profil utilisateur.
     """
-    infosgeogroups = None
-    bCancel = True
-    context = None
-    profile = None
-    activeGroup = None
-    newShapefilesDict = {}
-    idChosenGroup = None
-    nameChosenGroup = None
 
-    def __init__(self, context, profile, activeGroup, parent=None):
+    def __init__(self, context, parent=None) -> None:
+        """
+        Constructeur de la boite de dialogue intitulée "Paramètres de travail"
+        Initialisation des paramètres connus à partir du projet ou du fichier xml de configuration.
+
+        NB : appeler dans Contexte.py, fonction : __connectToService
+
+        :param context: le contexte du projet
+        """
         super(FormChoixGroupe, self).__init__(parent)
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-        self.context = context
-        self.profile = profile
-        self.activeGroup = activeGroup
-        self.newShapefilesDict.clear()
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
+        self.__context = context
+        self.__listNamesIdsCommunities = context.getListNameIdFromAllUserCommunities()
+        self.__nameActiveCommunity = context.getActiveCommunityName()
+        self.__newShapefilesDict = {}
+        self.__bCancel = True
+        self.__idSelectedCommunity = ''
+        self.__nameSelectedCommunity = ''
 
         # Ajout des noms de groupes trouvés pour l'utilisateur
         self.setComboBoxGroup()
@@ -53,41 +49,70 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # Modification des intitulés des boutons
         self.setButtonsTextAndConnect()
 
-    def setComboBoxGroup(self):
-        self.infosgeogroups = self.profile.infosGeogroups
-        for igg in self.infosgeogroups:
-            self.comboBoxGroup.addItem(igg.group.name)
-        if self.activeGroup is not None and self.activeGroup != "":
-            self.comboBoxGroup.setCurrentText(self.activeGroup)
+    def getCancel(self) -> int:
+        """
+        Clic de l'utilisateur sur le bouton Annuler ou sur la croix de fermeture de la boite de dialogue.
 
-    def setComboBoxWorkZone(self):
+        :return: 1 si l'utilisateur a fermé le dialogue, 0 sinon.
+        """
+        return self.__bCancel
+
+    def setComboBoxGroup(self) -> None:
+        """
+        Remplissage de la liste déroulante "Groupe" avec les noms des groupes appartenant à l'utilisateur.
+        """
+        for nameid in self.__listNamesIdsCommunities:
+            self.comboBoxGroup.addItem(nameid['name'])
+        if self.__nameActiveCommunity is not None and self.__nameActiveCommunity != "":
+            self.comboBoxGroup.setCurrentText(self.__nameActiveCommunity)
+
+    def setComboBoxWorkZone(self) -> None:
+        """
+        Remplissage de la liste déroulante "Zone de travail" avec les noms des couches de type polygone présentes
+        dans le projet. Le nom de la couche issue du fichier xml de configuration est mis en premier dans la liste
+        si elle existe dans la carte, vide sinon.
+        """
         index = -1
-        polyLayers = self.context.getMapPolygonLayers()
-        polyList = [val for key, val in polyLayers.items() if val != RipartHelper.nom_Calque_Croquis_Polygone]
+        polyLayers = self.__context.getMapPolygonLayers()
+        polyList = [val for key, val in polyLayers.items() if val != cst.nom_Calque_Croquis_Polygone]
         self.comboBoxWorkZone.clear()
         self.comboBoxWorkZone.addItem("")
         self.comboBoxWorkZone.addItems(polyList)
-        zone = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Zone_extraction, "Map").text
+        zone = PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, "Map").text
         if zone is None:
             self.comboBoxWorkZone.setCurrentIndex(0)
         else:
             index = self.comboBoxWorkZone.findText(zone, Qt.MatchFlag.MatchCaseSensitive)
-            # si le nom de la couche stockée dans le xml n'est pas dans la liste des couches existantes
+            # si le nom de la couche n'est pas dans la liste des couches existantes
             # dans le projet alors on affiche une zone vide
             if index == -1:
                 self.comboBoxWorkZone.setCurrentIndex(0)
         if index > 0:
             self.comboBoxWorkZone.setCurrentIndex(index)
 
-    def setButtonsTextAndConnect(self):
-        self.buttonBox.button(QDialogButtonBox.Save).setText("Continuer")
-        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
+    def setButtonsTextAndConnect(self) -> None:
+        """
+        Modification de l'intitulé des boutons Save et Cancel.
+        Connexion des signaux en réaction au clic sur un des boutons :
+        - save, l'utilisateur veut continuer
+        - cancel, l'utilisateur stoppe la procédure
+        - shapeFile, l'utilisateur veut importer une couche shapefile comme zone de travail
+        """
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Save).setText("Continuer")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Save).clicked.connect(self.save)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setText("Annuler")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).clicked.connect(self.cancel)
         self.toolButtonShapeFile.clicked.connect(self.openShapeFile)
 
-    def openShapeFile(self):
-        self.newShapefilesDict.clear()
+    def openShapeFile(self) -> None:
+        """
+        L'utilisateur veut importer sa zone de travail à partir d'un fichier shapefile.
+        L'outil propose l'import et vérifie si les conditions d'import d'une nouvelle zone sont respectées :
+         - si c'est un fichier .shp
+         - si la zone contenue dan sle fichier est de type polygone
+         - si la zone existe déjà dans le projet
+        """
+        self.__newShapefilesDict.clear()
         formats = ["shp", "SHP"]
         filters = u"ESRI Shapefile (*.shp; *.SHP);;"
         shapefilePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.',
@@ -96,7 +121,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             extension = os.path.splitext(shapefilePath)[1]
             if extension[1:] not in formats:
                 message = u"Le fichier de type '" + extension + u"' n'est pas un fichier Shapefile."
-                RipartHelper.showMessageBox(message)
+                PluginHelper.showMessageBox(message)
             else:
                 parts = shapefilePath.split('/')
                 shapefileName = parts[len(parts) - 1]
@@ -105,7 +130,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
 
                 # On vérifie que le shapefile est surfacique
                 vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
-                if vlayer.geometryType() != QgsWkbTypes.GeometryType.PolygonGeometry:
+                if vlayer.geometryType() != 2:  # 2 = Polygon
                     QMessageBox.warning(self, cst.IGNESPACECO, "La zone de travail ne peut être définie "
                                                                "qu'à partir d'une couche d'objets "
                                                                "surfaciques.")
@@ -121,9 +146,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                         self.comboBoxWorkZone.setCurrentIndex(index)
                         message = "La zone de travail [{}] existe déjà dans la carte. Voulez-vous la supprimer ?\n" \
                                   "Le nouveau fichier shape sera importé.".format(shapefileLayerName)
-                        reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes,
-                                                     QMessageBox.No)
-                        if reply == QMessageBox.Yes:
+                        reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                                     QMessageBox.StandardButton.No)
+                        if reply == QMessageBox.StandardButton.Yes:
                             removeLayers = QgsProject.instance().mapLayersByName(shapefileLayerName)
                             if len(removeLayers) == 1:
                                 QgsProject.instance().removeMapLayer(removeLayers[0].id())
@@ -133,14 +158,22 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                     index += 1
 
                 if bAddItem:
-                    self.newShapefilesDict[shapefileLayerName] = shapefilePath
+                    self.__newShapefilesDict[shapefileLayerName] = shapefilePath
                     self.comboBoxWorkZone.addItem(shapefileLayerName)
                     self.comboBoxWorkZone.setCurrentText(shapefileLayerName)
         else:
             self.comboBoxWorkZone.setCurrentIndex(0)
 
-    def importShapefile(self, shapefileLayerName):
-        shapefilePath = self.newShapefilesDict[shapefileLayerName]
+    def importShapefile(self, shapefileLayerName) -> str:
+        """
+        Import du fichier shapefile avec quelques vérifications :
+        - est-ce que le fichier existe ?
+        - est-ce que QGIS arrive à créer la couche QgsVectorLayer ?
+        - est-ce que le système de coordonnées est renseigné ?
+
+        :return: un message d'erreur correspondant aux vérifications, vide si l'import s'est bien passé
+        """
+        shapefilePath = self.__newShapefilesDict[shapefileLayerName]
         if shapefilePath is None:
             return "Impossible d'importer le fichier {0}".format(shapefilePath)
 
@@ -157,96 +190,104 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # si le système de coordonnées de référence assigné (SCR) est vide, il faut le signaler à l'utilisateur
         sourcecrs = vlayer.sourceCrs()
         if sourcecrs.isValid() is False:
-            return "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez " \
+            message = "Le système de coordonnées de référence (SCR) n'est pas assigné pour la couche [{0}]. Veuillez " \
                       "le renseigner dans [Propriétés...][Couche][Système de Coordonnées de Référence " \
                       "assigné]".format(vlayer.name())
+            PluginHelper.showMessageBox(message)
         return ""
 
-    # Bouton Continuer comme le nom de la fonction l'indique ;-)
-    def save(self):
-        try:
-            # Si le nom de la zone de travail est vide → extraction complete
-            spatialFilterLayerName = self.comboBoxWorkZone.currentText()
-            if spatialFilterLayerName == '':
-                message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou " \
-                          "les données de votre groupe, le chargement se fera sur la totalité du territoire et sera " \
-                          "probablement long. Voulez-vous continuer ?"
-                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.No:
-                    return
-                else:
-                    RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
-                self.bCancel = False
+    def save(self) -> None:
+        """
+        Bouton Continuer de la boite de dialogue comme le nom de la fonction l'indique ;-)
+        Remarques :
+         - Si le nom de la zone de travail est vide → extraction complete
+         - Si changement de groupe ou de zone de travail, suppression du groupe et de ses couches associées
+         - Si import d'un shapefile, sauvegarde du nom de la zone de travail dans le fichier xml de configuration
+          - Si l'import s'est mal passé, envoi d'une exception
+        """
+        # Si le nom de la zone de travail est vide → extraction complete
+        spatialFilterLayerName = self.comboBoxWorkZone.currentText()
+        if spatialFilterLayerName == '':
+            message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou les " \
+                      "données de votre groupe, le chargement se fera sur la totalité du territoire et sera " \
+                      "probablement long. Voulez-vous continuer ?"
+            reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
+                return
+            self.__bCancel = False
 
-            # Récupération du nom du groupe que l'utilisateur a choisi
-            index = self.comboBoxGroup.currentIndex()
-            self.idChosenGroup = self.infosgeogroups[index].group.id
-            self.nameChosenGroup = self.infosgeogroups[index].group.name
-            RipartHelper.save_groupeactif(self.context.projectDir, self.nameChosenGroup)
-            self.accept()
-            self.bCancel = False
+        # Récupération du nom du groupe que l'utilisateur a choisi
+        for nameid in self.__listNamesIdsCommunities:
+            if nameid['name'] == self.comboBoxGroup.currentText():
+                self.__idSelectedCommunity = nameid['id']
+                break
+        self.__nameSelectedCommunity = self.comboBoxGroup.currentText()
+        self.accept()
+        self.__bCancel = False
 
-            # Est-ce qu'un changement de groupe ou de zone de travail est intervenu au moment de la sauvegarde ?
-            # Si oui, il faut supprimer l'ensemble des couches et le groupe
-            self.deleteLayersAndGroup(spatialFilterLayerName)
+        # Est-ce qu'un changement de groupe ou de zone de travail est intervenu au moment de la sauvegarde ?
+        # Si oui, il faut supprimer l'ensemble des couches et le groupe
+        self.deleteLayersAndGroup(spatialFilterLayerName)
 
-            # Création d'une nouvelle zone de travail si le dictionnaire est rempli avec un shape
-            # que l'utilisateur a chargé avec le bouton 'Parcourir'
-            message = ""
-            if spatialFilterLayerName in self.newShapefilesDict:
-                message = self.importShapefile(spatialFilterLayerName)
-                # Sauvegarde du nom de la nouvelle zone de travail
-                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
-                                            spatialFilterLayerName,
-                                            "Map")
-            # si spatialFilterLayerName est rempli, la zone existe déjà
-            elif spatialFilterLayerName != '':
-                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction,
-                                            spatialFilterLayerName,
-                                            "Map")
+        # Création d'une nouvelle zone de travail si le dictionnaire est rempli avec un shape
+        # que l'utilisateur a chargé avec le bouton 'Parcourir'
+        message = ""
+        if spatialFilterLayerName in self.__newShapefilesDict:
+            message = self.importShapefile(spatialFilterLayerName)
+            # Sauvegarde du nom de la nouvelle zone de travail
+            PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
+                                        spatialFilterLayerName, PluginHelper.xml_Map)
+        # si spatialFilterLayerName est rempli, la zone existe déjà
+        elif spatialFilterLayerName != '':
+            PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
+                                        spatialFilterLayerName, PluginHelper.xml_Map)
 
-            # si l'import s'est mal passé, on sort
-            if message != "":
-                raise Exception(message)
-        except Exception as e:
-            RipartHelper.showMessageBox('{}'.format(e))
-            return
+        # si l'import s'est mal passé, envoi d'une exception
+        if message != "":
+            print(message)
+            raise Exception(message)
 
-    """
-    Retourne l'identifiant du groupe de l'utilisateur
-    en fonction de son choix
-    """
+    def getIdAndNameFromSelectedCommunity(self) -> ():
+        """
+        :return: l'identifiant et le nom du groupe de l'utilisateur en fonction de son choix
+        """
+        return self.__idSelectedCommunity, self.__nameSelectedCommunity
 
-    def getChosenGroupInfo(self):
-        return self.idChosenGroup, self.nameChosenGroup
-
-    # bouton Annuler
-    def cancel(self):
-        self.bCancel = True
+    def cancel(self) -> None:
+        """
+        En réaction au clic sur le bouton Annuler, la boite de dialogue peut être fermée
+        """
+        self.__bCancel = True
         self.reject()
 
-    def deleteLayersAndGroup(self, userWorkZone):
-        # Si c'est un projet nouvellement créé, il faut vérifier si la table des tables existe
-        if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-            return
+    def deleteLayersAndGroup(self, userWorkZone) -> None:
+        """
+        Suppression du groupe et de ses couches associées, si nouvelle zone de travail ou nouveau groupe.
 
+        NB : les couches d'un projet sont rassemblées sous un groupe dont le nom est préfixé par "[ESPACE CO] xxxx"
+        NB : mise à jour du xml de configuration si nouvelle zone ou nouveau groupe
+
+        :param userWorkZone: le nom de la zone de travail de l'utilisateur, un surfacique permettant de limiter
+                             une extraction de données, peut-être vide
+        :type userWorkZone: str
+        """
         # Le nom de la zone stockée dans le xml .../xxx_espaceco.xml
-        storedWorkZone = RipartHelper.load_ripartXmlTag(self.context.projectDir,
-                                                        RipartHelper.xml_Zone_extraction,
-                                                        "Map").text
+        storedWorkZone = PluginHelper.load_XmlTag(self.__context.projectDir,
+                                                  PluginHelper.xml_Zone_extraction,
+                                                  "Map").text
 
-        bNewGroup = self.activeGroup != self.nameChosenGroup
-        bNewZone = (storedWorkZone != userWorkZone and not (storedWorkZone is None and userWorkZone == ""))
+        bNewGroup = self.__nameActiveCommunity != self.__nameSelectedCommunity
+        bNewZone = storedWorkZone != userWorkZone
         # Si rien n'a changé, on sort
         if not bNewGroup and not bNewZone:
             return
 
         # Récupération de l'ensemble des noms des couches chargées dans le projet QGIS
-        projectLayers = self.context.getAllMapLayers()
+        projectLayers = self.__context.getAllMapLayers()
         layersInProject = []
-        for lp in projectLayers:
+        for c, v in projectLayers.items():
             tmp = Layer()
-            tmp.nom = lp
+            tmp.setName(c)
             layersInProject.append(tmp)
 
         # On regarde si le projet QGIS contient des couches Espace co
@@ -255,7 +296,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         nodesGroup = root.findGroups()
         newGroup = None
         for ng in nodesGroup:
-            # Dans le cas ou le nom du groupe actif, du groupe dans le carte et celui stocké dans le xml sont tous
+            # Dans le cas ou le nom du groupe actif, du groupe dans la carte et celui stocké dans le xml sont tous
             # les trois différents et qu'il n'y a qu'un seul groupe [ESPACE CO] par construction, le plus simple
             # est de chercher le prefixe
             if ng.name().find(cst.ESPACECO) != -1:
@@ -264,48 +305,55 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 break
 
         # Si l'utilisateur a changé de groupe, on supprime l'ancien (s'il existe dans le projet)
-        # et toutes les couches associées. On supprime la base sqlite et on la recréée
+        # et toutes les couches associées. On supprime la base SQLite et on la recrée
         if bNewGroup:
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
-                      "supprimées. Voulez-vous continuer ?".format(newGroup.name())
-                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.Yes:
+                          "supprimées. Voulez-vous continuer ?".format(newGroup.name())
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
                     root.removeChildNode(newGroup)
                     self.removeTablesSQLite(layersInProject)
                     QgsProject.instance().write()
                 else:
-                    self.bCancel = True
-                RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_GroupeActif, self.nameChosenGroup,
-                                        "Serveur")
+                    self.__bCancel = True
+                PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_GroupeActif,
+                                            self.__nameSelectedCommunity, PluginHelper.xml_Serveur)
 
         # Si l'utilisateur a changé de zone de travail, il faut supprimer les couches
         if bNewZone:
-            # Récupération de l'ensemble des noms des couches chargées dans la table des tables
-            layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
+            # Si c'est un projet nouvellement créé, il faut vérifier si la table des tables existe
             layersInTT = []
-            for lftot in layersFromTableOfTables:
-                layersInTT.append(lftot[0])
+            if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
+                # Récupération de l'ensemble des noms des couches chargées dans la table des tables
+                layersFromTableOfTables = SQLiteManager.selectLayersFromTableOfTables()
+                for lftot in layersFromTableOfTables:
+                    layersInTT.append(lftot[0])
 
             # Si l'utilisateur n'a pas été déjà averti de la suppression des données via le changement de groupe,
             # on l'informe
             if not bNewGroup and bEspaceCoLayersInProject:
                 message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif " \
                           " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
-                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.Yes:
-                    self.context.removeLayersFromProject(layersInProject, layersInTT, False)
-                    RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone,
-                                                "Map")
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
+                    self.__context.removeLayersFromProject(layersInProject, layersInTT, False)
                     self.removeTablesSQLite(layersInProject)
                 else:
-                    self.bCancel = True
+                    self.__bCancel = True
+            PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction, userWorkZone,
+                                        PluginHelper.xml_Map)
 
-    def removeTablesSQLite(self, layers):
+    def removeTablesSQLite(self, layers) -> None:
+        """
+        Vide et supprime une (ou plusieurs) table(s) de la base SQLite du projet.
+        NB : les tables portent le nom des couches par simplification.
+
+        :param layers: liste des tables à supprimer
+        :type layers: list
+        """
         for layer in layers:
-            if SQLiteManager.isTableExist(layer.nom):
-                SQLiteManager.emptyTable(layer.nom)
-                SQLiteManager.deleteTable(layer.nom)
-        if SQLiteManager.isTableExist(cst.TABLEOFTABLES):
-            SQLiteManager.emptyTable(cst.TABLEOFTABLES)
+            SQLiteManager.emptyTable(layer.name())
+            SQLiteManager.deleteTable(layer.name())
+        SQLiteManager.emptyTable(cst.TABLEOFTABLES)
         SQLiteManager.vacuumDatabase()
