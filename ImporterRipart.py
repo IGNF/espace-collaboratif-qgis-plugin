@@ -73,11 +73,11 @@ class ImporterRipart(object):
         message = "Placement des signalements sur la carte"
         self.progress = ProgressBar(200, message)
 
-        # Ajout des couches dans le projet
-        self.context.addRipartLayersToMap()
-
         # vider, détruire et créer les tables de l'espace collaboratif
         self.context.emptyAllRipartLayers()
+
+        # Ajout des couches dans le projet
+        self.context.addRipartLayersToMap()
 
         pagination = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination, "Map").text
         if pagination is None:
