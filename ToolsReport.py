@@ -115,24 +115,49 @@ class ToolsReport(object):
         data = query.multiple()
         return data
 
+    from qgis.core import (
+        QgsGeometry,
+        QgsCoordinateReferenceSystem,
+        QgsCoordinateTransform,
+        QgsProject
+    )
+
     def __filterObjectsWithWorkArea(self, datas) -> list:
         """
         Filtrer les objets en cherchant ceux qui intersectent la zone de travail.
 
-        :params datas: les objets retournés par la requête
+        :param datas: les objets retournés par la requête
         :type datas: list
         :return: la liste des objets intersectant la géométrie réelle de la zone de travail
         """
 
-        # Fusion de toutes les géométries de la zone de travail en une seule
-        intersectingDatas = []
+        # Récupération du calque de filtrage
         layerFilter = self.__context.getLayerByName(
-            PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
-        if layerFilter is None:
-            return intersectingDatas
+            PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text
+        )
+
+        if layerFilter is None or layerFilter.featureCount() == 0:
+            # Pas de calque => extraction complète
+            return datas
+
+        # Fusion des géométries du calque
         geometries = [f.geometry() for f in layerFilter.getFeatures()]
         filterGeom = QgsGeometry.unaryUnion(geometries)
 
+        # Transformation vers WGS84 si nécessaire
+        layer_crs = layerFilter.crs()
+        wgs84_crs = QgsCoordinateReferenceSystem("EPSG:4326")
+
+        if layer_crs != wgs84_crs:
+            try:
+                transformer = QgsCoordinateTransform(layer_crs, wgs84_crs, QgsProject.instance())
+                filterGeom.transform(transformer)
+            except Exception as e:
+                self.__logger.warning(f"Erreur transformation CRS : {e}")
+                return datas  # En cas d'erreur, on retourne tout
+
+        # Filtrage des données par intersection
+        intersectingDatas = []
         for data in datas:
             if PluginHelper.keyExist('geometry', data):
                 try:
