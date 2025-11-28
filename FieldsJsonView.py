@@ -1,7 +1,7 @@
 import os
 from qgis.PyQt import uic, QtWidgets
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QDialogButtonBox
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtWidgets import QDialogButtonBox
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FieldsJsonView_base.ui'))
 
