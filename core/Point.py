@@ -10,21 +10,47 @@ version 3.0.0 , 26/11/2018
 
 class Point(object):
     """
-    Classe représentant un Point (Signalement), donné en longitude/latitude
+    Classe représentant un Point (Signalement), donné en longitude/latitude.
     """
-    
-    # La longitude (WGS84 en degrés décimaux) du point
-    longitude = None
-    
-    # La latitude (WGS84 en degrés décimaux) du point
-    latitude = None
 
-    def __init__(self, lon=None, lat=None):
+    def __init__(self, lon=None, lat=None) -> None:
         """
-        Constructeur à partir d'une longitude/latitude
+        Définit un point à partir d'une longitude/latitude.
         
-        :param lon  La longitude (WGS84 en degrés décimaux) du point
-        :param lat  La latitude (WGS84 en degrés décimaux) du point
+        :param lon: longitude du point (WGS84 en degrés décimaux)
+        :type lon: float
+
+        :param lat: latitude du point (WGS84 en degrés décimaux)
+        :type lat: float
         """
-        self.longitude = lon
-        self.latitude = lat
+
+        # La longitude (WGS84 en degrés décimaux) du point
+        self.__longitude = lon
+        # La latitude (WGS84 en degrés décimaux) du point
+        self.__latitude = lat
+
+    def getLongitude(self) -> float:
+        """
+        :return: la longitude
+        """
+        return self.__longitude
+
+    def getLatitude(self) -> float:
+        """
+        :return: la latitude
+        """
+        return self.__latitude
+
+    def isValid(self) -> bool:
+        """
+        :return: False, si le premier point n'est pas égal au dernier point
+        """
+        if self.__longitude != self.__latitude:
+            return False
+
+    def isNone(self) -> bool:
+        """
+        :return: True, si les coordonnées sont à None
+        """
+        if self.__latitude is None and self.__longitude is None:
+            return True

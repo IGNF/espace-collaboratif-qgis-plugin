@@ -6,107 +6,108 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
+from typing import Optional
 
-# standard_library.install_aliases()
-from .RipartHelper import RipartHelper
+from .PluginHelper import PluginHelper
+from .core import Constantes as cst
 
 
 class Magicwand(object):
     """
-        Baguette magique: sélection des objets ripart associés
+    Baguette magique : sélection du (des) croquis associés au signalement et vice-versa.
     """
     context = None
 
-    def __init__(self, context):
+    def __init__(self, context) -> None:
         """
-        Constructor
+        Constructeur.
+
+        :param context: le contexte du projet QGIS de l'utilisateur
         """
         self.context = context
 
-    """
-        Sélection des croquis associés a une ou des remarque(s) 
-        ou les remarques associées à un ou plusieurs croquis
-    """
+    def selectReportOrSketchObjects(self) -> None:
+        """
+        Sélection des croquis associés à un signalement
+        ou le signalement associé à un ou plusieurs croquis.
 
-    def selectRipartObjects(self):
+        NB : appeler dans PluginModule.py, fonction : __magicwand
+        """
         res = self.checkObjectSelection()
         if res is None:
             return
         elif res == "croquis":
-            self.selectAssociatedRemarks()
-        elif res == "remarque":
+            self.selectAssociatedReport()
+        elif res == "signalement":
             self.selectAssociatedCroquis()
 
-    """
-        Contrôle si un des cas suivants est vrai:
-            1) un ou plusieurs croquis sélectionnés
-            2) une ou plusieurs remarques sélectionnées
+    def checkObjectSelection(self) -> Optional[str]:
+        """
+        Contrôle si un des cas suivants est vrai :
+         - un ou plusieurs croquis sélectionnés
+         - un signalement sélectionné
 
-            :return: None si  pas de sélection de croquis ou remarque ou sélection des 2 types d'objets, 
-                    "croquis" si des croquis sont sélectionnés, 
-                    "remarque" si des remarques sont sélectionnées
-            :rtype: string
-
-    """
-
-    def checkObjectSelection(self):
+        :return: None si pas de sélection de croquis ou signalement ou sélection des deux types d'objets,
+                 "croquis" si des croquis sont sélectionnés,
+                 "signalement" si un signalement est sélectionné
+        """
         selectedCroquis = False
-        selectedRemarque = False
+        selectedReport = False
         mapLayers = self.context.mapCan.layers()
         for ml in mapLayers:
-            if ml.name() in RipartHelper.croquis_layers and len(ml.selectedFeatures()) > 0:
+            if ml.name() in PluginHelper.sketchLayers and len(ml.selectedFeatures()) > 0:
                 selectedCroquis = True
-            if ml.name() == RipartHelper.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
-                selectedRemarque = True
+            if ml.name() == cst.nom_Calque_Signalement and len(ml.selectedFeatures()) > 0:
+                selectedReport = True
 
-        if selectedCroquis and selectedRemarque:
+        if selectedCroquis and selectedReport:
             self.context.iface.messageBar().pushMessage("",
-                                                        u"Veuillez sélectionner des signalements ou des croquis (mais pas les deux)",
-                                                        level=1, duration=10)
+                                                        u"Veuillez sélectionner un signalement ou un croquis"
+                                                        u" (mais pas les deux)",
+                                                        level=1, duration=3)
             return None
         elif selectedCroquis:
             return "croquis"
-        elif selectedRemarque:
-            return "remarque"
+        elif selectedReport:
+            return "signalement"
         else:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Aucun croquis ou signalement sélectionné",
-                                                        level=1, duration=10)
+                                                        level=1, duration=3)
             return None
 
-    """
-        Sélectionne les remarques associées aux croquis sélectionnés 
-    """
-
-    def selectAssociatedRemarks(self):
-        # identifiant de la remarque (No de remarque)
+    def selectAssociatedReport(self) -> None:
+        """
+        Sélectionne le signalement associé au croquis sélectionné.
+        """
+        # identifiant du signalement (Numéro de signalement)
         remNos = ""
         mapLayers = self.context.mapCan.layers()
 
         for ml in mapLayers:
-            if ml.name() in RipartHelper.croquis_layers and len(ml.selectedFeatures()) > 0:
-
+            if ml.name() in PluginHelper.sketchLayers and len(ml.selectedFeatures()) > 0:
                 for feat in ml.selectedFeatures():
                     idx = ml.fields().lookupField("NoSignalement")
                     noSignalement = feat.attributes()[idx]
                     remNos += str(noSignalement) + ","
                     ml.removeSelection()
 
-        self.context.selectRemarkByNo(remNos[:-1])
+        self.context.selectReportByNumero(remNos[:-1])
 
-    def selectAssociatedCroquis(self):
-        """Sélectionne les croquis associés aux remarques sélectionnées et déselectionne les remarques
+    def selectAssociatedCroquis(self) -> None:
+        """
+        Sélectionne les croquis associés au signalement sélectionné puis le désélectionne.
         """
         # key: layer name, value: noSignalement
         croquisLays = {}
 
-        remarqueLay = self.context.getLayerByName(RipartHelper.nom_Calque_Signalement)
+        remarqueLay = self.context.getLayerByName(cst.nom_Calque_Signalement)
         feats = remarqueLay.selectedFeatures()
 
         for f in feats:
             idx = remarqueLay.fields().lookupField("NoSignalement")
             noSignalement = f.attributes()[idx]
-            croquisLays = self.context.getCroquisForRemark(noSignalement, croquisLays)
+            croquisLays = self.context.getCroquisForReport(noSignalement, croquisLays)
 
         for cr in croquisLays:
             lay = self.context.getLayerByName(cr)

@@ -1,65 +1,66 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 3 janv. 2022
-@author: EPeyrouse
-"""
+from typing import Optional
+from .ToolsReport import ToolsReport
 from .SeeReportView import SeeReportView
-from .core.RipartLoggerCl import RipartLogger
-from .RipartHelper import RipartHelper
-
+from .core.PluginLogger import PluginLogger
+from .core import Constantes as cst
+from qgis.core import Qgis
 
 class SeeReport(object):
     """
-    Classe pour visualiser un signalement
+    Classe pour l'affichage des caractéristiques d'un signalement.
     """
-    logger = RipartLogger("SeeReport").getRipartLogger()
-    context = None
-    error = "Il faut sélectionner un et un seul signalement"
-
-    def __init__(self, context):
-        self.context = context
-
-    def do(self):
+    def __init__(self, context) -> None:
         """
-        Affichage de la fenêtre de visualisation d'un signalement
+        Constructeur.
+        Initialisation du Contexte et récupération du fichier de log.
+
+        :param context: le contexte du projet
+        """
+        self.__context = context
+        self.__logger = PluginLogger("SeeReport").getPluginLogger()
+
+    def do(self) -> Optional[SeeReportView]:
+        """
+        Lance et affiche le dialogue "Voir un signalement" qui affiche les caractéristiques d'un signalement.
+         - si la couche Signalement dans QGIS est active
+         - si un et un seul signalement est sélectionné
+        L'affichage de la boite de visualisation n'est possible qu'après récupération par une requête sur le site
+        de l'espace collaboratif .../gcms/api/reports/id (ou id peut-être 162918) des données du signalement.
+
+        NB : appeler dans PluginModule.py, fonction : __viewReport
+
+        :return: l'instance du dialogue de visualisation
         """
         try:
-            if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
-                if not connResult:
-                    return 0
-                # la connexion a échoué, on ne fait rien
-                if self.context.ripClient is None:
-                    self.context.iface.messageBar().pushMessage("",
-                                                                u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer",
-                                                                level=2, duration=5)
-                    return
-
-            activeLayer = self.context.iface.activeLayer()
-            if activeLayer is None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
-                self.context.iface.messageBar().pushMessage("Attention",
-                                                            'Le calque "Signalement" doit être le calque actif',
-                                                            level=1, duration=5)
+            activeLayer = self.__context.iface.activeLayer()
+            if activeLayer is None or activeLayer.name() != cst.nom_Calque_Signalement:
+                self.__context.iface.messageBar().pushMessage("Attention",'La couche "Signalement" doit être la couche active', Qgis.Warning, 3)
                 return
-            else:
-                selFeats = activeLayer.selectedFeatures()
-                if len(selFeats) != 1:
-                    self.context.iface.messageBar().pushMessage("Attention", self.error, level=1, duration=10)
-                    return
 
-                remIds = []
-                for feat in selFeats:
-                    remIds.append(feat.attribute('NoSignalement'))
+            selectedFeatures = activeLayer.selectedFeatures()
+            if len(selectedFeatures) != 1:
+                self.__context.iface.messageBar().pushMessage("Attention",
+                                                              "Il faut sélectionner un et un seul signalement",
+                                                              Qgis.Warning, 3)
+                return
 
-            client = self.context.client
-            remId = remIds[0]
-            report = client.getGeoRem(remId)
-            self.logger.debug("SeeReport")
-            seeReportView = SeeReportView(self.context, report)
-            seeReportView.setReport()
+            reportsId = []
+            for feat in selectedFeatures:
+                reportsId.append(feat.attribute('NoSignalement'))
+            # TODO Mélanie suggestion
+            #  Aller chercher les données dans SQLite ??? plutôt que de lancer la requête (dans getReport)
+            #  https://qlf-collaboratif.ign.fr/collaboratif-develop/gcms/api/reports/162918
+            #  Les données clientes dans SQLite sont censées être les mêmes que sur le serveur
+            #  même si la base SQLite contient moins de colonnes que d'attributs serveur retournés par la nouvelle API
+            #  bref faut voir si on aura les mêmes infos dans SQLite
+            toolsReport = ToolsReport(self.__context)
+            report = toolsReport.getReport(reportsId[0])
+            self.__logger.debug("SeeReport.do")
+            seeReportView = SeeReportView(self.__context.getUserCommunity())
+            seeReportView.setReport(report)
             seeReportView.show()
             return seeReportView
 
         except Exception as e:
-            self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
+            self.__logger.error(format(e) + ";" + str(type(e)) + " " + str(e))
             raise

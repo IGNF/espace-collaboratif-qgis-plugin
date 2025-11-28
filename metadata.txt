@@ -9,6 +9,7 @@
 [general]
 name=IGN_Espace_Collaboratif_DEV
 qgisMinimumVersion=3.0
+supportsQt6=True
 description=Service de signalement et contribution de l'IGN, plugin QGIS3
 version=4.2.x
 author=IGN
@@ -27,10 +28,7 @@ date=
 
 # Uncomment the following line and add your changelog:
 changelog=
-    4.2.3 - DEV - A COMPLETER
-    4.2.2 - Correction proxy
-    4.2.0 - Contribution directe à la BDTOPO pour les utilisateurs autorisés
-    4.1.2 - Correction version WFS
+    4.2.x
 	4.1.1 - Installation avec compte Espace collaboratif
     4.1.0 - Adaptation géoservices
 

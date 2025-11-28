@@ -6,26 +6,25 @@ version 3.0.0, 26/11/2018
 
 @author: AChang-Wailing
 """
-from PyQt5.QtCore import QDate, QDateTime
+from qgis.PyQt.QtCore import QDate, QDateTime
 
 
 class SketchAttributes(object):
     """
-    Classe représentant un attribut (d'un croquis)
-    sous forme nom/valeur
+    Classe représentant un attribut d'un croquis sous forme nom/valeur
     """
     name = ""
     value = ""
 
-    def __init__(self, name="", value=""):
+    def __init__(self, name="", value="") -> None:
         """
-        Constructeur
+        Initialise un attribut d'un croquis.
         
         :param name: le nom de l'attribut
-        :type name:string
+        :type name: str
         
         :param value: la valeur de l'attribut
-        :type value:string
+        :type value: str
         """
         self.name = name
 

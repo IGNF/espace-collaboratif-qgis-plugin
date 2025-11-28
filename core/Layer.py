@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on 25 may 2020
+Created on 25 MAY 2020
 
 version 4.0.1, 15/12/2020
 
@@ -10,53 +10,81 @@ version 4.0.1, 15/12/2020
 
 class Layer(object):
     """
-    Classe représentant les caractéristiques d'une couche appartenant au <GEOGROUPE>
+    Classe représentant les caractéristiques (attributs et symbologie) d'une couche d'un projet QGIS.
+     - Les attributs généraux sont remplis la fonction Community.__getLayers.
+     - Les attributs spécifiques à une couche WFS par la fonction Community.__getDataLayerFromTable.
+     - Les attributs spécifiques à une couche WMS par la fonction Community.__getDataLayerFromGeoservice.
     """
-    # <TYPE> GeoPortail </TYPE>
-    type = None
-    # <NOM> ORTHOIMAGERY.ORTHOPHOTOS </NOM>
-    nom = None
-    # <DESCRIPTION> Photographies aériennes </DESCRIPTION>
-    description = None
-    # <MINZOOM> 0 </MINZOOM>
-    minzoom = None
-    # <MAXZOOM> 20 </MAXZOOM>
-    maxzoom = None
-    # <EXTENT> -180, -86, 180, 84 </EXTENT>
-    extent = None
-    # <ROLE> Droit utilisateur sur la couche </ROLE>
-    role = None
-    # <VISIBILITY> 1 </VISIBILITY>
-    visibility = None
-    # <OPACITY> 1 </OPACITY>
-    opacity = None
-    # <TILEZOOM>
-    tilezoom = None
-    # <URL>
-    url = None
-    # Extraction du nom de la base de données à partir de l'url
-    databasename = None
-    # SRID
-    srid = None
-    # <LAYER>
-    layer_id = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
-        Constructor
+        Définit une couche à partir de ses attributs.
+        Cette classe servira à créer une couche de type GuichetVectorLayer dérivée de la classe QgsVectorLayer.
         """
-        self.type = ""
-        self.nom = ""
+
+        # Attributs remplis avec gcms/api/communities/{community_id}/layers
+        self.url = None
+        self.databaseid = 0
+        self.databasename = ''
+        self.tableid = 0
+        self.tablename = ''
+        self.geoservice = {}
+        self.id = 0
+        self.layers = ''
+        self.opacity = 1
+        self.order = 0
+        self.preferred_style = None
+        self.role = 'visu'
+        self.snapto = None
+        self.type = 'feature-type'
+        self.visibility = True
+
+        # Attributs remplis avec gcms/api/databases/{database_id}/tables/{table_id}
+        self.__name = ''
         self.description = ""
         self.minzoom = 0
         self.maxzoom = 20
-        self.extent = None
-        self.role = ""
-        self.visibility = 1
-        self.opacity = 1
-        self.tilezoom = ""
-        self.url = ""
-        self.databasename = ""
-        self.srid = -1
-        self.layer_id = ""
         self.isStandard = True
+        self.tileZoomLevel = 0
+        self.readOnly = None
+        self.geometryName = ''
+        self.geometryType = None
+        self.wfs = ''
+        self.wfsTransaction = ''
+        self.attributes = []
+        self.idName = None
+        self.is3d = None
+        self.style = {}
+        self.srid = -1
+
+    def name(self) -> str:
+        return self.__name
+
+    def setName(self, nameLayer):
+        self.__name = nameLayer
+
+    def getListOfValuesFromItemStyle(self) -> {}:
+        """
+        Récupération de la symbologie d'une couche pour l'item 'style'.
+
+        :return: la liste des styles à appliquer à la couche
+        """
+        listOfValues = {}
+
+        # La couche n'a pas de style défini, QGIS applique une symbologie par défaut
+        if self.style is None:
+            return listOfValues
+
+        tmp = {'children': []}
+        for stKey, stValues in self.style.items():
+            if stKey == 'children':
+                if type(stValues) is list and len(stValues) == 0:
+                    continue
+                else:
+                    for dftvValue in stValues:
+                        listOfValues[dftvValue['name']] = dftvValue
+            else:
+                tmp[stKey] = stValues
+        listOfValues['default'] = tmp
+
+        return listOfValues

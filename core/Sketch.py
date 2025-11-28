@@ -7,206 +7,162 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 """
 from .Enum import Enum
-import xml.etree.ElementTree as ET
-from .ClientHelper import ClientHelper
+from .Point import Point
 
 
 class Sketch(object):
     """
-    Classe représentant un croquis
+    Classe représentant un croquis. Un croquis est toujours lié à un signalement. Il apporte une précision
+    sur le pourquoi de la création d'un signalement.
+    Les croquis peuvent être de type :
+     - Vide : pas de croquis
+     - Point : un point du croquis
+     - Ligne : une polyligne du croquis
+     - Polygone : un polygone simple (sans trous et non multiple) du croquis.
+     - Texte : un champ texte du croquis
+     - Fleche : une flêche du croquis
     """
-    '''
-    Vide : pas de croquis
-    Point : un point du croquis
-    Ligne une polyligne du croquis
-    Polygone: un polygone simple (sans trous et non multiple) du croquis.
-    Texte : un champ texte du croquis
-    Fleche : une flêche du croquis
-    '''
     sketchType = Enum("Vide", "Point", "Ligne", "Polygone", "Texte", "Fleche")
-    
-    # Type du croquis
-    type = sketchType.Vide
-    
-    # Nom du croquis
-    name = ""
-    
-    # La liste des attributs (clé, valeur)
-    attributes = list()
-    
-    # La liste des points composants le croquis (coordonnées)
-    points = list()
-    
-    coordinates = ""
+    typeToStr = {sketchType.Point: 'Point', sketchType.Texte: 'Texte', sketchType.Ligne: 'Ligne',
+                 sketchType.Fleche: 'Fleche', sketchType.Polygone: 'Polygone'}
+    typeToWKT = {sketchType.Point: 'POINT', sketchType.Texte: 'POINT', sketchType.Ligne: 'LINESTRING',
+                 sketchType.Fleche: 'LINESTRING', sketchType.Polygone: 'POLYGON'}
 
-    def __init__(self, name="", typeSketch=sketchType.Vide, points=None):
-        """
-        Constructeur d'un croquis
-        
-        :param name: string le nom du croquis
-        :param typeSketch: sketchType le type du croquis
-        :param points: une liste de points 
-        """
-        self.name = name
-        
-        self.type = typeSketch
-        
-        self.attributes = list()
-        
-        if points is None:
-            self.points = list()
-        else:
-            self.points = points
+    def __init__(self) -> None:
+        # Type du croquis
+        self.type = self.sketchType.Vide
 
-    def addPoint(self, point):
+        # Nom du croquis
+        self.name = ""
+
+        # La liste des attributs (clé, valeur)
+        self.attributesList = list()
+
+        # La liste des points composants le croquis (coordonnées)
+        self.__points = list()
+
+        self.coordinates = ""
+
+    def getAllPoints(self) -> list:
         """
-        Ajoute un point à la liste des points du croquis
+        :return: la liste de points de type Point constituant le croquis
+        """
+        return self.__points
+
+    def addPoint(self, point) -> None:
+        """
+        Ajoute un point à la liste des points du croquis.
 
         :param point:  un objet Point
         """
-        self.points.append(point)
+        self.__points.append(point)
 
-    def addAttribut(self, attribute):
-        """Ajoute un attribut à la liste des attributs du croquis
+    def addAttribut(self, attribute) -> None:
+        """
+        Ajoute un attribut à la liste des attributs du croquis.
         
-        :param attribute : l'objet Attribut
+        :param attribute: l'objet Attribut
         :type attribute: Attribute
         """
-        self.attributes.append(attribute)
+        self.attributesList.append(attribute)
 
-    def getPoint(self, i):
-        """Recherche un point dans la liste de Points par sa position dans la liste
+    def getAttributes(self) -> dict:
+        """
+        :return: les attributs du croquis sous la forme [nom, valeur]
+        """
+        attributes = {}
+        for attribute in self.attributesList:
+            attributes[attribute.name] = attribute.value
+        return attributes
+
+    def getPoint(self, i) -> Point:
+        """
+        Recherche un point par sa position dans la liste de points du croquis.
          
-        :param i: la position du point à trouver
+        :param i: l'indice du point à trouver
         :type i: int
         
-        :return le point cherché
-        :rtype Point
-        """      
-        return self.points[i]
+        :return: le point cherché
+        """
+        return self.__points[i]
 
-    def longitude(self, i):
-        """Retourne la longitude pour le point i
-        
+    def longitude(self, i) -> float:
+        """
         :param i: l'index du point dans la liste
         :type i: int
         
-        :return la longitude
-        :rtype float
-        """       
-        return self.getPoint(i).longitude
+        :return: la longitude pour le point d'indice i
+        """
+        return self.getPoint(i).getLongitude()
 
-    def latitude(self, i):
-        """Retourne la latitude pour le point i
-        
+    def latitude(self, i) -> float:
+        """
         :param i: l'index du point dans la liste
         :type i: int
         
-        :return la latitude
-        :rtype float
-        """       
-        return self.getPoint(i).latitude
-                
-    def firstCoord(self):
-        """Retourne le premier point de la liste
-        
-        :return le premier point
-        :rtype Point
+        :return: la latitude pour le point d'indice i
         """
-        if len(self.points) > 0:
-            return self.points[0]
+        return self.getPoint(i).getLatitude()
+
+    def firstCoord(self) -> Point:
+        """
+        :return: le premier point de la liste
+        """
+        if len(self.__points) > 0:
+            return self.__points[0]
         else:
-            return None
+            return Point()
 
-    def lastCoord(self):
-        """Retourne le dernier point de la liste
-        
-        :return le dernier point
-        :rtype Point
+    def lastCoord(self) -> Point:
         """
-        if len(self.points) > 0:
-            return self.points[-1]
+        :return: le dernier point de la liste
+        """
+        if len(self.__points) > 0:
+            return self.__points[-1]
         else:
-            return None
+            return Point()
 
-    def isClosed(self):
-        """Contrôle si la géométrie est fermée
-        rtype:boolean
+    def isValid(self) -> bool:
         """
-        return self.firstCoord() == self.lastCoord()
+        Contrôle la validité de la géométrie pour un type de croquis.
+         - coordonnées différentes de None
+         - nombre de points différent de 0
+         - Point ou Texte : nombre de points égal à 1
+         - Polygone : premier et dernier point égal
+         - Vide : nombre de points égal à 0
 
-    def isValid(self):
-        """Contrôle la validité de la géométrie
+        :return: False, si la géométrie n'est pas conforme
         """
-        nPoints = len(self.points)
+        nPoints = len(self.__points)
         if nPoints == 0 \
-                or ((self.type == self.sketchType.Point or self.type == self.sketchType.Texte) and nPoints != 1)\
-                or (self.type == self.sketchType.Polygone and not self.firstCoord().eq(self.lastCoord()))\
+                or self.firstCoord().isNone() \
+                or ((self.type == self.sketchType.Point or self.type == self.sketchType.Texte) and nPoints != 1) \
+                or (self.type == self.sketchType.Polygone and not self.firstCoord().isValid()
+                    or self.lastCoord().isValid()) \
                 or (self.type == self.sketchType.Vide and nPoints > 0):
             return False
         return True
 
-    def encodeToXML(self, xmlDoc, ns='gml'):
-        """Transforme les objets géométriques en xml 
-        :param xmlDoc : le document xml représentant le croquis
-        :param ns: le namespace
-        
-        :return le xml au format string
+    def getCoordinatesFromPointsToPost(self) -> str:
         """
-        if self.type == self.sketchType.Vide:
-            return xmlDoc
-        
-        objet = ET.Element('objet', {"type": self.type.__str__()})
-        nom = ET.SubElement(objet, 'nom')
-        nom.text = self.name
-        
-        # la geométrie
-        geom = ET.SubElement(objet, 'geometrie')
-        coord = ""
-       
-        for pt in self.points:
-            coord += pt.longitude.__str__() + "," + pt.latitude.__str__() + " "
-            
-        coord = coord[:-1]
-        ingeom = ''
-        if self.type in [self.sketchType.Ligne, self.sketchType.Fleche]:
-            ingeom = ET.SubElement(geom, ns+':LineString')
-        elif self.type in [self.sketchType.Point, self.sketchType.Texte]:
-            ingeom = ET.SubElement(geom, ns+':Point')
-        elif self.type == self.sketchType.Polygone:
-            pol = ET.SubElement(geom, ns+':Polygon')
-            outer = ET.SubElement(pol, ns+':outerBoundaryIs')
-            ingeom = ET.SubElement(outer, ns+':LinearRing')
+        Transforme la géométrie WGS84 en géométrie WKT compatible QGIS.
 
-        coordEl = ET.SubElement(ingeom, ns+':coordinates')
-        coordEl.text = coord
-        
-        # les attributs
-        xattributs = ET.SubElement(objet, 'attributs')
-        for att in self.attributes:
-            xatt = ET.SubElement(xattributs, 'attribut', {'name': ClientHelper.notNoneValue(att.name)})
-            xatt.text = ClientHelper.notNoneValue(att.value)
-            
-        xmlDoc.append(objet)
-        return xmlDoc
-
-    def getAttributsInStringFormat(self):
+        :return: la géométrie du croquis au format WKT
         """
-        """
-        satt = ""
-        for att in self.attributes:
-            # Anomalie Redmine #14757 : le SQL n'aime pas les %
-            attributeName = att.name.replace('%', 'pourcent')
-            attributeValue = att.value.replace('%', 'pourcent')
-            satt += ClientHelper.notNoneValue(attributeName) + "='" + ClientHelper.notNoneValue(attributeValue) + "'|"
-       
-        if len(satt) > 0:
-            satt = satt[:-1]
-        
-        return satt
-            
-    def getCoordinatesFromPoints(self):
         coord = ""
-        for pt in self.points:
-            coord += str(pt.longitude) + " " + str(pt.latitude) + ","
-        return coord[:-1]    
+        for pt in self.__points:
+            coord += str(pt.getLongitude()) + " " + str(pt.getLatitude()) + ", "
+        if self.type not in self.typeToWKT:
+            return ''
+        # Cas particulier pour les polygones
+        if self.type == self.sketchType.Polygone:
+            geometryWKT = '{0}(({1}))'.format(self.typeToWKT[self.type], coord[:-2])
+        else:
+            geometryWKT = '{0}({1})'.format(self.typeToWKT[self.type], coord[:-2])
+        return geometryWKT
+
+    def getTypeEnumInStr(self, typeEnum) -> str:
+        """
+        :return: le type de croquis sous forme texte
+        """
+        return self.typeToStr[typeEnum]
