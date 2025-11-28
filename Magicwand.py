@@ -10,6 +10,7 @@ from typing import Optional
 
 from .PluginHelper import PluginHelper
 from .core import Constantes as cst
+from .core.SQLiteManager import SQLiteManager
 
 
 class Magicwand(object):
@@ -92,7 +93,9 @@ class Magicwand(object):
                     remNos += str(noSignalement) + ","
                     ml.removeSelection()
 
-        self.context.selectReportByNumero(remNos[:-1])
+        featIds = SQLiteManager.selectReportByNumero(remNos[:-1])
+        lay = self.context.getLayerByName(cst.nom_Calque_Signalement)
+        lay.selectByIds(featIds)
 
     def selectAssociatedCroquis(self) -> None:
         """
@@ -107,7 +110,7 @@ class Magicwand(object):
         for f in feats:
             idx = remarqueLay.fields().lookupField("NoSignalement")
             noSignalement = f.attributes()[idx]
-            croquisLays = self.context.getCroquisForReport(noSignalement, croquisLays)
+            croquisLays = SQLiteManager.getCroquisForReport(noSignalement, croquisLays)
 
         for cr in croquisLays:
             lay = self.context.getLayerByName(cr)

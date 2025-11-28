@@ -1,9 +1,8 @@
 import ntpath
 import json
 import os.path
+import sqlite3
 from sqlite3 import OperationalError
-
-from qgis.utils import spatialite_connect
 from qgis.core import QgsProject
 from . import Constantes as cst
 from .Wkt import Wkt
@@ -21,6 +20,64 @@ class SQLiteManager(object):
         Par exemple : .../ProjetQGIS/monprojet_espaceco.sqlite
         """
         self.__dbPath = SQLiteManager.getBaseSqlitePath()
+
+    @staticmethod
+    def getCroquisForReport(noSignalement, croquisSelFeats) -> {}:
+        """
+        Retourne le (ou les) croquis associé(s) à un signalement.
+
+        :param noSignalement: l'identifiant du signalement
+        :type noSignalement: int
+
+        :param croquisSelFeats: dictionnaire contenant le (ou les) croquis
+                                 (key: le nom de la table du croquis, value: liste des identifiants de croquis)
+        :type croquisSelFeats: dict
+
+        :return: dictionnaire contenant les croquis ou vide si pas de croquis associé(s) au signalement
+        """
+        crlayers = PluginHelper.sketchLayers
+        conn = SQLiteManager.sqlite3Connect()
+        cur = conn.cursor()
+        for table in crlayers:
+            sql = "SELECT * FROM " + table + "  WHERE noSignalement= " + str(noSignalement)
+            rows = cur.execute(sql)
+            featIds = []
+            for row in rows:
+                featIds.append(row[0])
+                if table not in croquisSelFeats:
+                    croquisSelFeats[table] = []
+                croquisSelFeats[table].append(row[0])
+        return croquisSelFeats
+
+    @staticmethod
+    def sqlite3Connect():
+        """
+        Etablit une connexion sécurisée avec la base SQLIte
+        :return: la connexion sécurisée
+        """
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
+        return connection
+
+    @staticmethod
+    def selectReportByNumero(noSignalements) -> []:
+        """
+        Sélection des signalements par leur numéro (identifiant espace collaboratif).
+
+        :param noSignalements: contient les numéros de signalements formatés pour la condition sql : IN
+                               en vue d'une requête vers la base SQLite du projet en cours
+        :type noSignalements: str
+        """
+        conn = SQLiteManager.sqlite3Connect()
+        cur = conn.cursor()
+        table = cst.nom_Calque_Signalement
+        sql = "SELECT * FROM " + table + "  WHERE noSignalement IN (" + noSignalements + ")"
+        rows = cur.execute(sql)
+        featIds = []
+        for row in rows:
+            featIds.append(row[0])
+        return featIds
 
     @staticmethod
     def getBaseSqlitePath() -> str:
@@ -46,7 +103,7 @@ class SQLiteManager(object):
         :param sql: la commande sql à lancer
         :type sql: str
         """
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         try:
             cur = connection.cursor()
             cur.execute(sql)
@@ -68,7 +125,7 @@ class SQLiteManager(object):
         :param sql: la requête SQL avec des placeholders '?'
         :param params: un tuple contenant les valeurs à insérer dans la requête
         """
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         try:
             cursor = connection.cursor()
             cursor.execute(sql, params)
@@ -95,7 +152,7 @@ class SQLiteManager(object):
         # Si la base SQLite n'existe pas, on passe
         if not os.path.isfile(dbPath):
             return False
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         sql = u"SELECT name FROM sqlite_master WHERE type='table' AND name='{}'".format(tableName)
         cur = connection.cursor()
         cur.execute(sql)
@@ -189,7 +246,7 @@ class SQLiteManager(object):
         if t[0] == "" and t[1] == "" and t[2] is False:
             raise Exception("SQLite : création de la table {} impossible, "
                             "un type de colonne est inconnu : {}".format(layer.name(), layer.attributes))
-        connection = spatialite_connect(self.__dbPath)
+        connection = SQLiteManager.sqlite3Connect()
         sql = u"CREATE TABLE {0} (".format(layer.name())
         sql += t[0]
         sql += ')'
@@ -383,7 +440,7 @@ class SQLiteManager(object):
             return totalRows
         wkt = Wkt(parameters)
         # Insertion des lignes dans la table
-        connection = spatialite_connect(self.__dbPath)
+        connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
         for attributesRow in attributesRows:
             columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
@@ -418,7 +475,7 @@ class SQLiteManager(object):
         else:
             sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idNameForDatabase, layer.name(), cst.ID_SQLITE,
                                                                 listId)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
         cur.execute(sql)
         res = cur.fetchall()
@@ -472,7 +529,7 @@ class SQLiteManager(object):
         if not SQLiteManager.isTableExist(tableName):
             return result
         sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchone()
@@ -495,7 +552,7 @@ class SQLiteManager(object):
         if not SQLiteManager.isTableExist(tableName):
             return result
         sql = u"SELECT {0} FROM {1}".format(columnName, tableName)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchall()
@@ -526,7 +583,7 @@ class SQLiteManager(object):
         tName = SQLiteManager.echap(tableName)
         cValue = SQLiteManager.echap(conditionValue)
         sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tName, conditionColumn, cValue)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchone()
@@ -572,7 +629,7 @@ class SQLiteManager(object):
         :return: l'ensemble des noms de couches stockées dans la table des tables.
         """
         sql = "SELECT layer FROM {0}".format(cst.TABLEOFTABLES)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
         cur.execute(sql)
         result = cur.fetchall()
@@ -589,7 +646,7 @@ class SQLiteManager(object):
         return: le dernier numéro de synchronisation pour une couche BDUni, 0 pour une table standard
         """
         sql = "SELECT numrec FROM {0} where layer = '{1}'".format(cst.TABLEOFTABLES, layer)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
         cur.execute(sql)
         result = cur.fetchone()
@@ -656,7 +713,7 @@ class SQLiteManager(object):
             return result
 
         sql = "SELECT * FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, tableName)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
         cur.execute(sql)
         result = cur.fetchall()
@@ -754,7 +811,7 @@ class SQLiteManager(object):
         """
         Si la base est verrouillée, supprime le fichier journal.
         """
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = SQLiteManager.sqlite3Connect()
         try:
             connection.execute("BEGIN EXCLUSIVE")
             connection.close()

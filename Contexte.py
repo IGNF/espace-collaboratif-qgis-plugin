@@ -15,7 +15,6 @@ import requests
 from PyQt5 import QtGui
 from PyQt5.QtGui import QImage
 from PyQt5.QtWidgets import QMessageBox
-from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
     QgsLayerTreeLayer, Qgis
@@ -1136,52 +1135,6 @@ class Contexte(object):
             return None
 
         return newSketch
-
-    def selectReportByNumero(self, noSignalements) -> None:
-        """
-        Sélection des signalements par leur numéro (identifiant espace collaboratif).
-
-        :param noSignalements: contient les numéros de signalements formatés pour la condition sql : IN
-                               en vue d'une requête vers la base SQLite du projet en cours
-        :type noSignalements: str
-        """
-        self.conn = spatialite_connect(self.dbPath)
-        cur = self.conn.cursor()
-        table = cst.nom_Calque_Signalement
-        sql = "SELECT * FROM " + table + "  WHERE noSignalement IN (" + noSignalements + ")"
-        rows = cur.execute(sql)
-        featIds = []
-        for row in rows:
-            featIds.append(row[0])
-        lay = self.getLayerByName(table)
-        lay.selectByIds(featIds)
-
-    def getCroquisForReport(self, noSignalement, croquisSelFeats) -> {}:
-        """
-        Retourne le (ou les) croquis associé(s) à un signalement.
-
-        :param noSignalement: l'identifiant du signalement
-        :type noSignalement: int
-
-        :param croquisSelFeats: dictionnaire contenant le (ou les) croquis
-                                 (key: le nom de la table du croquis, value: liste des identifiants de croquis)
-        :type croquisSelFeats: dict
-
-        :return: dictionnaire contenant les croquis ou vide si pas de croquis associé(s) au signalement
-        """
-        crlayers = PluginHelper.sketchLayers
-        self.conn = spatialite_connect(self.dbPath)
-        cur = self.conn.cursor()
-        for table in crlayers:
-            sql = "SELECT * FROM " + table + "  WHERE noSignalement= " + str(noSignalement)
-            rows = cur.execute(sql)
-            featIds = []
-            for row in rows:
-                featIds.append(row[0])
-                if table not in croquisSelFeats:
-                    croquisSelFeats[table] = []
-                croquisSelFeats[table].append(row[0])
-        return croquisSelFeats
 
     def getUriDatabaseSqlite(self) -> QgsDataSourceUri:
         """
