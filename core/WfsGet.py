@@ -1,55 +1,91 @@
 import time
-import json
-from .RipartServiceRequest import RipartServiceRequest
+from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
+from ..PluginHelper import PluginHelper
 
 
 class WfsGet(object):
-    context = None
-    url = None
-    identification = None
-    proxy = None
-    databaseName = None
-    layerName = None
-    geometryName = None
-    sridProject = None
-    sridLayer = None
-    bbox = None
-    parametersGcmsGet = None
-    bDetruit = None
-    isStandard = None
-    is3D = None
-    numrec = None
-    parametersForInsertsInTable = None
+    """
+    Classe implémentant une requête en HTTP GET pour une couche WFS.
+    """
 
-    def __init__(self, context, parameters):
-        self.context = context
-        self.url = self.context.client.getUrl() + '/gcms/wfs'
-        self.identification = self.context.client.getAuth()
-        self.proxy = self.context.client.getProxies()
-        self.databaseName = parameters['databasename']
-        self.layerName = parameters['layerName']
-        self.geometryName = parameters['geometryName']
-        self.sridProject = parameters['sridProject']
-        self.sridLayer = parameters['sridLayer']
-        self.bbox = parameters['bbox']
+    def __init__(self, parameters) -> None:
+        """
+        Constructeur.
+
+        :param parameters: les paramètres nécessaires pour lancer une requête HTTP GET
+        :type parameters: dict
+        """
+        if PluginHelper.keyExist('urlHostEspaceCo', parameters):
+            self.urlHostEspaceCo = parameters['urlHostEspaceCo']
+            self.url = parameters['urlHostEspaceCo'] + '/gcms/api/wfs'
+        if PluginHelper.keyExist('proxies', parameters):
+            self.proxies = parameters['proxies']
+        if PluginHelper.keyExist('headers', parameters):
+            self.headers = parameters['headers']
+        if PluginHelper.keyExist('databasename', parameters):
+            self.databasename = parameters['databasename']
+        if PluginHelper.keyExist('layerName', parameters):
+            self.layerName = parameters['layerName']
+        if PluginHelper.keyExist('geometryName', parameters):
+            self.geometryName = parameters['geometryName']
+        if PluginHelper.keyExist('sridProject', parameters):
+            self.sridProject = parameters['sridProject']
+        if PluginHelper.keyExist('sridLayer', parameters):
+            self.sridLayer = parameters['sridLayer']
+        if PluginHelper.keyExist('bbox', parameters):
+            self.bbox = parameters['bbox']
         self.parametersGcmsGet = {}
-        self.bDetruit = parameters['detruit']
-        self.isStandard = parameters['isStandard']
-        self.is3D = parameters['is3D']
-        self.numrec = int(parameters['numrec'])
+        if PluginHelper.keyExist('detruit', parameters):
+            self.bDetruit = parameters['detruit']
+        if PluginHelper.keyExist('isStandard', parameters):
+            self.isStandard = parameters['isStandard']
+        if PluginHelper.keyExist('is3D', parameters):
+            self.is3D = parameters['is3D']
+        if PluginHelper.keyExist('numrec', parameters):
+            self.numrec = int(parameters['numrec'])
         # Paramètres pour insérer un objet dans une table SQLite
         self.parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                             'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
                                             'isStandard': self.isStandard, 'is3D': self.is3D,
                                             'geometryType': ""}
+        if PluginHelper.keyExist('databaseid', parameters):
+            self.databaseid = parameters['databaseid']
+        if PluginHelper.keyExist('tableid', parameters):
+            self.tableid = parameters['tableid']
 
-    def makeRequestDeletedObjects(self):
-        # il s'agit de retrouver
-        self.initParametersGcmsGet(True)
+    def __initParametersGcmsGet(self, filterDelete=False) -> None:
+        """
+        Initialisation des paramètres pour une requête HTTP GET.
+
+        :param filterDelete: à True, si la requête doit récupérer les objets détruits d'une couche BDUni
+        :type filterDelete: bool
+        """
+        offset = 0
+        maxFeatures = 5000
+        # Passage des paramètres pour l'url
+        self.__setService()
+        self.__setRequest()
+        self.__setOutputFormat()
+        self.__setTypeName()
+        if self.numrec != 0:
+            self.__setNumrec()
+        if self.bbox is not None:
+            self.__setBBox()
+        self.__setFilter(filterDelete)
+        self.__setOffset(offset)
+        self.__setMaxFeatures(maxFeatures)
+        self.__setVersion('1.0.0')
+
+    def __makeRequestDeletedObjects(self) -> None:
+        """
+        Retrouver les objets détruits d'une table BDUni pour supprimer les enregistrements dans la base SQLite
+        du projet utilisateur.
+        """
+        self.__initParametersGcmsGet(True)
         while True:
-            response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
-                                                        params=self.parametersGcmsGet)
+            response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxies,
+                                               params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 break
 
@@ -59,77 +95,58 @@ class WfsGet(object):
             # ou un update après un post (enregistrement des couches actives)
             else:
                 for feature in response['features']:
-                    conditionTable = "{0} WHERE cleabs = '{1}'".format(self.layerName, feature['cleabs'])
-                    cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
-                    if len(cleabs) == 0:
+                    cleabs = SQLiteManager.selectColumnFromTableWithCondition("cleabs", self.layerName,
+                                                                              "cleabs", feature['cleabs'])
+                    if cleabs is None:
                         continue
                     else:
                         # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
                         # l'enregistrement
                         SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
-            self.setOffset(response['offset'])
+            self.__setOffset(response['offset'])
             if response['stop']:
                 break
 
-    def initParametersGcmsGet(self, filterDelete=False):
-        offset = 0
-        maxFeatures = 5000
-        # Passage des paramètres pour l'url
-        self.setService()
-        self.setRequest()
-        # GeoJSON | JSON | CSV | GML (par défaut)
-        self.setOutputFormat('JSON')
-        self.setTypeName()
-        if self.numrec != 0:
-            self.setNumrec()
-        if self.bbox is not None:
-            self.setBBox()
-        self.setFilter(filterDelete)
-        self.setOffset(offset)
-        self.setMaxFeatures(maxFeatures)
-        self.setVersion('1.0.0')
+    def gcmsGet(self, bExtraction=False) -> ():
+        """
+        Envoie une requête GET et met à jour les tables SQLite du projet en cours.
+        NB : le dernier numéro de mise à jour (numRec) d'une table est fixé à 0 pour une table différente de la BDUni.
 
-    # La requête doit être de type :
-    # https://espacecollaboratif.ign.fr/gcms/wfs
-    # ?service=WFS
-    # &request=GetFeature
-    # &typeName=bduni_interne_qualif_fxx:troncon_de_route
-    # &bbox=721962.3431462792,6828963.456591784,722530.9622283925,6829331.475409639
-    # &filter={%22detruit%22:false}
-    # &offset=0
-    # &maxFeatures=200
-    # &version=1.1.0
-    # http://gitlab.dockerforge.ign.fr/rpg/oukile_v2/blob/master/assets/js/oukile/saisie_controle/services/layer-service.js
-    def gcms_get(self, bExtraction=False):
+        :param bExtraction: à True quand il s'agit d'extraire les données sur une zone de travail
+        :type bExtraction: bool
+
+        :return: le dernier numéro de mise à jour sur une table et un message de fin
+        """
         message = ""
-        self.initParametersGcmsGet()
+        self.__initParametersGcmsGet()
         start = time.time()
         totalRows = 0
         if self.isStandard:
             maxNumrec = 0
         else:
             maxNumrec = self.getMaxNumrec()
+
         sqliteManager = SQLiteManager()
         while True:
-            response = RipartServiceRequest.nextRequest(self.url, authent=self.identification, proxies=self.proxy,
-                                                        params=self.parametersGcmsGet)
+            response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxies,
+                                               params=self.parametersGcmsGet)
             if response['status'] == 'error':
-                message += "[[WfsGet.py::gcms_get::nextRequest] {0} : {1}\n".format(response['status'], response['reason'])
+                message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
                 break
 
             if len(response['features']) == 0 and response['stop']:
                 break
-            # si c'est une table non BDUni ou une extraction,
+            # si c'est une table standard (non BDUni) ou une extraction,
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
-            if self.isStandard or bExtraction:
+            if self.isStandard is True or self.isStandard == 1 or bExtraction is True:
                 totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
             else:
                 for feature in response['features']:
-                    conditionTable = "{0} WHERE cleabs = '{1}'".format(self.layerName, feature['cleabs'])
-                    cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
-                    if len(cleabs) == 0:
+                    cleabs = SQLiteManager.selectColumnFromTableWithCondition("cleabs", self.layerName, "cleabs",
+                                                                              feature['cleabs'])
+                    if cleabs is None:
                         # création d'un nouvel objet
                         totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
                     else:
@@ -138,12 +155,12 @@ class WfsGet(object):
                         # l'ancien enregistrement et en insérer un nouveau
                         SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
                         totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
-            self.setOffset(response['offset'])
+            self.__setOffset(response['offset'])
             if response['stop']:
                 break
         # suppression des objets pour une table BDUni et différent d'une extraction
-        if self.isStandard != 1 and bExtraction is False:
-            self.makeRequestDeletedObjects()
+        if self.isStandard is False or self.isStandard == 0 and bExtraction is False:
+            self.__makeRequestDeletedObjects()
         # nettoyage de la base SQLite
         SQLiteManager.vacuumDatabase()
         end = time.time()
@@ -159,45 +176,100 @@ class WfsGet(object):
                     message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
         return maxNumrec, message
 
-    def getMaxNumrec(self):
-        # https://espacecollaboratif.ign.fr/gcms/database/bdtopo_fxx/feature-type/troncon_hydrographique/max-numrec
-        url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.client.getUrl(),
-                                                                         self.databaseName, self.layerName)
-        response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
-        data = json.loads(response)
-        return data['numrec']
+    def getMaxNumrec(self) -> int:
+        """
+        Requête pour récupérer le dernier numéro de réconciliation (NumRec) d'une table BDUni. Chaque mise à jour
+        d'une table BDUni se fait par l'intermédiaire d'une surface qui entoure les objets mis à jour appelée
+        réconciliation. Chaque réconciliation porte un numéro de séquence, le NumRec.
 
-    def setService(self):
+        :return: le numéro de la mise à jour.
+        """
+        url = "{0}/gcms/api/databases/{1}/tables/{2}/max-numrec".format(self.urlHostEspaceCo, self.databaseid,
+                                                                        self.tableid)
+        response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
+                                               launchBy='getMaxNumrec : {}'.format(self.layerName))
+        # Succès : get (code 200) post (code 201)
+        if response.status_code == 200 or response.status_code == 201:
+            numrec = response.json()
+        else:
+            message = "code : {} raison : {}".format(response.status_code, response.reason)
+            raise Exception("WfsGet.getMaxNumrec -> ".format(message))
+        return numrec
+
+    def __setService(self) -> None:
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'service'."""
         self.parametersGcmsGet['service'] = 'WFS'
 
-    def setVersion(self, version):
+    def __setVersion(self, version) -> None:
+        """
+        Fixe le numéro de version d'une requête GET en complètant le dictionnaire des paramètres avec l'item 'version'.
+
+        :param version: version du protocole HTTP
+        :type version: str
+        """
         self.parametersGcmsGet['version'] = version
 
-    def setRequest(self):
+    def __setRequest(self) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'request' en fixant le type
+        à 'GetFeature'.
+        """
         self.parametersGcmsGet['request'] = 'GetFeature'
 
-    def setOutputFormat(self, outputFormat):
+    def __setOutputFormat(self, outputFormat='JSON') -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'outputFormat' en fixant le format
+        de retour pour la réponse.
+
+        :param outputFormat: type de réponse attendue, par défaut JSON. Autres formats GeoJSON | CSV | GML
+        :type outputFormat: str
+        """
         self.parametersGcmsGet['outputFormat'] = outputFormat
 
-    def setTypeName(self):
-        typename = "{0}:{1}".format(self.databaseName, self.layerName)
+    def __setTypeName(self) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'typename'.
+        """
+        typename = "{0}:{1}".format(self.databasename, self.layerName)
         self.parametersGcmsGet['typename'] = typename
 
-    def setNumrec(self):
+    def __setNumrec(self) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'numrec'.
+        """
         self.parametersGcmsGet['numrec'] = self.numrec
 
-    def setFilter(self, filter):
+    def __setFilter(self, _filter) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'filter'.
+
+        :param _filter: à True, permet de récupérer les objets détruits dans une table
+        :type _filter: bool
+        """
         if self.bDetruit:
-            if filter:
+            if _filter:
                 self.parametersGcmsGet['filter'] = '{"detruit":true}'
             else:
                 self.parametersGcmsGet['filter'] = '{"detruit":false}'
 
-    def setBBox(self):
+    def __setBBox(self) -> None:
+        """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'bbox'."""
         self.parametersGcmsGet['bbox'] = self.bbox.boxToStringWithSrid(self.sridProject, self.sridLayer)
 
-    def setOffset(self, offset):
+    def __setOffset(self, offset) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'offset'
+
+        :param offset: nombre de pages que retourne une requête, initialisé à 0 pour la première.
+        :type offset: int
+        """
         self.parametersGcmsGet['offset'] = offset
 
-    def setMaxFeatures(self, maxFeatures):
+    def __setMaxFeatures(self, maxFeatures) -> None:
+        """
+        Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'maxFeatures'.
+
+        :param maxFeatures: nombre d'objets maximum que retourne une réponse du serveur
+        :type maxFeatures: int
+        """
         self.parametersGcmsGet['maxFeatures'] = maxFeatures
