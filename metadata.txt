@@ -15,7 +15,7 @@ author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
 
-about=
+about=Service de signalement et contribution de l'IGN
 
 tracker=https://github.com/IGNF/espace-collaboratif-qgis-plugin/issues
 repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin.git
