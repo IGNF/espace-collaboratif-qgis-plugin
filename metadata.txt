@@ -13,6 +13,7 @@ description=Service de signalement et contribution de l'IGN, plugin QGIS3
 version=4.3.2
 author=IGN
 email=service-client@ign.fr
+license=GNU AGPL v3
 
 about=
 
