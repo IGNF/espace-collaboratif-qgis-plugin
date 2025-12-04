@@ -8,12 +8,10 @@ version 3.0.0 , 26/11/2018
 """
 
 import sqlite3
+import re
 from .core.RipartLoggerCl import RipartLogger
-from PyQt5.QtWidgets import QProgressBar, QApplication
-from PyQt5.QtCore import Qt
 from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, \
     QgsEditorWidgetSetup
-from qgis.utils import spatialite_connect
 from .RipartHelper import RipartHelper
 from .core.BBox import BBox
 from .core import ConstanteRipart as cst
@@ -75,11 +73,11 @@ class ImporterRipart(object):
         message = "Placement des signalements sur la carte"
         self.progress = ProgressBar(200, message)
 
-        # Ajout des couches dans le projet
-        self.context.addRipartLayersToMap()
-
         # vider, détruire et créer les tables de l'espace collaboratif
         self.context.emptyAllRipartLayers()
+
+        # Ajout des couches dans le projet
+        self.context.addRipartLayersToMap()
 
         pagination = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination, "Map").text
         if pagination is None:
@@ -220,9 +218,18 @@ class ImporterRipart(object):
         
         :param box: bounding box
         """
+        # Cas particuliers
+        crs_map = {
+            'LAMB93': 2154,
+            'WGS84': 4326
+        }
         source_crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
         mapCrs = self.context.mapCan.mapSettings().destinationCrs().authid()
-        psgCode = int(mapCrs.split(":")[1])
+        tmp = mapCrs.split(":")[1]
+        if re.fullmatch(r"\d+", tmp):
+            psgCode = int(tmp)
+        else:
+            psgCode = crs_map.get(tmp)
         dest_crs = QgsCoordinateReferenceSystem.fromEpsgId(psgCode)
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         new_box = transform.transformBoundingBox(box)
