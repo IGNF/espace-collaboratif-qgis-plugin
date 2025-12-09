@@ -29,7 +29,7 @@ class RipartHelper:
     """
     ripart_files_dir = "files"
     ripart_db = "espaceco.sqlite"
-    ripart_help_file = "ENR_Espace_co_plugin_pour_qgis.pdf"
+    ripart_help_file = "https://ignf.github.io/espace-collaboratif-qgis-plugin/"
 
     # fichier de configuration
     nom_Fichier_Parametres_Ripart = "espaceco.xml"

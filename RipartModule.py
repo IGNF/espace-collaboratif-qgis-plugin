@@ -28,6 +28,8 @@
 from builtins import str
 from builtins import range
 import os.path
+import webbrowser
+import webbrowser
 
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
@@ -913,10 +915,9 @@ class RipartPlugin:
         dlgInfo.exec_()
 
     def showHelp(self):
-        """Ouvre le document d'aide utilisateur   
+        """Ouvre la documentation en ligne dans le navigateur
         """
-        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "files", RipartHelper.ripart_help_file))
-        RipartHelper.open_file(file_path)
+        webbrowser.open(RipartHelper.ripart_help_file)
 
     def showLog(self):
         """Ouvre le dernier fichier de log
