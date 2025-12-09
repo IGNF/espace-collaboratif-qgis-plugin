@@ -6,7 +6,7 @@
 
 
 
-<div  style="background-color: white; border: 1px solid black; padding: 3px; text-align: justify;">
+<div  style="background-color: white; border: 1px solid black; padding: 0px; text-align: justify;">
   <h2 style="color: #00ADC5">1. Sommaire</h2>
 </div>
 
@@ -52,7 +52,7 @@
   - [6.6 Exemple de contenu du fichier de configuration espaceco.xml](#66-exemple-de-contenu-du-fichier-de-configuration-espacecoxml)
 
 ---
-<div  style="background-color: white; border: 1px solid black; padding: 3px; text-align: justify;">
+<div  style="background-color: white; border: 1px solid black; padding: 0px; text-align: justify;">
   <h2 style="color: #00ADC5">2. Versions</h2>
 </div>
 
@@ -88,12 +88,22 @@
 ||Corrections diverses||
 
 
-
-<div  style="background-color: white; border: 1px solid black; padding: 3px; text-align: justify;">
+<div  style="background-color: white; border: 1px solid black; padding: 1px; width: 100%; box-sizing: border-box;">
   <h2 style="color: #00ADC5">3. Préambule</h2>
 </div>
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px;  width: 100%;">3.1 Présentation du service             </span>
+Titre h2, test avec fond bleu, texte blanc
+<div  style="background-color: #00ADC5; border: 1px solid black; padding: 1px; width: 100%; box-sizing: border-box;">
+  <h2 style="color: white">3. Préambule</h2>
+</div>
+
+
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px;  width: 100%; box-sizing: border-box;">3.1 Présentation du service</span>
+
+Titre h3, test dans une "<div>"
+<div style="color: white; background-color: #00ADC5; padding: 2px 5px;  width: 100%; width: 100%; box-sizing: border-box;">
+  <h3>3.1 Présentation du service</h3>
+</div>
 
 
 L’Espace collaboratif de l’IGN ([https://espacecollaboratif.ign.fr](https://espacecollaboratif.ign.fr)) propose deux services principaux :
@@ -137,7 +147,7 @@ L'utilisateur peut ainsi depuis QGIS :
 
 L'intégration du plugin dans le SIG se traduit visuellement par l’ajout d’une barre d'outils supplémentaire dédiée aux fonctionnalités du plugin, et par des couches ajoutées à la carte active et qui sont destinées à contenir les différents objets provenant de l’Espace collaboratif (ses signalements et croquis associés, couches du groupe).
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">3.3 Prérequis</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">3.3 Prérequis</span>
 
 Le plugin IGN_Espace_collaboratif pour QGIS requiert la configuration minimum suivante :
 -   Windows
@@ -151,11 +161,11 @@ Le plugin IGN_Espace_collaboratif ne fonctionne qu'en association avec un projet
 NB : le nom du projet QGIS dans lequel sera utilisé le plugin Espace collaboratif ne doit pas contenir de point en dehors de son extension (.qgz).
 
 
-<div  style="background-color: white; border: 1px solid black; padding: 3px; text-align: justify;">
+<div  style="background-color: white; border: 1px solid black; padding: 1px; width: 100%; box-sizing: border-box;">
   <h2 style="color: #00ADC5">4. Installation et principes de fonctionnement</h2>
 </div>
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">4.1 Procédure d'installation</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">4.1 Procédure d'installation</span>
 
 Pour installer le plugin, suivre les étapes suivantes :
 - Ouvrir QGIS et se rendre dans le menu **Extension** > **Installer/Gérer les extensions**
@@ -204,7 +214,7 @@ Pour installer le plugin, suivre les étapes suivantes :
 _Remarque  : Si elle n’apparait pas directement, aller dans « Extensions > Installer/Gérer les extensions », dans l’onglet « Installées », désélectionner puis re-sélectionner la coche devant l’extension « IGN_Espace_collaboratif »_
 
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">4.2 La barre d’outils IGN_Espace_collaboratif</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">4.2 La barre d’outils IGN_Espace_collaboratif</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image7.png"  alt="Figure 7" height = 80/> 
@@ -225,7 +235,7 @@ La barre d’outils du plugin IGN_Espace_collaboratif est composée des outils s
 -   **9** Mettre à jour les couches chargées dans QGIS à partir de l’Espace collaboratif.
 -   **10** Dérouler le menu d’aide du plugin.
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">4.3 Les calques gérés par le plugin</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">4.3 Les calques gérés par le plugin</span>
 
 Lors du premier chargement des signalements, le plugin ajoute dans la carte 6 couches destinées à contenir les différents objets IGN_Espace_collaboratif. Ces couches et leurs objets sont enregistrés dans une base de données SpatiaLite située dans le même dossier que celui de la carte qgz.
 
@@ -250,7 +260,7 @@ Le plugin propose une symbologie par défaut pour les signalements en fonction d
 
 Cette symbologie est définie dans les fichiers **<span style="font-family: Consolas, monospace; color:#00B050">xx.qml</span>** qui se trouvent dans le dossier **<span style="font-family: Consolas, monospace; color:#00B050">espacecoStyles</span>**. Néanmoins, l’utilisateur peut utiliser tout autre symbologie à sa convenance.
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">4.4 Configuration du plugin</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">4.4 Configuration du plugin</span>
 
 Pour son fonctionnement, le plugin stocke tous ses paramètres de configuration dans un fichier de type XML dénommé **<span style="font-family: Consolas, monospace; color:#00B050">espaceco.xml</span>**. Ce dernier se situe dans le même dossier que celui qui contient le fichier projet QGIS (qgz).
 
@@ -261,7 +271,7 @@ Ce fichier étant nécessaire à son fonctionnement, le plugin le génère autom
 </div>
 
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.1 Connexion au service</span><span style="color: red"> - Modifié !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.1 Connexion au service</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;"> - Modifié !</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image9.png" />
@@ -283,18 +293,20 @@ Dans tous les cas, cela provoque l'ouverture d’une page web d’authentificati
 Les champs **<span style="font-family: Consolas, monospace; color:#0000FF">Nom d’utilisateur ou courriel / Votre mot de passe</span>** correspondent à votre login ou courriel / mot de passe de l’Espace Collaboratif.
 
 Dans le cas où la connexion se passe bien :
-
-1. vous avez la fenêtre web suivante, vous indiquant que vous pouvez fermer la fenêtre web et retourner dans QGIS :
-
-<div  style="text-align: center;"> 
-	<img  src="Image10-1.png" />
-</div>
-
-2. suivi, par la fenêtre de paramétrage QGIS du groupe et de l’emprise.
-
-<div  style="text-align: center;"> 
-	<img  src="Image11.png" />
-</div>
+<ol>
+  <li> 
+    vous avez la fenêtre web suivante, vous indiquant que vous pouvez fermer la fenêtre web et retourner dans QGIS :
+    <div  style="text-align: center;"> 
+      <img  src="Image10-1.png" />
+    </div>
+  </li>
+  <li>
+    suivi, par la fenêtre de paramétrage QGIS du groupe et de l’emprise.
+    <div  style="text-align: center;"> 
+      <img  src="Image11.png" />
+    </div>
+  </li>
+</ol>
 
 La fermeture de QGIS interrompt la connexion au service. Il faut donc la rétablir lors de l’utilisation suivante du SIG.
 
@@ -305,13 +317,13 @@ La fermeture de QGIS interrompt la connexion au service. Il faut donc la rétabl
 Au clic sur le bouton « Connecter », une fenêtre de confirmation apparaît :
 
 <div  style="text-align: center;"> 
-	<img  src="Image12.png" alt="Figure 10" />
+	<img  src="Image12.png" alt="Figure 10" height = 200/>
   <p><strong><span style="color: #548DD4">Figure 10  : Fenêtre de confirmation de connexion pour un utilisateur sans groupe</span></strong></p>
 </div>
 
 #### <span style="color: #00ADC5">5.1.2 Cas d’un utilisateur appartenant à au moins un groupe</span>
 
-Au clic sur le bouton « Connecter », une nouvelle fenêtre permettant de paramétrer l’utilisation du plugin apparaît :
+**->** Au clic sur le bouton « Connecter », une nouvelle fenêtre permettant de paramétrer l’utilisation du plugin apparaît :
 
 <div  style="text-align: center;"> 
 	<img  src="Image13.png" alt="Figure 11" />
@@ -322,7 +334,7 @@ Au clic sur le bouton « Connecter », une nouvelle fenêtre permettant de param
 
 - L’utilisateur peut choisir sa zone de travail en utilisant le menu déroulant pour sélectionner une couche surfacique déjà présente dans la carte ou le bouton parcourir pour sélectionner un fichier shape sur l’ordinateur.
 
-Après avoir cliqué sur le bouton « Enregistrer », une fenêtre de confirmation de connexion, reprenant le paramétrage choisi par l’utilisateur, est affichée :
+**->** Après avoir cliqué sur le bouton « Enregistrer », une fenêtre de confirmation de connexion, reprenant le paramétrage choisi par l’utilisateur, est affichée :
 
 <div  style="text-align: center;"> 
 	<img  src="Image14.png" alt="Figure 12" />
@@ -373,7 +385,7 @@ Une fenêtre avec le message du signalement et les éventuelles réponses s’ou
   <p><strong><span style="color: #548DD4">Figure 14  : Fiche d’un signalement</span></strong></p>
 </div>
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.4 Déplacer un signalement</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.4 Déplacer un signalement</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;"> - Nouveau !</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image19.png" />
@@ -450,8 +462,8 @@ Le formulaire suivant permet de :
 - créer un ou plusieurs signalement(s) : dans le premier cas (sélectionné par défaut), un signalement unique est créé et positionné sur le centroïde de l’ensemble des objets sélectionnés. Dans le second cas, il est créé un nouveau signalement par objet sélectionné, avec pour position, à chaque fois, le centroïde de l’objet.
 
 <div  style="text-align: center;"> 
-	<img  src="Image27.png" alt="Figure 18" style="margin-right: 20px; vertical-align: middle;/>  
-  <img  src="Image27-1.png" alt="Figure 18" style="vertical-align: middle;"/>
+	<img  src="Image27.png" alt="Figure 18" style="margin-right: 20px; vertical-align: middle;"/>  
+  <img  src="Image27-1.png" alt="Figure 18" style="vertical-align: middle;" height = 200"/>
   <p><strong><span style="color: #548DD4">Figure 18 : Formulaires de création de nouveaux signalements</span></strong></p>
 </div>
 
@@ -515,13 +527,13 @@ Cet outil (baguette magique) permet de sélectionner sur la carte tous les croqu
 On sélectionne deux signalements (en jaune), puis on clique sur le bouton **<span style="font-family: Consolas, monospace; color:#0000FF">Voir les objets associés</span>**. Tous les croquis associés aux deux signalements sont alors sélectionnés
 
 <div  style="text-align: center;"> 
-	<img  src="Image34.png" alt="Figure 18" /><img  src="Image35.png" />
+	<img  src="Image34.png" alt="Figure 18" height = 230/><img  src="Image35.png" height = 230/>
   <p><strong><span style="color: #548DD4">Figure 19  : Exemple d’utilisation de la « Baguette magique »</span></strong></p>
 </div>
 
 Si on clique à nouveau sur le bouton, on retrouve la première situation avec les deux signalements sélectionnés.
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.10 Charger les couches de son groupe actif</span><span style="color: red">Evolution !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.10 Charger les couches de son groupe actif</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;"> - Evolution !</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image36.png" />
@@ -557,7 +569,7 @@ L’utilisateur doit alors cocher les couches qu’il souhaite charger dans son 
   <p><strong><span style="color: #548DD4">Figure 21  : Aperçu du gestionnaire de couches</span></strong></p>
 </div>
 
-**A noter :**
+<u>A noter</u> :
 Pour les gros jeux de données comme la BDTopo IGN, il est fortement conseillé, voire obligatoire, de sélectionner une zone de travail lors de la connexion au service sans quoi le téléchargement ne pourra aboutir.
 
 **->** l’utilisateur peut charger les couches d’un seul groupe à la fois. Si son projet QGIS contient déjà les couches d’un autre groupe, chargées via le plugin Espace collaboratif, elles seront supprimées lors de la connexion à un autre groupe.
@@ -565,8 +577,8 @@ Pour les gros jeux de données comme la BDTopo IGN, il est fortement conseillé,
 **->** Les couches chargées ne sont visibles qu’aux niveaux de zoom définis pour chacune d’entre elles sur l’Espace collaboratif. Ceux-ci peuvent être modifiés par l’administrateur de la base en cas de besoin.
 
 **->** Les fonctionnalités QGIS « Zoomer sur la couche » et « Zoomer sur le groupe » (accessibles après un clic droit sur une couche ou un groupe de couches dans le gestionnaire de couches) ne fonctionnent pas correctement avec les couches issues de l’Espace collaboratif. On peut alors :
-  - soit zoomer manuellement sur les données pour les visualiser,
-  - soit ouvrir la table attributaire de la couche souhaitée, sélectionner un objet et cliquer sur « Zoomer la carte sur les entités sélectionnées ».
+    - soit zoomer manuellement sur les données pour les visualiser,
+    - soit ouvrir la table attributaire de la couche souhaitée, sélectionner un objet et cliquer sur « Zoomer la carte sur les entités sélectionnées ».
 
 **->** En cas d’erreur indiquant que « Le téléchargement des entités a échoué. L’opération est annulée », il peut être nécessaire d’augmenter le paramètre QGIS « Délai d’abandon pour les requêtes réseaux ». Ce paramètre est accessible dans le menu Préférences > Option > Réseau, et peut être rempli avec une valeur de l’ordre de 60000 ms.
 
@@ -665,43 +677,48 @@ Permet d’afficher les informations de version du plugin.
 
 <u>Le changement de groupe est simple</u>. On peut recliquer sur la connexion,
 
-1. vous obtenez la fenêtre web suivante, vous indiquant que vous pouvez fermer la fenêtre web et retourner dans QGIS :
-
-<div  style="text-align: center;"> 
-	<img  src="Image48.png" />
-</div>
-
-2. suivi, par la fenêtre de paramétrage QGIS du groupe et de l’emprise.
-
-<div  style="text-align: center;"> 
-	<img  src="Image49.png" />
-</div>
+<ol>
+  <li> 
+    vous obtenez la fenêtre web suivante, vous indiquant que vous pouvez fermer la fenêtre web et retourner dans QGIS :
+    <div  style="text-align: center;"> 
+      <img  src="Image48.png" />
+    </div>
+  </li>
+  <li>
+    suivi, par la fenêtre de paramétrage QGIS du groupe et de l’emprise.
+    <div  style="text-align: center;"> 
+      <img  src="Image49.png" />
+    </div>
+  </li>
+</ol>    
 
 <u>Le changement d’utilisateur nécessite de se déconnecter proprement dans l’interface web</u>. (cas où vous étiez connecté avec un précédent utilisateur, différent de celui qui vous souhaitez maintenant)
 
-1. Cliquer sur Connexion dans QGIS.
-
-2. Deux pages web s’ouvrent :
-
-<div  style="text-align: center;"> 
-	<img  src="Image50.png" />
-</div>
-
-Et
-
-<div  style="text-align: center;"> 
-	<img  src="Image51.png" />
-</div>
-
-3. **Cliquer sur se déconnecter.** Vous obtenez ce message web.
-
-<div  style="text-align: center;"> 
-	<img  src="Image52.png" />
-</div>
-
-Si la déconnexion échoue. Fermer tous les onglets du navigateur web et recommencer depuis l’étape 1.
-
-4. Une fois déconnecté vous pouvez vous connecter en changeant d’utilisateur.
+<ol>
+  <li> 
+    Cliquer sur Connexion dans QGIS.
+  </li>
+  <li>
+    Deux pages web s’ouvrent :
+    <div  style="text-align: center;"> 
+      <img  src="Image50.png" />
+    </div>
+    Et
+    <div  style="text-align: center;"> 
+      <img  src="Image51.png" />
+    </div>
+  </li>
+  <li>
+    **Cliquer sur se déconnecter.** Vous obtenez ce message web.
+    <div  style="text-align: center;"> 
+      <img  src="Image52.png" />
+    </div>
+    Si la déconnexion échoue. Fermer tous les onglets du navigateur web et recommencer depuis l’étape 1.
+  </li>
+  <li>
+    Une fois déconnecté vous pouvez vous connecter en changeant d’utilisateur.
+  </li>
+</ol>
 
 <div  style="background-color: white; border: 1px solid black; padding: 3px; text-align: justify;">
   <h2 style="color: #00ADC5">6. Annexes</h2>
