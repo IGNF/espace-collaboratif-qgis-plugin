@@ -113,6 +113,7 @@ class Contexte(object):
         self.__activeCommunityName = ''
         self.__userName = ''
         self.__listNameOfCommunities = None
+        self.__includePublicReports = False
         self.__mapToolsReport = None
         self.__communities = None
         # Connexion avec keycloack
@@ -235,6 +236,24 @@ class Contexte(object):
         :return: le nom du groupe actif de l'utilisateur
         """
         return self.__activeCommunityName
+
+    def setIncludePublicReports(self, include):
+        """
+        Affecte le choix de l'utilisateur concernant l'inclusion des signalements publiques.
+        
+        :param self: Description
+        :param include: Description
+        """
+        self.__includePublicReports = include
+
+    def getIncludePublicReports(self):
+        """
+        :return: le choix de l'utilisateur concernant l'inclusion des signalements publiques.
+        """
+        return self.__includePublicReports
+
+
+
 
     def __setUrlHostEspaceCo(self) -> str:
         """
@@ -383,6 +402,9 @@ class Contexte(object):
             if not dlgSelectedCommunities.getCancel():
                 # Le nouvel id et nom du groupe sont retournés dans un tuple idNameCommunity
                 idNameCommunity = dlgSelectedCommunities.getIdAndNameFromSelectedCommunity()
+
+                # On enregistre le choix de l'inclusion des signalements publiques
+                self.setIncludePublicReports(dlgSelectedCommunities.getIncludePublicReports())
 
                 # La communauté de l'utilisateur est stocké dans le contexte
                 self.setUserCommunity(communities.getUserCommunity(idNameCommunity[1]))
