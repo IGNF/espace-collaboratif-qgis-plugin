@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>345</width>
-    <height>271</height>
+    <height>324</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,28 +16,6 @@
   <property name="styleSheet">
    <string notr="true">QDialog {background-color: rgb(255, 255, 255)}</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>240</y>
-     <width>201</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Orientation::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Save</set>
-   </property>
-   <property name="centerButtons">
-    <bool>true</bool>
-   </property>
-  </widget>
   <widget class="QLabel" name="lblGroupComment">
    <property name="geometry">
     <rect>
@@ -86,6 +64,7 @@
    <property name="font">
     <font>
      <pointsize>9</pointsize>
+     <weight>75</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -105,6 +84,7 @@
    <property name="font">
     <font>
      <pointsize>9</pointsize>
+     <weight>75</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -161,7 +141,7 @@
     <rect>
      <x>10</x>
      <y>100</y>
-     <width>241</width>
+     <width>261</width>
      <height>16</height>
     </rect>
    </property>
@@ -172,7 +152,7 @@
   <widget class="QCheckBox" name="checkBox">
    <property name="geometry">
     <rect>
-     <x>260</x>
+     <x>280</x>
      <y>100</y>
      <width>78</width>
      <height>20</height>
@@ -180,6 +160,28 @@
    </property>
    <property name="text">
     <string/>
+   </property>
+  </widget>
+  <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>70</x>
+     <y>270</y>
+     <width>201</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+   </property>
+   <property name="centerButtons">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>

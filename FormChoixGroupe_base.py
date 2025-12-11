@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'espace-collaboratif-qgis-plugin\FormChoixGroupe_base.ui'
+# Form implementation generated from reading ui file 'FormChoixGroupe_base.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -19,8 +19,8 @@ class Ui_DialogParametrage(object):
         self.buttonBox = QtWidgets.QDialogButtonBox(DialogParametrage)
         self.buttonBox.setEnabled(True)
         self.buttonBox.setGeometry(QtCore.QRect(70, 240, 201, 31))
-        self.buttonBox.setOrientation(QtCore.Qt.Qt::Orientation::Horizontal)
-        self.buttonBox.setStandardButtons(QtCore.Qt.QDialogButtonBox::StandardButton::Cancel|QtCore.Qt.QDialogButtonBox::StandardButton::Save)
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Save)
         self.buttonBox.setCenterButtons(True)
         self.buttonBox.setObjectName("buttonBox")
         self.lblGroupComment = QtWidgets.QLabel(DialogParametrage)
@@ -41,6 +41,7 @@ class Ui_DialogParametrage(object):
         font = QtGui.QFont()
         font.setPointSize(9)
         font.setBold(True)
+        font.setWeight(75)
         self.lblGroup.setFont(font)
         self.lblGroup.setObjectName("lblGroup")
         self.lblWorkZone = QtWidgets.QLabel(DialogParametrage)
@@ -48,6 +49,7 @@ class Ui_DialogParametrage(object):
         font = QtGui.QFont()
         font.setPointSize(9)
         font.setBold(True)
+        font.setWeight(75)
         self.lblWorkZone.setFont(font)
         self.lblWorkZone.setObjectName("lblWorkZone")
         self.lblWorkZoneComment = QtWidgets.QLabel(DialogParametrage)
@@ -64,10 +66,10 @@ class Ui_DialogParametrage(object):
         self.toolButtonShapeFile.setGeometry(QtCore.QRect(300, 210, 27, 22))
         self.toolButtonShapeFile.setObjectName("toolButtonShapeFile")
         self.label = QtWidgets.QLabel(DialogParametrage)
-        self.label.setGeometry(QtCore.QRect(10, 100, 241, 16))
+        self.label.setGeometry(QtCore.QRect(10, 100, 261, 16))
         self.label.setObjectName("label")
         self.checkBox = QtWidgets.QCheckBox(DialogParametrage)
-        self.checkBox.setGeometry(QtCore.QRect(260, 100, 78, 20))
+        self.checkBox.setGeometry(QtCore.QRect(280, 100, 78, 20))
         self.checkBox.setText("")
         self.checkBox.setObjectName("checkBox")
 
