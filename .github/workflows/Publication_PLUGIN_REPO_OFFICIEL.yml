@@ -1,0 +1,61 @@
+name: Publication automatique du plugin QGIS
+
+# Déclenchement du workflow lors du push d’un tag (ex: v1.0.0)
+on:
+  push:
+    tags:
+      - '*'
+
+# Variables globales (disponibles dans tous les jobs)
+env:
+  # Nom EXACT du dossier du plugin (et du ZIP final)
+  PLUGIN_NAME: espace_collaboratif_qgis_plugin
+
+jobs:
+  build_and_publish:
+    name: Build + Publication QGIS
+    runs-on: ubuntu-latest
+
+    steps:
+      # Récupération du code source du dépôt
+      - name: Checkout du dépôt GitHub
+        uses: actions/checkout@v4
+
+      # Installation de l’outil ZIP (nécessaire sur Ubuntu)
+      - name: Installation de zip
+        run: sudo apt-get install -y zip
+
+      # Création de l’archive ZIP du plugin
+      # Le ZIP doit contenir :
+      #   - le dossier du plugin à la racine
+      #   - le fichier metadata.txt à la racine du plugin
+      #   - aucun fichier inutile (.git, cache, IDE, etc.)
+      - name: Construction du ZIP du plugin QGIS
+        run: |
+          cd $PLUGIN_NAME
+          zip -r ../$PLUGIN_NAME.zip . \
+            -x "*.git*" \
+            -x "*__pycache__*" \
+            -x "*.idea*" \
+            -x "*.vscode*"
+
+      # Création automatique d’une release GitHub
+      # Le fichier ZIP est attaché à la release
+      - name: Création de la release GitHub
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.PLUGIN_NAME }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Envoi du plugin vers le dépôt officiel des plugins QGIS via SFTP
+      # Le serveur QGIS attend UNIQUEMENT le fichier ZIP
+      - name: Upload du plugin sur le serveur QGIS (SFTP)
+        uses: sebastianpopp/sftp-action@v2.2
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          port: ${{ secrets.SFTP_PORT }}
+          username: ${{ secrets.SFTP_USER }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          remotePath: "/plugins/"
+          localPath: "${{ env.PLUGIN_NAME }}.zip"
