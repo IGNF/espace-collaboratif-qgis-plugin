@@ -84,4 +84,4 @@ class Ui_DialogParametrage(object):
         self.lblWorkZone.setText(_translate("DialogParametrage", "Zone de travail"))
         self.lblWorkZoneComment.setText(_translate("DialogParametrage", "La zone de travail sera utilisée pour télécharger les signalements ou les données de votre groupe"))
         self.toolButtonShapeFile.setText(_translate("DialogParametrage", "..."))
-        self.label.setText(_translate("DialogParametrage", "Téléchargement des signalements publiques"))
+        self.label.setText(_translate("DialogParametrage", "Téléchargement des signalements publics dans la zone de travail"))

@@ -146,7 +146,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Téléchargement des signalements publiques</string>
+    <string>Téléchargement des signalements publics</string>
    </property>
   </widget>
   <widget class="QCheckBox" name="checkBox">
