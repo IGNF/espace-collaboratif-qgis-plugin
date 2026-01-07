@@ -1,6 +1,7 @@
 import logging
 import os.path
 import configparser
+import webbrowser
 
 from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
@@ -991,10 +992,9 @@ class RipartPlugin:
 
     def __showHelp(self) -> None:
         """
-        Ouvre le document d'aide utilisateur du plugin.
+        Ouvre la documentation en ligne dans le navigateur.
         """
-        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "files", PluginHelper.ripart_help_file))
-        PluginHelper.open_file(file_path)
+        webbrowser.open(PluginHelper.ripart_help_file)
 
     def __showLog(self) -> None:
         """
