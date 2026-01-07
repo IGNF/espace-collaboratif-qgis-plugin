@@ -802,21 +802,22 @@ class RipartPlugin:
             if self.__context is None:
                 self.__context = Contexte.getInstance(self, QgsProject, True)
             
-            # Check if a polygon layer is selected
+            # Check if a line or polygon layer is selected
             layer = self.iface.activeLayer()
             if not layer or not isinstance(layer, QgsVectorLayer):
                 QMessageBox.warning(
                     self.iface.mainWindow(),
                     "Découpe intelligente",
-                    "Veuillez sélectionner une couche vectorielle de polygones."
+                    "Veuillez sélectionner une couche vectorielle de lignes ou de polygones."
                 )
                 return
             
-            if layer.geometryType() != QgsWkbTypes.PolygonGeometry:
+            geom_type = layer.geometryType()
+            if geom_type not in [QgsWkbTypes.LineGeometry, QgsWkbTypes.PolygonGeometry]:
                 QMessageBox.warning(
                     self.iface.mainWindow(),
                     "Découpe intelligente",
-                    "Cette outil ne fonctionne qu'avec des couches de polygones."
+                    "Cet outil ne fonctionne qu'avec des couches de lignes ou de polygones."
                 )
                 return
             
