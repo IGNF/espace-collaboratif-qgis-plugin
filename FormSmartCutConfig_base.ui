@@ -31,7 +31,7 @@
     <widget class="QLabel" name="labelDescription">
      <property name="text">
       <string>Sélectionnez les attributs qui doivent rester uniques.
-Lors d'une découpe, ces attributs ne seront conservés que sur le plus grand polygone.</string>
+Lors d'une découpe, ces attributs ne seront conservés que sur le plus grand morceau (polygone) ou le segment le plus long (ligne).</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

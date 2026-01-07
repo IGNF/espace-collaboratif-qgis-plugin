@@ -73,8 +73,12 @@ class FormSmartCutConfig(QDialog, Ui_DialogSmartCutConfig):
             self.labelLayerInfo.setText("<i>Aucune couche vectorielle active</i>")
             return
         
-        if layer.geometryType() != QgsWkbTypes.PolygonGeometry:
-            self.labelLayerInfo.setText(f"Couche: <b>{layer.name()}</b> <i>(pas une couche de polygones)</i>")
+        geom_type = layer.geometryType()
+        if geom_type not in [QgsWkbTypes.LineGeometry, QgsWkbTypes.PolygonGeometry]:
+            type_name = "point" if geom_type == QgsWkbTypes.PointGeometry else "inconnue"
+            self.labelLayerInfo.setText(
+                f"Couche: <b>{layer.name()}</b> <i>(type {type_name} non supporté)</i>"
+            )
             return
         
         self.labelLayerInfo.setText(f"Couche: <b>{layer.name()}</b>")

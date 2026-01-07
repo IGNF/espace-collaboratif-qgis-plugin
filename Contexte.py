@@ -114,6 +114,7 @@ class Contexte(object):
         self.__userName = ''
         self.__listNameOfCommunities = None
         self.__mapToolsReport = None
+        self.__smartCutTool = None
         self.__communities = None
         # Connexion avec keycloack
         self.__keycloakService = None
@@ -190,6 +191,24 @@ class Contexte(object):
         :type listNameIdFromAllUserCommunities: list
         """
         self.__listNameIdFromAllUserCommunities = listNameIdFromAllUserCommunities
+
+    def getSmartCutTool(self):
+        """
+        Retourne l'instance de l'outil de découpe intelligente.
+        
+        :return: L'outil de découpe intelligente
+        :rtype: MapToolSmartCut
+        """
+        return self.__smartCutTool
+    
+    def setSmartCutTool(self, smartCutTool) -> None:
+        """
+        Affecte l'outil de découpe intelligente au contexte.
+        
+        :param smartCutTool: L'outil de découpe intelligente
+        :type smartCutTool: MapToolSmartCut
+        """
+        self.__smartCutTool = smartCutTool
 
     def getUserNameCommunity(self) -> str:
         """

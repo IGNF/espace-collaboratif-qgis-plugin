@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-MapToolSmartCut - Custom polygon cutting tool that manages unique attributes
+MapToolSmartCut - Custom cutting tool for polygons and lines that manages unique attributes
 
-This tool allows users to cut polygons with a line, automatically assigning
-unique attributes (like cleaabs) to the larger resulting polygon.
+This tool allows users to:
+- Cut polygons with a line, automatically assigning unique attributes to the larger piece
+- Split lines by clicking a separation point, assigning unique attributes to the longer segment
 
 Created on January 7, 2026
 @author: GitHub Copilot
@@ -22,11 +23,14 @@ from .PluginLogger import PluginLogger
 
 class MapToolSmartCut(QgsMapTool):
     """
-    Custom map tool for intelligently cutting polygons while managing unique attributes.
+    Custom map tool for intelligently cutting polygons and lines while managing unique attributes.
     
-    This tool extends QgsMapTool to allow users to draw a cutting line across
-    a selected polygon. After cutting, it calculates the areas of resulting polygons
-    and assigns unique attributes only to the larger piece.
+    This tool extends QgsMapTool to allow users to:
+    - Draw a cutting line across a selected polygon
+    - Click on a line to place a separation point
+    
+    After cutting, it calculates areas (polygons) or lengths (lines) and assigns 
+    unique attributes only to the larger/longer piece.
     """
     
     # Signal emitted when cut operation is complete
@@ -84,15 +88,16 @@ class MapToolSmartCut(QgsMapTool):
         """
         super(MapToolSmartCut, self).activate()
         
-        # Check if we have a valid polygon layer selected
+        # Check if we have a valid line or polygon layer selected
         layer = self.__canvas.currentLayer()
         if not layer or not isinstance(layer, QgsVectorLayer):
             self.__showError("Veuillez sélectionner une couche vectorielle.")
             self.deactivate()
             return
         
-        if layer.geometryType() != QgsWkbTypes.PolygonGeometry:
-            self.__showError("Cette outil ne fonctionne qu'avec des couches de polygones.")
+        geom_type = layer.geometryType()
+        if geom_type not in [QgsWkbTypes.LineGeometry, QgsWkbTypes.PolygonGeometry]:
+            self.__showError("Cet outil ne fonctionne qu'avec des couches de lignes ou de polygones.")
             self.deactivate()
             return
         
@@ -128,10 +133,15 @@ class MapToolSmartCut(QgsMapTool):
         # Create rubber band for visual feedback
         self.__createRubberBand()
         
-        # Show instructions
+        # Show instructions based on geometry type
+        if layer.geometryType() == QgsWkbTypes.LineGeometry:
+            message = "Cliquez sur la ligne pour placer un point de séparation."
+        else:
+            message = "Tracez une ligne pour découper le polygone. Clic droit pour terminer."
+        
         self.__context.iface.messageBar().pushMessage(
             "Découpe intelligente",
-            "Tracez une ligne pour découper le polygone. Clic droit pour terminer.",
+            message,
             level=0,
             duration=5
         )
@@ -195,7 +205,11 @@ class MapToolSmartCut(QgsMapTool):
             if self.__rubberBand:
                 self.__rubberBand.addPoint(map_point)
             
-            if len(self.__capturedPoints) == 1:
+            # For line geometry, one click is enough to split
+            if self.__selectedLayer and self.__selectedLayer.geometryType() == QgsWkbTypes.LineGeometry:
+                if len(self.__capturedPoints) == 1:
+                    self.__splitLineAtPoint()
+            elif len(self.__capturedPoints) == 1:
                 self.__context.iface.messageBar().pushMessage(
                     "Découpe intelligente",
                     "Continuez à cliquer pour tracer la ligne. Clic droit pour terminer.",
@@ -245,10 +259,151 @@ class MapToolSmartCut(QgsMapTool):
             self.__cancelCut()
             return
         
-        # Execute the split
-        self.__executeSplit()
+        # Execute the split for polygons
+        self.__executeSplitPolygon()
     
-    def __executeSplit(self):
+    def __splitLineAtPoint(self):
+        """
+        Split a line at the clicked point.
+        """
+        if not self.__selectedFeature or not self.__selectedLayer or not self.__capturedPoints:
+            self.__showError("Données de découpe invalides.")
+            return
+        
+        try:
+            layer = self.__selectedLayer
+            feature = self.__selectedFeature
+            line_geom = feature.geometry()
+            click_point = self.__capturedPoints[0]
+            
+            # Find the closest point on the line
+            closest_point, _, _, _ = line_geom.closestSegmentWithContext(click_point)
+            closest_point_geom = QgsGeometry.fromPointXY(closest_point)
+            
+            # Show visual marker
+            marker = QgsVertexMarker(self.__canvas)
+            marker.setCenter(closest_point)
+            marker.setColor(QColor(255, 0, 0))
+            marker.setIconSize(10)
+            marker.setIconType(QgsVertexMarker.ICON_X)
+            marker.setPenWidth(3)
+            
+            # Split the line at this point
+            split_geoms = []
+            line_vertices = line_geom.asPolyline()
+            
+            # Find the segment where to split
+            min_dist = float('inf')
+            split_index = 0
+            for i in range(len(line_vertices) - 1):
+                seg_start = line_vertices[i]
+                seg_end = line_vertices[i + 1]
+                seg_geom = QgsGeometry.fromPolylineXY([seg_start, seg_end])
+                dist = seg_geom.distance(closest_point_geom)
+                if dist < min_dist:
+                    min_dist = dist
+                    split_index = i
+            
+            # Create two line segments
+            if split_index >= 0:
+                # First segment: from start to split point
+                first_part = line_vertices[:split_index + 1] + [closest_point]
+                geom1 = QgsGeometry.fromPolylineXY(first_part)
+                
+                # Second segment: from split point to end
+                second_part = [closest_point] + line_vertices[split_index + 1:]
+                geom2 = QgsGeometry.fromPolylineXY(second_part)
+                
+                split_geoms = [
+                    {'geometry': geom1, 'length': geom1.length()},
+                    {'geometry': geom2, 'length': geom2.length()}
+                ]
+            
+            if len(split_geoms) < 2:
+                self.__showError("Impossible de découper la ligne à cet endroit.")
+                marker.hide()
+                self.__cancelCut()
+                return
+            
+            # Sort by length (longest first)
+            split_geoms.sort(key=lambda x: x['length'], reverse=True)
+            
+            # Show confirmation
+            lengths_text = "\n".join([
+                f"Segment {i+1}: {s['length']:.2f} m {'(garde attributs uniques)' if i == 0 else '(perd attributs uniques)'}"
+                for i, s in enumerate(split_geoms)
+            ])
+            
+            reply = QMessageBox.question(
+                None,
+                "Confirmer la découpe",
+                f"La découpe créera {len(split_geoms)} segments:\n\n{lengths_text}\n\n"
+                f"Les attributs uniques ({', '.join(self.__uniqueAttributes)}) "
+                f"seront conservés sur le segment le plus long.\n\nContinuer ?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            
+            marker.hide()
+            
+            if reply != QMessageBox.Yes:
+                self.__cancelCut()
+                return
+            
+            # Apply the split
+            layer.beginEditCommand("Découpe intelligente de ligne")
+            
+            # Update original feature with first segment
+            layer.changeGeometry(feature.id(), split_geoms[0]['geometry'])
+            
+            # Create new feature for second segment
+            newFeature = QgsFeature(layer.fields())
+            newFeature.setGeometry(split_geoms[1]['geometry'])
+            
+            # Copy attributes
+            for field in layer.fields():
+                fieldName = field.name()
+                originalValue = feature.attribute(fieldName)
+                
+                # Clear unique attributes on shorter segment
+                if fieldName in self.__uniqueAttributes:
+                    if field.type() in [1, 2, 3, 4, 6]:  # Integer types
+                        newFeature.setAttribute(fieldName, None)
+                    else:
+                        newFeature.setAttribute(fieldName, '')
+                    self.__logger.info(f"Cleared unique attribute '{fieldName}' on shorter segment")
+                else:
+                    newFeature.setAttribute(fieldName, originalValue)
+            
+            layer.addFeature(newFeature)
+            layer.endEditCommand()
+            
+            # Refresh
+            layer.triggerRepaint()
+            self.__canvas.refresh()
+            
+            # Success message
+            self.__context.iface.messageBar().pushMessage(
+                "Succès",
+                f"Ligne découpée en {len(split_geoms)} segments. "
+                f"Attributs uniques conservés sur le segment le plus long.",
+                level=3,
+                duration=5
+            )
+            
+            self.cutComplete.emit(True, f"Split line into {len(split_geoms)} segments")
+            self.__logger.info("Smart line cut completed successfully")
+            
+            # Clean up
+            self.__cleanup()
+            
+        except Exception as e:
+            self.__logger.error(f"Error during line split: {str(e)}")
+            if self.__selectedLayer:
+                self.__selectedLayer.destroyEditCommand()
+            self.__showError(f"Erreur lors de la découpe: {str(e)}")
+            self.cutComplete.emit(False, str(e))
+    
+    def __executeSplitPolygon(self):
         """
         Execute the polygon split and manage attributes.
         """

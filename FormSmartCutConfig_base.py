@@ -82,7 +82,7 @@ class Ui_DialogSmartCutConfig(object):
         DialogSmartCutConfig.setWindowTitle(_translate("DialogSmartCutConfig", "Configuration - Découpe intelligente"))
         self.labelTitle.setText(_translate("DialogSmartCutConfig", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">Configuration de la découpe intelligente</span></p></body></html>"))
         self.labelDescription.setText(_translate("DialogSmartCutConfig", "Sélectionnez les attributs qui doivent rester uniques.\n"
-"Lors d\'une découpe, ces attributs ne seront conservés que sur le plus grand polygone."))
+"Lors d'une découpe, ces attributs ne seront conservés que sur le plus grand morceau (polygone) ou le segment le plus long (ligne)."))
         self.groupBoxLayer.setTitle(_translate("DialogSmartCutConfig", "Attributs de la couche active"))
         self.labelLayerInfo.setText(_translate("DialogSmartCutConfig", "<i>Aucune couche sélectionnée</i>"))
         self.btnRefreshLayer.setText(_translate("DialogSmartCutConfig", "⟳ Actualiser depuis la couche active"))

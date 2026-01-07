@@ -10,7 +10,7 @@ from . import resources
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from PyQt5.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from PyQt5.QtGui import QIcon
-from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer
+from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer, QgsVectorLayer, QgsWkbTypes
 from builtins import str
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
@@ -32,6 +32,9 @@ from .CreateReport import CreateReport
 from .Magicwand import Magicwand
 from .PluginHelper import PluginHelper
 from .ReplyReport import ReplyReport
+from .FormSmartCutConfig import FormSmartCutConfig
+from .core.MapToolSmartCut import MapToolSmartCut
+from .core.SmartCutHelper import SmartCutHelper
 
 
 # QGIS Plugin Implementation
@@ -49,6 +52,7 @@ class RipartPlugin:
         self.helpMenu = None
         self.__context = None
         self.__dlgConfigure = None
+        self.__smartCutTool = None
         self.__ripartLogger = PluginLogger("RipartPlugin")
         self.__logger = self.__ripartLogger.getPluginLogger()
         # Save reference to the QGIS interface
@@ -578,6 +582,23 @@ class RipartPlugin:
             status_tip=self.__translate(u'Voir les objets associés'),
             parent=self.iface.mainWindow())
 
+        # Smart Cut tool
+        icon_path = ':/plugins/RipartPlugin/images/config.png'  # TODO: replace with smart_cut.png
+        self.__addAction(
+            icon_path,
+            text=self.__translate(u'Découpe intelligente de polygone'),
+            callback=self.__activateSmartCut,
+            status_tip=self.__translate(u'Découper un polygone en conservant les attributs uniques sur le plus grand'),
+            parent=self.iface.mainWindow())
+
+        icon_path = ':/plugins/RipartPlugin/images/config.png'  # Using config icon temporarily
+        self.__addAction(
+            icon_path,
+            text=self.__translate(u'Configurer la découpe intelligente'),
+            callback=self.__configureSmartCut,
+            status_tip=self.__translate(u'Définir les attributs uniques pour la découpe intelligente'),
+            parent=self.iface.mainWindow())
+
         icon_path = ':/plugins/RipartPlugin/images/charger.png'
         self.__addAction(
             icon_path,
@@ -771,6 +792,112 @@ class RipartPlugin:
             magicw.selectReportOrSketchObjects()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__magicwand', e)
+
+    def __activateSmartCut(self) -> None:
+        """
+        Active l'outil de découpe intelligente de polygones.
+        """
+        try:
+            # Initialize context if needed
+            if self.__context is None:
+                self.__context = Contexte.getInstance(self, QgsProject, True)
+            
+            # Check if a polygon layer is selected
+            layer = self.iface.activeLayer()
+            if not layer or not isinstance(layer, QgsVectorLayer):
+                QMessageBox.warning(
+                    self.iface.mainWindow(),
+                    "Découpe intelligente",
+                    "Veuillez sélectionner une couche vectorielle de polygones."
+                )
+                return
+            
+            if layer.geometryType() != QgsWkbTypes.PolygonGeometry:
+                QMessageBox.warning(
+                    self.iface.mainWindow(),
+                    "Découpe intelligente",
+                    "Cette outil ne fonctionne qu'avec des couches de polygones."
+                )
+                return
+            
+            # Get unique attributes configuration
+            uniqueAttrs = SmartCutHelper.getUniqueAttributes()
+            
+            # Validate attributes exist in layer
+            valid_attrs, invalid_attrs = SmartCutHelper.validateUniqueAttributes(layer, uniqueAttrs)
+            
+            if invalid_attrs:
+                message = f"Certains attributs uniques configurés n'existent pas dans cette couche:\\n" \
+                          f"{', '.join(invalid_attrs)}\\n\\n" \
+                          f"Voulez-vous continuer avec les attributs valides: {', '.join(valid_attrs) if valid_attrs else 'aucun'} ?"
+                reply = QMessageBox.question(
+                    self.iface.mainWindow(),
+                    "Attributs manquants",
+                    message,
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply != QMessageBox.Yes:
+                    return
+                uniqueAttrs = valid_attrs
+            
+            if not uniqueAttrs:
+                reply = QMessageBox.question(
+                    self.iface.mainWindow(),
+                    "Aucun attribut unique",
+                    "Aucun attribut unique n'est configuré. L'outil fonctionnera comme l'outil de découpe standard.\\n\\n"
+                    "Voulez-vous configurer les attributs uniques maintenant ?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    self.__configureSmartCut()
+                    return
+            
+            # Create and activate the tool
+            canvas = self.iface.mapCanvas()
+            self.__smartCutTool = MapToolSmartCut(canvas, self.__context, uniqueAttrs)
+            
+            # Connect to cutComplete signal
+            self.__smartCutTool.cutComplete.connect(self.__onSmartCutComplete)
+            
+            # Activate the tool (setMapTool automatically calls activate())
+            canvas.setMapTool(self.__smartCutTool)
+            
+            self.__logger.info("Smart Cut tool activated")
+            
+        except Exception as e:
+            self.__sendMessageBarException('PluginModule.__activateSmartCut', e)
+
+    def __configureSmartCut(self) -> None:
+        """
+        Ouvre la fenêtre de configuration de la découpe intelligente.
+        """
+        try:
+            # Initialize context if needed
+            if self.__context is None:
+                self.__context = Contexte.getInstance(self, QgsProject, True)
+            
+            dlgConfig = FormSmartCutConfig(self.__context)
+            dlgConfig.exec_()
+            
+            self.__logger.info("Smart Cut configuration dialog opened")
+            
+        except Exception as e:
+            self.__sendMessageBarException('PluginModule.__configureSmartCut', e)
+
+    def __onSmartCutComplete(self, success, message):
+        """
+        Callback appelé quand la découpe intelligente est terminée.
+        
+        :param success: True si la découpe a réussi
+        :type success: bool
+        :param message: Message de résultat
+        :type message: str
+        """
+        if success:
+            self.__logger.info(f"Smart Cut completed: {message}")
+        else:
+            self.__logger.warning(f"Smart Cut failed: {message}")
+
 
     def __downloadLayersFromMyCommunity(self) -> None:
         """
