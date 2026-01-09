@@ -282,7 +282,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Login par défaut</string>
+     <string>Login actif</string>
     </property>
    </widget>
   </widget>

@@ -114,6 +114,7 @@ class Contexte(object):
         self.__userName = ''
         self.__listNameOfCommunities = None
         self.__mapToolsReport = None
+        self.__smartCutTool = None
         self.__communities = None
         # Connexion avec keycloack
         self.__keycloakService = None
@@ -190,6 +191,24 @@ class Contexte(object):
         :type listNameIdFromAllUserCommunities: list
         """
         self.__listNameIdFromAllUserCommunities = listNameIdFromAllUserCommunities
+
+    def getSmartCutTool(self):
+        """
+        Retourne l'instance de l'outil de découpe intelligente.
+        
+        :return: L'outil de découpe intelligente
+        :rtype: MapToolSmartCut
+        """
+        return self.__smartCutTool
+    
+    def setSmartCutTool(self, smartCutTool) -> None:
+        """
+        Affecte l'outil de découpe intelligente au contexte.
+        
+        :param smartCutTool: L'outil de découpe intelligente
+        :type smartCutTool: MapToolSmartCut
+        """
+        self.__smartCutTool = smartCutTool
 
     def getUserNameCommunity(self) -> str:
         """
@@ -392,6 +411,10 @@ class Contexte(object):
                 PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_GroupeActif, idNameCommunity[1],
                                             PluginHelper.xml_Serveur)
                 self.setActiveCommunityName(idNameCommunity[1])
+                
+                # Sauvegarde du login actif dans le xml du projet utilisateur
+                PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Login, self.getUserNameCommunity(),
+                                            PluginHelper.xml_Serveur)
 
                 # On enregistre le groupe comme groupe préféré pour la création de signalement
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
@@ -441,7 +464,7 @@ class Contexte(object):
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))
-        # dlgInfo.textInfo.append("Login : {}".format(self.login))
+        dlgInfo.textInfo.append("Login : {}".format(self.getUserNameCommunity()))
         dlgInfo.textInfo.append("Groupe : {}".format(self.getUserCommunity().getName()))
         zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
         if zoneExtraction == "" or zoneExtraction is None or len(
@@ -529,6 +552,7 @@ class Contexte(object):
         vlayer = GuichetVectorLayer(parameters)
         # vlayer = QgsVectorLayer(uri.uri(), layer.name, 'spatialite')
         vlayer.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326))
+        print("[DEBUG Contexte.importWFS] Couche créée: {} - Valide: {} - URI: {}".format(layer.name(), vlayer.isValid(), uri.uri()))
         return vlayer, bColumnDetruitExist
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup) -> None:
@@ -600,12 +624,15 @@ class Contexte(object):
                 Ajout des couches WFS sélectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.FEATURE_TYPE:
+                    print("[DEBUG Contexte.addGuichetLayersToMap] ===== Traitement couche WFS: {} =====".format(layer.name()))
                     sourceLayer = self.importWFS(layer)
                     if not sourceLayer[0].isValid():
+                        print("[DEBUG Contexte.addGuichetLayersToMap] ERREUR: Couche {} invalide après importWFS !".format(layer.name()))
                         endMessage += "Layer {} failed to load !\n".format(layer.name())
                         continue
                     endMessage += self.getAndFormatLayer(layer, sourceLayer[0], nodeGroup, bbox, sourceLayer[1])
                     endMessage += "\n"
+                    print("[DEBUG Contexte.addGuichetLayersToMap] ===== Fin traitement couche: {} =====".format(layer.name()))
 
                 if layer.type == cst.GEOSERVICE:
                     '''
@@ -876,8 +903,10 @@ class Contexte(object):
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
                       'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid
                       }
+        print("[DEBUG Contexte.getAndFormatLayer] Début extraction couche: {}".format(layer.name()))
         wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcmsGet(True)
+        print("[DEBUG Contexte.getAndFormatLayer] Résultat extraction: {}".format(maxNumrecMessage[1]))
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1
@@ -917,6 +946,16 @@ class Contexte(object):
         self.QgsProject.instance().addMapLayer(newVectorLayer, False)
         nodeGroup.addLayer(newVectorLayer)
         self.guichetLayers.append(newVectorLayer)
+        
+        # Débogage : vérification du nombre d'entités dans la couche
+        featureCount = newVectorLayer.featureCount()
+        print("[DEBUG Contexte.getAndFormatLayer] Couche '{}' ajoutée à QGIS".format(newVectorLayer.name()))
+        print("[DEBUG Contexte.getAndFormatLayer] Nombre d'entités dans la couche: {}".format(featureCount))
+        print("[DEBUG Contexte.getAndFormatLayer] Couche valide: {}".format(newVectorLayer.isValid()))
+        print("[DEBUG Contexte.getAndFormatLayer] Type de géométrie: {}".format(newVectorLayer.geometryType()))
+        if featureCount == 0:
+            print("[DEBUG Contexte.getAndFormatLayer] ATTENTION: La couche est vide !")
+            print("[DEBUG Contexte.getAndFormatLayer] URI de la source: {}".format(newVectorLayer.source()))
 
         # On masque les champs de travail et champs internes
         # fields = newVectorLayer.fields()

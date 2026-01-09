@@ -93,7 +93,7 @@ class SQLiteManager(object):
         projectFileName = os.path.splitext(fname)[0]
         dbName = f"{projectFileName}_espaceco"
         dbPath = os.path.join(projectDir, f"{dbName}.sqlite")
-        # Nomalisation du chemin pour SQLite 
+        # Normalisation du chemin pour SQLite 
         dbPath = dbPath.replace('\\', '/')
         return dbPath
 
@@ -439,7 +439,9 @@ class SQLiteManager(object):
     def insertRowsInTable(self, parameters, attributesRows) -> int:
         totalRows = 0
         if len(attributesRows) == 0:
+            print("[DEBUG SQLiteManager] insertRowsInTable - Aucune entité à insérer (table: {})".format(parameters['tableName']))
             return totalRows
+        print("[DEBUG SQLiteManager] Début insertion de {} entités dans la table '{}'".format(len(attributesRows), parameters['tableName']))
         wkt = Wkt(parameters)
         # Insertion des lignes dans la table
         connection = SQLiteManager.sqlite3Connect()
@@ -447,11 +449,15 @@ class SQLiteManager(object):
         for attributesRow in attributesRows:
             columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
             sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
-            cur.execute(sql)
-            totalRows += 1
+            try:
+                cur.execute(sql)
+                totalRows += 1
+            except Exception as e:
+                print("[DEBUG SQLiteManager] ERREUR insertion entité: {}".format(e))
         cur.close()
         connection.commit()
         connection.close()
+        print("[DEBUG SQLiteManager] {} entités insérées avec succès dans '{}'".format(totalRows, parameters['tableName']))
         return totalRows
 
     @staticmethod

@@ -127,19 +127,26 @@ class WfsGet(object):
             maxNumrec = self.getMaxNumrec()
 
         sqliteManager = SQLiteManager()
+        requestCount = 0
         while True:
+            requestCount += 1
             response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxies,
                                                params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
                 break
 
-            if len(response['features']) == 0 and response['stop']:
+            nbFeaturesReceived = len(response['features'])
+            print("[DEBUG WfsGet] Requête #{} - {} entités reçues du serveur".format(requestCount, nbFeaturesReceived))
+            
+            if nbFeaturesReceived == 0 and response['stop']:
                 break
             # si c'est une table standard (non BDUni) ou une extraction,
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
             if self.isStandard is True or self.isStandard == 1 or bExtraction is True:
-                totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
+                rowsInserted = sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
+                print("[DEBUG WfsGet] Requête #{} - {} entités insérées dans SQLite (table: {})".format(requestCount, rowsInserted, self.layerName))
+                totalRows += rowsInserted
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
             else:
@@ -165,6 +172,10 @@ class WfsGet(object):
         SQLiteManager.vacuumDatabase()
         end = time.time()
         timeResult = end - start
+        print("[DEBUG WfsGet] ===== RÉSUMÉ EXTRACTION (table: {}) =====".format(self.layerName))
+        print("[DEBUG WfsGet] Total entités insérées dans SQLite: {}".format(totalRows))
+        print("[DEBUG WfsGet] Temps d'extraction: {} secondes".format(round(timeResult, 1)))
+        print("[DEBUG WfsGet] ===========================================")
         if timeResult > 60:
             if message == '':
                 message = "{0} objet(s), extrait(s) en : {1} minute(s)".format(totalRows, round(timeResult / 60, 1))
@@ -186,15 +197,28 @@ class WfsGet(object):
         """
         url = "{0}/gcms/api/databases/{1}/tables/{2}/max-numrec".format(self.urlHostEspaceCo, self.databaseid,
                                                                         self.tableid)
-        response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
-                                               launchBy='getMaxNumrec : {}'.format(self.layerName))
-        # Succès : get (code 200) post (code 201)
-        if response.status_code == 200 or response.status_code == 201:
-            numrec = response.json()
-        else:
-            message = "code : {} raison : {}".format(response.status_code, response.reason)
-            raise Exception("WfsGet.getMaxNumrec -> ".format(message))
-        return numrec
+        print("[DEBUG WfsGet.getMaxNumrec] Requête vers: {}".format(url))
+        print("[DEBUG WfsGet.getMaxNumrec] Table: {} - isStandard: {} - databaseid: {} - tableid: {}".format(
+            self.layerName, self.isStandard, self.databaseid, self.tableid))
+        
+        try:
+            response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
+                                                   launchBy='getMaxNumrec : {}'.format(self.layerName))
+            # Succès : get (code 200) post (code 201)
+            if response.status_code == 200 or response.status_code == 201:
+                numrec = response.json()
+                print("[DEBUG WfsGet.getMaxNumrec] NumRec récupéré: {}".format(numrec))
+                return numrec
+            else:
+                message = "code : {} raison : {}".format(response.status_code, response.reason)
+                print("[DEBUG WfsGet.getMaxNumrec] ERREUR: {}".format(message))
+                print("[DEBUG WfsGet.getMaxNumrec] Utilisation de numrec=0 par défaut")
+                return 0
+        except Exception as e:
+            print("[DEBUG WfsGet.getMaxNumrec] EXCEPTION capturée: {}".format(e))
+            print("[DEBUG WfsGet.getMaxNumrec] La table BDUni n'a peut-être pas de système de réconciliation")
+            print("[DEBUG WfsGet.getMaxNumrec] Utilisation de numrec=0 par défaut et continuation de l'extraction")
+            return 0
 
     def __setService(self) -> None:
         """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'service'."""
