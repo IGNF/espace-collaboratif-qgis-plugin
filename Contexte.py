@@ -393,6 +393,10 @@ class Contexte(object):
                                             PluginHelper.xml_Serveur)
                 self.setActiveCommunityName(idNameCommunity[1])
 
+                # Sauvegarde du login actif dans le xml du projet utilisateur
+                PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Login, self.getUserNameCommunity(),
+                                            PluginHelper.xml_Serveur)
+
                 # On enregistre le groupe comme groupe préféré pour la création de signalement
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
                 formPreferredGroup = PluginHelper.load_preferredGroup(self.projectDir).text
@@ -441,7 +445,7 @@ class Contexte(object):
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))
-        # dlgInfo.textInfo.append("Login : {}".format(self.login))
+        dlgInfo.textInfo.append("Login : {}".format(self.getUserNameCommunity()))
         dlgInfo.textInfo.append("Groupe : {}".format(self.getUserCommunity().getName()))
         zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
         if zoneExtraction == "" or zoneExtraction is None or len(

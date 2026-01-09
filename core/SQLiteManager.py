@@ -93,6 +93,8 @@ class SQLiteManager(object):
         projectFileName = os.path.splitext(fname)[0]
         dbName = f"{projectFileName}_espaceco"
         dbPath = os.path.join(projectDir, f"{dbName}.sqlite")
+        # Nomalisation du chemin pour SQLite 
+        dbPath = dbPath.replace('\\', '/')
         return dbPath
 
     @staticmethod
