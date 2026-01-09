@@ -1,13 +1,10 @@
-﻿
-# Plugin IGN_Espace_collaboratif pour QGIS
+﻿# Plugin IGN_Espace_collaboratif pour QGIS
 
 ## Version 5.0
 ![Image0](Image0.png) 
 
-
-
-<div  style="background-color: white; border: 1px solid black; padding: 0px; text-align: justify;">
-  <h2 style="color: #00ADC5">1. Sommaire</h2>
+<div  style="background-color: white; border: 1px solid black; padding: 10px; text-align: justify;">
+  <h2 id="1-sommaire" style="color: #00ADC5">1. Sommaire</h2>
 </div>
 
 - [1. Sommaire](#1-sommaire)
@@ -49,12 +46,13 @@
   - [6.3 Tableau 3 : Valeurs et signification des statuts d'un signalement](#63-tableau-3--valeurs-et-signification-des-statuts-dun-signalement)
   - [6.4 Formats acceptés pour les documents joints](#64-formats-acceptés-pour-les-documents-joints)
   - [6.5 Fichiers nécessaires au fonctionnement du plugin](#65-fichiers-nécessaires-au-fonctionnement-du-plugin)
-  - [6.6 Exemple de contenu du fichier de configuration espaceco.xml](#66-exemple-de-contenu-du-fichier-de-configuration-espacecoxml)
+ - [6.6 Exemple de contenu du fichier de configuration espaceco.xml](#66-exemple-de-contenu-du-fichier-de-configuration-espacecoxml)
 
 ---
-<div  style="background-color: white; border: 1px solid black; padding: 0px; text-align: justify;">
-  <h2 style="color: #00ADC5">2. Versions</h2>
+<div  style="background-color: white; border: 1px solid black; padding: 10px; text-align: justify;">
+  <h2 id="2-versions" style="color: #00ADC5">2. Versions</h2>
 </div>
+<p></p>
 
 | Numéro | Commentaire  | Date |
 |--|--|--|
@@ -88,23 +86,11 @@
 ||Corrections diverses||
 
 
-<div  style="background-color: white; border: 1px solid black; padding: 1px; width: 100%; box-sizing: border-box;">
-  <h2 style="color: #00ADC5">3. Préambule</h2>
+<div  style="background-color: white; border: 1px solid black; padding: 10px; width: 100%; box-sizing: border-box;">
+  <h2 id="3-préambule" style="color: #00ADC5">3. Préambule</h2>
 </div>
 
-Titre h2, test avec fond bleu, texte blanc
-<div  style="background-color: #00ADC5; border: 1px solid black; padding: 1px; width: 100%; box-sizing: border-box;">
-  <h2 style="color: white">3. Préambule</h2>
-</div>
-
-
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px;  width: 100%; box-sizing: border-box;">3.1 Présentation du service</span>
-
-Titre h3, test dans une "<div>"
-<div style="color: white; background-color: #00ADC5; padding: 2px 5px;  width: 100%; width: 100%; box-sizing: border-box;">
-  <h3>3.1 Présentation du service</h3>
-</div>
-
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px;">3.1 Présentation du service</span>
 
 L’Espace collaboratif de l’IGN ([https://espacecollaboratif.ign.fr](https://espacecollaboratif.ign.fr)) propose deux services principaux :
 
@@ -133,7 +119,7 @@ Chaque signalement, sauf s’il est lié à un groupe ne partageant pas ses sign
 L’IGN offre également à ses partenaires la possibilité d’héberger leurs données dans une base de données stockée sur l’Espace collaboratif. L’Espace collaboratif propose alors un ensemble d’outils de gestion de ces bases ainsi que des outils permettant d’entretenir et de mettre à jour les données qu’elles contiennent. On parle alors de fonctionnalités de contribution directe, accessibles depuis un « guichet » de l’Espace collaboratif.
 
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; text-align: justify;">3.2 Rôle du plugin Espace collaboratif pour QGIS</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; ">3.2 Rôle du plugin Espace collaboratif pour QGIS</span>
 Le plugin IGN_Espace_collaboratif est une extension pour le logiciel QGIS, qui permet depuis le SIG d'interagir directement avec le service Espace collaboratif (sans passer par le site web [espacecollaboratif.ign.fr](https://espacecollaboratif.ign.fr)).
 
 L'utilisateur peut ainsi depuis QGIS :
@@ -147,7 +133,7 @@ L'utilisateur peut ainsi depuis QGIS :
 
 L'intégration du plugin dans le SIG se traduit visuellement par l’ajout d’une barre d'outils supplémentaire dédiée aux fonctionnalités du plugin, et par des couches ajoutées à la carte active et qui sont destinées à contenir les différents objets provenant de l’Espace collaboratif (ses signalements et croquis associés, couches du groupe).
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">3.3 Prérequis</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; ">3.3 Prérequis</span>
 
 Le plugin IGN_Espace_collaboratif pour QGIS requiert la configuration minimum suivante :
 -   Windows
@@ -161,11 +147,11 @@ Le plugin IGN_Espace_collaboratif ne fonctionne qu'en association avec un projet
 NB : le nom du projet QGIS dans lequel sera utilisé le plugin Espace collaboratif ne doit pas contenir de point en dehors de son extension (.qgz).
 
 
-<div  style="background-color: white; border: 1px solid black; padding: 1px; width: 100%; box-sizing: border-box;">
-  <h2 style="color: #00ADC5">4. Installation et principes de fonctionnement</h2>
+<div  style="background-color: white; border: 1px solid black; padding: 10px">
+  <h2 id="4-installation-et-principes-de-fonctionnement" style="color: #00ADC5">4. Installation et principes de fonctionnement</h2>
 </div>
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">4.1 Procédure d'installation</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px;">4.1 Procédure d'installation</span>
 
 Pour installer le plugin, suivre les étapes suivantes :
 - Ouvrir QGIS et se rendre dans le menu **Extension** > **Installer/Gérer les extensions**
@@ -266,12 +252,12 @@ Pour son fonctionnement, le plugin stocke tous ses paramètres de configuration 
 
 Ce fichier étant nécessaire à son fonctionnement, le plugin le génère automatiquement s’il n’existe pas déjà. Le paramétrage du plugin se fait via la fenêtre de configuration qui s’ouvre depuis le menu **<span style="font-family: Consolas, monospace; color:#0000FF">[Aide > Configurer le plugin]</span>**  de la barre d'outils. Les nouveaux paramètres saisis sont ensuite automatiquement enregistrés dans ce fichier XML.
 
-<div  style="background-color: white; border: 1px solid black; padding: 3px; text-align: justify;">
-  <h2 style="color: #00ADC5">5. Utilisation</h2>
+<div  style="background-color: white; border: 1px solid black; padding: 10px; text-align: justify;">
+  <h2 id="5-utilisation" style="color: #00ADC5">5. Utilisation</h2>
 </div>
 
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.1 Connexion au service</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;"> - Modifié !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.1 Connexion au service</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">- Modifié !</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image9.png" />
@@ -342,7 +328,7 @@ Au clic sur le bouton « Connecter », une fenêtre de confirmation apparaît :
 </div>
 
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.2 Import des signalements</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.2 Import des signalements</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">- Modifié !</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image15.png" />
@@ -385,7 +371,7 @@ Une fenêtre avec le message du signalement et les éventuelles réponses s’ou
   <p><strong><span style="color: #548DD4">Figure 14  : Fiche d’un signalement</span></strong></p>
 </div>
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.4 Déplacer un signalement</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;"> - Nouveau !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.4 Déplacer un signalement</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">- Nouveau !</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image19.png" />
@@ -462,8 +448,10 @@ Le formulaire suivant permet de :
 - créer un ou plusieurs signalement(s) : dans le premier cas (sélectionné par défaut), un signalement unique est créé et positionné sur le centroïde de l’ensemble des objets sélectionnés. Dans le second cas, il est créé un nouveau signalement par objet sélectionné, avec pour position, à chaque fois, le centroïde de l’objet.
 
 <div  style="text-align: center;"> 
-	<img  src="Image27.png" alt="Figure 18" style="margin-right: 20px; vertical-align: middle;"/>  
-  <img  src="Image27-1.png" alt="Figure 18" style="vertical-align: middle;" height = 200"/>
+	<div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+		<img  src="Image27.png" alt="Figure 18" style="vertical-align: middle;" height="600"/>  
+		<img  src="Image27-1.png" alt="Figure 18" style="vertical-align: middle;" height="200"/>
+	</div>
   <p><strong><span style="color: #548DD4">Figure 18 : Formulaires de création de nouveaux signalements</span></strong></p>
 </div>
 
@@ -527,13 +515,13 @@ Cet outil (baguette magique) permet de sélectionner sur la carte tous les croqu
 On sélectionne deux signalements (en jaune), puis on clique sur le bouton **<span style="font-family: Consolas, monospace; color:#0000FF">Voir les objets associés</span>**. Tous les croquis associés aux deux signalements sont alors sélectionnés
 
 <div  style="text-align: center;"> 
-	<img  src="Image34.png" alt="Figure 18" height = 230/><img  src="Image35.png" height = 230/>
+	<img  src="Image34.png" alt="Figure 18" height = 300/><img  src="Image35.png" height = 300/>
   <p><strong><span style="color: #548DD4">Figure 19  : Exemple d’utilisation de la « Baguette magique »</span></strong></p>
 </div>
 
 Si on clique à nouveau sur le bouton, on retrouve la première situation avec les deux signalements sélectionnés.
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.10 Charger les couches de son groupe actif</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;"> - Evolution !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.10 Charger les couches de son groupe actif</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">- Evolution !</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image36.png" />
@@ -576,9 +564,9 @@ Pour les gros jeux de données comme la BDTopo IGN, il est fortement conseillé,
 
 **->** Les couches chargées ne sont visibles qu’aux niveaux de zoom définis pour chacune d’entre elles sur l’Espace collaboratif. Ceux-ci peuvent être modifiés par l’administrateur de la base en cas de besoin.
 
-**->** Les fonctionnalités QGIS « Zoomer sur la couche » et « Zoomer sur le groupe » (accessibles après un clic droit sur une couche ou un groupe de couches dans le gestionnaire de couches) ne fonctionnent pas correctement avec les couches issues de l’Espace collaboratif. On peut alors :
-    - soit zoomer manuellement sur les données pour les visualiser,
-    - soit ouvrir la table attributaire de la couche souhaitée, sélectionner un objet et cliquer sur « Zoomer la carte sur les entités sélectionnées ».
+**->** Les fonctionnalités QGIS « Zoomer sur la couche » et « Zoomer sur le groupe » (accessibles après un clic droit sur une couche ou un groupe de couches dans le gestionnaire de couches) ne fonctionnent pas correctement avec les couches issues de l'Espace collaboratif. On peut alors :
+- soit zoomer manuellement sur les données pour les visualiser,
+- soit ouvrir la table attributaire de la couche souhaitée, sélectionner un objet et cliquer sur « Zoomer la carte sur les entités sélectionnées ».
 
 **->** En cas d’erreur indiquant que « Le téléchargement des entités a échoué. L’opération est annulée », il peut être nécessaire d’augmenter le paramètre QGIS « Délai d’abandon pour les requêtes réseaux ». Ce paramètre est accessible dans le menu Préférences > Option > Réseau, et peut être rempli avec une valeur de l’ordre de 60000 ms.
 
@@ -639,12 +627,12 @@ Cliquer sur **<span style="font-family: Consolas, monospace; color:#0000FF">Conf
 
 Dans ce formulaire peuvent être édités les paramètres suivants :
 
--   **Adresse de connexion au service Espace collaboratif** : l’url du service : https://espacecollaboratif.ign.fr (il est recommandé de la modifier uniquement en cas d’instruction de la part de l’IGN).
--   **Proxy** : permet à l’utilisateur de rentrer ses paramètres de proxy (s’il en a un) directement depuis cette interface. Attention, la définition d’un proxy dans l’interface de QGIS (menu Préférences > Options > Réseau) ne suffit pas, il doit être défini via ce paramètre pour être pris en compte lors de la connexion à l’Espace collaboratif. En cas de problème de proxy, il peut être nécessaire de définir les variables d’environnement HTTP_PROXY et HTTPS_PROXY comme indiqué page 10.
+- **Adresse de connexion au service Espace collaboratif** : l’url du service : https://espacecollaboratif.ign.fr (il est recommandé de la modifier uniquement en cas d’instruction de la part de l’IGN).
+- **Proxy** : permet à l’utilisateur de rentrer ses paramètres de proxy (s’il en a un) directement depuis cette interface. Attention, la définition d’un proxy dans l’interface de QGIS (menu Préférences > Options > Réseau) ne suffit pas, il doit être défini via ce paramètre pour être pris en compte lors de la connexion à l’Espace collaboratif. En cas de problème de proxy, il peut être nécessaire de définir les variables d’environnement HTTP_PROXY et HTTPS_PROXY comme indiqué page 10.
 
 - **Date d’extraction** si la case est cochée, seuls les signalements mis à jour depuis cette date seront téléchargés.
 
--   **Couches sources et champs** : permet de paramétrer les attributs à envoyer avec les croquis liés aux signalements. Ce paramétrage sera appliqué si la case « Couches sources et champs… » est cochée. Par défaut, tous les champs d’un objet utilisé comme croquis seront envoyés.
+- **Couches sources et champs** : permet de paramétrer les attributs à envoyer avec les croquis liés aux signalements. Ce paramétrage sera appliqué si la case « Couches sources et champs… » est cochée. Par défaut, tous les champs d’un objet utilisé comme croquis seront envoyés.
 
 <div  style="text-align: center;"> 
 	<img  src="Image45.png" alt="Figure 22" />
@@ -709,7 +697,7 @@ Permet d’afficher les informations de version du plugin.
     </div>
   </li>
   <li>
-    **Cliquer sur se déconnecter.** Vous obtenez ce message web.
+    <strong>Cliquer sur se déconnecter.</strong> Vous obtenez ce message web.
     <div  style="text-align: center;"> 
       <img  src="Image52.png" />
     </div>
@@ -721,27 +709,27 @@ Permet d’afficher les informations de version du plugin.
 </ol>
 
 <div  style="background-color: white; border: 1px solid black; padding: 3px; text-align: justify;">
-  <h2 style="color: #00ADC5">6. Annexes</h2>
+  <h2 id="6-annexes" style="color: #00ADC5">6. Annexes</h2>
 </div>
 
 ### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">6.1 Tableau 1 : champs du calque Signalement</span>
 
-| Nom | Type  | Contenu |
+| Nom| Type | Contenu|
 |--|--|--|
 | NoSignalement |int  |L'identifiant unique d'un signalement|
-|Auteur|string|Le login du compte Espace collaboratif utilisé par le rédacteur du signalement.|
-|Commune|string|Le nom de la commune dans laquelle se trouve le signalement|
-|Département|string|Le nom du département dans lequel se trouve le signalement|
-|Département_id|string|Le code du département dans lequel se trouve le signalement|
-|Date_création|Date & heure|La date et l'heure de saisie du signalement (création dans le service).|
-|Date_MAJ|Date & heure|La date et l'heure de la dernière action apportée au signalement. (ajout d'une réponse, changement de statut et clôture du signalement.)|
-|Date_validation|Date & heure|La date et l'heure de l'action de clôture du signalement (prise en compte ou rejet)|
-|Thèmes|string|La concaténation du nom des thèmes associés au signalement ainsi que des éventuels attributs.|
-|Statut|int|Le stade d'avancement dans la chaîne de traitement du signalement|
-|Message|string|Le commentaire envoyé lors de la création du signalement|
-|Réponses|string|La concaténation des réponses apportées à le signalement|
-|URL|string|Lien vers la fiche publique du signalement sur l’espace collaboratif|
-|Document|string|Lien vers le fichier associé à le signalement et téléchargeable depuis l’espace collaboratif.|
+| Auteur|string|Le login du compte Espace collaboratif utilisé par le rédacteur du signalement.|
+| Commune|string|Le nom de la commune dans laquelle se trouve le signalement|
+| Département|string|Le nom du département dans lequel se trouve le signalement|
+| Département_id|string|Le code du département dans lequel se trouve le signalement|
+| Date_création|Date & heure|La date et l'heure de saisie du signalement (création dans le service).|
+| Date_MAJ|Date & heure|La date et l'heure de la dernière action apportée au signalement. (ajout d'une réponse, changement de statut et clôture du signalement.)|
+| Date_validation|Date & heure|La date et l'heure de l'action de clôture du signalement (prise en compte ou rejet)|
+| Thèmes|string|La concaténation du nom des thèmes associés au signalement ainsi que des éventuels attributs.|
+| Statut|int|Le stade d'avancement dans la chaîne de traitement du signalement|
+| Message|string|Le commentaire envoyé lors de la création du signalement|
+| Réponses|string|La concaténation des réponses apportées à le signalement|
+| URL|string|Lien vers la fiche publique du signalement sur l’espace collaboratif|
+| Document|string|Lien vers le fichier associé à le signalement et téléchargeable depuis l’espace collaboratif.|
 
 
 ### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">6.2 Tableau 2 : champs des calques Croquis_EC</span>
@@ -749,8 +737,8 @@ Permet d’afficher les informations de version du plugin.
 | Nom du champ | Type de champ | Contenu du champ |
 |--|--|--|
 | NoSignalement |int|Le numéro signalement à laquelle le croquis est associé.|
-|Nom|string|Le nom du croquis.|
-|Attributs_croquis|string|Concaténation des éventuels attributs du croquis sous forme : nom attribut = "valeur attribut".|
+| Nom|string|Le nom du croquis.|
+| Attributs_croquis|string|Concaténation des éventuels attributs du croquis sous forme : nom attribut = "valeur attribut".|
 
 ### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">6.3 Tableau 3 : Valeurs et signification des statuts d'un signalement</span>
 
@@ -767,7 +755,6 @@ jpg, png, gif, bmp, tif, aiff, asf, avi, flv, mid, mng, mka, mkv, mov, mp3, mp4,
 <div  style="text-align: center;"> 
 	<img  src="Image53.png" />
 </div>
-
 
 ### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">6.6 Exemple de contenu du fichier de configuration espaceco.xml</span>
 
