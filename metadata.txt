@@ -7,10 +7,10 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=IGN_Espace_Collaboratif_DEV
+name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
 description=IGN reporting and contribution service, plugin QGIS3
-version=4.2.x
+version=5.0.x
 author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
@@ -24,13 +24,11 @@ repository=http://repo
 # Recommended items:
 
 # Optional items:
-date=
+date=2026-01-09
 
 # Uncomment the following line and add your changelog:
 changelog=
-    4.2.x
-	4.1.1 - Installation avec compte Espace collaboratif
-    4.1.0 - Adaptation géoservices
+    5.0.0 - Passage a la nouvelle API collaborative
 
 # Tags are comma separated with spaces allowed
 tags=python
