@@ -447,7 +447,7 @@ class Contexte(object):
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))
         dlgInfo.textInfo.append("Login : {}".format(self.getUserNameCommunity()))
         dlgInfo.textInfo.append("Groupe : {}".format(self.getUserCommunity().getName()))
-        zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
+        zoneExtraction = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text
         if zoneExtraction == "" or zoneExtraction is None or len(
                 self.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
             dlgInfo.textInfo.append("Zone de travail : pas de zone définie")

@@ -326,7 +326,7 @@ class PluginHelper:
             parentNode = PluginHelper.addXmlElement(projectDir, parentElem, PluginHelper.xml_Root)
         elementNode = ET.SubElement(parentNode, elem)
         if value is not None:
-            elementNode.text = value
+            elementNode.text = str(value)
         tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
         return elementNode
 
@@ -489,7 +489,9 @@ class PluginHelper:
             tree = PluginHelper.checkXmlFile(projectDir)
             xmlroot = tree.getroot()
             node = xmlroot.find(PluginHelper.getXPath(tag, parentTag))
-            node.text = value
+            if node is None:
+                node = PluginHelper.addXmlElement(projectDir, tag, parentTag)
+            node.text = str(value) if value is not None else ""
             tree.write(projectDir + "/" + PluginHelper.getConfigFile(), encoding="utf-8")
 
         except Exception as e:

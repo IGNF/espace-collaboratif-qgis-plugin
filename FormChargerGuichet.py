@@ -251,7 +251,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
 
             # Filtre spatial (la zone de travail)
             bbox = BBox(self.__context)
-            box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, False, True)
+            box = bbox.getFromLayer(PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text, False, True)
             # si la box est à None alors, l'utilisateur veut extraire France entière
             # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
             # ne souhaite pas extraire les données France entière
