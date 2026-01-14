@@ -138,7 +138,7 @@ class WfsGet(object):
                 break
             # si c'est une table standard (non BDUni) ou une extraction,
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
-            if (self.isStandard is True or self.isStandard == 1) or bExtraction is True:
+            if self.isStandard in (True, 1) or bExtraction is True:
                 totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
@@ -159,7 +159,7 @@ class WfsGet(object):
             if response['stop']:
                 break
         # suppression des objets pour une table BDUni et différent d'une extraction
-        if (self.isStandard is False or self.isStandard == 0) and bExtraction is False:
+        if self.isStandard in (False, 0) and bExtraction is False:
             self.__makeRequestDeletedObjects()
         # nettoyage de la base SQLite
         SQLiteManager.vacuumDatabase()
