@@ -17,8 +17,8 @@ license=GNU AGPL v3
 
 about=IGN reporting and contribution service
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/IGNF/espace-collaboratif-qgis-plugin/issues
+repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin
 # End of mandatory metadata
 
 # Recommended items:
