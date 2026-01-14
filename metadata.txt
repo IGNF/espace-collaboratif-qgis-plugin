@@ -10,7 +10,7 @@
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
 description=IGN reporting and contribution service, plugin QGIS3
-version=5.0.x
+version=5.0.0
 author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
@@ -24,7 +24,7 @@ repository=http://repo
 # Recommended items:
 
 # Optional items:
-date=2026-01-09
+date=2026-01-14
 
 # Uncomment the following line and add your changelog:
 changelog=
