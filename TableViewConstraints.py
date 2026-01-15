@@ -54,6 +54,8 @@ class TableViewConstraints:
             self.layer.editingStarted.connect(self.onEditingStarted)
             # Connecte au signal d'édition arrêté
             self.layer.editingStopped.connect(self.onEditingStopped)
+            # Connecte au signal de modification d'attribut (temps réel)
+            self.layer.attributeValueChanged.connect(self.onAttributeValueChanged)
             # Connecte au signal avant validation des changements
             self.layer.beforeCommitChanges.connect(self.validateBeforeCommit)
             self.isConnected = True
@@ -66,6 +68,7 @@ class TableViewConstraints:
             try:
                 self.layer.editingStarted.disconnect(self.onEditingStarted)
                 self.layer.editingStopped.disconnect(self.onEditingStopped)
+                self.layer.attributeValueChanged.disconnect(self.onAttributeValueChanged)
                 self.layer.beforeCommitChanges.disconnect(self.validateBeforeCommit)
             except TypeError:
                 # Les signaux n'étaient pas connectés
@@ -89,6 +92,31 @@ class TableViewConstraints:
         Appelé quand l'édition s'arrête sur la couche.
         """
         pass
+
+    def onAttributeValueChanged(self, fid: int, fieldIndex: int, newValue: Any) -> None:
+        """
+        Appelé en temps réel quand une valeur d'attribut change dans la table.
+        Permet de valider immédiatement la nouvelle valeur.
+        
+        :param fid: ID de l'entité modifiée
+        :param fieldIndex: Index du champ modifié
+        :param newValue: Nouvelle valeur saisie
+        """
+        fieldName = self.layer.fields()[fieldIndex].name()
+        feature = self.layer.getFeature(fid)
+        
+        # Valider la nouvelle valeur
+        isValid, errorMsg = self.validateFieldValue(fieldName, newValue, fid, feature)
+        
+        if not isValid:
+            # Afficher un avertissement immédiat
+            if iface:
+                iface.messageBar().pushMessage(
+                    "Attention - Contrainte non respectée",
+                    f"Entité #{fid}, champ '{fieldName}': {errorMsg}",
+                    level=Qgis.Warning,
+                    duration=5
+                )
 
     def validateBeforeCommit(self) -> None:
         """

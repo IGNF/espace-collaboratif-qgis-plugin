@@ -34,6 +34,7 @@ from .core.DynamicProgressBar import DynamicProgressBar
 from .core.ign_keycloak.KeycloakService import KeycloakService
 from .core.FlagProject import FlagProject
 from .Import_WMSR import ImportWMSR
+from .TableViewConstraints import TableViewConstraints
 from .PluginHelper import PluginHelper
 from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
@@ -905,6 +906,12 @@ class Contexte(object):
         efffa = EditFormFieldFromAttributes(newVectorLayer, layer.attributes)
         # print("layer.attributes:\n{}".format(layer.attributes))
         efffa.readDataAndApplyConstraints()
+
+        # Ajout du gestionnaire de contraintes pour la vue tabulaire
+        tableConstraints = TableViewConstraints(newVectorLayer, layer.attributes)
+        tableConstraints.connectSignals()
+        # Stocker le gestionnaire pour éviter qu'il soit supprimé par le garbage collector
+        newVectorLayer.tableConstraintsHandler = tableConstraints
 
         # Modification de la symbologie de la couche
         listOfValuesFromItemStyle = layer.getListOfValuesFromItemStyle()
