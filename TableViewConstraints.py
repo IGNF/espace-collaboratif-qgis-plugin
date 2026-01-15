@@ -4,8 +4,6 @@ Created on 15 jan. 2026
 
 Gestionnaire de contraintes pour la vue tabulaire (attribute table).
 Valide les contraintes lors de la sauvegarde des modifications.
-
-@author: Plugin Team
 """
 import re
 from typing import Tuple, Optional, Dict, Any, List
@@ -37,16 +35,36 @@ class TableViewConstraints:
         self.constraintsByField = {}
         self._buildConstraintsIndex()
         
-        # Registre des validateurs de contraintes (mapping dynamique)
-        self._constraintValidators = {
-            'nullable': self._validateNotNull,
-            'min_length': self._validateMinLength,
-            'max_length': self._validateMaxLength,
-            'min_value': self._validateMinValue,
-            'max_value': self._validateMaxValue,
-            'pattern': self._validatePattern,
-            'unique': self._validateUnique,
-            'enum': self._validateEnum
+        # Configuration des validateurs (data-driven, pas de code dupliqué!)
+        self._validatorConfig = {
+            'nullable': {
+                'check': lambda c, v: c.get('nullable') is False and (v is None or v == '' or v == 'NULL'),
+                'message': lambda f, c, v: f"Le champ '{f}' ne peut pas être vide (contrainte NOT NULL)"
+            },
+            'min_length': {
+                'check': lambda c, v: c.get('min_length') is not None and v is not None and len(str(v)) < c['min_length'],
+                'message': lambda f, c, v: f"Le champ '{f}' doit contenir au moins {c['min_length']} caractères"
+            },
+            'max_length': {
+                'check': lambda c, v: c.get('max_length') is not None and v is not None and len(str(v)) > c['max_length'],
+                'message': lambda f, c, v: f"Le champ '{f}' ne peut pas dépasser {c['max_length']} caractères"
+            },
+            'min_value': {
+                'check': lambda c, v: c.get('min_value') is not None and v is not None and self._tryFloat(v, c['min_value'], lambda nv, mv: nv < mv),
+                'message': lambda f, c, v: f"Le champ '{f}' doit être supérieur ou égal à {c['min_value']}"
+            },
+            'max_value': {
+                'check': lambda c, v: c.get('max_value') is not None and v is not None and self._tryFloat(v, c['max_value'], lambda nv, mv: nv > mv),
+                'message': lambda f, c, v: f"Le champ '{f}' doit être inférieur ou égal à {c['max_value']}"
+            },
+            'pattern': {
+                'check': lambda c, v: c.get('pattern') is not None and v is not None and not re.match(c['pattern'], str(v)),
+                'message': lambda f, c, v: f"Le champ '{f}' ne correspond pas au format attendu"
+            },
+            'enum': {
+                'check': lambda c, v: c.get('enum') is not None and v is not None and not self._isInEnum(v, c['enum']),
+                'message': lambda f, c, v: f"Le champ '{f}' doit avoir une des valeurs prédéfinies"
+            }
         }
 
     def _buildConstraintsIndex(self) -> None:
@@ -219,7 +237,7 @@ class TableViewConstraints:
     def validateFieldValue(self, fieldName: str, value: Any, fid: int, feature: QgsFeature) -> Tuple[bool, str]:
         """
         Valide une valeur de champ selon les contraintes définies.
-        Itère dynamiquement sur toutes les contraintes applicables.
+        Utilise une configuration data-driven pour valider dynamiquement.
 
         :param fieldName: Nom du champ
         :param value: Valeur à valider
@@ -227,111 +245,47 @@ class TableViewConstraints:
         :param feature: L'entité complète (pour les contraintes contextuelles)
         :return: Tuple (isValid, errorMessage)
         """
-        # Récupérer les contraintes pour ce champ
         constraint = self.constraintsByField.get(fieldName)
-        
         if not constraint:
-            # Pas de contrainte définie pour ce champ
             return True, ""
 
-        # Itérer dynamiquement sur toutes les contraintes définies
-        for constraintKey, validator in self._constraintValidators.items():
-            if constraintKey in constraint:
-                isValid, errorMsg = validator(fieldName, value, fid, constraint, feature)
-                if not isValid:
-                    return False, errorMsg
+        # Validation de l'unicité (nécessite une logique spéciale avec fid)
+        if constraint.get('unique') is True and value is not None:
+            if self._checkUnique(fieldName, value, fid):
+                return False, f"Le champ '{fieldName}' doit être unique. La valeur '{value}' existe déjà"
+
+        # Itérer sur tous les validateurs configurés
+        for validatorKey, config in self._validatorConfig.items():
+            try:
+                if config['check'](constraint, value):
+                    return False, config['message'](fieldName, constraint, value)
+            except Exception:
+                # Si le validateur échoue (ex: conversion impossible), on continue
+                continue
         
         return True, ""
     
-    # === Validateurs individuels (peuvent être facilement étendus) ===
+    # === Méthodes helper pour les validations complexes ===
     
-    def _validateNotNull(self, fieldName: str, value: Any, fid: int, 
-                        constraint: dict, feature: QgsFeature) -> Tuple[bool, str]:
-        """Valide la contrainte NOT NULL"""
-        if constraint.get('nullable') is False:
-            if value is None or value == '' or value == 'NULL':
-                return False, f"Le champ '{fieldName}' ne peut pas être vide (contrainte NOT NULL)"
-        return True, ""
+    def _tryFloat(self, value: Any, constraintValue: Any, comparator) -> bool:
+        """Tente une comparaison numérique, retourne False si impossible"""
+        try:
+            return comparator(float(value), float(constraintValue))
+        except (ValueError, TypeError):
+            return False
     
-    def _validateMinLength(self, fieldName: str, value: Any, fid: int, 
-                          constraint: dict, feature: QgsFeature) -> Tuple[bool, str]:
-        """Valide la longueur minimale"""
-        minLength = constraint.get('min_length')
-        if minLength is not None and value is not None:
-            if len(str(value)) < minLength:
-                return False, f"Le champ '{fieldName}' doit contenir au moins {minLength} caractères"
-        return True, ""
+    def _isInEnum(self, value: Any, enumValues: Any) -> bool:
+        """Vérifie si une valeur est dans l'énumération"""
+        validValues = enumValues if isinstance(enumValues, list) else list(enumValues.keys()) if isinstance(enumValues, dict) else []
+        return value in validValues or str(value) in [str(v) for v in validValues]
     
-    def _validateMaxLength(self, fieldName: str, value: Any, fid: int, 
-                          constraint: dict, feature: QgsFeature) -> Tuple[bool, str]:
-        """Valide la longueur maximale"""
-        maxLength = constraint.get('max_length')
-        if maxLength is not None and value is not None:
-            if len(str(value)) > maxLength:
-                return False, f"Le champ '{fieldName}' ne peut pas dépasser {maxLength} caractères"
-        return True, ""
-    
-    def _validateMinValue(self, fieldName: str, value: Any, fid: int, 
-                         constraint: dict, feature: QgsFeature) -> Tuple[bool, str]:
-        """Valide la valeur minimale"""
-        minValue = constraint.get('min_value')
-        if minValue is not None and value is not None:
-            try:
-                numValue = float(value)
-                if numValue < float(minValue):
-                    return False, f"Le champ '{fieldName}' doit être supérieur ou égal à {minValue}"
-            except (ValueError, TypeError):
-                pass
-        return True, ""
-    
-    def _validateMaxValue(self, fieldName: str, value: Any, fid: int, 
-                         constraint: dict, feature: QgsFeature) -> Tuple[bool, str]:
-        """Valide la valeur maximale"""
-        maxValue = constraint.get('max_value')
-        if maxValue is not None and value is not None:
-            try:
-                numValue = float(value)
-                if numValue > float(maxValue):
-                    return False, f"Le champ '{fieldName}' doit être inférieur ou égal à {maxValue}"
-            except (ValueError, TypeError):
-                pass
-        return True, ""
-    
-    def _validatePattern(self, fieldName: str, value: Any, fid: int, 
-                        constraint: dict, feature: QgsFeature) -> Tuple[bool, str]:
-        """Valide le pattern (expression régulière)"""
-        pattern = constraint.get('pattern')
-        if pattern is not None and value is not None:
-            if not re.match(pattern, str(value)):
-                return False, f"Le champ '{fieldName}' ne correspond pas au format attendu"
-        return True, ""
-    
-    def _validateUnique(self, fieldName: str, value: Any, fid: int, 
-                       constraint: dict, feature: QgsFeature) -> Tuple[bool, str]:
-        """Valide l'unicité"""
-        if constraint.get('unique') is True and value is not None:
-            for existingFeature in self.layer.getFeatures():
-                if existingFeature.id() != fid:
-                    existingValue = existingFeature.attribute(fieldName)
-                    if existingValue == value:
-                        return False, f"Le champ '{fieldName}' doit être unique. La valeur '{value}' existe déjà"
-        return True, ""
-    
-    def _validateEnum(self, fieldName: str, value: Any, fid: int, 
-                     constraint: dict, feature: QgsFeature) -> Tuple[bool, str]:
-        """Valide les valeurs énumérées"""
-        enumValues = constraint.get('enum')
-        if enumValues is not None and value is not None:
-            # enumValues peut être une liste ou un dictionnaire
-            validValues = []
-            if isinstance(enumValues, list):
-                validValues = enumValues
-            elif isinstance(enumValues, dict):
-                validValues = list(enumValues.keys())
-            
-            if value not in validValues and str(value) not in [str(v) for v in validValues]:
-                return False, f"Le champ '{fieldName}' doit avoir une des valeurs prédéfinies"
-        return True, ""
+    def _checkUnique(self, fieldName: str, value: Any, fid: int) -> bool:
+        """Vérifie si la valeur est unique dans la couche"""
+        for existingFeature in self.layer.getFeatures():
+            if existingFeature.id() != fid:
+                if existingFeature.attribute(fieldName) == value:
+                    return True  # Duplicate trouvé
+        return False  # Unique
 
     def showValidationErrors(self, errors: List[Dict[str, Any]]) -> None:
         """
