@@ -999,19 +999,21 @@ class Contexte(object):
 
     def countReportsByStatut(self, statut):
         """
-        Lance une QgsFeatureRequest pour sélectionner les signalements avec le statut donné en paramètre.
+        Compte le nombre de signalements ayant un statut donné en interrogeant directement la base SQLite.
+        Cette méthode est bien plus rapide que de charger toutes les features QGIS.
 
         :param statut: le statut du signalement
         :type statut: str
 
-        :return: le nombre de signalements sélectionnés dans la couche 'Signalement'
+        :return: le nombre de signalements dans la table 'Signalement' avec ce statut
         """
-        remLay = self.getLayerByName(cst.nom_Calque_Signalement)
-        if remLay is None:
-            return 0
-        expression = '"Statut" = \'' + statut + '\''
-        filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
-        return len(list(filtFeatures))
+        # Utilise la méthode SQLite pour compter directement dans la base
+        # Beaucoup plus rapide que de charger les features QGIS
+        return SQLiteManager.countRowsFromTableWithCondition(
+            cst.nom_Calque_Signalement,
+            'Statut',
+            statut
+        )
 
     def asSelectedFeaturesInMap(self) -> bool:
         """
