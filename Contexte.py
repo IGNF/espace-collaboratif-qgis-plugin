@@ -1000,7 +1000,6 @@ class Contexte(object):
     def countReportsByStatut(self, statut):
         """
         Compte le nombre de signalements ayant un statut donné en interrogeant directement la base SQLite.
-        Cette méthode est bien plus rapide que de charger toutes les features QGIS.
 
         :param statut: le statut du signalement
         :type statut: str
@@ -1008,7 +1007,7 @@ class Contexte(object):
         :return: le nombre de signalements dans la table 'Signalement' avec ce statut
         """
         # Utilise la méthode SQLite pour compter directement dans la base
-        # Beaucoup plus rapide que de charger les features QGIS
+        # plus rapide que de charger les features QGIS
         return SQLiteManager.countRowsFromTableWithCondition(
             cst.nom_Calque_Signalement,
             'Statut',

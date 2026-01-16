@@ -35,7 +35,7 @@ class TableViewConstraints:
         self.constraintsByField = {}
         self._buildConstraintsIndex()
         
-        # Configuration des validateurs (data-driven, pas de code dupliqué!)
+        # Configuration des validateurs 
         self._validatorConfig = {
             'nullable': {
                 'check': lambda c, v: c.get('nullable') is False and (v is None or v == '' or v == 'NULL'),
@@ -82,8 +82,7 @@ class TableViewConstraints:
         if not self.isConnected:
             # Connecte au signal d'édition démarré
             self.layer.editingStarted.connect(self.onEditingStarted)
-            # Connecte au signal d'édition arrêté
-            self.layer.editingStopped.connect(self.onEditingStopped)
+            
             # Connecte au signal de modification d'attribut (temps réel)
             self.layer.attributeValueChanged.connect(self.onAttributeValueChanged)
             # Connecte au signal avant validation des changements
@@ -97,7 +96,6 @@ class TableViewConstraints:
         if self.isConnected:
             try:
                 self.layer.editingStarted.disconnect(self.onEditingStarted)
-                self.layer.editingStopped.disconnect(self.onEditingStopped)
                 self.layer.attributeValueChanged.disconnect(self.onAttributeValueChanged)
                 self.layer.beforeCommitChanges.disconnect(self.validateBeforeCommit)
             except TypeError:
@@ -116,12 +114,6 @@ class TableViewConstraints:
                 level=Qgis.Info,
                 duration=3
             )
-
-    def onEditingStopped(self) -> None:
-        """
-        Appelé quand l'édition s'arrête sur la couche.
-        """
-        pass
 
     def onAttributeValueChanged(self, fid: int, fieldIndex: int, newValue: Any) -> None:
         """
@@ -335,12 +327,3 @@ class TableViewConstraints:
         msgBox.setInformativeText(errorMessage)
         msgBox.setStandardButtons(QMessageBox.Ok)
         msgBox.exec_()
-
-    def getConstraintForField(self, fieldName: str) -> Optional[Dict[str, Any]]:
-        """
-        Récupère la définition de contrainte pour un champ.
-
-        :param fieldName: Nom du champ
-        :return: Dictionnaire de contraintes ou None
-        """
-        return self.constraintsByField.get(fieldName)
