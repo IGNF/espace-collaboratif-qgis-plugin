@@ -1,6 +1,8 @@
 import time
+from qgis.core import QgsCoordinateReferenceSystem
 from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
+from .PluginLogger import PluginLogger
 from ..PluginHelper import PluginHelper
 
 
@@ -16,6 +18,10 @@ class WfsGet(object):
         :param parameters: les paramètres nécessaires pour lancer une requête HTTP GET
         :type parameters: dict
         """
+        self.__logger = PluginLogger("WfsGet").getPluginLogger()
+        self.context = None
+        if PluginHelper.keyExist('context', parameters):
+            self.context = parameters['context']
         if PluginHelper.keyExist('urlHostEspaceCo', parameters):
             self.urlHostEspaceCo = parameters['urlHostEspaceCo']
             self.url = parameters['urlHostEspaceCo'] + '/gcms/api/wfs'
@@ -139,7 +145,11 @@ class WfsGet(object):
             # si c'est une table standard (non BDUni) ou une extraction,
             # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
             if self.isStandard in (True, 1) or bExtraction is True:
-                totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
+                # Appliquer le filtrage géométrique fin pour les extractions
+                features_to_insert = response['features']
+                if bExtraction is True:
+                    features_to_insert = self.__filterFeaturesWithWorkArea(response['features'])
+                totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, features_to_insert)
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
             else:
@@ -175,6 +185,25 @@ class WfsGet(object):
                 if message == '':
                     message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
         return maxNumrec, message
+
+    def __filterFeaturesWithWorkArea(self, features) -> list:
+        """
+        Filtrer les objets en cherchant ceux qui intersectent la zone de travail.
+        Applique un filtre géométrique fin après le filtre BBox de la requête HTTP.
+
+        :param features: les objets retournés par la requête
+        :type features: list
+        :return: la liste des objets intersectant la géométrie réelle de la zone de travail
+        """
+        # Si pas de contexte, on ne peut pas filtrer
+        if self.context is None:
+            return features
+
+        # Import ici pour éviter les imports circulaires
+        from ..ToolsReport import ToolsReport
+        
+        target_crs = QgsCoordinateReferenceSystem.fromEpsgId(self.sridLayer)
+        return ToolsReport.filterWithWorkArea(self.context, features, geometryKey=self.geometryName, targetCrs=target_crs)
 
     def getMaxNumrec(self) -> int:
         """

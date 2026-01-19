@@ -878,7 +878,8 @@ class Contexte(object):
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
-                      'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid
+                      'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid,
+                      'context': self
                       }
         wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcmsGet(True)
