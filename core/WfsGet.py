@@ -169,7 +169,7 @@ class WfsGet(object):
             if response['stop']:
                 break
         # suppression des objets pour une table BDUni et différent d'une extraction
-        if self.isStandard in (False, 0) and bExtraction is False:
+        if self.isStandard in (False, 0) and not bExtraction:
             self.__makeRequestDeletedObjects()
         # nettoyage de la base SQLite
         SQLiteManager.vacuumDatabase()

@@ -176,7 +176,7 @@ class ToolsReport(object):
         # Fermer la patience
         self.__progress.close()
 
-        # Afficher les résultats
+        # Afficher les résultats (compte directement dans SQLite)
         self.__showImportResult()
 
     def __showImportResult(self) -> None:
