@@ -113,6 +113,22 @@ class EditFormFieldFromAttributes(object):
         expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 5]
         self.layer.setConstraintExpression(self.index, expressionAllConstraints)
 
+    def _addNullableCondition(self, expression, nullable) -> str:
+        """
+        Ajoute une condition pour accepter les valeurs NULL si le champ est nullable.
+        
+        :param expression: l'expression de contrainte existante
+        :type expression: str
+        
+        :param nullable: si True, le champ peut être NULL
+        :type nullable: bool
+        
+        :return: l'expression modifiée ou inchangée
+        """
+        if nullable:
+            return '"{}" is NULL or ({})'.format(self.name, expression)
+        return expression
+
     def getAllKeys(self, attributesSets) -> list:
         """
         Récupérer toutes les clés présentes dans au moins un sous-dictionnaire
@@ -413,8 +429,7 @@ class EditFormFieldFromAttributes(object):
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
         
         # Si le champ est nullable, ajouter une condition pour accepter NULL
-        if nullable:
-            expression = '"{}" is NULL or ({})'.format(self.name, expression)
+        expression = self._addNullableCondition(expression, nullable)
         
         # print('setFieldExpressionConstraintMinMaxValue')
         # print("name : {}".format(self.name))
@@ -481,8 +496,7 @@ class EditFormFieldFromAttributes(object):
         expression += " END"
 
         # Si le champ est nullable, ajouter une condition pour accepter NULL
-        if nullable:
-            expression = '"{}" is NULL or ({})'.format(self.name, expression)
+        expression = self._addNullableCondition(expression, nullable)
 
         # print('setFieldExpressionConstraintMapping')
         # print("name : {}".format(self.name))
@@ -546,8 +560,7 @@ class EditFormFieldFromAttributes(object):
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
 
         # Si le champ est nullable, ajouter une condition pour accepter NULL
-        if nullable:
-            expression = '"{}" is NULL or ({})'.format(self.name, expression)
+        expression = self._addNullableCondition(expression, nullable)
         
         print('setFieldExpressionConstraintMinMaxLength')
         print("name : {}".format(self.name))
@@ -580,8 +593,7 @@ class EditFormFieldFromAttributes(object):
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
 
         # Si le champ est nullable, ajouter une condition pour accepter NULL
-        if nullable:
-            expression = '"{}" is NULL or ({})'.format(self.name, expression)
+        expression = self._addNullableCondition(expression, nullable)
         
         if expression == '':
             expression = None
