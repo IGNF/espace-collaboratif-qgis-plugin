@@ -93,7 +93,7 @@ class SQLiteManager(object):
         projectFileName = os.path.splitext(fname)[0]
         dbName = f"{projectFileName}_espaceco"
         dbPath = os.path.join(projectDir, f"{dbName}.sqlite")
-        # Normalise les séparateurs de chemin en slashes pour la compatibilité avec les URI QGIS
+        # Normalisation du chemin pour SQLite
         dbPath = dbPath.replace('\\', '/')
         return dbPath
 
