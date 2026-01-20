@@ -115,30 +115,6 @@ class ToolsReport(object):
         data = query.multiple()
         return data
 
-    from qgis.core import (
-        QgsGeometry,
-        QgsCoordinateReferenceSystem,
-        QgsCoordinateTransform,
-        QgsProject
-    )
-
-    @staticmethod
-    def filterWithWorkArea(context, datas, geometryKey='geometry', targetCrs=None) -> list:
-        """
-        Filtrer les objets en cherchant ceux qui intersectent la zone de travail.
-        Cette méthode délègue à PluginHelper.filterWithWorkArea().
-
-        :param context: le contexte du projet utilisateur
-        :param datas: les objets retournés par la requête
-        :type datas: list
-        :param geometryKey: le nom de la clé contenant la géométrie dans les données
-        :type geometryKey: str
-        :param targetCrs: le CRS cible pour la transformation (si None, utilise WGS84/EPSG:4326)
-        :type targetCrs: QgsCoordinateReferenceSystem
-        :return: la liste des objets intersectant la géométrie réelle de la zone de travail
-        """
-        return PluginHelper.filterWithWorkArea(context, datas, geometryKey, targetCrs)
-
     def __filterObjectsWithWorkArea(self, datas) -> list:
         """
         Filtrer les objets en cherchant ceux qui intersectent la zone de travail.
@@ -147,7 +123,7 @@ class ToolsReport(object):
         :type datas: list
         :return: la liste des objets intersectant la géométrie réelle de la zone de travail
         """
-        return ToolsReport.filterWithWorkArea(self.__context, datas, geometryKey='geometry')
+        return PluginHelper.filterWithWorkArea(self.__context, datas, geometryKey='geometry')
 
     def download(self) -> None:
         """
