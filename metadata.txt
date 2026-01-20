@@ -7,30 +7,28 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=IGN_Espace_Collaboratif_DEV
-qgisMinimumVersion=3.0
+name=IGN_Espace_Collaboratif
+qgisMinimumVersion=3.4
 description=IGN reporting and contribution service, plugin QGIS3
-version=4.2.x
+version=5.0.1
 author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
 
 about=IGN reporting and contribution service
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/IGNF/espace-collaboratif-qgis-plugin/issues
+repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin
 # End of mandatory metadata
 
 # Recommended items:
 
 # Optional items:
-date=
+date=2026-01-14
 
 # Uncomment the following line and add your changelog:
 changelog=
-    4.2.x
-	4.1.1 - Installation avec compte Espace collaboratif
-    4.1.0 - Adaptation géoservices
+    5.0.1 - Ajout filtre spatial sur le guichet 
 
 # Tags are comma separated with spaces allowed
 tags=python

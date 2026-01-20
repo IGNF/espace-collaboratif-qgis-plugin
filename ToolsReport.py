@@ -92,7 +92,7 @@ class ToolsReport(object):
         """
         # filtre spatial
         bbox = BBox(self.__context)
-        box = bbox.getFromLayer(PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text, True, True)
+        box = bbox.getFromLayer(PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text, True, True)
         # si la box est à None alors, l'utilisateur veut extraire France entière
         # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
         # ne souhaite pas extraire les données France entière
@@ -115,13 +115,6 @@ class ToolsReport(object):
         data = query.multiple()
         return data
 
-    from qgis.core import (
-        QgsGeometry,
-        QgsCoordinateReferenceSystem,
-        QgsCoordinateTransform,
-        QgsProject
-    )
-
     def __filterObjectsWithWorkArea(self, datas) -> list:
         """
         Filtrer les objets en cherchant ceux qui intersectent la zone de travail.
@@ -130,44 +123,7 @@ class ToolsReport(object):
         :type datas: list
         :return: la liste des objets intersectant la géométrie réelle de la zone de travail
         """
-
-        # Récupération du calque de filtrage
-        layerFilter = self.__context.getLayerByName(
-            PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text
-        )
-
-        if layerFilter is None or layerFilter.featureCount() == 0:
-            # Pas de calque => extraction complète
-            return datas
-
-        # Fusion des géométries du calque
-        geometries = [f.geometry() for f in layerFilter.getFeatures()]
-        filterGeom = QgsGeometry.unaryUnion(geometries)
-
-        # Transformation vers WGS84 si nécessaire
-        layer_crs = layerFilter.crs()
-        wgs84_crs = QgsCoordinateReferenceSystem("EPSG:4326")
-
-        if layer_crs != wgs84_crs:
-            try:
-                transformer = QgsCoordinateTransform(layer_crs, wgs84_crs, QgsProject.instance())
-                filterGeom.transform(transformer)
-            except Exception as e:
-                self.__logger.warning(f"Erreur transformation CRS : {e}")
-                return datas  # En cas d'erreur, on retourne tout
-
-        # Filtrage des données par intersection
-        intersectingDatas = []
-        for data in datas:
-            if PluginHelper.keyExist('geometry', data):
-                try:
-                    geom_data = QgsGeometry.fromWkt(data['geometry'])
-                    if geom_data and geom_data.intersects(filterGeom):
-                        intersectingDatas.append(data)
-                except Exception as e:
-                    self.__logger.warning(f"Erreur WKT : {e}")
-
-        return intersectingDatas
+        return PluginHelper.filterWithWorkArea(self.__context, datas, geometryKey='geometry')
 
     def download(self) -> None:
         """
@@ -220,7 +176,7 @@ class ToolsReport(object):
         # Fermer la patience
         self.__progress.close()
 
-        # Afficher les résultats
+        # Afficher les résultats (compte directement dans SQLite)
         self.__showImportResult()
 
     def __showImportResult(self) -> None:

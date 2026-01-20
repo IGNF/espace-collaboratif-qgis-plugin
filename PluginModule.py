@@ -1,6 +1,7 @@
 import logging
 import os.path
 import configparser
+import webbrowser
 
 from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
@@ -442,7 +443,7 @@ class RipartPlugin:
 
         :return: message de fin de transaction
         """
-        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
+        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text)
         # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
         # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
         bNormalWfsPost = False
@@ -886,7 +887,7 @@ class RipartPlugin:
             progress.setValue(1)
             headers = {
                 'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
-            spatialFilterName = PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text
+            spatialFilterName = PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text
             i = 0
             for layer in layersToSynchronize:
                 i += 1
@@ -991,10 +992,9 @@ class RipartPlugin:
 
     def __showHelp(self) -> None:
         """
-        Ouvre le document d'aide utilisateur du plugin.
+        Ouvre la documentation en ligne dans le navigateur.
         """
-        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "files", PluginHelper.ripart_help_file))
-        PluginHelper.open_file(file_path)
+        webbrowser.open(PluginHelper.ripart_help_file)
 
     def __showLog(self) -> None:
         """
