@@ -8,9 +8,9 @@
 
 [general]
 name=IGN_Espace_Collaboratif
-qgisMinimumVersion=3.0
+qgisMinimumVersion=3.4
 description=IGN reporting and contribution service, plugin QGIS3
-version=5.0.0
+version=5.0.1
 author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
@@ -28,7 +28,7 @@ date=2026-01-14
 
 # Uncomment the following line and add your changelog:
 changelog=
-    5.0.0 - Passage a la nouvelle API collaborative
+    5.0.1 - Ajout filtre spatial sur le guichet 
 
 # Tags are comma separated with spaces allowed
 tags=python

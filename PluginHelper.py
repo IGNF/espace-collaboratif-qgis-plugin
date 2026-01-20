@@ -727,6 +727,67 @@ class PluginHelper:
                 print(f"{layer.name()} → couche invalide")
 
     @staticmethod
+    def filterWithWorkArea(context, datas, geometryKey='geometry', targetCrs=None) -> list:
+        """
+        Filtrer les objets en cherchant ceux qui intersectent la zone de travail.
+        Méthode statique réutilisable depuis d'autres modules.
+
+        :param context: le contexte du projet utilisateur
+        :param datas: les objets retournés par la requête
+        :type datas: list
+        :param geometryKey: le nom de la clé contenant la géométrie dans les données
+        :type geometryKey: str
+        :param targetCrs: le CRS cible pour la transformation (si None, utilise WGS84/EPSG:4326)
+        :type targetCrs: QgsCoordinateReferenceSystem
+        :return: la liste des objets intersectant la géométrie réelle de la zone de travail
+        """
+        from qgis.core import (
+            QgsGeometry,
+            QgsCoordinateReferenceSystem,
+            QgsCoordinateTransform
+        )
+        
+        # Récupération du calque de filtrage
+        layerFilter = context.getLayerByName(
+            PluginHelper.load_XmlTag(context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text
+        )
+
+        if layerFilter is None or layerFilter.featureCount() == 0:
+            # Pas de calque => extraction complète
+            return datas
+
+        # Fusion des géométries du calque
+        geometries = [f.geometry() for f in layerFilter.getFeatures()]
+        filterGeom = QgsGeometry.unaryUnion(geometries)
+
+        # Transformation vers le CRS cible si nécessaire
+        layer_crs = layerFilter.crs()
+        if targetCrs is None:
+            targetCrs = QgsCoordinateReferenceSystem("EPSG:4326")
+
+        if layer_crs != targetCrs:
+            try:
+                transformer = QgsCoordinateTransform(layer_crs, targetCrs, QgsProject.instance())
+                filterGeom.transform(transformer)
+            except Exception as e:
+                PluginHelper.logger.warning(f"Erreur transformation CRS : {e}")
+                return datas  # En cas d'erreur, on retourne tout
+
+        # Filtrage des données par intersection
+        intersectingDatas = []
+        for data in datas:
+            if PluginHelper.keyExist(geometryKey, data):
+                try:
+                    from qgis.core import QgsGeometry
+                    geom_data = QgsGeometry.fromWkt(data[geometryKey])
+                    if geom_data and geom_data.intersects(filterGeom):
+                        intersectingDatas.append(data)
+                except Exception as e:
+                    PluginHelper.logger.warning(f"Erreur WKT : {e}")
+
+        return intersectingDatas
+
+    @staticmethod
     def setCursor():
         """
         Restaure tous les curseurs empilés en fonction du nombre réel de curseurs empilés
