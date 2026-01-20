@@ -126,7 +126,7 @@ class ToolsReport(object):
     def filterWithWorkArea(context, datas, geometryKey='geometry', targetCrs=None) -> list:
         """
         Filtrer les objets en cherchant ceux qui intersectent la zone de travail.
-        Méthode statique réutilisable depuis d'autres modules.
+        Cette méthode délègue à PluginHelper.filterWithWorkArea().
 
         :param context: le contexte du projet utilisateur
         :param datas: les objets retournés par la requête
@@ -137,46 +137,7 @@ class ToolsReport(object):
         :type targetCrs: QgsCoordinateReferenceSystem
         :return: la liste des objets intersectant la géométrie réelle de la zone de travail
         """
-        logger = PluginLogger("ToolsReport").getPluginLogger()
-        
-        # Récupération du calque de filtrage
-        layerFilter = context.getLayerByName(
-            PluginHelper.load_XmlTag(context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text
-        )
-
-        if layerFilter is None or layerFilter.featureCount() == 0:
-            # Pas de calque => extraction complète
-            return datas
-
-        # Fusion des géométries du calque
-        geometries = [f.geometry() for f in layerFilter.getFeatures()]
-        filterGeom = QgsGeometry.unaryUnion(geometries)
-
-        # Transformation vers le CRS cible si nécessaire
-        layer_crs = layerFilter.crs()
-        if targetCrs is None:
-            targetCrs = QgsCoordinateReferenceSystem("EPSG:4326")
-
-        if layer_crs != targetCrs:
-            try:
-                transformer = QgsCoordinateTransform(layer_crs, targetCrs, QgsProject.instance())
-                filterGeom.transform(transformer)
-            except Exception as e:
-                logger.warning(f"Erreur transformation CRS : {e}")
-                return datas  # En cas d'erreur, on retourne tout
-
-        # Filtrage des données par intersection
-        intersectingDatas = []
-        for data in datas:
-            if PluginHelper.keyExist(geometryKey, data):
-                try:
-                    geom_data = QgsGeometry.fromWkt(data[geometryKey])
-                    if geom_data and geom_data.intersects(filterGeom):
-                        intersectingDatas.append(data)
-                except Exception as e:
-                    logger.warning(f"Erreur WKT : {e}")
-
-        return intersectingDatas
+        return PluginHelper.filterWithWorkArea(context, datas, geometryKey, targetCrs)
 
     def __filterObjectsWithWorkArea(self, datas) -> list:
         """

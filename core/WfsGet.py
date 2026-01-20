@@ -199,11 +199,8 @@ class WfsGet(object):
         if self.context is None:
             return features
 
-        # Import ici pour éviter les imports circulaires
-        from ..ToolsReport import ToolsReport
-        
         target_crs = QgsCoordinateReferenceSystem.fromEpsgId(self.sridLayer)
-        return ToolsReport.filterWithWorkArea(self.context, features, geometryKey=self.geometryName, targetCrs=target_crs)
+        return PluginHelper.filterWithWorkArea(self.context, features, geometryKey=self.geometryName, targetCrs=target_crs)
 
     def getMaxNumrec(self) -> int:
         """
