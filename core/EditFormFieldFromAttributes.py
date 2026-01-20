@@ -395,8 +395,7 @@ class EditFormFieldFromAttributes(object):
 
         :return: l'expression mise en forme
         """
-        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or \
-                self.name == self.layer.idNameForDatabase:
+        if (minValue in (None, '') and maxValue in (None, '')) or self.name == self.layer.idNameForDatabase:
             return 'None'
 
         if vType == 'DateTime':
@@ -534,9 +533,7 @@ class EditFormFieldFromAttributes(object):
 
         :return: l'expression mise en forme
         """
-        if (minLength is None and maxLength is None) or \
-                (minLength == '' and maxLength == '') or \
-                self.name == self.layer.idNameForDatabase:
+        if (minLength in (None, '') and maxLength in (None, '')) or self.name == self.layer.idNameForDatabase:
             return 'None'
 
         listExpressions = []

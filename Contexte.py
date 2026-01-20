@@ -34,6 +34,7 @@ from .core.DynamicProgressBar import DynamicProgressBar
 from .core.ign_keycloak.KeycloakService import KeycloakService
 from .core.FlagProject import FlagProject
 from .Import_WMSR import ImportWMSR
+from .TableViewConstraints import TableViewConstraints
 from .PluginHelper import PluginHelper
 from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
@@ -878,7 +879,8 @@ class Contexte(object):
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
-                      'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid
+                      'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid,
+                      'context': self
                       }
         wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcmsGet(True)
@@ -905,6 +907,12 @@ class Contexte(object):
         efffa = EditFormFieldFromAttributes(newVectorLayer, layer.attributes)
         # print("layer.attributes:\n{}".format(layer.attributes))
         efffa.readDataAndApplyConstraints()
+
+        # Ajout du gestionnaire de contraintes pour la vue tabulaire
+        tableConstraints = TableViewConstraints(newVectorLayer, layer.attributes)
+        tableConstraints.connectSignals()
+        # Stocker le gestionnaire pour éviter qu'il soit supprimé par le garbage collector
+        newVectorLayer.tableConstraintsHandler = tableConstraints
 
         # Modification de la symbologie de la couche
         listOfValuesFromItemStyle = layer.getListOfValuesFromItemStyle()
@@ -992,19 +1000,20 @@ class Contexte(object):
 
     def countReportsByStatut(self, statut):
         """
-        Lance une QgsFeatureRequest pour sélectionner les signalements avec le statut donné en paramètre.
+        Compte le nombre de signalements ayant un statut donné en interrogeant directement la base SQLite.
 
         :param statut: le statut du signalement
         :type statut: str
 
-        :return: le nombre de signalements sélectionnés dans la couche 'Signalement'
+        :return: le nombre de signalements dans la table 'Signalement' avec ce statut
         """
-        remLay = self.getLayerByName(cst.nom_Calque_Signalement)
-        if remLay is None:
-            return 0
-        expression = '"Statut" = \'' + statut + '\''
-        filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
-        return len(list(filtFeatures))
+        # Utilise la méthode SQLite pour compter directement dans la base
+        # plus rapide que de charger les features QGIS
+        return SQLiteManager.countRowsFromTableWithCondition(
+            cst.nom_Calque_Signalement,
+            'Statut',
+            statut
+        )
 
     def asSelectedFeaturesInMap(self) -> bool:
         """
