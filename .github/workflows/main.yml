@@ -1,30 +1,42 @@
 name: Release QGIS Plugin
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types: [published]
 
 jobs:
   deploy:
+    name: "🚀 Deploy QGIS Plugin"
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: Install qgis-plugin-ci
         run: pip install qgis-plugin-ci
 
-      - name: Deploy plugin to QGIS and GitHub
+      - name: Deploy plugin to QGIS repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OSGEO_USER: ${{ secrets.OSGEO_USER }}
+          OSGEO_PASSWORD: ${{ secrets.OSGEO_PASSWORD }}
         run: |
-          qgis-plugin-ci release "${GITHUB_REF/refs\/tags\//}" \
-            --github-token "${{ secrets.GITHUB_TOKEN }}" \
-            --create-plugin-repo-release \
-            --osgeo-username "${{ secrets.OSGEO_USER }}" \
-            --osgeo-password "${{ secrets.OSGEO_PASSWORD }}"
+          qgis-plugin-ci release "${{ github.event.release.tag_name }}" \
+            --github-token "$GITHUB_TOKEN" \
+            --osgeo-username "$OSGEO_USER" \
+            --osgeo-password "$OSGEO_PASSWORD"
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qgis-plugin-${{ github.ref_name }}
+          path: '*.zip'
+          retention-days: 90
