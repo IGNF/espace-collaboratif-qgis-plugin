@@ -28,7 +28,7 @@ date=2026-01-14
 
 # Uncomment the following line and add your changelog:
 changelog=
-    5.0.1 - Ajout filtre spatial sur le guichet 
+    5.0.1 - Ajout d’un filtre spatial sur le guichet, ajout d’une option de téléchargement public et correction d’un bug lié aux attributs NULL. 
 
 # Tags are comma separated with spaces allowed
 tags=python

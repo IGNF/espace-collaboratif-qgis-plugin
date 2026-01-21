@@ -105,7 +105,7 @@ class ToolsReport(object):
         # Pour un utilisateur sans groupe, il n'y a pas de filtre sur l'identifiant de groupe -> il faut récupérer tous
         # les signalements,
         # pour un utilisateur avec groupes, il faut filtrer les signalements sur l'identifiant de groupe sélectionné
-        if self.__context.getUserCommunity().getId() != -1:
+        if self.__context.getUserCommunity().getId() != -1 and not self.__context.getIncludePublicReports():
             query.setCommunity(self.__context.getUserCommunity().getId())
         query.setPage(1)
         query.setLimit(100)

@@ -90,6 +90,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         if index > 0:
             self.comboBoxWorkZone.setCurrentIndex(index)
 
+
+
+
+
+
+
+
+
+
     def setButtonsTextAndConnect(self) -> None:
         """
         Modification de l'intitulé des boutons Save et Cancel.
@@ -109,7 +118,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         L'utilisateur veut importer sa zone de travail à partir d'un fichier shapefile.
         L'outil propose l'import et vérifie si les conditions d'import d'une nouvelle zone sont respectées :
          - si c'est un fichier .shp
-         - si la zone contenue dan sle fichier est de type polygone
+         - si la zone contenue dans le fichier est de type polygone
          - si la zone existe déjà dans le projet
         """
         self.__newShapefilesDict.clear()
@@ -252,6 +261,12 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         :return: l'identifiant et le nom du groupe de l'utilisateur en fonction de son choix
         """
         return self.__idSelectedCommunity, self.__nameSelectedCommunity
+
+    def getIncludePublicReports(self) -> bool:
+        """
+        :return: l'état de la checkbox des signalements publiques (True si cochée, False sinon)
+        """
+        return self.checkBox.isChecked()
 
     def cancel(self) -> None:
         """
