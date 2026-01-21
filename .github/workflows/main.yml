@@ -1,8 +1,9 @@
 name: Release QGIS Plugin
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'  # Déclenche sur tous les tags commençant par 'v'
 
 jobs:
   deploy:
