@@ -1,22 +1,3 @@
 plugin_path: .
 github_organization_slug: IGNF
 project_slug: espace-collaboratif-qgis-plugin
-
-exclude_patterns:
-  - .github/*
-  - .git/*
-  - .gitignore
-  - .qgis-plugin-ci
-  - requirements/*
-  - test/*
-  - tests/*
-  - scripts/*
-  - docs/*
-  - help/*
-  - .vscode/*
-  - README.md
-  - CONTRIBUTING.md
-  - Makefile
-  - pb_tool.cfg
-  - pylintrc
-  - plugin_upload.py
