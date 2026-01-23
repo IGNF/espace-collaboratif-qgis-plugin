@@ -93,7 +93,7 @@ class SQLiteManager(object):
         projectFileName = os.path.splitext(fname)[0]
         dbName = f"{projectFileName}_espaceco"
         dbPath = os.path.join(projectDir, f"{dbName}.sqlite")
-        # Normalisation du chemin pour SQLite 
+        # Normalisation du chemin pour SQLite
         dbPath = dbPath.replace('\\', '/')
         return dbPath
 
@@ -592,6 +592,38 @@ class SQLiteManager(object):
         cursor.close()
         connection.close()
         return result
+
+    @staticmethod
+    def countRowsFromTableWithCondition(tableName, conditionColumn, conditionValue) -> int:
+        """
+        Retourne le nombre de lignes d'une table selon une condition d'égalité.
+
+        :param tableName: nom de la table
+        :type tableName: str
+
+        :param conditionColumn: nom de la colonne faisant partie de la condition
+        :type conditionColumn: str
+
+        :param conditionValue: la valeur de la condition d'égalité
+        :type conditionValue: str
+
+        :return: nombre de lignes ou 0 si erreur
+        """
+        if not SQLiteManager.isTableExist(tableName):
+            return 0
+        try:
+            tName = SQLiteManager.echap(tableName)
+            cValue = SQLiteManager.echap(conditionValue)
+            sql = u"SELECT COUNT(*) FROM {0} WHERE {1} = '{2}'".format(tName, conditionColumn, cValue)
+            connection = SQLiteManager.sqlite3Connect()
+            cursor = connection.cursor()
+            cursor.execute(sql)
+            result = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            return result[0] if result else 0
+        except Exception as e:
+            return 0
 
     @staticmethod
     def echap(strToEchap):

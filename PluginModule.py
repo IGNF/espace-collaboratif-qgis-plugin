@@ -447,7 +447,7 @@ class RipartPlugin:
 
         :return: message de fin de transaction
         """
-        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text)
+        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text)
         # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
         # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
         bNormalWfsPost = False
@@ -1015,7 +1015,7 @@ class RipartPlugin:
             progress.setValue(1)
             headers = {
                 'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
-            spatialFilterName = PluginHelper.load_CalqueFiltrage(self.__context.projectDir).text
+            spatialFilterName = PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text
             i = 0
             for layer in layersToSynchronize:
                 i += 1

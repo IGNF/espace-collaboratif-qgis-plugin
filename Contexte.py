@@ -34,6 +34,7 @@ from .core.DynamicProgressBar import DynamicProgressBar
 from .core.ign_keycloak.KeycloakService import KeycloakService
 from .core.FlagProject import FlagProject
 from .Import_WMSR import ImportWMSR
+from .TableViewConstraints import TableViewConstraints
 from .PluginHelper import PluginHelper
 from .FormInfo import FormInfo
 from .FormChoixGroupe import FormChoixGroupe
@@ -113,6 +114,7 @@ class Contexte(object):
         self.__activeCommunityName = ''
         self.__userName = ''
         self.__listNameOfCommunities = None
+        self.__includePublicReports = False
         self.__mapToolsReport = None
         self.__smartCutTool = None
         self.__communities = None
@@ -254,6 +256,24 @@ class Contexte(object):
         :return: le nom du groupe actif de l'utilisateur
         """
         return self.__activeCommunityName
+
+    def setIncludePublicReports(self, include):
+        """
+        Affecte le choix de l'utilisateur concernant l'inclusion des signalements publiques.
+        
+        :param self: Description
+        :param include: Description
+        """
+        self.__includePublicReports = include
+
+    def getIncludePublicReports(self):
+        """
+        :return: le choix de l'utilisateur concernant l'inclusion des signalements publiques.
+        """
+        return self.__includePublicReports
+
+
+
 
     def __setUrlHostEspaceCo(self) -> str:
         """
@@ -403,6 +423,9 @@ class Contexte(object):
                 # Le nouvel id et nom du groupe sont retournés dans un tuple idNameCommunity
                 idNameCommunity = dlgSelectedCommunities.getIdAndNameFromSelectedCommunity()
 
+                # On enregistre le choix de l'inclusion des signalements publiques
+                self.setIncludePublicReports(dlgSelectedCommunities.getIncludePublicReports())
+
                 # La communauté de l'utilisateur est stocké dans le contexte
                 self.setUserCommunity(communities.getUserCommunity(idNameCommunity[1]))
                 self.setActiveCommunityName(idNameCommunity[1])
@@ -411,6 +434,10 @@ class Contexte(object):
                 PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_GroupeActif, idNameCommunity[1],
                                             PluginHelper.xml_Serveur)
                 self.setActiveCommunityName(idNameCommunity[1])
+
+                # Sauvegarde du login actif dans le xml du projet utilisateur
+                PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Login, self.getUserNameCommunity(),
+                                            PluginHelper.xml_Serveur)
 
                 # On enregistre le groupe comme groupe préféré pour la création de signalement
                 # Si ce n'est pas le même qu'avant, on vide les thèmes préférés
@@ -460,9 +487,9 @@ class Contexte(object):
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))
-        # dlgInfo.textInfo.append("Login : {}".format(self.login))
+        dlgInfo.textInfo.append("Login : {}".format(self.getUserNameCommunity()))
         dlgInfo.textInfo.append("Groupe : {}".format(self.getUserCommunity().getName()))
-        zoneExtraction = PluginHelper.load_CalqueFiltrage(self.projectDir).text
+        zoneExtraction = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text
         if zoneExtraction == "" or zoneExtraction is None or len(
                 self.QgsProject.instance().mapLayersByName(zoneExtraction)) == 0:
             dlgInfo.textInfo.append("Zone de travail : pas de zone définie")
@@ -893,7 +920,8 @@ class Contexte(object):
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
-                      'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid
+                      'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid,
+                      'context': self
                       }
         wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcmsGet(True)
@@ -920,6 +948,12 @@ class Contexte(object):
         efffa = EditFormFieldFromAttributes(newVectorLayer, layer.attributes)
         # print("layer.attributes:\n{}".format(layer.attributes))
         efffa.readDataAndApplyConstraints()
+
+        # Ajout du gestionnaire de contraintes pour la vue tabulaire
+        tableConstraints = TableViewConstraints(newVectorLayer, layer.attributes)
+        tableConstraints.connectSignals()
+        # Stocker le gestionnaire pour éviter qu'il soit supprimé par le garbage collector
+        newVectorLayer.tableConstraintsHandler = tableConstraints
 
         # Modification de la symbologie de la couche
         listOfValuesFromItemStyle = layer.getListOfValuesFromItemStyle()
@@ -1007,19 +1041,20 @@ class Contexte(object):
 
     def countReportsByStatut(self, statut):
         """
-        Lance une QgsFeatureRequest pour sélectionner les signalements avec le statut donné en paramètre.
+        Compte le nombre de signalements ayant un statut donné en interrogeant directement la base SQLite.
 
         :param statut: le statut du signalement
         :type statut: str
 
-        :return: le nombre de signalements sélectionnés dans la couche 'Signalement'
+        :return: le nombre de signalements dans la table 'Signalement' avec ce statut
         """
-        remLay = self.getLayerByName(cst.nom_Calque_Signalement)
-        if remLay is None:
-            return 0
-        expression = '"Statut" = \'' + statut + '\''
-        filtFeatures = remLay.getFeatures(QgsFeatureRequest().setFilterExpression(expression))
-        return len(list(filtFeatures))
+        # Utilise la méthode SQLite pour compter directement dans la base
+        # plus rapide que de charger les features QGIS
+        return SQLiteManager.countRowsFromTableWithCondition(
+            cst.nom_Calque_Signalement,
+            'Statut',
+            statut
+        )
 
     def asSelectedFeaturesInMap(self) -> bool:
         """

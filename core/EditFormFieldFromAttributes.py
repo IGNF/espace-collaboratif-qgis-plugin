@@ -83,10 +83,10 @@ class EditFormFieldFromAttributes(object):
             self.setFieldSwitchType(v['type'], v['default_value'], v['jeux_attributs'])
             self.setFieldConstraintNotNull(v['nullable'])
             self.setFieldConstraintUnique(v['unique'])
-            constraints = [self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length']),
-                           self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type']),
-                           self.setFieldExpressionConstraintPattern(v['pattern']),
-                           self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field']),
+            constraints = [self.setFieldExpressionConstraintMinMaxLength(v['min_length'], v['max_length'], v['nullable']),
+                           self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type'], v['nullable']),
+                           self.setFieldExpressionConstraintPattern(v['pattern'], v['nullable']),
+                           self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'], v['nullable']),
                            self.setFieldExpressionConstraintAttributesSets(v['jeux_attributs'])]
             self.setFieldAllConstraints(constraints)
             self.setFieldListOfValues(v['enum'], v['default_value'])
@@ -112,6 +112,22 @@ class EditFormFieldFromAttributes(object):
         # Il faut enlever le dernier AND inutile
         expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 5]
         self.layer.setConstraintExpression(self.index, expressionAllConstraints)
+
+    def _addNullableCondition(self, expression, nullable) -> str:
+        """
+        Ajoute une condition pour accepter les valeurs NULL si le champ est nullable.
+        
+        :param expression: l'expression de contrainte existante
+        :type expression: str
+        
+        :param nullable: si True, le champ peut être NULL
+        :type nullable: bool
+        
+        :return: l'expression modifiée ou inchangée
+        """
+        if nullable:
+            return '"{}" is NULL or ({})'.format(self.name, expression)
+        return expression
 
     def getAllKeys(self, attributesSets) -> list:
         """
@@ -349,7 +365,7 @@ class EditFormFieldFromAttributes(object):
     Il faut avoir : "date_nom" >= '2020-06-01' and "date_nom" <= '2021-06-30' 
     '''
 
-    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType) -> str:
+    def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType, nullable=False) -> str:
         """
         Applique une contrainte d'expression de valeurs minimale et maximale au champ en cours.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Expression (min_value/max_value) ]
@@ -374,10 +390,12 @@ class EditFormFieldFromAttributes(object):
         :param vType: valeur du type de champ
         :type vType: str
 
+        :param nullable: si True, le champ peut être NULL
+        :type nullable: bool
+
         :return: l'expression mise en forme
         """
-        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or \
-                self.name == self.layer.idNameForDatabase:
+        if (minValue in (None, '') and maxValue in (None, '')) or self.name == self.layer.idNameForDatabase:
             return 'None'
 
         if vType == 'DateTime':
@@ -408,6 +426,10 @@ class EditFormFieldFromAttributes(object):
             expression = listExpressions[0]
         else:
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
+        
+        # Si le champ est nullable, ajouter une condition pour accepter NULL
+        expression = self._addNullableCondition(expression, nullable)
+        
         # print('setFieldExpressionConstraintMinMaxValue')
         # print("name : {}".format(self.name))
         # print("minValue : {}".format(minValue))
@@ -415,7 +437,7 @@ class EditFormFieldFromAttributes(object):
         # print("expression : {}".format(expression))
         return expression
 
-    def setFieldExpressionConstraintMapping(self, constraintField, conditionField) -> str:
+    def setFieldExpressionConstraintMapping(self, constraintField, conditionField, nullable=False) -> str:
         """
         Ajout d'une contrainte qui vérifie que pour la valeur d'un champ correspond une ou plusieurs valeurs
         d'un autre champ.
@@ -439,6 +461,9 @@ class EditFormFieldFromAttributes(object):
 
         :param conditionField: le champ qui porte la condition, si None, sortie de fonction
         :type conditionField: str
+
+        :param nullable: si True, le champ peut être NULL
+        :type nullable: bool
 
         :return: la contrainte par expression
         """
@@ -469,6 +494,9 @@ class EditFormFieldFromAttributes(object):
                 expression += ' THEN array_contains(array({}),"{}")'.format(values[0:len(values) - 1], self.name)
         expression += " END"
 
+        # Si le champ est nullable, ajouter une condition pour accepter NULL
+        expression = self._addNullableCondition(expression, nullable)
+
         # print('setFieldExpressionConstraintMapping')
         # print("name : {}".format(self.name))
         # print("constraintField : {}".format(constraintField))
@@ -486,7 +514,7 @@ class EditFormFieldFromAttributes(object):
         print("attributesSets : {}".format(attributesSets))
         return expression
 
-    def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength) -> str:
+    def setFieldExpressionConstraintMinMaxLength(self, minLength, maxLength, nullable=False) -> str:
         """
         Applique au champ en cours une contrainte de longueur minimum et maximum.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Expression (minLength/maxLength)
@@ -500,11 +528,12 @@ class EditFormFieldFromAttributes(object):
         :param maxLength: longueur maximum, si None ou vide : sortie de fonction
         :type maxLength: str
 
+        :param nullable: si True, le champ peut être NULL
+        :type nullable: bool
+
         :return: l'expression mise en forme
         """
-        if (minLength is None and maxLength is None) or \
-                (minLength == '' and maxLength == '') or \
-                self.name == self.layer.idNameForDatabase:
+        if (minLength in (None, '') and maxLength in (None, '')) or self.name == self.layer.idNameForDatabase:
             return 'None'
 
         listExpressions = []
@@ -527,18 +556,18 @@ class EditFormFieldFromAttributes(object):
         else:
             expression = "{} and {}".format(listExpressions[0], listExpressions[1])
 
-        # Cas particulier des string nullable
-        # if bNullable is True:
-        #     expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name,
-        #                                                                                            expression)
+        # Si le champ est nullable, ajouter une condition pour accepter NULL
+        expression = self._addNullableCondition(expression, nullable)
+        
         print('setFieldExpressionConstraintMinMaxLength')
         print("name : {}".format(self.name))
         print("minLength : {}".format(minLength))
         print("maxLength : {}".format(maxLength))
+        print("nullable : {}".format(nullable))
         print("expression : {}".format(expression))
         return expression
 
-    def setFieldExpressionConstraintPattern(self, pattern) -> str:
+    def setFieldExpressionConstraintPattern(self, pattern, nullable=False) -> str:
         """
         Ajout d'un modèle de contrainte sur le champ en cours.
         Voir [ Couche/Propriétés.../Formulaire d'attributs/Contraintes > Expression ]
@@ -549,6 +578,9 @@ class EditFormFieldFromAttributes(object):
         :param pattern: le modèle de contrainte, si None ou vide : sortie de fonction
         :type pattern: str
 
+        :param nullable: si True, le champ peut être NULL
+        :type nullable: bool
+
         :return: l'expression mise en forme
         """
         if pattern is None or pattern == '' or self.name == self.layer.idNameForDatabase:
@@ -557,13 +589,15 @@ class EditFormFieldFromAttributes(object):
         newPattern = pattern.replace('\\', '\\\\')
         expression = "regexp_match(\"{}\", '{}') != 0".format(self.name, newPattern)
 
-        # if vType == 'String' and bNullable is True:
-        #     expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or {1}".format(self.name,
-        #     expression)
+        # Si le champ est nullable, ajouter une condition pour accepter NULL
+        expression = self._addNullableCondition(expression, nullable)
+        
         if expression == '':
             expression = None
         else:
             print('setFieldExpressionConstraintPattern')
+            print("pattern : {}".format(pattern))
+            print("nullable : {}".format(nullable))
             print("expression : {}".format(expression))
         return expression
 
