@@ -118,9 +118,23 @@ class HttpRequest(object):
                     # le parametre offset est mis à 0, car la récupération des données est finie
                     return {'status': 'ok', 'offset': 0, 'features': response, 'stop': True}
             else:
-                return {'status': 'error', 'reason': r.reason, 'url': r.url}
+                # Detailed error information
+                return {
+                    'status': 'error',
+                    'reason': r.reason,
+                    'code': r.status_code,
+                    'url': r.url,
+                    'details': r.text[:500] if len(r.text) > 0 else 'No response body'
+                }
         except Exception as e:
-            return {'status': 'error'}
+            HttpRequest.logger.error("Request error: {}".format(str(e)))
+            return {
+                'status': 'error',
+                'reason': str(e),
+                'code': 'EXCEPTION',
+                'url': url,
+                'details': str(type(e).__name__)
+            }
 
     @staticmethod
     def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> Response:
@@ -153,6 +167,22 @@ class HttpRequest(object):
         try:
             print("HttpRequest.makeHttpRequest.files : {}".format(files))
             print("HttpRequest.makeHttpRequest.data : {}".format(data))
+            
+            # DEBUG: Log request details
+            print("\n=== makeHttpRequest DEBUG START ===")
+            print("LaunchedBy: {}".format(launchBy))
+            print("URL: {}".format(url))
+            print("Params: {}".format(params))
+            print("Headers: {}".format(headers))
+            print("Proxies: {}".format(proxies))
+            
+            HttpRequest.logger.debug("=== makeHttpRequest DEBUG START ===")
+            HttpRequest.logger.debug("LaunchedBy: {}".format(launchBy))
+            HttpRequest.logger.debug("URL: {}".format(url))
+            HttpRequest.logger.debug("Params: {}".format(params))
+            HttpRequest.logger.debug("Headers: {}".format(headers))
+            HttpRequest.logger.debug("Proxies: {}".format(proxies))
+            
             if launchBy == 'gcmsPatch':
                 response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=False)
             elif data is None and files is None:
@@ -162,15 +192,40 @@ class HttpRequest(object):
             else:
                 response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=False)
 
+            # DEBUG: Log response details
+            print("Response status: {}".format(response.status_code))
+            print("Response reason: {}".format(response.reason))
+            print("Response URL: {}".format(response.url))
+            print("Response headers: {}".format(response.headers))
+            print("Response text (first 500 chars): {}".format(response.text[:500]))
+            
+            HttpRequest.logger.debug("Response status: {}".format(response.status_code))
+            HttpRequest.logger.debug("Response reason: {}".format(response.reason))
+            HttpRequest.logger.debug("Response URL: {}".format(response.url))
+            HttpRequest.logger.debug("Response headers: {}".format(response.headers))
+            HttpRequest.logger.debug("Response text (first 500 chars): {}".format(response.text[:500]))
+            
             if response.status_code != 200 and response.status_code != 201 and response.status_code != 206:
                 message = "{}:makeHttpRequest [{}]".format(launchBy, response.text)
+                print("ERROR: {}".format(message))
+                print("Request failed with status {}, URL: {}".format(response.status_code, url))
+                print("=== makeHttpRequest DEBUG END (ERROR) ===\n")
                 HttpRequest.logger.error(message)
+                HttpRequest.logger.error("Request failed with status {}, URL: {}".format(response.status_code, url))
+                HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (ERROR) ===")
                 raise Exception(message)
 
             response.encoding = 'utf-8'
+            print("=== makeHttpRequest DEBUG END (SUCCESS) ===\n")
+            HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (SUCCESS) ===")
 
         except Exception as e:
-            HttpRequest.logger.error(format(e))
+            print("EXCEPTION in makeHttpRequest: {}".format(format(e)))
+            print("Request details - URL: {}, LaunchedBy: {}".format(url, launchBy))
+            print("=== makeHttpRequest DEBUG END (EXCEPTION) ===\n")
+            HttpRequest.logger.error("Exception in makeHttpRequest: {}".format(format(e)))
+            HttpRequest.logger.error("Request details - URL: {}, LaunchedBy: {}".format(url, launchBy))
+            HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (EXCEPTION) ===")
             raise Exception(format(e))
 
         return response
