@@ -118,8 +118,8 @@ class Ui_DialogSmartCutConfig(object):
     # setupUi
 
     def retranslateUi(self, DialogSmartCutConfig):
-        DialogSmartCutConfig.setWindowTitle(QCoreApplication.translate("DialogSmartCutConfig", u"Configuration - D\u00e9coupe intelligente", None))
-        self.labelTitle.setText(QCoreApplication.translate("DialogSmartCutConfig", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">Configuration de la d\u00e9coupe intelligente</span></p></body></html>", None))
+        DialogSmartCutConfig.setWindowTitle(QCoreApplication.translate("DialogSmartCutConfig", u"Configuration - D\u00e9coupe", None))
+        self.labelTitle.setText(QCoreApplication.translate("DialogSmartCutConfig", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">Configuration de la d\u00e9coupe</span></p></body></html>", None))
         self.labelDescription.setText(QCoreApplication.translate("DialogSmartCutConfig", u"S\u00e9lectionnez les attributs qui doivent rester uniques.\n"
 "Lors d'une d\u00e9coupe, ces attributs ne seront conserv\u00e9s que sur le plus grand morceau (polygone) ou le segment le plus long (ligne).", None))
         self.groupBoxLayer.setTitle(QCoreApplication.translate("DialogSmartCutConfig", u"Attributs de la couche active", None))
