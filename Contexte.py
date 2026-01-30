@@ -753,16 +753,40 @@ class Contexte(object):
 
         :return: True si la suppression a pu s'effectuer, False si l'utilisateur change d'avis
         """
+        from .Import_WMTS import importWMTS
+        from .Import_WMSR import ImportWMSR
+        
         tmp = ''
         removeLayers = set()
         for gLayer in guichet_layers:
             noSpecialCharacterInLayerName = self.replaceSpecialCharacter(gLayer.name())
             # Cas particulier des couches WMTS
             nameLayers = self.replaceSpecialCharacter(gLayer.layers)
+            
+            # Pour les couches WMTS/WMS, récupérer le titre réel qui sera utilisé comme nom de couche
+            actualWmtsTitle = None
+            if gLayer.type == cst.GEOSERVICE:
+                if gLayer.geoservice['type'] == cst.WMTS:
+                    try:
+                        importWmts = importWMTS(self, gLayer)
+                        titleLayer_uri = importWmts.getWtmsUrlParams(gLayer.geoservice['layers'])
+                        if 'Exception' not in titleLayer_uri[0]:
+                            actualWmtsTitle = self.replaceSpecialCharacter(titleLayer_uri[0])
+                    except Exception as e:
+                        self.logger.debug("Error getting WMTS title for {}: {}".format(gLayer.name(), str(e)))
+                elif gLayer.geoservice['type'] == cst.WMS:
+                    try:
+                        importWmsr = ImportWMSR(gLayer)
+                        titleLayer_uri = importWmsr.getWmsrUrlParams()
+                        actualWmtsTitle = self.replaceSpecialCharacter(titleLayer_uri[0])
+                    except Exception as e:
+                        self.logger.debug("Error getting WMS title for {}: {}".format(gLayer.name(), str(e)))
+            
             for k, v in maplayers.items():
                 noSpecialCharacterInMapLayerName = self.replaceSpecialCharacter(v.name())
                 if (noSpecialCharacterInLayerName == noSpecialCharacterInMapLayerName) or \
-                        (nameLayers.find(noSpecialCharacterInMapLayerName) != -1):
+                        (nameLayers.find(noSpecialCharacterInMapLayerName) != -1) or \
+                        (actualWmtsTitle is not None and actualWmtsTitle == noSpecialCharacterInMapLayerName):
                     removeLayers.add(v.name())
                     tmp += "{}, ".format(v.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
