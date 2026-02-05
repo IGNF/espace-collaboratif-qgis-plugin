@@ -108,9 +108,9 @@ class Contexte(object):
         self.QgsProject = QgsProject
         self.mapCan = QObject.iface.mapCanvas()
         self.iface = QObject.iface
-        self.logger = PluginLogger("Contexte").getPluginLogger()
+        self.logger = PluginLogger("Contexte").PluginLogger()
         self.spatialRef = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326)
-        self.dbPath = SQLiteManager.getBaseSqlitePath()
+        self.dbPath = SQLiteManager.BaseSqlitePath()
         self.__userCommunity = None
         self.__activeCommunityName = ''
         self.__userName = ''
@@ -141,7 +141,7 @@ class Contexte(object):
             self.logger.error("init contexte:" + format(e))
             raise
 
-    def getProxies(self) -> {}:
+    def Proxies(self) -> {}:
         """
         Retourne le contenu du dictionnaire des proxys
         """
@@ -164,7 +164,7 @@ class Contexte(object):
             os.environ['https_proxy'] = proxy
             os.environ['HTTPS_PROXY'] = proxy
 
-    def getCommunities(self) -> []:
+    def Communities(self) -> []:
         """
         :return: les groupes auxquels l'utilisateur est abonné.
         """
@@ -680,7 +680,6 @@ class Contexte(object):
 
                     '''
                     Ajout des couches WFS selectionnées dans "Mon guichet"
-                    URL de test: https://data.geopf.fr/wfs?SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities
                     '''
                     # Vérifier plusieurs variantes possibles pour le type WFS
                     if layer.geoservice.get('type', '').upper() == 'WFS' or layer.geoservice.get('type', '') == cst.WFS:
