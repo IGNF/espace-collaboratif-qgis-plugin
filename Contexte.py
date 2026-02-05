@@ -19,6 +19,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordi
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
     QgsLayerTreeLayer, Qgis
 from .Import_WMTS import importWMTS
+from .Import_WFS import ImportWFS
 from .core.PluginLogger import PluginLogger
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
