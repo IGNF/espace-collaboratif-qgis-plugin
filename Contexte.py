@@ -682,19 +682,28 @@ class Contexte(object):
                     Ajout des couches WFS selectionnées dans "Mon guichet"
                     URL de test: https://data.geopf.fr/wfs?SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities
                     '''
-                    if layer.geoservice['type'] == cst.WFS:
+                    # Vérifier plusieurs variantes possibles pour le type WFS
+                    if layer.geoservice.get('type', '').upper() == 'WFS' or layer.geoservice.get('type', '') == cst.WFS:
                         importWfs = ImportWFS(layer)
                         titleLayer_uri = importWfs.getWfsUri()
-                        print("WFS titleLayer_uri : {}".format(titleLayer_uri))
+                        
                         vlayer = QgsVectorLayer(titleLayer_uri[1], titleLayer_uri[0], 'WFS')
+                        
                         if not vlayer.isValid():
-                            endMessage += "Layer {} failed to load !".format(vlayer.name())
+                            error_msg = "Layer {} failed to load !".format(vlayer.name())
+                            error_detail = ""
+                            if vlayer.error().message():
+                                error_detail = vlayer.error().message()
+                            # Afficher l'erreur complète pour l'utilisateur
+                            if error_detail:
+                                endMessage += error_msg + "\nDétail: " + error_detail + "\n\n"
+                            else:
+                                endMessage += error_msg + "\n(Try checking: server availability, layer name validity, authentication requirements)\n\n"
                             continue
 
                         self.QgsProject.instance().addMapLayer(vlayer, False)
                         # Insertion à la fin avec -1
                         root.insertLayer(-1, vlayer)
-                        self.logger.debug("Layer {} added to map".format(vlayer.name()))
                         message = "Couche {0} ajoutée à la carte.\n\n".format(vlayer.name())
                         endMessage += message
             progress.close()

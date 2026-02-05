@@ -27,7 +27,8 @@ class ImportWFS:
         self.__layerID = layer.layers
         self.__crs = cst.EPSG4326
         self.__titleLayer = layer.name()
-        self.__version = "1.0.0"
+        # Utiliser la version du geoservice ou par défaut 2.0.0
+        self.__version = layer.geoservice.get('version', '2.0.0')
 
     def getWfsUrlParams(self) -> tuple:
         """
@@ -61,19 +62,41 @@ class ImportWFS:
     def getWfsUri(self) -> tuple:
         """
         Construit l'URI au format attendu par QGIS pour une couche WFS.
-        Format: url=... typename=... version=... crs=...
+        Format: url='http://...' typename='layername' version='2.0.0' srsname='EPSG:4326'
         
         :return: tuple (titre de la couche, URI construite pour QGIS)
         :rtype: tuple
         """
+        # Nettoyer l'URL (enlever les paramètres existants si présents)
+        base_url = self.__url.split('?')[0]
+        
+        # Séparer le typename des éventuels filtres CQL
+        layer_id = self.__layerID
+        extra_params = []
+        
+        # Vérifier si des filtres sont présents dans le layerID (ex: &cql_filter=...)
+        if '&' in layer_id:
+            parts = layer_id.split('&', 1)
+            layer_id = parts[0]
+            # Extraire les paramètres supplémentaires
+            if len(parts) > 1:
+                extra_params_str = parts[1]
+                # Parser les paramètres supplémentaires
+                for param in extra_params_str.split('&'):
+                    if '=' in param:
+                        extra_params.append(param)
+        
         # Construire l'URI au format QGIS WFS
+        # Note: QGIS attend srsname et non crs pour WFS
         uri_parts = [
-            f"url={self.__url}",
-            f"typename={self.__layerID}",
+            f"url={base_url}",
+            f"typename={layer_id}",
             f"version={self.__version}",
-            f"srsname={self.__crs}",
-            "restrictToRequestBBOX='1'"
+            f"srsname={self.__crs}"
         ]
+        
+        # Ajouter les paramètres supplémentaires (filtres, etc.)
+        uri_parts.extend(extra_params)
         
         wfs_uri = " ".join(uri_parts)
         
