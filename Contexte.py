@@ -774,8 +774,7 @@ class Contexte(object):
 
         :return: True si la suppression a pu s'effectuer, False si l'utilisateur change d'avis
         """
-        from .Import_WMTS import importWMTS
-        from .Import_WMSR import ImportWMSR
+      
         
         tmp = ''
         removeLayers = set()
