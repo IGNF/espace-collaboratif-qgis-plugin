@@ -35,6 +35,7 @@ from .core.DynamicProgressBar import DynamicProgressBar
 from .core.ign_keycloak.KeycloakService import KeycloakService
 from .core.FlagProject import FlagProject
 from .Import_WMSR import ImportWMSR
+from .Import_WFS import ImportWFS
 from .TableViewConstraints import TableViewConstraints
 from .PluginHelper import PluginHelper
 from .FormInfo import FormInfo
@@ -681,28 +682,19 @@ class Contexte(object):
                     '''
                     Ajout des couches WFS selectionnées dans "Mon guichet"
                     '''
-                    # Vérifier plusieurs variantes possibles pour le type WFS
                     if layer.geoservice.get('type', '').upper() == 'WFS' or layer.geoservice.get('type', '') == cst.WFS:
                         importWfs = ImportWFS(layer)
                         titleLayer_uri = importWfs.getWfsUri()
-                        
+                        print("titleLayer_uri : {}".format(titleLayer_uri))
                         vlayer = QgsVectorLayer(titleLayer_uri[1], titleLayer_uri[0], 'WFS')
-                        
                         if not vlayer.isValid():
-                            error_msg = "Layer {} failed to load !".format(vlayer.name())
-                            error_detail = ""
-                            if vlayer.error().message():
-                                error_detail = vlayer.error().message()
-                            # Afficher l'erreur complète pour l'utilisateur
-                            if error_detail:
-                                endMessage += error_msg + "\nDétail: " + error_detail + "\n\n"
-                            else:
-                                endMessage += error_msg + "\n(Try checking: server availability, layer name validity, authentication requirements)\n\n"
+                            endMessage += "Layer {} failed to load !".format(vlayer.name())
                             continue
 
                         self.QgsProject.instance().addMapLayer(vlayer, False)
                         # Insertion à la fin avec -1
                         root.insertLayer(-1, vlayer)
+                        self.logger.debug("Layer {} added to map".format(vlayer.name()))
                         message = "Couche {0} ajoutée à la carte.\n\n".format(vlayer.name())
                         endMessage += message
             progress.close()
@@ -782,16 +774,46 @@ class Contexte(object):
 
         :return: True si la suppression a pu s'effectuer, False si l'utilisateur change d'avis
         """
+      
+        
         tmp = ''
         removeLayers = set()
         for gLayer in guichet_layers:
             noSpecialCharacterInLayerName = self.replaceSpecialCharacter(gLayer.name())
             # Cas particulier des couches WMTS
             nameLayers = self.replaceSpecialCharacter(gLayer.layers)
+            
+            # Pour les couches WMTS/WMS, récupérer le titre réel qui sera utilisé comme nom de couche
+            actualWmtsTitle = None
+            if gLayer.type == cst.GEOSERVICE:
+                if gLayer.geoservice['type'] == cst.WMTS:
+                    try:
+                        importWmts = importWMTS(self, gLayer)
+                        titleLayer_uri = importWmts.getWtmsUrlParams(gLayer.geoservice['layers'])
+                        if 'Exception' not in titleLayer_uri[0]:
+                            actualWmtsTitle = self.replaceSpecialCharacter(titleLayer_uri[0])
+                    except Exception as e:
+                        self.logger.debug("Error getting WMTS title for {}: {}".format(gLayer.name(), str(e)))
+                elif gLayer.geoservice['type'] == cst.WMS:
+                    try:
+                        importWmsr = ImportWMSR(gLayer)
+                        titleLayer_uri = importWmsr.getWmsrUrlParams()
+                        actualWmtsTitle = self.replaceSpecialCharacter(titleLayer_uri[0])
+                    except Exception as e:
+                        self.logger.debug("Error getting WMS title for {}: {}".format(gLayer.name(), str(e)))
+                elif gLayer.geoservice.get('type', '').upper() == 'WFS' or gLayer.geoservice.get('type', '') == cst.WFS:
+                    try:
+                        importWfs = ImportWFS(gLayer)
+                        titleLayer_uri = importWfs.getWfsUri()
+                        actualWmtsTitle = self.replaceSpecialCharacter(titleLayer_uri[0])
+                    except Exception as e:
+                        self.logger.debug("Error getting WFS title for {}: {}".format(gLayer.name(), str(e)))
+            
             for k, v in maplayers.items():
                 noSpecialCharacterInMapLayerName = self.replaceSpecialCharacter(v.name())
                 if (noSpecialCharacterInLayerName == noSpecialCharacterInMapLayerName) or \
-                        (nameLayers.find(noSpecialCharacterInMapLayerName) != -1):
+                        (nameLayers.find(noSpecialCharacterInMapLayerName) != -1) or \
+                        (actualWmtsTitle is not None and actualWmtsTitle == noSpecialCharacterInMapLayerName):
                     removeLayers.add(v.name())
                     tmp += "{}, ".format(v.name())
         return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
