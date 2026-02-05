@@ -19,6 +19,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordi
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
     QgsLayerTreeLayer, Qgis
 from .Import_WMTS import importWMTS
+from .Import_WFS import ImportWFS
 from .core.PluginLogger import PluginLogger
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
@@ -675,6 +676,34 @@ class Contexte(object):
                         root.insertLayer(-1, rlayer)
                         self.logger.debug("Layer {} added to map".format(rlayer.name()))
                         message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
+                        endMessage += message
+
+                    '''
+                    Ajout des couches WFS selectionnées dans "Mon guichet"
+                    '''
+                    # Vérifier plusieurs variantes possibles pour le type WFS
+                    if layer.geoservice.get('type', '').upper() == 'WFS' or layer.geoservice.get('type', '') == cst.WFS:
+                        importWfs = ImportWFS(layer)
+                        titleLayer_uri = importWfs.getWfsUri()
+                        
+                        vlayer = QgsVectorLayer(titleLayer_uri[1], titleLayer_uri[0], 'WFS')
+                        
+                        if not vlayer.isValid():
+                            error_msg = "Layer {} failed to load !".format(vlayer.name())
+                            error_detail = ""
+                            if vlayer.error().message():
+                                error_detail = vlayer.error().message()
+                            # Afficher l'erreur complète pour l'utilisateur
+                            if error_detail:
+                                endMessage += error_msg + "\nDétail: " + error_detail + "\n\n"
+                            else:
+                                endMessage += error_msg + "\n(Try checking: server availability, layer name validity, authentication requirements)\n\n"
+                            continue
+
+                        self.QgsProject.instance().addMapLayer(vlayer, False)
+                        # Insertion à la fin avec -1
+                        root.insertLayer(-1, vlayer)
+                        message = "Couche {0} ajoutée à la carte.\n\n".format(vlayer.name())
                         endMessage += message
             progress.close()
 
