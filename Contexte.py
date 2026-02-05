@@ -108,9 +108,9 @@ class Contexte(object):
         self.QgsProject = QgsProject
         self.mapCan = QObject.iface.mapCanvas()
         self.iface = QObject.iface
-        self.logger = PluginLogger("Contexte").PluginLogger()
+        self.logger = PluginLogger("Contexte").getPluginLogger()
         self.spatialRef = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326)
-        self.dbPath = SQLiteManager.BaseSqlitePath()
+        self.dbPath = SQLiteManager.getBaseSqlitePath()
         self.__userCommunity = None
         self.__activeCommunityName = ''
         self.__userName = ''
@@ -141,7 +141,7 @@ class Contexte(object):
             self.logger.error("init contexte:" + format(e))
             raise
 
-    def Proxies(self) -> {}:
+    def getProxies(self) -> {}:
         """
         Retourne le contenu du dictionnaire des proxys
         """
@@ -164,7 +164,7 @@ class Contexte(object):
             os.environ['https_proxy'] = proxy
             os.environ['HTTPS_PROXY'] = proxy
 
-    def Communities(self) -> []:
+    def getCommunities(self) -> []:
         """
         :return: les groupes auxquels l'utilisateur est abonné.
         """
