@@ -105,6 +105,28 @@ ENV/
 env.bak/
 venv.bak/
 
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Plugin packaging
+*.zip
+pylintrc
+.pylintrc
+
+# QGIS
+*.qgs~
+*.qgz~
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
 # Spyder project settings
 .spyderproject
 .spyproject
