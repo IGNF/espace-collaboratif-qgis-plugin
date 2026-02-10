@@ -68,7 +68,7 @@ class WfsGet(object):
         :type filterDelete: bool
         """
         offset = 0
-        maxFeatures = 10000  # Maximum API limit - increased from 5000 for better performance
+        maxFeatures = 10000  # Limite maximum d'objet de l'API 
         # Passage des paramètres pour l'url
         self.__setService()
         self.__setRequest()
@@ -146,6 +146,8 @@ class WfsGet(object):
 
         print("\n" + "="*80)
         print("[EXTRACTION START] Layer: {}".format(self.layerName))
+        print("[EXTRACTION] Database ID: {}".format(self.databaseid if hasattr(self, 'databaseid') else 'N/A'))
+        print("[EXTRACTION] Table ID: {}".format(self.tableid if hasattr(self, 'tableid') else 'N/A'))
         print("[EXTRACTION] Mode: {}".format("Extraction" if bExtraction else "Synchronisation"))
         print("[EXTRACTION] MaxFeatures per request: {}".format(self.parametersGcmsGet.get('maxFeatures', 'N/A')))
         print("="*80)
@@ -153,8 +155,15 @@ class WfsGet(object):
             self.layerName, "Extraction" if bExtraction else "Synchronisation"))
 
         sqliteManager = SQLiteManager()
-        MAX_RETRIES = 3
-        RETRY_DELAY = 2  # seconds between retries
+        MAX_RETRIES = 4  # Balanced for proxy issues
+        RETRY_DELAY = 2  # Base seconds between retries
+        proxy_failures = 0
+        using_proxy = self.proxies is not None and len(self.proxies) > 0
+        PROXY_FAILURE_THRESHOLD = 2  # Disable proxy after this many failures
+        
+        if using_proxy:
+            print("[INFO] Proxy configured: {}".format(list(self.proxies.values())[0] if self.proxies else 'None'))
+            print("[INFO] Proxy will be disabled after {} consecutive failures".format(PROXY_FAILURE_THRESHOLD))
         
         while True:
             requestCount += 1
@@ -163,21 +172,47 @@ class WfsGet(object):
                 requestCount, 
                 self.parametersGcmsGet.get('offset', 0),
                 self.parametersGcmsGet.get('maxFeatures', 'N/A')))
+            if using_proxy:
+                print("[REQUEST #{}] Using proxy: {}".format(requestCount, list(self.proxies.keys()) if self.proxies else 'None'))
             
-            # Retry logic for transient errors
+            # Retry logic with exponential backoff for transient errors
             response = None
+            current_proxies = self.proxies
+            
+            # If proxy has failed too many times, bypass it from the start
+            if proxy_failures >= PROXY_FAILURE_THRESHOLD and using_proxy:
+                print("[REQUEST #{}] !!! PROXY DISABLED - {} previous failures, using DIRECT connection !!!".format(
+                    requestCount, proxy_failures))
+                current_proxies = None
+                self.proxies = None
+                using_proxy = False
+            
             for attempt in range(1, MAX_RETRIES + 1):
                 if attempt > 1:
+                    # Progressive delays: 2s, 4s, 6s
+                    delay = RETRY_DELAY * attempt
                     print("[REQUEST #{}] Retry attempt {}/{} after {} seconds...".format(
-                        requestCount, attempt, MAX_RETRIES, RETRY_DELAY))
-                    time.sleep(RETRY_DELAY)
+                        requestCount, attempt, MAX_RETRIES, delay))
+                    time.sleep(delay)
                 
-                response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=self.proxies,
+                # Try without proxy after 2 failed proxy attempts
+                if attempt == 3 and proxy_failures >= 2 and using_proxy:
+                    print("[REQUEST #{}] !!! PROXY FAILING - Attempting direct connection (no proxy) !!!".format(requestCount))
+                    current_proxies = None
+                
+                response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=current_proxies,
                                                    params=self.parametersGcmsGet)
                 
                 if response['status'] == 'ok':
                     if attempt > 1:
                         print("[REQUEST #{}] Success after {} attempts".format(requestCount, attempt))
+                        if current_proxies is None and using_proxy:
+                            print("[REQUEST #{}] !!! Success with DIRECT connection (proxy bypassed) !!!".format(requestCount))
+                            # Continue without proxy for remaining requests
+                            self.proxies = None
+                            using_proxy = False
+                    # Reset proxy failure counter on success
+                    proxy_failures = 0
                     break
                 else:
                     # Detailed error information
@@ -185,19 +220,34 @@ class WfsGet(object):
                     errorUrl = response.get('url', 'N/A')
                     errorCode = response.get('code', 'N/A')
                     errorDetails = response.get('details', 'N/A')
+                    is_proxy_error = response.get('is_proxy_error', False)
                     
+                    if is_proxy_error:
+                        proxy_failures += 1
+                        print("[REQUEST #{}] PROXY ERROR detected (total proxy failures: {})".format(requestCount, proxy_failures))                        # Switch to direct connection immediately if threshold reached
+                        if proxy_failures >= PROXY_FAILURE_THRESHOLD and using_proxy and current_proxies is not None:
+                            print("[REQUEST #{}] !!! PROXY FAILURE THRESHOLD REACHED - Switching to DIRECT connection NOW !!!".format(requestCount))
+                            current_proxies = None
+                            # Don't count this as a retry attempt - try again immediately with direct connection
+                            continue                    
                     print("[REQUEST #{}] Attempt {}/{} FAILED".format(requestCount, attempt, MAX_RETRIES))
-                    print("  - Error reason: {}".format(errorReason))
+                    print("  - Error type: {}".format('PROXY ERROR' if is_proxy_error else 'Network/Server error'))
+                    print("  - Error reason: {}".format(errorReason[:200]))
                     print("  - Error code: {}".format(errorCode))
-                    print("  - URL: {}".format(errorUrl))
                     print("  - Details: {}".format(errorDetails))
                     
                     if attempt == MAX_RETRIES:
-                        message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], errorReason)
-                        print("\n[ERROR] Request PERMANENTLY FAILED after {} attempts".format(MAX_RETRIES))
-                        print("[ERROR] Full error: {}".format(message))
-                        print("[ERROR] Server may be overloaded or rate-limiting requests")
+                        message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], errorReason[:200])
+                        print("\n" + "!"*80)
+                        print("[ERROR] Request PERMANENTLY FAILED after {} attempts".format(MAX_RETRIES))
+                        print("[ERROR] Full error: {}".format(message[:300]))
+                        if is_proxy_error:
+                            print("[ERROR] PROXY CONNECTION ISSUE - Check proxy settings or network")
+                            print("[ERROR] Consider disabling proxy or checking proxy server status")
+                        else:
+                            print("[ERROR] Server may be overloaded or rate-limiting requests")
                         print("[ERROR] Total features extracted before error: {}".format(totalRows))
+                        print("!"*80 + "\n")
                         self.__logger.error("Request failed after {} retries: {}".format(MAX_RETRIES, message))
                         break
             

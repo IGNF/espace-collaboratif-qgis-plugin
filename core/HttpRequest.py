@@ -106,6 +106,18 @@ class HttpRequest(object):
         :type params: dict
         """
         try:
+            # Print the actual request being sent to the server
+            print("\n" + "="*80)
+            print("[HTTP REQUEST] Sending GET request to server")
+            print("[HTTP REQUEST] URL: {}".format(url))
+            print("[HTTP REQUEST] Parameters:")
+            if params:
+                for key, value in params.items():
+                    print("  - {}: {}".format(key, value))
+            else:
+                print("  - No parameters")
+            print("="*80 + "\n")
+            
             r = requests.get(url, headers=headers, proxies=proxies,
                              params=params, verify=False)
             if r.status_code == 200:
@@ -127,13 +139,21 @@ class HttpRequest(object):
                     'details': r.text[:500] if len(r.text) > 0 else 'No response body'
                 }
         except Exception as e:
-            HttpRequest.logger.error("Request error: {}".format(str(e)))
+            error_str = str(e)
+            error_type = str(type(e).__name__)
+            HttpRequest.logger.error("Request error: {}".format(error_str))
+            
+            # Detect proxy-specific errors
+            is_proxy_error = 'ProxyError' in error_str or 'RemoteDisconnected' in error_str or \
+                           'proxy' in error_str.lower() or 'Max retries exceeded' in error_str
+            
             return {
                 'status': 'error',
-                'reason': str(e),
+                'reason': error_str,
                 'code': 'EXCEPTION',
                 'url': url,
-                'details': str(type(e).__name__)
+                'details': error_type,
+                'is_proxy_error': is_proxy_error
             }
 
     @staticmethod
