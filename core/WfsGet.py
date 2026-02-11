@@ -164,8 +164,27 @@ class WfsGet(object):
         url = "{0}/gcms/database/{1}/feature-type/{2}/max-numrec".format(self.context.client.getUrl(),
                                                                          self.databaseName, self.layerName)
         response = RipartServiceRequest.makeHttpRequest(url, authent=self.identification, proxies=self.proxy)
-        data = json.loads(response)
-        return data['numrec']
+        
+        # Gestion du JSON malformé (ex: { "numrec": } au lieu de { "numrec": 12345 })
+        if not response or response.strip() == '':
+            print("[WfsGet.getMaxNumrec] Response is empty for layer {}, returning 0".format(self.layerName))
+            return 0
+        
+        try:
+            data = json.loads(response)
+            if isinstance(data, dict) and 'numrec' in data:
+                numrec_value = data.get('numrec')
+                if numrec_value is None or numrec_value == '':
+                    print("[WfsGet.getMaxNumrec] Malformed JSON for layer {} - numrec value is None or empty: '{}'".format(
+                        self.layerName, response))
+                    return 0
+                return numrec_value
+            else:
+                return data
+        except (ValueError, json.JSONDecodeError) as e:
+            print("[WfsGet.getMaxNumrec] Invalid JSON for layer {}: '{}' - Error: {}".format(
+                self.layerName, response, e))
+            return 0
 
     def setService(self):
         self.parametersGcmsGet['service'] = 'WFS'
