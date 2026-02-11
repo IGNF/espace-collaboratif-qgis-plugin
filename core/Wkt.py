@@ -17,8 +17,8 @@ class Wkt(object):
         self.crsTransform = self.setCoordinateTransform()
 
     def setCoordinateTransform(self):
-        crsSource = QgsCoordinateReferenceSystem(self.sridSource)
-        crsTarget = QgsCoordinateReferenceSystem(self.sridTarget)
+        crsSource = QgsCoordinateReferenceSystem.fromEpsgId(self.sridSource)
+        crsTarget = QgsCoordinateReferenceSystem.fromEpsgId(self.sridTarget)
         return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())
 
     def transformGeometry(self, geom):

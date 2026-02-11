@@ -7,12 +7,11 @@ version 3.0.0 , 26/11/2018
 @author: AChang-Wailing
 """
 
+import sqlite3
+import re
 from .core.RipartLoggerCl import RipartLogger
-from PyQt5.QtWidgets import QProgressBar, QApplication
-from PyQt5.QtCore import Qt
 from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, \
     QgsEditorWidgetSetup
-from qgis.utils import spatialite_connect
 from .RipartHelper import RipartHelper
 from .core.BBox import BBox
 from .core import ConstanteRipart as cst
@@ -50,16 +49,6 @@ class ImporterRipart(object):
 
         params = {}  # paramètres pour la requête au service Ripart
 
-        if self.context.client is None:
-            connResult = self.context.getConnexionRipart()
-            if not connResult:
-                return 0
-            if self.context.client is None:  # la connexion a échoué, on ne fait rien
-                self.context.iface.messageBar().pushMessage("",
-                                                            "Un problème de connexion avec l'Espace collaboratif est survenu. Veuillez vous reconnecter.",
-                                                            level=2, duration=5)
-                return
-
         if self.context.profil.geogroup.name is None:
             raise NoProfileException(
                 "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
@@ -72,7 +61,8 @@ class ImporterRipart(object):
         # si la box est égale 0.0 pour ces 4 coordonnées alors l'utilisateur
         # ne souhaite pas extraire les données France entière et on sort
         if box is not None and box.XMax == 0.0 and box.YMax == 0.0 and box.XMin == 0.0 and box.YMin == 0.0:
-            return
+            raise Exception("Les coordonnées de la box entourant la zone d'extraction sont égales à 0, "
+                            "veuillez importer une nouvelle zone.")
 
         filtreLay = None
         filtre = RipartHelper.load_CalqueFiltrage(self.context.projectDir).text
@@ -83,10 +73,11 @@ class ImporterRipart(object):
         message = "Placement des signalements sur la carte"
         self.progress = ProgressBar(200, message)
 
-        self.context.addRipartLayersToMap()
-
-        # vider les tables ripart
+        # vider, détruire et créer les tables de l'espace collaboratif
         self.context.emptyAllRipartLayers()
+
+        # Ajout des couches dans le projet
+        self.context.addRipartLayersToMap()
 
         pagination = RipartHelper.load_ripartXmlTag(self.context.projectDir, RipartHelper.xml_Pagination, "Map").text
         if pagination is None:
@@ -128,19 +119,30 @@ class ImporterRipart(object):
             remsToKeep = rems
 
         cnt = len(remsToKeep)
+        if cnt == 0:
+            self.progress.close()
+            self.context.iface.messageBar().pushMessage("", "Pas de signalements extraits ou intersectant cette zone.",
+                                                        level=2, duration=5)
+            return
 
         try:
             i = 100
+            nbRem = 0
             try:
-                self.context.conn = spatialite_connect(self.context.dbPath)
-
+                # self.context.conn = spatialite_connect(self.context.dbPath)
+                self.context.conn = sqlite3.connect(self.context.dbPath)
+                self.context.conn.enable_load_extension(True)
+                self.context.conn.execute("SELECT load_extension('mod_spatialite')")
                 for remId in remsToKeep:
-
+                    bCommit = False
                     if remId == '618195' or remId == '618197':
                         debug = True
-
-                    RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId])
+                    if nbRem == 200:
+                        bCommit = True
+                        nbRem = 0
+                    RipartHelper.insertRemarques(self.context.conn, remsToKeep[remId], bCommit)
                     i += 1
+                    nbRem += 1
                     if cnt > 0:
                         self.progressVal = int(round(i * 100 / cnt))
                         self.progress.setValue(self.progressVal)
@@ -173,6 +175,7 @@ class ImporterRipart(object):
             self.progress.close()
 
         except Exception as e:
+            self.progress.close()
             raise
 
         finally:
@@ -215,14 +218,19 @@ class ImporterRipart(object):
         
         :param box: bounding box
         """
-        source_crs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
-
+        # Cas particuliers
+        crs_map = {
+            'LAMB93': 2154,
+            'WGS84': 4326
+        }
+        source_crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
         mapCrs = self.context.mapCan.mapSettings().destinationCrs().authid()
-        dest_crs = QgsCoordinateReferenceSystem(mapCrs)
-
-        if not dest_crs.isValid():
-            return
-
+        tmp = mapCrs.split(":")[1]
+        if re.fullmatch(r"\d+", tmp):
+            psgCode = int(tmp)
+        else:
+            psgCode = crs_map.get(tmp)
+        dest_crs = QgsCoordinateReferenceSystem.fromEpsgId(psgCode)
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         new_box = transform.transformBoundingBox(box)
 

@@ -7,7 +7,6 @@ version 4.0.1, 15/12/2020
 @author: EPeyrouse, NGremeaux
 """
 
-
 # Imports
 import urllib
 from urllib.parse import urlparse
@@ -32,6 +31,7 @@ except ImportError as e:
         "Dependencies - HTTPError not within owslib."
         " Trying to get it from urllib directly."
     )
+
 try:
     from urllib import HTTPError
 
@@ -42,44 +42,44 @@ except ImportError as e:
     )
 
 
-class importWMTS:
-    # Variables
-    wmts = None
-    uri = QgsDataSourceUri()
-    context = None
-    wmts_lyr = None
-    tile_matrix_set = None
-    layer_id = None
-    crs = None
-    title_layer = None
-    selected_layer = None
+class ImportWMTS:
 
-    def __init__(self, context, layer):
+    def __init__(self, context, layer) -> None:
+        self.wmts = None
+        self.uri = QgsDataSourceUri().uri()
+        self.wmts_lyr = None
+        self.tile_matrix_set = None
+        self.layer_id = None
+        self.crs = None
+        self.title_layer = None
+        self.selected_layer = None
         self.context = context
         self.selected_layer = layer
-        self.checkOpenService()
-        self.checkGetTile()
-        self.checkTileMatrixSet()
+        self.__checkOpenService()
+        self.__checkGetTile()
+        self.__checkTileMatrixSet()
 
     # Construction url GetCapabilities sur le geoportail
     # exemple : https://wxs.ign.fr/[cle]/wmts?service=WMTS&request=GetCapabilities
-    def appendUriCapabilities(self):
+    def __appendUriCapabilities(self) -> None:
         params = {
-            'service': cst.WMTS,
+            # 'service': cst.WMTS,
             'request': 'GetCapabilities'
         }
 
         '''
-        Avec l'url http://wxs.ign.fr/VOTRE_CLE/geoportail/wmts, la projection proposée est
-        web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
+        Avec l'url https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities,
+        la projection proposée est web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
         '''
-        self.crs = "EPSG:3857"
+        self.crs = cst.EPSG3857
+        # TODO problème avec la clé 'url'
         self.uri = self.selected_layer.url.format(urllib.parse.unquote(urllib.parse.urlencode(params)))
 
     # opening WMTS
-    def checkOpenService(self):
-        self.appendUriCapabilities()
+    def __checkOpenService(self) -> bool:
+        self.__appendUriCapabilities()
         try:
+            # Quels sont les geoservices disponibles ?
             self.wmts = WebMapTileService(self.uri)
         except TypeError as e:
             print("OWSLib mixing str and unicode args", str(e))
@@ -91,7 +91,7 @@ class importWMTS:
         return True
 
     # check if GetTile operation is available
-    def checkGetTile(self):
+    def __checkGetTile(self) -> bool:
         if not hasattr(self.wmts, "gettile") or "GetTile" not in [op.name for op in self.wmts.operations]:
             print("Required GetTile operation not available in: " + self.uri)
             return False
@@ -100,7 +100,7 @@ class importWMTS:
         return True
 
     # check if tilematrixsets is available
-    def checkTileMatrixSet(self):
+    def __checkTileMatrixSet(self) -> bool:
         if not hasattr(self.wmts, "tilematrixsets"):
             print("Required tilematrixsets not available in: " + self.uri)
             return False
@@ -112,8 +112,8 @@ class importWMTS:
     def getTileUrl(self):
         wmts_lyr_url = self.wmts.getOperationByName("GetTile").methods
         wmts_lyr_url = wmts_lyr_url[0].get("url")
-        print("Available url : {}".format(wmts_lyr_url))
-        return wmts_lyr_url
+        print("Available url : {}".format(wmts_lyr_url[:len(wmts_lyr_url) - 1]))
+        return wmts_lyr_url[:len(wmts_lyr_url) - 1]
 
     # Style definition
     def getStyles(self):
@@ -134,6 +134,8 @@ class importWMTS:
 
     # Get a layer
     def getLayer(self, idGuichetLayerWmts):
+        if self.wmts is None:
+            return None
         layers = list(self.wmts.contents)
         print("Available layers : ", layers)
         for layer in layers:
@@ -166,11 +168,15 @@ class importWMTS:
     # tileMatrixSet=PM&
     # url=https://wxs.ign.fr/choisirgeoportail/geoportail/wmts?
     # SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities
-    def getWtmsUrlParams(self, idGuichetLayerWmts):
+    # TODO utilisation avec le proxy dans le panneau de configuration en désactivant les variables d'environnement
+    def getWtmsUrlParams(self, idGuichetLayerWmts) -> ():
         if not idGuichetLayerWmts:
-            raise Exception("Import_WMTS.py::getWtmsUrlParams : le nom de la couche geoportail est vide")
+            return "Exception", "Import_WMTS.getWtmsUrlParams : le nom de la couche géoservices est vide"
+
         if self.getLayer(idGuichetLayerWmts) is None:
-            raise Exception("Import_WMTS.py::getWtmsUrlParams : impossible de récupérer la couche Geoportail")
+            return "Exception", "Import_WMTS.getWtmsUrlParams.getLayer : géoservices non disponible pour la couche {}" \
+                .format(idGuichetLayerWmts)
+
         self.getTileMatrixSet()
 
         # Patch pour les flux privés GPF
@@ -185,7 +191,8 @@ class importWMTS:
                 "layers": self.layer_id,
                 "styles": self.getStyles(),
                 "tileMatrixSet": self.tile_matrix_set,
-                "url": "{}?{}".format(self.getTileUrl(), "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities")
+                "url": "{}{}".format(self.getTileUrl(), cst.PARTOFURLWMTS)
+
             }
         else:
             wmts_url_params = {
@@ -196,7 +203,9 @@ class importWMTS:
                 "layers": self.layer_id,
                 "styles": self.getStyles(),
                 "tileMatrixSet": self.tile_matrix_set,
-                "url": "{}?{}{}".format(self.getTileUrl(), "SERVICE%3DWMTS%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities%26apikey%3D", cst.APIKEY)
+                "url": "{}{}%26apikey%3D{}".format(self.getTileUrl(),
+                                                   cst.PARTOFURLWMTS,
+                                                   cst.APIKEY)
             }
         wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
         return self.title_layer, wmts_url_final

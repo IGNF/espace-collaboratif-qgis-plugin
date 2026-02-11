@@ -114,12 +114,13 @@ WMTS = "WMTS"
 WCS = "WCS"
 COLLABORATIF = "collaboratif.ign.fr"
 GEOPF = "data.geopf.fr"
-WXSIGN = "wxs.ign.fr"
+PARTOFURLWMTS = "%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"
 APIKEY = "ign_scan_ws"
 
 # Système de coordonnées de référence de Ripart
 EPSGCRS = 4326
 EPSG4326 = 'EPSG:4326'
+EPSG3857 = 'EPSG:3857'
 EPSG2154 = 'EPSG:2154'
 ID_ORIGINAL = 'id_original'
 ID_SQLITE = 'id_sqlite_1gnQg1s'

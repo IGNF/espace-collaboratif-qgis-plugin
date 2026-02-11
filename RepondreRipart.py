@@ -34,7 +34,6 @@ class RepondreRipart(object):
         :type isView: boolean
         """
         try:
-
             activeLayer = self.context.iface.activeLayer()
             if activeLayer is None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
                 self.context.iface.messageBar().pushMessage("Attention",
@@ -58,18 +57,6 @@ class RepondreRipart(object):
                     self.context.iface.messageBar().pushMessage("Attention",
                                                                 u'Plusieurs signalements sélectionnés. Un seul sera pris en compte (signalement n°='
                                                                 + str(remIds[0]) + ')', level=1, duration=10)
-
-            if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
-                if not connResult:
-                    return 0
-                # la connexion a échoué, on ne fait rien
-                if self.context.client is None:
-                    self.context.iface.messageBar().pushMessage("",
-                                                                u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer",
-                                                                level=2, duration=5)
-                    return
-
             client = self.context.client
             remId = remIds[0]
             remarque = client.getGeoRem(remId)

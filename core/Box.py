@@ -42,8 +42,8 @@ class Box(object):
         return strBox
 
     def boxToStringWithSrid(self, sridProject, sridLayer):
-        crsProject = QgsCoordinateReferenceSystem(sridProject)
-        crsLayer = QgsCoordinateReferenceSystem(sridLayer)
+        crsProject = QgsCoordinateReferenceSystem.fromEpsgId(sridProject)
+        crsLayer = QgsCoordinateReferenceSystem.fromEpsgId(sridLayer)
         transformer = QgsCoordinateTransform(crsProject, crsLayer, QgsProject.instance())
         mini = transformer.transform(self.XMin, self.YMin)
         maxi = transformer.transform(self.XMax, self.YMax)

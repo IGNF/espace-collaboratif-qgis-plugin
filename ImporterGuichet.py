@@ -28,8 +28,8 @@ class ImporterGuichet(object):
         Constructor
         Initialisation du contexte
 
-        :param context: le contexte de la carte actuelle
-        :type context: Contexte
+        :param context : le contexte de la carte actuelle
+        :type context : Contexte
         """
         self.context = context
 
@@ -38,20 +38,6 @@ class ImporterGuichet(object):
         """
         try:
             self.logger.debug("doImport")
-
-            if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
-                if not connResult:
-                    return 0
-                if self.context.client is None:  # la connexion a échoué, on ne fait rien
-                    self.context.iface.messageBar().pushMessage("",
-                                                                "Un problème de connexion avec le service Espace collaboratif est survenu. Veuillez rééssayer",
-                                                                level=2, duration=5)
-                    return
-
-            if self.context.profil is None:
-                raise NoProfileException(
-                    "Vous n'êtes pas autorisé à effectuer cette opération. Vous n'avez pas de profil actif.")
 
             if self.context.profil.geogroup.name is None:
                 raise NoProfileException(

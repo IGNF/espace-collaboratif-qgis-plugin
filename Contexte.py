@@ -12,13 +12,14 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
     QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
-    QgsWkbTypes, QgsLayerTreeGroup, QgsEditorWidgetSetup
+    QgsWkbTypes, QgsLayerTreeGroup
 
 import os
 import os.path
 import shutil
 import ntpath
 import configparser
+import sqlite3
 
 from .RipartException import RipartException
 from .RipartHelper import RipartHelper
@@ -29,7 +30,8 @@ from .core.Point import Point
 from .core.Sketch import Sketch
 from .FormConnection import FormConnectionDialog
 from .core import ConstanteRipart as cst
-from .Import_WMTS import importWMTS
+from .Import_WMTS import ImportWMTS
+from .Import_WMSR import ImportWMSR
 from .core.GuichetVectorLayer import GuichetVectorLayer
 from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 from .core.WfsGet import WfsGet
@@ -116,7 +118,7 @@ class Contexte(object):
         self.groupeactif = ""
         self.profil = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
-        self.spatialRef = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+
 
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata()
@@ -135,9 +137,9 @@ class Contexte(object):
             self.copyRipartStyleFiles()
 
             # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
-            formatFile = open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r')
-            lines = formatFile.readlines()
-            self.formats = [x.split("\n")[0] for x in lines]
+            with open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r') as formatFile:
+                lines = formatFile.readlines()
+                self.formats = [x.split("\n")[0] for x in lines]
 
         except Exception as e:
             self.logger.error("init contexte:" + format(e))
@@ -160,10 +162,11 @@ class Contexte(object):
         """
         Retourne l'instance du Contexte
         """
-        if not Contexte.instance or (Contexte.instance.projectDir != QgsProject.instance().homePath() or
-                                     ntpath.basename(QgsProject.instance().fileName()) not in [
-                                         Contexte.instance.projectFileName + ".qgs",
-                                         Contexte.instance.projectFileName + ".qgz"]):
+        if not Contexte.instance or \
+                (Contexte.instance.projectDir != QgsProject.instance().homePath() or
+                 ntpath.basename(QgsProject.instance().fileName()) not in [
+                     Contexte.instance.projectFileName + ".qgs",
+                     Contexte.instance.projectFileName + ".qgz"]):
             Contexte.instance = Contexte._createInstance(QObject, QgsProject)
         return Contexte.instance
 
@@ -214,16 +217,16 @@ class Contexte(object):
                 new_file = os.path.join(self.projectDir, RipartHelper.getConfigFile())
                 os.rename(ripartxml, new_file)
             except Exception as e:
-                self.logger.error("No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
+                self.logger.error(
+                    "No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
                 raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
                                 " n'a pas été trouvé.")
 
     def copyRipartStyleFiles(self):
         """
-        Copie les fichiers de styles (pour les remarques et croquis ripart)
+            Copie les fichiers de styles (pour les remarques et croquis ripart)
         """
         styleFilesDir = self.projectDir + os.path.sep + RipartHelper.qmlStylesDir
-
         RipartHelper.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
                           RipartHelper.qmlStylesDir, styleFilesDir)
 
@@ -258,6 +261,7 @@ class Contexte(object):
         """
         self.logger.debug("GetConnexionRipart")
         try:
+            self.checkConfigFile()
             self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
                                                                 "Serveur").text
             self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
@@ -280,7 +284,8 @@ class Contexte(object):
         xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
         if xmlproxy is not None and str(xmlproxy).strip() != '':
             if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
-                RipartHelper.showMessageBox(u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
+                RipartHelper.showMessageBox(
+                    u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
                 return
             self.proxy = {'https': str(xmlproxy).strip()}
 
@@ -332,7 +337,10 @@ class Contexte(object):
                 raise e
         try:
             # creating a Cursor
-            self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
+            # self.conn = spatialite_connect(self.dbPath)
             curs = self.conn.cursor()
             # create layer Signalement
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
@@ -376,9 +384,9 @@ class Contexte(object):
                       'geometryType': structure['attributes'][geometryName]['type']}
 
         vlayer = GuichetVectorLayer(parameters)
-        # plugin_layer = PluginGuichetLayer()
-        # vlayer = QgsVectorLayer(uri.uri(), layer.nom, 'spatialite')
-        vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+        crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
+        vlayer.setCrs(crs)
+
         return vlayer, bColumnDetruitExist
 
     def addGuichetLayersToMap(self, guichet_layers, bbox, nameGroup):
@@ -388,7 +396,7 @@ class Contexte(object):
         global progress
         try:
             # Quelles sont les cartes chargées dans le projet QGIS courant
-            maplayers = self.getAllMapLayers()
+            allMapLayers = self.QgsProject.instance().mapLayers()
             root = self.QgsProject.instance().layerTreeRoot()
 
             # Le groupe existe t-il dans le projet
@@ -416,7 +424,7 @@ class Contexte(object):
 
             # Destruction de toutes les couches existantes si ce n'est pas fait manuellement par l'utilisateur
             # sauf celui-ci à cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
-            if not self.removeLayersFromProject(guichet_layers, maplayers):
+            if not self.removeLayers(guichet_layers, allMapLayers):
                 return
 
             endMessage = ''
@@ -447,12 +455,13 @@ class Contexte(object):
                 Ajout des couches WMTS selectionnées dans "Mon guichet"
                 '''
                 if layer.type == cst.WMTS:
-                    importWmts = importWMTS(self, layer)
+                    importWmts = ImportWMTS(self, layer)
                     titleLayer_uri = importWmts.getWtmsUrlParams(layer.layer_id)
-                    print (titleLayer_uri)
+                    print("titleLayer_uri : {}".format(titleLayer_uri))
                     rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
                     if not rlayer.isValid():
-                        print("Layer {} failed to load !".format(rlayer.name()))
+                        # print("Layer {} failed to load !".format(rlayer.name()))
+                        endMessage += "Layer {} failed to load !".format(rlayer.name())
                         continue
 
                     self.QgsProject.instance().addMapLayer(rlayer, False)
@@ -460,7 +469,25 @@ class Contexte(object):
                     root.insertLayer(-1, rlayer)
                     self.logger.debug("Layer {} added to map".format(rlayer.name()))
                     message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
-                    print(message)
+                    endMessage += message
+
+                '''
+                Ajout des couches WMS-R selectionnées dans "Mon guichet"
+                '''
+                if layer.type == cst.WMS:
+                    importWmsr = ImportWMSR(layer)
+                    titleLayer_uri = importWmsr.getWmsrUrlParams()
+                    print("titleLayer_uri : {}".format(titleLayer_uri))
+                    rlayer = QgsRasterLayer(titleLayer_uri[1], titleLayer_uri[0], 'wms')
+                    if not rlayer.isValid():
+                        endMessage += "Layer {} failed to load !".format(rlayer.name())
+                        continue
+
+                    self.QgsProject.instance().addMapLayer(rlayer, False)
+                    # Insertion à la fin avec -1
+                    root.insertLayer(-1, rlayer)
+                    self.logger.debug("Layer {} added to map".format(rlayer.name()))
+                    message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
                     endMessage += message
             progress.close()
 
@@ -470,10 +497,13 @@ class Contexte(object):
 
         except Exception as e:
             progress.close()
-            self.logger.error(format(e))
+            message = str(format(e))
+            if message.find('getMaxNumrec') != -1:
+                message = "Attention la table est peut-être vide de données. {}".format(str(e))
+            self.logger.error(message)
             self.iface.messageBar(). \
                 pushMessage("Remarque",
-                            str(e),
+                            message,
                             level=1, duration=10)
             print(str(e))
 
@@ -486,6 +516,29 @@ class Contexte(object):
                 break
         config.setColumns(columns)
         layer.setAttributeTableConfig(config)
+
+    def replaceSpecialCharacter(self, replaceTo) -> str:
+        tmp = replaceTo.replace(' ', '')
+        tmp = tmp.replace('-', '')
+        tmp = tmp.replace('_', '')
+        tmp = tmp.replace('+', '')
+        tmp = tmp.replace('.', '')
+        tmp = tmp.replace('(', '')
+        tmp = tmp.replace(')', '')
+        return tmp.lower()
+
+    def removeLayers(self, guichet_layers, maplayers, bAskForConfirmation=True):
+        tmp = ''
+        removeLayers = set()
+        for layer in guichet_layers:
+            noSpaceInLayerName = self.replaceSpecialCharacter(layer.nom)
+            nameLayerId = self.replaceSpecialCharacter(layer.layer_id)
+            for k, v in maplayers.items():
+                noSpaceInMapLayerName = self.replaceSpecialCharacter(v.name())
+                if (noSpaceInLayerName == noSpaceInMapLayerName) or (nameLayerId.find(noSpaceInMapLayerName) != -1):
+                    removeLayers.add(v.name())
+                    tmp += "{}, ".format(v.name())
+        return self.removeLayersById(removeLayers, tmp, bAskForConfirmation)
 
     def removeLayersFromProject(self, guichet_layers, maplayers, bAskForConfirmation=True):
         tmp = ''
@@ -502,9 +555,11 @@ class Contexte(object):
 
         if bAskForConfirmation:
             if len(removeLayers) == 1:
-                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?".format(tmp[:-2])
+                message = "La couche [{}] existe déjà, elle va être mise à jour.\nVoulez-vous continuer ?"\
+                    .format(tmp[:-2])
             else:
-                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?".format(tmp[:-2])
+                message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?"\
+                    .format(tmp[:-2])
             reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
                                          QMessageBox.No)
             if reply == QMessageBox.No:
@@ -514,6 +569,8 @@ class Contexte(object):
         for removeLayer in removeLayers:
             listLayers = self.QgsProject.instance().mapLayersByName(removeLayer)
             for lLayer in listLayers:
+                if lLayer.id() in layerIds:
+                    continue
                 layerIds.append(lLayer.id())
 
         self.QgsProject.instance().removeMapLayers(layerIds)
@@ -564,6 +621,7 @@ class Contexte(object):
 
         # Modification de la symbologie de la couche
         listOfValuesFromItemStyle = self.client.getListOfValuesFromItemStyle(structure)
+        print(listOfValuesFromItemStyle)
         newVectorLayer.setModifySymbols(listOfValuesFromItemStyle)
 
         # Affichage des données en fonction de l'échelle
@@ -613,7 +671,8 @@ class Contexte(object):
                 uri.setDataSource('', table, 'geom')
                 uri.setSrid(str(cst.EPSGCRS))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId))
+                crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
+                vlayer.setCrs(crs)
                 self.QgsProject.instance().addMapLayer(vlayer, False)
                 root.insertLayer(0, vlayer)
                 self.logger.debug("Layer " + vlayer.name() + " added to map")
@@ -674,21 +733,26 @@ class Contexte(object):
 
     def emptyAllRipartLayers(self):
         """
-        Supprime toutes les remarques, vide les tables de la base ripart.sqlite
+        vide, détruit et crée les tables dans la base ripart.sqlite
         """
-        ripartLayers = RipartHelper.croquis_layers
-        ripartLayers[RipartHelper.nom_Calque_Signalement] = "POINT"
         try:
-            self.conn = spatialite_connect(self.dbPath)
-            for table in ripartLayers:
-                RipartHelper.emptyTable(self.conn, table)
-            ripartLayers.pop(RipartHelper.nom_Calque_Signalement, None)
-            self.conn.commit()
+            # self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
+            for table in RipartHelper.croquis_layers:
+                if SQLiteManager.isTableExist(table):
+                    SQLiteManager.emptyTable(table)
+                else:
+                    RipartHelper.createCroquisTable(self.conn, table, RipartHelper.croquis_layers[table])
+            if SQLiteManager.isTableExist(RipartHelper.nom_Calque_Signalement):
+                SQLiteManager.emptyTable(RipartHelper.nom_Calque_Signalement)
+            else:
+                RipartHelper.createRemarqueTable(self.conn)
+            SQLiteManager.vacuumDatabase()
         except RipartException as e:
             self.logger.error(format(e))
             raise
-        finally:
-            self.conn.close()
         self.refresh_layers()
 
     def refresh_layers(self):
@@ -707,7 +771,10 @@ class Contexte(object):
         curs = None
         try:
             # self.conn= sqlite3.connect(self.dbPath)
-            self.conn = spatialite_connect(self.dbPath)
+            #self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
 
             sql = "UPDATE " + RipartHelper.nom_Calque_Signalement + " SET "
             sql += " Date_MAJ= '" + rem.getAttribut("dateMiseAJour") + "',"
@@ -842,7 +909,7 @@ class Contexte(object):
         geomPoints = []
 
         try:
-            destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS)
+            destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
             transformer = QgsCoordinateTransform(layerCrs, destCrs, self.QgsProject.instance())
             if ftype == QgsWkbTypes.GeometryType.PolygonGeometry:
                 geomPoints = geom.asPolygon()
@@ -913,7 +980,10 @@ class Contexte(object):
 
         cr = listCroquis[0]
         try:
-            self.conn = spatialite_connect(self.dbPath)
+            # self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
             cur = self.conn.cursor()
 
             sql = u"Drop table if Exists " + tmpTable
@@ -971,7 +1041,10 @@ class Contexte(object):
         try:
             dbName = self.projectFileName + "_espaceco"
             self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
-            self.conn = spatialite_connect(self.dbPath)
+            # self.conn = spatialite_connect(self.dbPath)
+            self.conn = sqlite3.connect(self.dbPath)
+            self.conn.enable_load_extension(True)
+            self.conn.execute("SELECT load_extension('mod_spatialite')")
             cur = self.conn.cursor()
 
             sql = "SELECT X(ST_GeomFromText(centroid)) as x, Y(ST_GeomFromText(centroid)) as y  from " + tmpTable
@@ -1000,7 +1073,10 @@ class Contexte(object):
         :param noSignalements : les no de signalements à sélectionner
         :type noSignalements: list de string
         """
-        self.conn = spatialite_connect(self.dbPath)
+        # self.conn = spatialite_connect(self.dbPath)
+        self.conn = sqlite3.connect(self.dbPath)
+        self.conn.enable_load_extension(True)
+        self.conn.execute("SELECT load_extension('mod_spatialite')")
         cur = self.conn.cursor()
         table = RipartHelper.nom_Calque_Signalement
         lay = self.getLayerByName(table)
@@ -1008,7 +1084,6 @@ class Contexte(object):
         rows = cur.execute(sql)
         featIds = []
         for row in rows:
-            print(row[0])
             featIds.append(row[0])
         lay.selectByIds(featIds)
 
@@ -1027,7 +1102,10 @@ class Contexte(object):
         :rtype: dictionnary
         """
         crlayers = RipartHelper.croquis_layers
-        self.conn = spatialite_connect(self.dbPath)
+        # self.conn = spatialite_connect(self.dbPath)
+        self.conn = sqlite3.connect(self.dbPath)
+        self.conn.enable_load_extension(True)
+        self.conn.execute("SELECT load_extension('mod_spatialite')")
         cur = self.conn.cursor()
 
         for table in crlayers:

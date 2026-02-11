@@ -44,8 +44,8 @@ class XMLResponse(object):
     def __init__(self, response):
         """Constructeur
         
-        :param response: la réponse du serveur (xml)
-        :type response: string 
+        :param response : la réponse du serveur (xml)
+        :type response : string
         """
         self.logger.debug("init 1 :")
 
@@ -112,7 +112,7 @@ class XMLResponse(object):
     def extractProfil(self):
         """Extraction du profil à partir de la réponse xml
         
-        :return: profil de l'utilisateur
+        :return : profil de l'utilisateur
         """
         profil = Profil()
 
@@ -216,7 +216,8 @@ class XMLResponse(object):
                         continue
                     layer.url = url.text
                     layer.databasename = self.findDatabaseName(url.text)
-                    print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.name, layer.nom, layer.databasename))
+                    print("groupe : {0} layer : {1} databasename : {2}".format(infosgeogroup.group.name, layer.nom,
+                                                                               layer.databasename))
                     layer_id = nodelayer.find('LAYER')
                     if layer_id is not None:
                         layer.layer_id = layer_id.text
@@ -386,7 +387,7 @@ class XMLResponse(object):
         return [themes, filteredThemes, globalThemes]
 
     def getVersion(self):
-        """Retourne la version du service ripart    
+        """Retourne la version du service ripart
         :return la version du service
         """
         v = ""
@@ -414,7 +415,7 @@ class XMLResponse(object):
 
     def getTotalResponse(self):
         """Retourne le nombre total de réponses
-        :return: nombre total de réponse
+        : return : nombre total de réponse
         """
         total = 0
         try:
@@ -556,10 +557,10 @@ class XMLResponse(object):
         """ Extrait les croquis d'une remarque et les ajoute dans l'objet Remarque (rem)
 
         :param rem un objet Remarque
-        :type rem: Remarque
+        :type rem : Remarque
 
-        :param node: le noeud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
-        :type node: Element
+        :param node : le nœud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
+        :type node : Element
 
         :return la remarque avec les croquis
         :rtype Remarque
@@ -580,7 +581,8 @@ class XMLResponse(object):
                     elif typeObjet == "MultiPolygone":
                         typeCroquis = "Polygone"
                     else:
-                        self.logger.error("Type de croquis inconnu pour le signalement " + str(rem.id) + " : " + typeObjet)
+                        self.logger.error("Type de croquis inconnu pour le signalement " + str(rem.id) + " : " +
+                                          typeObjet)
                         return
 
                 # Récupération du nom
@@ -627,7 +629,8 @@ class XMLResponse(object):
 
                         except Exception as e:
                             self.logger.error(str(e))
-                            raise Exception("Erreur dans la récupération de l'un des points du croquis pour le signalement "
+                            raise Exception("Erreur dans la récupération de l'un des points du croquis "
+                                            "pour le signalement "
                                             + str(rem.id) + " : {}".format(str(e)))
 
                     sketch.coordinates = coordinates[:-1]
@@ -637,7 +640,8 @@ class XMLResponse(object):
 
         except Exception as e:
             self.logger.error(str(e))
-            raise Exception("Erreur dans la récupération du croquis pour le signalement " + str(rem.id) + " : {}".format(str(e)))
+            raise Exception("Erreur dans la récupération du croquis "
+                            "pour le signalement " + str(rem.id) + " : {}".format(str(e)))
 
         return rem
 
@@ -645,10 +649,10 @@ class XMLResponse(object):
         """Extraction des documents attachés à une remarque
         
         :param rem un objet Remarque
-        :type rem: Remarque
+        :type rem : Remarque
         
-        :param node: le noeud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
-        :type node: Element
+        :param node : le nœud de la remarque dans le fichier xml (<GEOREM> ...</GEOREM>)
+        :type node : Element
         
         :return la remarque avec les croquis
         :rtype Remarque

@@ -67,14 +67,15 @@ class EditFormFieldFromAttributes(object):
                                                                          v['type'], v['nullable']),
                            self.setFieldExpressionConstraintMinMaxValue(v['min_value'], v['max_value'], v['type']),
                            self.setFieldExpressionConstraintPattern(v['pattern'], v['type'], v['nullable']),
-                           self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'])]
-            self.setFieldAllConstraints(constraints, v['nullable'])
+                           self.setFieldExpressionConstraintWithCondition(v['constraint'], v['condition_field'])]
+            #self.setFieldAllConstraints(constraints, v['nullable'])
+            self.setFieldAllConstraints(constraints)
             self.setFieldListOfValues(v['listOfValues'], v['default_value'])
             self.setFieldReadOnly(v['readOnly'], v['computed'])
             linkFieldType[v['name']] = v['type']
         return linkFieldType
 
-    def setFieldAllConstraints(self, constraints, bNullable):
+    def setFieldAllConstraints(self, constraints):
         expressionAllConstraints = ''
         for c in constraints:
             if c is None:
@@ -87,8 +88,9 @@ class EditFormFieldFromAttributes(object):
         # Suppression du dernier AND inutile
         expressionAllConstraints = expressionAllConstraints[0:len(expressionAllConstraints) - 5]
 
-        if bNullable:
-            expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name, expressionAllConstraints)
+        # if bNullable:
+        #     expressionAllConstraints = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(
+        #         self.name, expressionAllConstraints)
 
         self.layer.setConstraintExpression(self.index, expressionAllConstraints)
 
@@ -211,8 +213,7 @@ class EditFormFieldFromAttributes(object):
 
     def setFieldExpressionConstraintMinMaxValue(self, minValue, maxValue, vType):
         expTmp = None
-        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == self.data[
-            'idName']:
+        if (minValue is None and maxValue is None) or (minValue == '' and maxValue == '') or self.name == self.data['idName']:
             return None
 
         if vType == 'DateTime':
@@ -267,11 +268,21 @@ class EditFormFieldFromAttributes(object):
         END
     '''
 
-    def setFieldExpressionConstraintMapping(self, constraintField, conditionField):
+    def setFieldExpressionConstraintWithCondition(self, constraintField, conditionField):
         if constraintField is None and conditionField is None:
             return None
-        if constraintField['type'] != 'mapping':
+        typeConstraint = constraintField['type']
+        if typeConstraint == 'mapping':
+            expression = self.setFieldConditionMapping(constraintField, conditionField)
+        elif typeConstraint == 'regex':
+            expression = self.setFieldConditionRegex(constraintField, conditionField)
+        elif typeConstraint == 'document':
+            expression = self.setFieldConditionDocument(constraintField, conditionField)
+        else:
             return None
+        return expression
+
+    def setFieldConditionMapping(self, constraintField, conditionField) -> str:
         expression = 'CASE'
         for k, v in constraintField['mapping'].items():
             # le caractère apostrophe est doublé
@@ -290,6 +301,61 @@ class EditFormFieldFromAttributes(object):
                 # si array_contains retourne true, alors la valeur affectée au champ est bien contenue dans le tableau
                 expression += ' THEN array_contains(array({}),"{}")'.format(values[0:len(values) - 1], self.name)
         expression += " END"
+        return expression
+
+    '''
+        "constraint": {
+                "type": "regex",
+                "regex": "true"
+          },
+        "condition_field": "acces_vehicules"
+        La contrainte est de type
+        CASE
+            WHEN "acces_vehicules" <> 1
+            THEN "nb_voies" = '' OR "nb_voies" IS NULL
+            WHEN "acces_vehicules" = 1
+            THEN "nb_voies" IS NOT NULL OR "nb_voies" <> ''
+        END
+    '''
+
+    def setFieldConditionRegex(self, constraintField, conditionField) -> str:
+        # ^val commence par val
+        # val1|val2 val1 ou val2
+        # val$ finit par val
+        # ou pas de caractères spéciaux
+        expression = 'CASE'
+        strRegex = constraintField['regex']
+        nameField = conditionField.replace("'", "''")
+        if strRegex == 'true':
+            expression += ' WHEN "{0}" <> 1 THEN "{1}" = \'\' OR "{1}" IS NULL WHEN "{0}" = 1 THEN "{1}" IS NOT NULL OR "{1}" <> \'\''.format(nameField, self.name)
+        elif strRegex[0:1] == '^' or strRegex[-1:] == '$':
+            expression += ' WHEN "{0}" <> {2} THEN "{1}" = \'\' OR "{1}" IS NULL WHEN "{0}" = {2} THEN "{1}" <> \'\' OR "{1}" IS NOT NULL'.format(nameField, self.name, strRegex)
+        elif strRegex.find('|') != -1:
+            tabSplit = strRegex.split('|')
+            expression += ' WHEN '
+            tmp = ''
+            for val in tabSplit:
+                tmp += '"{0}" = \'{1}\' OR '.format(nameField, val)
+            exp = tmp[0:len(tmp) - 3]
+            expression += exp
+            expr = exp.replace('=', '<>')
+            expression += 'THEN "{0}" IS NULL OR "{0}" <> \'\' OR "{0}" != \'\' WHEN {1} THEN "{2}" IS NULL OR "{2}" = \'\''.format(self.name, expr, nameField)
+        expression += ' END'
+        return expression
+
+    def setFieldConditionDocument(self, constraintField, conditionField) -> str:
+        expression = 'CASE'
+        nameField = conditionField.replace("'", "''")
+        strValue = constraintField['value']
+        if strValue == 'dateFile()':
+            a = 1
+        elif strValue == 'nameFile()':
+            a = 1
+        elif strValue == 'mimetypeFile()':
+            a = 1
+        elif strValue == 'sizeFile()':
+            a = 1
+        expression += ' END'
         return expression
 
     '''
@@ -329,7 +395,8 @@ class EditFormFieldFromAttributes(object):
 
         # Cas particulier des string nullable
         if bNullable is True:
-            expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name, expression)
+            expression = "\"{0}\" is null or \"{0}\" = 'null' or \"{0}\" = 'NULL' or ({1})".format(self.name,
+                                                                                                   expression)
         return expression
 
     '''

@@ -11,7 +11,7 @@ version 4.0.1, 15/12/2020
 import os
 
 from PyQt5.QtWidgets import QDialogButtonBox
-from qgis.PyQt import uic
+from qgis.PyQt import uic, QtCore
 from .core.RipartLoggerCl import RipartLogger
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtGui import QImage
@@ -66,8 +66,8 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lblPwd.setFont(font)
         self.lblLogin.setFont(font)
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
-
         self.setFixedSize(self.width(), self.height())
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
 
     def setLogin(self, login):
         self.lineEditLogin.setText(login)  
@@ -174,14 +174,12 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 dlgInfo = FormInfo()
 
                 # Modification du logo en fonction du groupe
-                if profil.logo != "":
-                    #logoPath = "{0}{1}".format(self.urlhost, profil.logo)
-                    image = QImage()
-                    #image.loadFromData(requests.get(logoPath).content)
-                    image.loadFromData(client.getLogoFromService(profil.logo))
-                    dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
-                elif profil.title == "Profil par défaut":
+                if profil.logo == "" or profil.title == "Profil par défaut":
                     dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/RipartPlugin/images/logo_IGN.png"))
+                else:
+                    image = QImage()
+                    image.loadFromData(client.getLogoFromService(client.getProfil().logo))
+                    dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
 
                 dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
                 dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlhost))

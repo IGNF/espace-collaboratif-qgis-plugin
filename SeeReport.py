@@ -24,17 +24,6 @@ class SeeReport(object):
         Affichage de la fenêtre de visualisation d'un signalement
         """
         try:
-            if self.context.client is None:
-                connResult = self.context.getConnexionRipart()
-                if not connResult:
-                    return 0
-                # la connexion a échoué, on ne fait rien
-                if self.context.ripClient is None:
-                    self.context.iface.messageBar().pushMessage("",
-                                                                u"Un problème de connexion avec le service RIPart est survenu.Veuillez rééssayer",
-                                                                level=2, duration=5)
-                    return
-
             activeLayer = self.context.iface.activeLayer()
             if activeLayer is None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
                 self.context.iface.messageBar().pushMessage("Attention",

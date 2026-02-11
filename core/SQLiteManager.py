@@ -1,8 +1,9 @@
 import ntpath
 import json
 import os.path
+import re
+import sqlite3
 
-from qgis.utils import spatialite_connect
 from qgis.core import QgsProject, QgsGeometry
 from . import ConstanteRipart as cst
 from .Wkt import Wkt
@@ -28,7 +29,10 @@ class SQLiteManager(object):
 
     @staticmethod
     def executeSQL(sql):
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cur = connection.cursor()
         cur.execute(sql)
         cur.close()
@@ -42,7 +46,10 @@ class SQLiteManager(object):
         # Si la base SQLite n'existe pas, on passe
         if not os.path.isfile(dbPath):
             return False
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         sql = u"SELECT name FROM sqlite_master WHERE type='table' AND name='{}'".format(tableName)
         cur = connection.cursor()
         cur.execute(sql)
@@ -75,7 +82,8 @@ class SQLiteManager(object):
             elif value['name'] == cst.FINGERPRINT or value['name'] == cst.NUMREC:
                 continue
             else:
-                sqlAttributes += "{0} {1},".format(value['name'], self.setSwitchType(value['type']))
+                tmp = value['name'].replace(' ', '')
+                sqlAttributes += "{0} {1},".format(tmp, self.setSwitchType(value['type']))
         # Anomalie 17196, l'identifiant ID_SQLITE et FINGERPRINT sont positionnés en dernier dans le formulaire
         sqlAttributes += "{0} INTEGER PRIMARY KEY AUTOINCREMENT".format(cst.ID_SQLITE)
         if not layer.isStandard:
@@ -84,54 +92,129 @@ class SQLiteManager(object):
         self.geometryType = typeGeometrie
         return sqlAttributes, typeGeometrie, columnDetruitExist
 
+    def sanitize_identifier(self, identifier):
+        """
+        Valide un identifiant SQL (nom de table ou colonne).
+        Autorise uniquement lettres, chiffres et underscore.
+        """
+        if not re.match(r'^[A-Za-z0-9_]+$', identifier):
+            raise ValueError(f"Identifiant SQL invalide : {identifier}")
+        return identifier
+
     def addGeometryColumn(self, parameters):
-        # Paramétrage de la colonne géométrie en 2D par défaut
-        if parameters['is3D']:
-            sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XYZ')".format(parameters['tableName'],
-                                                                                     parameters['geometryName'],
-                                                                                     parameters['crs'],
-                                                                                     parameters['geometryType'])
-        else:
-            sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XY')".format(parameters['tableName'],
-                                                                                    parameters['geometryName'],
-                                                                                    parameters['crs'],
-                                                                                    parameters['geometryType'])
+        # Validation des identifiants
+        tableName = self.sanitize_identifier(parameters['tableName'])
+        geometryName = self.sanitize_identifier(parameters['geometryName'])
+        geometryType = parameters['geometryType']
+        crs = parameters['crs']
+
+        # Définition du type de dimension
+        dimension = 'XYZ' if parameters['is3D'] else 'XY'
+
+        # Construction sécurisée
+        sql = f"SELECT AddGeometryColumn('{tableName}', '{geometryName}', {crs}, '{geometryType}', '{dimension}')"
         return sql
 
     def createTableFromLayer(self, layer, tableStructure):
-        # Stockage du nom du champ contenant la géométrie
-        geometryName = tableStructure['geometryName']
+        global cur
+        geometryName = self.sanitize_identifier(tableStructure['geometryName'])
         self.is3D = tableStructure['attributes'][geometryName]['is3d']
-        # La structure de la table à créer
         self.tableAttributes = tableStructure['attributes']
+
+        # Génération des colonnes SQL
         t = self.setAttributesTableToSql(geometryName, layer)
         if t[0] == "" and t[1] == "" and t[2] == "":
             raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
 
-        connection = spatialite_connect(self.dbPath)
-        sql = u"CREATE TABLE {0} (".format(layer.nom)
-        sql += t[0]
-        sql += ')'
-        cur = connection.cursor()
-        print(sql)
-        cur.execute(sql)
-        '''sqlSpatial = 'SELECT InitSpatialMetaData()'
-        print(sqlSpatial)
-        cur.execute(sqlSpatial)'''
-        parameters_geometry_column = {'tableName': layer.nom, 'geometryName': tableStructure['geometryName'],
-                                      'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
-        sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
-        print(sqlGeometryColumn)
-        cur.execute(sqlGeometryColumn)
-        if len(cur.fetchall()) == 0:
-            print("SQLiteManager : création de la table {0} réussie".format(layer.nom))
-        cur.close()
-        connection.commit()
-        connection.close()
-        # compactage de la base
-        SQLiteManager.vacuumDatabase()
-        # retourne True si la colonne detruit existe dans la table
-        return t[2]
+        # Connexion sécurisée
+        connection = sqlite3.connect(self.dbPath)
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
+
+        try:
+            cur = connection.cursor()
+
+            # Initialisation SpatiaLite
+            cur.execute("SELECT InitSpatialMetaData()")
+
+            # Création table (nom validé)
+            tableName = self.sanitize_identifier(layer.nom)
+            sql_create = f"CREATE TABLE \"{tableName}\" ({t[0]})"
+            print(sql_create)
+            cur.execute(sql_create)
+
+            # Ajout colonne géométrie
+            parameters_geometry_column = {
+                'tableName': tableName,
+                'geometryName': geometryName,
+                'crs': cst.EPSGCRS,
+                'geometryType': self.geometryType,
+                'is3D': self.is3D
+            }
+            sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
+            print(sqlGeometryColumn)
+            cur.execute(sqlGeometryColumn)
+
+            connection.commit()
+            print(f"SQLiteManager : création de la table {tableName} réussie")
+
+        except Exception as e:
+            connection.rollback()
+            raise Exception(f"Erreur lors de la création de la table : {e}")
+
+        finally:
+            cur.close()
+            connection.close()
+            SQLiteManager.vacuumDatabase()
+
+    # def addGeometryColumn(self, parameters):
+    #     # Paramétrage de la colonne géométrie en 2D par défaut
+    #     if parameters['is3D']:
+    #         sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XYZ')".format(parameters['tableName'],
+    #                                                                                  parameters['geometryName'],
+    #                                                                                  parameters['crs'],
+    #                                                                                  parameters['geometryType'])
+    #     else:
+    #         sql = "SELECT AddGeometryColumn('{0}', '{1}', {2}, '{3}', 'XY')".format(parameters['tableName'],
+    #                                                                                 parameters['geometryName'],
+    #                                                                                 parameters['crs'],
+    #                                                                                 parameters['geometryType'])
+    #     return sql
+    #
+    # def createTableFromLayer(self, layer, tableStructure):
+    #     # Stockage du nom du champ contenant la géométrie
+    #     geometryName = tableStructure['geometryName']
+    #     self.is3D = tableStructure['attributes'][geometryName]['is3d']
+    #     # La structure de la table à créer
+    #     self.tableAttributes = tableStructure['attributes']
+    #     t = self.setAttributesTableToSql(geometryName, layer)
+    #     if t[0] == "" and t[1] == "" and t[2] == "":
+    #         raise Exception("Création d'une table dans SQLite impossible, un type de colonne est inconnu")
+    #
+    #     connection = spatialite_connect(self.dbPath)
+    #     sql = u"CREATE TABLE {0} (".format(layer.nom)
+    #     sql += t[0]
+    #     sql += ')'
+    #     cur = connection.cursor()
+    #     print(sql)
+    #     cur.execute(sql)
+    #     '''sqlSpatial = 'SELECT InitSpatialMetaData()'
+    #     print(sqlSpatial)
+    #     cur.execute(sqlSpatial)'''
+    #     parameters_geometry_column = {'tableName': layer.nom, 'geometryName': tableStructure['geometryName'],
+    #                                   'crs': cst.EPSGCRS, 'geometryType': self.geometryType, 'is3D': self.is3D}
+    #     sqlGeometryColumn = self.addGeometryColumn(parameters_geometry_column)
+    #     print(sqlGeometryColumn)
+    #     cur.execute(sqlGeometryColumn)
+    #     if len(cur.fetchall()) == 0:
+    #         print("SQLiteManager : création de la table {0} réussie".format(layer.nom))
+    #     connection.commit()
+    #     cur.close()
+    #     connection.close()
+    #     # compactage de la base
+    #     SQLiteManager.vacuumDatabase()
+    #     # retourne True si la colonne detruit existe dans la table
+    #     return t[2]
 
     def setSwitchType(self, vType):
         if vType == 'Boolean':
@@ -228,6 +311,11 @@ class SQLiteManager(object):
             elif column == cst.ID_SQLITE:
                 tmpColumns += '{0},'.format(cst.ID_ORIGINAL)
             else:
+                # un nom de colonne ne doit pas contenir d'espace
+                if column.find(' ') != -1:
+                    message = "Le nom de colonne [{}] ne doit pas contenir d'espace, il est impossible d'importer " \
+                              "la couche, veuillez demander à revoir la configuration de la table sur le serveur.".format(column)
+                    raise Exception(message)
                 tmpColumns += '{0},'.format(column)
 
             if value is None:
@@ -265,7 +353,7 @@ class SQLiteManager(object):
     def deleteRowsInTableBDUni(tableName, keys):
         tmp = ''
         for key in keys:
-            tmp += '"{0}", '.format(key[0])
+            tmp += '"{0}", '.format(key)
         strCleabs = tmp[0:len(tmp) - 2]
         sql = 'DELETE FROM {0} WHERE cleabs IN ({1})'.format(tableName, strCleabs)
         SQLiteManager.executeSQL(sql)
@@ -279,7 +367,7 @@ class SQLiteManager(object):
                 continue
             if data['state'] == 'Update' or data['state'] == 'Delete':
                 cleabss.append(data['feature']['cleabs'])
-        # Si la transaction ne contient que des créations, il n'y a pas d'enregistrements à détruire
+        # Si la transaction ne contient que des créations ou des updates, il n'y a pas d'enregistrements à détruire
         if len(cleabss) > 0:
             SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
@@ -311,7 +399,10 @@ class SQLiteManager(object):
             return totalRows
         wkt = Wkt(parameters)
         # Insertion des lignes dans la table
-        connection = spatialite_connect(self.dbPath)
+        # connection = spatialite_connect(self.dbPath)
+        connection = sqlite3.connect(self.dbPath)
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cur = connection.cursor()
         for attributesRow in attributesRows:
             columnsValues = self.setColumnsValuesForInsert(attributesRow, parameters, wkt)
@@ -338,7 +429,10 @@ class SQLiteManager(object):
         else:
             sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idNameForDatabase, layer.name(), cst.ID_SQLITE,
                                                                 listId)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cur = connection.cursor()
         cur.execute(sql)
         result = cur.fetchall()
@@ -361,7 +455,10 @@ class SQLiteManager(object):
     @staticmethod
     def isColumnExist(tableName, columnName):
         sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchone()
@@ -372,7 +469,10 @@ class SQLiteManager(object):
     @staticmethod
     def selectColumnFromTable(tableName, columnName):
         sql = u"SELECT {0} FROM {1}".format(columnName, tableName)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchall()
@@ -382,8 +482,13 @@ class SQLiteManager(object):
 
     @staticmethod
     def selectColumnFromTableWithCondition(tableName, columnName, key):
-        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, columnName, key)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        tableName = SQLiteManager.echap(tableName)
+        keyValue = SQLiteManager.echap(key)
+        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tableName, columnName, keyValue)
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchone()
@@ -405,7 +510,10 @@ class SQLiteManager(object):
     @staticmethod
     def selectLayersFromTableOfTables():
         sql = "SELECT layer FROM {0}".format(cst.TABLEOFTABLES)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cur = connection.cursor()
         cur.execute(sql)
         result = cur.fetchall()
@@ -416,7 +524,10 @@ class SQLiteManager(object):
     @staticmethod
     def selectNumrecTableOfTables(layer):
         sql = "SELECT numrec FROM {0} where layer = '{1}'".format(cst.TABLEOFTABLES, layer)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cur = connection.cursor()
         cur.execute(sql)
         result = cur.fetchone()
@@ -433,11 +544,11 @@ class SQLiteManager(object):
 
     @staticmethod
     def InsertIntoTableOfTables(parameters):
-        # TODO
-        # Si l'enregistrement existe déjà, on sort ou on update ?
+        # Si l'enregistrement existe déjà, on le détruit avant d'insérer le nouveau
         result = SQLiteManager.selectRowsInTableOfTables(parameters['layer'])
         if len(result) == 1:
-            return
+            sql = "DELETE FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, parameters['layer'])
+            SQLiteManager.executeSQL(sql)
 
         columns = ''
         values = ''
@@ -460,10 +571,20 @@ class SQLiteManager(object):
             return result
 
         sql = "SELECT * FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, tableName)
-        connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        # connection = spatialite_connect(SQLiteManager.getBaseSqlitePath())
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
         cur = connection.cursor()
         cur.execute(sql)
         result = cur.fetchall()
         cur.close()
         connection.close()
         return result
+
+    @staticmethod
+    def echap(strToEchap):
+        if strToEchap.find('\'') != -1:
+            tmp = strToEchap.replace('\'', '\'\'')
+            return tmp
+        return strToEchap

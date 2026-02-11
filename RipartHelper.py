@@ -15,12 +15,15 @@ import subprocess
 import sys
 import ntpath
 import xml.etree.ElementTree as ET
+import sqlite3
 from datetime import datetime
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from .core.ClientHelper import ClientHelper
 from .core.RipartLoggerCl import RipartLogger
 from .core import ConstanteRipart as cst
+from .core.SQLiteManager import SQLiteManager
+from qgis.utils import spatialite_connect
 
 
 class RipartHelper:
@@ -501,28 +504,32 @@ class RipartHelper:
         """
         cur = conn.cursor()
         sql = u"CREATE TABLE Signalement (" + \
-              u"id INTEGER NOT NULL PRIMARY KEY," + \
-              u"NoSignalement INTEGER," + \
+              u"id INTEGER NOT NULL PRIMARY KEY, " + \
+              u"NoSignalement INTEGER, " + \
               u"Auteur TEXT, " + \
               u"Commune TEXT, " + \
               u"Département TEXT, " + \
-              u"Département_id  TEXT," + \
-              u"Date_création TEXT," + \
-              u"Date_MAJ TEXT," + \
-              u"Date_validation TEXT," + \
-              u"Thèmes TEXT ," + \
-              u"Statut TEXT ," + \
-              u"Message TEXT," + \
-              u"Réponses TEXT," + \
-              u"URL TEXT," + \
-              u"URL_privé TEXT ," + \
-              u"Document TEXT," + \
+              u"Département_id  TEXT, " + \
+              u"Date_création TEXT, " + \
+              u"Date_MAJ TEXT, " + \
+              u"Date_validation TEXT, " + \
+              u"Thèmes TEXT, " + \
+              u"Statut TEXT, " + \
+              u"Message TEXT, " + \
+              u"Réponses TEXT, " + \
+              u"URL TEXT, " + \
+              u"URL_privé TEXT, " + \
+              u"Document TEXT, " + \
               u"Autorisation TEXT)"
-        cur.execute(sql)
+        print(sql)
+        res = cur.execute(sql)
+        print(res)
         conn.commit()
         # creating a POINT Geometry column
-        sql = "SELECT AddGeometryColumn('Signalement','geom', " + str(cst.EPSGCRS) + ", 'POINT', 'XY')"
-        cur.execute(sql)
+        sql = "SELECT AddGeometryColumn('Signalement', 'geom', " + str(cst.EPSGCRS) + ", 'POINT', 'XY')"
+        print(sql)
+        res = cur.execute(sql)
+        print(res)
         cur.close()
         conn.commit()
 
@@ -541,19 +548,22 @@ class RipartHelper:
         """
         cur = conn.cursor()
         sql = u"CREATE TABLE " + table + " (" + \
-              u"id INTEGER NOT NULL PRIMARY KEY," + \
-              u"NoSignalement INTEGER," + \
-              u"Nom TEXT ," + \
-              u"Attributs_croquis," + \
+              u"id INTEGER NOT NULL PRIMARY KEY, " + \
+              u"NoSignalement INTEGER, " + \
+              u"Nom TEXT, " + \
+              u"Attributs_croquis, " + \
               u"Lien_objet_BDUNI TEXT) "
-        cur.execute(sql)
-        cur.close()
+        print(sql)
+        res = cur.execute(sql)
+        print(res)
+        conn.commit()
         # creating a POINT Geometry column
-        cursor = conn.cursor()
-        sql = "SELECT AddGeometryColumn('" + table + "',"
-        sql += "'geom'," + str(cst.EPSGCRS) + ",'" + geomType + "', 'XY')"
-        cursor.execute(sql)
-        cursor.close()
+        sql = "SELECT AddGeometryColumn('" + table + "', "
+        sql += "'geom', " + str(cst.EPSGCRS) + ", '" + geomType + "', 'XY')"
+        print(sql)
+        res = cur.execute(sql)
+        print(res)
+        cur.close()
         conn.commit()
 
     @staticmethod
@@ -574,14 +584,17 @@ class RipartHelper:
             cur.close()
 
     @staticmethod
-    def insertRemarques(conn, rem):
+    def insertRemarques(conn, rem, bCommit):
         """Insertion d'une nouvelle remarque dans la table Signalement
         
         @param conn: la connexion à la base de données
         @type conn: 
         
         @param rem: la remarque à ajouter
-        @type rem: Remarque  
+        @type rem: Remarque
+
+        @param bCommit: fait une transaction tous les 200 objets
+        @type bCommit: bool
         """
         RipartHelper.logger.debug("insertRemarques")
         cur = conn.cursor()
@@ -627,11 +640,23 @@ class RipartHelper:
             sql += ClientHelper.getValForDB(rem.getAllDocuments()) + "', '"
             sql += rem.getAttribut("autorisation") + "', "
             sql += geom + ")"
+            result = SQLiteManager.isColumnExist(RipartHelper.nom_Calque_Signalement, 'Auteur')
+            if result[0] != 1:
+                SQLiteManager.deleteTable(RipartHelper.nom_Calque_Signalement)
+                dbName = RipartHelper.getConfigFile().replace("xml", "sqlite")
+                dbPath = QgsProject.instance().homePath() + "/" + dbName
+                # connexion = spatialite_connect(dbPath)
+                connexion = sqlite3.connect(dbPath)
+                connexion.enable_load_extension(True)
+                connexion.execute("SELECT load_extension('mod_spatialite')")
+                RipartHelper.createRemarqueTable(connexion)
+                SQLiteManager.vacuumDatabase()
             cur.execute(sql)
             rowcount = cur.rowcount
             if rowcount != 1:
                 RipartHelper.logger.error("No row inserted:" + sql)
-
+            if bCommit:
+                conn.commit()
             if len(rem.croquis) > 0:
                 croquis = rem.croquis
                 for cr in croquis:
@@ -657,6 +682,8 @@ class RipartHelper:
                         geom = sgeom % ('POLYGON(', coord + ")")
                         sql = sql % (RipartHelper.nom_Calque_Croquis_Polygone, geom)
                     cur.execute(sql)
+                if bCommit:
+                    conn.commit()
 
         except Exception as e:
             raise e
@@ -674,7 +701,7 @@ class RipartHelper:
         :param geomLayer: QgsVectorlayer
         """
         layerCrs = geomLayer.crs()
-        destCrs = QgsCoordinateReferenceSystem(cst.EPSGCRS, QgsCoordinateReferenceSystem.CrsType.EpsgCrsId)
+        destCrs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
         xform = QgsCoordinateTransform(layerCrs, destCrs, QgsProject.instance())
         featsPoly = geomLayer.getFeatures()
         isWithin = False
