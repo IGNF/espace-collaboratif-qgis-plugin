@@ -10,7 +10,7 @@
 name=IGN_Espace_Collaboratif_DEV
 qgisMinimumVersion=3.0
 description=Service de signalement et contribution de l'IGN, plugin QGIS3
-version=4.2.x
+version=4.2.4
 author=IGN
 email=service-client@ign.fr
 
@@ -27,6 +27,7 @@ date=
 
 # Uncomment the following line and add your changelog:
 changelog=
+    4.2.4 - Correction en cas de numrec vide
     4.2.3 - DEV - A COMPLETER
     4.2.2 - Correction proxy
     4.2.0 - Contribution directe à la BDTOPO pour les utilisateurs autorisés
