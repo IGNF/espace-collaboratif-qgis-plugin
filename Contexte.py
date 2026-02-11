@@ -281,7 +281,7 @@ class Contexte(object):
         else:
             self.login = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur").text
 
-           xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
+        xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
         if xmlproxy is not None and str(xmlproxy).strip() != '':
             if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
                 RipartHelper.showMessageBox(
