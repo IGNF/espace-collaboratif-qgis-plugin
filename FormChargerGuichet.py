@@ -201,7 +201,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         for layerChecked in layersChecked:
             for tmp in layerChecked:
                 for layer in self.listLayers:
-                    if tmp.find(layer.nom) != -1:
+                    # Exact match for WFS layers, or match with format "layer_name (layer_id)" for WMTS/WMS
+                    if tmp == layer.nom or tmp.startswith(layer.nom + " ("):
                         layersQGIS.append(layer)
                         break
 
