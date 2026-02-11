@@ -281,15 +281,15 @@ class Contexte(object):
         else:
             self.login = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur").text
 
-        xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
-        if xmlproxy is not None and str(xmlproxy).strip() != '':
-            if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
+        xml = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_, "Serveur").text
+        if xml is not None and str(xml).strip() != '':
+            if not xml.startswith("http://") and not xml.startswith("https://"):
                 RipartHelper.showMessageBox(
-                    u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
+                    u"Le  spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
                 return
-            self.proxy = {'https': str(xmlproxy).strip()}
+            self. = {'https': str(xml).strip()}
 
-            proxy = str(xmlproxy).strip()
+          
 
            
         else:
