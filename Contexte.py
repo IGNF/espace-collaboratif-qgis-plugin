@@ -14,7 +14,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordi
     QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
     QgsWkbTypes, QgsLayerTreeGroup
 
-import os
+
 import os.path
 import shutil
 import ntpath
@@ -291,10 +291,7 @@ class Contexte(object):
 
             proxy = str(xmlproxy).strip()
 
-            os.environ['http_proxy'] = proxy
-            os.environ['HTTP_PROXY'] = proxy
-            os.environ['https_proxy'] = proxy
-            os.environ['HTTPS_PROXY'] = proxy
+           
         else:
             self.proxy = None
 
