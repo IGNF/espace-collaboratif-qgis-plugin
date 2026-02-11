@@ -95,7 +95,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             if layer.type != cst.WFS:
                 continue
 
-            if layer.url.find(self.context.urlHostRipart) == -1:
+            if layer.url.find(cst.COLLABORATIF) == -1:
                 continue
 
             rowPosition = self.tableWidgetMonGuichet.rowCount()
