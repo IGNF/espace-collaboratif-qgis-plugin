@@ -10,7 +10,7 @@
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
 description=IGN reporting and contribution service, plugin QGIS3
-version=4.3.2
+version=4.3.3
 author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
@@ -24,14 +24,17 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin.git
 # Recommended items:
 
 # Optional items:
-date=04/12/2025
+date=11/02/2026
 
 # Uncomment the following line and add your changelog:
 changelog=
+    4.3.3 - Correction json vide
     4.3.2 - Corrections diverses
     4.3.1 - Modification du chargement des signalements
     4.3.0 - Mise à jour d'un seuil sur les transactions/Ajout téléchargement Flux WMS-R
     4.2.3 - Prise en compte de la migration des géoservices IGN vers la Géoplateforme
+    4.2.4 - Correction en cas de numrec vide
+    4.2.3 - DEV - A COMPLETER
     4.2.2 - Correction proxy
     4.2.0 - Contribution directe à la BDTOPO pour les utilisateurs autorisés
     4.1.2 - Correction version WFS

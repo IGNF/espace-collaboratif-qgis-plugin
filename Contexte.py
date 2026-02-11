@@ -14,6 +14,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordi
     QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
     QgsWkbTypes, QgsLayerTreeGroup
 
+
 import os.path
 import shutil
 import ntpath
@@ -287,9 +288,18 @@ class Contexte(object):
                     u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
                 return
             self.proxy = {'https': str(xmlproxy).strip()}
+
+          
+
+           
         else:
             self.proxy = None
 
+    
+
+
+
+        
         xmlgroupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif, "Serveur")
         if xmlgroupeactif is not None:
             self.groupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif,

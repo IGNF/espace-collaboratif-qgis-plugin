@@ -234,12 +234,12 @@ class Client(object):
         total = int(result["total"])  # nb de remarques récupérées
         sdate = result["sdate"]  # date de la réponse du serveur
         while total > 1:
-            parameters['updatingDate'] = sdate
-            tmp = self.__getGeoRemsTotal(parameters)
-            result['dicoRems'].update(tmp['dicoRems'])  # add the tmp result to the result['dicoRems'] dictionnary
-            total = tmp['total']
-            sdate = tmp["sdate"]
-            self.logger.debug("loop on total result " + " total=" + str(result['total']) + ",datetime=" + sdate)
+             parameters['updatingDate'] = sdate
+             tmp = self.__getGeoRemsTotal(parameters)
+             result['dicoRems'].update(tmp['dicoRems'])  # add the tmp result to the result['dicoRems'] dictionnary
+             total = tmp['total']
+             sdate = tmp["sdate"]
+             self.logger.debug("loop on total result " + " total=" + str(result['total']) + ",datetime=" + sdate)
         self.progress.close()
         # tri des remarques par ordre décroissant d'id
         dicoRems = OrderedDict(sorted(list(result['dicoRems'].items()), key=lambda t: t[0], reverse=True))
