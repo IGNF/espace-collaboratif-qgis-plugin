@@ -233,7 +233,7 @@ class Client(object):
         result = self.__getGeoRemsTotal(parameters)
         total = int(result["total"])  # nb de remarques récupérées
         sdate = result["sdate"]  # date de la réponse du serveur
-         while total > 1:
+        while total > 1:
              parameters['updatingDate'] = sdate
              tmp = self.__getGeoRemsTotal(parameters)
              result['dicoRems'].update(tmp['dicoRems'])  # add the tmp result to the result['dicoRems'] dictionnary
