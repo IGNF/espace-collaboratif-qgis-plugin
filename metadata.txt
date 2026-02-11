@@ -24,7 +24,7 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin.git
 # Recommended items:
 
 # Optional items:
-date=04/12/2025
+date=11/02/2026
 
 # Uncomment the following line and add your changelog:
 changelog=
