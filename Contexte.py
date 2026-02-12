@@ -677,6 +677,7 @@ class Contexte(object):
                         root.insertLayer(-1, rlayer)
                         self.logger.debug("Layer {} added to map".format(rlayer.name()))
                         message = "Couche {0} ajoutée à la carte.\n\n".format(rlayer.name())
+                        print(message)
                         endMessage += message
 
                     '''
@@ -707,10 +708,14 @@ class Contexte(object):
             if progress is not None:
                 progress.close()
             message = str(format(e))
+            
             if message.find('getMaxNumrec') != -1:
                 message = "Attention la table est peut-être vide de données " \
                           "ou n'existe pas. Veuillez contacter le gestionnaire de votre groupe. {}".format(str(e))
-            self.logger.error(message)
+            
+            self.logger.error("Final error message: {}".format(message))
+            self.logger.error("=== End Exception Details ===")
+            
             self.iface.messageBar(). \
                 pushMessage("Remarque",
                             str(e),
