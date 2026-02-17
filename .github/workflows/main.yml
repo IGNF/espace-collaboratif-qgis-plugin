@@ -1,42 +1,46 @@
-name: Release QGIS Plugin
+name: Publish QGIS Plugin
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
-  deploy:
-    name: "🚀 Deploy QGIS Plugin"
+  package-and-publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
+
+      - name: Extract version from tag
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Extracted version: $VERSION"
+
+      - name: Update metadata.txt version
+        run: |
+          sed -i "s/^version=.*/version=$VERSION/" metadata.txt
+          echo "Updated metadata.txt version to $VERSION"
 
       - name: Install qgis-plugin-ci
         run: pip install qgis-plugin-ci
 
-      - name: Deploy plugin to QGIS repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OSGEO_USER: ${{ secrets.OSGEO_USER }}
-          OSGEO_PASSWORD: ${{ secrets.OSGEO_PASSWORD }}
+      - name: Package and release plugin
         run: |
-          qgis-plugin-ci release "${{ github.event.release.tag_name }}" \
-            --github-token "$GITHUB_TOKEN" \
-            --osgeo-username "$OSGEO_USER" \
-            --osgeo-password "$OSGEO_PASSWORD"
-
-      - name: Upload plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: qgis-plugin-${{ github.ref_name }}
-          path: '*.zip'
-          retention-days: 90
+          qgis-plugin-ci release "$VERSION" \
+            --release-tag "${{ github.ref_name }}" \
+            --github-token "${{ secrets.GITHUB_TOKEN }}" \
+            --osgeo-username "${{ secrets.OSGEO_USER }}" \
+            --osgeo-password "${{ secrets.OSGEO_PASSWORD }}" \
+            --create-plugin-repo \
+            --allow-uncommitted-changes

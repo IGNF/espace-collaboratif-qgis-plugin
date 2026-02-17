@@ -1,0 +1,19 @@
+# Exclude development and CI files from plugin archive
+.github export-ignore
+.git export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+.qgis-plugin-ci export-ignore
+.vscode export-ignore
+requirements export-ignore
+test export-ignore
+tests export-ignore
+scripts export-ignore
+docs export-ignore
+help export-ignore
+README.md export-ignore
+CONTRIBUTING.md export-ignore
+Makefile export-ignore
+pb_tool.cfg export-ignore
+pylintrc export-ignore
+plugin_upload.py export-ignore

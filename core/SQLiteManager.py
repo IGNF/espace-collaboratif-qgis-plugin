@@ -440,18 +440,45 @@ class SQLiteManager(object):
         totalRows = 0
         if len(attributesRows) == 0:
             return totalRows
+        
+        totalFeatures = len(attributesRows)
+        BATCH_SIZE = 1000  # Process 1000 features at a time to optimize memory and performance
+        
+        print("  [SQLite] Starting batch insertion of {} features (batch size: {})".format(
+            totalFeatures, BATCH_SIZE))
+        
         wkt = Wkt(parameters)
-        # Insertion des lignes dans la table
         connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
-        for attributesRow in attributesRows:
-            columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
-            sql = "INSERT INTO {0} {1} VALUES {2}".format(parameters['tableName'], columnsValues[0], columnsValues[1])
-            cur.execute(sql)
-            totalRows += 1
+        
+        # Process in batches
+        batchNumber = 0
+        for i in range(0, totalFeatures, BATCH_SIZE):
+            batchNumber += 1
+            batch = attributesRows[i:i + BATCH_SIZE]
+            batchSize = len(batch)
+            
+            print("  [SQLite] Processing batch {}/{} ({} features)...".format(
+                batchNumber, 
+                (totalFeatures + BATCH_SIZE - 1) // BATCH_SIZE,
+                batchSize))
+            
+            # Insert batch
+            for attributesRow in batch:
+                columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
+                sql = "INSERT INTO {0} {1} VALUES {2}".format(
+                    parameters['tableName'], columnsValues[0], columnsValues[1])
+                cur.execute(sql)
+                totalRows += 1
+            
+            # Commit after each batch to release memory and ensure data persistence
+            connection.commit()
+            print("  [SQLite] Batch {} committed. Progress: {}/{} features ({:.1f}%)".format(
+                batchNumber, totalRows, totalFeatures, (totalRows / totalFeatures * 100)))
+        
         cur.close()
-        connection.commit()
         connection.close()
+        print("  [SQLite] Batch insertion completed. Total inserted: {} features".format(totalRows))
         return totalRows
 
     @staticmethod
