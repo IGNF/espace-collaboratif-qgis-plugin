@@ -215,6 +215,7 @@ class WfsPost(object):
         """
         message = ''
         responseToDict = json.loads(response.text)
+        print("responseToDict : {}".format(responseToDict))
         if 'code' in responseToDict:
             message = {'code': responseToDict['code'], 'message': responseToDict['message'],
                        'status': 'error', 'id': [-1]}
@@ -250,17 +251,10 @@ class WfsPost(object):
                 # Le numrec est égal à 0 pour une couche standard à un numéro pour une couche BDUni
                 numrec = self.__synchronize()
             except Exception as e:
-                QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
-                # Suppression de la couche dans la carte. Virer la table dans SQLite
-                layersID = [self.__layer.id()]
-                QgsProject.instance().removeMapLayers(layersID)
-                SQLiteManager.emptyTable(self.__layer.name())
-                SQLiteManager.deleteTable(self.__layer.name())
-                SQLiteManager.emptyTable(cst.TABLEOFTABLES)
-                SQLiteManager.vacuumDatabase()
+                # QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
                 # Il faut vider l'editbuffer de la couche active
                 self.__layer.rollBack()
-                return
+                raise Exception(e)
             # Mise à jour du numrec pour la couche dans la table des tables
             SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
             SQLiteManager.vacuumDatabase()

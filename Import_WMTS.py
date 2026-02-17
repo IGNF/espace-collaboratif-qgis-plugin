@@ -10,7 +10,7 @@ version 4.0.1, 15/12/2020
 # Imports
 import urllib
 import owslib
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 from .core import Constantes as cst
 from qgis.core import QgsDataSourceUri
 
@@ -48,14 +48,28 @@ class importWMTS:
         self.wmts_lyr = None
         self.tile_matrix_set = None
         self.layer_id = layer.layers
-        self.crs = None
         self.title_layer = None
         self.selected_layer = None
         self.context = context
         self.selected_layer = layer
+        self.__apiKey = self.__extractApikey(layer.url)
         self.__checkOpenService()
         self.__checkGetTile()
         self.__checkTileMatrixSet()
+
+    def __extractApikey(self, url) -> str:
+        idx = url.find("apikey=")
+        if idx != -1:
+            start = idx + len("apikey=")
+            # fin au prochain séparateur
+            end_chars = ['&', '#', ';']
+            end_positions = [url.find(c, start) for c in end_chars]
+            end_positions = [p for p in end_positions if p != -1]
+            end = min(end_positions) if end_positions else len(url)
+            candidate = url[start:end]
+            candidate = unquote(candidate)
+            if candidate:
+                return candidate
 
     def __appendUriCapabilities(self) -> None:
         params = {'request': 'GetCapabilities'}
@@ -63,7 +77,6 @@ class importWMTS:
         Avec l'url https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities,
         la projection proposée est web Mercator sphérique EPSG:3857 (page 18 du document DT_APIGeoportail.pdf)
         '''
-        self.crs = "EPSG:3857"
         self.uri = self.selected_layer.url.format(urllib.parse.unquote(urllib.parse.urlencode(params)))
 
     # opening WMTS
@@ -166,10 +179,9 @@ class importWMTS:
         # Patch pour les flux privés GPF
         url_tmp = self.getTileUrl()
 
-        if url_tmp.find("/private/") == -1:
+        if "/private/" not in url_tmp:
             wmts_url_params = {
                 "IgnoreGetMapUrl": 1,
-                "crs": self.crs,
                 "dpiMode": "7",
                 "format": self.getFormat(),
                 "layers": self.layer_id,
@@ -178,17 +190,20 @@ class importWMTS:
                 "url": "{}{}".format(self.getTileUrl(), cst.PARTOFURLWMTS)
             }
         else:
+            '''
+            Avec ignoreReportedUrl=1, QGIS utilise exactement l’URL fournie dans l'url=, sans la remplacer.
+            '''
             wmts_url_params = {
                 "IgnoreGetMapUrl": 1,
-                "crs": self.crs,
                 "dpiMode": "7",
                 "format": self.getFormat(),
                 "layers": self.layer_id,
                 "styles": self.getStyles(),
+                "ignoreReportedUrl": "1",
                 "tileMatrixSet": self.tile_matrix_set,
                 "url": "{}{}%26apikey%3D{}".format(self.getTileUrl(),
                                                    cst.PARTOFURLWMTS,
-                                                   cst.APIKEY)
+                                                   self.__apiKey)
             }
         wmts_url_final = urllib.parse.unquote(urllib.parse.urlencode(wmts_url_params))
         return self.title_layer, wmts_url_final

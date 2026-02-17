@@ -68,10 +68,14 @@ class HttpRequest(object):
         :return: un dictionnaire comprenant le status de la réponse, les données et s'il faut relancer la requête
                  (status_code 206)
         """
+        errorMessage = {'status': '', 'reason': ''}
         try:
             response = self.getResponse(partOfUrl, params)
             data = response.json()
             # Statut de la réponse
+            if response.status_code != 200 or response.status_code != 206:
+                errorMessage['status'] = 'error'
+                errorMessage['reason'] = response.reason
             if response.status_code == 200:
                 return {'status': 'ok', 'page': 0, 'data': data, 'stop': True}
             elif response.status_code == 206:
@@ -84,7 +88,7 @@ class HttpRequest(object):
             else:
                 return {'status': 'error', 'reason': data['message'], 'url': response.url}
         except Exception as e:
-            return {'status': 'error'}
+            return errorMessage
 
     @staticmethod
     # Même requête que précédemment, mais en utilisant les paramètres offset et maxFeatures

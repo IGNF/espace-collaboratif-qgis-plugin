@@ -422,6 +422,10 @@ class RipartPlugin:
 
         # si l'utilisateur crée un nouveau projet alors qu'il est déjà connecté sur son projet actuel
         if QgsProject.instance().fileName().find(self.__context.projectFileName) == -1:
+            # Si c'est un nouveau projet les fichiers de configuration n'existent pas, il faut recharger
+            # l'instance du contexte
+            self.__context = Contexte.getInstance(self, QgsProject, True)
+            # et se reconnecter
             return self.__context.getConnexionEspaceCollaboratifWithKeycloak(True)
         if bAutomaticConnection:
             return self.__context.getConnexionEspaceCollaboratifWithKeycloak(bAutomaticConnection)

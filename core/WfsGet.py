@@ -1,4 +1,5 @@
 import time
+import json
 from qgis.core import QgsCoordinateReferenceSystem
 from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
@@ -78,7 +79,8 @@ class WfsGet(object):
             self.__setNumrec()
         if self.bbox is not None:
             self.__setBBox()
-        self.__setFilter(filterDelete)
+        if self.bDetruit or self.numrec != 0:
+            self.__setFilter(filterDelete, self.numrec)
         self.__setOffset(offset)
         self.__setMaxFeatures(maxFeatures)
         self.__setVersion('1.0.0')
@@ -138,7 +140,7 @@ class WfsGet(object):
                                                params=self.parametersGcmsGet)
             if response['status'] == 'error':
                 message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], response['reason'])
-                break
+                return maxNumrec, message
 
             if len(response['features']) == 0 and response['stop']:
                 break
@@ -200,7 +202,8 @@ class WfsGet(object):
             return features
 
         target_crs = QgsCoordinateReferenceSystem.fromEpsgId(self.sridLayer)
-        return PluginHelper.filterWithWorkArea(self.context, features, geometryKey=self.geometryName, targetCrs=target_crs)
+        return PluginHelper.filterWithWorkArea(self.context, features, geometryKey=self.geometryName,
+                                               targetCrs=target_crs)
 
     def getMaxNumrec(self) -> int:
         """
@@ -263,20 +266,42 @@ class WfsGet(object):
         """
         Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'numrec'.
         """
-        self.parametersGcmsGet['numrec'] = self.numrec
+        self.parametersGcmsGet['gcms_numrec'] = self.numrec
 
-    def __setFilter(self, _filter) -> None:
+    def __setFilter(self, _filter, numrec) -> None:
         """
         Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'filter'.
+        Le filtre doit être du genre :
+        filter={"$and":[{"class_adm":"Autoroute","longueur":"$gte":10}]}
 
         :param _filter: à True, permet de récupérer les objets détruits dans une table
         :type _filter: bool
+
+        :param numrec: le dernier numéro de réconciliation de la table, il sert au filtrage des objets
+                        à 0 pour une couche standard
+        :type numrec: int
         """
+        filters = {}
+
+        # 1) Filtre 'detruit' si applicable
+        # bDetruit indique si la couche est standard ou BDUni
         if self.bDetruit:
-            if _filter:
-                self.parametersGcmsGet['filter'] = '{"detruit":true}'
-            else:
-                self.parametersGcmsGet['filter'] = '{"detruit":false}'
+            filters['detruit'] = _filter
+
+        # 2) Filtre 'numrec' si applicable
+        if numrec != 0:
+            filters['gcms_numrec'] = {"$gte": numrec}
+            # clauses.append({"numrec": {"$gte": numrec}})
+
+        # 3) Construction du JSON final selon le nombre de filtres
+        if len(filters) == 1:
+            # Un seul filtre → on envoie l'objet seul
+            loadFilters = filters[0]
+        else:
+            # Deux filtres (ou plus) → on met tout dans un $and
+            loadFilters = {"$and": [filters]}
+
+        self.parametersGcmsGet["filter"] = json.dumps(loadFilters)
 
     def __setBBox(self) -> None:
         """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'bbox'."""
