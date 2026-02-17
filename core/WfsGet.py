@@ -290,8 +290,7 @@ class WfsGet(object):
             else:
                 print("[REQUEST #{}] Processing BDUni synchronization...".format(requestCount))
                 
-                # Optimisation : charger toutes les cleabs existantes en mémoire UNE FOIS
-                # au lieu de faire une requête SQL par feature
+                # Chargement des cleabs en mémoire 
                 if requestCount == 1:
                     print("[REQUEST #{}] Loading existing cleabs into memory for fast lookup...".format(requestCount))
                     existingCleabs = set()
@@ -513,3 +512,4 @@ class WfsGet(object):
         :type maxFeatures: int
         """
         self.parametersGcmsGet['maxFeatures'] = maxFeatures
+
