@@ -289,20 +289,57 @@ class WfsGet(object):
             # ou un update après un post (enregistrement des couches actives)
             else:
                 print("[REQUEST #{}] Processing BDUni synchronization...".format(requestCount))
+                
+                # Optimisation : charger toutes les cleabs existantes en mémoire UNE FOIS
+                # au lieu de faire une requête SQL par feature
+                if requestCount == 1:
+                    print("[REQUEST #{}] Loading existing cleabs into memory for fast lookup...".format(requestCount))
+                    existingCleabs = set()
+                    try:
+                        sql = "SELECT cleabs FROM {} WHERE cleabs IS NOT NULL".format(SQLiteManager.echap(self.layerName))
+                        connection = SQLiteManager.sqlite3Connect()
+                        cursor = connection.cursor()
+                        cursor.execute(sql)
+                        existingCleabs = {row[0] for row in cursor.fetchall()}
+                        cursor.close()
+                        connection.close()
+                        print("[REQUEST #{}] Loaded {} existing cleabs for fast lookup".format(requestCount, len(existingCleabs)))
+                    except Exception as e:
+                        print("[REQUEST #{}] Warning: Could not preload cleabs: {}".format(requestCount, e))
+                        existingCleabs = set()
+                elif 'existingCleabs' not in locals():
+                    existingCleabs = set()
+                
                 processedInBatch = 0
+                featuresToInsert = []
+                cleabsToDelete = []
+                # Traiter les features reçues en batch pour minimiser les opérations SQL
                 for feature in response['features']:
-                    cleabs = SQLiteManager.selectColumnFromTableWithCondition("cleabs", self.layerName, "cleabs",
-                                                                              feature['cleabs'])
-                    if cleabs is None:
-                        # création d'un nouvel objet
-                        totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
+                    featureCleabs = feature.get('cleabs')
+                    
+                    
+                    if featureCleabs in existingCleabs:
+                        # modification d'un objet - marquer pour suppression puis réinsertion
+                        cleabsToDelete.append(featureCleabs)
+                        featuresToInsert.append(feature)
                     else:
-                        # modification d'un objet
-                        # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
-                        # l'ancien enregistrement et en insérer un nouveau
-                        SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
-                        totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
+                        # création d'un nouvel objet
+                        featuresToInsert.append(feature)
+                        existingCleabs.add(featureCleabs)  # Ajouter au cache
+                    
                     processedInBatch += 1
+                
+                # Suppression en batch des cleabs à mettre à jour
+                if cleabsToDelete:
+                    print("[REQUEST #{}] Deleting {} existing features for update...".format(requestCount, len(cleabsToDelete)))
+                    SQLiteManager.deleteRowsInTableBDUni(self.layerName, cleabsToDelete)
+                
+                # Insertion en batch de toutes les features
+                if featuresToInsert:
+                    print("[REQUEST #{}] Inserting {} features...".format(requestCount, len(featuresToInsert)))
+                    insertedRows = sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, featuresToInsert)
+                    totalRows += insertedRows
+                
                 print("[REQUEST #{}] Processed {} BDUni features. Total: {}".format(requestCount, processedInBatch, totalRows))
                 
                 # Memory cleanup for BDUni mode
