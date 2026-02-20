@@ -495,7 +495,7 @@ class WfsGet(object):
         :type numrec: int
         """
         filters = {}
-
+        print( "[DEBUG] Setting filter for GET request: filterDelete={}, numrec={}".format(_filter, numrec))
         # 1) Filtre 'detruit' si applicable
         # bDetruit indique si la couche est standard ou BDUni
         if self.bDetruit:
@@ -509,10 +509,12 @@ class WfsGet(object):
         # 3) Construction du JSON final selon le nombre de filtres
         if len(filters) == 1:
             # Un seul filtre → on envoie l'objet seul
-            loadFilters = filters[0]
+            loadFilters = filters
         else:
             # Deux filtres (ou plus) → on met tout dans un $and
-            loadFilters = {"$and": [filters]}
+            # On crée une liste de dictionnaires individuels pour chaque condition
+            conditions = [{key: value} for key, value in filters.items()]
+            loadFilters = {"$and": conditions}
 
         self.parametersGcmsGet["filter"] = json.dumps(loadFilters)
 

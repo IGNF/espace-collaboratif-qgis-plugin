@@ -68,17 +68,15 @@ class HttpRequest(object):
         :return: un dictionnaire comprenant le status de la réponse, les données et s'il faut relancer la requête
                  (status_code 206)
         """
-        errorMessage = {'status': '', 'reason': ''}
         try:
             response = self.getResponse(partOfUrl, params)
-            data = response.json()
-            # Statut de la réponse
-            if response.status_code != 200 or response.status_code != 206:
-                errorMessage['status'] = 'error'
-                errorMessage['reason'] = response.reason
+            
+            # Vérifier d'abord le status code avant de parser le JSON
             if response.status_code == 200:
+                data = response.json()
                 return {'status': 'ok', 'page': 0, 'data': data, 'stop': True}
             elif response.status_code == 206:
+                data = response.json()
                 if len(data) == params['limit']:
                     return {'status': 'ok', 'page': params['page'] + params['limit'], 'data': data,
                             'stop': False}
@@ -86,9 +84,16 @@ class HttpRequest(object):
                     # le parametre page est mis à 0, car la récupération des données est finie
                     return {'status': 'ok', 'page': 0, 'data': data, 'stop': True}
             else:
-                return {'status': 'error', 'reason': data['message'], 'url': response.url}
+                # En cas d'erreur, tenter de récupérer le message s'il y a du JSON
+                try:
+                    data = response.json()
+                    error_message = data.get('message', response.reason)
+                except:
+                    error_message = response.reason
+                return {'status': 'error', 'reason': error_message, 'url': response.url, 
+                        'code': response.status_code}
         except Exception as e:
-            return errorMessage
+            return {'status': 'error', 'reason': str(e), 'details': 'Exception in getNextResponse'}
 
     @staticmethod
     # Même requête que précédemment, mais en utilisant les paramètres offset et maxFeatures
