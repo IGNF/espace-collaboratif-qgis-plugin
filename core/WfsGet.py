@@ -125,8 +125,6 @@ class WfsGet(object):
 
         :return: le dernier numéro de mise à jour sur une table et un message de fin
         """
-        import gc  # For garbage collection
-        
         message = ""
         self.__initParametersGcmsGet()
         start = time.time()
@@ -281,10 +279,9 @@ class WfsGet(object):
                 totalRows += insertedRows
                 print("[REQUEST #{}] Inserted {} rows. Total: {}".format(requestCount, insertedRows, totalRows))
                 
-                # Memory cleanup - release references and force garbage collection
+                # Memory cleanup - release references (Python GC will handle cleanup automatically)
                 features_to_insert = None
                 response['features'] = None
-                gc.collect()
                 print("[REQUEST #{}] Memory cleanup completed".format(requestCount))
                 
             # sinon c'est une synchronisation (maj) de toutes les couches
@@ -343,9 +340,8 @@ class WfsGet(object):
                 
                 print("[REQUEST #{}] Processed {} BDUni features. Total: {}".format(requestCount, processedInBatch, totalRows))
                 
-                # Memory cleanup for BDUni mode
+               
                 response['features'] = None
-                gc.collect()
                 
             self.__setOffset(response['offset'])
             if response['stop']:
