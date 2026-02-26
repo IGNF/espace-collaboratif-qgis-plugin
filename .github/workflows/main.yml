@@ -33,16 +33,11 @@ jobs:
 
       - name: Update metadata.txt version
         run: |
-          sed -i "s/^version=.*/version=$VERSION/" espace_collaboratif/metadata.txt
+          sed -i "s/^version=.*/version=$VERSION/" ign_espace_collaboratif/metadata.txt
           echo "Updated metadata.txt version to $VERSION"
 
       - name: Install qgis-plugin-ci
         run: pip install qgis-plugin-ci
-
-      - name: Rename plugin folder to match plugins.qgis.org package name
-        run: |
-          cp -r espace_collaboratif ign_espace_collaboratif
-          sed -i "s|plugin_path: espace_collaboratif|plugin_path: ign_espace_collaboratif|" .qgis-plugin-ci
 
       - name: Create GitHub Release
         run: |
