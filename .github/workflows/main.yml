@@ -42,7 +42,6 @@ jobs:
       - name: Package and release plugin
         run: |
           qgis-plugin-ci release "$VERSION" \
-            --release-tag "${{ github.ref_name }}" \
             --github-token "${{ secrets.GITHUB_TOKEN }}" \
             --osgeo-username "${{ secrets.OSGEO_USER }}" \
             --osgeo-password "${{ secrets.OSGEO_PASSWORD }}" \
