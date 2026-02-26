@@ -1,4 +1,3 @@
-plugin_path: .
+plugin_path: ign_espace_collaboratif
 github_organization_slug: IGNF
 project_slug: espace-collaboratif-qgis-plugin
-use_project_slug_as_plugin_directory: true
