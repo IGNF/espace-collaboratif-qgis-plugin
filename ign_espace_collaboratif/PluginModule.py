@@ -948,6 +948,8 @@ class RipartPlugin:
                 endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])
             progress.close()
 
+            PluginHelper.refreshAllLayers()
+
             # Message de fin de synchronisation
             dlgInfo = FormInfo()
             dlgInfo.textInfo.setText(endMessage)
