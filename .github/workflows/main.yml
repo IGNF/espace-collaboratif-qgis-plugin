@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - "v*"
+  release:
+    types:
+      - published
 
 permissions:
   contents: write
@@ -18,10 +21,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Extract version from tag
         run: |
+          # Works for both push.tag and release events
           TAG="${{ github.ref_name }}"
           VERSION="${TAG#v}"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
@@ -29,11 +33,20 @@ jobs:
 
       - name: Update metadata.txt version
         run: |
-          sed -i "s/^version=.*/version=$VERSION/" metadata.txt
+          sed -i "s/^version=.*/version=$VERSION/" ign_espace_collaboratif/metadata.txt
           echo "Updated metadata.txt version to $VERSION"
 
       - name: Install qgis-plugin-ci
         run: pip install qgis-plugin-ci
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "Release ${{ github.ref_name }}" \
+            --notes "Release ${{ github.ref_name }}" \
+            --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package and release plugin
         run: |
