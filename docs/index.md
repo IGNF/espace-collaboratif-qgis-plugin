@@ -46,7 +46,7 @@
   - [6.3 Tableau 3 : Valeurs et signification des statuts d'un signalement](#63-tableau-3--valeurs-et-signification-des-statuts-dun-signalement)
   - [6.4 Formats acceptés pour les documents joints](#64-formats-acceptés-pour-les-documents-joints)
   - [6.5 Fichiers nécessaires au fonctionnement du plugin](#65-fichiers-nécessaires-au-fonctionnement-du-plugin)
- - [6.6 Exemple de contenu du fichier de configuration espaceco.xml](#66-exemple-de-contenu-du-fichier-de-configuration-espacecoxml)
+  - [6.6 Exemple de contenu du fichier de configuration espaceco.xml](#66-exemple-de-contenu-du-fichier-de-configuration-espacecoxml)
 
 ---
 <div  style="background-color: white; border: 1px solid black; padding: 10px; text-align: justify;">
@@ -257,7 +257,7 @@ Ce fichier étant nécessaire à son fonctionnement, le plugin le génère autom
 </div>
 
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.1 Connexion au service</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">- Modifié !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.1 Connexion au service</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image9.png" />
@@ -328,7 +328,7 @@ Au clic sur le bouton « Connecter », une fenêtre de confirmation apparaît :
 </div>
 
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.2 Import des signalements</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">- Modifié !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.2 Import des signalements</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image15.png" />
@@ -371,7 +371,7 @@ Une fenêtre avec le message du signalement et les éventuelles réponses s’ou
   <p><strong><span style="color: #548DD4">Figure 14  : Fiche d’un signalement</span></strong></p>
 </div>
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.4 Déplacer un signalement</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">- Nouveau !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%;">5.4 Déplacer un signalement</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image19.png" />
@@ -521,7 +521,7 @@ On sélectionne deux signalements (en jaune), puis on clique sur le bouton **<sp
 
 Si on clique à nouveau sur le bouton, on retrouve la première situation avec les deux signalements sélectionnés.
 
-### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.10 Charger les couches de son groupe actif</span><span style="color: red; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">- Evolution !</span>
+### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">5.10 Charger les couches de son groupe actif</span>
 
 <div  style="text-align: center;"> 
 	<img  src="Image36.png" />
@@ -708,7 +708,7 @@ Permet d’afficher les informations de version du plugin.
   </li>
 </ol>
 
-<div  style="background-color: white; border: 1px solid black; padding: 3px; text-align: justify;">
+<div  style="background-color: white; border: 1px solid black; padding: 10px; text-align: justify;">
   <h2 id="6-annexes" style="color: #00ADC5">6. Annexes</h2>
 </div>
 
