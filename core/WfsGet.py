@@ -58,15 +58,11 @@ class WfsGet(object):
             # Synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
             else:
-                for feature in response['features']:
-                    conditionTable = "{0} WHERE cleabs = '{1}'".format(self.layerName, feature['cleabs'])
-                    cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
-                    if len(cleabs) == 0:
-                        continue
-                    else:
-                        # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
-                        # l'enregistrement
-                        SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
+                # Récupération en lot des cleabs de cette page et suppression des présentes en local
+                page_cleabs = [feature['cleabs'] for feature in response['features']]
+                existing_cleabs = SQLiteManager.selectExistingCleabs(self.layerName, page_cleabs)
+                if existing_cleabs:
+                    SQLiteManager.deleteRowsInTableBDUni(self.layerName, existing_cleabs)
             self.setOffset(response['offset'])
             if response['stop']:
                 break
@@ -126,18 +122,14 @@ class WfsGet(object):
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
             else:
-                for feature in response['features']:
-                    conditionTable = "{0} WHERE cleabs = '{1}'".format(self.layerName, feature['cleabs'])
-                    cleabs = SQLiteManager.selectColumnFromTable(conditionTable, "cleabs")
-                    if len(cleabs) == 0:
-                        # création d'un nouvel objet
-                        totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
-                    else:
-                        # modification d'un objet
-                        # si la cleabs est trouvée dans la base SQLite du client alors il faut supprimer
-                        # l'ancien enregistrement et en insérer un nouveau
-                        SQLiteManager.deleteRowsInTableBDUni(self.layerName, [cleabs[0]])
-                        totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, [feature])
+                # Récupération en lot des cleabs existants (1 seule connexion SQLite pour toute la page)
+                page_cleabs = [feature['cleabs'] for feature in response['features']]
+                existing_cleabs = SQLiteManager.selectExistingCleabs(self.layerName, page_cleabs)
+                # Suppression en lot des objets qui vont être mis à jour
+                if existing_cleabs:
+                    SQLiteManager.deleteRowsInTableBDUni(self.layerName, existing_cleabs)
+                # Insertion en lot de tous les objets de la page (nouveaux et mis à jour)
+                totalRows += sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, response['features'])
             self.setOffset(response['offset'])
             if response['stop']:
                 break

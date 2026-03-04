@@ -481,6 +481,24 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
+    @staticmethod
+    def selectExistingCleabs(tableName, cleabs_list):
+        """Retourne la liste des cleabs présentes dans la table parmi celles fournies (batch SELECT)."""
+        if not cleabs_list:
+            return []
+        placeholders = ', '.join('"{0}"'.format(c) for c in cleabs_list)
+        sql = "SELECT cleabs FROM {0} WHERE cleabs IN ({1})".format(tableName, placeholders)
+        connection = sqlite3.connect(SQLiteManager.getBaseSqlitePath())
+        connection.enable_load_extension(True)
+        connection.execute("SELECT load_extension('mod_spatialite')")
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        result = [row[0] for row in cursor.fetchall()]
+        cursor.close()
+        connection.close()
+        return result
+
+    @staticmethod
     def selectColumnFromTableWithCondition(tableName, columnName, key):
         tableName = SQLiteManager.echap(tableName)
         keyValue = SQLiteManager.echap(key)
