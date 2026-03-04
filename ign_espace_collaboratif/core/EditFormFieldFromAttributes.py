@@ -818,14 +818,14 @@ class EditFormFieldFromAttributes(object):
                 if value is None:
                     attribute_values[""] = 'NULL'
                     continue
-                attribute_values[value] = value
+                attribute_values[str(value)] = value
 
         if type(listOfValues) is dict:
             for attribute, value in listOfValues.items():
                 if attribute is None:
                     attribute_values[""] = 'NULL'
                     continue
-                attribute_values[attribute] = value
+                attribute_values[str(attribute)] = value
 
         # Type: ValueMap
         QgsEWS_type = 'ValueMap'
@@ -836,3 +836,4 @@ class EditFormFieldFromAttributes(object):
         if defaultListValue is None or defaultListValue == '':
             defaultListValue = 'NULL'
         self.layer.setDefaultValueDefinition(self.index, QgsDefaultValue("'{}'".format(defaultListValue)))
+
