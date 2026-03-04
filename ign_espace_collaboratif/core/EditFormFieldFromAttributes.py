@@ -201,8 +201,8 @@ class EditFormFieldFromAttributes(object):
                 expression += f' WHEN "{self.name}" = \'{typ}\' THEN {expr_val} '
             expression += "END"
             fieldIndex = self.layer.fields().indexOf(fieldName)
-            default_value = QgsDefaultValue(expression)
-            default_value.setApplyOnUpdate(True)
+            default_value = QgsDefaultValue(expression) 
+            default_value.setApplyOnUpdate(False) # ne pas appliquer la valeur par défaut à la mise à jour d'un objet, uniquement à sa création
             self.layer.setDefaultValueDefinition(fieldIndex, default_value)
 
     def setFieldSwitchType(self, vType, default_value, attributesSets) -> None:
