@@ -583,6 +583,11 @@ class Contexte(object):
         """
         progress = DynamicProgressBar(len(guichet_layers) + 1, "{} : initialisation".format(cst.LOADINGTEXTPROGRESS))
         try:
+            endMessage = ''
+            if len(guichet_layers) == 0:
+                endMessage = 'Pas de couches sélectionnées, fin du chargement.\n'
+                return 
+
             # Quelles sont les cartes chargées dans le projet QGIS courant
             maplayers = self.getAllMapLayers()
             root = self.QgsProject.instance().layerTreeRoot()
@@ -614,10 +619,6 @@ class Contexte(object):
             # sauf celui-ci a cliqué sur Non à la demande de destruction dans ce cas la fonction retourne False
             if not self.removeLayers(guichet_layers, maplayers):
                 return
-
-            endMessage = ''
-            if len(guichet_layers) == 0:
-                endMessage = 'Pas de couches sélectionnées, fin du chargement.\n'
 
             progress.setValue(1)
             i = 0
