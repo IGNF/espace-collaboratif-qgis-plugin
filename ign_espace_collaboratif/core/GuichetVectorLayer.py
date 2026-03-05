@@ -577,6 +577,9 @@ class GuichetVectorLayer(QgsVectorLayer):
         rules = []
         for c, v in data.items():
             expression = self.__changeConditionToExpression(v['condition'], bExpression)
+            # Le style par défaut (ELSE) doit être affiché "Par défaut" dans la légende QGIS
+            if expression == "ELSE":
+                v = {**v, 'name': 'Par défaut'}
             if v['type'] == 'line':
                 lineRule = self.__setLineRule(expression, v, strDirectionField)
                 rules.append(lineRule)
