@@ -139,12 +139,16 @@ class WfsPost(object):
         fieldsNameValue = {}
         for key, value in attributesChanged.items():
             #
-            if value is None or value == qgis.core.NULL:
+            fieldName = feature.fields()[key].name()
+            if value is None or value == qgis.core.NULL or value == "NULL":
+                # Null choice: send JSON null to the server.
+                # Guard: if original was already null, no real change — skip.
+                original = feature.attribute(key)
+                if original is None or original == qgis.core.NULL:
+                    continue
+                fieldsNameValue[fieldName] = None
                 continue
-            if value == "NULL":
-                fieldsNameValue[feature.fields()[key].name()] = 'null'
-                continue
-            fieldsNameValue[feature.fields()[key].name()] = value
+            fieldsNameValue[fieldName] = value
         return fieldsNameValue
 
     def __setKey(self, key, value) -> {}:

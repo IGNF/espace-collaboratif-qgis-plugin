@@ -10,7 +10,7 @@ from typing import Tuple, Optional, Dict, Any, List
 from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsVectorLayer, QgsFeature, Qgis
 from qgis.utils import iface
-
+import qgis.core
 
 class TableViewConstraints:
     """
@@ -38,7 +38,7 @@ class TableViewConstraints:
         # Configuration des validateurs 
         self._validatorConfig = {
             'nullable': {
-                'check': lambda c, v: c.get('nullable') is False and (v is None or v == '' or v == 'NULL'),
+                'check': lambda c, v: c.get('nullable') is False and (v is None or v == qgis.core.NULL or v == '' or v == 'NULL'),
                 'message': lambda f, c, v: f"Le champ '{f}' ne peut pas être vide (contrainte NOT NULL)"
             },
             'min_length': {
@@ -62,7 +62,9 @@ class TableViewConstraints:
                 'message': lambda f, c, v: f"Le champ '{f}' ne correspond pas au format attendu"
             },
             'enum': {
-                'check': lambda c, v: c.get('enum') is not None and v is not None and not self._isInEnum(v, c['enum']),
+                # Skip null values: qgis.core.NULL (QGIS auto-null) and 'NULL' (our ValueMap stored value)
+                # are both valid representations of a null choice and must not be enum-checked.
+                'check': lambda c, v: c.get('enum') is not None and v is not None and v != qgis.core.NULL and v != 'NULL' and not self._isInEnum(v, c['enum']),
                 'message': lambda f, c, v: f"Le champ '{f}' doit avoir une des valeurs prédéfinies"
             }
         }
