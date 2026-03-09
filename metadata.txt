@@ -10,7 +10,7 @@
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
 description=IGN reporting and contribution service, plugin QGIS3
-version=4.3.3
+version=4.3.4
 author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
@@ -24,10 +24,11 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin.git
 # Recommended items:
 
 # Optional items:
-date=11/02/2026
+date=09/03/2026
 
 # Uncomment the following line and add your changelog:
 changelog=
+    4.3.4 - Amélioration du temps de synchronisation
     4.3.3 - Correction json vide
     4.3.2 - Corrections diverses
     4.3.1 - Modification du chargement des signalements
