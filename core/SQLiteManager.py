@@ -480,7 +480,7 @@ class SQLiteManager(object):
         connection.close()
         return result
 
-    @staticmethod
+
     @staticmethod
     def selectExistingCleabs(tableName, cleabs_list):
         """Retourne la liste des cleabs présentes dans la table parmi celles fournies (batch SELECT)."""
