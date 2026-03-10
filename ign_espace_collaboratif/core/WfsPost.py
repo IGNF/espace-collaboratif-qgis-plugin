@@ -124,9 +124,12 @@ class WfsPost(object):
 
     def __setFieldsNameValueWithAttributes(self, feature, attributesChanged) -> {}:
         """
-        Constitue une liste d'attributs sous la forme nom/valeur en remplaçant - si nécessaire - la chaine de caractères
-        'NULL' par 'null'. Si QGIS a remplacé une valeur vide par None ou une qgis.core.NULL, l'attribut n'est pas
-        pris en compte.
+        Constitue une liste d'attributs sous la forme nom/valeur en remplaçant - si nécessaire - la chaine de
+        caractères 'NULL' par null (JSON).
+        Pour les valeurs NULL :
+          - si le champ a une contrainte NOT NULL (champ obligatoire), le NULL est probablement un signal parasite
+            de QGIS (ex : initialisation d'un widget ENUM/ValueMap) → on l'ignore pour éviter un refus serveur.
+          - sinon le champ est nullable et l'utilisateur a volontairement effacé la valeur → on envoie null.
 
         :param feature: l'objet dont les attributs ont été modifiés
         :type feature: QgsFeature
@@ -138,14 +141,14 @@ class WfsPost(object):
         """
         fieldsNameValue = {}
         for key, value in attributesChanged.items():
-            #
-            fieldName = feature.fields()[key].name()
+            field = feature.fields()[key]
+            fieldName = field.name()
             if value is None or value == qgis.core.NULL or value == "NULL":
-                # Null choice: send JSON null to the server.
-                # Guard: if original was already null, no real change — skip.
-                original = feature.attribute(key)
-                if original is None or original == qgis.core.NULL:
+                # If the field has a NOT NULL constraint it is required: a NULL here is a spurious QGIS
+                # signal (e.g. ValueMap/ENUM widget init). Skip it to avoid a server constraint violation.
+                if field.constraints().constraints() & qgis.core.QgsFieldConstraints.ConstraintNotNull:
                     continue
+                # Nullable field: user intentionally cleared it → send JSON null.
                 fieldsNameValue[fieldName] = None
                 continue
             fieldsNameValue[fieldName] = value
