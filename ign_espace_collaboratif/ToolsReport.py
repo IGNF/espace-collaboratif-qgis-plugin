@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsRectangle, QgsPointXY, QgsGeometry
 
-from .core.requests import Response
+from requests import Response
 from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
 from .core.DynamicProgressBar import DynamicProgressBar
