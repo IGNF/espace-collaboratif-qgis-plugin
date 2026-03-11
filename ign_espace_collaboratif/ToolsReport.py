@@ -2,7 +2,7 @@ import json
 import os.path
 from typing import Optional
 
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsRectangle, QgsPointXY, QgsGeometry
 
@@ -430,7 +430,7 @@ class ToolsReport(object):
         """
         # Ouverture du formulaire de création du signalement
         formCreate = FormCreateReport(self.__context, len(sketchList))
-        formCreate.exec_()
+        formCreate.exec()
 
         # Envoi ou pas vers l'espace collaboratif ?
         if not formCreate.bSend:

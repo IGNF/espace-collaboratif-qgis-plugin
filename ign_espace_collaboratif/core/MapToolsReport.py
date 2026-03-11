@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QColor
+from qgis.PyQt.QtCore import Qt, QPoint
+from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsSettings, QgsPointXY
 from qgis.gui import QgsMapTool, QgsVertexMarker
 from ..Contexte import Contexte

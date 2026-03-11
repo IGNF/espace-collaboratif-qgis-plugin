@@ -3,7 +3,7 @@
 # Created by: The Resource Compiler for Qt version 6.10.1
 # WARNING! All changes made in this file will be lost!
 
-from qgis.PyQt import QtCore
+from PySide6 import QtCore
 
 qt_resource_data = b"\
 \x00\x01]\x8b\

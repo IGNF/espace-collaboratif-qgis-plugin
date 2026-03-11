@@ -7,7 +7,7 @@ Valide les contraintes lors de la sauvegarde des modifications.
 """
 import re
 from typing import Tuple, Optional, Dict, Any, List
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsVectorLayer, QgsFeature, Qgis
 from qgis.utils import iface
 import qgis.core
@@ -323,9 +323,9 @@ class TableViewConstraints:
 
         # Afficher le message d'erreur
         msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Critical)
+        msgBox.setIcon(QMessageBox.Icon.Critical)
         msgBox.setWindowTitle("Erreurs de validation des contraintes")
         msgBox.setText("Impossible de sauvegarder les modifications")
         msgBox.setInformativeText(errorMessage)
-        msgBox.setStandardButtons(QMessageBox.Ok)
-        msgBox.exec_()
+        msgBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msgBox.exec()

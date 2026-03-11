@@ -1,7 +1,6 @@
 import os
-from PyQt5.QtWidgets import QDialogButtonBox, QTableWidget
-from PyQt5 import QtCore, QtWidgets
-from qgis.PyQt import uic
+from qgis.PyQt.QtWidgets import QDialogButtonBox, QTableWidget
+from qgis.PyQt import QtCore, QtWidgets, uic
 from .PluginHelper import PluginHelper
 from .core.BBox import BBox
 from .core.NoProfileException import NoProfileException
@@ -58,8 +57,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.__setTableWidgetFondsGeoservices()
 
         # Réaction au clic sur les boutons "Enregistrer" (Save) et "Annuler" (Cancel)
-        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.__save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.__cancel)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Save).clicked.connect(self.__save)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).clicked.connect(self.__cancel)
 
         # Réaction au clic sur les boutons "Tout charger", l'ensemble des couches sont cochées automatiquement
         self.pushButton_checkAllBoxes_MonGuichet.clicked.connect(self.__checkAllBoxesMonGuichet)

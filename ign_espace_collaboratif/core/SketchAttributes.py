@@ -6,7 +6,7 @@ version 3.0.0, 26/11/2018
 
 @author: AChang-Wailing
 """
-from PyQt5.QtCore import QDate, QDateTime
+from qgis.PyQt.QtCore import QDate, QDateTime
 
 
 class SketchAttributes(object):

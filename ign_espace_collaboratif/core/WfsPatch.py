@@ -1,5 +1,5 @@
 import json
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from .HttpRequest import HttpRequest
 from .SQLiteManager import SQLiteManager
 from .PluginLogger import PluginLogger

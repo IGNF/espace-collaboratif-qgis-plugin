@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 
 from .FormInfo import FormInfo
 from .ToolsReport import ToolsReport
@@ -59,19 +59,19 @@ class ReplyReport(object):
                            "Opération terminée.\n{0}".format(messageReportNoValid)
                 dlgInfo = FormInfo()
                 dlgInfo.textInfo.setText(mess)
-                dlgInfo.exec_()
+                dlgInfo.exec()
                 return
 
             # Donne à l'utilisateur la liste des signalements clôturés
             if messageReportNoValid != "":
                 dlgInfo = FormInfo()
                 dlgInfo.textInfo.setText(messageReportNoValid)
-                dlgInfo.exec_()
+                dlgInfo.exec()
 
             # Ouverture de la fenêtre de Réponse aux signalements
             dlgReplyReport = ReplyReportView(replyReports, len(selFeats))
             self.__logger.debug("ReplyReportView.exec")
-            dlgReplyReport.exec_()
+            dlgReplyReport.exec()
             # Si à True, lancement des requêtes de mise à jour des signalements
             if dlgReplyReport.bResponse:
                 headers = {

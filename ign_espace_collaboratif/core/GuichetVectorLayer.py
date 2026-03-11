@@ -8,7 +8,7 @@ version 4.0.1, 15/12/2020
 """
 import random
 import json
-from PyQt5.QtGui import QColor
+from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, \
     QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes, QgsMarkerLineSymbolLayer, QgsSimpleLineSymbolLayer, \
     QgsFontMarkerSymbolLayer, QgsSymbolLayer, QgsProperty, Qgis
@@ -266,9 +266,9 @@ class GuichetVectorLayer(QgsVectorLayer):
         :return: la symbologie appliquée à un point
         """
         if fillColor is None:
-            fillColor = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
+            fillColor = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.NameFormat.HexRgb)
         if strokeColor is None:
-            strokeColor = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
+            strokeColor = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.NameFormat.HexRgb)
         if fillOpacity is None:
             fillOpacity = 1
         pointSymbol = self.__setPointStyle(fillColor, strokeColor)
@@ -360,7 +360,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         """
         geomType = self.geometryType()
         symbol = None
-        color = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.HexRgb)
+        color = QColor(f"#{random.randrange(0x1000000):06x}").name(QColor.NameFormat.HexRgb)
         # 'Point'
         if geomType == 0:
             symbol = self.__setSymbolPoint(color, color, 0.5)
