@@ -8,8 +8,8 @@ version 3.0.0 , 26/11/2018
 """
 import json
 from .RipartLoggerCl import RipartLogger
-from . import requests
-from .requests.auth import HTTPBasicAuth
+import requests
+from requests.auth import HTTPBasicAuth
 
 
 class RipartServiceRequest(object):
