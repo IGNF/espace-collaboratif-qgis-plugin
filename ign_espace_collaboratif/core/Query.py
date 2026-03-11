@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMessageBox
 from .HttpRequest import HttpRequest
-from .requests import Response
+from requests import Response
 from . import Constantes as cst
 from .Box import Box
 

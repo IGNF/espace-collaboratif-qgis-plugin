@@ -1,7 +1,6 @@
 import json
-from .requests import Response
 import requests
-from . import requests
+from requests import Response
 from .PluginLogger import PluginLogger
 
 
