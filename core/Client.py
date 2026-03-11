@@ -20,8 +20,8 @@ from .XMLResponse import XMLResponse
 from .ClientHelper import ClientHelper
 from .NoProfileException import NoProfileException
 from .RipartLoggerCl import RipartLogger
-from . import requests
-from .requests.auth import HTTPBasicAuth
+import requests
+from requests.auth import HTTPBasicAuth
 import os
 from .ProgressBar import ProgressBar
 
