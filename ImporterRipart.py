@@ -230,6 +230,8 @@ class ImporterRipart(object):
             psgCode = int(tmp)
         else:
             psgCode = crs_map.get(tmp)
+        if psgCode is None:
+            psgCode = cst.EPSGCRS
         dest_crs = QgsCoordinateReferenceSystem.fromEpsgId(psgCode)
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         new_box = transform.transformBoundingBox(box)

@@ -17,6 +17,12 @@ class Wkt(object):
         self.crsTransform = self.setCoordinateTransform()
 
     def setCoordinateTransform(self):
+        if self.sridSource is None or self.sridTarget is None:
+            raise ValueError(
+                "SRID non défini (sridSource={}, sridTarget={}) : les paramètres de la couche sont "
+                "incomplets. Essayez de re-télécharger la couche depuis l'Espace collaboratif."
+                .format(self.sridSource, self.sridTarget)
+            )
         crsSource = QgsCoordinateReferenceSystem.fromEpsgId(self.sridSource)
         crsTarget = QgsCoordinateReferenceSystem.fromEpsgId(self.sridTarget)
         return QgsCoordinateTransform(crsSource, crsTarget, QgsProject.instance())

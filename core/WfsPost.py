@@ -44,7 +44,7 @@ class WfsPost(object):
 
     def initParametersLayer(self):
         result = SQLiteManager.selectRowsInTableOfTables(self.layer.name())
-        if result is not None:
+        if result is not None and len(result) > 0:
             for r in result:
                 self.layer.databasename = r[4]
                 self.isTableStandard = r[3]
@@ -54,6 +54,30 @@ class WfsPost(object):
                 self.layer.geometryNameForDatabase = r[6]
                 self.layer.geometryDimensionForDatabase = r[7]
                 self.layer.geometryTypeForDatabase = r[8]
+            
+            # Validation des paramètres critiques
+            if self.layer.srid is None:
+                raise Exception(
+                    "WfsPost:__init__, pour la couche {}, le SRID n'est pas défini dans la base de données locale. "
+                    "Les paramètres de la couche sont incomplets. "
+                    "Veuillez re-télécharger la couche depuis l'Espace collaboratif."
+                    .format(self.layer.name())
+                )
+            if not hasattr(self.layer, 'idNameForDatabase') or self.layer.idNameForDatabase is None:
+                raise Exception(
+                    "WfsPost:__init__, pour la couche {}, l'identifiant de la table n'est pas défini dans la base de données locale. "
+                    "Les paramètres de la couche sont incomplets. "
+                    "Veuillez re-télécharger la couche depuis l'Espace collaboratif."
+                    .format(self.layer.name())
+                )
+        else:
+            # Les paramètres de la couche n'ont pas été trouvés dans la base de données
+            raise Exception(
+                "WfsPost:__init__, pour la couche {}, l'identifiant de la table n'est pas trouvé. "
+                "Les paramètres de la couche sont manquants dans la base de données locale. "
+                "Veuillez re-télécharger la couche depuis l'Espace collaboratif."
+                .format(self.layer.name())
+            )
 
     def formatItemActions(self) -> list:
         # Evolution #20450, les transactions n'acceptent que 40 actions à chaque fois
