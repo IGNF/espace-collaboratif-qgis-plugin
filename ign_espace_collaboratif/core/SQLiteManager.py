@@ -893,3 +893,21 @@ class SQLiteManager(object):
                 connection.close()
             except:
                 pass
+
+    def createTableConflicts(self):
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
+        sql = u"CREATE TABLE " + cst.CONFLICT_LAYER + " (" + \
+              u"id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " + \
+              u"date_conflict TEXT, " + \
+              u"layer_name TEXT, " + \
+              u"id_object_client INTEGER, " + \
+              u"cleabs TEXT, " + \
+              u"type_conflict TEXT," + \
+              u"data_server TEXT," + \
+              u"data_client TEXT) "
+        SQLiteManager.executeSQL(sql)
+        # creating a POINT or LINE or POLYGON Geometry column
+        sql = "SELECT AddGeometryColumn('" + cst.CONFLICT_LAYER + "',"
+        sql += "'geom', " + str(cst.EPSGCRS4326) + ", 'MULTIPOLYGON, 'XYZ')"
+        SQLiteManager.executeSQL(sql)

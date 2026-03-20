@@ -60,8 +60,14 @@ nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
 nom_Calque_Croquis_Point = "Croquis_EC_Point"
 
 STATUS_COMMITTED = 'committed'
+STATUS_CONFLICTING = 'conflicting'
 
 PROJECT_NOREGISTERED = "Votre projet QGIS doit être enregistré avant de pouvoir utiliser les fonctionnalités " \
                           "du plugin de l'espace collaboratif"
 
 DEFAULTPROFILE = "Profil par défaut"
+
+CONFLICT_LAYER = "conflits"
+CONFLICT_MODIFICATION = "Modification"
+CONFLICT_SUPPRESSION_SERVEUR = "Suppression sur serveur"
+CONFLICT_SUPPRESSION_CLIENT = "Suppression sur client"

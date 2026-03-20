@@ -7,6 +7,7 @@ from .WfsGet import WfsGet
 from .Wkt import Wkt
 from .BBox import BBox
 from .HttpRequest import HttpRequest
+from .BufferFeatures import BufferFeatures
 from . import Constantes as cst
 
 
@@ -249,26 +250,36 @@ class WfsPost(object):
         response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxies, data=json.dumps(self.__datasForPost),
                                                headers=headers, launchBy='__gcmsPost')
         responseTransactions = self.__checkResponseTransactions(response)
-        if responseTransactions['status'] == cst.STATUS_COMMITTED:
-            # Mise à jour de la base SQLite pour les objets détruits et modifiés d'une couche BDUni
-            if not self.__layer.isStandard:
-                SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
-            # Mise à jour de la couche
-            try:
-                # Le numrec est égal à 0 pour une couche standard à un numéro pour une couche BDUni
-                numrec = self.__synchronize()
-            except Exception as e:
-                # QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
-                # Il faut vider l'editbuffer de la couche active
-                self.__layer.rollBack()
-                raise Exception(e)
-            # Mise à jour du numrec pour la couche dans la table des tables
-            SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
-            SQLiteManager.vacuumDatabase()
-            # Le buffer de la couche est vidée et elle est rechargée
-            if bNormalWfsPost:
-                self.__layer.rollBack()
-            self.__layer.reload()
+        if responseTransactions['status'] is cst.STATUS_CONFLICTING:
+            bf = BufferFeatures(self.__context, self.__layer)
+            params = {
+                'database_id': self.__layer.databaseid,
+                'table_id': self.__layer.tableid,
+                'attr_val': responseTransactions['id'],
+                'attr': 'cleabs'
+            }
+            bf.setFeatureByAttribute(params)
+        else:
+            if responseTransactions['status'] == cst.STATUS_COMMITTED:
+                # Mise à jour de la base SQLite pour les objets détruits et modifiés d'une couche BDUni
+                if not self.__layer.isStandard:
+                    SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
+                # Mise à jour de la couche
+                try:
+                    # Le numrec est égal à 0 pour une couche standard à un numéro pour une couche BDUni
+                    numrec = self.__synchronize()
+                except Exception as e:
+                    # QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
+                    # Il faut vider l'editbuffer de la couche active
+                    self.__layer.rollBack()
+                    raise Exception(e)
+                # Mise à jour du numrec pour la couche dans la table des tables
+                SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
+                SQLiteManager.vacuumDatabase()
+                # Le buffer de la couche est vidée et elle est rechargée
+                if bNormalWfsPost:
+                    self.__layer.rollBack()
+                self.__layer.reload()
         return responseTransactions
 
     def __synchronize(self) -> int:
