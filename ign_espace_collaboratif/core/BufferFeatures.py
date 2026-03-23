@@ -293,9 +293,6 @@ class BufferFeatures:
     def applySrid(self):
         self.conflictslayer.setCrs(QgsCoordinateReferenceSystem(4326))
 
-    import json
-    from qgis.core import QgsFeature, QgsGeometry, NULL
-
     def insert_buffered_feature(
             self,
             source_feat: QgsFeature,

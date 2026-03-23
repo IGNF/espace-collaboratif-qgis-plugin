@@ -1,4 +1,3 @@
-import ntpath
 import json
 import os.path
 import sqlite3
@@ -893,8 +892,8 @@ class SQLiteManager(object):
                 connection.close()
             except:
                 pass
-
-    def createTableConflicts(self):
+    @staticmethod
+    def createTableConflicts():
         # Est-ce la base est verrouillée ?
         SQLiteManager.findAndDeleteLock()
         sql = u"CREATE TABLE " + cst.CONFLICT_LAYER + " (" + \

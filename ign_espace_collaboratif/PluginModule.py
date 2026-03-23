@@ -32,6 +32,7 @@ from .CreateReport import CreateReport
 from .Magicwand import Magicwand
 from .PluginHelper import PluginHelper
 from .ReplyReport import ReplyReport
+from .Conflicts import Conflicts
 
 
 # QGIS Plugin Implementation
@@ -598,6 +599,14 @@ class RipartPlugin:
             status_tip=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
 
+        icon_path = ':/plugins/RipartPlugin/images/conflicts.png'
+        self.__addAction(
+            icon_path,
+            text=self.__translate(u'Résoudre un conflit'),
+            callback=self.__conflictsView,
+            status_tip=self.__translate(u'Lancer la boite de gestion des conflits'),
+            parent=self.iface.mainWindow())
+
         self.config.triggered.connect(self.__configurePlugin)
         self.config.setStatusTip(self.__translate(u"Ouvre la fenêtre de configuration du plugin."))
         self.about.triggered.connect(self.__ripAbout)
@@ -956,6 +965,13 @@ class RipartPlugin:
             dlgInfo.exec_()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__synchronizeDataFromAllLayers', e)
+
+    def __conflictsView(self):
+        if not self.__doConnexion(False):
+            return False
+        conflicts = Conflicts(self.__context, self.iface)
+        conflicts.do()
+
 
     def __configurePlugin(self) -> None:
         """

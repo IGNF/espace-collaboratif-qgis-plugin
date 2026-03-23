@@ -69,7 +69,7 @@
    <column/>
    <column/>
   </widget>
-  <widget class="QPushButton" name="pushButton_conflict_create">
+  <widget class="QPushButton" name="pushButton_conflict_create_report">
    <property name="geometry">
     <rect>
      <x>510</x>
@@ -79,7 +79,7 @@
     </rect>
    </property>
    <property name="toolTip">
-    <string/>
+    <string>Créer un nouveau signalement</string>
    </property>
    <property name="text">
     <string>Report</string>
@@ -94,6 +94,9 @@
      <height>40</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>Aller au conflit précédent</string>
+   </property>
    <property name="text">
     <string>Prev.</string>
    </property>
@@ -106,6 +109,9 @@
      <width>40</width>
      <height>40</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Aller au conflit suivant</string>
    </property>
    <property name="text">
     <string>Next</string>
@@ -120,6 +126,9 @@
      <height>40</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>Afficher/Ne pas afficher tous les champs</string>
+   </property>
    <property name="text">
     <string>See</string>
    </property>
@@ -133,11 +142,14 @@
      <height>40</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>Sélectionner toutes les zones de conflit</string>
+   </property>
    <property name="text">
     <string>reload</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton_conflict_create_2">
+  <widget class="QPushButton" name="pushButton_conflict_create">
    <property name="geometry">
     <rect>
      <x>760</x>
@@ -145,6 +157,9 @@
      <width>40</width>
      <height>40</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Recréer l'objet supprimé sur le serveur</string>
    </property>
    <property name="text">
     <string>create</string>
@@ -159,6 +174,9 @@
      <height>40</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>Supprimer l'objet issu du serveur</string>
+   </property>
    <property name="text">
     <string>Delete</string>
    </property>
@@ -171,6 +189,9 @@
      <width>40</width>
      <height>40</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Valider le conflit en cours</string>
    </property>
    <property name="text">
     <string>Val</string>
@@ -185,6 +206,9 @@
      <height>40</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>Valider tous les conflits sélectionnés</string>
+   </property>
    <property name="text">
     <string>Val all</string>
    </property>
@@ -197,6 +221,9 @@
      <width>40</width>
      <height>40</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Annuler la dernière manipulation</string>
    </property>
    <property name="text">
     <string>Undo</string>
