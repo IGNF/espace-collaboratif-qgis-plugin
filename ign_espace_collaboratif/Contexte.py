@@ -710,7 +710,7 @@ class Contexte(object):
                 progress.close()
             message = str(format(e))
             
-            if message.find('getMaxNumrec') != -1:
+            if message.find('getMaxOrdrefinevol') != -1:
                 message = "Attention la table est peut-être vide de données " \
                           "ou n'existe pas. Veuillez contacter le gestionnaire de votre groupe. {}".format(str(e))
             
@@ -956,13 +956,13 @@ class Contexte(object):
         parameters = {'databasename': layer.databasename, 'layerName': layer.name(),
                       'sridLayer': layer.srid, 'role': layer.role, 'isStandard': layer.isStandard,
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
-                      'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
+                      'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': 0, 'ordrefinevol': 0,
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
                       'proxies': self.__proxies, 'databaseid': layer.databaseid, 'tableid': layer.tableid,
                       'context': self
                       }
         wfsGet = WfsGet(parameters)
-        maxNumrecMessage = wfsGet.gcmsGet(True)
+        maxOrdreFinevolMessage = wfsGet.gcmsGet(True)
 
         # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
         valStandard = 1
@@ -975,8 +975,8 @@ class Contexte(object):
         parametersForTableOfTables = {'layer': layer.name(), 'idName': idNameForDatabase, 'standard': valStandard,
                                       'database': layer.databasename, 'databaseid': layer.databaseid,
                                       'srid': layer.srid, 'geometryName': geometryName, 'geometryDimension': dim,
-                                      'geometryType': layer.geometryType, 'numrec': maxNumrecMessage[0],
-                                      'tableid': layer.tableid}
+                                      'geometryType': layer.geometryType, 'numrec': 0,
+                                      'tableid': layer.tableid, 'ordrefinevol': maxOrdreFinevolMessage[0]}
         SQLiteManager.InsertIntoTableOfTables(parametersForTableOfTables)
 
         # On stocke le srid de la layer pour pouvoir traiter le post
@@ -1019,7 +1019,7 @@ class Contexte(object):
                 newVectorLayer.setEditorWidgetSetup(i, hidden_setup)
 
         self.logger.debug("Layer {} added to map".format(newVectorLayer.name()))
-        message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxNumrecMessage[1])
+        message = "Couche {0} ajoutée à la carte.\n{1}\n".format(newVectorLayer.name(), maxOrdreFinevolMessage[1])
         print(message)
         return message
 

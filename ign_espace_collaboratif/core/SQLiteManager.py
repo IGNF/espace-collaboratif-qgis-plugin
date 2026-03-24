@@ -685,6 +685,41 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
+    def updateOrdreFinevolTableOfTables(layer, ordrefinevol) -> None:
+        """
+        Met à jour l'ordrefinevol de synchronisation pour une couche de la table des tables.
+        L'ordrefinevol est attribué en FIN de transaction (contrairement au numrec attribué en début),
+        ce qui garantit qu'aucune transaction longue ne sera manquée lors des synchronisations incrémentales.
+
+        :param layer: nom de la couche
+        :type layer: str
+
+        :param ordrefinevol: dernier ordrefinevol connu lors de la synchronisation
+        :type ordrefinevol: int
+        """
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
+        sql = "UPDATE {0} SET ordrefinevol = {1} WHERE layer = '{2}'".format(cst.TABLEOFTABLES, ordrefinevol, layer)
+        SQLiteManager.executeSQL(sql)
+
+    @staticmethod
+    def selectOrdreFinevolTableOfTables(layer) -> int:
+        """
+        :param layer: le nom de la couche
+        :type layer: str
+
+        :return: le dernier ordrefinevol de synchronisation pour une couche BDUni, 0 pour une table standard
+        """
+        sql = "SELECT ordrefinevol FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, layer)
+        connection = SQLiteManager.sqlite3Connect()
+        cur = connection.cursor()
+        cur.execute(sql)
+        result = cur.fetchone()
+        cur.close()
+        connection.close()
+        return result[0] if result and result[0] is not None else 0
+
+    @staticmethod
     def selectLayersFromTableOfTables() -> list:
         """
         :return: l'ensemble des noms de couches stockées dans la table des tables.
@@ -727,8 +762,14 @@ class SQLiteManager(object):
         sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, layer TEXT, idName TEXT, " \
               u"standard BOOL, database TEXT, databaseid INTEGER, srid INTEGER, geometryName TEXT, " \
               u"geometryDimension INTEGER, geometryType TEXT, numrec INTEGER, " \
-              u"tableid INTEGER)".format(cst.TABLEOFTABLES)
+              u"tableid INTEGER, ordrefinevol INTEGER DEFAULT 0)".format(cst.TABLEOFTABLES)
         SQLiteManager.executeSQL(sql)
+        # Migration : ajout de la colonne ordrefinevol pour les bases existantes
+        try:
+            sql_migration = "ALTER TABLE {0} ADD COLUMN ordrefinevol INTEGER DEFAULT 0".format(cst.TABLEOFTABLES)
+            SQLiteManager.executeSQL(sql_migration)
+        except Exception:
+            pass  # La colonne existe déjà
 
     @staticmethod
     def InsertIntoTableOfTables(parameters) -> None:

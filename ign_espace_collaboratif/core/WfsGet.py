@@ -51,6 +51,10 @@ class WfsGet(object):
             self.is3D = parameters['is3D']
         if PluginHelper.keyExist('numrec', parameters):
             self.numrec = int(parameters['numrec'])
+        if PluginHelper.keyExist('ordrefinevol', parameters):
+            self.ordrefinevol = int(parameters['ordrefinevol'])
+        else:
+            self.ordrefinevol = 0
         # Paramètres pour insérer un objet dans une table SQLite
         self.parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                             'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
@@ -79,8 +83,8 @@ class WfsGet(object):
             self.__setNumrec()
         if self.bbox is not None:
             self.__setBBox()
-        if self.bDetruit or self.numrec != 0:
-            self.__setFilter(filterDelete, self.numrec)
+        if self.bDetruit or self.ordrefinevol != 0:
+            self.__setFilter(filterDelete, self.ordrefinevol)
         self.__setOffset(offset)
         self.__setMaxFeatures(maxFeatures)
         self.__setVersion('1.0.0')
@@ -118,12 +122,15 @@ class WfsGet(object):
     def gcmsGet(self, bExtraction=False) -> ():
         """
         Envoie une requête GET et met à jour les tables SQLite du projet en cours.
-        NB : le dernier numéro de mise à jour (numRec) d'une table est fixé à 0 pour une table différente de la BDUni.
+        NB : l'ordrefinevol (attribué en FIN de transaction) est utilisé comme filigrane pour les synchronisations
+        incrémentales BDUni, afin d'éviter de manquer les transactions longues qui ont démarré avant une extraction
+        mais terminé après (problème insoluble avec le numrec qui est attribué en début de transaction).
+        Pour une table standard, l'ordrefinevol est fixé à 0.
 
         :param bExtraction: à True quand il s'agit d'extraire les données sur une zone de travail
         :type bExtraction: bool
 
-        :return: le dernier numéro de mise à jour sur une table et un message de fin
+        :return: le dernier ordrefinevol connu sur le serveur et un message de fin
         """
         message = ""
         self.__initParametersGcmsGet()
@@ -131,18 +138,21 @@ class WfsGet(object):
         totalRows = 0
         requestCount = 0
         if self.isStandard:
-            maxNumrec = 0
+            maxOrdrefinevol = 0
         else:
-            # Try to get maxNumrec, but don't block extraction if it fails
+            # Récupération du max ordrefinevol AVANT l'extraction pour servir de filigrane.
+            # L'ordrefinevol est attribué en fin de transaction : toute transaction encore en cours au
+            # moment de l'extraction obtiendra un ordrefinevol > maxOrdrefinevol et sera donc capturée
+            # lors de la prochaine synchronisation (filtre gcms_ordrefinevol >= maxOrdrefinevol).
             try:
-                print("[INFO] Attempting to get maxNumrec for BDUni layer...")
-                maxNumrec = self.getMaxNumrec()
-                print("[INFO] MaxNumrec: {}".format(maxNumrec))
+                print("[INFO] Attempting to get maxOrdrefinevol for BDUni layer...")
+                maxOrdrefinevol = self.getMaxOrdrefinevol()
+                print("[INFO] MaxOrdrefinevol: {}".format(maxOrdrefinevol))
             except Exception as e:
-                print("[WARNING] Failed to get maxNumrec (server error), defaulting to 0")
+                print("[WARNING] Failed to get maxOrdrefinevol (server error), defaulting to 0")
                 print("[WARNING] Error: {}".format(str(e)))
-                self.__logger.warning("getMaxNumrec failed: {}, continuing with 0".format(str(e)))
-                maxNumrec = 0
+                self.__logger.warning("getMaxOrdrefinevol failed: {}, continuing with 0".format(str(e)))
+                maxOrdrefinevol = 0
 
         print("\n" + "="*80)
         print("[EXTRACTION START] Layer: {}".format(self.layerName))
@@ -253,7 +263,7 @@ class WfsGet(object):
             
             # If all retries failed, exit the loop
             if response['status'] == 'error':
-                return maxNumrec, message
+                return maxOrdrefinevol, message
 
             featuresReceived = len(response['features'])
             print("[REQUEST #{}] Received {} features".format(requestCount, featuresReceived))
@@ -392,7 +402,7 @@ class WfsGet(object):
             else:
                 if message == '':
                     message = "{0} objet(s), extrait(s) en : {1} seconde(s)".format(totalRows, round(timeResult, 1))
-        return maxNumrec, message
+        return maxOrdrefinevol, message
 
     def __filterFeaturesWithWorkArea(self, features) -> list:
         """
@@ -413,9 +423,12 @@ class WfsGet(object):
 
     def getMaxNumrec(self) -> int:
         """
-        Requête pour récupérer le dernier numéro de réconciliation (NumRec) d'une table BDUni. Chaque mise à jour
-        d'une table BDUni se fait par l'intermédiaire d'une surface qui entoure les objets mis à jour appelée
-        réconciliation. Chaque réconciliation porte un numéro de séquence, le NumRec.
+        Requête pour récupérer le dernier numéro de réconciliation (NumRec) d'une table BDUni.
+
+        .. deprecated::
+            Utiliser :meth:`getMaxOrdrefinevol` à la place.
+            Le numrec est attribué en DÉBUT de transaction et ne garantit pas que les transactions longues
+            seront capturées lors des synchronisations incrémentales (cf. problème ordrefinevol).
 
         :return: le numéro de la mise à jour.
         """
@@ -423,8 +436,6 @@ class WfsGet(object):
                                                                         self.tableid)
         response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
                                                launchBy='getMaxNumrec : {}'.format(self.layerName))
-        
-        # Succès : get (code 200) post (code 201)
         if response.status_code == 200 or response.status_code == 201:
             numrec = response.json()
         else:
@@ -433,6 +444,29 @@ class WfsGet(object):
             self.__logger.error("getMaxNumrec failed: {}".format(message))
             raise Exception("WfsGet.getMaxNumrec -> {}".format(message))
         return numrec
+
+    def getMaxOrdrefinevol(self) -> int:
+        """
+        Récupère le dernier ordrefinevol du serveur pour une table BDUni.
+        L'ordrefinevol est attribué en FIN de transaction : enregistrer ce maximum AVANT une extraction
+        garantit que toute transaction encore en cours au moment de l'extraction (et qui se terminera
+        après) obtiendra un ordrefinevol strictement supérieur, et sera donc capturée lors de la
+        prochaine synchronisation via le filtre ``gcms_ordrefinevol >= max_ordrefinevol_saved``.
+
+        :return: le dernier ordrefinevol connu sur le serveur pour cette table.
+        """
+        url = "{0}/gcms/api/databases/{1}/max-ordrefinevol".format(
+            self.urlHostEspaceCo, self.databaseid)
+        response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
+                                               launchBy='getMaxOrdrefinevol : {}'.format(self.layerName))
+        if response.status_code == 200 or response.status_code == 201:
+            return response.json()
+        else:
+            message = "code : {} raison : {} response_text: {}".format(
+                response.status_code, response.reason, response.text)
+            print("[ERROR] getMaxOrdrefinevol failed: {}".format(message))
+            self.__logger.error("getMaxOrdrefinevol failed: {}".format(message))
+            raise Exception("WfsGet.getMaxOrdrefinevol -> {}".format(message))
 
     def __setService(self) -> None:
         """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'service'."""
@@ -477,7 +511,7 @@ class WfsGet(object):
         """
         self.parametersGcmsGet['gcms_numrec'] = self.numrec
 
-    def __setFilter(self, _filter, numrec) -> None:
+    def __setFilter(self, _filter, ordrefinevol) -> None:
         """
         Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'filter'.
         Le filtre doit être du genre :
@@ -486,20 +520,22 @@ class WfsGet(object):
         :param _filter: à True, permet de récupérer les objets détruits dans une table
         :type _filter: bool
 
-        :param numrec: le dernier numéro de réconciliation de la table, il sert au filtrage des objets
-                        à 0 pour une couche standard
-        :type numrec: int
+        :param ordrefinevol: le dernier ordrefinevol connu (attribué en FIN de transaction), sert de filigrane
+                             pour éviter de manquer les transactions longues ; 0 pour une couche standard
+        :type ordrefinevol: int
         """
         filters = {}
-        print( "[DEBUG] Setting filter for GET request: filterDelete={}, numrec={}".format(_filter, numrec))
+        print("[DEBUG] Setting filter for GET request: filterDelete={}, ordrefinevol={}".format(_filter, ordrefinevol))
         # 1) Filtre 'detruit' si applicable
         # bDetruit indique si la couche est standard ou BDUni
         if self.bDetruit:
             filters['detruit'] = _filter
 
-        # 2) Filtre 'numrec' si applicable
-        if numrec != 0:
-            filters['gcms_numrec'] = {"$gte": numrec}
+        # 2) Filtre 'gcms_ordrefinevol' si applicable.
+        # On utilise l'ordrefinevol (attribué en FIN de transaction) plutôt que le numrec (attribué en début)
+        # pour garantir qu'une transaction longue démarrée avant l'extraction mais terminée après ne soit pas manquée.
+        if ordrefinevol != 0:
+            filters['gcms_ordrefinevol'] = {"$gte": ordrefinevol}
             # clauses.append({"numrec": {"$gte": numrec}})
 
         # 3) Construction du JSON final selon le nombre de filtres

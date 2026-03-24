@@ -255,15 +255,15 @@ class WfsPost(object):
                 SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
             # Mise à jour de la couche
             try:
-                # Le numrec est égal à 0 pour une couche standard à un numéro pour une couche BDUni
-                numrec = self.__synchronize()
+                # L'ordrefinevol est récupéré pour une couche BDUni ; 0 pour une couche standard
+                ordrefinevol = self.__synchronize()
             except Exception as e:
                 # QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
                 # Il faut vider l'editbuffer de la couche active
                 self.__layer.rollBack()
                 raise Exception(e)
-            # Mise à jour du numrec pour la couche dans la table des tables
-            SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
+            # Mise à jour de l'ordrefinevol pour la couche dans la table des tables
+            SQLiteManager.updateOrdreFinevolTableOfTables(self.__layer.name(), ordrefinevol)
             SQLiteManager.vacuumDatabase()
             # Le buffer de la couche est vidée et elle est rechargée
             if bNormalWfsPost:
@@ -277,7 +277,7 @@ class WfsPost(object):
         NB : pour une table standard (non BDUni), la synchronisation vide les tables SQLite du projet et extrait
         de nouveau l'ensemble des objets intersectant la boite englobante de la zone de travail.
 
-        :return: le dernier numéro de mises à jour.
+        :return: le dernier ordrefinevol de synchronisation (0 pour une table standard).
         """
         # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
         bDetruit = True
@@ -289,7 +289,7 @@ class WfsPost(object):
             SQLiteManager.vacuumDatabase()
             self.__layer.reload()
 
-        numrec = SQLiteManager.selectNumrecTableOfTables(self.__layer.name())
+        ordrefinevol = SQLiteManager.selectOrdreFinevolTableOfTables(self.__layer.name())
         headers = {
             'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
         parameters = {'databasename': self.__layer.databasename, 'layerName': self.__layer.name(),
@@ -297,18 +297,18 @@ class WfsPost(object):
                       'sridLayer': self.__layer.srid, 'bbox': self.__bbox.getFromLayer(self.__filterName, False, True),
                       'detruit': bDetruit, 'isStandard': self.__layer.isStandard,
                       'is3D': self.__layer.geometryDimensionForDatabase,
-                      'numrec': numrec, 'role': None,
+                      'numrec': 0, 'ordrefinevol': ordrefinevol, 'role': None,
                       'urlHostEspaceCo': self.__context.urlHostEspaceCo,
                       'headers': headers, 'proxies': self.__context.getProxies(),
                       'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
-        numrecmessage = wfsGet.gcmsGet()
-        if 'error' in numrecmessage[1]:
+        ordreFinevolMessage = wfsGet.gcmsGet()
+        if 'error' in ordreFinevolMessage[1]:
             message = "Vos modifications ont bien été prises en compte mais la couche n'a pas pu être rechargée " \
                       "dans QGIS. Il faut la ré-importer. En cas de problème, veuillez contacter le gestionnaire " \
                       "de votre groupe."
             raise Exception(message)
-        return numrecmessage[0]
+        return ordreFinevolMessage[0]
 
     def commitLayer(self, currentLayer, editBuffer, bNormalWfsPost) -> {}:
         """

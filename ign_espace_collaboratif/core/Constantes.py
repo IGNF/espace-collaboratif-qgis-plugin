@@ -48,6 +48,7 @@ ID_ORIGINAL = 'id_original'
 ID_SQLITE = 'id_sqlite_1gnQg1s'
 FINGERPRINT = 'gcms_fingerprint'
 NUMREC = 'gcms_numrec'
+ORDREFINEVOL = 'gcms_ordrefinevol'
 TABLEOFTABLES = 'tableoftables'
 LOADINGTEXTPROGRESS = "Chargement des couches du guichet"
 UPDATETEXTPROGRESS = "Mise à jour des couches du guichet"

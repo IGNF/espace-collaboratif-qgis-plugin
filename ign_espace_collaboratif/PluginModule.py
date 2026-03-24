@@ -905,12 +905,13 @@ class RipartPlugin:
                               'headers': headers, 'proxies': self.__context.getProxies()}
                 result = SQLiteManager.selectRowsInTableOfTables(layer.name())
                 numrec = 0
+                ordrefinevol = 0
                 if len(result) > 0:
                     for r in result:
                         # r contient les items suivants :
-                        # id/layer/idName/standard/database/databaseid/srid/geometryName/geometryDimension/geometryType/Numrec/tableid
+                        # id/layer/idName/standard/database/databaseid/srid/geometryName/geometryDimension/geometryType/numrec/tableid/ordrefinevol
                         # exemple :
-                        # 8, 'Lignes', 'id_ligne', 1, 'test', 83, 2154, 'geom', 0, 'LineString', 0, 1531)
+                        # 8, 'Lignes', 'id_ligne', 1, 'test', 83, 2154, 'geom', 0, 'LineString', 0, 1531, 102)
                         layer.idNameForDatabase = r[2]
                         parameters['isStandard'] = layer.isStandard = r[3]
                         parameters['databasename'] = layer.databasename = r[4]
@@ -921,6 +922,8 @@ class RipartPlugin:
                         layer.geometryTypeForDatabase = r[9]
                         parameters['numrec'] = numrec = r[10]
                         parameters['tableid'] = r[11]
+                        # ordrefinevol (index 12) : attribué en FIN de transaction, filigrane fiable pour les syncs incrémentales
+                        parameters['ordrefinevol'] = ordrefinevol = r[12] if len(r) > 12 and r[12] is not None else 0
 
                 # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
                 bDetruit = True
@@ -935,17 +938,18 @@ class RipartPlugin:
                 # numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
                 # parameters['numrec'] = numrec
                 wfsGet = WfsGet(parameters)
-                # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser.
-                # Il faut aussi qu'il soit égal à 1, ce numrec correspondant à une table non BDUni
+                # Si l'ordrefinevol stocké est le même que celui du serveur, il n'y a rien à synchroniser.
+                # L'ordrefinevol est attribué en FIN de transaction, contrairement au numrec attribué en début :
+                # utiliser l'ordrefinevol évite de manquer les transactions longues.
                 if not layer.isStandard:
-                    maxNumrec = wfsGet.getMaxNumrec()
-                    if numrec == maxNumrec:
+                    maxOrdrefinevol = wfsGet.getMaxOrdrefinevol()
+                    if ordrefinevol == maxOrdrefinevol:
                         endMessage += "<br/>Pas de mise à jour\n\n"
                         continue
-                maxNumRecMessage = wfsGet.gcmsGet()
-                SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
+                maxOrdreFinevolMessage = wfsGet.gcmsGet()
+                SQLiteManager.updateOrdreFinevolTableOfTables(layer.name(), maxOrdreFinevolMessage[0])
                 SQLiteManager.vacuumDatabase()
-                endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])
+                endMessage += "<br/>{0}\n".format(maxOrdreFinevolMessage[1])
             progress.close()
 
             PluginHelper.refreshAllLayers()
