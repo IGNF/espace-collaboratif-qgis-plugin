@@ -85,6 +85,9 @@ class RipartPlugin:
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
 
+        # La classe de gestion des conflits
+        self.__conflicts = None
+
         # En fin de chargement du projet ou à l'ajout d'une couche, il y a connexion de signaux
         # - quand le nom de la couche est changé
         # - quand des mises à jour ont été effectuées sur la couche
@@ -139,6 +142,11 @@ class RipartPlugin:
 
         if self.__context.urlHostEspaceCo is None or self.__context.urlHostEspaceCo == "":
             return
+
+        # Ajout de la couche conflits au projet
+        self.__conflicts = Conflicts(self.__context, self.iface)
+        self.__conflicts.createTable()
+        self.__conflicts.createLayer()
 
         root = QgsProject.instance().layerTreeRoot()
         nodesGroup = root.findGroups()
@@ -340,6 +348,7 @@ class RipartPlugin:
         :param editableLayers: liste des couches modifiées
         :type editableLayers: list[QgsMapLayer]
         """
+
         allMessages = []
         for layer in editableLayers:
             allMessages.append(self.__saveChangesForOneLayer(layer))
@@ -969,8 +978,7 @@ class RipartPlugin:
     def __conflictsView(self):
         # if not self.__doConnexion(False):
         #     return False
-        conflicts = Conflicts(self.__context, self.iface)
-        conflicts.do()
+        self.__conflicts.do()
 
 
     def __configurePlugin(self) -> None:

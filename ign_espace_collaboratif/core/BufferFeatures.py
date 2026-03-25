@@ -8,17 +8,13 @@ from qgis.core import (
     QgsProject,
     QgsField,
     QgsFeatureRequest,
-    QgsFillSymbol,
-    QgsSingleSymbolRenderer,
-    QgsEditorWidgetSetup,
-    QgsCoordinateReferenceSystem,
     QgsFeature,
     QgsCoordinateTransform,
     QgsGeometry
 )
 from PyQt5.QtCore import QVariant
-from .SQLiteManager import SQLiteManager
-from.Query import Query
+from .Query import Query
+from ..PluginHelper import PluginHelper
 
 
 def now_iso():
@@ -75,62 +71,15 @@ class BufferFeatures:
         if not source_layer or not source_layer.isValid():
             raise ValueError("Feature et/ou couche source invalide(s).")
         self.__context = context
-        self.sqlite_path = SQLiteManager.getBaseSqlitePath()
         self.table_name = cst.CONFLICT_LAYER
         self.feature = None
         self.sourceLayer = source_layer
-        self.conflictslayer = None
+        listLayers = QgsProject.instance().mapLayersByName(cst.CONFLICT_LAYER)
+        self.conflictslayer = listLayers[0]
         self.srid = int(QgsProject.instance().crs().postgisSrid())
         print("[INFO] srid project : {}".format(self.srid))
         self.distance = float(distance)
         self.cleabs_attr = cleabs_attr
-
-        # Création de la table si elle n'existe pas
-        if SQLiteManager.isTableExist(cst.CONFLICT_LAYER):
-            SQLiteManager.deleteTable(cst.CONFLICT_LAYER)
-            print("[INFO] Table {} détruite".format(cst.CONFLICT_LAYER))
-        SQLiteManager.createTableConflicts()
-        print("[INFO] Table {} créée".format(cst.CONFLICT_LAYER))
-
-        # Ajout de la couche conflits au projet
-        self.__deleteLayerConflicts()
-        self.__addLayerConflicts()
-
-    def __toQgsVectorLayer(self) -> QgsVectorLayer:
-        """
-        Retourne une QgsVectorLayer (provider 'spatialite') pointant sur la table créée.
-        """
-        from qgis.core import QgsDataSourceUri
-        uri = QgsDataSourceUri()
-        uri.setDatabase(self.sqlite_path)
-        uri.setDataSource("", cst.CONFLICT_LAYER, "geom")
-        return QgsVectorLayer(uri.uri(), cst.CONFLICT_LAYER, "spatialite")
-
-    def __addLayerConflicts(self) -> None:
-        self.conflictslayer = self.__toQgsVectorLayer()
-        if self.conflictslayer and self.conflictslayer.isValid():
-            QgsProject.instance().addMapLayer(self.conflictslayer)
-            self.__applySrid()
-            self.__applySymbology()
-            self.__applyJsonWidget()
-            print("[INFO] Couche Conflits ajoutée au projet")
-
-    def __deleteLayerConflicts(self):
-        """
-        Cherche la couche conflits dans le projet QGIS et la supprime.
-        """
-        project = QgsProject.instance()
-        layers = project.mapLayersByName(cst.CONFLICT_LAYER)
-        if not layers:
-            print("[INFO] La couche {} est déjà supprimée.".format(cst.CONFLICT_LAYER))
-            return False
-
-        # Supprimer toutes les couches "conflits" trouvées
-        layer_ids = [layer.id() for layer in project.mapLayers().values()]
-        project.removeMapLayers(layer_ids)
-        print("[INFO] Couche {} supprimée".format(cst.CONFLICT_LAYER))
-
-        return True
 
     def setFeatureByAttribute(self, params) -> None:
         isObjectClientDeleted = False
@@ -146,11 +95,23 @@ class BufferFeatures:
         # TODO attention self.feature peut-être None
         print("[INFO] Objet en conflit d'identifiant {} et de cleabs {}".format(self.feature.id(), params['attr_val']))
         # Retrouver les caractéristiques de l'objet serveur
-        dataObjectServer = self.__retrieveObjectFromServer(params['database_id'], params['table_id'], params['attr_val'])
+        dataObjectServer = self.__retrieveObjectFromServer(params['database_id'], params['table_id'],
+                                                           params['attr_val'])
         # Insère la ligne (buffer + attributs)
         print("[INFO] Données de l'objet server : {}".format(dataObjectServer))
         # TODO attention self.feature peut-être None
-        self.__insertBufferedFeature(self.feature, isObjectClientDeleted, json.dumps(dataObjectServer, ensure_ascii=False))
+        self.__insertBufferedFeature(self.feature, isObjectClientDeleted, dataObjectServer)
+
+    def __searchTypeConflict(self, isObjectClientDeleted, datasObjectServer):
+        isObjectServerDeleted = False
+        datasServer = json.loads(datasObjectServer)
+        if PluginHelper.keyExist('detruit', datasServer):
+            isObjectServerDeleted = datasServer['detruit']
+        if isObjectClientDeleted and not isObjectServerDeleted:
+            return cst.CONFLICT_SUPPRESSION_CLIENT
+        if not isObjectClientDeleted and isObjectServerDeleted:
+            return cst.CONFLICT_SUPPRESSION_SERVEUR
+        return cst.CONFLICT_MODIFICATION
 
     def __retrieveObjectFromServer(self, database_id, table_id, feature_id):
         query = Query(self.__context.urlHostEspaceCo, self.__context.getProxies())
@@ -160,40 +121,6 @@ class BufferFeatures:
         if response is None:
             return ''
         return response.text
-
-    def __applySymbology(self):
-        properties = {
-            'outline_color': '255,0,0',
-            'outline_width': '0.66',
-            'outline_style': 'solid',
-            'color': '0,0,0,0'  # transparent
-        }
-        self.conflictslayer.setRenderer(QgsSingleSymbolRenderer(QgsFillSymbol.createSimple(properties)))
-
-    def __applyJsonWidget(self):
-        """
-        Applique par défaut une vue JSON de type arborescence/indenté au champ en cours.
-        Voir [ Couche/Propriétés.../Formulaire d'attributs/Type d'outil > Vue JSON ]
-        """
-        # Type:JsonEdit
-        QgsEWS_type = 'JsonEdit'
-        # Config:{'DefaultView': 1, 'FormatJson': 0} arborescence/indenté
-        QgsEWS_config = {'DefaultView': 1, 'FormatJson': 0}
-        setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
-        idx = self.conflictslayer.fields().indexOf('data_server')
-        self.conflictslayer.setEditorWidgetSetup(idx, setup)
-        idx = self.conflictslayer.fields().indexOf('data_client')
-        self.conflictslayer.setEditorWidgetSetup(idx, setup)
-
-    def __applySrid(self):
-        self.conflictslayer.setCrs(QgsCoordinateReferenceSystem(4326))
-
-    def __searchTypeConflict(self, isObjectClientDeleted, isObjectServerDeleted):
-        if isObjectClientDeleted and not isObjectServerDeleted:
-            return cst.CONFLICT_SUPPRESSION_CLIENT
-        if not isObjectClientDeleted and isObjectServerDeleted:
-            return cst.CONFLICT_SUPPRESSION_SERVEUR
-        return cst.CONFLICT_MODIFICATION
 
     def __insertBufferedFeature(
             self,
@@ -231,8 +158,7 @@ class BufferFeatures:
 
         # -- 6) Nouveau feature --
         new_feat = QgsFeature(self.conflictslayer.fields())
-        # new_feat.setGeometry(buffered_back)
-        new_feat.setGeometry(buffered_transformed)
+        new_feat.setGeometry(buffered_back)
 
         # -- 7) Préparer attributs du feature source --
         attributesFeatureSource = {}
@@ -249,9 +175,9 @@ class BufferFeatures:
         new_feat["layer_name"] = self.sourceLayer.name() if self.sourceLayer else None
         new_feat["id_object_client"] = int(source_feat.id())
         new_feat["cleabs"] = source_feat[self.cleabs_attr] if self.cleabs_attr in source_feat.fields().names() else None
-        new_feat["type_conflict"] = self.__searchTypeConflict(source_feat_deleted, dataObjectServer['detruit'])
         new_feat["data_server"] = dataObjectServer
         new_feat["data_client"] = json.dumps(attributesFeatureSource, ensure_ascii=False)
+        new_feat["type_conflict"] = self.__searchTypeConflict(source_feat_deleted, dataObjectServer)
 
         # -- 9) Insertion dans la couche --
         must_commit = False
