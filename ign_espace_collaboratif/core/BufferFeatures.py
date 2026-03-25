@@ -74,12 +74,15 @@ class BufferFeatures:
         self.table_name = cst.CONFLICT_LAYER
         self.feature = None
         self.sourceLayer = source_layer
-        listLayers = QgsProject.instance().mapLayersByName(cst.CONFLICT_LAYER)
-        self.conflictslayer = listLayers[0]
+        self.conflictslayer = self.__retrieveLayer()
         self.srid = int(QgsProject.instance().crs().postgisSrid())
         print("[INFO] srid project : {}".format(self.srid))
         self.distance = float(distance)
         self.cleabs_attr = cleabs_attr
+
+    def __retrieveLayer(self):
+        layers = QgsProject.instance().mapLayersByName(cst.CONFLICT_LAYER)
+        return QgsVectorLayer(layers[0].source(), layers[0].name(), layers[0].providerType())
 
     def setFeatureByAttribute(self, params) -> None:
         isObjectClientDeleted = False
