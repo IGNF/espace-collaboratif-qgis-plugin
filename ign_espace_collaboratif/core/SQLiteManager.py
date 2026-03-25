@@ -896,6 +896,7 @@ class SQLiteManager(object):
     def createTableConflicts():
         # Est-ce la base est verrouillée ?
         SQLiteManager.findAndDeleteLock()
+        SQLiteManager.deleteTable(cst.CONFLICT_LAYER)
         sql = u"CREATE TABLE " + cst.CONFLICT_LAYER + " (" + \
               u"id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " + \
               u"date_conflict TEXT, " + \
@@ -908,5 +909,6 @@ class SQLiteManager(object):
         SQLiteManager.executeSQL(sql)
         # creating a POINT or LINE or POLYGON Geometry column
         sql = "SELECT AddGeometryColumn('" + cst.CONFLICT_LAYER + "',"
-        sql += "'geom', " + str(cst.EPSGCRS4326) + ", 'MULTIPOLYGON, 'XYZ')"
+        sql += "'geom', " + str(cst.EPSGCRS4326) + ", 'MULTIPOLYGON', 'XYZ')"
         SQLiteManager.executeSQL(sql)
+        SQLiteManager.vacuumDatabase()

@@ -82,7 +82,13 @@
     <string>Créer un nouveau signalement</string>
    </property>
    <property name="text">
-    <string>Report</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_previous">
@@ -98,7 +104,13 @@
     <string>Aller au conflit précédent</string>
    </property>
    <property name="text">
-    <string>Prev.</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_next">
@@ -114,7 +126,13 @@
     <string>Aller au conflit suivant</string>
    </property>
    <property name="text">
-    <string>Next</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_see_all_fields">
@@ -130,7 +148,13 @@
     <string>Afficher/Ne pas afficher tous les champs</string>
    </property>
    <property name="text">
-    <string>See</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_reload">
@@ -146,7 +170,13 @@
     <string>Sélectionner toutes les zones de conflit</string>
    </property>
    <property name="text">
-    <string>reload</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_create">
@@ -162,7 +192,13 @@
     <string>Recréer l'objet supprimé sur le serveur</string>
    </property>
    <property name="text">
-    <string>create</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_delete">
@@ -178,7 +214,13 @@
     <string>Supprimer l'objet issu du serveur</string>
    </property>
    <property name="text">
-    <string>Delete</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_validate">
@@ -194,7 +236,13 @@
     <string>Valider le conflit en cours</string>
    </property>
    <property name="text">
-    <string>Val</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_validate_all">
@@ -210,7 +258,13 @@
     <string>Valider tous les conflits sélectionnés</string>
    </property>
    <property name="text">
-    <string>Val all</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_conflict_undo">
@@ -226,7 +280,13 @@
     <string>Annuler la dernière manipulation</string>
    </property>
    <property name="text">
-    <string>Undo</string>
+    <string/>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
    </property>
   </widget>
  </widget>

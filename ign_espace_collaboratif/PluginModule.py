@@ -599,7 +599,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/conflicts.png'
+        icon_path = ':/plugins/RipartPlugin/images/conflict_menu.png'
         self.__addAction(
             icon_path,
             text=self.__translate(u'Résoudre un conflit'),
@@ -967,8 +967,8 @@ class RipartPlugin:
             self.__sendMessageBarException('PluginModule.__synchronizeDataFromAllLayers', e)
 
     def __conflictsView(self):
-        if not self.__doConnexion(False):
-            return False
+        # if not self.__doConnexion(False):
+        #     return False
         conflicts = Conflicts(self.__context, self.iface)
         conflicts.do()
 

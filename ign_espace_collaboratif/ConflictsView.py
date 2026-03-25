@@ -11,22 +11,27 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
     """
     Dialogue de gestion des conflits d'une carte
     """
-    def __init__(self, context, parent=None) -> None:
+    __datas = {}
+
+    def __init__(self, context, datas, parent=None) -> None:
         super(ConflictsView, self).__init__(parent)
+        self.setupUi(self)
         self.__context = context
         self.__getConflicts()
         self.__initDialog()
+        self.__datas = datas
 
     def __getConflicts(self):
         a=1
 
     def __initDialog(self):
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
-        nb = self.__layerConflits.featureCount()
+        # nb = len(self.__datas)
+        nb = 12
         if nb >= 1:
             self.setWindowTitle("Gestion des conflits - {} conflit(s)".format(nb))
         self.__initTableWidget()
-        self.__setConnectButtons()
+        # self.__setConnectButtons()
         self.__setImagesOnButtons()
 
     def __initTableWidget(self):
@@ -73,22 +78,30 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/create.png")
         self.pushButton_conflict_create_report.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_previous.png")
         self.pushButton_conflict_previous.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_next.png")
         self.pushButton_conflict_next.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_see_all_fields.png")
         self.pushButton_conflict_see_all_fields.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_reload.png")
         self.pushButton_conflict_reload.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_create.png")
         self.pushButton_conflict_create.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_delete.png")
         self.pushButton_conflict_delete.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_validate.png")
         self.pushButton_conflict_validate.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_validate_all.png")
         self.pushButton_conflict_validate_all.setIcon(icon)
+        icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_undo.png")
         self.pushButton_conflict_undo.setIcon(icon)
-

@@ -221,16 +221,24 @@ class WfsPost(object):
 
          :return: la liste des messages décodés
         """
-        message = ''
+        message = {}
+        code = response.status_code
         responseToDict = json.loads(response.text)
-        print("responseToDict : {}".format(responseToDict))
-        if 'code' in responseToDict:
-            message = {'code': responseToDict['code'], 'message': responseToDict['message'],
-                       'status': 'error', 'id': [-1]}
+        print("[INFO] Réponse (httprequest) : {}".format(responseToDict))
+        # if 'code' in responseToDict:
+        #     message = {'code': responseToDict['code'], 'message': responseToDict['message'],
+        #                'status': 'error', 'id': [-1], 'cleabs': responseToDict['conflicts'][0]['server_object'].cleabs
         if 'status' in responseToDict:
-            message = {'code': 200, 'message': responseToDict["message"],
-                       'status': responseToDict["status"], 'id': []}
-            message['id'].append(responseToDict["id"])
+            message = {'code': code, 'message': responseToDict["message"],
+                       'status': responseToDict["status"], 'id_transaction': responseToDict["id"]}
+            print("[INFO] code : {}".format(code))
+            print("[INFO] message : {}".format(responseToDict["message"]))
+            print("[INFO] status : {}".format(responseToDict["status"]))
+            print("[INFO] transaction n° {}".format(responseToDict["id"]))
+            if len(responseToDict['conflicts']) >= 1:
+                print("[INFO] conflit : {}".format(responseToDict['conflicts'][0]['server_object']))
+                print("[INFO] cleabs : {}".format(responseToDict['conflicts'][0]['server_object']['cleabs']))
+                message.update({'cleabs': responseToDict['conflicts'][0]['server_object']['cleabs']})
         return message
 
     def __gcmsPost(self, bNormalWfsPost) -> {}:
@@ -250,12 +258,13 @@ class WfsPost(object):
         response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxies, data=json.dumps(self.__datasForPost),
                                                headers=headers, launchBy='__gcmsPost')
         responseTransactions = self.__checkResponseTransactions(response)
-        if responseTransactions['status'] is cst.STATUS_CONFLICTING:
+        print('responseTransactions : {}'.format(responseTransactions))
+        if responseTransactions['status'] == cst.STATUS_CONFLICTING:
             bf = BufferFeatures(self.__context, self.__layer)
             params = {
                 'database_id': self.__layer.databaseid,
                 'table_id': self.__layer.tableid,
-                'attr_val': responseTransactions['id'],
+                'attr_val': responseTransactions['cleabs'],
                 'attr': 'cleabs'
             }
             bf.setFeatureByAttribute(params)
@@ -410,7 +419,7 @@ class WfsPost(object):
         if status == cst.STATUS_COMMITTED:
             information = self.__transactionReporting
             information += '<br/>{0}'.format(message)
-            fid = endTransactionMessage['id'][0]
+            fid = str(endTransactionMessage['id_transaction'])
             information += '<br/><a href="{0}/{1}" target="_blank">{2}</a>'.format(self.__url, fid, fid)
         else:
             information = '<br/><font color="red">error : {0}</font>'.format(message)

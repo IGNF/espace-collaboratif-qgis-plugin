@@ -4,6 +4,7 @@ from .core import Constantes as cst
 from .PluginHelper import PluginHelper
 
 class Conflicts(object):
+
     def __init__(self, context, iface) -> None:
         """
         Constructeur.
@@ -16,9 +17,10 @@ class Conflicts(object):
         self.__iface = iface
 
     def do(self):
-        datas = self.__selectAll()
-        cf = ConflictsView(self.__context)
-        cf.setDatas(datas)
+        # datas = self.__selectAll()
+        datas = {}
+        cf = ConflictsView(self.__context, datas)
+        cf.exec_()
 
     def __selectDatas(self, feature):
         datas = {}
@@ -38,7 +40,7 @@ class Conflicts(object):
             return False
 
         features = activeLayer.getFeatures()
-        if len(features) == 0:
+        if len(list(features)) == 0:
             message = "La couche {} ne contient pas d'objets.".format(cst.CONFLICT_LAYER)
             PluginHelper.showMessageBox(message)
             return False
