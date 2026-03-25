@@ -236,9 +236,12 @@ class WfsPost(object):
             print("[INFO] status : {}".format(responseToDict["status"]))
             print("[INFO] transaction n° {}".format(responseToDict["id"]))
             if len(responseToDict['conflicts']) >= 1:
-                print("[INFO] conflit : {}".format(responseToDict['conflicts'][0]['server_object']))
-                print("[INFO] cleabs : {}".format(responseToDict['conflicts'][0]['server_object']['cleabs']))
-                message.update({'cleabs': responseToDict['conflicts'][0]['server_object']['cleabs']})
+                listcleabs = []
+                for conflit in responseToDict['conflicts']:
+                    print("[INFO] conflit : {}".format(conflit['server_object']))
+                    print("[INFO] cleabs : {}".format(conflit['server_object']['cleabs']))
+                    listcleabs.append(conflit['server_object']['cleabs'])
+                message.update({'cleabs': listcleabs})
         return message
 
     def __gcmsPost(self, bNormalWfsPost) -> {}:
@@ -260,14 +263,15 @@ class WfsPost(object):
         responseTransactions = self.__checkResponseTransactions(response)
         print('responseTransactions : {}'.format(responseTransactions))
         if responseTransactions['status'] == cst.STATUS_CONFLICTING:
-            bf = BufferFeatures(self.__context, self.__layer)
-            params = {
-                'database_id': self.__layer.databaseid,
-                'table_id': self.__layer.tableid,
-                'attr_val': responseTransactions['cleabs'],
-                'attr': 'cleabs'
-            }
-            bf.setFeatureByAttribute(params)
+            for cleabs in responseTransactions['cleabs']:
+                bf = BufferFeatures(self.__context, self.__layer)
+                params = {
+                    'database_id': self.__layer.databaseid,
+                    'table_id': self.__layer.tableid,
+                    'attr_val': cleabs,
+                    'attr': 'cleabs'
+                }
+                bf.setFeatureByAttribute(params)
         else:
             if responseTransactions['status'] == cst.STATUS_COMMITTED:
                 # Mise à jour de la base SQLite pour les objets détruits et modifiés d'une couche BDUni
