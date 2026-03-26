@@ -1,8 +1,8 @@
 import os
-
 from qgis.PyQt import uic
 from PyQt5 import QtCore, QtWidgets
 from qgis.PyQt.QtGui import QIcon, QColor
+from .PluginHelper import PluginHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ConflictsView_base.ui'))
 
@@ -13,34 +13,32 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
     """
     __datas = {}
 
-    def __init__(self, context, datas, parent=None) -> None:
+    def __init__(self, context, datas, nbConflicts, parent=None) -> None:
         super(ConflictsView, self).__init__(parent)
         self.setupUi(self)
         self.__context = context
         self.__getConflicts()
-        self.__initDialog()
+        self.__initDialog(nbConflicts)
         self.__datas = datas
 
     def __getConflicts(self):
         a=1
 
-    def __initDialog(self):
+    def __initDialog(self, nbConflicts):
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
-        # nb = len(self.__datas)
-        nb = 12
-        if nb >= 1:
-            self.setWindowTitle("Gestion des conflits - {} conflit(s)".format(nb))
+        if nbConflicts >= 1:
+            self.setWindowTitle("Gestion des conflits - {} conflit(s)".format(nbConflicts))
         self.__initTableWidget()
-        # self.__setConnectButtons()
+        self.__setConnectButtons()
         self.__setImagesOnButtons()
 
     def __initTableWidget(self):
         entete = ["Nom des champs", "Objet issu du serveur", "Votre objet", "Commentaire"]
         self.tableWidget_attributes.setHorizontalHeaderLabels(entete)
-        self.tableWidget_attributes.setColumnWidth(0, 190)
-        self.tableWidget_attributes.setColumnWidth(1, 300)
-        self.tableWidget_attributes.setColumnWidth(2, 300)
-        self.tableWidget_attributes.setColumnWidth(3, 190)
+        self.tableWidget_attributes.setColumnWidth(0, 180)
+        self.tableWidget_attributes.setColumnWidth(1, 290)
+        self.tableWidget_attributes.setColumnWidth(2, 290)
+        self.tableWidget_attributes.setColumnWidth(3, 150)
         self.__setAttributesTableWidget()
 
     def __resetTableWidget(self):
@@ -105,3 +103,33 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         icon = QIcon()
         icon.addFile(":/plugins/RipartPlugin/images/conflict_undo.png")
         self.pushButton_conflict_undo.setIcon(icon)
+
+    def __createReport(self):
+        PluginHelper.showMessageBox("createReport")
+
+    def __previous(self):
+        PluginHelper.showMessageBox("previous")
+
+    def __next(self):
+        PluginHelper.showMessageBox("next")
+
+    def __seeAllFields(self):
+        PluginHelper.showMessageBox("seeAllFields")
+
+    def __reload(self):
+        PluginHelper.showMessageBox("reload")
+
+    def __create(self):
+        PluginHelper.showMessageBox("create")
+
+    def __delete(self):
+        PluginHelper.showMessageBox("delete")
+
+    def __validate(self):
+        PluginHelper.showMessageBox("validate")
+
+    def __validateAll(self):
+        PluginHelper.showMessageBox("validateAll")
+
+    def __undo(self):
+        PluginHelper.showMessageBox("undo")

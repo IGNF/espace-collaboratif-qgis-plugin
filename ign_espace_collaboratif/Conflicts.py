@@ -103,35 +103,37 @@ class Conflicts(object):
         self.__addLayerConflicts()
 
     def do(self):
-        # datas = self.__selectAll()
-        datas = {}
-        cf = ConflictsView(self.__context, datas)
+        datas = self.__selectAll()
+        print("[INFO] datas : {}".format(datas[0]))
+        cf = ConflictsView(self.__context, datas[0], datas[1])
         cf.exec_()
 
     def __selectDatas(self, feature):
-        datas = {}
-        fields = feature.fields()
-        datas.update({fields['cleabs']: [fields['data_server'], fields['data_client']]})
-        return datas
+        try:
+            key = feature['cleabs']
+            return {key: [feature['data_server'], feature['data_client']]}
+        except KeyError as e:
+            raise KeyError(f"Champ manquant dans l'objet en conflit : {e}")
 
     def __selectAll(self):
+        datas = {}
         activeLayer = self.__iface.activeLayer()
         if activeLayer is None:
-            return False
+            return datas, 0
 
         if activeLayer.name() != cst.CONFLICT_LAYER:
             message = "Il faut sélectionner la couche {} avant d'utiliser " \
                       "cette fonctionnalité.".format(cst.CONFLICT_LAYER)
             PluginHelper.showMessageBox(message)
-            return False
+            return datas, 0
 
-        features = activeLayer.getFeatures()
-        if len(list(features)) == 0:
+        features = list(activeLayer.getFeatures())
+        nb = len(features)
+        if nb == 0:
             message = "La couche {} ne contient pas d'objets.".format(cst.CONFLICT_LAYER)
             PluginHelper.showMessageBox(message)
-            return False
+            return datas, 0
 
-        datas = {}
         for feature in features:
             datas.update(self.__selectDatas(feature))
-        return datas
+        return datas, nb

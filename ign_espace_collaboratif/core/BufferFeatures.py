@@ -10,7 +10,8 @@ from qgis.core import (
     QgsFeatureRequest,
     QgsFeature,
     QgsCoordinateTransform,
-    QgsGeometry
+    QgsGeometry,
+    QgsCoordinateReferenceSystem
 )
 from PyQt5.QtCore import QVariant
 from .Query import Query
@@ -60,16 +61,15 @@ class BufferFeatures:
       - crée la table si nécessaire,
       - transforme la géométrie au SRID cible avant insertion.
     """
-
     def __init__(
             self,
             context,
             source_layer: QgsVectorLayer,
-            distance: float = 5.0,  # distance de buffer (en unités du SRID)
+            distance: float = 15.0,  # distance de buffer (en unités du SRID)
             cleabs_attr: str = "cleabs"  # attribut unique/clé métier
     ):
         if not source_layer or not source_layer.isValid():
-            raise ValueError("Feature et/ou couche source invalide(s).")
+            raise ValueError("BufferFeatures.__init__: la couche de l'objet en conflit est invalide.")
         self.__context = context
         self.table_name = cst.CONFLICT_LAYER
         self.feature = None
@@ -88,7 +88,8 @@ class BufferFeatures:
         isObjectClientDeleted = False
         idx = self.sourceLayer.fields().indexOf(params['attr'])
         if idx < 0:
-            raise ValueError(f"Attribut '{params['attr']}' introuvable")
+            raise ValueError(f"BufferFeatures.setFeatureByAttribute: l'attribut '{params['attr']}' "
+                             f"n'existe pas dans la couche de l'objet en conflit.")
         expr = f"\"{params['attr']}\" = '{params['attr_val']}'"
         req = QgsFeatureRequest().setFilterExpression(expr)
         self.feature = next(self.sourceLayer.getFeatures(req), None)
@@ -104,6 +105,8 @@ class BufferFeatures:
         print("[INFO] Données de l'objet server : {}".format(dataObjectServer))
         # TODO attention self.feature peut-être None
         self.__insertBufferedFeature(self.feature, isObjectClientDeleted, dataObjectServer)
+        self.conflictslayer.triggerRepaint()
+        self.conflictslayer.reload()
 
     def __searchTypeConflict(self, isObjectClientDeleted, datasObjectServer):
         isObjectServerDeleted = False
@@ -125,12 +128,35 @@ class BufferFeatures:
             return ''
         return response.text
 
+    def __bufferedGeometry(self):
+        if self.feature is None:
+            raise Exception("BufferFeatures.__bufferedGeometry : l'objet en conflit n'a pas été récupéré correctement.")
+        geom = self.feature.geometry()
+        if geom is None or geom.isEmpty():
+            raise Exception("BufferFeatures.__bufferedGeometry : l'objet en conflit n’a pas de géométrie valide.")
+        crs = self.sourceLayer.crs()
+        # Si CRS en degrés → reprojection vers un CRS métrique
+        if crs.isGeographic():
+            target_crs = QgsCoordinateReferenceSystem("EPSG:3857")  # métrique
+            transform = QgsCoordinateTransform(crs, target_crs, QgsProject.instance())
+            geom_proj = QgsGeometry(geom)
+            geom_proj.transform(transform)
+            # Buffer dans le CRS métrique
+            buffered = geom_proj.buffer(self.distance, 8)
+            # Retour au CRS original
+            back_transform = QgsCoordinateTransform(target_crs, crs, QgsProject.instance())
+            buffered.transform(back_transform)
+            return buffered
+        else:
+            # CRS déjà métrique → buffer direct
+            return geom.buffer(self.distance, 8)
+
     def __insertBufferedFeature(
             self,
             source_feat: QgsFeature,
             source_feat_deleted: bool,
-            dataObjectServer: str,
-            buffer_dist: float = 5.0):
+            dataObjectServer: str
+    ):
         """
         Crée un nouvel objet dans target_layer à partir d’un feature source :
           - buffer de sa géométrie (buffer_dist)
@@ -138,32 +164,14 @@ class BufferFeatures:
           - stockage des attributs du feature source dans 'data_client'
             avec conversion des NULL QGIS → None
         """
-        # -- 1) Géométrie source --
-        geom = source_feat.geometry()
-        if geom is None or geom.isEmpty():
-            raise Exception("Le feature source n’a pas de géométrie valide.")
+        # -- 1) Calcul du buffer autour de l'objet en conflit --
+        buffer = self.__bufferedGeometry()
 
-        # -- 2) Récupérer CRS source et CRS du projet --
-        crs_src = self.sourceLayer.crs()  # normalement EPSG:4326
-        crs_dest = QgsProject.instance().crs()  # normalement EPSG:3857
-
-        # -- 3) Transformer la géométrie vers le CRS métrique --
-        transform = QgsCoordinateTransform(crs_src, crs_dest, QgsProject.instance())
-        geom.transform(transform)
-
-        # -- 4) Calcul du buffer --
-        buffered_transformed = geom.buffer(buffer_dist, 8)
-
-        # -- 5) Revenir au CRS de la couche de destination --
-        transform_back = QgsCoordinateTransform(crs_dest, crs_src, QgsProject.instance())
-        buffered_back = QgsGeometry(buffered_transformed)
-        buffered_back.transform(transform_back)
-
-        # -- 6) Nouveau feature --
+        # -- 2) Nouveau feature --
         new_feat = QgsFeature(self.conflictslayer.fields())
-        new_feat.setGeometry(buffered_back)
+        new_feat.setGeometry(buffer)
 
-        # -- 7) Préparer attributs du feature source --
+        # -- 3) Préparer attributs du feature source --
         attributesFeatureSource = {}
         for field in source_feat.fields():
             name = field.name()
@@ -173,7 +181,7 @@ class BufferFeatures:
                 val = None
             attributesFeatureSource[name] = val
 
-        # -- 8) Attributs spécifiques au conflit --
+        # -- 4) Attributs spécifiques au conflit --
         new_feat["date_conflict"] = now_iso()
         new_feat["layer_name"] = self.sourceLayer.name() if self.sourceLayer else None
         new_feat["id_object_client"] = int(source_feat.id())
@@ -182,7 +190,7 @@ class BufferFeatures:
         new_feat["data_client"] = json.dumps(attributesFeatureSource, ensure_ascii=False)
         new_feat["type_conflict"] = self.__searchTypeConflict(source_feat_deleted, dataObjectServer)
 
-        # -- 9) Insertion dans la couche --
+        # -- 5) Insertion dans la couche --
         must_commit = False
         if not self.conflictslayer.isEditable():
             self.conflictslayer.startEditing()

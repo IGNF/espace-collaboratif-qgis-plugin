@@ -143,7 +143,7 @@ class RipartPlugin:
         if self.__context.urlHostEspaceCo is None or self.__context.urlHostEspaceCo == "":
             return
 
-        # Ajout de la couche conflits au projet
+        # Ajout de la table SQLite et de la couche conflits au projet
         self.__conflicts = Conflicts(self.__context, self.iface)
         self.__conflicts.createTable()
         self.__conflicts.createLayer()
@@ -976,10 +976,11 @@ class RipartPlugin:
             self.__sendMessageBarException('PluginModule.__synchronizeDataFromAllLayers', e)
 
     def __conflictsView(self):
-        # if not self.__doConnexion(False):
-        #     return False
+        if not self.__doConnexion(False):
+            return False
+        if self.__conflicts is None:
+            self.__conflicts = Conflicts(self.__context, self.iface)
         self.__conflicts.do()
-
 
     def __configurePlugin(self) -> None:
         """
