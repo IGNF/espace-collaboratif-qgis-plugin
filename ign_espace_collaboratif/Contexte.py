@@ -721,7 +721,7 @@ class Contexte(object):
                 pushMessage("Remarque",
                             str(e),
                             message,
-                            level=1, duration=3)
+                            level=Qgis.MessageLevel.Warning, duration=3)
             print(str(e))
 
     def hideColumn(self, layer, columnName) -> None:

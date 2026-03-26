@@ -1,4 +1,5 @@
 from typing import Optional
+from qgis.core import Qgis
 from .ToolsReport import ToolsReport
 from .SeeReportView import SeeReportView
 from .core.PluginLogger import PluginLogger
@@ -36,14 +37,14 @@ class SeeReport(object):
             if activeLayer is None or activeLayer.name() != cst.nom_Calque_Signalement:
                 self.__context.iface.messageBar().pushMessage("Attention",
                                                               'La couche "Signalement" doit être la couche active',
-                                                              level=1, duration=3)
+                                                              level=Qgis.MessageLevel.Warning, duration=3)
                 return
 
             selectedFeatures = activeLayer.selectedFeatures()
             if len(selectedFeatures) != 1:
                 self.__context.iface.messageBar().pushMessage("Attention",
                                                               "Il faut sélectionner un et un seul signalement",
-                                                              level=1, duration=3)
+                                                              level=Qgis.MessageLevel.Warning, duration=3)
                 return
 
             reportsId = []

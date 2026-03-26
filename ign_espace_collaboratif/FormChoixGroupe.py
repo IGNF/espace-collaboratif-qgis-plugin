@@ -30,7 +30,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.__context = context
         self.__listNamesIdsCommunities = context.getListNameIdFromAllUserCommunities()
         self.__nameActiveCommunity = context.getActiveCommunityName()

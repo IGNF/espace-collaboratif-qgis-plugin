@@ -3,7 +3,7 @@ import os.path
 from typing import Optional
 
 from qgis.PyQt.QtWidgets import QMessageBox
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
+from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsRectangle, QgsPointXY, QgsGeometry
 
 import requests
@@ -331,7 +331,7 @@ class ToolsReport(object):
             return ''
         else:
             message = "code : {} raison : {}".format(response.status_code, response.reason)
-            self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
+            self.__context.iface.messageBar().pushMessage("Attention", message, level=Qgis.MessageLevel.Warning, duration=3)
             return ''
 
     def serialize_for_multipart(self, obj):
@@ -409,7 +409,7 @@ class ToolsReport(object):
             return response
         else:
             message = "Code : {0}, Raison : {1}".format(response.status_code, response.reason)
-            self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
+            self.__context.iface.messageBar().pushMessage("Attention", message, level=Qgis.MessageLevel.Warning, duration=3)
         return None
 
     def createReport(self, sketchList, pointFromClipboard):

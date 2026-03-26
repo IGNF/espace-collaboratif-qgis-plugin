@@ -63,7 +63,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.__context = context
 
         self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setText("Envoyer")

@@ -8,6 +8,7 @@ version 3.0.0 , 26/11/2018
 """
 from typing import Optional
 
+from qgis.core import Qgis
 from .PluginHelper import PluginHelper
 from .core import Constantes as cst
 from .core.SQLiteManager import SQLiteManager
@@ -65,7 +66,7 @@ class Magicwand(object):
             self.context.iface.messageBar().pushMessage("",
                                                         u"Veuillez sélectionner un signalement ou un croquis"
                                                         u" (mais pas les deux)",
-                                                        level=1, duration=3)
+                                                        level=Qgis.MessageLevel.Warning, duration=3)
             return None
         elif selectedCroquis:
             return "croquis"
@@ -74,7 +75,7 @@ class Magicwand(object):
         else:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Aucun croquis ou signalement sélectionné",
-                                                        level=1, duration=3)
+                                                        level=Qgis.MessageLevel.Warning, duration=3)
             return None
 
     def selectAssociatedReport(self) -> None:

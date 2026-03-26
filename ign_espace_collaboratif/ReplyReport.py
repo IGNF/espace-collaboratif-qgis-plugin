@@ -1,4 +1,5 @@
 from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.core import Qgis
 
 from .FormInfo import FormInfo
 from .ToolsReport import ToolsReport
@@ -96,7 +97,7 @@ class ReplyReport(object):
                     information += "au signalement {0} a bien été envoyée.".format(replyReports[0].getId())
                 else:
                     information += "aux {0} signalements a bien été envoyée.".format(len(replyReports))
-                self.__context.iface.messageBar().pushMessage("Succès", information, level=0, duration=5)
+                self.__context.iface.messageBar().pushMessage("Succès", information, level=Qgis.MessageLevel.Info, duration=5)
 
         except Exception as e:
             self.__logger.error(format(e))
@@ -111,7 +112,7 @@ class ReplyReport(object):
         if not self.__context.IsLayerInMap(cst.nom_Calque_Signalement):
             mess = "Pas de couche 'Signalement' dans la carte.\nIl est donc impossible de répondre à un " \
                    "signalement.\nIl faut se connecter à l'Espace collaboratif et télécharger les signalements."
-            self.__context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=3)
+            self.__context.iface.messageBar().pushMessage("Attention", mess, level=Qgis.MessageLevel.Warning, duration=3)
             self.__logger.error(mess)
             return False
         return True
@@ -125,7 +126,7 @@ class ReplyReport(object):
         activeLayer = self.__context.iface.activeLayer()
         if activeLayer is None or activeLayer.name() != cst.nom_Calque_Signalement:
             mess = 'La couche "{}" doit être le calque actif'.format(cst.nom_Calque_Signalement)
-            self.__context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=3)
+            self.__context.iface.messageBar().pushMessage("Attention", mess, level=Qgis.MessageLevel.Warning, duration=3)
             self.__logger.error(mess)
             return {}
         return activeLayer.selectedFeatures()

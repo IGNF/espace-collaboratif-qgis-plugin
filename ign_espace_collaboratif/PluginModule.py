@@ -10,7 +10,7 @@ from . import resources
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer
+from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer, Qgis
 from builtins import str
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
@@ -478,7 +478,7 @@ class RipartPlugin:
         self.__context.iface.messageBar().clearWidgets()
         self.__logger.error(format(exception))
         errorMessage = "{} : {}".format(message, str(exception))
-        self.__context.iface.messageBar().pushMessage("Erreur", errorMessage, level=2, duration=5)
+        self.__context.iface.messageBar().pushMessage("Erreur", errorMessage, level=Qgis.MessageLevel.Critical, duration=5)
         PluginHelper.setCursor()
 
     def __translate(self, message) -> str:

@@ -1,6 +1,6 @@
 from qgis.PyQt.QtCore import Qt, QPoint
 from qgis.PyQt.QtGui import QColor
-from qgis.core import QgsSettings, QgsPointXY
+from qgis.core import Qgis, QgsSettings, QgsPointXY
 from qgis.gui import QgsMapTool, QgsVertexMarker
 from ..Contexte import Contexte
 from ..ToolsReport import ToolsReport
@@ -51,7 +51,7 @@ class MapToolsReport(QgsMapTool):
             self.endCreateReport()
             self.__logger.error(format(e))
             self.__context.iface.messageBar().pushMessage("Erreur", u"Problème dans la création de signalement(s) : {}"
-                                                          .format(e), level=2, duration=4)
+                                                          .format(e), level=Qgis.MessageLevel.Critical, duration=4)
 
     def snappoint(self, qpoint) -> QgsPointXY:
         """

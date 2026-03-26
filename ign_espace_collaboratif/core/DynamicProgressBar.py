@@ -1,6 +1,7 @@
 from qgis.PyQt.QtGui import QFontMetrics
 from qgis.PyQt.QtWidgets import QProgressBar, QLabel, QApplication
 from qgis.PyQt.QtCore import Qt
+from qgis.core import Qgis
 from qgis.utils import iface
 
 from ..PluginHelper import PluginHelper
@@ -42,7 +43,7 @@ class DynamicProgressBar(QProgressBar):
         progressMessageBar.layout().addWidget(self.label)
         progressMessageBar.layout().addWidget(self)
 
-        iface.messageBar().pushWidget(progressMessageBar, level=0)
+        iface.messageBar().pushWidget(progressMessageBar, level=Qgis.MessageLevel.Info)
         iface.mainWindow().repaint()
         QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
