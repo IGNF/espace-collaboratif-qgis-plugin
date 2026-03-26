@@ -6,7 +6,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsRectangle, QgsPointXY, QgsGeometry
 
-from .core.requests import Response
+import requests
 from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
 from .core.DynamicProgressBar import DynamicProgressBar
@@ -388,7 +388,7 @@ class ToolsReport(object):
             return
         return responseFromServer.json()
 
-    def __sendRequest(self, datas, filesAttachments) -> Optional[Response]:
+    def __sendRequest(self, datas, filesAttachments) -> Optional[requests.Response]:
         """
         Envoi de la requête POST de création de signalement(s) avec ou sans croquis.
 
