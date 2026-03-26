@@ -1,4 +1,6 @@
+import json
 import os
+from .core import Constantes as cst
 from qgis.PyQt import uic
 from PyQt5 import QtCore, QtWidgets
 from qgis.PyQt.QtGui import QIcon, QColor
@@ -13,21 +15,18 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
     """
     __datas = {}
 
-    def __init__(self, context, datas, nbConflicts, parent=None) -> None:
+    def __init__(self, context, featuresConflicts, parent=None) -> None:
         super(ConflictsView, self).__init__(parent)
         self.setupUi(self)
         self.__context = context
-        self.__getConflicts()
-        self.__initDialog(nbConflicts)
-        self.__datas = datas
+        self.__features = featuresConflicts
+        self.__nbConflicts = len(featuresConflicts)
+        self.__initDialog()
 
-    def __getConflicts(self):
-        a=1
-
-    def __initDialog(self, nbConflicts):
+    def __initDialog(self):
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
-        if nbConflicts >= 1:
-            self.setWindowTitle("Gestion des conflits - {} conflit(s)".format(nbConflicts))
+        if self.__nbConflicts >= 1:
+            self.setWindowTitle("Gestion des conflits - {} conflit(s)".format(self.__nbConflicts))
         self.__initTableWidget()
         self.__setConnectButtons()
         self.__setImagesOnButtons()
@@ -39,13 +38,19 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         self.tableWidget_attributes.setColumnWidth(1, 290)
         self.tableWidget_attributes.setColumnWidth(2, 290)
         self.tableWidget_attributes.setColumnWidth(3, 150)
-        self.__setAttributesTableWidget()
+        self.__setTableWidget()
 
     def __resetTableWidget(self):
         self.tableWidget_attributes.clear()
         self.tableWidget_attributes.setRowCount(0)
 
-    def setColorItem(self):
+    def __setTableWidget(self):
+        for feature in self.__features:
+            self.__setLabelsConflit(feature)
+            self.__setAttributes(feature)
+        self.__setColorItem()
+
+    def __setColorItem(self):
         for row in range(self.tableWidget_attributes.rowCount()):
             item = self.tableWidget_attributes.item(row, 3)  # colonne à vérifier
             if not item:
@@ -57,8 +62,67 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
                 font.setBold(True)
                 item.setFont(font)
 
-    def __setAttributesTableWidget(self):
-        a=1
+    def __setLabelsConflit(self, feature):
+        typeConflict = feature['type_conflict']
+        self.label_type_conflict.setText(typeConflict)
+        self.label_layer_name.setText(feature['layer_name'])
+        if typeConflict == cst.CONFLICT_MODIFICATION:
+            self.label_context_type_conflict.setText('Le même objet a été modifié par un autre utilisateur et par vous '
+                                                     'même depuis la dernière transaction.')
+        elif typeConflict == cst.CONFLICT_SUPPRESSION_SERVEUR:
+            self.label_context_type_conflict.setText('Le même objet a été supprimé par un autre utilisateur et modifié '
+                                                     'par vous depuis la dernière transaction.')
+        elif typeConflict == cst.CONFLICT_SUPPRESSION_CLIENT:
+            self.label_context_type_conflict.setText('Le même objet a été modifié par un autre utilisateur et supprimé '
+                                                     'par vous même depuis la dernière transaction.')
+
+    def __mergeDataServerAndClient(self, dict1, dict2):
+        # Si un dict est None ou pas un dict, on le remplace par {}
+        dict1 = dict1 or {}
+        dict2 = dict2 or {}
+        # Union des clés
+        try:
+            all_keys = sorted(dict1.keys() | dict2.keys())
+        except TypeError:
+            # Si les clés ne sont pas comparables entre elles → pas de tri
+            all_keys = dict1.keys() | dict2.keys()
+        resultat = {}
+        for k in all_keys:
+            v1 = dict1.get(k, "")
+            v2 = dict2.get(k, "")
+            if v1 == "" or v2 == "":
+                status = "--"
+            elif v1 != v2:
+                status = "<>"
+            else:
+                status = "="
+            resultat[k] = [v1, v2, status]
+        return resultat
+
+    def __setAttributes(self, feature):
+        resultats = self.__mergeDataServerAndClient(json.loads(feature['data_server']),
+                                                   json.loads(feature['data_client']))
+        print("[INFO] Resultat : {}".format(resultats))
+
+        for k, v in resultats.items():
+            rowPosition = self.tableWidget_attributes.rowCount()
+            self.tableWidget_attributes.insertRow(rowPosition)
+
+            # Colonne "Nom des champs"
+            item = QtWidgets.QTableWidgetItem(str(k))
+            self.tableWidget_attributes.setItem(rowPosition, 0, item)
+
+            # Colonne "Objet issu du serveur"
+            item = QtWidgets.QTableWidgetItem(str(v[0]))
+            self.tableWidget_attributes.setItem(rowPosition, 1, item)
+
+            # Colonne "Votre objet"
+            item = QtWidgets.QTableWidgetItem(str(v[1]))
+            self.tableWidget_attributes.setItem(rowPosition, 2, item)
+
+            # Colonne "Commentaire"
+            item = QtWidgets.QTableWidgetItem(str(v[2]))
+            self.tableWidget_attributes.setItem(rowPosition, 3, item)
 
     def __setConnectButtons(self):
         self.pushButton_conflict_create_report.clicked.connect(self.__createReport)
