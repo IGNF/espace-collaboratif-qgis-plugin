@@ -22,6 +22,8 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         self.__features = featuresConflicts
         self.__nbConflicts = len(featuresConflicts)
         self.__initDialog()
+        # Filtrer les attributs (True = filtré)
+        self.__filterActive = True
 
     def __initDialog(self):
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
@@ -48,7 +50,6 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         for feature in self.__features:
             self.__setLabelsConflit(feature)
             self.__setAttributes(feature)
-        self.__setColorItem()
 
     def __setColorItem(self):
         for row in range(self.tableWidget_attributes.rowCount()):
@@ -60,6 +61,11 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
                 item.setForeground(QColor("red"))
                 font = item.font()
                 font.setBold(True)
+                item.setFont(font)
+            else:
+                item.setForeground(QColor("black"))
+                font = item.font()
+                font.setBold(False)
                 item.setFont(font)
 
     def __setLabelsConflit(self, feature):
@@ -101,7 +107,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
 
     def __setAttributes(self, feature):
         resultats = self.__mergeDataServerAndClient(json.loads(feature['data_server']),
-                                                   json.loads(feature['data_client']))
+                                                    json.loads(feature['data_client']))
         print("[INFO] Resultat : {}".format(resultats))
 
         for k, v in resultats.items():
@@ -123,6 +129,8 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             # Colonne "Commentaire"
             item = QtWidgets.QTableWidgetItem(str(v[2]))
             self.tableWidget_attributes.setItem(rowPosition, 3, item)
+        # Au départ, affichage uniquement des différences
+        self.__showDiff()
 
     def __setConnectButtons(self):
         self.pushButton_conflict_create_report.clicked.connect(self.__createReport)
@@ -168,17 +176,42 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         icon.addFile(":/plugins/RipartPlugin/images/conflict_undo.png")
         self.pushButton_conflict_undo.setIcon(icon)
 
+    # -- 1) Créer un signalement --
     def __createReport(self):
         PluginHelper.showMessageBox("createReport")
 
+    # -- 2) Aller au conflit précédent --
     def __previous(self):
         PluginHelper.showMessageBox("previous")
 
+    # -- 3) Aller au conflit suivant --
     def __next(self):
         PluginHelper.showMessageBox("next")
 
+    # -- 4) Filtrer les attributs --
+    """Affiche toutes les lignes."""
+    def __showAll(self):
+        for row in range(self.tableWidget_attributes.rowCount()):
+            self.tableWidget_attributes.setRowHidden(row, False)
+        self.__setColorItem()
+
+    """N'affiche que les lignes dont la valeur de la colonne testée est '<>'."""
+    def __showDiff(self):
+        for row in range(self.tableWidget_attributes.rowCount()):
+            item = self.tableWidget_attributes.item(row, 3)
+            if item is None or item.text() != "<>":
+                self.tableWidget_attributes.setRowHidden(row, True)
+            else:
+                self.tableWidget_attributes.setRowHidden(row, False)
+
+    """Alterner l'affichage entre attributs filtrés et non filtrés."""
     def __seeAllFields(self):
-        PluginHelper.showMessageBox("seeAllFields")
+        if self.__filterActive:
+            self.__showAll()
+        else:
+            self.__showDiff()
+        # alterne l’état
+        self.__filterActive = not self.__filterActive
 
     def __reload(self):
         PluginHelper.showMessageBox("reload")
