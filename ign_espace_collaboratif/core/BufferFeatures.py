@@ -189,6 +189,7 @@ class BufferFeatures:
         new_feat["data_server"] = dataObjectServer
         new_feat["data_client"] = json.dumps(attributesFeatureSource, ensure_ascii=False)
         new_feat["type_conflict"] = self.__searchTypeConflict(source_feat_deleted, dataObjectServer)
+        new_feat["geometry_conflict"] = source_feat.geometry().asWkt()
 
         # -- 5) Insertion dans la couche --
         must_commit = False

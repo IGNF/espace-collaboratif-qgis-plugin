@@ -903,9 +903,10 @@ class SQLiteManager(object):
               u"layer_name TEXT, " + \
               u"id_object_client INTEGER, " + \
               u"cleabs TEXT, " + \
-              u"type_conflict TEXT," + \
-              u"data_server TEXT," + \
-              u"data_client TEXT) "
+              u"type_conflict TEXT, " + \
+              u"data_server TEXT, " + \
+              u"data_client TEXT, " + \
+              u"geometry_conflict TEXT) "
         SQLiteManager.executeSQL(sql)
         # creating a POINT or LINE or POLYGON Geometry column
         sql = "SELECT AddGeometryColumn('" + cst.CONFLICT_LAYER + "',"

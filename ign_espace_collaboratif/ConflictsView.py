@@ -2,11 +2,30 @@ import json
 import os
 from .core import Constantes as cst
 from qgis.PyQt import uic
+from qgis.core import (
+    QgsGeometry,
+    QgsProject,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform
+)
 from PyQt5 import QtCore, QtWidgets
 from qgis.PyQt.QtGui import QIcon, QColor
 from .PluginHelper import PluginHelper
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ConflictsView_base.ui'))
+
+
+def ring_orientation(ring):
+    """
+        Retourne 'horaire' ou 'antihoraire'
+        selon le signe de l'aire algébrique.
+    """
+    area = 0.0
+    for i in range(len(ring) - 1):
+        x1, y1 = ring[i].x(), ring[i].y()
+        x2, y2 = ring[i + 1].x(), ring[i + 1].y()
+        area += (x2 - x1) * (y2 + y1)
+    return "horaire" if area > 0 else "antihoraire"
 
 
 class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
@@ -62,11 +81,6 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
                 font = item.font()
                 font.setBold(True)
                 item.setFont(font)
-            else:
-                item.setForeground(QColor("black"))
-                font = item.font()
-                font.setBold(False)
-                item.setFont(font)
 
     def __setLabelsConflit(self, feature):
         typeConflict = feature['type_conflict']
@@ -82,20 +96,20 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             self.label_context_type_conflict.setText('Le même objet a été modifié par un autre utilisateur et supprimé '
                                                      'par vous même depuis la dernière transaction.')
 
-    def __mergeDataServerAndClient(self, dict1, dict2):
+    def __mergeDataServerAndClient(self, dictServer, dictClient):
         # Si un dict est None ou pas un dict, on le remplace par {}
-        dict1 = dict1 or {}
-        dict2 = dict2 or {}
+        dictServer = dictServer or {}
+        dictClient = dictClient or {}
         # Union des clés
         try:
-            all_keys = sorted(dict1.keys() | dict2.keys())
+            all_keys = sorted(dictServer.keys() | dictClient.keys())
         except TypeError:
             # Si les clés ne sont pas comparables entre elles → pas de tri
-            all_keys = dict1.keys() | dict2.keys()
+            all_keys = dictServer.keys() | dictClient.keys()
         resultat = {}
         for k in all_keys:
-            v1 = dict1.get(k, "")
-            v2 = dict2.get(k, "")
+            v1 = dictServer.get(k, "")
+            v2 = dictClient.get(k, "")
             if v1 == "" or v2 == "":
                 status = "--"
             elif v1 != v2:
@@ -105,12 +119,218 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             resultat[k] = [v1, v2, status]
         return resultat
 
+    def __resumeGeometry(self, obj, mode="compact"):
+        """
+        Description complète en français, avec :
+          - dimension
+          - points
+          - parties
+          - anneaux externes
+          - anneaux internes
+          - orientation (pour polygones)
+          - segments
+          - surface / périmètre / longueur (métrique)
+          - mode détail ou compact
+          - calculs métriques via reprojection automatique EPSG:2154
+
+        Exemple : Multipolygone (pts=120, parties=4, ext=4, int=6, seg=120, dim=3D, surf=45230.55m², peri=1850.44m)
+        """
+        # --------------------------------------------
+        # 1) Extraction de la géométrie
+        # --------------------------------------------
+        print("[INFO] géométrie : {}".format(obj))
+        try:
+            geom = obj.geometry()
+        except AttributeError:
+            geom = obj
+        if geom is None or geom.isEmpty():
+            return "Géométrie vide"
+
+        # --------------------------------------------
+        # 2) Dimension
+        # --------------------------------------------
+        # has_z = geom.is3D()
+        # has_m = geom.isMeasure()
+        #
+        # if has_z and has_m:
+        #     dim_str = "3D+M"
+        # elif has_z:
+        #     dim_str = "3D"
+        # elif has_m:
+        #     dim_str = "2D+M"
+        # else:
+        #     dim_str = "2D"
+
+        # --------------------------------------------
+        # 3) Comptage points / parties / anneaux / segments
+        # --------------------------------------------
+        geom_type = geom.type()  # 0=Point, 1=Ligne, 2=Polygone
+
+        nb_points = 0
+        nb_parties = 0
+        nb_outer = 0
+        nb_holes = 0
+        nb_segments = 0
+        type_name = ""
+
+        orientations = []  # orientation des anneaux ext + int
+
+        # -----------------------
+        # POINTS
+        # -----------------------
+        if geom_type == 0:
+            pt = geom.asPoint()
+            if pt:
+                type_name = "Point"
+                nb_points = 1
+                nb_parties = 1
+                nb_segments = 0
+            else:
+                mp = geom.asMultiPoint()
+                type_name = "Multipoint"
+                nb_points = len(mp)
+                nb_parties = 1
+                nb_segments = 0
+
+        # -----------------------
+        # LIGNES
+        # -----------------------
+        elif geom_type == 1:
+            pl = geom.asPolyline()
+            if pl:
+                type_name = "Ligne"
+                nb_points = len(pl)
+                nb_parties = 1
+                nb_segments = len(pl) - 1
+            else:
+                mpl = geom.asMultiPolyline()
+                type_name = "Multiligne"
+                nb_parties = len(mpl)
+                nb_points = sum(len(line) for line in mpl)
+                nb_segments = sum(len(line) - 1 for line in mpl)
+
+        # -----------------------
+        # POLYGONES
+        # -----------------------
+        elif geom_type == 2:
+            mpoly = geom.asMultiPolygon()
+            if mpoly:
+                type_name = "Multipolygone"
+
+                nb_parties = len(mpoly)
+                nb_outer = nb_parties
+                nb_holes = sum(len(p) - 1 for p in mpoly)
+                nb_points = sum(len(p[0]) for p in mpoly)
+                nb_segments = sum(len(p[0]) for p in mpoly)
+
+                # Orientation
+                for p in mpoly:
+                    orientations.append(("anneau externe", ring_orientation(p[0])))
+                    for h in p[1:]:
+                        orientations.append(("anneau interne", ring_orientation(h)))
+
+            else:
+                poly = geom.asPolygon()
+                if poly:
+                    type_name = "Polygone"
+                    outer = poly[0]
+                    holes = poly[1:]
+
+                    nb_outer = 1
+                    nb_holes = len(holes)
+                    nb_parties = 1
+                    nb_points = len(outer)
+                    nb_segments = len(outer)
+
+                    orientations.append(("anneau externe", ring_orientation(outer)))
+                    for h in holes:
+                        orientations.append(("anneau interne", ring_orientation(h)))
+
+        # --------------------------------------------
+        # 4) Mesures métriques via reprojection EPSG:2154
+        # --------------------------------------------
+        src_crs = QgsProject.instance().crs()
+        if src_crs.isGeographic():
+            geom_m = QgsGeometry(geom)
+            tgt_crs = QgsCoordinateReferenceSystem("EPSG:2154")
+            transform = QgsCoordinateTransform(src_crs, tgt_crs, QgsProject.instance())
+            geom_m.transform(transform)
+        else:
+            geom_m = geom
+        # TODO chercher pourquoi la géométrie de l'objet serveur ne permet pas de calculer la surface et le périmètre
+        surface = None
+        perimetre = None
+        longueur = None
+
+        if geom_type == 2:
+            surface = geom_m.area()
+            perimetre = geom_m.length()
+
+        if geom_type == 1:
+            longueur = geom_m.length()
+
+        # --------------------------------------------
+        # 5) Pluriels
+        # --------------------------------------------
+        txt_points = "point" if nb_points == 1 else "points"
+        txt_parts = "partie" if nb_parties == 1 else "parties"
+        txt_outer = "anneau externe" if nb_outer == 1 else "anneaux externes"
+        txt_holes = "anneau interne" if nb_holes == 1 else "anneaux internes"
+        txt_segments = "segment" if nb_segments == 1 else "segments"
+
+        # --------------------------------------------
+        # 6) Mode compact
+        # --------------------------------------------
+        if mode == "compact":
+            vals = [
+                f"pts={nb_points}",
+                f"parties={nb_parties}",
+                f"ext={nb_outer}",
+                f"int={nb_holes}",
+                f"seg={nb_segments}"
+                # f"dim={dim_str}"
+            ]
+            if surface is not None:
+                vals.append(f"surf={surface:.2f}m²")
+            if perimetre is not None:
+                vals.append(f"peri={perimetre:.2f}m")
+            if longueur is not None:
+                vals.append(f"long={longueur:.2f}m")
+            return f"{type_name} (" + ", ".join(vals) + ")"
+
+        # --------------------------------------------
+        # 7) Mode détaillé
+        # --------------------------------------------
+        parts = [
+            f"{type_name} : {nb_points} {txt_points}",
+            f"{nb_parties} {txt_parts}",
+            f"{nb_outer} {txt_outer}",
+            f"{nb_holes} {txt_holes}",
+            f"{nb_segments} {txt_segments}"
+            # dim_str
+        ]
+
+        if surface is not None:
+            parts.append(f"Surface {surface : .2f} m²")
+        if perimetre is not None:
+            parts.append(f"Périmètre {perimetre : .2f} m")
+        if longueur is not None:
+            parts.append(f"Longueur {longueur : .2f} m")
+
+        # Orientations
+        for name, ori in orientations:
+            parts.append(f"{name} : {ori}")
+
+        return ", ".join(parts)
+
     def __setAttributes(self, feature):
         resultats = self.__mergeDataServerAndClient(json.loads(feature['data_server']),
                                                     json.loads(feature['data_client']))
         print("[INFO] Resultat : {}".format(resultats))
-
+        discardFields = ['date_modification', 'gcms_fingerprint', 'id_sqlite_1gnQg1s']
         for k, v in resultats.items():
+            if k in discardFields:
+                continue
             rowPosition = self.tableWidget_attributes.rowCount()
             self.tableWidget_attributes.insertRow(rowPosition)
 
@@ -119,16 +339,25 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             self.tableWidget_attributes.setItem(rowPosition, 0, item)
 
             # Colonne "Objet issu du serveur"
-            item = QtWidgets.QTableWidgetItem(str(v[0]))
+            if k == 'geometrie':
+                geom = QgsGeometry.fromWkt(v[0])
+                item = QtWidgets.QTableWidgetItem(self.__resumeGeometry(geom))
+            else:
+                item = QtWidgets.QTableWidgetItem(str(v[0]))
             self.tableWidget_attributes.setItem(rowPosition, 1, item)
 
             # Colonne "Votre objet"
-            item = QtWidgets.QTableWidgetItem(str(v[1]))
+            if k == 'geometrie':
+                geom = QgsGeometry.fromWkt(feature['geometry_conflict'])
+                item = QtWidgets.QTableWidgetItem(self.__resumeGeometry(geom))
+            else:
+                item = QtWidgets.QTableWidgetItem(str(v[1]))
             self.tableWidget_attributes.setItem(rowPosition, 2, item)
 
             # Colonne "Commentaire"
             item = QtWidgets.QTableWidgetItem(str(v[2]))
             self.tableWidget_attributes.setItem(rowPosition, 3, item)
+        self.tableWidget_attributes.resizeRowsToContents()
         # Au départ, affichage uniquement des différences
         self.__showDiff()
 
@@ -190,12 +419,14 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
 
     # -- 4) Filtrer les attributs --
     """Affiche toutes les lignes."""
+
     def __showAll(self):
         for row in range(self.tableWidget_attributes.rowCount()):
             self.tableWidget_attributes.setRowHidden(row, False)
         self.__setColorItem()
 
     """N'affiche que les lignes dont la valeur de la colonne testée est '<>'."""
+
     def __showDiff(self):
         for row in range(self.tableWidget_attributes.rowCount()):
             item = self.tableWidget_attributes.item(row, 3)
@@ -205,6 +436,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
                 self.tableWidget_attributes.setRowHidden(row, False)
 
     """Alterner l'affichage entre attributs filtrés et non filtrés."""
+
     def __seeAllFields(self):
         if self.__filterActive:
             self.__showAll()
