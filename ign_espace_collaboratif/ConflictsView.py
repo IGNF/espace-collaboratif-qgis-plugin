@@ -447,7 +447,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         if len(layers) == 0:
             self.__context.createTablesReportsAndSketchs()
             # Création des couches dans QGIS et des liens vers la base SQLite
-            self.__context.__addReportSketchLayersToTheCurrentMap()
+            self.__context.addReportSketchLayersToTheCurrentMap()
 
     def __createReport(self):
         # 1. Rechercher la couche Signalement pour la créer éventuellement

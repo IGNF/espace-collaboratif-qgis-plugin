@@ -518,7 +518,7 @@ class Contexte(object):
                 SQLiteManager.createSketchTable(table, PluginHelper.sketchLayers[table])
         SQLiteManager.vacuumDatabase()
 
-    def __addReportSketchLayersToTheCurrentMap(self) -> None:
+    def addReportSketchLayersToTheCurrentMap(self) -> None:
         """
         Ajoute les couches 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne', 'Croquis_EC_Polygone'
         dans le projet courant ainsi que les liens de connexion vers la base SQLite 'nomProjet_espaceco.sqlite'
