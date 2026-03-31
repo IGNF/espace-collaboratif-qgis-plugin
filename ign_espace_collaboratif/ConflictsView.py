@@ -1,16 +1,19 @@
 import json
 import os
 from .core import Constantes as cst
+from .core.SQLiteManager import SQLiteManager
 from qgis.PyQt import uic
 from qgis.core import (
     QgsGeometry,
     QgsProject,
     QgsCoordinateReferenceSystem,
-    QgsCoordinateTransform
+    QgsCoordinateTransform,
+    QgsVectorLayer
 )
 from PyQt5 import QtCore, QtWidgets
 from qgis.PyQt.QtGui import QIcon, QColor
 from .PluginHelper import PluginHelper
+from .CreateReport import CreateReport
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ConflictsView_base.ui'))
 
@@ -38,12 +41,14 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
     # Filtrer les attributs (True = filtré)
     __filterActive = True
 
-    def __init__(self, context, featuresConflicts, parent=None) -> None:
+    def __init__(self, context, iface, featuresConflicts, parent=None) -> None:
         super(ConflictsView, self).__init__(parent)
         self.setupUi(self)
         self.__context = context
+        self.__iface = iface
         self.__features = featuresConflicts
         self.__nbConflicts = len(featuresConflicts)
+        self.__project = QgsProject.instance()
         self.__initDialog()
 
     def __initDialog(self):
@@ -72,8 +77,9 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         feature = self.__features[self.__currentIndex]
         self.__setLabelsConflit(feature)
         self.__setAttributes(feature)
+        self.__zoomZoom(feature)
 
-    def __colorize_row(self, row, color):
+    def __colorizeRow(self, row, color):
         for col in range(self.tableWidget_attributes.columnCount()):
             item = self.tableWidget_attributes.item(row, col)
             item.setForeground(QColor(color))
@@ -81,14 +87,14 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             font.setBold(True)
             item.setFont(font)
 
-    def __setColorItem(self, color='red'):
+    def __setColorRow(self, color='red'):
         for row in range(self.tableWidget_attributes.rowCount()):
             item = self.tableWidget_attributes.item(row, 3)  # colonne à vérifier
             if not item:
                 continue
             val = item.text()
             if val == '<>':
-                self.__colorize_row(row, color)
+                self.__colorizeRow(row, color)
 
     def __setLabelsConflit(self, feature):
         typeConflict = feature['type_conflict']
@@ -126,6 +132,11 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
                 status = "="
             resultat[k] = [v1, v2, status]
         return resultat
+
+    def __zoomZoom(self, feature):
+        extent = feature.geometry().boundingBox()
+        self.__iface.mapCanvas().setExtent(extent)
+        self.__iface.mapCanvas().refresh()
 
     def __resumeGeometry(self, obj, mode="compact"):
         """
@@ -263,11 +274,11 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         # --------------------------------------------
         # 4) Mesures métriques via reprojection EPSG:2154
         # --------------------------------------------
-        src_crs = QgsProject.instance().crs()
+        src_crs = self.__project.crs()
         if src_crs.isGeographic():
             geom_m = QgsGeometry(geom)
             tgt_crs = QgsCoordinateReferenceSystem("EPSG:2154")
-            transform = QgsCoordinateTransform(src_crs, tgt_crs, QgsProject.instance())
+            transform = QgsCoordinateTransform(src_crs, tgt_crs, self.__project)
             geom_m.transform(transform)
         else:
             geom_m = geom
@@ -420,9 +431,36 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         icon.addFile(":/plugins/RipartPlugin/images/conflict_undo.png")
         self.pushButton_conflict_undo.setIcon(icon)
 
+    def __deleteObjectConflict(self):
+        feature = self.__features[self.__currentIndex]
+        layerName = feature['layer_name']
+        layers = self.__project.mapLayersByName(layerName)
+        if len(layers) == 1:
+            layer = QgsVectorLayer(layers[0].source(), layers[0].name(), layers[0].providerType())
+            layer.startEditing()
+            layer.deleteFeature(feature.id())
+            layer.commitChanges()
+
     # -- 1) Créer un signalement --
+    def __isLayerReportExist(self):
+        layers = self.__project.mapLayersByName(cst.nom_Calque_Signalement)
+        if len(layers) == 0:
+            self.__context.createTablesReportsAndSketchs()
+            # Création des couches dans QGIS et des liens vers la base SQLite
+            self.__context.__addReportSketchLayersToTheCurrentMap()
+
     def __createReport(self):
-        PluginHelper.showMessageBox("createReport")
+        # 1. Rechercher la couche Signalement pour la créer éventuellement
+        self.__isLayerReportExist()
+        # 2. Création du signalement
+        create = CreateReport(self.__context)
+        # TODO mettre un message automatique que l'utilisateur pourra modifier ensuite
+        create.do()
+        # 3. Détruire le conflit en cours
+        # self.__deleteObjectConflict()
+        # 4. Synchroniser l'objet de la couche en cours
+        # TODO Mettre à jour l'objet directement dans la table ?
+        # TODO Puis mettre à jour la table des tables avec le numrec ?
 
     # -- 2) Aller au conflit précédent --
     def __previous(self):
@@ -441,7 +479,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         """Affiche toutes les lignes."""
         for row in range(self.tableWidget_attributes.rowCount()):
             self.tableWidget_attributes.setRowHidden(row, False)
-        self.__setColorItem()
+        self.__setColorRow()
 
     def __showDiff(self):
         """N'affiche que les lignes dont la valeur de la colonne testée est '<>'."""
@@ -451,7 +489,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
                 self.tableWidget_attributes.setRowHidden(row, True)
             else:
                 self.tableWidget_attributes.setRowHidden(row, False)
-        self.__setColorItem('black')
+        self.__setColorRow('black')
 
     def __seeAllFields(self):
         """Alterner l'affichage entre attributs filtrés et non filtrés."""

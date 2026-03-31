@@ -457,7 +457,9 @@ class RipartPlugin:
 
         :return: message de fin de transaction
         """
-        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text)
+        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_XmlTag(self.__context.projectDir,
+                                                                          PluginHelper.xml_Zone_extraction,
+                                                                          PluginHelper.xml_Map).text)
         # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
         # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
         bNormalWfsPost = False
@@ -976,8 +978,8 @@ class RipartPlugin:
             self.__sendMessageBarException('PluginModule.__synchronizeDataFromAllLayers', e)
 
     def __conflictsView(self):
-        # if not self.__doConnexion(False):
-        #     return False
+        if not self.__doConnexion(False):
+            return False
         if self.__conflicts is None:
             self.__conflicts = Conflicts(self.__context, self.iface)
         self.__conflicts.do()

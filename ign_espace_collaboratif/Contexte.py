@@ -518,6 +518,29 @@ class Contexte(object):
                 SQLiteManager.createSketchTable(table, PluginHelper.sketchLayers[table])
         SQLiteManager.vacuumDatabase()
 
+    def __addReportSketchLayersToTheCurrentMap(self) -> None:
+        """
+        Ajoute les couches 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne', 'Croquis_EC_Polygone'
+        dans le projet courant ainsi que les liens de connexion vers la base SQLite 'nomProjet_espaceco.sqlite'
+        """
+        uri = self.getUriDatabaseSqlite()
+        self.logger.debug(uri.uri())
+        maplayers = self.getAllMapLayers()
+        root = QgsProject.instance().layerTreeRoot()
+        for table in PluginHelper.reportSketchLayersName:
+            if not PluginHelper.keyExist(table, maplayers):
+                uri.setDataSource('', table, 'geom')
+                uri.setSrid(str(cst.EPSGCRS4326))
+                vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
+                vlayer.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326))
+                QgsProject.instance().addMapLayer(vlayer, False)
+                root.insertLayer(0, vlayer)
+                self.logger.debug("Layer " + vlayer.name() + " added to map")
+                # ajoute les styles aux couches
+                style = os.path.join(self.projectDir, "espacecoStyles", table + ".qml")
+                vlayer.loadNamedStyle(style)
+        self.mapCan.refresh()
+
     def importWFS(self, layer) -> ():
         """
         Import des couches WFS sélectionnées dans la boite de dialogue "Charger les couches de mon groupe"

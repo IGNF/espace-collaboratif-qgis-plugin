@@ -173,7 +173,8 @@ class WfsGet(object):
                 self.parametersGcmsGet.get('offset', 0),
                 self.parametersGcmsGet.get('maxFeatures', 'N/A')))
             if using_proxy:
-                print("[REQUEST #{}] Using proxy: {}".format(requestCount, list(self.proxies.keys()) if self.proxies else 'None'))
+                print("[REQUEST #{}] Using proxy: {}".format(requestCount,
+                                                             list(self.proxies.keys()) if self.proxies else 'None'))
             
             # Retry logic with exponential backoff for transient errors
             response = None
@@ -197,7 +198,8 @@ class WfsGet(object):
                 
                 # Try without proxy after 2 failed proxy attempts
                 if attempt == 3 and proxy_failures >= 2 and using_proxy:
-                    print("[REQUEST #{}] !!! PROXY FAILING - Attempting direct connection (no proxy) !!!".format(requestCount))
+                    print("[REQUEST #{}] !!! PROXY FAILING - Attempting direct connection "
+                          "(no proxy) !!!".format(requestCount))
                     current_proxies = None
                 
                 response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=current_proxies,
@@ -207,7 +209,8 @@ class WfsGet(object):
                     if attempt > 1:
                         print("[REQUEST #{}] Success after {} attempts".format(requestCount, attempt))
                         if current_proxies is None and using_proxy:
-                            print("[REQUEST #{}] !!! Success with DIRECT connection (proxy bypassed) !!!".format(requestCount))
+                            print("[REQUEST #{}] !!! Success with DIRECT connection "
+                                  "(proxy bypassed) !!!".format(requestCount))
                             # Continue without proxy for remaining requests
                             self.proxies = None
                             using_proxy = False
@@ -224,9 +227,11 @@ class WfsGet(object):
                     
                     if is_proxy_error:
                         proxy_failures += 1
-                        print("[REQUEST #{}] PROXY ERROR detected (total proxy failures: {})".format(requestCount, proxy_failures))                        # Switch to direct connection immediately if threshold reached
+                        print("[REQUEST #{}] PROXY ERROR detected (total proxy failures: {})".format(requestCount,
+                                                                                                     proxy_failures))
                         if proxy_failures >= PROXY_FAILURE_THRESHOLD and using_proxy and current_proxies is not None:
-                            print("[REQUEST #{}] !!! PROXY FAILURE THRESHOLD REACHED - Switching to DIRECT connection NOW !!!".format(requestCount))
+                            print("[REQUEST #{}] !!! PROXY FAILURE THRESHOLD REACHED - Switching to DIRECT "
+                                  "connection NOW !!!".format(requestCount))
                             current_proxies = None
                             # Don't count this as a retry attempt - try again immediately with direct connection
                             continue                    
@@ -237,7 +242,8 @@ class WfsGet(object):
                     print("  - Details: {}".format(errorDetails))
                     
                     if attempt == MAX_RETRIES:
-                        message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], errorReason[:200])
+                        message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'],
+                                                                                         errorReason[:200])
                         print("\n" + "!"*80)
                         print("[ERROR] Request PERMANENTLY FAILED after {} attempts".format(MAX_RETRIES))
                         print("[ERROR] Full error: {}".format(message[:300]))
@@ -263,7 +269,7 @@ class WfsGet(object):
                 break
             
             # si c'est une table standard (non BDUni) ou une extraction,
-            # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
+            # on insère tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
             if self.isStandard in (True, 1) or bExtraction is True:
                 # Appliquer le filtrage géométrique fin pour les extractions
                 features_to_insert = response['features']
@@ -274,7 +280,8 @@ class WfsGet(object):
                     print("[REQUEST #{}] Features after filter: {} (filtered out: {})".format(
                         requestCount, featuresAfterFilter, featuresReceived - featuresAfterFilter))
                 
-                print("[REQUEST #{}] Inserting {} features into SQLite...".format(requestCount, len(features_to_insert)))
+                print("[REQUEST #{}] Inserting {} features into SQLite...".format(requestCount,
+                                                                                  len(features_to_insert)))
                 insertedRows = sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, features_to_insert)
                 totalRows += insertedRows
                 print("[REQUEST #{}] Inserted {} rows. Total: {}".format(requestCount, insertedRows, totalRows))
@@ -288,20 +295,22 @@ class WfsGet(object):
             # ou un update après un post (enregistrement des couches actives)
             else:
                 print("[REQUEST #{}] Processing BDUni synchronization...".format(requestCount))
-                
-                # Chargement des cleabs en mémoire 
+                # Chargement des cleabs en mémoire
+                existingCleabs = set()
                 if requestCount == 1:
                     print("[REQUEST #{}] Loading existing cleabs into memory for fast lookup...".format(requestCount))
                     existingCleabs = set()
                     try:
-                        sql = "SELECT cleabs FROM {} WHERE cleabs IS NOT NULL".format(SQLiteManager.echap(self.layerName))
+                        sql = "SELECT cleabs FROM {} WHERE cleabs IS NOT NULL".format(SQLiteManager.echap(
+                            self.layerName))
                         connection = SQLiteManager.sqlite3Connect()
                         cursor = connection.cursor()
                         cursor.execute(sql)
                         existingCleabs = {row[0] for row in cursor.fetchall()}
                         cursor.close()
                         connection.close()
-                        print("[REQUEST #{}] Loaded {} existing cleabs for fast lookup".format(requestCount, len(existingCleabs)))
+                        print("[REQUEST #{}] Loaded {} existing cleabs for fast lookup".format(requestCount,
+                                                                                               len(existingCleabs)))
                     except Exception as e:
                         print("[REQUEST #{}] Warning: Could not preload cleabs: {}".format(requestCount, e))
                         existingCleabs = set()
@@ -314,8 +323,6 @@ class WfsGet(object):
                 # Traiter les features reçues en batch pour minimiser les opérations SQL
                 for feature in response['features']:
                     featureCleabs = feature.get('cleabs')
-                    
-                    
                     if featureCleabs in existingCleabs:
                         # modification d'un objet - marquer pour suppression puis réinsertion
                         cleabsToDelete.append(featureCleabs)
@@ -329,7 +336,8 @@ class WfsGet(object):
                 
                 # Suppression en batch des cleabs à mettre à jour
                 if cleabsToDelete:
-                    print("[REQUEST #{}] Deleting {} existing features for update...".format(requestCount, len(cleabsToDelete)))
+                    print("[REQUEST #{}] Deleting {} existing features for update...".format(requestCount,
+                                                                                             len(cleabsToDelete)))
                     SQLiteManager.deleteRowsInTableBDUni(self.layerName, cleabsToDelete)
                 
                 # Insertion en batch de toutes les features
@@ -338,9 +346,8 @@ class WfsGet(object):
                     insertedRows = sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, featuresToInsert)
                     totalRows += insertedRows
                 
-                print("[REQUEST #{}] Processed {} BDUni features. Total: {}".format(requestCount, processedInBatch, totalRows))
-                
-               
+                print("[REQUEST #{}] Processed {} BDUni features. Total: {}".format(requestCount, processedInBatch,
+                                                                                    totalRows))
                 response['features'] = None
                 
             self.__setOffset(response['offset'])
@@ -428,7 +435,8 @@ class WfsGet(object):
         if response.status_code == 200 or response.status_code == 201:
             numrec = response.json()
         else:
-            message = "code : {} raison : {} response_text: {}".format(response.status_code, response.reason, response.text)
+            message = "code : {} raison : {} response_text: {}".format(response.status_code, response.reason,
+                                                                       response.text)
             print("[ERROR] getMaxNumrec failed: {}".format(message))
             self.__logger.error("getMaxNumrec failed: {}".format(message))
             raise Exception("WfsGet.getMaxNumrec -> {}".format(message))
@@ -491,7 +499,7 @@ class WfsGet(object):
         :type numrec: int
         """
         filters = {}
-        print( "[DEBUG] Setting filter for GET request: filterDelete={}, numrec={}".format(_filter, numrec))
+        print("[DEBUG] Setting filter for GET request: filterDelete={}, numrec={}".format(_filter, numrec))
         # 1) Filtre 'detruit' si applicable
         # bDetruit indique si la couche est standard ou BDUni
         if self.bDetruit:
@@ -535,4 +543,3 @@ class WfsGet(object):
         :type maxFeatures: int
         """
         self.parametersGcmsGet['maxFeatures'] = maxFeatures
-

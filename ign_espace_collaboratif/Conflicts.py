@@ -26,6 +26,7 @@ class Conflicts(object):
         """
         self.__context = context
         self.__iface = iface
+        self.__project = QgsProject.instance()
 
     def __applySymbology(self):
         properties = {
@@ -64,21 +65,23 @@ class Conflicts(object):
         return QgsVectorLayer(uri.uri(), cst.CONFLICT_LAYER, "spatialite")
 
     def __addLayerConflicts(self) -> None:
+        listLayers = self.__project.mapLayersByName(cst.CONFLICT_LAYER)
+        if len(listLayers) == 1:
+            return
         self.conflictslayer = self.__toQgsVectorLayer()
         if self.conflictslayer and self.conflictslayer.isValid():
-            QgsProject.instance().addMapLayer(self.conflictslayer)
+            self.__project.addMapLayer(self.conflictslayer)
             self.__applySrid()
             self.__applySymbology()
             self.__applyJsonWidget()
-            print("[INFO] Couche Conflits ajoutée au projet")
+            print("[INFO] Couche 'conflits' ajoutée au projet")
 
     def __deleteLayerConflicts(self):
         """
         Cherche la couche conflits dans le projet QGIS et la supprime.
         """
-        project = QgsProject.instance()
-        listLayers = project.mapLayersByName(cst.CONFLICT_LAYER)
-        if not listLayers:
+        listLayers = self.__project.mapLayersByName(cst.CONFLICT_LAYER)
+        if len(listLayers) == 0:
             print("[INFO] La couche {} est déjà supprimée.".format(cst.CONFLICT_LAYER))
             return False
         # Supprimer toutes les couches "conflits" trouvées
@@ -86,26 +89,29 @@ class Conflicts(object):
         for lLayer in listLayers:
             layerIds.append(lLayer.id())
         if len(layerIds) >= 1:
-            project.removeMapLayers(layerIds)
-            project.write()
+            self.__project.removeMapLayers(layerIds)
+            self.__project.write()
         print("[INFO] Couche {} supprimée".format(cst.CONFLICT_LAYER))
         return True
 
     def createTable(self):
         # Création de la table si elle n'existe pas
         if SQLiteManager.isTableExist(cst.CONFLICT_LAYER):
-            SQLiteManager.deleteTable(cst.CONFLICT_LAYER)
-            print("[INFO] Table {} détruite".format(cst.CONFLICT_LAYER))
+            return
+            # SQLiteManager.deleteTable(cst.CONFLICT_LAYER)
+            # print("[INFO] Table {} détruite".format(cst.CONFLICT_LAYER))
         SQLiteManager.createTableConflicts()
         print("[INFO] Table {} créée".format(cst.CONFLICT_LAYER))
 
     def createLayer(self):
-        self.__deleteLayerConflicts()
+        # self.__deleteLayerConflicts()
         self.__addLayerConflicts()
 
     def do(self):
         conflicts = Conflicts.selectAllConflicts()
-        cf = ConflictsView(self.__context, conflicts)
+        if len(conflicts) == 0:
+            return
+        cf = ConflictsView(self.__context, self.__iface, conflicts)
         cf.exec_()
 
     @staticmethod

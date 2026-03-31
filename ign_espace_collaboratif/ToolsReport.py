@@ -41,29 +41,6 @@ class ToolsReport(object):
         # Initialisation d'un système de transformation de coordonnées (QgsCoordinateTransform)
         self.__crsTransform = self.__setCoordinateTransform()
 
-    def __addReportSketchLayersToTheCurrentMap(self) -> None:
-        """
-        Ajoute les couches 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne', 'Croquis_EC_Polygone'
-        dans le projet courant ainsi que les liens de connexion vers la base SQLite 'nomProjet_espaceco.sqlite'
-        """
-        uri = self.__context.getUriDatabaseSqlite()
-        self.__logger.debug(uri.uri())
-        maplayers = self.__context.getAllMapLayers()
-        root = QgsProject.instance().layerTreeRoot()
-        for table in PluginHelper.reportSketchLayersName:
-            if not PluginHelper.keyExist(table, maplayers):
-                uri.setDataSource('', table, 'geom')
-                uri.setSrid(str(cst.EPSGCRS4326))
-                vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326))
-                QgsProject.instance().addMapLayer(vlayer, False)
-                root.insertLayer(0, vlayer)
-                self.__logger.debug("Layer " + vlayer.name() + " added to map")
-                # ajoute les styles aux couches
-                style = os.path.join(self.__context.projectDir, "espacecoStyles", table + ".qml")
-                vlayer.loadNamedStyle(style)
-        self.__context.mapCan.refresh()
-
     def getReport(self, idReport) -> Report:
         """
         Lance une requête ver le serveur de l'espace collaboratif pour récupérer les caractéristiques du signalement
@@ -148,7 +125,7 @@ class ToolsReport(object):
         self.__context.createTablesReportsAndSketchs()
 
         # Création des couches dans QGIS et des liens vers la base SQLite
-        self.__addReportSketchLayersToTheCurrentMap()
+        self.__context.__addReportSketchLayersToTheCurrentMap()
 
         # Téléchargement des signalements
         self.__progress.setValue(1)
