@@ -8,7 +8,7 @@ from qgis.core import QgsFeatureRequest
 from . import resources
 
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt5.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
+from PyQt5.QtWidgets import QAction, QMenu, QMessageBox, QToolButton
 from PyQt5.QtGui import QIcon
 from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer
 from builtins import str
@@ -976,8 +976,8 @@ class RipartPlugin:
             self.__sendMessageBarException('PluginModule.__synchronizeDataFromAllLayers', e)
 
     def __conflictsView(self):
-        if not self.__doConnexion(False):
-            return False
+        # if not self.__doConnexion(False):
+        #     return False
         if self.__conflicts is None:
             self.__conflicts = Conflicts(self.__context, self.iface)
         self.__conflicts.do()

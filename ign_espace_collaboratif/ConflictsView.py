@@ -33,6 +33,10 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
     Dialogue de gestion des conflits d'une carte
     """
     __datas = {}
+    # Le conflit courant
+    __currentIndex = 0
+    # Filtrer les attributs (True = filtré)
+    __filterActive = True
 
     def __init__(self, context, featuresConflicts, parent=None) -> None:
         super(ConflictsView, self).__init__(parent)
@@ -41,8 +45,6 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         self.__features = featuresConflicts
         self.__nbConflicts = len(featuresConflicts)
         self.__initDialog()
-        # Filtrer les attributs (True = filtré)
-        self.__filterActive = True
 
     def __initDialog(self):
         self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
@@ -66,21 +68,27 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         self.tableWidget_attributes.setRowCount(0)
 
     def __setTableWidget(self):
-        for feature in self.__features:
-            self.__setLabelsConflit(feature)
-            self.__setAttributes(feature)
+        self.__resetTableWidget()
+        feature = self.__features[self.__currentIndex]
+        self.__setLabelsConflit(feature)
+        self.__setAttributes(feature)
 
-    def __setColorItem(self):
+    def __colorize_row(self, row, color):
+        for col in range(self.tableWidget_attributes.columnCount()):
+            item = self.tableWidget_attributes.item(row, col)
+            item.setForeground(QColor(color))
+            font = item.font()
+            font.setBold(True)
+            item.setFont(font)
+
+    def __setColorItem(self, color='red'):
         for row in range(self.tableWidget_attributes.rowCount()):
             item = self.tableWidget_attributes.item(row, 3)  # colonne à vérifier
             if not item:
                 continue
             val = item.text()
             if val == '<>':
-                item.setForeground(QColor("red"))
-                font = item.font()
-                font.setBold(True)
-                item.setFont(font)
+                self.__colorize_row(row, color)
 
     def __setLabelsConflit(self, feature):
         typeConflict = feature['type_conflict']
@@ -411,33 +419,35 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
 
     # -- 2) Aller au conflit précédent --
     def __previous(self):
-        PluginHelper.showMessageBox("previous")
+        if self.__currentIndex > 0:
+            self.__currentIndex -= 1
+            self.__setTableWidget()
 
     # -- 3) Aller au conflit suivant --
     def __next(self):
-        PluginHelper.showMessageBox("next")
+        if self.__currentIndex < len(self.__features) - 1:
+            self.__currentIndex += 1
+            self.__setTableWidget()
 
     # -- 4) Filtrer les attributs --
-    """Affiche toutes les lignes."""
-
     def __showAll(self):
+        """Affiche toutes les lignes."""
         for row in range(self.tableWidget_attributes.rowCount()):
             self.tableWidget_attributes.setRowHidden(row, False)
         self.__setColorItem()
 
-    """N'affiche que les lignes dont la valeur de la colonne testée est '<>'."""
-
     def __showDiff(self):
+        """N'affiche que les lignes dont la valeur de la colonne testée est '<>'."""
         for row in range(self.tableWidget_attributes.rowCount()):
             item = self.tableWidget_attributes.item(row, 3)
             if item is None or item.text() != "<>":
                 self.tableWidget_attributes.setRowHidden(row, True)
             else:
                 self.tableWidget_attributes.setRowHidden(row, False)
-
-    """Alterner l'affichage entre attributs filtrés et non filtrés."""
+        self.__setColorItem('black')
 
     def __seeAllFields(self):
+        """Alterner l'affichage entre attributs filtrés et non filtrés."""
         if self.__filterActive:
             self.__showAll()
         else:
