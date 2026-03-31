@@ -1,3 +1,4 @@
+from qgis.utils import iface
 from qgis.core import (
     QgsProject,
     QgsVectorLayer,
@@ -103,12 +104,13 @@ class Conflicts(object):
         self.__addLayerConflicts()
 
     def do(self):
-        conflicts = self.__selectAllConflicts()
+        conflicts = Conflicts.selectAllConflicts()
         cf = ConflictsView(self.__context, conflicts)
         cf.exec_()
 
-    def __selectAllConflicts(self):
-        activeLayer = self.__iface.activeLayer()
+    @staticmethod
+    def selectAllConflicts():
+        activeLayer = iface.activeLayer()
         if activeLayer is None:
             return []
 

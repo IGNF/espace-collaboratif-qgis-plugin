@@ -147,10 +147,16 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         # 1) Extraction de la géométrie
         # --------------------------------------------
         print("[INFO] géométrie : {}".format(obj))
-        try:
-            geom = obj.geometry()
-        except AttributeError:
+        # 1) Extraire la géométrie proprement
+        if isinstance(obj, QgsGeometry):
             geom = obj
+        else:
+            # si obj est un QgsFeature
+            try:
+                geom = obj.geometry()
+            except Exception:
+                return "Géométrie invalide"
+
         if geom is None or geom.isEmpty():
             return "Géométrie vide"
 
@@ -368,6 +374,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         self.tableWidget_attributes.resizeRowsToContents()
         # Au départ, affichage uniquement des différences
         self.__showDiff()
+        self.__filterActive = True
 
     def __setConnectButtons(self):
         self.pushButton_conflict_create_report.clicked.connect(self.__createReport)
@@ -455,8 +462,10 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         # alterne l’état
         self.__filterActive = not self.__filterActive
 
+    # -- 5) Recharger les conflits --
     def __reload(self):
-        PluginHelper.showMessageBox("reload")
+        from .Conflicts import Conflicts
+        self.__features = Conflicts.selectAllConflicts()
 
     def __create(self):
         PluginHelper.showMessageBox("create")
