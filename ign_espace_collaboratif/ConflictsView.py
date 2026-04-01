@@ -222,8 +222,6 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         self.__setImagesOnButtons()
 
     def __initTableWidget(self):
-        entete = ["Nom des champs", "Objet issu du serveur", "Votre objet", "Commentaire"]
-        self.tableWidget_attributes.setHorizontalHeaderLabels(entete)
         self.tableWidget_attributes.setColumnWidth(0, 180)
         self.tableWidget_attributes.setColumnWidth(1, 290)
         self.tableWidget_attributes.setColumnWidth(2, 290)
@@ -282,6 +280,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         self.__resetTableWidget()
         feature = self.__features[self.__currentIndex]
         self.__setLabelsConflit(feature)
+        self.__setEntete()
         self.__setAttributes(feature)
         self.__zoomZoom(feature)
 
@@ -302,6 +301,10 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             if val == '<>':
                 self.__colorizeRow(row, color)
 
+    def __setEntete(self):
+        entete = ["Nom des champs", "Objet issu du serveur", "Votre objet", "Commentaire"]
+        self.tableWidget_attributes.setHorizontalHeaderLabels(entete)
+
     def __setLabelsConflit(self, feature):
         typeConflict = feature['type_conflict']
         self.label_type_conflict.setText(typeConflict)
@@ -316,7 +319,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             self.label_context_type_conflict.setText('Le même objet a été modifié par un autre utilisateur et supprimé '
                                                      'par vous même depuis la dernière transaction.')
 
-    def __mergeDataServerAndClient(self, dictServer, dictClient):
+    def __mergeDatasServerAndClient(self, dictServer, dictClient):
         # Si un dict est None ou pas un dict, on le remplace par {}
         dictServer = dictServer or {}
         dictClient = dictClient or {}
@@ -339,6 +342,17 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             resultat[k] = [v1, v2, status]
         return resultat
 
+    def __mergeDatas(self, feature):
+        dictServer = json.loads(feature['data_server'])
+        dictClient = json.loads(feature['data_client'])
+        typeConflict = feature['type_conflict']
+        if typeConflict == cst.CONFLICT_MODIFICATION:
+            return self.__mergeDatasServerAndClient(dictServer, dictClient)
+        if typeConflict == cst.CONFLICT_SUPPRESSION_SERVEUR:
+            return self.__mergeDatasServerAndClient({}, dictClient)
+        if typeConflict == cst.CONFLICT_SUPPRESSION_CLIENT:
+            return self.__mergeDatasServerAndClient(dictServer, {})
+
     def __zoomZoom(self, feature):
         extent = feature.geometry().boundingBox()
         self.__iface.mapCanvas().setExtent(extent)
@@ -351,8 +365,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
             layer.triggerRepaint()
 
     def __setAttributes(self, feature):
-        resultats = self.__mergeDataServerAndClient(json.loads(feature['data_server']),
-                                                    json.loads(feature['data_client']))
+        resultats = self.__mergeDatas(feature)
         print("[INFO] Resultat : {}".format(resultats))
         discardFields = ['date_modification', 'gcms_fingerprint', 'id_sqlite_1gnQg1s']
         for k, v in resultats.items():

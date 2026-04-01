@@ -232,9 +232,14 @@ class HttpRequest(object):
             HttpRequest.logger.debug("Response URL: {}".format(response.url))
             HttpRequest.logger.debug("Response headers: {}".format(response.headers))
             HttpRequest.logger.debug("Response text (first 500 chars): {}".format(response.text[:500]))
-            
+
             if response.status_code != 200 and response.status_code != 201 and response.status_code != 206:
                 message = "{}:makeHttpRequest [{}]".format(launchBy, response.text)
+                if response.status_code == 404 and response.reason == 'Not Found':
+                    message += "\nAttention, le guichet sur lequel vous travaillez est mal configuré. Il s'agit " \
+                               "peut-être d'un objet que vous tentez de mettre à jour qui a été supprimé " \
+                               "par un autre utilisateur, un conflit de suppression aurait du être signalé. " \
+                               "Veuillez contactez le gestionnaire du guichet."
                 print("ERROR: {}".format(message))
                 print("Request failed with status {}, URL: {}".format(response.status_code, url))
                 print("=== makeHttpRequest DEBUG END (ERROR) ===\n")
