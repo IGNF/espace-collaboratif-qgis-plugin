@@ -15,6 +15,7 @@ from .core.SQLiteManager import SQLiteManager
 
 
 class Conflicts(object):
+    __dlgConflicts = None
 
     def __init__(self, context, iface) -> None:
         """
@@ -111,8 +112,9 @@ class Conflicts(object):
         conflicts = Conflicts.selectAllConflicts()
         if len(conflicts) == 0:
             return
-        cf = ConflictsView(self.__context, self.__iface, conflicts)
-        cf.exec_()
+        self.__dlgConflicts = ConflictsView(self.__context, self.__iface, conflicts)
+        # Ouverture en non-modale
+        self.__dlgConflicts.show()
 
     @staticmethod
     def selectAllConflicts():

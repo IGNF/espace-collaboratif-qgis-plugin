@@ -82,6 +82,7 @@ class BufferFeatures:
 
     def __retrieveLayer(self):
         layers = QgsProject.instance().mapLayersByName(cst.CONFLICT_LAYER)
+        # QgsMapLayer to QgsVectorLayer
         return QgsVectorLayer(layers[0].source(), layers[0].name(), layers[0].providerType())
 
     def setFeatureByAttribute(self, params) -> None:
