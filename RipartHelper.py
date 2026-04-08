@@ -24,8 +24,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .core import ConstanteRipart as cst
 from .core.SQLiteManager import SQLiteManager
 from qgis.utils import spatialite_connect
-
-
+from .qt_compat import MSGBOX_WARNING
 class RipartHelper:
     """
     Classe contenant des utilitaires pour le plugin
@@ -755,9 +754,9 @@ class RipartHelper:
         """
         msgBox = QMessageBox()
         msgBox.setWindowTitle("IGN Espace Collaboratif")
-        msgBox.setIcon(QMessageBox.Warning)
+        msgBox.setIcon(MSGBOX_WARNING)
         msgBox.setText(message)
-        msgBox.exec_()
+        msgBox.exec()
 
     @staticmethod
     def copy(src, dest):

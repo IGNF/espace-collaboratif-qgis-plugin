@@ -9,8 +9,10 @@
 [general]
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.0
+qgisMaximumVersion = 4.99
+supportsQt6 = True
 description=IGN reporting and contribution service, plugin QGIS3
-version=4.3.5
+version = 4.3.6
 author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
@@ -24,11 +26,11 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin.git
 # Recommended items:
 
 # Optional items:
-date=11/03/2026
+date=08/04/2026
 
 # Uncomment the following line and add your changelog:
-changelog=
-	4.3.5 - Correction de problèmes d'incompatibilité avec certaines versions de QGIS 
+changelog = 4.3.6 : Mise en conformité conjointe Qgis3/Qgis4 
+    4.3.5 - Correction de problèmes d'incompatibilité avec certaines versions de QGIS
     4.3.4 - Amélioration du temps de synchronisation
     4.3.3 - Correction json vide
     4.3.2 - Corrections diverses

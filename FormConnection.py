@@ -10,11 +10,11 @@ version 4.0.1, 15/12/2020
 
 import os
 
-from PyQt5.QtWidgets import QDialogButtonBox
-from qgis.PyQt import uic, QtCore
+from qgis.PyQt.QtWidgets import QDialogButtonBox
+from qgis.PyQt import QtCore, QtGui, QtWidgets, uic
 from .core.RipartLoggerCl import RipartLogger
-from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtGui import QImage
+from qgis.PyQt import QtGui, QtWidgets
+from qgis.PyQt.QtGui import QImage
 
 import requests
 
@@ -24,7 +24,7 @@ from .RipartHelper import RipartHelper
 from .FormChoixGroupe import FormChoixGroupe
 from .FormInfo import FormInfo
 from .core import ConstanteRipart as cst
-
+from .qt_compat import BUTTONBOX_CANCEL, BUTTONBOX_OK, WINDOW_STAYS_ON_TOP_HINT
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConnection_base.ui'))
 
 
@@ -55,11 +55,11 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setContext(context)
         self.connectionResult = 0
 
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Connecter")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.connectToService)
+        self.buttonBox.button(BUTTONBOX_OK).setText("Connecter")
+        self.buttonBox.button(BUTTONBOX_OK).clicked.connect(self.connectToService)
 
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.Cancel)
+        self.buttonBox.button(BUTTONBOX_CANCEL).setText("Annuler")
+        self.buttonBox.button(BUTTONBOX_CANCEL).clicked.connect(self.Cancel)
 
         font = QtGui.QFont()
         font.setPointSize(8)
@@ -67,7 +67,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lblLogin.setFont(font)
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(WINDOW_STAYS_ON_TOP_HINT)
 
     def setLogin(self, login):
         self.lineEditLogin.setText(login)  
@@ -125,7 +125,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 # afin qu'il puisse remplir sa clé Géoportail
                 else:
                     dlgChoixGroupe = FormChoixGroupe(self.context, profil, self.context.groupeactif)
-                    dlgChoixGroupe.exec_()
+                    dlgChoixGroupe.exec()
 
                     # bouton Valider
                     if not dlgChoixGroupe.bCancel:
@@ -197,7 +197,7 @@ class FormConnectionDialog(QtWidgets.QDialog, FORM_CLASS):
                 else:
                     dlgInfo.textInfo.append("Zone : {}".format(self.context.profil.zone.__str__()))
 
-                dlgInfo.exec_()
+                dlgInfo.exec()
 
                 self.connectionResult = 1
 

@@ -6,8 +6,6 @@ Created on 3 janv. 2022
 from .SeeReportView import SeeReportView
 from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
-
-
 class SeeReport(object):
     """
     Classe pour visualiser un signalement

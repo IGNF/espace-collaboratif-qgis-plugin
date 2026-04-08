@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from .qt_compat import SIZEPOLICY_FIXED
 # Form implementation generated from reading ui file 'ReplyReportView_base.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.2
@@ -7,7 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qgis.PyQt import QtCore, QtGui, QtWidgets
 
 
 class Ui_ReplyReportView(object):
@@ -44,7 +44,7 @@ class Ui_ReplyReportView(object):
         self.lbl_numberReportLabel.setObjectName("lbl_numberReportLabel")
         self.pte_NewResponse = QtWidgets.QPlainTextEdit(ReplyReportView)
         self.pte_NewResponse.setGeometry(QtCore.QRect(10, 90, 381, 151))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy = QtWidgets.QSizePolicy(SIZEPOLICY_FIXED, SIZEPOLICY_FIXED)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.pte_NewResponse.sizePolicy().hasHeightForWidth())

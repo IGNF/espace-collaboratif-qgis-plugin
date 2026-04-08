@@ -6,7 +6,6 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse, NGremeaux
 """
-
 # Imports
 import urllib
 from urllib.parse import urlparse

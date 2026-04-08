@@ -10,16 +10,19 @@ version 3.0.0 , 26/11/2018
 import sqlite3
 import re
 from .core.RipartLoggerCl import RipartLogger
-from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, \
-    QgsEditorWidgetSetup
+from qgis.core import (
+    QgsGeometry,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsProject,
+    QgsEditorWidgetSetup,
+)
 from .RipartHelper import RipartHelper
 from .core.BBox import BBox
 from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .Contexte import Contexte
 from .core.ProgressBar import ProgressBar
-
-
 class ImporterRipart(object):
     """Importation des remarques dans le projet QGIS
     """
@@ -230,8 +233,6 @@ class ImporterRipart(object):
             psgCode = int(tmp)
         else:
             psgCode = crs_map.get(tmp)
-        if psgCode is None:
-            psgCode = cst.EPSGCRS
         dest_crs = QgsCoordinateReferenceSystem.fromEpsgId(psgCode)
         transform = QgsCoordinateTransform(source_crs, dest_crs, QgsProject.instance())
         new_box = transform.transformBoundingBox(box)

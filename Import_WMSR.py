@@ -4,7 +4,6 @@ Created on 27 feb. 2025
 
 @author: EPeyrouse
 """
-
 # Imports
 import urllib
 from urllib.parse import urlparse

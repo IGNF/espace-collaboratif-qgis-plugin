@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from .qt_compat import BUTTONBOX_CANCEL, BUTTONBOX_SAVE, ORIENTATION_HORIZONTAL, PEN_NO_PEN, SIZEPOLICY_EXPANDING
 # Form implementation generated from reading ui file 'FormChargerGuichet_base.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.2
@@ -7,7 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qgis.PyQt import QtCore, QtGui, QtWidgets
 
 
 class Ui_DialogChargerGuichet(object):
@@ -17,8 +17,8 @@ class Ui_DialogChargerGuichet(object):
         DialogChargerGuichet.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
         self.buttonBox = QtWidgets.QDialogButtonBox(DialogChargerGuichet)
         self.buttonBox.setGeometry(QtCore.QRect(540, 670, 201, 32))
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Save)
+        self.buttonBox.setOrientation(ORIENTATION_HORIZONTAL)
+        self.buttonBox.setStandardButtons(BUTTONBOX_CANCEL|BUTTONBOX_SAVE)
         self.buttonBox.setObjectName("buttonBox")
         self.labelMonGuichet = QtWidgets.QLabel(DialogChargerGuichet)
         self.labelMonGuichet.setGeometry(QtCore.QRect(10, 40, 101, 21))
@@ -39,7 +39,7 @@ class Ui_DialogChargerGuichet(object):
         self.tableWidgetMonGuichet = QtWidgets.QTableWidget(DialogChargerGuichet)
         self.tableWidgetMonGuichet.setEnabled(True)
         self.tableWidgetMonGuichet.setGeometry(QtCore.QRect(10, 70, 731, 261))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(SIZEPOLICY_EXPANDING, SIZEPOLICY_EXPANDING)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tableWidgetMonGuichet.sizePolicy().hasHeightForWidth())
@@ -49,7 +49,7 @@ class Ui_DialogChargerGuichet(object):
         self.tableWidgetMonGuichet.setAutoScroll(True)
         self.tableWidgetMonGuichet.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerItem)
         self.tableWidgetMonGuichet.setShowGrid(False)
-        self.tableWidgetMonGuichet.setGridStyle(QtCore.Qt.NoPen)
+        self.tableWidgetMonGuichet.setGridStyle(PEN_NO_PEN)
         self.tableWidgetMonGuichet.setRowCount(0)
         self.tableWidgetMonGuichet.setColumnCount(3)
         self.tableWidgetMonGuichet.setObjectName("tableWidgetMonGuichet")
@@ -71,7 +71,7 @@ class Ui_DialogChargerGuichet(object):
         self.tableWidgetFondsGeoportail.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
         self.tableWidgetFondsGeoportail.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerItem)
         self.tableWidgetFondsGeoportail.setShowGrid(False)
-        self.tableWidgetFondsGeoportail.setGridStyle(QtCore.Qt.NoPen)
+        self.tableWidgetFondsGeoportail.setGridStyle(PEN_NO_PEN)
         self.tableWidgetFondsGeoportail.setColumnCount(3)
         self.tableWidgetFondsGeoportail.setObjectName("tableWidgetFondsGeoportail")
         self.tableWidgetFondsGeoportail.setRowCount(0)

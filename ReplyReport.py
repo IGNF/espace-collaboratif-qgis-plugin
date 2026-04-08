@@ -8,8 +8,6 @@ from .RipartHelper import RipartHelper
 from .core import ConstanteRipart as cst
 from .ReplyReportView import ReplyReportView
 from .core.ClientHelper import ClientHelper
-
-
 class ReplyReport(object):
     """
     Classe pour répondre à un signalement
@@ -68,7 +66,7 @@ class ReplyReport(object):
 
                 self.logger.debug("view reply report")
                 dlgReplyReport = ReplyReportView(replyReports)
-                dlgReplyReport.exec_()
+                dlgReplyReport.exec()
                 if dlgReplyReport.bResponse:
                     for report in replyReports:
                         report.statut = cst.CorrespondenceStatusWording[dlgReplyReport.newStatus]

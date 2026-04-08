@@ -10,13 +10,13 @@ version 4.0.1, 15/12/2020
 
 import os
 
-from PyQt5 import QtGui, QtWidgets, uic
+from qgis.PyQt import QtCore, QtGui, QtWidgets, uic
 from qgis.PyQt import QtCore
 
 from .core.RipartLoggerCl import RipartLogger
 
-from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
-from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
+from qgis.PyQt.QtCore import Qt, QDate, QDateTime, QTime
+from qgis.PyQt.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from .core.ClientHelper import ClientHelper
@@ -24,7 +24,7 @@ from .core import ConstanteRipart as cst
 from .core.Theme import Theme
 from .RipartHelper import RipartHelper
 from .core.ThemeAttribut import ThemeAttribut
-
+from .qt_compat import BUTTONBOX_OK, WINDOW_STAYS_ON_TOP_HINT
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
 
 
@@ -71,12 +71,12 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(WINDOW_STAYS_ON_TOP_HINT)
         self.context = context
         self.context.groupeactif = RipartHelper.load_groupeactif(self.context.projectDir).text
 
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.onSend)
+        self.buttonBox.button(BUTTONBOX_OK).setText("Envoyer")
+        self.buttonBox.button(BUTTONBOX_OK).clicked.connect(self.onSend)
 
         self.checkBoxAttDoc.stateChanged.connect(self.openFileDialog)
 

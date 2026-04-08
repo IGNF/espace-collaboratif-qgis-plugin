@@ -6,7 +6,6 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
-
 # standard_library.install_aliases()
 from .RipartHelper import RipartHelper
 

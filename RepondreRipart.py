@@ -11,8 +11,6 @@ from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
 from .core import ConstanteRipart as cst
 from .ReplyReportView import ReplyReportView
-
-
 class RepondreRipart(object):
     """"Classe pour les réponses Ripart
     """
@@ -82,7 +80,7 @@ class RepondreRipart(object):
             else:
                 self.logger.debug("view reply report")
                 replyReport = ReplyReportView(selFeats)
-                replyReport.exec_()
+                replyReport.exec()
 
         except Exception as e:
             self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))

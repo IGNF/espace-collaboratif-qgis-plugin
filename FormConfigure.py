@@ -12,16 +12,16 @@ import os.path
 from datetime import datetime, timedelta
 import calendar
 
-from PyQt5 import uic, QtWidgets
-from PyQt5.QtCore import Qt, QDate
-from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
+from qgis.PyQt import QtCore, QtWidgets, uic
+from qgis.PyQt.QtCore import Qt, QDate
+from qgis.PyQt.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.PyQt import QtCore
 from qgis.core import QgsVectorLayer
 from .RipartHelper import RipartHelper
 from .Contexte import Contexte
 from .core.SQLiteManager import SQLiteManager
 from .core import ConstanteRipart as cst
-
+from .qt_compat import BUTTONBOX_CANCEL, BUTTONBOX_OK, WINDOW_STAYS_ON_TOP_HINT
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormConfigurerRipart_base.ui'))
 
 
@@ -53,13 +53,13 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(WINDOW_STAYS_ON_TOP_HINT)
 
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
+        self.buttonBox.button(BUTTONBOX_OK).setText("Enregistrer")
+        self.buttonBox.button(BUTTONBOX_OK).clicked.connect(self.save)
+        self.buttonBox.button(BUTTONBOX_CANCEL).setText("Annuler")
 
         self.lineEditUrl.setText(RipartHelper.load_urlhost(context.projectDir).text)
 

@@ -12,8 +12,6 @@ from .core.RipartLoggerCl import RipartLogger
 from .FormCreerRemarque import FormCreerRemarque
 from .RipartHelper import RipartHelper
 from .core.Remarque import Remarque
-
-
 class CreerRipart(object):
     """
     Classe pour la création d'une nouvelle remarque ripart
@@ -50,7 +48,7 @@ class CreerRipart(object):
         
             # ouverture du formulaire de création de la remarque
             formCreate = FormCreerRemarque(context=self.context, NbSketch=len(croquisList))
-            formCreate.exec_()
+            formCreate.exec()
 
             # création de la remarque
             if formCreate.bSend:
