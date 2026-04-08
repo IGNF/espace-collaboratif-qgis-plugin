@@ -1,6 +1,4 @@
 from .AbstractCondition import *
-
-
 class AndOrCondition(AbstractCondition):
     def __init__(self, operator, sub_conditions):
         self._operator = operator

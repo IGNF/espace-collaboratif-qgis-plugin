@@ -2,8 +2,6 @@
 Taken from http://code.activestate.com/recipes/413486-first-class-enums-in-python/
 (released under PSF license)
 """
-
-
 def Enum(*names):
     # assert names, "Empty enums are not supported" # <- Don't like empty enums? Uncomment!
 

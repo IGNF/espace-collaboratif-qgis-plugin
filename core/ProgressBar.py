@@ -1,8 +1,6 @@
 from qgis.PyQt.QtWidgets import QProgressBar, QApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.utils import iface
-
-
 class ProgressBar(QProgressBar):
 
     def __init__(self, nbMax, message):

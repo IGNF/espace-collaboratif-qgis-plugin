@@ -10,8 +10,6 @@ import json
 from .RipartLoggerCl import RipartLogger
 import requests
 from requests.auth import HTTPBasicAuth
-
-
 class RipartServiceRequest(object):
     """
     Classe pour les requêtes http vers le service ripart

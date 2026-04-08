@@ -11,8 +11,6 @@ version 4.0.1, 15/12/2020
 from .Author import Author
 from .Group import Group
 from . import ConstanteRipart 
-
-
 class Profil(object):
     """
     Classe représentant le profil de l'utilisateur

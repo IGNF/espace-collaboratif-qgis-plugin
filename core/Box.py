@@ -6,8 +6,6 @@ Updated on 15 dec. 2020
 @author: AChang-Wailing, EPeyrouse
 """
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
-
-
 class Box(object):
     """
     Représente une boite englobante

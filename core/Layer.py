@@ -6,8 +6,6 @@ version 4.0.1, 15/12/2020
 
 @author: EPeyrouse
 """
-
-
 class Layer(object):
     """
     Classe représentant les caractéristiques d'une couche appartenant au <GEOGROUPE>

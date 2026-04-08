@@ -1,8 +1,6 @@
 import json
 from .AndOrCondition import AndOrCondition
 from .OperatorCondition import OperatorCondition
-
-
 class ConditionFactory:
     def __init__(self):
         pass

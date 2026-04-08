@@ -1,7 +1,12 @@
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsGeometry, QgsWkbTypes,\
-    QgsPoint, QgsAbstractGeometry
-
-
+from qgis.core import (
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsProject,
+    QgsGeometry,
+    QgsWkbTypes,
+    QgsPoint,
+    QgsAbstractGeometry,
+)
 class Wkt(object):
     sridSource = None
     sridTarget = None

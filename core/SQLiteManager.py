@@ -7,8 +7,6 @@ import sqlite3
 from qgis.core import QgsProject, QgsGeometry
 from . import ConstanteRipart as cst
 from .Wkt import Wkt
-
-
 class SQLiteManager(object):
     dbPath = ""
     tableAttributes = None

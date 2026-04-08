@@ -16,8 +16,6 @@ from .ClientHelper import ClientHelper
 from .RipartLoggerCl import RipartLogger
 
 import json
-
-
 class Remarque(object):
     """
     Classe représentant une remarque

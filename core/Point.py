@@ -6,8 +6,6 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
-
-
 class Point(object):
     """
     Classe représentant un Point (Signalement), donné en longitude/latitude

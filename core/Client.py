@@ -24,8 +24,6 @@ import requests
 from requests.auth import HTTPBasicAuth
 import os
 from .ProgressBar import ProgressBar
-
-
 class Client(object):
     """"
     Cette classe sert de client pour le service RIPart
