@@ -8,15 +8,15 @@ version 4.0.1, 15/12/2020
 """
 import os
 
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
+from qgis.PyQt.QtWidgets import QDialogButtonBox, QMessageBox
 from qgis.PyQt import uic, QtWidgets, QtCore
-from PyQt5.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
 from .RipartHelper import RipartHelper
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
 from .core import ConstanteRipart as cst
-
+from .qt_compat import BUTTONBOX_CANCEL, BUTTONBOX_SAVE, MSGBOX_NO, MSGBOX_YES, WINDOW_STAYS_ON_TOP_HINT
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
 
 
@@ -39,7 +39,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(WINDOW_STAYS_ON_TOP_HINT)
         self.context = context
         self.profile = profile
         self.activeGroup = activeGroup
@@ -81,10 +81,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             self.comboBoxWorkZone.setCurrentIndex(index)
 
     def setButtonsTextAndConnect(self):
-        self.buttonBox.button(QDialogButtonBox.Save).setText("Continuer")
-        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
+        self.buttonBox.button(BUTTONBOX_SAVE).setText("Continuer")
+        self.buttonBox.button(BUTTONBOX_SAVE).clicked.connect(self.save)
+        self.buttonBox.button(BUTTONBOX_CANCEL).setText("Annuler")
+        self.buttonBox.button(BUTTONBOX_CANCEL).clicked.connect(self.cancel)
         self.toolButtonShapeFile.clicked.connect(self.openShapeFile)
 
     def openShapeFile(self):
@@ -122,9 +122,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                         self.comboBoxWorkZone.setCurrentIndex(index)
                         message = "La zone de travail [{}] existe déjà dans la carte. Voulez-vous la supprimer ?\n" \
                                   "Le nouveau fichier shape sera importé.".format(shapefileLayerName)
-                        reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes,
-                                                     QMessageBox.No)
-                        if reply == QMessageBox.Yes:
+                        reply = QMessageBox.question(self, cst.IGNESPACECO, message, MSGBOX_YES,
+                                                     MSGBOX_NO)
+                        if reply == MSGBOX_YES:
                             removeLayers = QgsProject.instance().mapLayersByName(shapefileLayerName)
                             if len(removeLayers) == 1:
                                 QgsProject.instance().removeMapLayer(removeLayers[0].id())
@@ -172,8 +172,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                 message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou " \
                           "les données de votre groupe, le chargement se fera sur la totalité du territoire et sera " \
                           "probablement long. Voulez-vous continuer ?"
-                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.No:
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, MSGBOX_YES, MSGBOX_NO)
+                if reply == MSGBOX_NO:
                     return
                 else:
                     RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, "", "Map")
@@ -270,8 +270,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
                           "supprimées. Voulez-vous continuer ?".format(newGroup.name())
-                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.Yes:
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, MSGBOX_YES, MSGBOX_NO)
+                if reply == MSGBOX_YES:
                     root.removeChildNode(newGroup)
                     self.removeTablesSQLite(layersInProject)
                     QgsProject.instance().write()
@@ -293,8 +293,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             if not bNewGroup and bEspaceCoLayersInProject:
                 message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif " \
                           " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
-                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.Yes:
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, MSGBOX_YES, MSGBOX_NO)
+                if reply == MSGBOX_YES:
                     self.context.removeLayersFromProject(layersInProject, layersInTT, False)
                     RipartHelper.setXmlTagValue(self.context.projectDir, RipartHelper.xml_Zone_extraction, userWorkZone,
                                                 "Map")

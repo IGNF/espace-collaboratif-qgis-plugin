@@ -2,8 +2,6 @@ import time
 import json
 from .RipartServiceRequest import RipartServiceRequest
 from .SQLiteManager import SQLiteManager
-
-
 class WfsGet(object):
     context = None
     url = None

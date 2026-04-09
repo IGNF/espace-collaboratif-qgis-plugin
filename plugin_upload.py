@@ -9,7 +9,6 @@ import sys
 import getpass
 import xmlrpc.client
 from optparse import OptionParser
-
 # Configuration
 PROTOCOL = 'http'
 SERVER = 'plugins.qgis.org'

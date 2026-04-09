@@ -6,8 +6,6 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
-
-
 class Group(object):
     """
     Classe représentant un groupe de l'espace collaboratif

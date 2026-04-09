@@ -10,11 +10,20 @@ version 4.0.1, 15/12/2020
 
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import spatialite_connect
-from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, \
-    QgsGeometry, QgsDataSourceUri, QgsVectorLayer, QgsRasterLayer, QgsProject, \
-    QgsWkbTypes, QgsLayerTreeGroup
+from qgis.core import (
+    QgsCoordinateReferenceSystem,
+    QgsFeatureRequest,
+    QgsCoordinateTransform,
+    QgsGeometry,
+    QgsDataSourceUri,
+    QgsVectorLayer,
+    QgsRasterLayer,
+    QgsProject,
+    QgsWkbTypes,
+    QgsLayerTreeGroup,
+)
 
-
+import os
 import os.path
 import shutil
 import ntpath
@@ -37,6 +46,7 @@ from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 from .core.WfsGet import WfsGet
 from .core.SQLiteManager import SQLiteManager
 from .core.ProgressBar import ProgressBar
+from .qt_compat import MSGBOX_NO, MSGBOX_YES, MSG_LEVEL_WARNING, MSG_LEVEL_CRITICAL
 
 
 class Contexte(object):
@@ -117,8 +127,9 @@ class Contexte(object):
         self.urlHostRipart = ""
         self.groupeactif = ""
         self.profil = None
+        self.proxy = None
+        self.conn = None
         self.logger = RipartLogger("Contexte").getRipartLogger()
-
 
         # version in metadata
         cst.RIPART_CLIENT_VERSION = self.getMetadata()
@@ -126,15 +137,6 @@ class Contexte(object):
         try:
             # set du répertoire et fichier du projet qgis
             self.setProjectParams()
-
-            # contrôle l'existence du fichier de configuration
-            self.checkConfigFile()
-
-            # set de la base de données
-            self.getOrCreateDatabase()
-
-            # set des fichiers de style
-            self.copyRipartStyleFiles()
 
             # retrouve les formats de fichiers joints acceptés à partir du fichier formats.txt.
             with open(os.path.join(self.plugin_path, 'files', 'formats.txt'), 'r') as formatFile:
@@ -204,23 +206,42 @@ class Contexte(object):
 
         self.projectFileName = fname[:fname.find(".")]
 
+    def ensureProjectReady(self):
+        """
+        Prépare le projet Ripart uniquement à la demande :
+        - crée le fichier XML de configuration si besoin
+        - crée la base SQLite si besoin
+        - copie les styles si besoin
+        """
+        self.setProjectParams()
+        self.checkConfigFile()
+        self.getOrCreateDatabase()
+        self.copyRipartStyleFiles()
+
     def checkConfigFile(self):
         """
         Contrôle de l'existence du fichier de configuration
         """
-        ripartxml = self.projectDir + os.path.sep + RipartHelper.getConfigFile()
+        ripartxml = os.path.join(self.projectDir, RipartHelper.getConfigFile())
         if not os.path.isfile(ripartxml):
             try:
-                shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
-                            RipartHelper.nom_Fichier_Parametres_Ripart, ripartxml)
+                shutil.copy(
+                    self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
+                    RipartHelper.nom_Fichier_Parametres_Ripart,
+                    ripartxml
+                )
                 self.logger.debug("Copy {}".format(RipartHelper.nom_Fichier_Parametres_Ripart))
-                new_file = os.path.join(self.projectDir, RipartHelper.getConfigFile())
-                os.rename(ripartxml, new_file)
             except Exception as e:
                 self.logger.error(
-                    "No {} found in plugin directory".format(RipartHelper.nom_Fichier_Parametres_Ripart) + format(e))
-                raise Exception("Le fichier de configuration " + RipartHelper.nom_Fichier_Parametres_Ripart +
-                                " n'a pas été trouvé.")
+                    "No {} found in plugin directory".format(
+                        RipartHelper.nom_Fichier_Parametres_Ripart
+                    ) + format(e)
+                )
+                raise Exception(
+                    "Le fichier de configuration " +
+                    RipartHelper.nom_Fichier_Parametres_Ripart +
+                    " n'a pas été trouvé."
+                )
 
     def copyRipartStyleFiles(self):
         """
@@ -253,69 +274,75 @@ class Contexte(object):
     def getConnexionRipart(self, newLogin=False):
         """Connexion au service ripart
 
-        :param newLogin: booléen indiquant si on fait un nouveau login (fonctionnalité "Connexion au service Ripart")
+        :param newLogin: booléen indiquant si on fait un nouveau login
         :type newLogin: boolean
 
-        :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur (Exception)
+        :return 1 si la connexion a réussie, 0 si elle a échouée, -1 s'il y a eu une erreur
         :rtype int
         """
         self.logger.debug("GetConnexionRipart")
         try:
-            self.checkConfigFile()
-            self.urlHostRipart = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_UrlHost,
-                                                                "Serveur").text
-            self.logger.debug("this.URLHostRipart " + self.urlHostRipart)
+            self.ensureProjectReady()
+            self.urlHostRipart = RipartHelper.load_ripartXmlTag(
+                self.projectDir,
+                RipartHelper.xml_UrlHost,
+                "Serveur"
+            ).text
+            self.logger.debug("this.URLHostRipart " + str(self.urlHostRipart))
 
-        except Exception as e:
+        except Exception:
             self.logger.error("URLHOST inexistant dans fichier configuration")
-            RipartHelper.showMessageBox(u"L'url du serveur doit être renseignée dans la configuration avant de "
-                                        u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion "
-                                        u"...)")
+            RipartHelper.showMessageBox(
+                u"L'url du serveur doit être renseignée dans la configuration avant de "
+                u"pouvoir se connecter.\n(Aide>Configurer le plugin>Adresse de connexion ...)"
+            )
             return
 
         self.loginWindow = FormConnectionDialog(self)
         self.loginWindow.setWindowTitle("Connexion à {0}".format(self.urlHostRipart))
-        loginXmlNode = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur")
+
+        loginXmlNode = RipartHelper.load_ripartXmlTag(
+            self.projectDir,
+            RipartHelper.xml_Login,
+            "Serveur"
+        )
         if loginXmlNode is None:
             self.login = ""
         else:
-            self.login = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_Login, "Serveur").text
+            self.login = loginXmlNode.text or ""
 
-        xmlproxy = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_proxy, "Serveur").text
+        proxyNode = RipartHelper.load_ripartXmlTag(
+            self.projectDir,
+            RipartHelper.xml_proxy,
+            "Serveur"
+        )
+        xmlproxy = proxyNode.text if proxyNode is not None else None
         if xmlproxy is not None and str(xmlproxy).strip() != '':
             if not xmlproxy.startswith("http://") and not xmlproxy.startswith("https://"):
                 RipartHelper.showMessageBox(
-                    u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin.")
+                    u"Le proxy spécifié n'est pas une URL valide. \n Voir le menu Aide > Configurer le plugin."
+                )
                 return
             self.proxy = {'https': str(xmlproxy).strip()}
-
-          
-
-           
         else:
             self.proxy = None
 
-    
-
-
-
-        
-        xmlgroupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif, "Serveur")
+        xmlgroupeactif = RipartHelper.load_ripartXmlTag(
+            self.projectDir,
+            RipartHelper.xml_GroupeActif,
+            "Serveur"
+        )
         if xmlgroupeactif is not None:
-            self.groupeactif = RipartHelper.load_ripartXmlTag(self.projectDir, RipartHelper.xml_GroupeActif,
-                                                              "Serveur").text
+            self.groupeactif = xmlgroupeactif.text
             if self.groupeactif is not None:
                 self.logger.debug("this.groupeactif " + self.groupeactif)
 
         if self.login == "" or self.pwd == "" or newLogin:
             self.loginWindow.setLogin(self.login)
 
-        # Le résultat de la connexion est initialisé à -1.
-        # Tant qu'il reste à -1, c'est que le formulaire de connexion a renvoyé une exception (mauvais mot de passe, pb
-        # de proxy etc.). Dans ce cas-là, on rouvre le formulaire pour que l'utilisateur essaie de se reconnecter.
         connectionResult = -1
         while connectionResult < 0:
-            self.loginWindow.exec_()
+            self.loginWindow.exec()
             connectionResult = self.loginWindow.connectionResult
 
         return connectionResult
@@ -331,18 +358,20 @@ class Contexte(object):
 
         if not os.path.isfile(self.dbPath):
             try:
-                shutil.copy(self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
-                            RipartHelper.ripart_db, self.dbPath)
+                shutil.copy(
+                    self.plugin_path + os.path.sep + RipartHelper.ripart_files_dir + os.path.sep +
+                    RipartHelper.ripart_db,
+                    self.dbPath
+                )
                 self.logger.debug("copy espaceco.sqlite")
             except Exception as e:
                 self.logger.error("no espaceco.sqlite found in plugin directory" + format(e))
-                raise e
+                raise
+
         try:
-            # creating a Cursor
             self.conn = sqlite3.connect(self.dbPath)
             self.conn.enable_load_extension(True)
             self.conn.execute("SELECT load_extension('mod_spatialite')")
-            # self.conn = spatialite_connect(self.dbPath)
             curs = self.conn.cursor()
             # create layer Signalement
             sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='Signalement'"
@@ -360,13 +389,19 @@ class Contexte(object):
             self.logger.error(format(e))
             raise
         finally:
-            curs.close()
-            self.conn.close()
+            try:
+                if curs is not None:
+                    curs.close()
+            except Exception:
+                pass
+            try:
+                if self.conn is not None:
+                    self.conn.close()
+            except Exception:
+                pass
 
     def importWFS(self, layer, structure):
-        # Création éventuelle de la table SQLite liée à la couche
         sqliteManager = SQLiteManager()
-
         # Si la table du nom de la couche existe,
         # elle est vidée, détruite et recréée
         if SQLiteManager.isTableExist(layer.nom):
@@ -376,14 +411,24 @@ class Contexte(object):
 
         # Création de la source pour la couche dans la carte liée à la table SQLite
         uri = self.getUriDatabaseSqlite()
+        if uri is None:
+            raise Exception("Base SQLite Ripart absente. Le projet n'est pas prêt.")
+
         self.logger.debug(uri.uri())
         geometryName = structure['geometryName']
         uri.setDataSource('', layer.nom, geometryName)
         uri.setSrid(str(cst.EPSGCRS))
-        parameters = {'uri': uri.uri(), 'name': layer.nom, 'genre': 'spatialite', 'databasename': layer.databasename,
-                      'sqliteManager': sqliteManager, 'idName': structure['idName'],
-                      'geometryName': geometryName, 'geometryDimension': structure['attributes'][geometryName]['is3d'],
-                      'geometryType': structure['attributes'][geometryName]['type']}
+        parameters = {
+            'uri': uri.uri(),
+            'name': layer.nom,
+            'genre': 'spatialite',
+            'databasename': layer.databasename,
+            'sqliteManager': sqliteManager,
+            'idName': structure['idName'],
+            'geometryName': geometryName,
+            'geometryDimension': structure['attributes'][geometryName]['is3d'],
+            'geometryType': structure['attributes'][geometryName]['type']
+        }
 
         vlayer = GuichetVectorLayer(parameters)
         crs = QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS)
@@ -498,7 +543,8 @@ class Contexte(object):
             QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, endMessage)
 
         except Exception as e:
-            progress.close()
+            if 'progress' in globals() and progress is not None:
+                progress.close()
             message = str(format(e))
             if message.find('getMaxNumrec') != -1:
                 message = "Attention la table est peut-être vide de données. {}".format(str(e))
@@ -506,7 +552,7 @@ class Contexte(object):
             self.iface.messageBar(). \
                 pushMessage("Remarque",
                             message,
-                            level=1, duration=10)
+                            level=MSG_LEVEL_WARNING, duration=10)
             print(str(e))
 
     def hideColumn(self, layer, columnName):
@@ -562,9 +608,9 @@ class Contexte(object):
             else:
                 message = "Les couches [{}] existent déjà, elles vont être mises à jour.\nVoulez-vous continuer ?"\
                     .format(tmp[:-2])
-            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.No:
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, MSGBOX_YES,
+                                         MSGBOX_NO)
+            if reply == MSGBOX_NO:
                 return False
 
         layerIds = []
@@ -653,16 +699,22 @@ class Contexte(object):
         return message
 
     def getUriDatabaseSqlite(self):
-        uri = QgsDataSourceUri(cst.EPSG4326)
         dbName = self.projectFileName + "_espaceco"
         self.dbPath = self.projectDir + "/" + dbName + self.sqlite_ext
+
+        if not os.path.isfile(self.dbPath):
+            return None
+
+        uri = QgsDataSourceUri(cst.EPSG4326)
         uri.setDatabase(self.dbPath)
         return uri
 
     def addRipartLayersToMap(self):
-        """Add ripart layers to the current map
-        """
+        """Add ripart layers to the current map"""
         uri = self.getUriDatabaseSqlite()
+        if uri is None:
+            raise Exception("Base SQLite Ripart absente. Le projet n'est pas prêt.")
+
         self.logger.debug(uri.uri())
 
         maplayers = self.getAllMapLayers()
@@ -679,9 +731,9 @@ class Contexte(object):
                 root.insertLayer(0, vlayer)
                 self.logger.debug("Layer " + vlayer.name() + " added to map")
 
-                # ajoute les styles aux couches
                 style = os.path.join(self.projectDir, "espacecoStyles", table + ".qml")
-                vlayer.loadNamedStyle(style)
+                if os.path.isfile(style):
+                    vlayer.loadNamedStyle(style)
 
         self.mapCan.refresh()
 

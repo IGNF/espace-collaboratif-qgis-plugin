@@ -10,16 +10,20 @@ version 3.0.0 , 26/11/2018
 import sqlite3
 import re
 from .core.RipartLoggerCl import RipartLogger
-from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, \
-    QgsEditorWidgetSetup
+from qgis.core import (
+    QgsGeometry,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsProject,
+    QgsEditorWidgetSetup,
+)
 from .RipartHelper import RipartHelper
+from .qt_compat import MSG_LEVEL_CRITICAL
 from .core.BBox import BBox
 from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
 from .Contexte import Contexte
 from .core.ProgressBar import ProgressBar
-
-
 class ImporterRipart(object):
     """Importation des remarques dans le projet QGIS
     """
@@ -122,7 +126,7 @@ class ImporterRipart(object):
         if cnt == 0:
             self.progress.close()
             self.context.iface.messageBar().pushMessage("", "Pas de signalements extraits ou intersectant cette zone.",
-                                                        level=2, duration=5)
+                                                        level=MSG_LEVEL_CRITICAL, duration=5)
             return
 
         try:

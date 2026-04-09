@@ -1,11 +1,10 @@
 # coding=utf-8
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 
 from . import ConstanteRipart as cst
 from .Box import Box
-
-
+from ..qt_compat import MSGBOX_NO, MSGBOX_YES
 class BBox(object):
     """
         Représente une bounding box
@@ -27,9 +26,9 @@ class BBox(object):
             if bAskConfirmation:
                 message = "Vous n'avez pas spécifié de zone de travail. \n\n" \
                           "Souhaitez-vous poursuivre l'import des objets sur la totalité du territoire ? "
-                reply = QMessageBox.question(self.context.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                             QMessageBox.No)
-                if reply == QMessageBox.No:
+                reply = QMessageBox.question(self.context.iface.mainWindow(), cst.IGNESPACECO, message, MSGBOX_YES,
+                                             MSGBOX_NO)
+                if reply == MSGBOX_NO:
                     return Box(0.0, 0.0, 0.0, 0.0)
         return box
 
@@ -39,9 +38,9 @@ class BBox(object):
                       self.filterName + \
                       "' définie comme zone de travail ou celle-ci n'est pas activée.\n\n" + \
                       "Souhaitez-vous poursuivre l'import sur la totalité du territoire ? "
-            reply = QMessageBox.question(self.context.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.No:
+            reply = QMessageBox.question(self.context.iface.mainWindow(), cst.IGNESPACECO, message, MSGBOX_YES,
+                                         MSGBOX_NO)
+            if reply == MSGBOX_NO:
                 raise Exception("Arrêt demandé")
         else:
             layerFilterExtent = self.layerFilter.extent()

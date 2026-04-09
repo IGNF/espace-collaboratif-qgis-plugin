@@ -8,8 +8,6 @@ version 4.0.1, 15/12/2020
 """
 
 from .Group import Group
-
-
 class InfosGeogroup(object):
     """
     Classe représentant les infos du <GEOGROUPE> de l'utilisateur

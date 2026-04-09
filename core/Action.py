@@ -1,6 +1,4 @@
 from qgis.core import QgsAction
-
-
 class Action(QgsAction):
     """
     Classe représentant une action QGIS

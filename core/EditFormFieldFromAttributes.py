@@ -8,8 +8,6 @@ version 4.0.1, 15/12/2020
 """
 from qgis.core import QgsEditorWidgetSetup, QgsFieldConstraints, QgsDefaultValue, QgsAction
 from .Action import *
-
-
 class EditFormFieldFromAttributes(object):
     """
     Mise en forme des champs dans le formulaire d'attributs QGIS

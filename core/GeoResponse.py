@@ -11,8 +11,6 @@ import xml.etree.cElementTree as ET
 from .Group import Group
 from .Author import Author
 from . import ConstanteRipart
-
-
 class GeoResponse(object):
     """
     Classe pour définir un objet réponse de Ripart.

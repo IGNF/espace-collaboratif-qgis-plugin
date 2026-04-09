@@ -9,12 +9,12 @@ from __future__ import absolute_import
 from builtins import range
 import os
 
-from PyQt5.QtCore import pyqtSlot
+from qgis.PyQt.QtCore import pyqtSlot
 from qgis.PyQt import uic, QtWidgets, QtCore
 
 from .core import ConstanteRipart as cst
 from .core.ClientHelper import ClientHelper
-
+from .qt_compat import BUTTONBOX_CANCEL, WINDOW_STAYS_ON_TOP_HINT
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormRepondre_base.ui'))
 
 
@@ -39,10 +39,10 @@ class FormRepondreDialog(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(WINDOW_STAYS_ON_TOP_HINT)
         self.btnSend.clicked.connect(self.sendResponse)
         self.btnCancel.clicked.connect(self.cancel)
-        self.btnCancel.button(QtWidgets.QDialogButtonBox.Cancel).setText("Annuler")
+        self.btnCancel.button(BUTTONBOX_CANCEL).setText("Annuler")
         
         for i in range(0, 9):
             if cst.statutLibelle[i] != "En attente de validation":

@@ -11,8 +11,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
 from .core import ConstanteRipart as cst
 from .ReplyReportView import ReplyReportView
-
-
+from .qt_compat import MSG_LEVEL_WARNING
 class RepondreRipart(object):
     """"Classe pour les réponses Ripart
     """
@@ -38,14 +37,14 @@ class RepondreRipart(object):
             if activeLayer is None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
                 self.context.iface.messageBar().pushMessage("Attention",
                                                             'Le calque "Signalement" doit être le calque actif',
-                                                            level=1, duration=5)
+                                                            level=MSG_LEVEL_WARNING, duration=5)
                 return
             else:
                 # get selected features
                 selFeats = activeLayer.selectedFeatures()
 
                 if len(selFeats) == 0:
-                    self.context.iface.messageBar().pushMessage("Attention", 'Pas de signalement sélectionné', level=1,
+                    self.context.iface.messageBar().pushMessage("Attention", 'Pas de signalement sélectionné', level=MSG_LEVEL_WARNING,
                                                                 duration=10)
                     return
 
@@ -56,7 +55,7 @@ class RepondreRipart(object):
                 if len(remIds) > 1:
                     self.context.iface.messageBar().pushMessage("Attention",
                                                                 u'Plusieurs signalements sélectionnés. Un seul sera pris en compte (signalement n°='
-                                                                + str(remIds[0]) + ')', level=1, duration=10)
+                                                                + str(remIds[0]) + ')', level=MSG_LEVEL_WARNING, duration=10)
             client = self.context.client
             remId = remIds[0]
             remarque = client.getGeoRem(remId)
@@ -65,12 +64,12 @@ class RepondreRipart(object):
                 mess = "Impossible de répondre au signalement n°" + str(remId) + \
                        ", car il est clôturé depuis le " + remarque.dateValidation
 
-                self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=5)
+                self.context.iface.messageBar().pushMessage("Attention", mess, level=MSG_LEVEL_WARNING, duration=5)
                 return
 
             if remarque.autorisation not in ["RW", "RW+", "RW-"] and not isView:
                 mess = "Vous n'êtes pas autorisé à modifier le signalement n°" + str(remId)
-                self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=10)
+                self.context.iface.messageBar().pushMessage("Attention", mess, level=MSG_LEVEL_WARNING, duration=10)
                 return
 
             if isView:
@@ -82,7 +81,7 @@ class RepondreRipart(object):
             else:
                 self.logger.debug("view reply report")
                 replyReport = ReplyReportView(selFeats)
-                replyReport.exec_()
+                replyReport.exec()
 
         except Exception as e:
             self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))

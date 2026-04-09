@@ -1,7 +1,5 @@
 import re
 from .AbstractCondition import *
-
-
 class OperatorCondition(AbstractCondition):
     KEY_GREATERTHAN = '$gt'
     KEY_GREATERTHANEQUAL = '$gte'

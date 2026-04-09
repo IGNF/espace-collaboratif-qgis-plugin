@@ -9,14 +9,14 @@ version 4.0.1, 15/12/2020
 
 import os
 
-from PyQt5.QtWidgets import QDialogButtonBox
-from PyQt5 import QtCore
+from qgis.PyQt.QtWidgets import QDialogButtonBox
+from qgis.PyQt import QtCore, QtWidgets
 
 from qgis.PyQt import uic, QtWidgets
 
 from .ImporterGuichet import ImporterGuichet
 from .core import ConstanteRipart as cst
-
+from .qt_compat import BUTTONBOX_CANCEL, BUTTONBOX_SAVE, WINDOW_STAYS_ON_TOP_HINT
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChargerGuichet_base.ui'))
 
 
@@ -45,7 +45,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(WINDOW_STAYS_ON_TOP_HINT)
         self.context = context
         self.listLayers.clear()
         # Tuple contenant Rejected/Accepted pour la connexion Ripart et la liste des layers du groupe utilisateur
@@ -69,8 +69,8 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.setTableWidgetFondsGeoportail()
         # self.setTableWidgetAutresGeoservices()
 
-        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
+        self.buttonBox.button(BUTTONBOX_SAVE).clicked.connect(self.save)
+        self.buttonBox.button(BUTTONBOX_CANCEL).clicked.connect(self.cancel)
 
         self.labelGroupeActif.setText("Groupe actif : {}".format(profilUser.geogroup.name))
         self.labelGroupeActif.setStyleSheet("QLabel {color : blue}")  ##ff0000

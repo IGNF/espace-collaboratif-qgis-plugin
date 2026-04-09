@@ -7,8 +7,6 @@ version 4.0.1, 15/12/2020
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-
-
 class ThemeAttribut(object):
     """
     Classe représentant un attribut d'un thème

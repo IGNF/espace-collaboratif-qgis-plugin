@@ -13,8 +13,6 @@ from .core.BBox import BBox
 from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .Contexte import Contexte
-
-
 class ImporterGuichet(object):
     """Importation des remarques dans le projet QGIS
     """

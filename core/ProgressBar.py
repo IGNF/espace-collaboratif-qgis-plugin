@@ -1,8 +1,7 @@
 from qgis.PyQt.QtWidgets import QProgressBar, QApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.utils import iface
-
-
+from ..qt_compat import MSG_LEVEL_INFO
 class ProgressBar(QProgressBar):
 
     def __init__(self, nbMax, message):
@@ -11,7 +10,7 @@ class ProgressBar(QProgressBar):
         self.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         progressMessageBar = iface.messageBar().createMessage(message)
         progressMessageBar.layout().addWidget(self)
-        iface.messageBar().pushWidget(progressMessageBar, level=0)
+        iface.messageBar().pushWidget(progressMessageBar, level=MSG_LEVEL_INFO)
         iface.mainWindow().repaint()
         QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
 

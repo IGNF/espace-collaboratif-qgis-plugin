@@ -10,9 +10,9 @@ version 4.0.6, 30/12/2021
 
 import os
 
-from PyQt5 import QtCore
+from qgis.PyQt import QtCore, QtWidgets
 from qgis.PyQt import uic, QtWidgets
-
+from .qt_compat import WINDOW_STAYS_ON_TOP_HINT
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo_base.ui'))
 
 
@@ -39,5 +39,5 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         self.resize(511, 200)
         self.setWindowTitle("IGN Espace collaboratif")
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(WINDOW_STAYS_ON_TOP_HINT)
         self.logo.setOpenExternalLinks(True)

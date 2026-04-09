@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from .qt_compat import ALIGN_LEADING, ALIGN_LEFT, ALIGN_TOP, FRAME_NOFRAME, TEXTFORMAT_RICHTEXT, TEXT_BROWSER_INTERACTION, TEXT_NO_INTERACTION
 # Form implementation generated from reading ui file 'SeeReportView_base.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.2
@@ -7,7 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qgis.PyQt import QtCore, QtGui, QtWidgets
 
 
 class Ui_SeeReportView(object):
@@ -73,7 +73,7 @@ class Ui_SeeReportView(object):
         font.setPointSize(8)
         self.lbl_displayGeneralInformation.setFont(font)
         self.lbl_displayGeneralInformation.setText("")
-        self.lbl_displayGeneralInformation.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.lbl_displayGeneralInformation.setAlignment(ALIGN_LEADING|ALIGN_LEFT|ALIGN_TOP)
         self.lbl_displayGeneralInformation.setWordWrap(True)
         self.lbl_displayGeneralInformation.setObjectName("lbl_displayGeneralInformation")
         self.lbl_displayDocuments = QtWidgets.QLabel(SeeReportView)
@@ -82,11 +82,11 @@ class Ui_SeeReportView(object):
         font.setPointSize(8)
         self.lbl_displayDocuments.setFont(font)
         self.lbl_displayDocuments.setText("")
-        self.lbl_displayDocuments.setTextFormat(QtCore.Qt.RichText)
-        self.lbl_displayDocuments.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.lbl_displayDocuments.setTextFormat(TEXTFORMAT_RICHTEXT)
+        self.lbl_displayDocuments.setAlignment(ALIGN_LEADING|ALIGN_LEFT|ALIGN_TOP)
         self.lbl_displayDocuments.setWordWrap(False)
         self.lbl_displayDocuments.setOpenExternalLinks(True)
-        self.lbl_displayDocuments.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        self.lbl_displayDocuments.setTextInteractionFlags(TEXT_BROWSER_INTERACTION)
         self.lbl_displayDocuments.setObjectName("lbl_displayDocuments")
         self.lbl_displayDescription = QtWidgets.QLabel(SeeReportView)
         self.lbl_displayDescription.setGeometry(QtCore.QRect(10, 270, 631, 91))
@@ -94,7 +94,7 @@ class Ui_SeeReportView(object):
         font.setPointSize(8)
         self.lbl_displayDescription.setFont(font)
         self.lbl_displayDescription.setText("")
-        self.lbl_displayDescription.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.lbl_displayDescription.setAlignment(ALIGN_LEADING|ALIGN_LEFT|ALIGN_TOP)
         self.lbl_displayDescription.setWordWrap(True)
         self.lbl_displayDescription.setObjectName("lbl_displayDescription")
         self.pte_displayThemes = QtWidgets.QPlainTextEdit(SeeReportView)
@@ -102,18 +102,18 @@ class Ui_SeeReportView(object):
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pte_displayThemes.setFont(font)
-        self.pte_displayThemes.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.pte_displayThemes.setFrameShape(FRAME_NOFRAME)
         self.pte_displayThemes.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
-        self.pte_displayThemes.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        self.pte_displayThemes.setTextInteractionFlags(TEXT_NO_INTERACTION)
         self.pte_displayThemes.setObjectName("pte_displayThemes")
         self.pte_displayResponses = QtWidgets.QPlainTextEdit(SeeReportView)
         self.pte_displayResponses.setGeometry(QtCore.QRect(10, 480, 631, 91))
         font = QtGui.QFont()
         font.setPointSize(8)
         self.pte_displayResponses.setFont(font)
-        self.pte_displayResponses.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.pte_displayResponses.setFrameShape(FRAME_NOFRAME)
         self.pte_displayResponses.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
-        self.pte_displayResponses.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        self.pte_displayResponses.setTextInteractionFlags(TEXT_NO_INTERACTION)
         self.pte_displayResponses.setObjectName("pte_displayResponses")
 
         self.retranslateUi(SeeReportView)

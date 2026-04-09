@@ -6,9 +6,9 @@ version 3.0.0 , 26/11/2018
 
 @author: AChang-Wailing
 """
-
 # standard_library.install_aliases()
 from .RipartHelper import RipartHelper
+from .qt_compat import MSG_LEVEL_WARNING
 
 
 class Magicwand(object):
@@ -64,7 +64,7 @@ class Magicwand(object):
         if selectedCroquis and selectedRemarque:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Veuillez sélectionner des signalements ou des croquis (mais pas les deux)",
-                                                        level=1, duration=3)
+                                                        level=MSG_LEVEL_WARNING, duration=3)
             return None
         elif selectedCroquis:
             return "croquis"
@@ -73,7 +73,7 @@ class Magicwand(object):
         else:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Aucun croquis ou signalement sélectionné",
-                                                        level=1, duration=3)
+                                                        level=MSG_LEVEL_WARNING, duration=3)
             return None
 
     """
@@ -96,7 +96,7 @@ class Magicwand(object):
         if remNos == "":
             self.context.iface.messageBar().pushMessage("",
                                                         u"Pas de signalement associé au(x) croquis sélectionné(s)",
-                                                        level=1, duration=3)
+                                                        level=MSG_LEVEL_WARNING, duration=3)
         self.context.selectRemarkByNo(remNos[:-1])
 
     def selectAssociatedCroquis(self):
@@ -116,7 +116,7 @@ class Magicwand(object):
         if len(croquisLays) == 0:
             self.context.iface.messageBar().pushMessage("",
                                                         u"Pas de croquis associé(s) au signalement sélectionné",
-                                                        level=1, duration=3)
+                                                        level=MSG_LEVEL_WARNING, duration=3)
         for cr in croquisLays:
             lay = self.context.getLayerByName(cr)
             lay.selectByIds(croquisLays[cr])

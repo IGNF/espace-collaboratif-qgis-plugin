@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
 
-from PyQt5 import QtCore
+from qgis.PyQt import QtCore, QtWidgets
 from numpy import double
 
 from .core.RipartLoggerCl import RipartLogger
 from qgis.PyQt import uic, QtWidgets
 from .core import ConstanteRipart as cst
-
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'SeeReportView_base.ui'))
 
 context = None

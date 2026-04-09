@@ -11,8 +11,6 @@ from .Wkt import Wkt
 from .BBox import BBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from qgis.PyQt.QtWidgets import QMessageBox
-
-
 class WfsPost(object):
     context = None
     layer = None

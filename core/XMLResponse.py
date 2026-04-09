@@ -26,8 +26,6 @@ from .RipartLoggerCl import RipartLogger
 from .Layer import Layer
 
 import re
-
-
 class XMLResponse(object):
     """
     Classe pour le parsing des réponses xml et l'extraction des informations nécessaires

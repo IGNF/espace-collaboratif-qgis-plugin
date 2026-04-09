@@ -12,8 +12,6 @@ import os
 from datetime import datetime
 import dateutil.relativedelta
 from os.path import expanduser
-
-
 class RipartLogger(object):
     """Paramètres du log
     """

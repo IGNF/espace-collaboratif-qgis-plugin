@@ -9,8 +9,6 @@ version 3.0.0 , 26/11/2018
 from .Enum import Enum
 import xml.etree.ElementTree as ET
 from .ClientHelper import ClientHelper
-
-
 class Sketch(object):
     """
     Classe représentant un croquis

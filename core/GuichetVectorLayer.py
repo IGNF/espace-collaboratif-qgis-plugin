@@ -8,14 +8,24 @@ version 4.0.1, 15/12/2020
 """
 import random
 import json
-from PyQt5.QtGui import QColor
-from qgis.core import QgsVectorLayer, QgsSymbol, QgsRuleBasedRenderer, QgsSingleSymbolRenderer, QgsLineSymbol, \
-    QgsFillSymbol, QgsMarkerSymbol, QgsUnitTypes, QgsMarkerLineSymbolLayer, QgsSimpleLineSymbolLayer, \
-    QgsFontMarkerSymbolLayer, QgsSymbolLayer, QgsProperty
+from qgis.PyQt.QtGui import QColor
+from qgis.core import (
+    QgsVectorLayer,
+    QgsSymbol,
+    QgsRuleBasedRenderer,
+    QgsSingleSymbolRenderer,
+    QgsLineSymbol,
+    QgsFillSymbol,
+    QgsMarkerSymbol,
+    QgsUnitTypes,
+    QgsMarkerLineSymbolLayer,
+    QgsSimpleLineSymbolLayer,
+    QgsFontMarkerSymbolLayer,
+    QgsSymbolLayer,
+    QgsProperty,
+)
 
 from .MongoDBtoQGIS.ConditionFactory import ConditionFactory
-
-
 class GuichetVectorLayer(QgsVectorLayer):
     databasename = None
     correspondanceChampType = None
