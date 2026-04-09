@@ -220,6 +220,8 @@ class RipartPlugin:
                 self.logger.debug("connectProjectRead: projet standard, aucune initialisation Ripart")
                 return
 
+            self._show_deprecation_warning()
+
             uri = context.getUriDatabaseSqlite()
             if uri is None:
                 self.logger.debug("connectProjectRead: groupe Ripart détecté mais base absente")
@@ -585,8 +587,6 @@ class RipartPlugin:
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
-
-        self._show_deprecation_warning()
 
     def _show_deprecation_warning(self):
         """Affiche un bandeau d'avertissement pour les versions 4.3.5 et 4.3.6."""
