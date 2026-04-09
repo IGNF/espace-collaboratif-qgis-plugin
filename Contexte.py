@@ -46,7 +46,7 @@ from .core.EditFormFieldFromAttributes import EditFormFieldFromAttributes
 from .core.WfsGet import WfsGet
 from .core.SQLiteManager import SQLiteManager
 from .core.ProgressBar import ProgressBar
-from .qt_compat import MSGBOX_NO, MSGBOX_YES
+from .qt_compat import MSGBOX_NO, MSGBOX_YES, MSG_LEVEL_WARNING, MSG_LEVEL_CRITICAL
 
 
 class Contexte(object):
@@ -543,7 +543,8 @@ class Contexte(object):
             QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, endMessage)
 
         except Exception as e:
-            progress.close()
+            if 'progress' in globals() and progress is not None:
+                progress.close()
             message = str(format(e))
             if message.find('getMaxNumrec') != -1:
                 message = "Attention la table est peut-être vide de données. {}".format(str(e))
@@ -551,7 +552,7 @@ class Contexte(object):
             self.iface.messageBar(). \
                 pushMessage("Remarque",
                             message,
-                            level=1, duration=10)
+                            level=MSG_LEVEL_WARNING, duration=10)
             print(str(e))
 
     def hideColumn(self, layer, columnName):

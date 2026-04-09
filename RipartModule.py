@@ -21,7 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-from .qt_compat import MSGBOX_NO, MSGBOX_YES, TOOLBUTTON_POPUP_INSTANT
+from .qt_compat import MSGBOX_NO, MSGBOX_YES, TOOLBUTTON_POPUP_INSTANT, MSG_LEVEL_WARNING, MSG_LEVEL_CRITICAL
 
 from builtins import str
 from builtins import range
@@ -461,7 +461,8 @@ class RipartPlugin:
         status_tip=None,
         whats_this=None,
         parent=None
-    ):
+        ):
+        
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
@@ -653,7 +654,7 @@ class RipartPlugin:
             self.context.iface.messageBar().pushMessage(
                 "Remarque",
                 format(e),
-                level=2,
+                level=MSG_LEVEL_CRITICAL,
                 duration=5
             )
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
@@ -664,7 +665,7 @@ class RipartPlugin:
             self.context.iface.messageBar().pushMessage(
                 "Erreur",
                 format(e),
-                level=2,
+                level=MSG_LEVEL_CRITICAL,
                 duration=5
             )
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
@@ -681,7 +682,7 @@ class RipartPlugin:
             self.context.iface.messageBar().pushMessage(
                 "Erreur",
                 u"lors de la connexion avec l'Espace Collaboratif. Veuillez réessayer.",
-                level=2,
+                level=MSG_LEVEL_CRITICAL,
                 duration=5
             )
 
@@ -695,7 +696,7 @@ class RipartPlugin:
             self.context.iface.messageBar().pushMessage(
                 "Erreur",
                 "Problème dans la réponse faite au(x) signalement(s) : {0}".format(str(e)),
-                level=2,
+                level=MSG_LEVEL_CRITICAL,
                 duration=5
             )
 
@@ -709,7 +710,7 @@ class RipartPlugin:
             self.context.iface.messageBar().pushMessage(
                 "Erreur",
                 u"Un problème est survenu lors de la création du signalement",
-                level=2,
+                level=MSG_LEVEL_CRITICAL,
                 duration=5
             )
 
@@ -735,7 +736,7 @@ class RipartPlugin:
             self.context.iface.messageBar().pushMessage(
                 "Erreur",
                 u"Un problème est survenu lors de la suppression des signalements",
-                level=2,
+                level=MSG_LEVEL_CRITICAL,
                 duration=5
             )
 
@@ -775,7 +776,7 @@ class RipartPlugin:
 
         except Exception as e:
             self.logger.error(format(e))
-            self.context.iface.messageBar().pushMessage("Remarque", str(e), level=1, duration=5)
+            self.context.iface.messageBar().pushMessage("Remarque", str(e), level=MSG_LEVEL_WARNING, duration=5)
             QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
     def synchronizeData(self):
@@ -920,7 +921,7 @@ class RipartPlugin:
                 self.context.iface.messageBar().pushMessage(
                     "Erreur",
                     u"Un problème est survenu dans le chargement de la configuration." + format(e),
-                    level=2,
+                    level=MSG_LEVEL_CRITICAL,
                     duration=5
                 )
             else:

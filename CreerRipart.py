@@ -11,6 +11,7 @@ version 4.0.1, 15/12/2020
 from .core.RipartLoggerCl import RipartLogger
 from .FormCreerRemarque import FormCreerRemarque
 from .RipartHelper import RipartHelper
+from .qt_compat import MSG_LEVEL_CRITICAL
 from .core.Remarque import Remarque
 class CreerRipart(object):
     """
@@ -58,7 +59,7 @@ class CreerRipart(object):
               
         except Exception as e:
             self.logger.error(format(e))
-            self.context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)", level=2,
+            self.context.iface.messageBar().pushMessage("", u"Problème dans la création de signalement(s)", level=MSG_LEVEL_CRITICAL,
                                                         duration=15)
 
     def _createNewReport(self, formCreate, croquisList):
@@ -91,7 +92,7 @@ class CreerRipart(object):
                 newReport = self._prepareAndSendReport(tmpRem, croquisList, formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
                 if newReport is None:
                     self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création du "
-                                                                    u"signalement ", level=2, duration=15)
+                                                                    u"signalement ", level=MSG_LEVEL_CRITICAL, duration=15)
                      
                 listNewReportIds.append(newReport.id)
             
@@ -103,7 +104,7 @@ class CreerRipart(object):
                     newReport = self._prepareAndSendReport(tmpRem, [cr], formCreate.optionWithCroquis(), formCreate.idSelectedGeogroup)
                     if newReport is None:
                         self.context.iface.messageBar().pushMessage("", u"Une erreur est survenue dans la création "
-                                                                        u"d'un signalement", level=2, duration=15)
+                                                                        u"d'un signalement", level=MSG_LEVEL_CRITICAL, duration=15)
                         continue
                     listNewReportIds.append(newReport.id)
    
@@ -119,7 +120,7 @@ class CreerRipart(object):
             RipartHelper.showMessageBox(message)
 
         except Exception as e:
-            self.context.iface.messageBar().pushMessage("", format(e), level=2, duration=5)
+            self.context.iface.messageBar().pushMessage("", format(e), level=MSG_LEVEL_CRITICAL, duration=5)
             self.logger.error("in _createNewReport " + format(e))
 
         finally:

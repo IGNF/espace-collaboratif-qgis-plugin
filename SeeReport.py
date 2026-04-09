@@ -6,6 +6,7 @@ Created on 3 janv. 2022
 from .SeeReportView import SeeReportView
 from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
+from .qt_compat import MSG_LEVEL_WARNING
 class SeeReport(object):
     """
     Classe pour visualiser un signalement
@@ -26,12 +27,12 @@ class SeeReport(object):
             if activeLayer is None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
                 self.context.iface.messageBar().pushMessage("Attention",
                                                             'Le calque "Signalement" doit être le calque actif',
-                                                            level=1, duration=5)
+                                                            level=MSG_LEVEL_WARNING, duration=5)
                 return
             else:
                 selFeats = activeLayer.selectedFeatures()
                 if len(selFeats) != 1:
-                    self.context.iface.messageBar().pushMessage("Attention", self.error, level=1, duration=10)
+                    self.context.iface.messageBar().pushMessage("Attention", self.error, level=MSG_LEVEL_WARNING, duration=10)
                     return
 
                 remIds = []

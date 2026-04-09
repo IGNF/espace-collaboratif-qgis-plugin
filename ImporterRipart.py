@@ -18,6 +18,7 @@ from qgis.core import (
     QgsEditorWidgetSetup,
 )
 from .RipartHelper import RipartHelper
+from .qt_compat import MSG_LEVEL_CRITICAL
 from .core.BBox import BBox
 from .core import ConstanteRipart as cst
 from .core.NoProfileException import NoProfileException
@@ -125,7 +126,7 @@ class ImporterRipart(object):
         if cnt == 0:
             self.progress.close()
             self.context.iface.messageBar().pushMessage("", "Pas de signalements extraits ou intersectant cette zone.",
-                                                        level=2, duration=5)
+                                                        level=MSG_LEVEL_CRITICAL, duration=5)
             return
 
         try:

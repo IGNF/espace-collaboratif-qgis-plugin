@@ -24,7 +24,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .core import ConstanteRipart as cst
 from .core.SQLiteManager import SQLiteManager
 from qgis.utils import spatialite_connect
-from .qt_compat import MSGBOX_WARNING
+from .qt_compat import MSGBOX_WARNING, MSG_LEVEL_CRITICAL
 class RipartHelper:
     """
     Classe contenant des utilitaires pour le plugin
@@ -802,14 +802,14 @@ class RipartHelper:
         if nb > 1:
             message = "Le filtrage des objets sera impossible car la couche {0} contient plusieurs objets." \
                       "Il faut une seule zone de travail pour filtrer les objets après extraction des données.".format(nameWorkZone)
-            QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=5)
+            QgsProject.instance().iface.messageBar().pushMessage("", message, level=MSG_LEVEL_CRITICAL, duration=5)
             return geometryWorkZone
         for feat in feats:
             geometryWorkZone = feat.geometry()
         if len(list(geometryWorkZone.parts())) > 1:
              message = "Le filtrage des objets sera impossible car la zone de travail est une surface multiple." \
                       "Il faut une surface simple pour filtrer les objets après extraction des données.".format(nameWorkZone)
-             QgsProject.instance().iface.messageBar().pushMessage("", message, level=2, duration=5)
+             QgsProject.instance().iface.messageBar().pushMessage("", message, level=MSG_LEVEL_CRITICAL, duration=5)
              return geometryWorkZone
         layerWorkZone[0].rollBack()
         layerWorkZone[0].removeSelection()

@@ -7,6 +7,7 @@ from .core.RipartLoggerCl import RipartLogger
 from .RipartHelper import RipartHelper
 from .core import ConstanteRipart as cst
 from .ReplyReportView import ReplyReportView
+from .qt_compat import MSG_LEVEL_INFO, MSG_LEVEL_WARNING
 from .core.ClientHelper import ClientHelper
 class ReplyReport(object):
     """
@@ -27,14 +28,14 @@ class ReplyReport(object):
             bExist = self.context.IsLayerInMap(RipartHelper.nom_Calque_Signalement)
             if not bExist:
                 mess = "Pas de couche 'Signalement' dans la carte.\nIl est donc impossible de répondre à un signalement.\nIl faut se connecter à l'Espace collaboratif et télécharger les signalements."
-                self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=5)
+                self.context.iface.messageBar().pushMessage("Attention", mess, level=MSG_LEVEL_WARNING, duration=5)
                 return
             else:
                 activeLayer = self.context.iface.activeLayer()
                 if activeLayer is None or activeLayer.name() != RipartHelper.nom_Calque_Signalement:
                     self.context.iface.messageBar().pushMessage("Attention",
                                                                 'Le calque "Signalement" doit être le calque actif',
-                                                                level=1, duration=5)
+                                                                level=MSG_LEVEL_WARNING, duration=5)
                     return
                 # get selected features
                 selFeats = activeLayer.selectedFeatures()
@@ -61,7 +62,7 @@ class ReplyReport(object):
                     mess = "Pas de signalements sélectionnés. Veuillez sélectionner un ou plusieurs signalements."
                     if messageReportNoValid != "":
                         mess = "Les signalements sélectionnés ne sont pas valides. Opération terminée.\n{0}".format(messageReportNoValid)
-                    self.context.iface.messageBar().pushMessage("Attention", mess, level=1, duration=5)
+                    self.context.iface.messageBar().pushMessage("Attention", mess, level=MSG_LEVEL_WARNING, duration=5)
                     return
 
                 self.logger.debug("view reply report")
@@ -79,7 +80,7 @@ class ReplyReport(object):
                         information += "au signalement {0} a bien été envoyée.".format(replyReports[0].id)
                     else:
                         information += "aux {0} signalements a bien été envoyée.".format(len(replyReports))
-                    self.context.iface.messageBar().pushMessage("Succès", information, level=0, duration=15)
+                    self.context.iface.messageBar().pushMessage("Succès", information, level=MSG_LEVEL_INFO, duration=15)
 
         except Exception as e:
             self.logger.error(format(e) + ";" + str(type(e)) + " " + str(e))

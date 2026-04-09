@@ -1017,6 +1017,21 @@ else:
     WIZARD_MAC_STYLE = QWizard.MacStyle
     WIZARD_AERO_STYLE = getattr(QWizard, "AeroStyle", None)
 
+# ---------------------------------------------------------
+# Qgis.MessageLevel
+# ---------------------------------------------------------
+from qgis.core import Qgis
+try:
+    MSG_LEVEL_INFO = Qgis.MessageLevel.Info
+    MSG_LEVEL_WARNING = Qgis.MessageLevel.Warning
+    MSG_LEVEL_CRITICAL = Qgis.MessageLevel.Critical
+    MSG_LEVEL_SUCCESS = Qgis.MessageLevel.Success
+except AttributeError:
+    MSG_LEVEL_INFO = 0
+    MSG_LEVEL_WARNING = 1
+    MSG_LEVEL_CRITICAL = 2
+    MSG_LEVEL_SUCCESS = 3
+
 
 # ---------------------------------------------------------
 # QPainter

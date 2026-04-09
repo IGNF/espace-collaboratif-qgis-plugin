@@ -24,7 +24,7 @@ from .core import ConstanteRipart as cst
 from .core.Theme import Theme
 from .RipartHelper import RipartHelper
 from .core.ThemeAttribut import ThemeAttribut
-from .qt_compat import BUTTONBOX_OK, WINDOW_STAYS_ON_TOP_HINT
+from .qt_compat import BUTTONBOX_OK, WINDOW_STAYS_ON_TOP_HINT, MSG_LEVEL_WARNING
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreerRemarque_base.ui'))
 
 
@@ -494,7 +494,7 @@ class FormCreerRemarque(QtWidgets.QDialog, FORM_CLASS):
         if self.textEditMessage.toPlainText().strip() == "":
             self.lblMessageError.setStyleSheet("QLabel { background-color : #F5A802; font-weight:bold}")
             self.lblMessageError.setText(u"Le message est obligatoire")
-            self.context.iface.messageBar().pushMessage("Attention", u'Le message est obligatoire', level=1,
+            self.context.iface.messageBar().pushMessage("Attention", u'Le message est obligatoire', level=MSG_LEVEL_WARNING,
                                                         duration=10)
             return
 
