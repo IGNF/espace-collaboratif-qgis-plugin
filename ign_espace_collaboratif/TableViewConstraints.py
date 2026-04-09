@@ -113,7 +113,7 @@ class TableViewConstraints:
             iface.messageBar().pushMessage(
                 "Mode édition",
                 f"Édition activée sur '{self.layer.name()}'. Les contraintes seront validées lors de la sauvegarde.",
-                level=Qgis.Info,
+                level=Qgis.MessageLevel.Info,
                 duration=3
             )
 
@@ -138,7 +138,7 @@ class TableViewConstraints:
                 iface.messageBar().pushMessage(
                     "Attention - Contrainte non respectée",
                     f"Entité #{fid}, champ '{fieldName}': {errorMsg}",
-                    level=Qgis.Warning,
+                    level=Qgis.MessageLevel.Warning,
                     duration=5
                 )
 
@@ -193,7 +193,7 @@ class TableViewConstraints:
                 iface.messageBar().pushMessage(
                     "Erreur de validation",
                     "Sauvegarde annulée : des contraintes ne sont pas respectées. Corrigez les erreurs et sauvegardez à nouveau.",
-                    level=Qgis.Critical,
+                    level=Qgis.MessageLevel.Critical,
                     duration=7
                 )
 

@@ -8,17 +8,19 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
+from .qt_compat import (
+    QCoreApplication, QDate, QDateTime, QLocale,
     QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
+    QSize, QTime, QUrl, Qt,
+    QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QAbstractScrollArea, QApplication,
+    QPalette, QPixmap, QRadialGradient, QTransform,
+    QAbstractButton, QAbstractItemView, QAbstractScrollArea, QApplication,
     QDialog, QDialogButtonBox, QHeaderView, QLabel,
     QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem,
-    QWidget)
+    QWidget,
+)
 
 class Ui_DialogChargerGuichet(object):
     def setupUi(self, DialogChargerGuichet):

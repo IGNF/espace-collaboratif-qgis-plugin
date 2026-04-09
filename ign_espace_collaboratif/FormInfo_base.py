@@ -8,15 +8,17 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
+from .qt_compat import (
+    QCoreApplication, QDate, QDateTime, QLocale,
     QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
+    QSize, QTime, QUrl, Qt,
+    QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QLabel,
-    QPushButton, QSizePolicy, QTextBrowser, QWidget)
+    QPalette, QPixmap, QRadialGradient, QTransform,
+    QApplication, QDialog, QFrame, QLabel,
+    QPushButton, QSizePolicy, QTextBrowser, QWidget,
+)
 class Ui_InfoDialog(object):
     def setupUi(self, InfoDialog):
         if not InfoDialog.objectName():

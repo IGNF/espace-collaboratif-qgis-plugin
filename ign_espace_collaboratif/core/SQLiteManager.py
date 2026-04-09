@@ -540,6 +540,29 @@ class SQLiteManager(object):
         SQLiteManager.findAndDeleteLock()
         if not SQLiteManager.isTableExist(tableName):
             return
+        # Nettoyage de la métadonnée SpatiaLite avant de supprimer la table :
+        # si geometry_columns contient encore une entrée pour cette table (cas d'un rechargement
+        # depuis un autre guichet), AddGeometryColumn échoue ou produit un état incohérent
+        # qui peut provoquer un crash QGIS. DiscardGeometryColumn supprime cette entrée.
+        connection = SQLiteManager.sqlite3Connect()
+        try:
+            cur = connection.cursor()
+            cur.execute(
+                "SELECT f_geometry_column FROM geometry_columns WHERE f_table_name = ?",
+                (tableName,)
+            )
+            geom_cols = cur.fetchall()
+            for (geom_col,) in geom_cols:
+                cur.execute(
+                    "SELECT DiscardGeometryColumn(?, ?)",
+                    (tableName, geom_col)
+                )
+            connection.commit()
+            cur.close()
+        except Exception as e:
+            print(f"SQLiteManager.deleteTable : nettoyage geometry_columns ignoré pour {tableName} : {e}")
+        finally:
+            connection.close()
         sql = u"DROP TABLE {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
 

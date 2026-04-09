@@ -39,12 +39,19 @@ class DynamicProgressBar(QProgressBar):
         self.setFixedWidth(bar_width)
 
         # Création du message dans la barre de message QGIS
+        if iface is None:
+            return
+
         progressMessageBar = iface.messageBar().createMessage("")
+        if progressMessageBar is None:
+            return
+
         progressMessageBar.layout().addWidget(self.label)
         progressMessageBar.layout().addWidget(self)
 
         iface.messageBar().pushWidget(progressMessageBar, level=Qgis.MessageLevel.Info)
-        iface.mainWindow().repaint()
+        if iface.mainWindow() is not None:
+            iface.mainWindow().repaint()
         QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
     def updateMessage(self, new_message: str) -> None:
@@ -55,11 +62,13 @@ class DynamicProgressBar(QProgressBar):
         :type new_message: str
         """
         self.label.setText(new_message)
-        iface.mainWindow().repaint()
+        if iface is not None and iface.mainWindow() is not None:
+            iface.mainWindow().repaint()
 
     def close(self) -> None:
         """
         Ferme la barre de progression et rétablit le curseur.
         """
-        iface.messageBar().clearWidgets()
+        if iface is not None:
+            iface.messageBar().clearWidgets()
         PluginHelper.setCursor()
