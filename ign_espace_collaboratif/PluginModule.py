@@ -7,10 +7,10 @@ from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
 from . import resources
 
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt5.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
-from PyQt5.QtGui import QIcon
-from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
+from qgis.PyQt.QtGui import QIcon
+from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer, Qgis
 from builtins import str
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
@@ -151,15 +151,15 @@ class RipartPlugin:
                 message = "Votre projet contient des couches de l'Espace collaboratif IGN. Pour continuer à les " \
                           "utiliser, nous vous conseillons de vous y connecter.\nVoulez-vous vous connecter " \
                           "à l'Espace collaboratif ? "
-                reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                             QMessageBox.No)
-                if reply == QMessageBox.Yes:
+                reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                             QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
                     self.__context = Contexte.getInstance(self, QgsProject, True)
                     if self.__context is None:
                         return
                     if self.__context.getUserCommunity() is None:
                         self.__context.getConnexionEspaceCollaboratifWithKeycloak(True)
-                elif reply == QMessageBox.No:
+                elif reply == QMessageBox.StandardButton.No:
                     projectLayers = QgsProject.instance().mapLayers()
                     for k, v in projectLayers.items():
                         if not self.__searchSpecificLayerInSQLite(v.name()):
@@ -244,9 +244,9 @@ class RipartPlugin:
         if len(listLayersNotInTable) != 0:
             message = "Attention, la table générale SQLite est désynchronisée avec votre projet. Il faut extraire " \
                       "les couches suivantes :\n{0}".format(listLayersNotInTable)
-            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.Yes:
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
                 self.__downloadLayersFromMyCommunity()
 
     # TODO Mélanie remettre en service ?
@@ -352,7 +352,7 @@ class RipartPlugin:
         for messages in allMessages:
             messageInfo += messages
         dlgInfo.textInfo.append(messageInfo)
-        dlgInfo.exec_()
+        dlgInfo.exec()
         PluginHelper.setCursor()
         errors = ['error', '400', '401', '402', '403', '404', '500']
         for error in errors:
@@ -478,7 +478,7 @@ class RipartPlugin:
         self.__context.iface.messageBar().clearWidgets()
         self.__logger.error(format(exception))
         errorMessage = "{} : {}".format(message, str(exception))
-        self.__context.iface.messageBar().pushMessage("Erreur", errorMessage, level=2, duration=5)
+        self.__context.iface.messageBar().pushMessage("Erreur", errorMessage, level=Qgis.MessageLevel.Critical, duration=5)
         PluginHelper.setCursor()
 
     def __translate(self, message) -> str:
@@ -611,7 +611,7 @@ class RipartPlugin:
         self.helpMenu.addAction(self.about)
         self.toolButton2 = QToolButton()
         self.toolButton2.setMenu(self.helpMenu)
-        self.toolButton2.setPopupMode(QToolButton.InstantPopup)
+        self.toolButton2.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.toolButton2.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
         self.toolButton2.setText("Aide")
 
@@ -751,9 +751,9 @@ class RipartPlugin:
                 return
             message = u"Êtes-vous sûr de vouloir supprimer les signalements et les croquis associés " \
                       u"de la carte en cours ?"
-            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.Yes:
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
                 SQLiteManager.setEmptyTablesReportAndSketchs(PluginHelper.reportSketchLayersName)
                 self.__context.refreshLayers()
             else:
@@ -813,7 +813,7 @@ class RipartPlugin:
             if dlgChargerGuichet.bRejected:
                 return
             # Affichage de la boite
-            dlgChargerGuichet.exec_()
+            dlgChargerGuichet.exec()
             PluginHelper.refreshAllLayers()
             progress.close()
 
@@ -877,10 +877,10 @@ class RipartPlugin:
 
                     message = "{0} des modifications non enregistrées. Si vous poursuivez la synchronisation, " \
                               "vos modifications seront perdues. \nVoulez-vous continuer ?".format(startMessage)
-                    reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                                 QMessageBox.No)
+                    reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                                 QMessageBox.StandardButton.No)
                     # On sort
-                    if reply == QMessageBox.No:
+                    if reply == QMessageBox.StandardButton.No:
                         return
                     else:
                         # On supprime les modifications et on poursuit
@@ -953,7 +953,7 @@ class RipartPlugin:
             # Message de fin de synchronisation
             dlgInfo = FormInfo()
             dlgInfo.textInfo.setText(endMessage)
-            dlgInfo.exec_()
+            dlgInfo.exec()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__synchronizeDataFromAllLayers', e)
 
@@ -964,7 +964,7 @@ class RipartPlugin:
         try:
             self.__context = Contexte.getInstance(self, QgsProject, True)
             self.__dlgConfigure = FormConfigure(context=self.__context)
-            self.__dlgConfigure.exec_()
+            self.__dlgConfigure.exec()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__configurePlugin', e)
 
@@ -994,7 +994,7 @@ class RipartPlugin:
             u"<br/>Plugin intégrant les fonctionnalités de signalement et d'écriture de l'Espace collaboratif.")
         dlgInfo.textInfo.append(u"<br/>Version : " + version)
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
-        dlgInfo.exec_()
+        dlgInfo.exec()
 
     def __showHelp(self) -> None:
         """

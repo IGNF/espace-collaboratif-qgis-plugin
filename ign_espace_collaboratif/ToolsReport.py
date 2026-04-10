@@ -2,11 +2,11 @@ import json
 import os.path
 from typing import Optional
 
-from PyQt5.QtWidgets import QMessageBox
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
+from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsRectangle, QgsPointXY, QgsGeometry
 
-from requests import Response
+import requests
 from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
 from .core.DynamicProgressBar import DynamicProgressBar
@@ -331,7 +331,7 @@ class ToolsReport(object):
             return ''
         else:
             message = "code : {} raison : {}".format(response.status_code, response.reason)
-            self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
+            self.__context.iface.messageBar().pushMessage("Attention", message, level=Qgis.MessageLevel.Warning, duration=3)
             return ''
 
     def serialize_for_multipart(self, obj):
@@ -388,7 +388,7 @@ class ToolsReport(object):
             return
         return responseFromServer.json()
 
-    def __sendRequest(self, datas, filesAttachments) -> Optional[Response]:
+    def __sendRequest(self, datas, filesAttachments) -> Optional[requests.Response]:
         """
         Envoi de la requête POST de création de signalement(s) avec ou sans croquis.
 
@@ -409,7 +409,7 @@ class ToolsReport(object):
             return response
         else:
             message = "Code : {0}, Raison : {1}".format(response.status_code, response.reason)
-            self.__context.iface.messageBar().pushMessage("Attention", message, level=1, duration=3)
+            self.__context.iface.messageBar().pushMessage("Attention", message, level=Qgis.MessageLevel.Warning, duration=3)
         return None
 
     def createReport(self, sketchList, pointFromClipboard):
@@ -430,7 +430,7 @@ class ToolsReport(object):
         """
         # Ouverture du formulaire de création du signalement
         formCreate = FormCreateReport(self.__context, len(sketchList))
-        formCreate.exec_()
+        formCreate.exec()
 
         # Envoi ou pas vers l'espace collaboratif ?
         if not formCreate.bSend:

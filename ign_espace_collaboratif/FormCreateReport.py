@@ -1,10 +1,9 @@
 import json
 import os
 from typing import Optional
-from PyQt5 import QtGui, QtWidgets, QtCore
-from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
-from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
-from qgis.PyQt import uic
+from qgis.PyQt import QtGui, QtWidgets, QtCore, uic
+from qgis.PyQt.QtCore import Qt, QDate, QDateTime, QTime
+from qgis.PyQt.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 from .core.Theme import Theme
@@ -64,11 +63,11 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.__context = context
 
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__onSend)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setText("Envoyer")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(self.__onSend)
 
         self.checkBoxAttDoc.stateChanged.connect(self.__openFileDialog)
 

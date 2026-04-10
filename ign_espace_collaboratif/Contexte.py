@@ -12,9 +12,9 @@ import ntpath
 import time
 from typing import Optional
 import requests
-from PyQt5 import QtGui
-from PyQt5.QtGui import QImage
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt import QtGui
+from qgis.PyQt.QtGui import QImage
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
     QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup
@@ -400,7 +400,7 @@ class Contexte(object):
             self.setListNameIdFromAllUserCommunities(communities.getListNameIdFromAllUserCommunities())
             self.setUserNameCommunity(communities.getUserName())
             dlgSelectedCommunities = FormChoixGroupe(self)
-            dlgSelectedCommunities.exec_()
+            dlgSelectedCommunities.exec()
             # bouton Continuer (le choix du nouveau profil est validé)
             if not dlgSelectedCommunities.getCancel():
                 # Le nouvel id et nom du groupe sont retournés dans un tuple idNameCommunity
@@ -491,7 +491,7 @@ class Contexte(object):
             for emprise in self.getUserCommunity().getEmprises():
                 strEmprises += "{},".format(emprise)
         dlgInfo.textInfo.append("Emprise(s) serveur : {}".format(strEmprises[:-1]))
-        dlgInfo.exec_()
+        dlgInfo.exec()
 
     def getTokenType(self):
         """
@@ -721,7 +721,7 @@ class Contexte(object):
                 pushMessage("Remarque",
                             str(e),
                             message,
-                            level=1, duration=3)
+                            level=Qgis.MessageLevel.Warning, duration=3)
             print(str(e))
 
     def hideColumn(self, layer, columnName) -> None:
@@ -901,9 +901,9 @@ class Contexte(object):
             else:
                 message = "Les couches [{}] existent déjà, elles vont être supprimées.\nVoulez-vous continuer ?"\
                     .format(tmp[:-2])
-            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.No:
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
                 return False
 
         layerIds = []

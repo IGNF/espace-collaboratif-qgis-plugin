@@ -1,8 +1,7 @@
 import os
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QDialogButtonBox, QMessageBox
-from PyQt5.QtCore import Qt
-from qgis.PyQt import uic
+from qgis.PyQt import QtWidgets, QtCore, uic
+from qgis.PyQt.QtWidgets import QDialogButtonBox, QMessageBox
+from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsProject, QgsVectorLayer
 from .core.SQLiteManager import SQLiteManager
 from .core.Layer import Layer
@@ -31,7 +30,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.__context = context
         self.__listNamesIdsCommunities = context.getListNameIdFromAllUserCommunities()
         self.__nameActiveCommunity = context.getActiveCommunityName()
@@ -107,10 +106,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         - cancel, l'utilisateur stoppe la procédure
         - shapeFile, l'utilisateur veut importer une couche shapefile comme zone de travail
         """
-        self.buttonBox.button(QDialogButtonBox.Save).setText("Continuer")
-        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Save).setText("Continuer")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Save).clicked.connect(self.save)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setText("Annuler")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).clicked.connect(self.cancel)
         self.toolButtonShapeFile.clicked.connect(self.openShapeFile)
 
     def openShapeFile(self) -> None:
@@ -155,9 +154,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                         self.comboBoxWorkZone.setCurrentIndex(index)
                         message = "La zone de travail [{}] existe déjà dans la carte. Voulez-vous la supprimer ?\n" \
                                   "Le nouveau fichier shape sera importé.".format(shapefileLayerName)
-                        reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes,
-                                                     QMessageBox.No)
-                        if reply == QMessageBox.Yes:
+                        reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                                     QMessageBox.StandardButton.No)
+                        if reply == QMessageBox.StandardButton.Yes:
                             removeLayers = QgsProject.instance().mapLayersByName(shapefileLayerName)
                             if len(removeLayers) == 1:
                                 QgsProject.instance().removeMapLayer(removeLayers[0].id())
@@ -220,8 +219,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             message = "Vous n'avez pas spécifié de zone de travail. Lorsque vous importerez les signalements ou les " \
                       "données de votre groupe, le chargement se fera sur la totalité du territoire et sera " \
                       "probablement long. Voulez-vous continuer ?"
-            reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.No:
+            reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
                 return
             self.__bCancel = False
 
@@ -325,8 +324,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             if newGroup is not None:
                 message = "Vous avez choisi un nouveau groupe. Toutes les données du groupe {0} vont être " \
                           "supprimées. Voulez-vous continuer ?".format(newGroup.name())
-                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.Yes:
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
                     root.removeChildNode(newGroup)
                     self.removeTablesSQLite(layersInProject)
                     QgsProject.instance().write()
@@ -350,8 +349,8 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             if not bNewGroup and bEspaceCoLayersInProject:
                 message = "Vous avez choisi une nouvelle zone de travail. Les couches Espace collaboratif " \
                           " déjà chargées dans votre projet vont être supprimées. Voulez-vous continuer ?"
-                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.Yes:
+                reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
                     self.__context.removeLayersFromProject(layersInProject, layersInTT, False)
                     self.removeTablesSQLite(layersInProject)
                 else:

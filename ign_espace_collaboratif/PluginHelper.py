@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element
 from datetime import datetime
 from typing import Optional
-from PyQt5.QtWidgets import QMessageBox, QApplication
+from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 from qgis.core import QgsProject
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
@@ -587,9 +587,9 @@ class PluginHelper:
         """
         msgBox = QMessageBox()
         msgBox.setWindowTitle("IGN Espace Collaboratif")
-        msgBox.setIcon(QMessageBox.Warning)
+        msgBox.setIcon(QMessageBox.Icon.Warning)
         msgBox.setText(message)
-        msgBox.exec_()
+        msgBox.exec()
 
     @staticmethod
     def open_file(filename) -> None:

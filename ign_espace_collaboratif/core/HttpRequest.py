@@ -1,6 +1,5 @@
 import json
 import requests
-from requests import Response
 from .PluginLogger import PluginLogger
 
 
@@ -165,7 +164,7 @@ class HttpRequest(object):
             }
 
     @staticmethod
-    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> Response:
+    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> requests.Response:
         """
         Lance une requête HTTP GET, POST ou PATCH en fonction des variables passées en entrée.
 

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from . import Constantes as cst
 from .Box import Box
@@ -37,8 +37,8 @@ class BBox(object):
                 message = "Vous n'avez pas spécifié de zone de travail. \n\n" \
                           "Souhaitez-vous poursuivre l'import des objets sur la totalité du territoire ? "
                 reply = QMessageBox.question(self.__context.iface.mainWindow(), cst.IGNESPACECO, message,
-                                             QMessageBox.Yes, QMessageBox.No)
-                if reply == QMessageBox.No:
+                                             QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.No:
                     return Box(0.0, 0.0, 0.0, 0.0)
         return box
 
@@ -59,9 +59,9 @@ class BBox(object):
                       self.__filterName + \
                       "' définie comme zone de travail ou celle-ci n'est pas activée.\n\n" + \
                       "Souhaitez-vous poursuivre l'import sur la totalité du territoire ? "
-            reply = QMessageBox.question(self.__context.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.No:
+            reply = QMessageBox.question(self.__context.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
                 raise Exception("Arrêt demandé")
         else:
             layerFilterCrs = self.__layerFilter.crs()

@@ -7,7 +7,7 @@ Valide les contraintes lors de la sauvegarde des modifications.
 """
 import re
 from typing import Tuple, Optional, Dict, Any, List
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsVectorLayer, QgsFeature, Qgis
 from qgis.utils import iface
 import qgis.core
@@ -113,7 +113,7 @@ class TableViewConstraints:
             iface.messageBar().pushMessage(
                 "Mode édition",
                 f"Édition activée sur '{self.layer.name()}'. Les contraintes seront validées lors de la sauvegarde.",
-                level=Qgis.Info,
+                level=Qgis.MessageLevel.Info,
                 duration=3
             )
 
@@ -138,7 +138,7 @@ class TableViewConstraints:
                 iface.messageBar().pushMessage(
                     "Attention - Contrainte non respectée",
                     f"Entité #{fid}, champ '{fieldName}': {errorMsg}",
-                    level=Qgis.Warning,
+                    level=Qgis.MessageLevel.Warning,
                     duration=5
                 )
 
@@ -193,7 +193,7 @@ class TableViewConstraints:
                 iface.messageBar().pushMessage(
                     "Erreur de validation",
                     "Sauvegarde annulée : des contraintes ne sont pas respectées. Corrigez les erreurs et sauvegardez à nouveau.",
-                    level=Qgis.Critical,
+                    level=Qgis.MessageLevel.Critical,
                     duration=7
                 )
 
@@ -323,9 +323,9 @@ class TableViewConstraints:
 
         # Afficher le message d'erreur
         msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Critical)
+        msgBox.setIcon(QMessageBox.Icon.Critical)
         msgBox.setWindowTitle("Erreurs de validation des contraintes")
         msgBox.setText("Impossible de sauvegarder les modifications")
         msgBox.setInformativeText(errorMessage)
-        msgBox.setStandardButtons(QMessageBox.Ok)
-        msgBox.exec_()
+        msgBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msgBox.exec()

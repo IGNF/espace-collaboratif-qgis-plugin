@@ -1,6 +1,5 @@
 import os
-from PyQt5 import QtCore, QtWidgets
-from qgis.PyQt import uic
+from qgis.PyQt import QtCore, QtWidgets, uic
 from .core.Wkt import Wkt
 from .core.PluginLogger import PluginLogger
 from .core.Report import Report

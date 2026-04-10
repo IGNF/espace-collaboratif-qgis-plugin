@@ -1,6 +1,6 @@
 import json
 import qgis.core
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsProject, QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
