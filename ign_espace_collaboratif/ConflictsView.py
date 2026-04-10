@@ -342,8 +342,14 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         return resultat
 
     def __mergeDatas(self, feature):
-        dictServer = json.loads(feature['data_server'])
-        dictClient = json.loads(feature['data_client'])
+        if feature['data_server'] is None or feature['data_server'] == "":
+            dictServer = {}
+        else:
+            dictServer = json.loads(feature['data_server'])
+        if feature['data_client'] is None or feature['data_client'] == "":
+            dictClient = {}
+        else:
+            dictClient = json.loads(feature['data_client'])
         typeConflict = feature['type_conflict']
         if typeConflict == cst.CONFLICT_MODIFICATION:
             return self.__mergeDatasServerAndClient(dictServer, dictClient)

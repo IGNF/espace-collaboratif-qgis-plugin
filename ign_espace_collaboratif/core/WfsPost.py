@@ -274,6 +274,9 @@ class WfsPost(object):
                 bf.setFeatureByAttribute(params)
         else:
             if responseTransactions['status'] == cst.STATUS_COMMITTED:
+                # Il faut détruire la (ou les) zone(s) de conflit créées pour sauvegarder les objets clients
+                self.__deleteTemporaryConflicts()
+
                 # Mise à jour de la base SQLite pour les objets détruits et modifiés d'une couche BDUni
                 if not self.__layer.isStandard:
                     SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
@@ -294,6 +297,11 @@ class WfsPost(object):
                     self.__layer.rollBack()
                 self.__layer.reload()
         return responseTransactions
+
+    def __deleteTemporaryConflicts(self, cleabss):
+        for cleabs in cleabss:
+            # Rechercher les zones de conflits correspondantes
+            a = 1
 
     def __synchronize(self) -> int:
         """

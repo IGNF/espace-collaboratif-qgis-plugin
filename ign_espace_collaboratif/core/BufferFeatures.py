@@ -173,6 +173,10 @@ class BufferFeatures:
           - stockage des attributs du feature source dans 'data_client'
             avec conversion des NULL QGIS → None
         """
+        # -- 0) Si l'objet client est détruit, il faut compléter la zone de conflit
+        if source_feat_deleted:
+            a = 1
+
         # -- 1) Calcul du buffer autour de l'objet en conflit --
         buffer = self.__bufferedGeometry()
 
