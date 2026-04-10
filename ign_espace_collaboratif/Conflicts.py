@@ -15,9 +15,12 @@ from .core.SQLiteManager import SQLiteManager
 
 
 class Conflicts(object):
+    __context = None
+    __iface = None
+    __project = None
     __dlgConflicts = None
 
-    def __init__(self, context, iface) -> None:
+    def __init__(self, context) -> None:
         """
         Constructeur.
         Initialise le contexte, les outils de gestion d'un signalement (ToolsReport).
@@ -26,7 +29,7 @@ class Conflicts(object):
         :param context: le contexte du projet
         """
         self.__context = context
-        self.__iface = iface
+        self.__iface = context.iface
         self.__project = QgsProject.instance()
 
     def __applySymbology(self):

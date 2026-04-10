@@ -6,8 +6,7 @@ from qgis.core import (
     QgsGeometry,
     QgsProject,
     QgsCoordinateReferenceSystem,
-    QgsCoordinateTransform,
-    QgsVectorLayer
+    QgsCoordinateTransform
 )
 from PyQt5 import QtCore, QtWidgets
 from qgis.PyQt.QtGui import QIcon, QColor

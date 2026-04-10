@@ -481,7 +481,6 @@ class SQLiteManager(object):
         return totalRows
 
     @staticmethod
-    #
     def selectRowsInTable(layer, ids) -> list:
         """
         Retourne le nom de la clé primaire (et la clé MD5 d'une empreinte numérique de l'objet) pour une table non BDUni
@@ -512,6 +511,20 @@ class SQLiteManager(object):
         return res
 
     @staticmethod
+    def selectRow(layer, id, nameGeometryColumn):
+        sql = "SELECT *, ST_AsText({}) AS geom_wkt FROM {} WHERE {} = {}".format(nameGeometryColumn, layer.name(),
+                                                                                 cst.ID_SQLITE, id)
+        connection = SQLiteManager.sqlite3Connect()
+        connection.row_factory = sqlite3.Row
+        cur = connection.cursor()
+        cur.execute(sql)
+        rows = cur.fetchone()
+        records = dict(rows) if rows else None
+        cur.close()
+        connection.close()
+        return records
+
+    @staticmethod
     def emptyTable(tableName) -> None:
         """
         Suppression de tous les enregistrements d'une table.
@@ -539,6 +552,29 @@ class SQLiteManager(object):
         SQLiteManager.findAndDeleteLock()
         if not SQLiteManager.isTableExist(tableName):
             return
+        # Nettoyage de la métadonnée SpatiaLite avant de supprimer la table :
+        # si geometry_columns contient encore une entrée pour cette table (cas d'un rechargement
+        # depuis un autre guichet), AddGeometryColumn échoue ou produit un état incohérent
+        # qui peut provoquer un crash QGIS. DiscardGeometryColumn supprime cette entrée.
+        connection = SQLiteManager.sqlite3Connect()
+        try:
+            cur = connection.cursor()
+            cur.execute(
+                "SELECT f_geometry_column FROM geometry_columns WHERE f_table_name = ?",
+                (tableName,)
+            )
+            geom_cols = cur.fetchall()
+            for (geom_col,) in geom_cols:
+                cur.execute(
+                    "SELECT DiscardGeometryColumn(?, ?)",
+                    (tableName, geom_col)
+                )
+            connection.commit()
+            cur.close()
+        except Exception as e:
+            print(f"SQLiteManager.deleteTable : nettoyage geometry_columns ignoré pour {tableName} : {e}")
+        finally:
+            connection.close()
         sql = u"DROP TABLE {0}".format(tableName)
         SQLiteManager.executeSQL(sql)
 
@@ -896,7 +932,8 @@ class SQLiteManager(object):
     def createTableConflicts():
         # Est-ce la base est verrouillée ?
         SQLiteManager.findAndDeleteLock()
-        SQLiteManager.deleteTable(cst.CONFLICT_LAYER)
+        if SQLiteManager.isTableExist(cst.CONFLICT_LAYER):
+            return
         sql = u"CREATE TABLE " + cst.CONFLICT_LAYER + " (" + \
               u"id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " + \
               u"date_conflict TEXT, " + \

@@ -144,7 +144,7 @@ class RipartPlugin:
             return
 
         # Ajout de la table SQLite et de la couche conflits au projet
-        self.__conflicts = Conflicts(self.__context, self.iface)
+        self.__conflicts = Conflicts(self.__context)
         self.__conflicts.createTable()
         self.__conflicts.createLayer()
 
@@ -348,7 +348,6 @@ class RipartPlugin:
         :param editableLayers: liste des couches modifiées
         :type editableLayers: list[QgsMapLayer]
         """
-
         allMessages = []
         for layer in editableLayers:
             allMessages.append(self.__saveChangesForOneLayer(layer))
@@ -981,7 +980,7 @@ class RipartPlugin:
         if not self.__doConnexion(False):
             return False
         if self.__conflicts is None:
-            self.__conflicts = Conflicts(self.__context, self.iface)
+            self.__conflicts = Conflicts(self.__context)
         self.__conflicts.do()
 
     def __configurePlugin(self) -> None:

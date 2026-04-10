@@ -15,6 +15,7 @@ from qgis.core import (
 )
 from PyQt5.QtCore import QVariant
 from .Query import Query
+from ..Conflicts import Conflicts
 from ..PluginHelper import PluginHelper
 
 
@@ -83,7 +84,14 @@ class BufferFeatures:
     def __retrieveLayer(self):
         layers = QgsProject.instance().mapLayersByName(cst.CONFLICT_LAYER)
         # QgsMapLayer to QgsVectorLayer
-        return QgsVectorLayer(layers[0].source(), layers[0].name(), layers[0].providerType())
+        # return QgsVectorLayer(layers[0].source(), layers[0].name(), layers[0].providerType())
+        if len(layers) == 0:
+            # Ajout de la table SQLite et de la couche conflits au projet
+            self.__conflicts = Conflicts(self.__context)
+            self.__conflicts.createTable()
+            self.__conflicts.createLayer()
+            layers = QgsProject.instance().mapLayersByName(cst.CONFLICT_LAYER)
+        return layers[0]
 
     def setFeatureByAttribute(self, params) -> None:
         isObjectClientDeleted = False
@@ -105,7 +113,7 @@ class BufferFeatures:
         # Insère la ligne (buffer + attributs)
         print("[INFO] Données de l'objet server : {}".format(dataObjectServer))
         # TODO attention self.feature peut-être None
-        self.__insertBufferedFeature(self.feature, isObjectClientDeleted, dataObjectServer)
+        self.insertBufferedFeature(self.feature, isObjectClientDeleted, dataObjectServer)
         self.conflictslayer.triggerRepaint()
         self.conflictslayer.reload()
 
@@ -152,7 +160,7 @@ class BufferFeatures:
             # CRS déjà métrique → buffer direct
             return geom.buffer(self.distance, 8)
 
-    def __insertBufferedFeature(
+    def insertBufferedFeature(
             self,
             source_feat: QgsFeature,
             source_feat_deleted: bool,
@@ -206,3 +214,41 @@ class BufferFeatures:
                 raise Exception("Erreur durant le commit des modifications.")
 
         return new_feat
+
+    def insertDeletedClientFeature(self, params):
+        """
+        """
+        # -- 1) Nouveau feature avec sa géométrie --
+        self.feature = QgsFeature(self.conflictslayer.fields())
+        wkt = params['geom_wkt']
+        print(f"WKT : {wkt}")
+        if not isinstance(wkt, str) or not wkt.strip():
+            raise ValueError(f"Géométrie WKT invalide : {wkt}")
+        self.feature.setGeometry(QgsGeometry.fromWkt(wkt))
+
+        # -- 2) Calcul du buffer pour créer un objet polygone --
+        buffer = self.__bufferedGeometry()
+        self.feature.setGeometry(buffer)
+
+        # -- 3) Attributs spécifiques au conflit --
+        self.feature["date_conflict"] = now_iso()
+        self.feature["layer_name"] = params['sourceLayerName']
+        self.feature["id_object_client"] = int(params['idFeature'])
+        self.feature["cleabs"] = params['cleabs']
+        self.feature["data_server"] = ""
+        self.feature["data_client"] = json.dumps(params['fields'], ensure_ascii=False)
+        self.feature["type_conflict"] = cst.CONFLICT_SUPPRESSION_CLIENT
+        self.feature["geometry_conflict"] = params['geom_wkt']
+
+        # -- 3) Insertion dans la couche --
+        must_commit = False
+        if not self.conflictslayer.isEditable():
+            self.conflictslayer.startEditing()
+            must_commit = True
+
+        if not self.conflictslayer.addFeature(self.feature):
+            raise Exception("Impossible d’ajouter le nouvel objet à la couche.")
+
+        if must_commit:
+            if not self.conflictslayer.commitChanges():
+                raise Exception("Erreur durant le commit des modifications.")

@@ -1,6 +1,6 @@
 import json
 import qgis.core
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtCore import NULL
 from qgis.core import QgsProject, QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
@@ -445,7 +445,7 @@ class WfsPost(object):
         }
         return action
 
-    def __pushDeletedFeatures(self, deletedFeatures) -> None:
+    def __pushDeletedFeatures(self, deletedFeaturesIds) -> None:
         """
         Complète le dictionnaire général des actions (__datasForPost) par une liste d'actions 'Delete'
         sur la destruction d'objets.
@@ -453,13 +453,46 @@ class WfsPost(object):
         :param deletedFeatures: liste des objets détruits (QgsFeature) sur une couche
         :type deletedFeatures: list
         """
-        result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeatures)
+        result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeaturesIds)
         for r in result:
             action = self.__setAction('Delete')
             if not self.__isTableStandard:
                 action['data'].update(self.__setFingerPrint(r[1]))
             action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             self.__datasForPost['actions'].append(action)
+        self.__captureDeletedFeaturesAndPutToConflictsLayer(deletedFeaturesIds)
+
+    def __captureDeletedFeaturesAndPutToConflictsLayer(self, deletedFeatureIds):
+        """
+        Capture des objets détruits en prévention d'un conflit de suppression sur client.
+        Création d'un objet conflit temporaire qui sera détruit de la couche "conflits" si pas de conflits.
+        """
+        bf = BufferFeatures(self.__context, self.__layer)
+        params = {'sourceLayerName': self.__layer.name()}
+        for fid in deletedFeatureIds:
+            params['idFeature'] = fid
+            rec = SQLiteManager.selectRow(self.__layer, fid, self.__layer.geometryNameForDatabase)
+            if rec:
+                fields = {}
+                for col_name in rec.keys():
+                    field = {}
+                    value = rec[col_name]
+                    if col_name == "cleabs":
+                        params['cleabs'] = value
+                    # On zappe la géométrie en bytes
+                    if col_name == self.__layer.geometryNameForDatabase:
+                        continue
+                    # --- Géométrie ---
+                    if col_name == "geom_wkt":
+                        params['geom_wkt'] = value
+                        continue
+                    if value == NULL:
+                        field[col_name] = None
+                    else:
+                        field[col_name] = value
+                    fields.update(field)
+                params['fields'] = fields
+            bf.insertDeletedClientFeature(params)
 
     def __pushAddedFeatures(self, addedFeatures, bBDUni) -> None:
         """
