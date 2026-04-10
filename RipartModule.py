@@ -220,6 +220,8 @@ class RipartPlugin:
                 self.logger.debug("connectProjectRead: projet standard, aucune initialisation Ripart")
                 return
 
+            self._show_deprecation_warning()
+
             uri = context.getUriDatabaseSqlite()
             if uri is None:
                 self.logger.debug("connectProjectRead: groupe Ripart détecté mais base absente")
@@ -585,6 +587,26 @@ class RipartPlugin:
         self.toolButton2.setText("Aide")
 
         self.toolbar.addWidget(self.toolButton2)
+
+    def _show_deprecation_warning(self):
+        """Affiche un bandeau d'avertissement pour les versions 4.3.5 et 4.3.6."""
+        try:
+            config = configparser.ConfigParser()
+            config.read(os.path.join(self.plugin_dir, 'metadata.txt'))
+            version = config.get('general', 'version').strip()
+            if version in ('4.3.5', '4.3.6'):
+                self.iface.messageBar().pushMessage(
+                    "IGN Espace Collaboratif",
+                    (
+                        "Vous utilisez la version {} du plugin. "
+                        "Une version 5.0.x sera prochainement disponible "
+                        "sur les dépôts officiels QGIS."
+                    ).format(version),
+                    level=MSG_LEVEL_WARNING,
+                    duration=20
+                )
+        except Exception as e:
+            self.logger.warning("_show_deprecation_warning: {}".format(e))
 
     def test(self):
         layer = self.iface.activeLayer()
