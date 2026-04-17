@@ -1,7 +1,7 @@
 import json
 import qgis.core
 from qgis.PyQt.QtCore import NULL
-from qgis.core import QgsProject, QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer
+from qgis.core import QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer, QgsFeatureRequest, QgsProject
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
 from .Wkt import Wkt
@@ -147,7 +147,7 @@ class WfsPost(object):
             if value is None or value == qgis.core.NULL or value == "NULL":
                 # If the field has a NOT NULL constraint it is required: a NULL here is a spurious QGIS
                 # signal (e.g. ValueMap/ENUM widget init). Skip it to avoid a server constraint violation.
-                if field.constraints().constraints() & qgis.core.QgsFieldConstraints.ConstraintNotNull:
+                if field.constraints().constraints() & qgis.core.QgsFieldConstraints.Constraint.ConstraintNotNull:
                     continue
                 # Nullable field: user intentionally cleared it → send JSON null.
                 fieldsNameValue[fieldName] = None
@@ -242,6 +242,13 @@ class WfsPost(object):
                     print("[INFO] cleabs : {}".format(conflit['server_object']['cleabs']))
                     listcleabs.append(conflit['server_object']['cleabs'])
                 message.update({'cleabs': listcleabs})
+            if responseToDict["status"] == cst.STATUS_COMMITTED:
+                listcleabs = []
+                actions = responseToDict["actions"]
+                for action in actions:
+                    if action['state'] == 'Delete':
+                        listcleabs.append(action['server_feature_id'])
+                message.update({'cleabs': listcleabs})
         return message
 
     def __gcmsPost(self, bNormalWfsPost) -> {}:
@@ -275,7 +282,7 @@ class WfsPost(object):
         else:
             if responseTransactions['status'] == cst.STATUS_COMMITTED:
                 # Il faut détruire la (ou les) zone(s) de conflit créées pour sauvegarder les objets clients
-                self.__deleteTemporaryConflicts()
+                self.__deleteTemporaryConflicts(responseTransactions['cleabs'])
 
                 # Mise à jour de la base SQLite pour les objets détruits et modifiés d'une couche BDUni
                 if not self.__layer.isStandard:
@@ -299,9 +306,23 @@ class WfsPost(object):
         return responseTransactions
 
     def __deleteTemporaryConflicts(self, cleabss):
-        for cleabs in cleabss:
-            # Rechercher les zones de conflits correspondantes
-            a = 1
+        # Recherche de la couche "conflits"
+        listLayers = QgsProject.instance().mapLayersByName(cst.CONFLICT_LAYER)
+        if len(listLayers) != 1:
+            return
+        features = list(listLayers[0].getFeatures())
+        if len(features) == 0:
+            return
+        idx = listLayers[0].fields().indexOf('cleabs')
+        if idx < 0:
+            return
+        ids = []
+        for feature in features:
+            if feature['cleabs'] in cleabss:
+                ids.append(feature.id())
+        dp = listLayers[0].dataProvider()
+        dp.deleteFeatures(ids)
+        listLayers[0].triggerRepaint()
 
     def __synchronize(self) -> int:
         """
@@ -458,8 +479,8 @@ class WfsPost(object):
         Complète le dictionnaire général des actions (__datasForPost) par une liste d'actions 'Delete'
         sur la destruction d'objets.
 
-        :param deletedFeatures: liste des objets détruits (QgsFeature) sur une couche
-        :type deletedFeatures: list
+        :param deletedFeaturesIds: liste des objets détruits (QgsFeature) sur une couche
+        :type deletedFeaturesIds: list
         """
         result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeaturesIds)
         for r in result:
