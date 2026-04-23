@@ -264,7 +264,6 @@ class WfsPost(object):
                 raise Exception(e)
             # Mise à jour du numrec pour la couche dans la table des tables
             SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
-            SQLiteManager.vacuumDatabase()
             # Le buffer de la couche est vidée et elle est rechargée
             if bNormalWfsPost:
                 self.__layer.rollBack()
@@ -286,8 +285,6 @@ class WfsPost(object):
         if self.__layer.isStandard:
             bDetruit = False
             SQLiteManager.emptyTable(self.__layer.name())
-            SQLiteManager.vacuumDatabase()
-            self.__layer.reload()
 
         numrec = SQLiteManager.selectNumrecTableOfTables(self.__layer.name())
         headers = {

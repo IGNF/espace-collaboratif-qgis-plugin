@@ -115,13 +115,17 @@ class WfsGet(object):
             if response['stop']:
                 break
 
-    def gcmsGet(self, bExtraction=False) -> ():
+    def gcmsGet(self, bExtraction=False, maxNumrec=None) -> ():
         """
         Envoie une requête GET et met à jour les tables SQLite du projet en cours.
         NB : le dernier numéro de mise à jour (numRec) d'une table est fixé à 0 pour une table différente de la BDUni.
 
         :param bExtraction: à True quand il s'agit d'extraire les données sur une zone de travail
         :type bExtraction: bool
+
+        :param maxNumrec: le numéro de réconciliation max déjà récupéré par l'appelant (évite un appel réseau
+                          redondant). Si None, sera récupéré automatiquement pour les couches BDUni.
+        :type maxNumrec: int or None
 
         :return: le dernier numéro de mise à jour sur une table et un message de fin
         """
@@ -130,7 +134,9 @@ class WfsGet(object):
         start = time.time()
         totalRows = 0
         requestCount = 0
-        if self.isStandard:
+        if maxNumrec is not None:
+            pass  # Fourni par l'appelant, pas de requête réseau supplémentaire
+        elif self.isStandard:
             maxNumrec = 0
         else:
             # Try to get maxNumrec, but don't block extraction if it fails
@@ -358,10 +364,7 @@ class WfsGet(object):
             self.__makeRequestDeletedObjects()
             print("[CLEANUP] Deleted objects processed")
         
-        # nettoyage de la base SQLite
-        print("\n[CLEANUP] Running SQLite VACUUM to optimize database...")
-        SQLiteManager.vacuumDatabase()
-        print("[CLEANUP] Database optimization completed")
+  
         
         end = time.time()
         timeResult = end - start

@@ -42,14 +42,14 @@ class HttpRequest(object):
         print(uri)
         if params is not None:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    params=params, verify=False)
+                                    params=params, verify=False, timeout=30)
         else:
             # Ne pas vérifier le certificat en localhost
             if uri.find("localhost.ign.fr") != -1:
                 response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                        verify=False)
+                                        verify=False, timeout=30)
             else:
-                response = requests.get(uri, headers=self.__headers, proxies=self.__proxies)
+                response = requests.get(uri, headers=self.__headers, proxies=self.__proxies, timeout=30)
         response.encoding = 'utf-8'
         return response
 
@@ -126,7 +126,7 @@ class HttpRequest(object):
             print("="*80 + "\n")
             
             r = requests.get(url, headers=headers, proxies=proxies,
-                             params=params, verify=False)
+                             params=params, verify=False, timeout=30)
             if r.status_code == 200:
                 r.encoding = 'utf-8'
                 response = json.loads(r.text)
@@ -211,13 +211,13 @@ class HttpRequest(object):
             HttpRequest.logger.debug("Proxies: {}".format(proxies))
             
             if launchBy == 'gcmsPatch':
-                response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=False)
+                response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=False, timeout=30)
             elif data is None and files is None:
-                response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=False)
+                response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=False, timeout=30)
             elif files is None:
-                response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=False)
+                response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=False, timeout=30)
             else:
-                response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=False)
+                response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=False, timeout=60)
 
             # DEBUG: Log response details
             print("Response status: {}".format(response.status_code))

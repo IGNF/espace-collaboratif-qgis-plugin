@@ -374,6 +374,8 @@ class RipartPlugin:
         # Connexion à l'Espace collaboratif
         # si res = 0, alors l'utilisateur à annuler son action
         if not self.__doConnexion(False):
+            # Empêcher QGIS de persister les modifications localement sans transaction serveur
+            layer.destroyEditCommand()
             return "error : PluginModule:__saveChangesForOneLayer, pas de connexion, pas de transaction" \
                    " avec l'espace collaboratif."
 
@@ -929,8 +931,6 @@ class RipartPlugin:
                 if layer.isStandard:
                     bDetruit = False
                     SQLiteManager.emptyTable(layer.name())
-                    SQLiteManager.vacuumDatabase()
-                    layer.triggerRepaint()
                 parameters['detruit'] = bDetruit
                 # numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
                 # parameters['numrec'] = numrec
@@ -942,11 +942,15 @@ class RipartPlugin:
                     if numrec == maxNumrec:
                         endMessage += "<br/>Pas de mise à jour\n\n"
                         continue
-                maxNumRecMessage = wfsGet.gcmsGet()
+                else:
+                    maxNumrec = None  # Standard : pas de getMaxNumrec
+                maxNumRecMessage = wfsGet.gcmsGet(maxNumrec=maxNumrec)
                 SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
-                SQLiteManager.vacuumDatabase()
                 endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])
             progress.close()
+
+            # VACUUM une seule fois après toutes les synchronisations
+            SQLiteManager.vacuumDatabase()
 
             PluginHelper.refreshAllLayers()
 
