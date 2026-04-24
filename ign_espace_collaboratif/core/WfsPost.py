@@ -258,10 +258,17 @@ class WfsPost(object):
                 # Le numrec est égal à 0 pour une couche standard à un numéro pour une couche BDUni
                 numrec = self.__synchronize()
             except Exception as e:
-                # QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
-                # Il faut vider l'editbuffer de la couche active
-                self.__layer.rollBack()
-                raise Exception(e)
+                # La transaction est déjà committée côté serveur.
+                # Pour BDUni, les actions locales ont été appliquées (setActionsInTableBDUni),
+                # on vide l'editBuffer et on recharge la couche pour refléter l'état local.
+                print("[WARNING] __synchronize failed: {}".format(str(e)))
+                if bNormalWfsPost:
+                    self.__layer.rollBack()
+                self.__layer.reload()
+                # Ne pas relancer l'exception : la transaction a réussi côté serveur,
+                # l'utilisateur pourra resynchroniser via le bouton "mettre à jour"
+                responseTransactions['message'] += " (rechargement partiel, utilisez 'mettre à jour' pour resynchroniser)"
+                return responseTransactions
             # Mise à jour du numrec pour la couche dans la table des tables
             SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
             # Le buffer de la couche est vidée et elle est rechargée
@@ -275,6 +282,10 @@ class WfsPost(object):
         Lance la mise à jour (GET) des couches QGIS après l'envoi sur les tables serveurs (POST) des modifications.
         NB : pour une table standard (non BDUni), la synchronisation vide les tables SQLite du projet et extrait
         de nouveau l'ensemble des objets intersectant la boite englobante de la zone de travail.
+
+        Pour une couche BDUni, la synchronisation est incrémentale (seuls les objets modifiés depuis le dernier
+        numrec sont récupérés). Les actions locales (Update/Delete) ont déjà été appliquées via
+        setActionsInTableBDUni avant l'appel à cette méthode.
 
         :return: le dernier numéro de mises à jour.
         """
@@ -299,7 +310,21 @@ class WfsPost(object):
                       'headers': headers, 'proxies': self.__context.getProxies(),
                       'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
-        numrecmessage = wfsGet.gcmsGet()
+
+        # Pour les couches BDUni, récupérer maxNumrec en amont pour éviter un appel redondant dans gcmsGet.
+        # En cas d'échec, on retourne le numrec actuel : la transaction est déjà committée côté serveur,
+        # l'utilisateur pourra resynchroniser plus tard via le bouton "mettre à jour".
+        maxNumrec = None
+        if not self.__layer.isStandard:
+            try:
+                maxNumrec = wfsGet.getMaxNumrec()
+            except Exception as e:
+                print("[WARNING] __synchronize: getMaxNumrec failed: {}".format(str(e)))
+                # Transaction OK côté serveur, mais on ne peut pas récupérer le delta.
+                # On retourne le numrec actuel, l'utilisateur resynchronisera via le bouton "mettre à jour".
+                return numrec
+
+        numrecmessage = wfsGet.gcmsGet(maxNumrec=maxNumrec)
         if 'error' in numrecmessage[1]:
             message = "Vos modifications ont bien été prises en compte mais la couche n'a pas pu être rechargée " \
                       "dans QGIS. Il faut la ré-importer. En cas de problème, veuillez contacter le gestionnaire " \

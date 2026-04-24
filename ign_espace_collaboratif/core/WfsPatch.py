@@ -103,7 +103,6 @@ class WfsPatch(object):
         condition = "NoSignalement = {}".format(jsonResponse['id'])
         parameters = {'name': cst.nom_Calque_Signalement, 'attributes': attributes, 'condition': condition}
         SQLiteManager.updateTable(parameters)
-        SQLiteManager.vacuumDatabase()
 
     def gcmsPatch(self) -> bool:
         """

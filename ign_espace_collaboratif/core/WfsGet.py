@@ -61,12 +61,13 @@ class WfsGet(object):
         if PluginHelper.keyExist('tableid', parameters):
             self.tableid = parameters['tableid']
 
-    def __initParametersGcmsGet(self, filterDelete=False) -> None:
+    def __initParametersGcmsGet(self, skipDetruitFilter=False) -> None:
         """
         Initialisation des paramètres pour une requête HTTP GET.
 
-        :param filterDelete: à True, si la requête doit récupérer les objets détruits d'une couche BDUni
-        :type filterDelete: bool
+        :param skipDetruitFilter: à True, ne pas filtrer sur le champ 'detruit' (récupère détruits et
+               non-détruits en une seule passe pour traitement local) 
+        :type skipDetruitFilter: bool
         """
         offset = 0
         maxFeatures = 10000  # Limite maximum d'objet de l'API 
@@ -80,7 +81,7 @@ class WfsGet(object):
         if self.bbox is not None:
             self.__setBBox()
         if self.bDetruit or self.numrec != 0:
-            self.__setFilter(filterDelete, self.numrec)
+            self.__setFilter(filterDelete=False, numrec=self.numrec, skipDetruit=skipDetruitFilter) # phase de test pour voir si plus rapide de récupérer détruits et non-détruits en une seule passe (skipDetruitFilter=True) ou pas (skipDetruitFilter=False)
         self.__setOffset(offset)
         self.__setMaxFeatures(maxFeatures)
         self.__setVersion('1.0.0')
@@ -130,7 +131,9 @@ class WfsGet(object):
         :return: le dernier numéro de mise à jour sur une table et un message de fin
         """
         message = ""
-        self.__initParametersGcmsGet()
+        # Pour la synchro BDUni, on récupère détruits et non-détruits en une seule passe
+        skipDetruit = (self.isStandard in (False, 0) and not bExtraction)
+        self.__initParametersGcmsGet(skipDetruitFilter=skipDetruit)
         start = time.time()
         totalRows = 0
         requestCount = 0
@@ -141,24 +144,17 @@ class WfsGet(object):
         else:
             # Try to get maxNumrec, but don't block extraction if it fails
             try:
-                print("[INFO] Attempting to get maxNumrec for BDUni layer...")
                 maxNumrec = self.getMaxNumrec()
-                print("[INFO] MaxNumrec: {}".format(maxNumrec))
+                print("[INFO] {} | maxNumrec: {}".format(self.layerName, maxNumrec))
             except Exception as e:
-                print("[WARNING] Failed to get maxNumrec (server error), defaulting to 0")
-                print("[WARNING] Error: {}".format(str(e)))
+                print("[WARNING] {} | getMaxNumrec failed, defaulting to 0: {}".format(self.layerName, str(e)))
                 self.__logger.warning("getMaxNumrec failed: {}, continuing with 0".format(str(e)))
                 maxNumrec = 0
 
-        print("\n" + "="*80)
-        print("[EXTRACTION START] Layer: {}".format(self.layerName))
-        print("[EXTRACTION] Database ID: {}".format(self.databaseid if hasattr(self, 'databaseid') else 'N/A'))
-        print("[EXTRACTION] Table ID: {}".format(self.tableid if hasattr(self, 'tableid') else 'N/A'))
-        print("[EXTRACTION] Mode: {}".format("Extraction" if bExtraction else "Synchronisation"))
-        print("[EXTRACTION] MaxFeatures per request: {}".format(self.parametersGcmsGet.get('maxFeatures', 'N/A')))
-        print("="*80)
-        self.__logger.info("Starting extraction for layer: {} (mode: {})".format(
-            self.layerName, "Extraction" if bExtraction else "Synchronisation"))
+        mode = "Extraction" if bExtraction else "Synchronisation"
+        print("[{}] Layer: {} | URL: {} | Mode: {}".format(
+            mode.upper(), self.layerName, self.url, mode))
+        self.__logger.info("Starting {} for layer: {}".format(mode, self.layerName))
 
         sqliteManager = SQLiteManager()
         MAX_RETRIES = 4  # Balanced for proxy issues
@@ -167,19 +163,8 @@ class WfsGet(object):
         using_proxy = self.proxies is not None and len(self.proxies) > 0
         PROXY_FAILURE_THRESHOLD = 2  # Disable proxy after this many failures
         
-        if using_proxy:
-            print("[INFO] Proxy configured: {}".format(list(self.proxies.values())[0] if self.proxies else 'None'))
-            print("[INFO] Proxy will be disabled after {} consecutive failures".format(PROXY_FAILURE_THRESHOLD))
-        
         while True:
             requestCount += 1
-            print("\n[REQUEST #{}] Fetching data from API...".format(requestCount))
-            print("[REQUEST #{}] Offset: {}, MaxFeatures: {}".format(
-                requestCount, 
-                self.parametersGcmsGet.get('offset', 0),
-                self.parametersGcmsGet.get('maxFeatures', 'N/A')))
-            if using_proxy:
-                print("[REQUEST #{}] Using proxy: {}".format(requestCount, list(self.proxies.keys()) if self.proxies else 'None'))
             
             # Retry logic with exponential backoff for transient errors
             response = None
@@ -187,8 +172,6 @@ class WfsGet(object):
             
             # If proxy has failed too many times, bypass it from the start
             if proxy_failures >= PROXY_FAILURE_THRESHOLD and using_proxy:
-                print("[REQUEST #{}] !!! PROXY DISABLED - {} previous failures, using DIRECT connection !!!".format(
-                    requestCount, proxy_failures))
                 current_proxies = None
                 self.proxies = None
                 using_proxy = False
@@ -197,26 +180,24 @@ class WfsGet(object):
                 if attempt > 1:
                     # Progressive delays: 2s, 4s, 6s
                     delay = RETRY_DELAY * attempt
-                    print("[REQUEST #{}] Retry attempt {}/{} after {} seconds...".format(
-                        requestCount, attempt, MAX_RETRIES, delay))
+                    print("[RETRY] {} | Request #{} attempt {}/{} (delay: {}s)".format(
+                        self.layerName, requestCount, attempt, MAX_RETRIES, delay))
                     time.sleep(delay)
                 
                 # Try without proxy after 2 failed proxy attempts
                 if attempt == 3 and proxy_failures >= 2 and using_proxy:
-                    print("[REQUEST #{}] !!! PROXY FAILING - Attempting direct connection (no proxy) !!!".format(requestCount))
+                    print("[PROXY] {} | Switching to direct connection (proxy failed {} times)".format(
+                        self.layerName, proxy_failures))
                     current_proxies = None
                 
                 response = HttpRequest.nextRequest(self.url, headers=self.headers, proxies=current_proxies,
                                                    params=self.parametersGcmsGet)
                 
                 if response['status'] == 'ok':
-                    if attempt > 1:
-                        print("[REQUEST #{}] Success after {} attempts".format(requestCount, attempt))
-                        if current_proxies is None and using_proxy:
-                            print("[REQUEST #{}] !!! Success with DIRECT connection (proxy bypassed) !!!".format(requestCount))
-                            # Continue without proxy for remaining requests
-                            self.proxies = None
-                            using_proxy = False
+                    if attempt > 1 and current_proxies is None and using_proxy:
+                        # Continue without proxy for remaining requests
+                        self.proxies = None
+                        using_proxy = False
                     # Reset proxy failure counter on success
                     proxy_failures = 0
                     break
@@ -230,30 +211,16 @@ class WfsGet(object):
                     
                     if is_proxy_error:
                         proxy_failures += 1
-                        print("[REQUEST #{}] PROXY ERROR detected (total proxy failures: {})".format(requestCount, proxy_failures))                        # Switch to direct connection immediately if threshold reached
+                        # Switch to direct connection immediately if threshold reached
                         if proxy_failures >= PROXY_FAILURE_THRESHOLD and using_proxy and current_proxies is not None:
-                            print("[REQUEST #{}] !!! PROXY FAILURE THRESHOLD REACHED - Switching to DIRECT connection NOW !!!".format(requestCount))
                             current_proxies = None
                             # Don't count this as a retry attempt - try again immediately with direct connection
-                            continue                    
-                    print("[REQUEST #{}] Attempt {}/{} FAILED".format(requestCount, attempt, MAX_RETRIES))
-                    print("  - Error type: {}".format('PROXY ERROR' if is_proxy_error else 'Network/Server error'))
-                    print("  - Error reason: {}".format(errorReason[:200]))
-                    print("  - Error code: {}".format(errorCode))
-                    print("  - Details: {}".format(errorDetails))
+                            continue
                     
                     if attempt == MAX_RETRIES:
                         message += "[WfsGet.py::gcms_get::nextRequest] {0} : {1}".format(response['status'], errorReason[:200])
-                        print("\n" + "!"*80)
-                        print("[ERROR] Request PERMANENTLY FAILED after {} attempts".format(MAX_RETRIES))
-                        print("[ERROR] Full error: {}".format(message[:300]))
-                        if is_proxy_error:
-                            print("[ERROR] PROXY CONNECTION ISSUE - Check proxy settings or network")
-                            print("[ERROR] Consider disabling proxy or checking proxy server status")
-                        else:
-                            print("[ERROR] Server may be overloaded or rate-limiting requests")
-                        print("[ERROR] Total features extracted before error: {}".format(totalRows))
-                        print("!"*80 + "\n")
+                        print("[ERROR] {} - Request failed after {} attempts: {} (code: {})".format(
+                            self.layerName, MAX_RETRIES, errorReason[:200], errorCode))
                         self.__logger.error("Request failed after {} retries: {}".format(MAX_RETRIES, message))
                         break
             
@@ -262,10 +229,10 @@ class WfsGet(object):
                 return maxNumrec, message
 
             featuresReceived = len(response['features'])
-            print("[REQUEST #{}] Received {} features".format(requestCount, featuresReceived))
+            print("[PROGRESS] {} | Request #{}: {} features (offset: {})".format(
+                self.layerName, requestCount, featuresReceived, self.parametersGcmsGet.get('offset', 0)))
             
             if featuresReceived == 0 and response['stop']:
-                print("[REQUEST #{}] No more data to fetch".format(requestCount))
                 break
             
             # si c'est une table standard (non BDUni) ou une extraction,
@@ -274,30 +241,22 @@ class WfsGet(object):
                 # Appliquer le filtrage géométrique fin pour les extractions
                 features_to_insert = response['features']
                 if bExtraction is True:
-                    print("[REQUEST #{}] Applying geometric filter...".format(requestCount))
                     features_to_insert = self.__filterFeaturesWithWorkArea(response['features'])
-                    featuresAfterFilter = len(features_to_insert)
-                    print("[REQUEST #{}] Features after filter: {} (filtered out: {})".format(
-                        requestCount, featuresAfterFilter, featuresReceived - featuresAfterFilter))
+                    print("[FILTER] {} | Geometric filter: {}/{} features kept".format(
+                        self.layerName, len(features_to_insert), featuresReceived))
                 
-                print("[REQUEST #{}] Inserting {} features into SQLite...".format(requestCount, len(features_to_insert)))
                 insertedRows = sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, features_to_insert)
                 totalRows += insertedRows
-                print("[REQUEST #{}] Inserted {} rows. Total: {}".format(requestCount, insertedRows, totalRows))
                 
-                # Memory cleanup - release references (Python GC will handle cleanup automatically)
+                # Memory cleanup - release references
                 features_to_insert = None
                 response['features'] = None
-                print("[REQUEST #{}] Memory cleanup completed".format(requestCount))
                 
             # sinon c'est une synchronisation (maj) de toutes les couches
             # ou un update après un post (enregistrement des couches actives)
             else:
-                print("[REQUEST #{}] Processing BDUni synchronization...".format(requestCount))
-                
                 # Chargement des cleabs en mémoire 
                 if requestCount == 1:
-                    print("[REQUEST #{}] Loading existing cleabs into memory for fast lookup...".format(requestCount))
                     existingCleabs = set()
                     try:
                         sql = "SELECT cleabs FROM {} WHERE cleabs IS NOT NULL".format(SQLiteManager.echap(self.layerName))
@@ -307,20 +266,29 @@ class WfsGet(object):
                         existingCleabs = {row[0] for row in cursor.fetchall()}
                         cursor.close()
                         connection.close()
-                        print("[REQUEST #{}] Loaded {} existing cleabs for fast lookup".format(requestCount, len(existingCleabs)))
                     except Exception as e:
-                        print("[REQUEST #{}] Warning: Could not preload cleabs: {}".format(requestCount, e))
+                        self.__logger.warning("Could not preload cleabs: {}".format(e))
                         existingCleabs = set()
                 elif 'existingCleabs' not in locals():
                     existingCleabs = set()
                 
                 processedInBatch = 0
+                deletedInBatch = 0
                 featuresToInsert = []
                 cleabsToDelete = []
+                cleabsDestroyed = []
                 # Traiter les features reçues en batch pour minimiser les opérations SQL
+                # On reçoit détruits et non-détruits en une seule passe
                 for feature in response['features']:
                     featureCleabs = feature.get('cleabs')
-                    
+
+                    # Objet détruit côté serveur → supprimer localement si présent
+                    if feature.get('detruit', False):
+                        if featureCleabs in existingCleabs:
+                            cleabsDestroyed.append(featureCleabs)
+                            existingCleabs.discard(featureCleabs)
+                        deletedInBatch += 1
+                        continue
                     
                     if featureCleabs in existingCleabs:
                         # modification d'un objet - marquer pour suppression puis réinsertion
@@ -333,58 +301,45 @@ class WfsGet(object):
                     
                     processedInBatch += 1
                 
+                # Suppression en batch des objets détruits
+                if cleabsDestroyed:
+                    SQLiteManager.deleteRowsInTableBDUni(self.layerName, cleabsDestroyed)
+
                 # Suppression en batch des cleabs à mettre à jour
                 if cleabsToDelete:
-                    print("[REQUEST #{}] Deleting {} existing features for update...".format(requestCount, len(cleabsToDelete)))
                     SQLiteManager.deleteRowsInTableBDUni(self.layerName, cleabsToDelete)
                 
                 # Insertion en batch de toutes les features
                 if featuresToInsert:
-                    print("[REQUEST #{}] Inserting {} features...".format(requestCount, len(featuresToInsert)))
                     insertedRows = sqliteManager.insertRowsInTable(self.parametersForInsertsInTable, featuresToInsert)
                     totalRows += insertedRows
                 
-                print("[REQUEST #{}] Processed {} BDUni features. Total: {}".format(requestCount, processedInBatch, totalRows))
+                print("[SYNC] {} | BDUni batch: {} updated, {} new, {} destroyed, total: {}".format(
+                    self.layerName, len(cleabsToDelete), processedInBatch - len(cleabsToDelete),
+                    deletedInBatch, totalRows))
                 
                
                 response['features'] = None
                 
             self.__setOffset(response['offset'])
             if response['stop']:
-                print("[REQUEST #{}] Extraction complete flag received".format(requestCount))
                 break
             else:
                 # Small delay between requests to avoid overwhelming the server
-                if requestCount % 10 == 0:  # Every 10 requests
-                    print("[REQUEST #{}] Pausing 1 second to avoid server overload...".format(requestCount))
+                if requestCount % 10 == 0:
                     time.sleep(1)
-        # suppression des objets pour une table BDUni et différent d'une extraction
-        if self.isStandard in (False, 0) and not bExtraction:
-            print("\n[CLEANUP] Processing deleted objects for BDUni...")
-            self.__makeRequestDeletedObjects()
-            print("[CLEANUP] Deleted objects processed")
+        # Note: les objets détruits sont maintenant traités dans la boucle principale
+        # (pas de requête HTTP supplémentaire pour le cleanup)
         
   
         
         end = time.time()
         timeResult = end - start
         
-        # Detailed completion statistics
-        print("\n" + "="*80)
-        print("[EXTRACTION COMPLETE] Layer: {}".format(self.layerName))
-        print("[STATISTICS] Total features extracted: {}".format(totalRows))
-        print("[STATISTICS] Total API requests: {}".format(requestCount))
-        print("[STATISTICS] Average features per request: {}".format(
-            round(totalRows / requestCount, 1) if requestCount > 0 else 0))
-        print("[STATISTICS] Total time: {} seconds ({} minutes)".format(
-            round(timeResult, 1), round(timeResult / 60, 2)))
-        if totalRows > 0:
-            print("[STATISTICS] Processing speed: {} features/second".format(
-                round(totalRows / timeResult, 1) if timeResult > 0 else 0))
-        print("="*80 + "\n")
-        
-        self.__logger.info("Extraction completed: {} features in {} seconds ({} requests)".format(
-            totalRows, round(timeResult, 1), requestCount))
+        print("[DONE] {} | {} features | {} requests | {:.1f}s".format(
+            self.layerName, totalRows, requestCount, timeResult))
+        self.__logger.info("{}: {} features in {:.1f}s ({} requests)".format(
+            self.layerName, totalRows, timeResult, requestCount))
         
         if timeResult > 60:
             if message == '':
@@ -416,26 +371,55 @@ class WfsGet(object):
 
     def getMaxNumrec(self) -> int:
         """
-        Requête pour récupérer le dernier numéro de réconciliation (NumRec) d'une table BDUni. Chaque mise à jour
-        d'une table BDUni se fait par l'intermédiaire d'une surface qui entoure les objets mis à jour appelée
-        réconciliation. Chaque réconciliation porte un numéro de séquence, le NumRec.
+        Requête pour récupérer le dernier numéro de réconciliation (NumRec) d'une table BDUni.
+        Essaie d'abord au niveau de la base (table reconciliations, bien indexée),
+        puis se rabat sur l'endpoint par table (peut être lent si mal indexé).
+
+        :return: le numéro de la mise à jour.
+        """
+        # 1) Essai via l'endpoint database (table reconciliations, rapide), à termes on ne requetera plus que de cette façon
+        try:
+            numrec = self.__getMaxNumrecFromDatabase()
+            return numrec
+        except Exception as e:
+            self.__logger.warning("getMaxNumrec database-level failed, falling back to table-level: {}".format(str(e)))
+
+        # 2) Fallback : endpoint par table (peut être lent sur vues métier)
+        return self.__getMaxNumrecFromTable()
+
+    def __getMaxNumrecFromDatabase(self) -> int:
+        """
+        Récupère le max-numrec au niveau de la base de données (table reconciliations).
+        Plus rapide car cette table est bien indexée.
+
+        :return: le numéro de la mise à jour.
+        """
+        url = "{0}/gcms/api/databases/{1}/max-numrec".format(self.urlHostEspaceCo, self.databaseid)
+        response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
+                                               launchBy='getMaxNumrecFromDatabase : {}'.format(self.layerName))
+        if response.status_code in (200, 201):
+            return response.json()
+        else:
+            raise Exception("code: {} raison: {}".format(response.status_code, response.reason))
+
+    def __getMaxNumrecFromTable(self) -> int:
+        """
+        Récupère le max-numrec au niveau d'une table spécifique.
+        Peut être lent sur les vues métier si le numrec n'est pas indexé.
 
         :return: le numéro de la mise à jour.
         """
         url = "{0}/gcms/api/databases/{1}/tables/{2}/max-numrec".format(self.urlHostEspaceCo, self.databaseid,
                                                                         self.tableid)
         response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
-                                               launchBy='getMaxNumrec : {}'.format(self.layerName))
-        
-        # Succès : get (code 200) post (code 201)
-        if response.status_code == 200 or response.status_code == 201:
-            numrec = response.json()
+                                               launchBy='getMaxNumrecFromTable : {}'.format(self.layerName))
+        if response.status_code in (200, 201):
+            return response.json()
         else:
             message = "code : {} raison : {} response_text: {}".format(response.status_code, response.reason, response.text)
             print("[ERROR] getMaxNumrec failed: {}".format(message))
             self.__logger.error("getMaxNumrec failed: {}".format(message))
             raise Exception("WfsGet.getMaxNumrec -> {}".format(message))
-        return numrec
 
     def __setService(self) -> None:
         """Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'service'."""
@@ -480,25 +464,27 @@ class WfsGet(object):
         """
         self.parametersGcmsGet['gcms_numrec'] = self.numrec
 
-    def __setFilter(self, _filter, numrec) -> None:
+    def __setFilter(self, filterDelete, numrec, skipDetruit=False) -> None:
         """
         Complète le dictionnaire des paramètres en vue d'une requête GET par l'item 'filter'.
         Le filtre doit être du genre :
         filter={"$and":[{"class_adm":"Autoroute","longueur":"$gte":10}]}
 
-        :param _filter: à True, permet de récupérer les objets détruits dans une table
-        :type _filter: bool
+        :param filterDelete: à True, permet de récupérer les objets détruits dans une table
+        :type filterDelete: bool
 
         :param numrec: le dernier numéro de réconciliation de la table, il sert au filtrage des objets
                         à 0 pour une couche standard
         :type numrec: int
+
+        :param skipDetruit: à True, ne pas inclure le filtre 'detruit' (on récupère tout d'un coup)
+        :type skipDetruit: bool
         """
         filters = {}
-        print( "[DEBUG] Setting filter for GET request: filterDelete={}, numrec={}".format(_filter, numrec))
-        # 1) Filtre 'detruit' si applicable
+        # 1) Filtre 'detruit' si applicable (sauf si skipDetruit)
         # bDetruit indique si la couche est standard ou BDUni
-        if self.bDetruit:
-            filters['detruit'] = _filter
+        if self.bDetruit and not skipDetruit:
+            filters['detruit'] = filterDelete
 
         # 2) Filtre 'numrec' si applicable
         if numrec != 0:

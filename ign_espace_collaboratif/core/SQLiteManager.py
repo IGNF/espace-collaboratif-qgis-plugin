@@ -264,8 +264,6 @@ class SQLiteManager(object):
         connection.commit()
         cur.close()
         connection.close()
-        # compactage de la base
-        SQLiteManager.vacuumDatabase()
         return t[2]
 
     def __setSwitchType(self, vType) -> str:
