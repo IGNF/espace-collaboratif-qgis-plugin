@@ -200,14 +200,12 @@ class HttpRequest(object):
             print("LaunchedBy: {}".format(launchBy))
             print("URL: {}".format(url))
             print("Params: {}".format(params))
-            print("Headers: {}".format(headers))
             print("Proxies: {}".format(proxies))
             
             HttpRequest.logger.debug("=== makeHttpRequest DEBUG START ===")
             HttpRequest.logger.debug("LaunchedBy: {}".format(launchBy))
             HttpRequest.logger.debug("URL: {}".format(url))
             HttpRequest.logger.debug("Params: {}".format(params))
-            HttpRequest.logger.debug("Headers: {}".format(headers))
             HttpRequest.logger.debug("Proxies: {}".format(proxies))
             
             if launchBy == 'gcmsPatch':
@@ -223,13 +221,11 @@ class HttpRequest(object):
             print("Response status: {}".format(response.status_code))
             print("Response reason: {}".format(response.reason))
             print("Response URL: {}".format(response.url))
-            print("Response headers: {}".format(response.headers))
             print("Response text (first 500 chars): {}".format(response.text[:500]))
             
             HttpRequest.logger.debug("Response status: {}".format(response.status_code))
             HttpRequest.logger.debug("Response reason: {}".format(response.reason))
             HttpRequest.logger.debug("Response URL: {}".format(response.url))
-            HttpRequest.logger.debug("Response headers: {}".format(response.headers))
             HttpRequest.logger.debug("Response text (first 500 chars): {}".format(response.text[:500]))
             
             if response.status_code != 200 and response.status_code != 201 and response.status_code != 206:

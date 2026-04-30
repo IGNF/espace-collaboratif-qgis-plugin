@@ -298,6 +298,7 @@ class WfsPost(object):
             SQLiteManager.emptyTable(self.__layer.name())
 
         numrec = SQLiteManager.selectNumrecTableOfTables(self.__layer.name())
+        print("numrec for synchronize : {}".format(numrec))
         headers = {
             'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
         parameters = {'databasename': self.__layer.databasename, 'layerName': self.__layer.name(),
@@ -325,6 +326,7 @@ class WfsPost(object):
                 return numrec
 
         numrecmessage = wfsGet.gcmsGet(maxNumrec=maxNumrec)
+        print("numrecmessage : {}".format(numrecmessage))
         if 'error' in numrecmessage[1]:
             message = "Vos modifications ont bien été prises en compte mais la couche n'a pas pu être rechargée " \
                       "dans QGIS. Il faut la ré-importer. En cas de problème, veuillez contacter le gestionnaire " \
