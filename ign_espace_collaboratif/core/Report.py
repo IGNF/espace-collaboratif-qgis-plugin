@@ -195,7 +195,7 @@ class Report(object):
             }]
             geomAndTable = self.__whatGeometryAndTableIs(geom)
             parameters = {'tableName': geomAndTable[1], 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
-                          'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False,
+                          'sridSource': cst.EPSGCRS4326, 'isBduni': True, 'is3D': False,
                           'geometryType': geomAndTable[0]}
 
             sqliteManager = SQLiteManager()

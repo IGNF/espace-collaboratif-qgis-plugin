@@ -45,8 +45,8 @@ class WfsGet(object):
         self.parametersGcmsGet = {}
         if PluginHelper.keyExist('detruit', parameters):
             self.bDetruit = parameters['detruit']
-        if PluginHelper.keyExist('isStandard', parameters):
-            self.isStandard = parameters['isStandard']
+        if PluginHelper.keyExist('isBduni', parameters):
+            self.isBduni = parameters['isBduni']
         if PluginHelper.keyExist('is3D', parameters):
             self.is3D = parameters['is3D']
         if PluginHelper.keyExist('numrec', parameters):
@@ -54,7 +54,7 @@ class WfsGet(object):
         # Paramètres pour insérer un objet dans une table SQLite
         self.parametersForInsertsInTable = {'tableName': self.layerName, 'geometryName': self.geometryName,
                                             'sridTarget': self.sridProject, 'sridSource': self.sridLayer,
-                                            'isStandard': self.isStandard, 'is3D': self.is3D,
+                                            'isBduni': self.isBduni, 'is3D': self.is3D,
                                             'geometryType': ""}
         if PluginHelper.keyExist('databaseid', parameters):
             self.databaseid = parameters['databaseid']
@@ -132,14 +132,14 @@ class WfsGet(object):
         """
         message = ""
         # Pour la synchro BDUni, on récupère détruits et non-détruits en une seule passe
-        skipDetruit = (self.isStandard in (False, 0) and not bExtraction)
+        skipDetruit = (self.isBduni in (True, 1) and not bExtraction)
         self.__initParametersGcmsGet(skipDetruitFilter=skipDetruit)
         start = time.time()
         totalRows = 0
         requestCount = 0
         if maxNumrec is not None:
             pass  # Fourni par l'appelant, pas de requête réseau supplémentaire
-        elif self.isStandard:
+        elif not self.isBduni:
             maxNumrec = 0
         else:
             # Try to get maxNumrec, but don't block extraction if it fails
@@ -235,9 +235,9 @@ class WfsGet(object):
             if featuresReceived == 0 and response['stop']:
                 break
             
-            # si c'est une table standard (non BDUni) ou une extraction,
-            # on insére tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
-            if self.isStandard in (True, 1) or bExtraction is True:
+            # si c'est une couche non-BDUni ou une extraction,
+            # on insère tous les objets dans la base SQLite en appliquant un filtre avec la zone de travail active
+            if not self.isBduni or bExtraction is True:
                 # Appliquer le filtrage géométrique fin pour les extractions
                 features_to_insert = response['features']
                 if bExtraction is True:

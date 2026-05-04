@@ -57,7 +57,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         self.databasename = parameters['databasename']
         self.sqliteManager = parameters['sqliteManager']
         self.srid = -1
-        self.isStandard = True
+        self.isBduni = False
         self.idNameForDatabase = parameters['idName']
         self.geometryNameForDatabase = parameters['geometryName']
         self.geometryDimensionForDatabase = parameters['geometryDimension']

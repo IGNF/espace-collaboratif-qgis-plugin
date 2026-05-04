@@ -914,7 +914,9 @@ class RipartPlugin:
                         # exemple :
                         # 8, 'Lignes', 'id_ligne', 1, 'test', 83, 2154, 'geom', 0, 'LineString', 0, 1531)
                         layer.idNameForDatabase = r[2]
-                        parameters['isStandard'] = layer.isStandard = r[3]
+                        # r[3] : colonne 'standard' en base (1 = non-BDUni, 0 = BDUni) → isBduni = inverse
+                        layer.isBduni = not bool(r[3])
+                        parameters['isBduni'] = layer.isBduni
                         parameters['databasename'] = layer.databasename = r[4]
                         parameters['databaseid'] = r[5]
                         parameters['sridLayer'] = r[6]
@@ -924,26 +926,25 @@ class RipartPlugin:
                         parameters['numrec'] = numrec = r[10]
                         parameters['tableid'] = r[11]
 
-                # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
+                # La colonne 'detruit' existe uniquement pour une couche BDUni
                 bDetruit = True
-                # si c'est une autre table donc standard alors la colonne n'existe pas
-                # et il faut vider la table pour éviter de créer un objet à chaque Get
-                if layer.isStandard:
+                # Pour une couche non-BDUni la colonne n'existe pas :
+                # il faut vider la table pour éviter de dupliquer les objets à chaque Get
+                if not layer.isBduni:
                     bDetruit = False
                     SQLiteManager.emptyTable(layer.name())
                 parameters['detruit'] = bDetruit
                 # numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
                 # parameters['numrec'] = numrec
                 wfsGet = WfsGet(parameters)
-                # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser.
-                # Il faut aussi qu'il soit égal à 1, ce numrec correspondant à une table non BDUni
-                if not layer.isStandard:
+                # Pour les couches BDUni : si le numrec local égale le max serveur, rien à synchroniser
+                if layer.isBduni:
                     maxNumrec = wfsGet.getMaxNumrec()
                     if numrec == maxNumrec:
                         endMessage += "<br/>Pas de mise à jour\n\n"
                         continue
                 else:
-                    maxNumrec = None  # Standard : pas de getMaxNumrec
+                    maxNumrec = None  # Non-BDUni : pas de getMaxNumrec
                 maxNumRecMessage = wfsGet.gcmsGet(maxNumrec=maxNumrec)
                 SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
                 endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])

@@ -657,7 +657,7 @@ class ToolsReport(object):
                             "de signalement(s). Cas non prévu. Veuillez contacter l'équipe support.")
         # Insertion des signalements dans la base SQLite
         parameters = {'tableName': cst.nom_Calque_Signalement, 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
-                      'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False, 'geometryType': 'POINT'}
+                      'sridSource': cst.EPSGCRS4326, 'isBduni': True, 'is3D': False, 'geometryType': 'POINT'}
         sqliteManager = SQLiteManager()
         sqliteManager.insertRowsInTable(parameters, attributesRows)
         return idsReports

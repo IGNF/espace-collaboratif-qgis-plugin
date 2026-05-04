@@ -41,7 +41,7 @@ class WfsPost(object):
         self.__url = "{0}/gcms/api/databases/{1}/transactions".format(context.urlHostEspaceCo, database_id)
         self.__bbox = BBox(context)
         self.__filterName = filterName
-        self.__isTableStandard = True
+        self.__isTableBduni = False
         self.__datasForPost = {}
 
     def __initParametersLayer(self) -> int:
@@ -68,8 +68,9 @@ class WfsPost(object):
         if result is not None:
             for r in result:
                 self.__layer.databasename = r[4]
-                self.__isTableStandard = r[3]
-                self.__layer.isStandard = r[3]
+                # r[3] : colonne 'standard' en base (1 = non-BDUni, 0 = BDUni) → isBduni = inverse
+                self.__isTableBduni = not bool(r[3])
+                self.__layer.isBduni = not bool(r[3])
                 self.__layer.srid = r[6]
                 self.__layer.idNameForDatabase = r[2]
                 self.__layer.geometryNameForDatabase = r[7]
@@ -251,7 +252,7 @@ class WfsPost(object):
         responseTransactions = self.__checkResponseTransactions(response)
         if responseTransactions['status'] == cst.STATUS_COMMITTED:
             # Mise à jour de la base SQLite pour les objets détruits et modifiés d'une couche BDUni
-            if not self.__layer.isStandard:
+            if self.__layer.isBduni:
                 SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
             # Mise à jour de la couche
             try:
@@ -289,11 +290,11 @@ class WfsPost(object):
 
         :return: le dernier numéro de mises à jour.
         """
-        # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
+        # La colonne 'detruit' existe uniquement pour une couche BDUni
         bDetruit = True
-        # si c'est une autre table donc standard alors la colonne n'existe pas
-        # et il faut vider la table pour éviter de créer un objet à chaque Get
-        if self.__layer.isStandard:
+        # Pour une couche non-BDUni la colonne n'existe pas :
+        # il faut vider la table pour éviter de dupliquer les objets à chaque Get
+        if not self.__layer.isBduni:
             bDetruit = False
             SQLiteManager.emptyTable(self.__layer.name())
 
@@ -304,7 +305,7 @@ class WfsPost(object):
         parameters = {'databasename': self.__layer.databasename, 'layerName': self.__layer.name(),
                       'geometryName': self.__layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS4326,
                       'sridLayer': self.__layer.srid, 'bbox': self.__bbox.getFromLayer(self.__filterName, False, True),
-                      'detruit': bDetruit, 'isStandard': self.__layer.isStandard,
+                      'detruit': bDetruit, 'isBduni': self.__layer.isBduni,
                       'is3D': self.__layer.geometryDimensionForDatabase,
                       'numrec': numrec, 'role': None,
                       'urlHostEspaceCo': self.__context.urlHostEspaceCo,
@@ -312,16 +313,19 @@ class WfsPost(object):
                       'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
 
-        # Pour les couches BDUni, récupérer maxNumrec en amont pour éviter un appel redondant dans gcmsGet.
-        # En cas d'échec, on retourne le numrec actuel : la transaction est déjà committée côté serveur,
-        # l'utilisateur pourra resynchroniser plus tard via le bouton "mettre à jour".
+        # Pour les couches BDUni :
+        #   - numrec (local, issu de SQLite) est la borne inférieure du filtre GET :
+        #     il détermine QUELS objets récupérer (filter: {"gcms_numrec": {"$gte": numrec}})
+        #   - maxNumrec (serveur) est le nouveau watermark à sauvegarder dans SQLite après la sync ;
+        #     il est récupéré ici pour éviter un appel HTTP redondant dans gcmsGet, mais ne modifie pas le filtre.
+        # Pour les couches non-BDUni, maxNumrec vaut 0 (pas de versioning).
         maxNumrec = None
-        if not self.__layer.isStandard:
+        if self.__layer.isBduni:
             try:
                 maxNumrec = wfsGet.getMaxNumrec()
             except Exception as e:
                 print("[WARNING] __synchronize: getMaxNumrec failed: {}".format(str(e)))
-                # Transaction OK côté serveur, mais on ne peut pas récupérer le delta.
+                # Transaction OK côté serveur, mais on ne peut pas récupérer le nouveau watermark.
                 # On retourne le numrec actuel, l'utilisateur resynchronisera via le bouton "mettre à jour".
                 return numrec
 
@@ -380,7 +384,7 @@ class WfsPost(object):
         if result is not None:
             if result[0] == 1:
                 bBDUni = True
-                self.__isTableStandard = False
+                self.__isTableBduni = True
 
         # Traitement des ajouts
         if len(addedFeatures) != 0:
