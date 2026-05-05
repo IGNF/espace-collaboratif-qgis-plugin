@@ -44,16 +44,18 @@ class ToolsReport(object):
     def __addReportSketchLayersToTheCurrentMap(self) -> None:
         """
         Ajoute les couches 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne', 'Croquis_EC_Polygone'
-        dans le projet courant ainsi que les liens de connexion vers la base SQLite 'nomProjet_espaceco.sqlite'
+        dans le projet courant ainsi que les liens de connexion vers la base SQLite 'nomProjet_espaceco.sqlite'.
+        Si les couches existent déjà (projet issu d'une version antérieure), leur source de données est mise à jour
+        pour pointer vers le SQLite courant.
         """
         uri = self.__context.getUriDatabaseSqlite()
         self.__logger.debug(uri.uri())
         maplayers = self.__context.getAllMapLayers()
         root = QgsProject.instance().layerTreeRoot()
         for table in PluginHelper.reportSketchLayersName:
+            uri.setDataSource('', table, 'geom')
+            uri.setSrid(str(cst.EPSGCRS4326))
             if not PluginHelper.keyExist(table, maplayers):
-                uri.setDataSource('', table, 'geom')
-                uri.setSrid(str(cst.EPSGCRS4326))
                 vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
                 vlayer.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326))
                 QgsProject.instance().addMapLayer(vlayer, False)
@@ -62,6 +64,14 @@ class ToolsReport(object):
                 # ajoute les styles aux couches
                 style = os.path.join(self.__context.projectDir, "espacecoStyles", table + ".qml")
                 vlayer.loadNamedStyle(style)
+            else:
+                # La couche existe déjà (potentiellement depuis une ancienne version).
+                # On met à jour sa source de données pour pointer vers le SQLite courant
+                # afin d'éviter les erreurs dues aux différences de schéma (#176).
+                existingLayer = maplayers[table]
+                existingLayer.setDataSource(uri.uri(), table, 'spatialite')
+                existingLayer.reload()
+                self.__logger.debug("Layer " + table + " reconnected to current SQLite")
         self.__context.mapCan.refresh()
 
     def getReport(self, idReport) -> Report:
@@ -436,8 +446,7 @@ class ToolsReport(object):
         if not formCreate.bSend:
             return
 
-        # TODO voir Noémie pour les thèmes préférés
-        # PluginHelper.save_preferredThemes(self.__context.projectDir, selectedThemes)
+        # Sauvegarde du groupe préféré
         PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_GroupePrefere,
                                     formCreate.preferredGroup, PluginHelper.xml_Serveur)
 
@@ -491,12 +500,21 @@ class ToolsReport(object):
         # Insertion des signalements et des croquis dans la base SQLite
         listNewReportIds = self.__insertReportsSketchsIntoSQLite(contents)
 
+        # Sauvegarde du thème utilisé pour le pré-sélectionner lors du prochain signalement
+        selectedThemeName = formCreate.getDatasForRequest().get('theme', '')
+        if selectedThemeName:
+            PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_ThemePrefere,
+                                        selectedThemeName, PluginHelper.xml_Serveur)
+
         # Message de fin
         self.__sendMessageEndProcess(listNewReportIds)
 
         # Rafraichissement de la carte pour faire afficher le (ou les) signalements nouvellement créés
-        self.__context.iface.activeLayer().reload()
-        self.__context.iface.activeLayer().triggerRepaint()
+        maplayers = self.__context.getAllMapLayers()
+        for table in PluginHelper.reportSketchLayersName:
+            if table in maplayers:
+                maplayers[table].reload()
+                maplayers[table].triggerRepaint()
 
     def createSingleReportFromClipboard(self, filesAttachments) -> []:
         """
