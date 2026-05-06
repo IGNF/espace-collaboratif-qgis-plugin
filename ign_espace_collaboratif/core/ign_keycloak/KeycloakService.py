@@ -25,7 +25,6 @@ class KeycloakService:
         self.session.verify = ssl_verify
         if proxies is not None:
             self.session.proxies.update(proxies)
-            print("session.proxies : {}".format(self.session.proxies))
 
         self.ip = "127.0.0.1"
         self.port = 7070
