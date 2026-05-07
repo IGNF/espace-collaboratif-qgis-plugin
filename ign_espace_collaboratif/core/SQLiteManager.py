@@ -736,6 +736,10 @@ class SQLiteManager(object):
         result = cur.fetchone()
         cur.close()
         connection.close()
+        # Si la couche n'est pas trouvée dans la table des tables (ex : projet issu d'une ancienne version),
+        # on renvoie 0 pour forcer une extraction complète 
+        if result is None:
+            return 0
         return result[0]
 
     @staticmethod

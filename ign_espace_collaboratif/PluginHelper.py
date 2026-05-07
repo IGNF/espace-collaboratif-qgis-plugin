@@ -61,6 +61,7 @@ class PluginHelper:
     xml_proxy = "Proxy"
     xml_GroupeActif = "groupe_actif"
     xml_GroupePrefere = "groupe_prefere"
+    xml_ThemePrefere = "theme_prefere"
     xml_Root = "root"
 
     defaultDate = "1900-01-01 00:00:00"

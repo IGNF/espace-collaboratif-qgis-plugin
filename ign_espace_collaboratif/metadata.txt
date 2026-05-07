@@ -9,7 +9,8 @@
 [general]
 name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.4
-description=IGN reporting and contribution service, plugin QGIS3
+qgisMaximumVersion=4.99
+description=IGN reporting and contribution service, plugin QGIS3/4
 version=5.0.3
 author=IGN
 email=service-client@ign.fr
@@ -28,9 +29,11 @@ date=2026-04-13
 
 # Uncomment the following line and add your changelog:
 changelog=
+    5.0.4 - Correction : thème du dernier signalement à nouveau pré-sélectionné ; signalement unique par défaut ; affichage automatique après envoi ; compatibilité layers existantes d'anciennes versions (#172/#173/#175/#176)
     5.0.3 - Compatibilité Qt5/Qt6
-    5.0.2 - Ajout d’un filtre spatial sur le guichet, ajout d’une option de téléchargement public et correction d’un bug lié aux attributs NULL. 
-    5.0.1 - Nouvelle API collaboratif, corrections de bugs 
+    5.0.2 - Ajout d'un filtre spatial sur le guichet, ajout d'une option de téléchargement public et correction d'un bug lié aux attributs NULL.
+    5.0.1 - Corrections de bugs
+    5.0.0 - Première version majeure avec la nouvelle API collaboratif(déploiement annulé à cause de bug)
 
 # Tags are comma separated with spaces allowed
 tags=python

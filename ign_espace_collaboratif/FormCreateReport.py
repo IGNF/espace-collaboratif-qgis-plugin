@@ -73,8 +73,9 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
 
         self.lblDoc.setProperty("visible", False)
         if nbSketch >= 2:
-            self.radioBtnUnique.setChecked(False)
-            self.radioBtnMultiple.setChecked(True)
+            # Toujours conserver "Créer un signalement unique" coché par défaut 
+            self.radioBtnUnique.setChecked(True)
+            self.radioBtnMultiple.setChecked(False)
             self.radioBtnMultiple.setText(u"Créer {0} signalements".format(nbSketch))
 
         self.__activeCommunity = self.__context.getActiveCommunityName()
@@ -289,6 +290,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         for c in communities:
             if self.__activeCommunity == c.getName():
                 self.__displayThemesForCommunity(c)
+                self.__preselectLastTheme()
                 break
 
     def __getQtWidgetsFromTypeAttribute(self, att) -> QtWidgets:
@@ -501,6 +503,27 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """
         return self.__communityIdWhenThemeChanged
 
+    def __preselectLastTheme(self) -> None:
+        """
+        Pré-sélectionne dans le treeWidget le dernier thème utilisé lors d'un signalement précédent,
+        s'il est disponible dans la liste des thèmes du groupe courant.
+        """
+        try:
+            lastThemeNode = PluginHelper.load_XmlTag(self.__context.projectDir,
+                                                     PluginHelper.xml_ThemePrefere,
+                                                     PluginHelper.xml_Serveur)
+            lastThemeName = lastThemeNode.text if lastThemeNode is not None else None
+            if not lastThemeName:
+                return
+            for i in range(self.treeWidget.topLevelItemCount()):
+                item = self.treeWidget.topLevelItem(i)
+                if item.text(0) == lastThemeName:
+                    item.setCheckState(0, Qt.CheckState.Checked)
+                    self.treeWidget.expandItem(item)
+                    break
+        except Exception:
+            pass
+
     def __groupIndexChanged(self):
         """
         Détecte le groupe choisi et lance l'affiche des thèmes adéquats.
@@ -512,6 +535,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             for comm in self.__context.getCommunities():
                 if comm.getName() == userCommunityNameChoice:
                     self.__displayThemesForCommunity(comm)
+                    self.__preselectLastTheme()
                     self.__communityIdWhenThemeChanged = comm.getId()
                     break
 
