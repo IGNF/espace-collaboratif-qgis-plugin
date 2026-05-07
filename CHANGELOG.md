@@ -5,12 +5,12 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
-## [5.0.4] - 2026-05-05
+## [5.0.4] - 2026-05-07
 
 ### Corrigé
 - Thème du signalement précédent à nouveau pré-sélectionné à l'ouverture du formulaire de création (#173, régression 5.0.3)
 - Nouveau signalement désormais affiché automatiquement sur la carte après envoi, sans nécessiter un re-téléchargement manuel
-- "Créer un signalement unique" à nouveau sélectionné par défaut lors de la création avec plusieurs croquis (#172 / #175, régression 5.0.3)
+- "Créer un signalement unique" à nouveau sélectionné par défaut lors de la création avec plusieurs croquis (#172 /#175, régression 5.0.3)
 - Téléchargement des signalements fonctionnel même si les couches Signalement/Croquis sont déjà présentes (projet issu d'une version antérieure) : reconnexion automatique des couches à la base SQLite courante (#176)
 
 ## [5.0.3] - 2026-04-13
