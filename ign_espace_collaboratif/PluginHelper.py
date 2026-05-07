@@ -13,6 +13,11 @@ import sys
 import ntpath
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element
+try:
+    import defusedxml.ElementTree as _safe_ET
+    _xml_parse = _safe_ET.parse
+except ImportError:
+    _xml_parse = ET.parse
 from datetime import datetime
 from typing import Optional
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication
@@ -129,7 +134,7 @@ class PluginHelper:
     def checkXmlFile(projectDir) -> Optional[ET.ElementTree]:
         xmlFileDirectory = "{}/{}".format(projectDir, PluginHelper.getConfigFile())
         try:
-            tree = ET.parse(xmlFileDirectory)
+            tree = _xml_parse(xmlFileDirectory)
             return tree
         except ET.ParseError as e:
             message = "PluginHelper.checkXmlFile, erreur d'analyse : {0} sur le fichier {1}. " \

@@ -354,12 +354,12 @@ class Contexte(object):
         self.__tokenTimerStart = time.perf_counter()
         KEYCLOAK_SERVER_URI = "https://sso.geopf.fr/"
         KEYCLOAK_CLIENT_ID = "espaceco-qgis"
-        KEYCLOAK_CLIENT_SECRET = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"
+        KEYCLOAK_CLIENT_CREDENTIAL = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"
         KEYCLOAK_REALM_NAME = "geoplateforme"
         # IGN_PROXY = "http://proxy.ign.fr:3128"
         # proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
         self.__keycloakService = KeycloakService(KEYCLOAK_SERVER_URI, KEYCLOAK_REALM_NAME, KEYCLOAK_CLIENT_ID,
-                                                 client_secret=KEYCLOAK_CLIENT_SECRET, proxies=self.__proxies)
+                                                 client_secret=KEYCLOAK_CLIENT_CREDENTIAL, proxies=self.__proxies)
         r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
         r = self.__keycloakService.get_access_token(r["code"][0])
         self.__tokenAccess = r["access_token"]
@@ -464,7 +464,7 @@ class Contexte(object):
             raise Exception(message)
         if self.getUserCommunity().getLogo() != "":
             image = QImage()
-            image.loadFromData(requests.get(self.getUserCommunity().getLogo()).content)
+            image.loadFromData(requests.get(self.getUserCommunity().getLogo(), timeout=30).content)
             dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
         elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))

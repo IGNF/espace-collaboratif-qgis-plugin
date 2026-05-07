@@ -40,16 +40,14 @@ class HttpRequest(object):
         """
         uri = "{}/{}".format(self.__url, partOfUrl)
         print(uri)
+        # Disable SSL verification only for localhost development
+        ssl_verify = "localhost.ign.fr" not in uri
         if params is not None:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    params=params, verify=False)
+                                    params=params, verify=ssl_verify, timeout=30)
         else:
-            # Ne pas vérifier le certificat en localhost
-            if uri.find("localhost.ign.fr") != -1:
-                response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                        verify=False)
-            else:
-                response = requests.get(uri, headers=self.__headers, proxies=self.__proxies)
+            response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
+                                    verify=ssl_verify, timeout=30)
         response.encoding = 'utf-8'
         return response
 
