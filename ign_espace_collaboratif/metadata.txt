@@ -29,6 +29,7 @@ date=2026-05-07
 
 # Uncomment the following line and add your changelog:
 changelog=
+    5.0.5 - Mise à jour de fonctions XML dépréciées
     5.0.4 - Correction : thème du dernier signalement à nouveau pré-sélectionné ; signalement unique par défaut ; affichage automatique après envoi ; compatibilité layers existantes d'anciennes versions (#172/#173/#175/#176)
     5.0.3 - Compatibilité Qt5/Qt6
     5.0.2 - Ajout d'un filtre spatial sur le guichet, ajout d'une option de téléchargement public et correction d'un bug lié aux attributs NULL.
