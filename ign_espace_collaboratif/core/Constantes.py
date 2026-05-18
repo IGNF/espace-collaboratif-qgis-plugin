@@ -39,7 +39,6 @@ WMTS = "WMTS"
 FEATURE_TYPE = WFS = "feature-type"
 GEOSERVICE = "geoservice"
 PARTOFURLWMTS = "%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"
-APIKEY = "ign_scan_ws"
 
 # Système de coordonnées de référence de Ripart
 EPSGCRS4326 = 4326
