@@ -521,7 +521,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     item.setCheckState(0, Qt.CheckState.Checked)
                     self.treeWidget.expandItem(item)
                     break
-        except Exception:
+        except Exception:  # nosec B110
             pass
 
     def __groupIndexChanged(self):

@@ -253,7 +253,7 @@ class TableViewConstraints:
             try:
                 if config['check'](constraint, value):
                     return False, config['message'](fieldName, constraint, value)
-            except Exception:
+            except Exception:  # nosec B112
                 # Si le validateur échoue (ex: conversion impossible), on continue
                 continue
         

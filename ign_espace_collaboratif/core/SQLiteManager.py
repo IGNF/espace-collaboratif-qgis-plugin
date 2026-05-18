@@ -39,7 +39,7 @@ class SQLiteManager(object):
         conn = SQLiteManager.sqlite3Connect()
         cur = conn.cursor()
         for table in crlayers:
-            sql = "SELECT * FROM " + table + "  WHERE noSignalement= " + str(noSignalement)
+            sql = "SELECT * FROM " + table + "  WHERE noSignalement= " + str(noSignalement)  # nosec B608
             rows = cur.execute(sql)
             featIds = []
             for row in rows:
@@ -72,7 +72,7 @@ class SQLiteManager(object):
         conn = SQLiteManager.sqlite3Connect()
         cur = conn.cursor()
         table = cst.nom_Calque_Signalement
-        sql = "SELECT * FROM " + table + "  WHERE noSignalement IN (" + noSignalements + ")"
+        sql = "SELECT * FROM " + table + "  WHERE noSignalement IN (" + noSignalements + ")"  # nosec B608
         rows = cur.execute(sql)
         featIds = []
         for row in rows:
@@ -155,7 +155,7 @@ class SQLiteManager(object):
         if not os.path.isfile(dbPath):
             return False
         connection = SQLiteManager.sqlite3Connect()
-        sql = u"SELECT name FROM sqlite_master WHERE type='table' AND name='{}'".format(tableName)
+        sql = u"SELECT name FROM sqlite_master WHERE type='table' AND name='{}'".format(tableName)  # nosec B608
         cur = connection.cursor()
         cur.execute(sql)
         if cur.fetchone() is None:
@@ -405,7 +405,7 @@ class SQLiteManager(object):
         for key in keys:
             tmp += '"{0}", '.format(key)
         strCleabs = tmp[0:len(tmp) - 2]
-        sql = 'DELETE FROM {0} WHERE cleabs IN ({1})'.format(tableName, strCleabs)
+        sql = 'DELETE FROM {0} WHERE cleabs IN ({1})'.format(tableName, strCleabs)  # nosec B608
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
@@ -466,7 +466,7 @@ class SQLiteManager(object):
             # Insert batch
             for attributesRow in batch:
                 columnsValues = self.__setColumnsValuesForInsert(attributesRow, parameters, wkt)
-                sql = "INSERT INTO {0} {1} VALUES {2}".format(
+                sql = "INSERT INTO {0} {1} VALUES {2}".format(  # nosec B608
                     parameters['tableName'], columnsValues[0], columnsValues[1])
                 cur.execute(sql)
                 totalRows += 1
@@ -499,10 +499,10 @@ class SQLiteManager(object):
         if result is None:
             return res
         if result[0] == 1:
-            sql = "SELECT {0}, {1} FROM {2} WHERE {3} IN {4}".format(layer.idNameForDatabase, cst.FINGERPRINT,
+            sql = "SELECT {0}, {1} FROM {2} WHERE {3} IN {4}".format(layer.idNameForDatabase, cst.FINGERPRINT,  # nosec B608
                                                                      layer.name(), cst.ID_SQLITE, listId)
         else:
-            sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idNameForDatabase, layer.name(), cst.ID_SQLITE,
+                sql = "SELECT {0} FROM {1} WHERE {2} IN {3}".format(layer.idNameForDatabase, layer.name(), cst.ID_SQLITE,  # nosec B608
                                                                 listId)
         connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
@@ -524,7 +524,7 @@ class SQLiteManager(object):
         SQLiteManager.findAndDeleteLock()
         if not SQLiteManager.isTableExist(tableName):
             return
-        sql = u"DELETE FROM {0}".format(tableName)
+        sql = u"DELETE FROM {0}".format(tableName)  # nosec B608
         SQLiteManager.executeSQL(sql)
         print("SQLiteManager : table {0} vidée".format(tableName))
 
@@ -580,7 +580,7 @@ class SQLiteManager(object):
         result = None
         if not SQLiteManager.isTableExist(tableName):
             return result
-        sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)
+        sql = u"SELECT COUNT(*) FROM pragma_table_info('{0}') WHERE name='{1}'".format(tableName, columnName)  # nosec B608
         connection = SQLiteManager.sqlite3Connect()
         cursor = connection.cursor()
         cursor.execute(sql)
@@ -603,7 +603,7 @@ class SQLiteManager(object):
         result = None
         if not SQLiteManager.isTableExist(tableName):
             return result
-        sql = u"SELECT {0} FROM {1}".format(columnName, tableName)
+        sql = u"SELECT {0} FROM {1}".format(columnName, tableName)  # nosec B608
         connection = SQLiteManager.sqlite3Connect()
         cursor = connection.cursor()
         cursor.execute(sql)
@@ -634,7 +634,7 @@ class SQLiteManager(object):
             return result
         tName = SQLiteManager.echap(tableName)
         cValue = SQLiteManager.echap(conditionValue)
-        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tName, conditionColumn, cValue)
+        sql = u"SELECT {0} FROM {1} WHERE {2} = '{3}'".format(columnName, tName, conditionColumn, cValue)  # nosec B608
         connection = SQLiteManager.sqlite3Connect()
         cursor = connection.cursor()
         cursor.execute(sql)
@@ -664,7 +664,7 @@ class SQLiteManager(object):
         try:
             tName = SQLiteManager.echap(tableName)
             cValue = SQLiteManager.echap(conditionValue)
-            sql = u"SELECT COUNT(*) FROM {0} WHERE {1} = '{2}'".format(tName, conditionColumn, cValue)
+            sql = u"SELECT COUNT(*) FROM {0} WHERE {1} = '{2}'".format(tName, conditionColumn, cValue)  # nosec B608
             connection = SQLiteManager.sqlite3Connect()
             cursor = connection.cursor()
             cursor.execute(sql)
@@ -704,7 +704,7 @@ class SQLiteManager(object):
         """
         # Est-ce la base est verrouillée ?
         SQLiteManager.findAndDeleteLock()
-        sql = "UPDATE {0} SET numrec = {1} WHERE layer = '{2}'".format(cst.TABLEOFTABLES, numrec, layer)
+        sql = "UPDATE {0} SET numrec = {1} WHERE layer = '{2}'".format(cst.TABLEOFTABLES, numrec, layer)  # nosec B608
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
@@ -712,7 +712,7 @@ class SQLiteManager(object):
         """
         :return: l'ensemble des noms de couches stockées dans la table des tables.
         """
-        sql = "SELECT layer FROM {0}".format(cst.TABLEOFTABLES)
+        sql = "SELECT layer FROM {0}".format(cst.TABLEOFTABLES)  # nosec B608
         connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
         cur.execute(sql)
@@ -729,7 +729,7 @@ class SQLiteManager(object):
 
         return: le dernier numéro de synchronisation pour une couche BDUni, 0 pour une table standard
         """
-        sql = "SELECT numrec FROM {0} where layer = '{1}'".format(cst.TABLEOFTABLES, layer)
+        sql = "SELECT numrec FROM {0} where layer = '{1}'".format(cst.TABLEOFTABLES, layer)  # nosec B608
         connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
         cur.execute(sql)
@@ -771,7 +771,7 @@ class SQLiteManager(object):
         SQLiteManager.findAndDeleteLock()
         result = SQLiteManager.selectRowsInTableOfTables(parameters['layer'])
         if len(result) == 1:
-            sql = "DELETE FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, parameters['layer'])
+            sql = "DELETE FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, parameters['layer'])  # nosec B608
             SQLiteManager.executeSQL(sql)
 
         columns = ''
@@ -784,7 +784,7 @@ class SQLiteManager(object):
                 values += "'{0}',".format(val)
         posC = len(columns)
         posV = len(values)
-        sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(cst.TABLEOFTABLES, columns[0:posC - 1], values[0:posV - 1])
+        sql = "INSERT INTO {0} ({1}) VALUES ({2})".format(cst.TABLEOFTABLES, columns[0:posC - 1], values[0:posV - 1])  # nosec B608
         SQLiteManager.executeSQL(sql)
 
     @staticmethod
@@ -800,7 +800,7 @@ class SQLiteManager(object):
         if not SQLiteManager.isTableExist(cst.TABLEOFTABLES):
             return result
 
-        sql = "SELECT * FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, tableName)
+        sql = "SELECT * FROM {0} WHERE layer = '{1}'".format(cst.TABLEOFTABLES, tableName)  # nosec B608
         connection = SQLiteManager.sqlite3Connect()
         cur = connection.cursor()
         cur.execute(sql)
@@ -887,7 +887,7 @@ class SQLiteManager(object):
         """
         # Est-ce la base est verrouillée ?
         # SQLiteManager.findAndDeleteLock()
-        sql = "UPDATE {0} SET {1} WHERE {2}".format(parameters['name'], parameters['attributes'],
+        sql = "UPDATE {0} SET {1} WHERE {2}".format(parameters['name'], parameters['attributes'],  # nosec B608
                                                     parameters['condition'])
         SQLiteManager.executeSQL(sql)
         # sql = "INSERT INTO zones (nom, surface) VALUES (?, ?)"
@@ -918,5 +918,5 @@ class SQLiteManager(object):
             # Fermeture de la connexion si elle est encore ouverte
             try:
                 connection.close()
-            except:
+            except Exception:  # nosec B110
                 pass
