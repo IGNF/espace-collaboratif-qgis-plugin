@@ -5,6 +5,11 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [5.0.7] - 2026-05-18
+
+### Modifié
+- Mise en conformité avec les exigences d'analyse statique du dépôt officiel QGIS
+
 ## [5.0.6] - 2026-05-18
 
 ### Modifié

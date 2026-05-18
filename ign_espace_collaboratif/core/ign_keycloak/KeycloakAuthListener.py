@@ -63,7 +63,7 @@ class KeycloakAuthListener:
                 except Exception:
                     try:
                         conn.close()
-                    except Exception:
+                    except Exception:  # nosec B110
                         pass
                     if result is not None:
                         return result
@@ -91,11 +91,11 @@ class KeycloakAuthListener:
                 if not handled:
                     try:
                         conn.sendall(response_err)
-                    except Exception:
+                    except Exception:  # nosec B110
                         pass
                     try:
                         conn.close()
-                    except Exception:
+                    except Exception:  # nosec B110
                         pass
                     if result is not None:
                         return result

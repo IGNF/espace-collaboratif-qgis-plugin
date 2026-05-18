@@ -308,14 +308,8 @@ class ToolsReport(object):
         #   'status': 'valid', 'date': '2023-08-16T15:54:30+02:00'}
         #  Noémie -> je suppose que la date retournée est la date de maj et non de validation
         content = jsonResponse['content']
-        if type(content) == str:
-            content = content.replace("'", "''")
-        attributes = "Date_MAJ = '{}', Réponses = '{}', Statut ='{}'".format(jsonResponse['date'],
-                                                                             content,
-                                                                             jsonResponse['status'])
-        condition = "NoSignalement = {}".format(jsonResponse['report_id'])
-        parameters = {'name': cst.nom_Calque_Signalement, 'attributes': attributes, 'condition': condition}
-        SQLiteManager.updateTable(parameters)
+        sql = "UPDATE {} SET \"Date_MAJ\" = ?, \"Réponses\" = ?, \"Statut\" = ? WHERE \"NoSignalement\" = ?".format(SQLiteManager._quote_identifier(cst.nom_Calque_Signalement)) #nosec B608
+        SQLiteManager.executeSQLWithParams(sql, (jsonResponse['date'], content, jsonResponse['status'], jsonResponse['report_id']))
 
     # Ajoute une réponse à un signalement
     def sendResponseToServer(self, parameters) -> {}:
