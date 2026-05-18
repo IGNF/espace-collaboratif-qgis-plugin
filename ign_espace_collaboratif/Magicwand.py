@@ -83,7 +83,7 @@ class Magicwand(object):
         Sélectionne le signalement associé au croquis sélectionné.
         """
         # identifiant du signalement (Numéro de signalement)
-        remNos = ""
+        noSignalementList = []
         mapLayers = self.context.mapCan.layers()
 
         for ml in mapLayers:
@@ -91,10 +91,10 @@ class Magicwand(object):
                 for feat in ml.selectedFeatures():
                     idx = ml.fields().lookupField("NoSignalement")
                     noSignalement = feat.attributes()[idx]
-                    remNos += str(noSignalement) + ","
+                    noSignalementList.append(noSignalement)
                     ml.removeSelection()
 
-        featIds = SQLiteManager.selectReportByNumero(remNos[:-1])
+        featIds = SQLiteManager.selectReportByNumero(noSignalementList)
         lay = self.context.getLayerByName(cst.nom_Calque_Signalement)
         lay.selectByIds(featIds)
 
