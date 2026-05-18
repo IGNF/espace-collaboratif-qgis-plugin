@@ -15,7 +15,7 @@ class KeycloakService:
         client_id: str,
         client_secret: str = "",
         proxies=None,
-        ssl_verify: bool = False,
+        ssl_verify: bool = True,
     ) -> None:
         self.base_uri = base_uri
         self.realm_name = realm_name

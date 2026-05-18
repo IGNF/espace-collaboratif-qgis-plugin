@@ -58,6 +58,12 @@ nom_Calque_Croquis_Polygone = "Croquis_EC_Polygone"
 nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
 nom_Calque_Croquis_Point = "Croquis_EC_Point"
 
+# Paramètres de connexion Keycloak / IGN Geoplatform (client OAuth2 public du plugin)
+KEYCLOAK_SERVER_URI = "https://sso.geopf.fr/"
+KEYCLOAK_REALM_NAME = "geoplateforme"
+KEYCLOAK_CLIENT_ID = "espaceco-qgis"
+KEYCLOAK_CLIENT_SECRET = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"  # nosec B105 # pragma: allowlist secret
+
 STATUS_COMMITTED = 'committed'
 
 PROJECT_NOREGISTERED = "Votre projet QGIS doit être enregistré avant de pouvoir utiliser les fonctionnalités " \
