@@ -784,7 +784,7 @@ class SQLiteManager(object):
 
         cols = [SQLiteManager._quote_identifier(col) for col in parameters.keys()]
         placeholders = ','.join(['?'] * len(parameters))
-        sql = "INSERT INTO {} ({}) VALUES ({})".format(
+        sql = "INSERT INTO {} ({}) VALUES ({})".format(  # nosec B608
             cst.TABLEOFTABLES, ','.join(cols), placeholders)
         SQLiteManager.executeSQLWithParams(sql, tuple(parameters.values()))
 

@@ -99,7 +99,7 @@ class WfsPatch(object):
         :param jsonResponse: la réponse du serveur après la requête vers le serveur
         :type: dict
         """
-        sql = "UPDATE {} SET geom = ?, \"Date_MAJ\" = ? WHERE \"NoSignalement\" = ?".format(
+        sql = "UPDATE {} SET geom = ?, \"Date_MAJ\" = ? WHERE \"NoSignalement\" = ?".format(  # nosec B608
             SQLiteManager._quote_identifier(cst.nom_Calque_Signalement))
         SQLiteManager.executeSQLWithParams(sql, (jsonResponse['geometry'], jsonResponse['updating_date'], jsonResponse['id']))
         SQLiteManager.vacuumDatabase()
