@@ -15,7 +15,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 ### Modifié
 - Vérification SSL activée systématiquement sur toutes les requêtes réseau
 - Ajout de délais d'attente (timeout) sur les appels HTTP pour éviter les blocages indéfinis
-- Organisation des paramètres de connexion au service d'authentification dans le fichier de constantes
+- Organisation des paramètres de connexion au service d'authentification 
 
 ## [5.0.5] - 2026-05-07
 
