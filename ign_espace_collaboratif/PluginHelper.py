@@ -8,11 +8,11 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 import os
-import subprocess
+import subprocess  # nosec B404
 import sys
 import ntpath
-import xml.etree.ElementTree as ET
-from xml.etree.ElementTree import Element
+import xml.etree.ElementTree as ET  # nosec B405
+from xml.etree.ElementTree import Element  # nosec B405
 try:
     import defusedxml.ElementTree as _safe_ET
     _xml_parse = _safe_ET.parse
@@ -606,10 +606,10 @@ class PluginHelper:
         :type filename: str
         """
         if sys.platform == "win32":
-            os.startfile(filename)
+            os.startfile(filename)  # nosec B606
         else:
             opener = "open" if sys.platform == "darwin" else "xdg-open"
-            subprocess.call([opener, filename])
+            subprocess.call([opener, filename])  # nosec B603
 
     @staticmethod
     # TODO Mélanie : cette fonction n'est pas mis en service ? Dois-je l'intégrer au code ?

@@ -124,7 +124,7 @@ class HttpRequest(object):
             print("="*80 + "\n")
             
             r = requests.get(url, headers=headers, proxies=proxies,
-                             params=params, verify=False, timeout=120) # timeout de 120 secondes pour les requêtes longues 
+                             params=params, verify=True, timeout=30)
             if r.status_code == 200:
                 r.encoding = 'utf-8'
                 response = json.loads(r.text)
@@ -207,13 +207,13 @@ class HttpRequest(object):
             HttpRequest.logger.debug("Proxies: {}".format(proxies))
             
             if launchBy == 'gcmsPatch':
-                response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=False, timeout=30) #timeout de 30 secondes pour les requêtes de mise à jour (A surveiller si c'est suffisant ou pas)
+                response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=True, timeout=30)
             elif data is None and files is None:
-                response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=False, timeout=120) # timeout de 120 secondes pour les requêtes longues
+                response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=True, timeout=30)
             elif files is None:
-                response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=False, timeout=30) # timeout de 30 secondes pour les requêtes de mise à jour (A surveiller si c'est suffisant ou pas)
+                response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=True, timeout=30)
             else:
-                response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=False, timeout=60)
+                response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=True, timeout=30)
 
             # DEBUG: Log response details
             print("Response status: {}".format(response.status_code))

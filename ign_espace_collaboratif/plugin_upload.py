@@ -7,7 +7,9 @@
 
 import sys
 import getpass
-import xmlrpc.client
+import xmlrpc.client  # nosec B411
+import defusedxml.xmlrpc
+defusedxml.xmlrpc.monkey_patch()
 from optparse import OptionParser
 
 # Configuration

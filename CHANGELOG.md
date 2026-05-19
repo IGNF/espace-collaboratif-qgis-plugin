@@ -5,6 +5,23 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [5.0.7] - 2026-05-18
+
+### Modifié
+- Mise en conformité avec les exigences d'analyse statique du dépôt officiel QGIS
+
+## [5.0.6] - 2026-05-18
+
+### Modifié
+- Vérification SSL activée systématiquement sur toutes les requêtes réseau
+- Ajout de délais d'attente (timeout) sur les appels HTTP pour éviter les blocages indéfinis
+- Organisation des paramètres de connexion au service d'authentification 
+
+## [5.0.5] - 2026-05-07
+
+### Modifié
+- Mise à jour de fonctions XML dépréciées
+
 ## [5.0.4] - 2026-05-07
 
 ### Corrigé

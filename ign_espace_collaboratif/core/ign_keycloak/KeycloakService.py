@@ -1,6 +1,7 @@
 import urllib.parse
 import uuid
 import webbrowser
+from typing import Optional
 
 import requests
 
@@ -13,9 +14,9 @@ class KeycloakService:
         base_uri: str,
         realm_name: str,
         client_id: str,
-        client_secret: str = "",
+        client_secret: Optional[str] = None,
         proxies=None,
-        ssl_verify: bool = False,
+        ssl_verify: bool = True,
     ) -> None:
         self.base_uri = base_uri
         self.realm_name = realm_name
@@ -43,7 +44,7 @@ class KeycloakService:
             "scope": scope,
             "state": state,
         }
-        if self.client_secret != "":
+        if self.client_secret:
             params["client_secret"] = self.client_secret
 
         params_encoded = urllib.parse.urlencode(params)
@@ -70,7 +71,7 @@ class KeycloakService:
             "client_id": self.client_id,
         }
 
-        if self.client_secret != "":
+        if self.client_secret:
             data["client_secret"] = self.client_secret
 
         token_url = "{}realms/{}/protocol/openid-connect/token".format(self.base_uri, self.realm_name)

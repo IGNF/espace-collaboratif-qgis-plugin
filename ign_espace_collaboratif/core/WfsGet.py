@@ -259,7 +259,7 @@ class WfsGet(object):
                 if requestCount == 1:
                     existingCleabs = set()
                     try:
-                        sql = "SELECT cleabs FROM {} WHERE cleabs IS NOT NULL".format(SQLiteManager.echap(self.layerName))
+                        sql = "SELECT cleabs FROM {} WHERE cleabs IS NOT NULL".format(SQLiteManager._quote_identifier(self.layerName)) #nosec B608
                         connection = SQLiteManager.sqlite3Connect()
                         cursor = connection.cursor()
                         cursor.execute(sql)

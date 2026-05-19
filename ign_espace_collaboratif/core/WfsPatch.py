@@ -99,10 +99,10 @@ class WfsPatch(object):
         :param jsonResponse: la réponse du serveur après la requête vers le serveur
         :type: dict
         """
-        attributes = "geom = '{}', Date_MAJ = '{}'".format(jsonResponse['geometry'], jsonResponse['updating_date'])
-        condition = "NoSignalement = {}".format(jsonResponse['id'])
-        parameters = {'name': cst.nom_Calque_Signalement, 'attributes': attributes, 'condition': condition}
-        SQLiteManager.updateTable(parameters)
+        sql = "UPDATE {} SET geom = ?, \"Date_MAJ\" = ? WHERE \"NoSignalement\" = ?".format(  # nosec B608
+            SQLiteManager._quote_identifier(cst.nom_Calque_Signalement))
+        SQLiteManager.executeSQLWithParams(sql, (jsonResponse['geometry'], jsonResponse['updating_date'], jsonResponse['id']))
+        SQLiteManager.vacuumDatabase()
 
     def gcmsPatch(self) -> bool:
         """
