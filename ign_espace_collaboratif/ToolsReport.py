@@ -624,30 +624,6 @@ class ToolsReport(object):
                 datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(sk.getAllPoints())})
         return datas
 
-    def __resolveCommunityName(self, reportData) -> str:
-        """
-        Résout le nom du groupe à partir de l'identifiant de communauté présent dans les attributs du signalement.
-        L'identifiant est dans reportData['attributes'][0]['community'].
-        Il est comparé à la liste des communautés connues de l'utilisateur.
-
-        :param reportData: les données brutes d'un signalement issues de l'API
-        :type reportData: dict
-
-        :return: le nom du groupe, ou une chaîne vide si non trouvé
-        """
-        attributes = reportData.get('attributes', [])
-        if not isinstance(attributes, list) or len(attributes) == 0:
-            return ''
-        communityId = attributes[0].get('community')
-        if communityId is None:
-            return ''
-        communities = self.__context.getListNameIdFromAllUserCommunities()
-        if communities:
-            for entry in communities:
-                if entry.get('id') == communityId:
-                    return entry.get('name', '')
-        # ID non trouvé dans la liste de l'utilisateur : on retourne l'identifiant en chaîne
-        return str(communityId)
 
     def __calculateRowsForInsertInTable(self, datas) -> ():
         """
@@ -665,10 +641,6 @@ class ToolsReport(object):
         """
         report = Report(self.__context.urlHostEspaceCo, datas)
         report.InsertSketchIntoSQLite()
-        # Résoudre le nom du groupe depuis l'identifiant de communauté contenu dans les attributs
-        communityName = self.__resolveCommunityName(datas)
-        if communityName:
-            report.setCommunity(communityName)
         columns = report.getDatasForSQlite()
         return columns, report.getId()
 
