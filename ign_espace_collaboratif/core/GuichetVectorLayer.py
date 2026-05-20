@@ -276,7 +276,10 @@ class GuichetVectorLayer(QgsVectorLayer):
         :param strokeColor: couleur du trait entourant le symbole
         :type strokeColor: str
 
-        :param fillOpacity: opacité de la couleur de remplissage
+        :param fillOpacity: opacité de la couleur de remplissage (0.0 à 1.0).
+                            Appliqué uniquement au canal alpha du remplissage afin que le contour
+                            reste visible même si le remplissage est transparent (fillOpacity = 0),
+                            ce qui correspond au comportement du portail web.
         :type fillOpacity: float
 
         :param graphicName: forme du symbole ponctuel telle que définie par le portail web
@@ -292,9 +295,15 @@ class GuichetVectorLayer(QgsVectorLayer):
             strokeColor = QColor(f"#{secrets.randbelow(0x1000000):06x}").name(QColor.NameFormat.HexRgb)
         if fillOpacity is None:
             fillOpacity = 1
-        pointSymbol = self.__setPointStyle(fillColor, strokeColor, graphicName)
+        # Intègre fillOpacity dans le canal alpha de la couleur de remplissage uniquement.
+        # Ne pas utiliser symbol.setOpacity() qui rendrait l'intégralité du symbole (contour compris)
+        # transparent lorsque fillOpacity vaut 0, contrairement au portail web qui ne rend transparent
+        # que le remplissage tout en conservant un contour visible.
+        color = QColor(fillColor)
+        color.setAlphaF(float(fillOpacity))
+        fillColorWithAlpha = '{},{},{},{}'.format(color.red(), color.green(), color.blue(), color.alpha())
+        pointSymbol = self.__setPointStyle(fillColorWithAlpha, strokeColor, graphicName)
         symbol = QgsMarkerSymbol().createSimple(pointSymbol)
-        symbol.setOpacity(fillOpacity)
         return symbol
 
     # Example
