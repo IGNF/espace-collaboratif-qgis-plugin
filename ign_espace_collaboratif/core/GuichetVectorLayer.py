@@ -94,7 +94,17 @@ class GuichetVectorLayer(QgsVectorLayer):
         expression = self.conditionFactory.create_condition(condition)
         return expression.toSQL()
 
-    def __setPointStyle(self, fillColor, strokeColor) -> dict:
+    # Correspondance entre les noms de formes du portail web (OpenLayers) et les noms QGIS SimpleMarker
+    __GRAPHIC_NAME_MAP = {
+        'circle': 'circle',
+        'square': 'square',
+        'triangle': 'equilateral_triangle',
+        'star': 'star',
+        'cross': 'cross',
+        'x': 'cross2',
+    }
+
+    def __setPointStyle(self, fillColor, strokeColor, graphicName=None) -> dict:
         """
         Défini pour QGIS une représentation graphique d'un point en transformant le style issu du collaboratif.
 
@@ -104,10 +114,16 @@ class GuichetVectorLayer(QgsVectorLayer):
         :param strokeColor: couleur du trait entourant le symbole
         :type strokeColor: str
 
+        :param graphicName: forme du symbole ponctuel telle que définie par le portail web
+                            (ex: 'circle', 'square', 'triangle', 'star', 'cross', 'x').
+                            Si None ou non reconnue, 'circle' est utilisé par défaut.
+        :type graphicName: str or None
+
         :return: un style par défaut pour un point
         """
+        qgisMarkerName = self.__GRAPHIC_NAME_MAP.get(graphicName, 'circle') if graphicName else 'circle'
         return {'angle': '0', 'color': fillColor, 'horizontal_anchor_point': '1',
-                'joinstyle': 'round', 'name': 'circle', 'offset': '0,0',
+                'joinstyle': 'round', 'name': qgisMarkerName, 'offset': '0,0',
                 'offset_map_unit_scale': '3x:0,0,0,0,0,0', 'offset_unit': 'Pixel',
                 'outline_color': strokeColor, 'outline_style': 'solid',
                 'outline_width': '2', 'outline_width_map_unit_scale': '3x:0,0,0,0,0,0',
@@ -250,7 +266,7 @@ class GuichetVectorLayer(QgsVectorLayer):
         }
         return polygonStyles[strokeDashstyle]
 
-    def __setSymbolPoint(self, fillColor, strokeColor, fillOpacity) -> QgsMarkerSymbol:
+    def __setSymbolPoint(self, fillColor, strokeColor, fillOpacity, graphicName=None) -> QgsMarkerSymbol:
         """
         Applique une représentation graphique à un point.
 
@@ -263,6 +279,11 @@ class GuichetVectorLayer(QgsVectorLayer):
         :param fillOpacity: opacité de la couleur de remplissage
         :type fillOpacity: float
 
+        :param graphicName: forme du symbole ponctuel telle que définie par le portail web
+                            (ex: 'circle', 'square', 'triangle', 'star', 'cross', 'x').
+                            Si None, 'circle' est utilisé par défaut.
+        :type graphicName: str or None
+
         :return: la symbologie appliquée à un point
         """
         if fillColor is None:
@@ -271,7 +292,7 @@ class GuichetVectorLayer(QgsVectorLayer):
             strokeColor = QColor(f"#{secrets.randbelow(0x1000000):06x}").name(QColor.NameFormat.HexRgb)
         if fillOpacity is None:
             fillOpacity = 1
-        pointSymbol = self.__setPointStyle(fillColor, strokeColor)
+        pointSymbol = self.__setPointStyle(fillColor, strokeColor, graphicName)
         symbol = QgsMarkerSymbol().createSimple(pointSymbol)
         symbol.setOpacity(fillOpacity)
         return symbol
@@ -405,7 +426,8 @@ class GuichetVectorLayer(QgsVectorLayer):
                                                  v['fillOpacity'])
 
             if v['type'] == 'point':
-                symbol = self.__setSymbolPoint(v["fillColor"], v['strokeColor'], v['fillOpacity'])
+                symbol = self.__setSymbolPoint(v["fillColor"], v['strokeColor'], v['fillOpacity'],
+                                               v.get('graphicName'))
 
         if symbol is None:
             symbol = QgsSymbol.defaultSymbol(self.geometryType())
@@ -553,7 +575,8 @@ class GuichetVectorLayer(QgsVectorLayer):
 
         :return: la règle de symbologie du point
         """
-        symbolPoint = self.__setSymbolPoint(valeurs["fillColor"], valeurs['strokeColor'], valeurs['fillOpacity'])
+        symbolPoint = self.__setSymbolPoint(valeurs["fillColor"], valeurs['strokeColor'], valeurs['fillOpacity'],
+                                              valeurs.get('graphicName'))
         ruleBasedRendererPoint = QgsRuleBasedRenderer.Rule(symbolPoint, 0, 0, expression, valeurs['name'])
         return ruleBasedRendererPoint
 
