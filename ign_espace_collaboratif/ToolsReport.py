@@ -624,6 +624,7 @@ class ToolsReport(object):
                 datas.append({'sketch': sketch, 'geometryReport': self.__getBarycentreInWkt(sk.getAllPoints())})
         return datas
 
+
     def __calculateRowsForInsertInTable(self, datas) -> ():
         """
         Création d'un nouveau signalement.
