@@ -5,6 +5,13 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [5.0.8] - 2026-05-20
+
+### Corrigé
+- Correction de l'application des contraintes bloquantes lors de la création d'un nouvel objet
+- Ajout de styles ponctuels supplémentaires (triangle, carré, etc.)
+- Correction du menu déroulant dans l'interface de téléchargement des couches
+
 ## [5.0.7] - 2026-05-18
 
 ### Modifié
