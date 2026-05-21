@@ -434,6 +434,57 @@ class SQLiteManager(object):
         if len(cleabss) > 0:
             SQLiteManager.deleteRowsInTableBDUni(tableName, cleabss)
 
+    @staticmethod
+    def applyActionsToStandardTable(tableName, idName, geometryName, itemsTransaction) -> None:
+        """
+        Applique les actions (Update/Delete) d'une transaction sur une table standard (non-BDUni)
+        directement dans la base SQLite locale, sans re-télécharger les données depuis le serveur.
+
+        - Delete : supprime l'enregistrement par idName.
+        - Update : met à jour les attributs modifiés (hors géométrie) par idName.
+        - Insert : ignoré (le serveur assigne l'identifiant ; une resynchronisation est nécessaire
+                   pour voir les nouveaux objets avec leur identifiant serveur).
+
+        :param tableName: nom de la table SQLite
+        :param idName: nom du champ identifiant (clé primaire côté serveur)
+        :param geometryName: nom du champ géométrie (ignoré lors des updates)
+        :param itemsTransaction: liste des actions de la transaction (format datasForPost["actions"])
+        """
+        if not SQLiteManager.isTableExist(tableName):
+            return
+        tName = SQLiteManager._quote_identifier(tableName)
+        qIdName = SQLiteManager._quote_identifier(idName)
+        for item in itemsTransaction:
+            if type(item) is not dict:
+                item = json.loads(item)
+            state = item.get('state')
+            data = item.get('data', {})
+
+            if state == 'Delete':
+                id_value = data.get(idName)
+                if id_value is not None:
+                    sql = 'DELETE FROM {} WHERE {} = ?'.format(tName, qIdName)  # nosec B608
+                    SQLiteManager.executeSQLWithParams(sql, (id_value,))
+
+            elif state == 'Update':
+                id_value = data.get(idName)
+                if id_value is None:
+                    continue
+                set_parts = []
+                values = []
+                for key, value in data.items():
+                    if key == idName or key == geometryName:
+                        continue
+                    set_parts.append('{} = ?'.format(SQLiteManager._quote_identifier(key)))
+                    values.append(value)
+                if set_parts:
+                    values.append(id_value)
+                    sql = 'UPDATE {} SET {} WHERE {} = ?'.format(  # nosec B608
+                        tName, ', '.join(set_parts), qIdName)
+                    SQLiteManager.executeSQLWithParams(sql, tuple(values))
+
+            # Insert : ignoré - le serveur assigne l'identifiant, resynchronisation nécessaire
+
     # Insère un ou plusieurs enregistrements dans une table en fonction de la liste des attributs donnée en entrée
     def insertRowsInTable(self, parameters, attributesRows) -> int:
         totalRows = 0

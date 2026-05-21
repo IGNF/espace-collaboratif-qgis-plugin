@@ -251,28 +251,37 @@ class WfsPost(object):
                                                headers=headers, launchBy='__gcmsPost')
         responseTransactions = self.__checkResponseTransactions(response)
         if responseTransactions['status'] == cst.STATUS_COMMITTED:
-            # Mise à jour de la base SQLite pour les objets détruits et modifiés d'une couche BDUni
             if self.__layer.isBduni:
+                # BDUni : application locale des suppressions/mises à jour, puis synchronisation incrémentale
                 SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
-            # Mise à jour de la couche
-            try:
-                # Le numrec est égal à 0 pour une couche standard à un numéro pour une couche BDUni
-                numrec = self.__synchronize()
-            except Exception as e:
-                # La transaction est déjà committée côté serveur.
-                # Pour BDUni, les actions locales ont été appliquées (setActionsInTableBDUni),
-                # on vide l'editBuffer et on recharge la couche pour refléter l'état local.
-                print("[WARNING] __synchronize failed: {}".format(str(e)))
-                if bNormalWfsPost:
-                    self.__layer.rollBack()
-                self.__layer.reload()
-                # Ne pas relancer l'exception : la transaction a réussi côté serveur,
-                # l'utilisateur pourra resynchroniser via le bouton "mettre à jour"
-                responseTransactions['message'] += " (rechargement partiel, utilisez 'mettre à jour' pour resynchroniser)"
-                return responseTransactions
-            # Mise à jour du numrec pour la couche dans la table des tables
-            SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
-            # Le buffer de la couche est vidée et elle est rechargée
+                try:
+                    numrec = self.__synchronize()
+                except Exception as e:
+                    # La transaction est déjà committée côté serveur.
+                    # Les actions locales ont été appliquées (setActionsInTableBDUni),
+                    # on vide l'editBuffer et on recharge la couche pour refléter l'état local.
+                    print("[WARNING] __synchronize failed: {}".format(str(e)))
+                    if bNormalWfsPost:
+                        self.__layer.rollBack()
+                    self.__layer.reload()
+                    # Ne pas relancer l'exception : la transaction a réussi côté serveur,
+                    # l'utilisateur pourra resynchroniser via le bouton "mettre à jour"
+                    responseTransactions['message'] += " (rechargement partiel, utilisez 'mettre à jour' pour resynchroniser)"
+                    return responseTransactions
+                SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
+            else:
+                # Table standard (non-BDUni) : application directe des changements locaux dans SQLite,
+                # sans re-téléchargement complet. Les objets créés n'apparaîtront qu'après une
+                # resynchronisation manuelle (bouton "mettre à jour"), car le serveur assigne leur
+                # identifiant et il n'existe pas de numrec pour filtrer un GET incrémental.
+                SQLiteManager.applyActionsToStandardTable(
+                    self.__layer.name(),
+                    self.__layer.idNameForDatabase,
+                    self.__layer.geometryNameForDatabase,
+                    self.__datasForPost["actions"]
+                )
+                SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), 0)
+            # Le buffer de la couche est vidé et elle est rechargée
             if bNormalWfsPost:
                 self.__layer.rollBack()
             self.__layer.reload()
