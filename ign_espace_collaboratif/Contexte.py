@@ -14,7 +14,7 @@ from typing import Optional
 import requests
 from qgis.PyQt import QtGui
 from qgis.PyQt.QtGui import QImage
-from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
     QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup
@@ -701,7 +701,19 @@ class Contexte(object):
 
             # Rafraichissement de la carte
             self.mapCan.refresh()
-            QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, endMessage)
+            dlg = QDialog(self.iface.mainWindow())
+            dlg.setWindowTitle(cst.IGNESPACECO)
+            dlg.setMinimumWidth(450)
+            layout = QVBoxLayout(dlg)
+            text_edit = QTextEdit()
+            text_edit.setReadOnly(True)
+            text_edit.setPlainText(endMessage)
+            text_edit.setMaximumHeight(400)
+            layout.addWidget(text_edit)
+            btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+            btn_box.accepted.connect(dlg.accept)
+            layout.addWidget(btn_box)
+            dlg.exec()
 
         except Exception as e:
             if progress is not None:

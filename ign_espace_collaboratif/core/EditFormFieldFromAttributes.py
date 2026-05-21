@@ -89,6 +89,7 @@ class EditFormFieldFromAttributes(object):
                            self.setFieldExpressionConstraintMapping(v['constraint'], v['condition_field'], v['nullable']),
                            self.setFieldExpressionConstraintAttributesSets(v['jeux_attributs'])]
             self.setFieldAllConstraints(constraints)
+            self._applyNotNullHardConstraint(v['nullable'])
             self.setFieldListOfValues(v['enum'], v['default_value'])
             self.setFieldReadOnly(v['read_only'])
 
@@ -129,6 +130,36 @@ class EditFormFieldFromAttributes(object):
             return '"{}" is NULL or ({})'.format(self.name, expression)
         return expression
 
+    def _applyNotNullHardConstraint(self, bNullable) -> None:
+        """
+        Pour les champs NOT NULL, la valeur chaîne 'NULL' stockée par les widgets ValueMap
+        (lorsque l'utilisateur sélectionne l'option vide) n'est pas interceptée par la
+        contrainte native ConstraintNotNull de QGIS (qui ne vérifie que les None Python).
+        Cette méthode ajoute une contrainte d'expression "champ" != 'NULL' et la force
+        en mode HARD (croix rouge) pour que le formulaire affiche bien une erreur visible.
+
+        :param bNullable: valeur nullable du champ (False = NOT NULL)
+        :type bNullable: bool
+        """
+        if bNullable is not False or bNullable == '' or self.name == getattr(self.layer, 'idNameForDatabase', None):
+            return
+
+        nullStringExpr = '"{}" != \'NULL\''.format(self.name)
+        existingExpr = self.layer.constraintExpression(self.index)
+
+        if existingExpr:
+            combined = '({}) AND ({})'.format(nullStringExpr, existingExpr)
+        else:
+            combined = nullStringExpr
+
+        self.layer.setConstraintExpression(self.index, combined)
+        # setConstraintExpression définit la force à Soft par défaut ; on force à Hard
+        # pour que la violation soit affichée en rouge (croix) et non en orange (avertissement).
+        self.layer.setFieldConstraint(
+            self.index,
+            QgsFieldConstraints.Constraint.ConstraintExpression,
+            QgsFieldConstraints.ConstraintStrengthHard
+        )
     def getAllKeys(self, attributesSets) -> list:
         """
         Récupérer toutes les clés présentes dans au moins un sous-dictionnaire

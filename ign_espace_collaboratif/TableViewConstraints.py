@@ -35,7 +35,10 @@ class TableViewConstraints:
         self.constraintsByField = {}
         self._buildConstraintsIndex()
         
-        # Configuration des validateurs 
+        # Configuration des validateurs
+        # La contrainte NOT NULL est validée uniquement pour les objets existants (fid >= 0).
+        # Pour les nouveaux objets (fid < 0) et le champ identifiant (idNameForDatabase),
+        # elle est ignorée côté client (voir validateFieldValue).
         self._validatorConfig = {
             'nullable': {
                 'check': lambda c, v: c.get('nullable') is False and (v is None or v == qgis.core.NULL or v == '' or v == 'NULL'),
@@ -58,7 +61,7 @@ class TableViewConstraints:
                 'message': lambda f, c, v: f"Le champ '{f}' doit être inférieur ou égal à {c['max_value']}"
             },
             'pattern': {
-                'check': lambda c, v: c.get('pattern') is not None and v is not None and not re.match(c['pattern'], str(v)),
+                'check': lambda c, v: c.get('pattern') is not None and v is not None and v != qgis.core.NULL and v != 'NULL' and not re.match(c['pattern'], str(v)),
                 'message': lambda f, c, v: f"Le champ '{f}' ne correspond pas au format attendu"
             },
             'enum': {
@@ -248,15 +251,23 @@ class TableViewConstraints:
             if self._checkUnique(fieldName, value, fid):
                 return False, f"Le champ '{fieldName}' doit être unique. La valeur '{value}' existe déjà"
 
+        # La contrainte NOT NULL est ignorée pour :
+        #   - les nouvelles entités (fid < 0) : validée côté WfsPost avant l'envoi serveur
+        #   - le champ identifiant (idNameForDatabase) : valeur assignée par le serveur
+        isNewFeature = fid < 0
+        idNameForDatabase = getattr(self.layer, 'idNameForDatabase', None)
+
         # Itérer sur tous les validateurs configurés
         for validatorKey, config in self._validatorConfig.items():
+            if validatorKey == 'nullable' and (isNewFeature or fieldName == idNameForDatabase):
+                continue
             try:
                 if config['check'](constraint, value):
                     return False, config['message'](fieldName, constraint, value)
             except Exception:  # nosec B112
                 # Si le validateur échoue (ex: conversion impossible), on continue
                 continue
-        
+
         return True, ""
     
     # === Méthodes helper pour les validations complexes ===
