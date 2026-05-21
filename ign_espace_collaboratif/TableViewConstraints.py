@@ -129,7 +129,20 @@ class TableViewConstraints:
         :param fieldIndex: Index du champ modifié
         :param newValue: Nouvelle valeur saisie
         """
+        # Les valeurs null-like (None, qgis.core.NULL, 'NULL') sont toujours valides à ce stade
+        # et seront gérées par validateBeforeCommit si nécessaire.
+        if newValue is None or newValue == qgis.core.NULL or newValue == 'NULL':
+            return
+
         fieldName = self.layer.fields()[fieldIndex].name()
+
+        # Pour un champ nullable, une chaîne vide est un état transitoire vers NULL
+        # (l'utilisateur vide le champ avant de le passer à NULL explicitement).
+        # La validation finale au moment du commit gérera ce cas si besoin.
+        constraint = self.constraintsByField.get(fieldName)
+        if newValue == '' and (not constraint or constraint.get('nullable') is not False):
+            return
+
         feature = self.layer.getFeature(fid)
         
         # Valider la nouvelle valeur

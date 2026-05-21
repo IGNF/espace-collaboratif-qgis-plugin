@@ -469,7 +469,7 @@ class WfsPost(object):
         result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeatures)
         for r in result:
             action = self.__setAction('Delete')
-            if not self.__isTableStandard:
+            if self.__isTableBduni:
                 action['data'].update(self.__setFingerPrint(r[1]))
             action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             self.__datasForPost['actions'].append(action)
@@ -503,7 +503,7 @@ class WfsPost(object):
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
-                if not self.__isTableStandard:
+                if self.__isTableBduni:
                     action['data'].update(self.__setFingerPrint(r[1]))
                 action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             feature = self.__layer.getFeature(featureId)
@@ -528,7 +528,7 @@ class WfsPost(object):
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
-                if not self.__isTableStandard:
+                if self.__isTableBduni:
                     action['data'].update(self.__setFingerPrint(r[1]))
                 action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             if isGeometryAsWkt:
@@ -566,7 +566,7 @@ class WfsPost(object):
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
-                if not self.__isTableStandard:
+                if self.__isTableBduni:
                     action['data'].update(self.__setFingerPrint(r[1]))
                 action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             feature = self.__layer.getFeature(featureId)
