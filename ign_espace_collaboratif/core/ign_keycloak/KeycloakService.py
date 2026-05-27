@@ -37,7 +37,7 @@ class KeycloakService:
 
     @staticmethod
     def _generate_pkce_pair():
-        """Génère (code_verifier, code_challenge) selon RFC 7636 avec méthode S256."""
+        """Generate (code_verifier, code_challenge) according to RFC 7636 using the S256 method."""
         code_verifier = base64.urlsafe_b64encode(os.urandom(32)).rstrip(b"=").decode()
         digest = hashlib.sha256(code_verifier.encode()).digest()
         code_challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode()

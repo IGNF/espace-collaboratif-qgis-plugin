@@ -356,7 +356,6 @@ class Contexte(object):
         # proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
         self.__keycloakService = KeycloakService(cst.KEYCLOAK_SERVER_URI, cst.KEYCLOAK_REALM_NAME,
                                                  cst.KEYCLOAK_CLIENT_ID,
-                                                 client_secret=cst.KEYCLOAK_CLIENT_SECRET,
                                                  proxies=self.__proxies)
         r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
         r = self.__keycloakService.get_access_token(r["code"][0])
