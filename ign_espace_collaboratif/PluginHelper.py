@@ -8,14 +8,19 @@ version 4.0.1, 15/12/2020
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 import os
-import subprocess
+import subprocess  # nosec B404
 import sys
 import ntpath
-import xml.etree.ElementTree as ET
-from xml.etree.ElementTree import Element
+import xml.etree.ElementTree as ET  # nosec B405
+from xml.etree.ElementTree import Element  # nosec B405
+try:
+    import defusedxml.ElementTree as _safe_ET
+    _xml_parse = _safe_ET.parse
+except ImportError:
+    _xml_parse = ET.parse
 from datetime import datetime
 from typing import Optional
-from PyQt5.QtWidgets import QMessageBox, QApplication
+from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 from qgis.core import QgsProject
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
@@ -61,6 +66,7 @@ class PluginHelper:
     xml_proxy = "Proxy"
     xml_GroupeActif = "groupe_actif"
     xml_GroupePrefere = "groupe_prefere"
+    xml_ThemePrefere = "theme_prefere"
     xml_Root = "root"
 
     defaultDate = "1900-01-01 00:00:00"
@@ -128,7 +134,7 @@ class PluginHelper:
     def checkXmlFile(projectDir) -> Optional[ET.ElementTree]:
         xmlFileDirectory = "{}/{}".format(projectDir, PluginHelper.getConfigFile())
         try:
-            tree = ET.parse(xmlFileDirectory)
+            tree = _xml_parse(xmlFileDirectory)
             return tree
         except ET.ParseError as e:
             message = "PluginHelper.checkXmlFile, erreur d'analyse : {0} sur le fichier {1}. " \
@@ -587,9 +593,9 @@ class PluginHelper:
         """
         msgBox = QMessageBox()
         msgBox.setWindowTitle("IGN Espace Collaboratif")
-        msgBox.setIcon(QMessageBox.Warning)
+        msgBox.setIcon(QMessageBox.Icon.Warning)
         msgBox.setText(message)
-        msgBox.exec_()
+        msgBox.exec()
 
     @staticmethod
     def open_file(filename) -> None:
@@ -600,10 +606,10 @@ class PluginHelper:
         :type filename: str
         """
         if sys.platform == "win32":
-            os.startfile(filename)
+            os.startfile(filename)  # nosec B606
         else:
             opener = "open" if sys.platform == "darwin" else "xdg-open"
-            subprocess.call([opener, filename])
+            subprocess.call([opener, filename])  # nosec B603
 
     @staticmethod
     # TODO Mélanie : cette fonction n'est pas mis en service ? Dois-je l'intégrer au code ?

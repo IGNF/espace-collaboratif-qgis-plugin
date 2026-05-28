@@ -1,7 +1,7 @@
 import json
 import qgis.core
-from qgis.PyQt.QtCore import NULL
-from qgis.core import QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer, QgsFeatureRequest, QgsProject
+from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.core import QgsProject, QgsGeometry, QgsFeature, QgsVectorLayerEditBuffer
 from .SQLiteManager import SQLiteManager
 from .WfsGet import WfsGet
 from .Wkt import Wkt

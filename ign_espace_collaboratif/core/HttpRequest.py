@@ -1,6 +1,5 @@
 import json
 import requests
-from requests import Response
 from .PluginLogger import PluginLogger
 
 
@@ -41,16 +40,14 @@ class HttpRequest(object):
         """
         uri = "{}/{}".format(self.__url, partOfUrl)
         print(uri)
+        # Disable SSL verification only for localhost development
+        ssl_verify = "localhost.ign.fr" not in uri
         if params is not None:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    params=params, verify=False)
+                                    params=params, verify=ssl_verify, timeout=30)
         else:
-            # Ne pas vérifier le certificat en localhost
-            if uri.find("localhost.ign.fr") != -1:
-                response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                        verify=False)
-            else:
-                response = requests.get(uri, headers=self.__headers, proxies=self.__proxies)
+            response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
+                                    verify=ssl_verify, timeout=30)
         response.encoding = 'utf-8'
         return response
 
@@ -127,7 +124,7 @@ class HttpRequest(object):
             print("="*80 + "\n")
             
             r = requests.get(url, headers=headers, proxies=proxies,
-                             params=params, verify=False)
+                             params=params, verify=True, timeout=30)
             if r.status_code == 200:
                 r.encoding = 'utf-8'
                 response = json.loads(r.text)
@@ -165,7 +162,7 @@ class HttpRequest(object):
             }
 
     @staticmethod
-    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> Response:
+    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> requests.Response:
         """
         Lance une requête HTTP GET, POST ou PATCH en fonction des variables passées en entrée.
 
@@ -212,13 +209,13 @@ class HttpRequest(object):
             HttpRequest.logger.debug("Proxies: {}".format(proxies))
             
             if launchBy == 'gcmsPatch':
-                response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=False)
+                response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=True, timeout=30)
             elif data is None and files is None:
-                response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=False)
+                response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=True, timeout=30)
             elif files is None:
-                response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=False)
+                response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=True, timeout=30)
             else:
-                response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=False)
+                response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=True, timeout=30)
 
             # DEBUG: Log response details
             print("Response status: {}".format(response.status_code))

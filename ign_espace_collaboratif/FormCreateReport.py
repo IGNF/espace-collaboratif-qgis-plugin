@@ -1,10 +1,9 @@
 import json
 import os
 from typing import Optional
-from PyQt5 import QtGui, QtWidgets, QtCore
-from PyQt5.QtCore import Qt, QDate, QDateTime, QTime
-from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
-from qgis.PyQt import uic
+from qgis.PyQt import QtGui, QtWidgets, QtCore, uic
+from qgis.PyQt.QtCore import Qt, QDate, QDateTime, QTime
+from qgis.PyQt.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 from .core.Theme import Theme
@@ -64,18 +63,19 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.__context = context
 
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Envoyer")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.__onSend)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setText("Envoyer")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(self.__onSend)
 
         self.checkBoxAttDoc.stateChanged.connect(self.__openFileDialog)
 
         self.lblDoc.setProperty("visible", False)
         if nbSketch >= 2:
-            self.radioBtnUnique.setChecked(False)
-            self.radioBtnMultiple.setChecked(True)
+            # Toujours conserver "Créer un signalement unique" coché par défaut 
+            self.radioBtnUnique.setChecked(True)
+            self.radioBtnMultiple.setChecked(False)
             self.radioBtnMultiple.setText(u"Créer {0} signalements".format(nbSketch))
 
         self.__activeCommunity = self.__context.getActiveCommunityName()
@@ -290,6 +290,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         for c in communities:
             if self.__activeCommunity == c.getName():
                 self.__displayThemesForCommunity(c)
+                self.__preselectLastTheme()
                 break
 
     def __getQtWidgetsFromTypeAttribute(self, att) -> QtWidgets:
@@ -502,6 +503,27 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         """
         return self.__communityIdWhenThemeChanged
 
+    def __preselectLastTheme(self) -> None:
+        """
+        Pré-sélectionne dans le treeWidget le dernier thème utilisé lors d'un signalement précédent,
+        s'il est disponible dans la liste des thèmes du groupe courant.
+        """
+        try:
+            lastThemeNode = PluginHelper.load_XmlTag(self.__context.projectDir,
+                                                     PluginHelper.xml_ThemePrefere,
+                                                     PluginHelper.xml_Serveur)
+            lastThemeName = lastThemeNode.text if lastThemeNode is not None else None
+            if not lastThemeName:
+                return
+            for i in range(self.treeWidget.topLevelItemCount()):
+                item = self.treeWidget.topLevelItem(i)
+                if item.text(0) == lastThemeName:
+                    item.setCheckState(0, Qt.CheckState.Checked)
+                    self.treeWidget.expandItem(item)
+                    break
+        except Exception:  # nosec B110
+            pass
+
     def __groupIndexChanged(self):
         """
         Détecte le groupe choisi et lance l'affiche des thèmes adéquats.
@@ -513,6 +535,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
             for comm in self.__context.getCommunities():
                 if comm.getName() == userCommunityNameChoice:
                     self.__displayThemesForCommunity(comm)
+                    self.__preselectLastTheme()
                     self.__communityIdWhenThemeChanged = comm.getId()
                     break
 

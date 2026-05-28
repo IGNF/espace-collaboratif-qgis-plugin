@@ -12,9 +12,9 @@ import ntpath
 import time
 from typing import Optional
 import requests
-from PyQt5 import QtGui
-from PyQt5.QtGui import QImage
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt import QtGui
+from qgis.PyQt.QtGui import QImage
+from qgis.PyQt.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
     QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup
@@ -352,14 +352,11 @@ class Contexte(object):
 
         self.logger.debug("getConnexionEspaceCollaboratifWithKeycloak")
         self.__tokenTimerStart = time.perf_counter()
-        KEYCLOAK_SERVER_URI = "https://sso.geopf.fr/"
-        KEYCLOAK_CLIENT_ID = "espaceco-qgis"
-        KEYCLOAK_CLIENT_SECRET = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"
-        KEYCLOAK_REALM_NAME = "geoplateforme"
         # IGN_PROXY = "http://proxy.ign.fr:3128"
         # proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
-        self.__keycloakService = KeycloakService(KEYCLOAK_SERVER_URI, KEYCLOAK_REALM_NAME, KEYCLOAK_CLIENT_ID,
-                                                 client_secret=KEYCLOAK_CLIENT_SECRET, proxies=self.__proxies)
+        self.__keycloakService = KeycloakService(cst.KEYCLOAK_SERVER_URI, cst.KEYCLOAK_REALM_NAME,
+                                                 cst.KEYCLOAK_CLIENT_ID,
+                                                 proxies=self.__proxies)
         r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
         r = self.__keycloakService.get_access_token(r["code"][0])
         self.__tokenAccess = r["access_token"]
@@ -400,7 +397,7 @@ class Contexte(object):
             self.setListNameIdFromAllUserCommunities(communities.getListNameIdFromAllUserCommunities())
             self.setUserNameCommunity(communities.getUserName())
             dlgSelectedCommunities = FormChoixGroupe(self)
-            dlgSelectedCommunities.exec_()
+            dlgSelectedCommunities.exec()
             # bouton Continuer (le choix du nouveau profil est validé)
             if not dlgSelectedCommunities.getCancel():
                 # Le nouvel id et nom du groupe sont retournés dans un tuple idNameCommunity
@@ -464,7 +461,7 @@ class Contexte(object):
             raise Exception(message)
         if self.getUserCommunity().getLogo() != "":
             image = QImage()
-            image.loadFromData(requests.get(self.getUserCommunity().getLogo()).content)
+            image.loadFromData(requests.get(self.getUserCommunity().getLogo(), timeout=30).content)
             dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
         elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
@@ -491,7 +488,7 @@ class Contexte(object):
             for emprise in self.getUserCommunity().getEmprises():
                 strEmprises += "{},".format(emprise)
         dlgInfo.textInfo.append("Emprise(s) serveur : {}".format(strEmprises[:-1]))
-        dlgInfo.exec_()
+        dlgInfo.exec()
 
     def getTokenType(self):
         """
@@ -726,7 +723,19 @@ class Contexte(object):
 
             # Rafraichissement de la carte
             self.mapCan.refresh()
-            QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO, endMessage)
+            dlg = QDialog(self.iface.mainWindow())
+            dlg.setWindowTitle(cst.IGNESPACECO)
+            dlg.setMinimumWidth(450)
+            layout = QVBoxLayout(dlg)
+            text_edit = QTextEdit()
+            text_edit.setReadOnly(True)
+            text_edit.setPlainText(endMessage)
+            text_edit.setMaximumHeight(400)
+            layout.addWidget(text_edit)
+            btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+            btn_box.accepted.connect(dlg.accept)
+            layout.addWidget(btn_box)
+            dlg.exec()
 
         except Exception as e:
             if progress is not None:
@@ -744,7 +753,7 @@ class Contexte(object):
                 pushMessage("Remarque",
                             str(e),
                             message,
-                            level=1, duration=3)
+                            level=Qgis.MessageLevel.Warning, duration=3)
             print(str(e))
 
     def hideColumn(self, layer, columnName) -> None:
@@ -924,9 +933,9 @@ class Contexte(object):
             else:
                 message = "Les couches [{}] existent déjà, elles vont être supprimées.\nVoulez-vous continuer ?"\
                     .format(tmp[:-2])
-            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.Yes,
-                                         QMessageBox.No)
-            if reply == QMessageBox.No:
+            reply = QMessageBox.question(self.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
                 return False
 
         layerIds = []

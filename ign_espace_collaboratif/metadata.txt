@@ -8,9 +8,10 @@
 
 [general]
 name=IGN_Espace_Collaboratif
-qgisMinimumVersion=3.40
-description=IGN reporting and contribution service, plugin QGIS3
-version=5.0.1
+qgisMinimumVersion=3.4
+qgisMaximumVersion=4.99
+description=IGN reporting and contribution service, plugin QGIS3/4
+version=5.0.8
 author=IGN
 email=service-client@ign.fr
 license=GNU AGPL v3
@@ -24,11 +25,20 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin
 # Recommended items:
 
 # Optional items:
-date=2026-01-14
+date=2026-05-28
 
 # Uncomment the following line and add your changelog:
 changelog=
-    5.0.1 - Ajout d’un filtre spatial sur le guichet, ajout d’une option de téléchargement public et correction d’un bug lié aux attributs NULL. 
+    5.0.9 - Modifications du système d'authentification
+    5.0.8 - Corrections : application des contraintes bloquantes à la création d'objet, ajout de styles ponctuels et correction du menu de téléchargement des couches
+    5.0.7 - Conformité aux exigences d'analyse statique du dépôt officiel QGIS
+    5.0.6 - Corrections : vérification SSL systématique, délais d'attente sur les requêtes réseau et organisation des paramètres de connexion
+    5.0.5 - Mise à jour de fonctions XML dépréciées
+    5.0.4 - Correction : thème du dernier signalement à nouveau pré-sélectionné ; signalement unique par défaut ; affichage automatique après envoi ; compatibilité layers existantes d'anciennes versions (#172/#173/#175/#176)
+    5.0.3 - Compatibilité Qt5/Qt6
+    5.0.2 - Ajout d'un filtre spatial sur le guichet, ajout d'une option de téléchargement public et correction d'un bug lié aux attributs NULL.
+    5.0.1 - Corrections de bugs
+    5.0.0 - Première version majeure avec la nouvelle API collaboratif(déploiement annulé à cause de bug)
 
 # Tags are comma separated with spaces allowed
 tags=python

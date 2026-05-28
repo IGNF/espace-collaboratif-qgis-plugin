@@ -39,7 +39,6 @@ WMTS = "WMTS"
 FEATURE_TYPE = WFS = "feature-type"
 GEOSERVICE = "geoservice"
 PARTOFURLWMTS = "%26VERSION%3D1.0.0%26REQUEST%3DGetCapabilities"
-APIKEY = "ign_scan_ws"
 
 # Système de coordonnées de référence de Ripart
 EPSGCRS4326 = 4326
@@ -58,6 +57,11 @@ nom_Calque_Signalement = "Signalement"
 nom_Calque_Croquis_Polygone = "Croquis_EC_Polygone"
 nom_Calque_Croquis_Ligne = "Croquis_EC_Ligne"
 nom_Calque_Croquis_Point = "Croquis_EC_Point"
+
+# Paramètres de connexion Keycloak / IGN Geoplatform (client OAuth2 public du plugin)
+KEYCLOAK_SERVER_URI = "https://sso.geopf.fr/"
+KEYCLOAK_REALM_NAME = "geoplateforme"
+KEYCLOAK_CLIENT_ID = "espaceco-qgis-plugin"
 
 STATUS_COMMITTED = 'committed'
 STATUS_CONFLICTING = 'conflicting'

@@ -5,7 +5,7 @@ Updated on 26 aout 2025
 
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
-from qgis.core import QgsPointXY
+from qgis.core import QgsPointXY, Qgis
 from .core.MapToolsReport import MapToolsReport
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
@@ -61,4 +61,4 @@ class CreateReport(object):
         except Exception as e:
             self.__logger.error(format(e))
             self.__context.iface.messageBar().pushMessage("Erreur", u"Problème dans la création de signalement(s) : {}"
-                                                          .format(e), level=2, duration=4)
+                                                          .format(e), level=Qgis.MessageLevel.Critical, duration=4)

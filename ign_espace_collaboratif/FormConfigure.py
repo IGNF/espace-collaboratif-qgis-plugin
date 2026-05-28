@@ -12,10 +12,9 @@ import os.path
 from datetime import datetime, timedelta
 import calendar
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import Qt, QDate
-from PyQt5.QtWidgets import QTreeWidgetItem, QDialogButtonBox
-from qgis.PyQt import uic
+from qgis.PyQt import QtCore, QtWidgets, uic
+from qgis.PyQt.QtCore import Qt, QDate
+from qgis.PyQt.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.core import QgsVectorLayer, QgsProject
 from .PluginHelper import PluginHelper
 from .core.SQLiteManager import SQLiteManager
@@ -42,12 +41,12 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         self.context = context
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet("QDialog {background-color: rgb(255, 255, 255)}")
 
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Enregistrer")
-        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.save)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setText("Annuler")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setText("Enregistrer")
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(self.save)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setText("Annuler")
 
         self.lineEditUrl.setText(PluginHelper.load_urlhost(context.projectDir).text)
 

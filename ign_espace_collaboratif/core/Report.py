@@ -194,6 +194,8 @@ class Report(object):
                 'geom': geom
             }]
             geomAndTable = self.__whatGeometryAndTableIs(geom)
+            if geomAndTable[0] is None:
+                continue
             parameters = {'tableName': geomAndTable[1], 'geometryName': 'geom', 'sridTarget': cst.EPSGCRS4326,
                           'sridSource': cst.EPSGCRS4326, 'isStandard': False, 'is3D': False,
                           'geometryType': geomAndTable[0]}
@@ -253,12 +255,17 @@ class Report(object):
 
         :return: le type de géométrie, le nom de la table du croquis
         """
-        if 'POINT' in geom:
+        geomStr = geom if isinstance(geom, str) else str(geom)
+        geomUpper = geomStr.upper()
+        if 'POINT' in geomUpper:
             return 'POINT', cst.nom_Calque_Croquis_Point
-        if 'LINESTRING' in geom:
+        if 'LINESTRING' in geomUpper:
             return 'LINESTRING', cst.nom_Calque_Croquis_Ligne
-        if 'POLYGON' in geom:
+        if 'POLYGON' in geomUpper:
             return 'POLYGON', cst.nom_Calque_Croquis_Polygone
+        # Type géométrique non reconnu : on ignore ce croquis plutôt que de planter 
+        self.__logger.warning("__whatGeometryAndTableIs : type de géométrie non reconnu pour '{}'".format(geomStr[:100]))
+        return None, None
 
     def __formatDateToStrftime(self, dateToFormat) -> str:
         """

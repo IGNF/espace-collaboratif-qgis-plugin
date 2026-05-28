@@ -7,7 +7,7 @@ Valide les contraintes lors de la sauvegarde des modifications.
 """
 import re
 from typing import Tuple, Optional, Dict, Any, List
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsVectorLayer, QgsFeature, Qgis
 from qgis.utils import iface
 import qgis.core
@@ -35,7 +35,10 @@ class TableViewConstraints:
         self.constraintsByField = {}
         self._buildConstraintsIndex()
         
-        # Configuration des validateurs 
+        # Configuration des validateurs
+        # La contrainte NOT NULL est validée uniquement pour les objets existants (fid >= 0).
+        # Pour les nouveaux objets (fid < 0) et le champ identifiant (idNameForDatabase),
+        # elle est ignorée côté client (voir validateFieldValue).
         self._validatorConfig = {
             'nullable': {
                 'check': lambda c, v: c.get('nullable') is False and (v is None or v == qgis.core.NULL or v == '' or v == 'NULL'),
@@ -58,7 +61,7 @@ class TableViewConstraints:
                 'message': lambda f, c, v: f"Le champ '{f}' doit être inférieur ou égal à {c['max_value']}"
             },
             'pattern': {
-                'check': lambda c, v: c.get('pattern') is not None and v is not None and not re.match(c['pattern'], str(v)),
+                'check': lambda c, v: c.get('pattern') is not None and v is not None and v != qgis.core.NULL and v != 'NULL' and not re.match(c['pattern'], str(v)),
                 'message': lambda f, c, v: f"Le champ '{f}' ne correspond pas au format attendu"
             },
             'enum': {
@@ -113,7 +116,7 @@ class TableViewConstraints:
             iface.messageBar().pushMessage(
                 "Mode édition",
                 f"Édition activée sur '{self.layer.name()}'. Les contraintes seront validées lors de la sauvegarde.",
-                level=Qgis.Info,
+                level=Qgis.MessageLevel.Info,
                 duration=3
             )
 
@@ -138,7 +141,7 @@ class TableViewConstraints:
                 iface.messageBar().pushMessage(
                     "Attention - Contrainte non respectée",
                     f"Entité #{fid}, champ '{fieldName}': {errorMsg}",
-                    level=Qgis.Warning,
+                    level=Qgis.MessageLevel.Warning,
                     duration=5
                 )
 
@@ -193,7 +196,7 @@ class TableViewConstraints:
                 iface.messageBar().pushMessage(
                     "Erreur de validation",
                     "Sauvegarde annulée : des contraintes ne sont pas respectées. Corrigez les erreurs et sauvegardez à nouveau.",
-                    level=Qgis.Critical,
+                    level=Qgis.MessageLevel.Critical,
                     duration=7
                 )
 
@@ -248,15 +251,23 @@ class TableViewConstraints:
             if self._checkUnique(fieldName, value, fid):
                 return False, f"Le champ '{fieldName}' doit être unique. La valeur '{value}' existe déjà"
 
+        # La contrainte NOT NULL est ignorée pour :
+        #   - les nouvelles entités (fid < 0) : validée côté WfsPost avant l'envoi serveur
+        #   - le champ identifiant (idNameForDatabase) : valeur assignée par le serveur
+        isNewFeature = fid < 0
+        idNameForDatabase = getattr(self.layer, 'idNameForDatabase', None)
+
         # Itérer sur tous les validateurs configurés
         for validatorKey, config in self._validatorConfig.items():
+            if validatorKey == 'nullable' and (isNewFeature or fieldName == idNameForDatabase):
+                continue
             try:
                 if config['check'](constraint, value):
                     return False, config['message'](fieldName, constraint, value)
-            except Exception:
+            except Exception:  # nosec B112
                 # Si le validateur échoue (ex: conversion impossible), on continue
                 continue
-        
+
         return True, ""
     
     # === Méthodes helper pour les validations complexes ===
@@ -323,9 +334,9 @@ class TableViewConstraints:
 
         # Afficher le message d'erreur
         msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Critical)
+        msgBox.setIcon(QMessageBox.Icon.Critical)
         msgBox.setWindowTitle("Erreurs de validation des contraintes")
         msgBox.setText("Impossible de sauvegarder les modifications")
         msgBox.setInformativeText(errorMessage)
-        msgBox.setStandardButtons(QMessageBox.Ok)
-        msgBox.exec_()
+        msgBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msgBox.exec()

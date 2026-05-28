@@ -32,8 +32,11 @@ class OperatorCondition(AbstractCondition):
         self._value = value
 
     def quote(self, value):
-        if str is None:
+        if value is None:
             return "''"
+        #Booleans pas entre guillemets
+        if isinstance(value, bool):
+            return str(value)
         return "'{}'".format(value)
 
     def toSQL(self):

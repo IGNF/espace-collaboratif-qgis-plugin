@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from .HttpRequest import HttpRequest
-from requests import Response
+import requests
 from . import Constantes as cst
 from .Box import Box
 
@@ -127,13 +127,13 @@ class Query(object):
         if message != '':
             msgBox = QMessageBox()
             msgBox.setWindowTitle(cst.IGNESPACECO)
-            msgBox.setIcon(QMessageBox.Warning)
+            msgBox.setIcon(QMessageBox.Icon.Warning)
             msgBox.setText(message)
-            msgBox.exec_()
+            msgBox.exec()
 
         return data
 
-    def simple(self) -> Response:
+    def simple(self) -> requests.Response:
         """
         Requête HTTP simple.
 
