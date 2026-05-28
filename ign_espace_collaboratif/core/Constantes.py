@@ -61,8 +61,7 @@ nom_Calque_Croquis_Point = "Croquis_EC_Point"
 # Paramètres de connexion Keycloak / IGN Geoplatform (client OAuth2 public du plugin)
 KEYCLOAK_SERVER_URI = "https://sso.geopf.fr/"
 KEYCLOAK_REALM_NAME = "geoplateforme"
-KEYCLOAK_CLIENT_ID = "espaceco-qgis"
-KEYCLOAK_CLIENT_SECRET = "rv8rOUBCnHsh7LH63FXw3vetaxbmCLso"  # nosec B105 # pragma: allowlist secret
+KEYCLOAK_CLIENT_ID = "espaceco-qgis-plugin"
 
 STATUS_COMMITTED = 'committed'
 

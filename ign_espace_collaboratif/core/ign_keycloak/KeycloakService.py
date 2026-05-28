@@ -1,7 +1,9 @@
+import base64
+import hashlib
+import os
 import urllib.parse
 import uuid
 import webbrowser
-from typing import Optional
 
 import requests
 
@@ -14,9 +16,9 @@ class KeycloakService:
         base_uri: str,
         realm_name: str,
         client_id: str,
-        client_secret: Optional[str] = None,
+        client_secret: str = "",
         proxies=None,
-        ssl_verify: bool = True,
+        ssl_verify: bool = False,
     ) -> None:
         self.base_uri = base_uri
         self.realm_name = realm_name
@@ -26,16 +28,27 @@ class KeycloakService:
         self.session.verify = ssl_verify
         if proxies is not None:
             self.session.proxies.update(proxies)
+            print("session.proxies : {}".format(self.session.proxies))
 
         self.ip = "127.0.0.1"
         self.port = 7070
         self.redirect_uri = f"http://{self.ip}:{self.port}/authorization-code/callback"
+        self._code_verifier = None
+
+    @staticmethod
+    def _generate_pkce_pair():
+        """Generate (code_verifier, code_challenge) according to RFC 7636 using the S256 method."""
+        code_verifier = base64.urlsafe_b64encode(os.urandom(32)).rstrip(b"=").decode()
+        digest = hashlib.sha256(code_verifier.encode()).digest()
+        code_challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
+        return code_verifier, code_challenge
 
     def get_authorization_code(self, scope):
         if isinstance(scope, list):
             scope = " ".join(scope)
 
         state = uuid.uuid4().hex
+        self._code_verifier, code_challenge = self._generate_pkce_pair()
 
         params = {
             "response_type": "code",
@@ -43,9 +56,9 @@ class KeycloakService:
             "redirect_uri": self.redirect_uri,
             "scope": scope,
             "state": state,
+            "code_challenge": code_challenge,
+            "code_challenge_method": "S256",
         }
-        if self.client_secret:
-            params["client_secret"] = self.client_secret
 
         params_encoded = urllib.parse.urlencode(params)
 
@@ -64,20 +77,24 @@ class KeycloakService:
         return keycloak_response
 
     def get_access_token(self, authorization_code: str):
+        if self._code_verifier is None:
+            raise Exception("code_verifier manquant — appelez get_authorization_code d'abord")
+
         data = {
             "grant_type": "authorization_code",
             "code": authorization_code,
             "redirect_uri": self.redirect_uri,
             "client_id": self.client_id,
+            "code_verifier": self._code_verifier,
         }
-
         if self.client_secret:
             data["client_secret"] = self.client_secret
+        self._code_verifier = None
 
         token_url = "{}realms/{}/protocol/openid-connect/token".format(self.base_uri, self.realm_name)
         response = self.session.post(token_url, data=data)
         if response.status_code != 200:
-            raise Exception("Failed to get access token")
+            raise Exception("Failed to get access token: {}".format(response.text))
 
         return response.json()
 
