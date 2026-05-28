@@ -7,7 +7,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [5.0.9] - 2026-05-28
 
-### Modifé
+### Modifié
 - Modifications système d'authentification
 
 ## [5.0.8] - 2026-05-20
