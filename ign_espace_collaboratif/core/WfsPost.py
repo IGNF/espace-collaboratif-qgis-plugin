@@ -419,7 +419,10 @@ class WfsPost(object):
             self.__transactionReporting += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
         endTransaction = self.__gcmsPost(bNormalWfsPost)
         self.__endReporting += self.__setEndReporting(endTransaction)
-        return dict(status=endTransaction['status'], reporting=self.__endReporting)
+        result = dict(status=endTransaction['status'], reporting=self.__endReporting)
+        if endTransaction['status'] != cst.STATUS_COMMITTED:
+            result['message'] = endTransaction.get('message', '')
+        return result
 
     def __setEndReporting(self, endTransactionMessage) -> str:
         """

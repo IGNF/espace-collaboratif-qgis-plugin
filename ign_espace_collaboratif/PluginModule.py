@@ -402,6 +402,13 @@ class RipartPlugin:
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             PluginHelper.setCursor()
+            if self.__context is not None:
+                self.__context.iface.messageBar().pushMessage(
+                    "Espace Collaboratif",
+                    "Couche '{}' : {}. Vos modifications sont conservées en mode édition.".format(layer.name(), e),
+                    level=Qgis.MessageLevel.Critical,
+                    duration=0
+                )
             return messages
         return messages
 
@@ -455,8 +462,15 @@ class RipartPlugin:
         bNormalWfsPost = False
         commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
         messages = "{0}\n".format(commitLayerResult['reporting'])
-        if commitLayerResult['status'] == "FAILED":
+        if commitLayerResult['status'] != cst.STATUS_COMMITTED:
             layer.destroyEditCommand()
+            error_msg = commitLayerResult.get('message', 'Transaction refusée par le serveur.')
+            self.__context.iface.messageBar().pushMessage(
+                "Espace Collaboratif",
+                "Couche '{}' : {}. Vos modifications sont conservées en mode édition.".format(layer.name(), error_msg),
+                level=Qgis.MessageLevel.Critical,
+                duration=0
+            )
         else:
             # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction
             # commitLayer n'envoie pas d'exception sinon les modifs sont perdues
