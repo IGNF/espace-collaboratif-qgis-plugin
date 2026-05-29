@@ -8,6 +8,7 @@ Valide les contraintes lors de la sauvegarde des modifications.
 import re
 from typing import Tuple, Optional, Dict, Any, List
 from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtCore import QTimer
 from qgis.core import QgsVectorLayer, QgsFeature, Qgis
 from qgis.utils import iface
 import qgis.core
@@ -158,53 +159,118 @@ class TableViewConstraints:
                     duration=5
                 )
 
+    def getValidationErrors(self, editBuffer) -> list:
+        """
+        Valide le buffer sans effet de bord et retourne la liste des erreurs de validation.
+        Peut être appelé depuis n'importe quel point du flux de sauvegarde.
+        """
+        if not editBuffer:
+            return []
+        validationErrors = []
+        for fid, attributes in editBuffer.changedAttributeValues().items():
+            feature = self.layer.getFeature(fid)
+            if feature.isValid():
+                validationErrors.extend(self._validateFeatureAttributes(fid, feature, attributes.items()))
+        for fid, feature in editBuffer.addedFeatures().items():
+            allFields = [(i, feature.attribute(i)) for i in range(len(self.layer.fields()))]
+            validationErrors.extend(self._validateFeatureAttributes(fid, feature, allFields))
+        return validationErrors
+
+    def rollBackAndPreserveChanges(self) -> None:
+        """
+        Annule le commit en cours et restaure les modifications de l'utilisateur dans un nouveau
+        buffer d'édition, afin qu'il puisse corriger les erreurs sans perdre son travail.
+
+        Stratégie :
+        - On appelle editBuffer.rollBack() (et NON layer.rollBack()) pour vider le buffer sans
+          terminer la session d'édition en cours. QGIS va donc committer « rien » vers SpatiaLite
+          et fermer proprement la session via son propre cycle commitChanges().
+        - Un QTimer.singleShot(0, ...) planifie la restauration des modifications APRÈS que le
+          cycle commitChanges() de QGIS ait entièrement terminé de s'exécuter. Cela évite de
+          ré-entrer dans commitChanges() depuis l'intérieur d'un handler beforeCommitChanges,
+          ce qui provoquerait un second commit (et donc un second envoi au serveur).
+        - Les entités ajoutées (fid < 0) sont re-ajoutées depuis leur objet QgsFeature sauvegardé.
+        - Les modifications d'attributs et de géométrie sont re-appliquées pour les entités
+          existantes (fid >= 0).
+        - Les suppressions (fid >= 0) sont re-appliquées.
+        """
+        from qgis.core import QgsFeature, QgsGeometry
+
+        editBuffer = self.layer.editBuffer()
+
+        # --- 1. Sauvegarder l'état du buffer avant de le vider ---
+        added_features = []
+        changed_attrs = {}  # {fid: {fieldIdx: value}} — entités existantes uniquement
+        changed_geoms = {}  # {fid: QgsGeometry}       — entités existantes uniquement
+        deleted_fids = []
+
+        if editBuffer:
+            for fid, feature in editBuffer.addedFeatures().items():
+                added_features.append(QgsFeature(feature))
+            for fid, attrMap in editBuffer.changedAttributeValues().items():
+                if fid >= 0:
+                    changed_attrs[fid] = dict(attrMap)
+            for fid, geom in editBuffer.changedGeometries().items():
+                if fid >= 0:
+                    changed_geoms[fid] = QgsGeometry(geom)
+            deleted_fids = list(editBuffer.deletedFeatureIds())
+
+            # --- 2. Vider le buffer pour que QGIS committe « rien » vers SpatiaLite ---
+            # editBuffer.rollBack() vide le contenu du buffer sans terminer la session ;
+            # QGIS trouve un buffer vide et ne modifie pas SpatiaLite, puis ferme la session.
+            editBuffer.rollBack()
+
+        # --- 3. Planifier la restauration APRÈS la fin du cycle commitChanges() ---
+        # QTimer.singleShot(0) s'exécute dès que la pile d'appels courante est terminée,
+        # c'est-à-dire après que QGIS ait fermé la session d'édition. On évite ainsi tout
+        # ré-entrée dans la mécanique de commit.
+        layer = self.layer  # capture locale pour la lambda
+
+        def _restore():
+            if not layer.isEditable():
+                layer.startEditing()
+            for feature in added_features:
+                layer.addFeature(feature)
+            for fid, attrMap in changed_attrs.items():
+                for fieldIdx, value in attrMap.items():
+                    layer.changeAttributeValue(fid, fieldIdx, value)
+            for fid, geom in changed_geoms.items():
+                layer.changeGeometry(fid, geom)
+            for fid in deleted_fids:
+                layer.deleteFeature(fid)
+            # Le flag peut être resté True si __connectBeforeCommitChanges a court-circuité
+            # sa vérification (editBuffer vide) sans jamais atteindre le code de nettoyage.
+            # On le remet à False ici pour que le prochain commit parte bien au serveur.
+            layer._validation_already_handled = False
+
+        QTimer.singleShot(0, _restore)
+
     def validateBeforeCommit(self) -> None:
         """
         Valide toutes les modifications avant de les enregistrer.
         Empêche la sauvegarde si des contraintes ne sont pas respectées.
+
+        Si le gestionnaire de sauvegarde du plugin (PluginModule.__saveChangesForOneLayer)
+        a déjà effectué la validation et le rollback-with-preservation pour cette couche,
+        il positionne le flag '_validation_already_handled' pour éviter un double rollback.
         """
+        # Éviter le double rollback si la pipeline de sauvegarde a déjà traité cette couche
+        if getattr(self.layer, '_validation_already_handled', False):
+            self.layer._validation_already_handled = False
+            return
+
         editBuffer = self.layer.editBuffer()
         if not editBuffer:
             return
 
-        validationErrors = []
+        validationErrors = self.getValidationErrors(editBuffer)
 
-        # Valider les attributs modifiés
-        changedAttributes = editBuffer.changedAttributeValues()
-        for fid, attributes in changedAttributes.items():
-            feature = self.layer.getFeature(fid)
-            if not feature.isValid():
-                continue
-            
-            errors = self._validateFeatureAttributes(fid, feature, attributes.items())
-            validationErrors.extend(errors)
-
-        # Valider les nouvelles entités ajoutées
-        addedFeatures = editBuffer.addedFeatures()
-        for fid, feature in addedFeatures.items():
-            # Valider tous les champs de la nouvelle entité
-            allFields = [(fieldIndex, feature.attribute(fieldIndex)) 
-                         for fieldIndex in range(len(self.layer.fields()))]
-            errors = self._validateFeatureAttributes(fid, feature, allFields)
-            validationErrors.extend(errors)
-
-        # Si des erreurs de validation existent, empêcher la sauvegarde
         if validationErrors:
             self.showValidationErrors(validationErrors)
-            
-            # Déconnecter temporairement ce signal pour éviter la récursion
-            self.layer.beforeCommitChanges.disconnect(self.validateBeforeCommit)
-            
-            # Annuler les modifications en faisant un rollback
-            self.layer.rollBack()
-            
-            # Remettre la couche en mode édition
-            self.layer.startEditing()
-            
-            # Reconnecter le signal
-            self.layer.beforeCommitChanges.connect(self.validateBeforeCommit)
-            
-            # Afficher un message d'erreur
+            self.rollBackAndPreserveChanges()
+            # Signaler aux autres handlers connectés à beforeCommitChanges que
+            # le rollback a déjà été effectué pour ne pas retraiter
+            self.layer._validation_already_handled = True
             if iface:
                 iface.messageBar().pushMessage(
                     "Erreur de validation",

@@ -235,6 +235,18 @@ class RipartPlugin:
         """
         if layer is None:
             return
+        # Déconnecter avant de reconnecter pour éviter les connexions multiples.
+        # __connectSpecificSignals peut être appelé plusieurs fois sur la même couche
+        # (ex. _connectLayerWasAdded + boucle __onProjectLoaded), ce qui ferait
+        # déclencher __connectBeforeCommitChanges N fois par commit.
+        try:
+            layer.nameChanged.disconnect(self.__connectNameChanged)
+        except TypeError:
+            pass
+        try:
+            layer.beforeCommitChanges.disconnect(self.__connectBeforeCommitChanges)
+        except TypeError:
+            pass
         layer.nameChanged.connect(self.__connectNameChanged)
         layer.beforeCommitChanges.connect(self.__connectBeforeCommitChanges)
 
@@ -397,6 +409,29 @@ class RipartPlugin:
         if not editBuffer:
             return "error : PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
                    " pour la couche {}".format(layer.name())
+
+        # Si validateBeforeCommit a déjà géré la validation et le rollback-with-preservation
+        # pour cette couche (cas où il s'est exécuté avant ce handler), ne pas ré-envoyer.
+        if getattr(layer, '_validation_already_handled', False):
+            layer._validation_already_handled = False
+            return '<br/><font color="orange"><b>{}</b> : Sauvegarde annulée — contraintes non respectées.' \
+                   ' Corrigez les erreurs et sauvegardez à nouveau.</font>'.format(layer.name())
+
+        # Vérifier les contraintes AVANT d'envoyer au serveur.
+        # Nécessaire car ce handler (beforeCommitChanges) peut s'exécuter avant validateBeforeCommit
+        # selon l'ordre de connexion des signaux (PluginModule connecte avant TableViewConstraints).
+        constraints_handler = getattr(layer, 'tableConstraintsHandler', None)
+        if constraints_handler:
+            constraint_errors = constraints_handler.getValidationErrors(editBuffer)
+            if constraint_errors:
+                constraints_handler.showValidationErrors(constraint_errors)
+                constraints_handler.rollBackAndPreserveChanges()
+                # Positionner le flag pour que validateBeforeCommit (s'il se déclenche après)
+                # ne refasse pas de rollback et ne perde pas les modifications restaurées.
+                layer._validation_already_handled = True
+                return '<br/><font color="orange"><b>{}</b> : Sauvegarde annulée — contraintes non respectées.' \
+                       ' Corrigez les erreurs et sauvegardez à nouveau.</font>'.format(layer.name())
+
         try:
             messages = self.__doPost(layer, editBuffer)
         except Exception as e:
