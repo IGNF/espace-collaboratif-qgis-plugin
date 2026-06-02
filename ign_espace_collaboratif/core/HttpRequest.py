@@ -123,8 +123,13 @@ class HttpRequest(object):
                 print("  - No parameters")
             print("="*80 + "\n")
             
-            r = requests.get(url, headers=headers, proxies=proxies,
-                             params=params, verify=True, timeout=30)
+            # proxies=None means "read from environment variables" in requests.
+            # Force direct connection when no proxy is configured to avoid env-based proxy picks.
+            effective_proxies = proxies if proxies else {"http": None, "https": None}
+            # timeout=(connect, read): fail fast on silent proxy drops (5s to connect),
+            # but allow the server up to 60s to stream back a large WFS response.
+            r = requests.get(url, headers=headers, proxies=effective_proxies,
+                             params=params, verify=True, timeout=(5, 60))
             if r.status_code == 200:
                 r.encoding = 'utf-8'
                 response = json.loads(r.text)
@@ -162,7 +167,7 @@ class HttpRequest(object):
             }
 
     @staticmethod
-    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None) -> requests.Response:
+    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None, timeout=30) -> requests.Response:
         """
         Lance une requête HTTP GET, POST ou PATCH en fonction des variables passées en entrée.
 
@@ -187,6 +192,10 @@ class HttpRequest(object):
         :param launchBy: indique quelle fonction a lancé la requête
         :type launchBy: str
 
+        :param timeout: délai d'attente en secondes, ou tuple (connect_timeout, read_timeout) pour
+                        distinguer l'établissement de la connexion de la lecture de la réponse.
+        :type timeout: int or tuple
+
         :return: les données retournées par le serveur
         """
         try:
@@ -206,14 +215,17 @@ class HttpRequest(object):
             HttpRequest.logger.debug("Params: {}".format(params))
             HttpRequest.logger.debug("Proxies: {}".format(proxies))
             
+            # proxies=None means "read from environment variables" in requests.
+            # Force direct connection when no proxy is configured to avoid env-based proxy picks.
+            effective_proxies = proxies if proxies else {"http": None, "https": None}
             if launchBy == 'gcmsPatch':
-                response = requests.patch(url, data=data, headers=headers, proxies=proxies, verify=True, timeout=30)
+                response = requests.patch(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
             elif data is None and files is None:
-                response = requests.get(url, params=params, headers=headers, proxies=proxies, verify=True, timeout=30)
+                response = requests.get(url, params=params, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
             elif files is None:
-                response = requests.post(url, data=data, headers=headers, proxies=proxies, verify=True, timeout=30)
+                response = requests.post(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
             else:
-                response = requests.post(url, data=data, headers=headers, files=files, proxies=proxies, verify=True, timeout=30)
+                response = requests.post(url, data=data, headers=headers, files=files, proxies=effective_proxies, verify=True, timeout=timeout)
 
             # DEBUG: Log response details
             print("Response status: {}".format(response.status_code))
