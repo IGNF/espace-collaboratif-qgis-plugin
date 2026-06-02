@@ -61,7 +61,7 @@ PluginModule          ← Point d'entrée, barre d'outils, signaux QGIS
 La documentation de l'API collaborative est disponible ici :  
 <https://espacecollaboratif.ign.fr/gcms/api/doc/>
 
-**Authentification** : HTTP Basic Auth sur tous les appels.  
+**Authentification** : OAuth2/Keycloak (PKCE), gérée par ign_keycloak/KeycloakService.py et KeycloakAuthListener.py
 **Proxy** : lu depuis les paramètres QGIS (`QSettings`) et injecté dans `Client.__proxies`.
 
 | Endpoint | Méthode | Rôle | Format |
