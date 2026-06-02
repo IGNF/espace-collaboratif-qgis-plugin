@@ -30,30 +30,25 @@ Le plugin offre deux fonctionnalités principales :
 
 ![Architecture Espace Collaboratif](archi_espace_co_simplifiee.jpg)
 
-Certaines variables font référence à Ripart.
-Ripart désigne le nom historique pour l'espace collaboratif, il s'agit d'un acronyme pour : "Remontées d'Informations PARTagées" ou "Remontées d'Informations PARTenaires".
-
 ```
 QGIS Interface
       │
       ▼
-RipartPlugin          ← Point d'entrée, barre d'outils, signaux QGIS
+PluginModule          ← Point d'entrée, barre d'outils, signaux QGIS
       │
       ├── Contexte              ← État de session (profil, client, BDD, layers)
       │
       ├── FormConnection        ← Authentification
-      ├── ImporterRipart        ← Import des signalements
-      ├── CreerRipart           ← Création de signalements
+      ├── FormChargerGuichet    ← Import des signalements
+      ├── FormCreateReport      ← Création de signalements
       ├── SeeReport             ← Consultation
       ├── ReplyReport           ← Réponse à un signalement
       └── ImporterGuichet       ← Contribution directe (guichets)
               │
       ┌───────┴────────────────────────┐
       │                                │
-   core/Client                  core/SQLiteManager
-   core/RipartServiceRequest    (cache local)
-   core/XMLResponse
-   core/WfsGet / WfsPost
+   core/HttpRequest             core/SQLiteManager
+   core/WfsGet / WfsPost /WfsPatch
 ```
 
 
@@ -71,12 +66,9 @@ La documentation de l'API collaborative est disponible ici :
 
 | Endpoint | Méthode | Rôle | Format |
 |---|---|---|---|
-| `/api/georem/geoaut_get.xml` | GET | Profil utilisateur, groupes, droits | XML |
-| `/api/georem/georem_get` | GET | Signalements (paginé, filtré par bbox) | JSON |
-| `/api/georem/georem_post` | POST | Créer un signalement | Multipart |
-| `/api/georem/georem_put` | PUT | Ajouter une réponse | JSON |
 | `/gcms/wfs` | GET | Features guichet (WFS GetFeature) | JSON |
 | `/gcms/wfstransactions` | POST | Transactions WFS (INSERT/UPDATE/DELETE) | XML/WKT |
+| `/gcms/wfs` | GET | Features guichet (WFS GetFeature) | JSON |
 
 ---
 
@@ -92,20 +84,18 @@ Champs clés : `auteur` (Author), `geogroup` (Group), `themes`, `statut`, `prive
 Types (`sketchType`) : `Vide`, `Point`, `Ligne`, `Polygone`, `Texte`, `Fleche`.  
 Contient une liste de `Point` et des `SketchAttributes` (clé/valeur).
 
-### Constantes clés (`ConstanteRipart`)
+### Constantes clés 
 | Constante | Valeur |
 |---|---|
 | `MAX_TAILLE_UPLOAD_FILE` | 16 Mo |
-| `RIPART_CLIENT_PROTOCOL` | `"_RIPART_QGIS_99712"` |
 | `STATUT` | `undefined`, `submit`, `pending`, `valid`, `reject`, … |
-| `ZoneGeographique` | `FXX` (France), `GLP`, `MYT`, `REU`, `MTQ`, … |
 
 ---
 
 ## Configuration et profils
 
 ### Fichiers de config XML (par projet)
-Gérés par `RipartHelper` :
+Gérés par `PluginHelper` :
 
 | Clé XML | Rôle |
 |---|---|
@@ -158,4 +148,4 @@ python -m unittest test.test_init.TestInit.test_read_init
 | `sqlite3` | Cache local |
 | `configparser` | Lecture de `metadata.txt` |
 
-CRS de référence interne : **EPSG:2154** (Lambert-93). Les transformations vers le CRS du projet sont gérées par `RipartHelper`.
+CRS de référence interne : **EPSG:2154** (Lambert-93). Les transformations vers le CRS du projet sont gérées par `PluginHelper`.
