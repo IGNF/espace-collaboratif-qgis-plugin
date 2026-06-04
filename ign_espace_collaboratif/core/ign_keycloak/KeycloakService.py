@@ -16,7 +16,7 @@ class KeycloakService:
         base_uri: str,
         realm_name: str,
         client_id: str,
-        client_secret: str = "",
+        client_secret: str = "",  # nosec B107 - empty string is a default, not a hardcoded secret
         proxies=None,
         ssl_verify: bool = False,
     ) -> None:
