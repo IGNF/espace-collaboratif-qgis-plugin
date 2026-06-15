@@ -513,6 +513,32 @@ class RipartPlugin:
             editBuffer.rollBack()
         return messages
 
+    @staticmethod
+    def __isSessionExpiredError(exception) -> bool:
+        """
+        Vérifie si l'exception est due à un token invalide ou une session expirée.
+        """
+        msg = str(exception)
+        return "Invalid token" in msg or "Unauthorized" in msg
+
+    @staticmethod
+    def __isNetworkError(exception) -> bool:
+        """
+        Vérifie si l'exception est due à un problème réseau (timeout, connexion refusée, proxy…).
+        """
+        msg = str(exception)
+        return any(kw in msg for kw in (
+            "ConnectTimeoutError",
+            "ReadTimeoutError",
+            "Max retries exceeded",
+            "NewConnectionError",
+            "Failed to establish a new connection",
+            "Read timed out",
+            "Connection timed out",
+            "WinError 10013",
+            "WinError 10061",
+        ))
+
     def __sendMessageBarException(self, message, exception) -> None:
         """
         Envoi d'un message d'erreur formaté avec l'exception à l'utilisateur sur la barre de message QGIS
@@ -527,8 +553,34 @@ class RipartPlugin:
         if self.__context is None:
             return
         self.__context.iface.messageBar().clearWidgets()
-        self.__logger.error(format(exception))
         errorMessage = "{} : {}".format(message, str(exception))
+        self.__logger.error(errorMessage)
+
+        if self.__isSessionExpiredError(exception):
+            reply = QMessageBox.question(
+                self.__context.iface.mainWindow(),
+                cst.IGNESPACECO,
+                "Votre session a expiré ou n'est plus valide.\n\n"
+                "Voulez-vous vous reconnecter à l'Espace Collaboratif ?",
+                QMessageBox.StandardButton.Yes,
+                QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.__doConnexion(True)
+            PluginHelper.setCursor()
+            return
+
+        if self.__isNetworkError(exception):
+            QMessageBox.warning(
+                self.__context.iface.mainWindow(),
+                cst.IGNESPACECO,
+                "Impossible de joindre le serveur de l'Espace Collaboratif.\n\n"
+                "Vérifiez votre connexion réseau et votre configuration proxy\n"
+                "Si le problème persiste, le serveur est peut-être temporairement indisponible."
+            )
+            PluginHelper.setCursor()
+            return
+
         self.__context.iface.messageBar().pushMessage("Erreur", errorMessage, level=Qgis.MessageLevel.Critical, duration=5)
         PluginHelper.setCursor()
 
