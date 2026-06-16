@@ -1,6 +1,6 @@
 ﻿# Plugin IGN_Espace_collaboratif pour QGIS
 
-## Version 5.0
+## Version 5.0.9
 ![Image0](Image0.png) 
 
 <div  style="background-color: white; border: 1px solid black; padding: 10px; text-align: justify;">
@@ -84,7 +84,7 @@
 ||Évolution filtrage des signalements selon le groupe.||
 ||Contribution directe : Ajout de contraintes entre champs||
 ||Corrections diverses||
-
+|5.0.9|Mise à jour documentation connexion|16/06/2026|
 
 <div  style="background-color: white; border: 1px solid black; padding: 10px; width: 100%; box-sizing: border-box;">
   <h2 id="3-préambule" style="color: #00ADC5">3. Préambule</h2>
@@ -161,29 +161,14 @@ Pour installer le plugin, suivre les étapes suivantes :
 	<p><strong><span style="color: #548DD4">Figure 1 : le menu de gestion des extensions</span></strong></p>
 </div>
 
-- Se rendre dans l’onglet **Paramètres** et cliquer sur « Ajouter… »
-- Ajouter le dépôt avec l’URL : **https://espacecollaboratif.ign.fr/plugins/plugin-qgis.xml**
+- Taper dans Toutes "espace", on a alors le plugin IGN_Espace_Collaboratif proposé
 
 <div  style="text-align: center;"> 
-	<img  src="Image2.png" alt="Figure 2" />
-  <p><strong><span style="color: #548DD4">Figure 2  : configuration du dépôt d’extensions</span></strong></p>
+	<img  src="Image2.png"  alt="Figure 2" height = 400/> 
+	<p><strong><span style="color: #548DD4">Figure 2 : proposition de chargement du plugin</span></strong></p>
 </div>
 
-- Une fois ajouté, s’assurer que les extensions expérimentales sont affichées et que le statut du dépôt Espace collaboratif est « connecté » :
-
-<div  style="text-align: center;"> 
-	<img  src="Image3.png" alt="Figure 3" />
-  <p><strong><span style="color: #548DD4">Figure 3 : Affichage des extensions expérimentales</span></strong></p>
-</div>
-
-- **IGN_Espace_collaboratif** apparait dans l’onglet **Nouvelles**. Il est possible de l’installer en cliquant sur «  Installer l’extension ». Il vous sera alors demandé de vous connecter en utilisant le login et le mot de passe de votre compte Espace collaboratif :
-
-<div  style="text-align: center;"> 
-	<img  src="Image4.png" alt="Figure 4" />
-  <p><strong><span style="color: #548DD4">Figure 4 : Connexion au compte Espace collaboratif pour installation</span></strong></p>
-</div>
-
-- **IGN_Espace_collaboratif apparait alors dans la liste des extensions installées.**
+- Cliquer sur Installer l'extension. **IGN_Espace_collaboratif** apparait dans la liste des extensions **Installées**. 
 	
 <div  style="text-align: center;"> 
 	<img  src="Image5.png" alt="Figure 5" />
