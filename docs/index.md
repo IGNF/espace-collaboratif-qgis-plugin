@@ -164,7 +164,7 @@ Pour installer le plugin, suivre les étapes suivantes :
 - Taper dans Toutes "espace", on a alors le plugin IGN_Espace_Collaboratif proposé
 
 <div  style="text-align: center;"> 
-	<img  src="Image2.png"  alt="Figure 2" /> 
+	<img  src="Image2.png"  alt="Figure 2" height = 400/> 
 	<p><strong><span style="color: #548DD4">Figure 2 : proposition de chargement du plugin</span></strong></p>
 </div>
 
