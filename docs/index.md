@@ -1,6 +1,6 @@
 ﻿# Plugin IGN_Espace_collaboratif pour QGIS
 
-## Version 5.0
+## Version 5.0.9
 ![Image0](Image0.png) 
 
 <div  style="background-color: white; border: 1px solid black; padding: 10px; text-align: justify;">
@@ -84,7 +84,7 @@
 ||Évolution filtrage des signalements selon le groupe.||
 ||Contribution directe : Ajout de contraintes entre champs||
 ||Corrections diverses||
-
+|5.0.9|Mise à jour documentation connexion|16/06/2026|
 
 <div  style="background-color: white; border: 1px solid black; padding: 10px; width: 100%; box-sizing: border-box;">
   <h2 id="3-préambule" style="color: #00ADC5">3. Préambule</h2>
