@@ -25,11 +25,11 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin
 # Recommended items:
 
 # Optional items:
-date=2026-06-04
+date=2026-06-24
 
 # Uncomment the following line and add your changelog:
 changelog=
-    5.1.0 - Optimisation synchronisation SQLite, amélioration gestion contraintes bloquantes (REGEX #187), gestion erreurs proxy, réduction délai validation serveur, ajout documentation développeur (#178)
+    5.1.0 - Optimisation synchronisation SQLite, amélioration gestion contraintes bloquantes (REGEX #187), gestion erreurs proxy, réduction délai validation serveur, ajout documentation développeur (#178), gestion des erreurs de connexion améliorée, maj documentation
     5.0.9 - Modifications du système d'authentification
     5.0.8 - Corrections : application des contraintes bloquantes à la création d'objet, ajout de styles ponctuels et correction du menu de téléchargement des couches
     5.0.7 - Conformité aux exigences d'analyse statique du dépôt officiel QGIS
