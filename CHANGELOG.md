@@ -5,7 +5,7 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
-## [5.1.0] - 2026-06-04
+## [5.1.0] - 2026-06-24
 
 ### Ajouté
 - Documentation développeur (#178)
@@ -15,6 +15,8 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - Amélioration de la gestion des contraintes bloquantes : validation REGEX avant commit pour éviter l'affichage inutile du bandeau d'erreur (#187)
 - Amélioration de la gestion des transactions et des erreurs proxy
 - Réduction du délai d'attente lors de la validation serveur
+- gestion des erreurs de connexion améliorée
+- Mise à jour de la documentation
 
 
 ## [5.0.9] - 2026-05-28
