@@ -5,6 +5,13 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [5.1.1] - 2026-06-24
+
+### Ajouté
+
+### Modifié
+- Modification email metadata
+
 ## [5.1.0] - 2026-06-24
 
 ### Ajouté
