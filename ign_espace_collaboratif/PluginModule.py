@@ -1,6 +1,8 @@
+import json
 import logging
 import os.path
 import configparser
+import requests
 import webbrowser
 
 from qgis.core import QgsFeatureRequest
@@ -13,6 +15,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer, Qgis
 from builtins import str
 from .core.BBox import BBox
+from .core.HttpRequest import HttpRequest
 from .core.WfsPost import WfsPost
 from .core.PluginLogger import PluginLogger
 from .core.SQLiteManager import SQLiteManager
@@ -46,6 +49,7 @@ class RipartPlugin:
         :param iface: interface du plugin
         """
         self.toolButton2 = None
+        self.statButton = None
         self.helpMenu = None
         self.__context = None
         self.__dlgConfigure = None
@@ -707,6 +711,13 @@ class RipartPlugin:
         self.help.triggered.connect(self.__showHelp)
         self.log.triggered.connect(self.__showLog)
 
+        self.statButton = QToolButton()
+        self.statButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        self.statButton.setText(self.__translate(u'Statistiques'))
+        self.statButton.setStatusTip(self.__translate(u'Afficher les statistiques de la base de la couche active'))
+        self.statButton.clicked.connect(self.__showStatistics)
+        self.toolbar.addWidget(self.statButton)
+
         self.helpMenu = QMenu("Aide")
         self.helpMenu.addAction(self.config)
         self.helpMenu.addAction(self.help)
@@ -1101,6 +1112,52 @@ class RipartPlugin:
         dlgInfo.textInfo.append(u"<br/>Version : " + version)
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
         dlgInfo.exec()
+
+    def __showStatistics(self) -> None:
+        """
+        Récupère et affiche les statistiques de la base de données de la couche active.
+        """
+        if not self.__doConnexion(False):
+            return
+
+        active_layer = self.iface.activeLayer()
+        if active_layer is None:
+            PluginHelper.showMessageBox(u"Veuillez sélectionner une couche active.")
+            return
+
+        rows = SQLiteManager.selectRowsInTableOfTables(active_layer.name())
+        if not rows:
+            PluginHelper.showMessageBox(
+                u"La couche '{}' n'est pas une couche de l'espace collaboratif.".format(active_layer.name()))
+            return
+
+        # Colonnes: id, layer, idName, standard, database, databaseid, srid, ...
+        databaseid = rows[0][5]
+
+        url = "{}/gcms/api/databases/{}/statistic".format(self.__context.urlHostEspaceCo, databaseid)
+        headers = {
+            'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())
+        }
+
+        try:
+            ssl_verify = "localhost.ign.fr" not in url
+            response = requests.get(url, headers=headers, proxies=self.__context.getProxies(),
+                                    verify=ssl_verify, timeout=30)
+            response.encoding = 'utf-8'
+
+            if response.status_code == 200:
+                text = json.dumps(response.json(), indent=2, ensure_ascii=False)
+                dlg = QMessageBox(self.iface.mainWindow())
+                dlg.setWindowTitle(u"Statistiques - base {}".format(databaseid))
+                dlg.setText(text)
+                dlg.exec()
+            else:
+                PluginHelper.showMessageBox(
+                    u"Erreur {} lors de la récupération des statistiques.\n{}".format(
+                        response.status_code, response.text))
+        except Exception as e:
+            self.__logger.error("__showStatistics : {}".format(e))
+            PluginHelper.showMessageBox(u"Erreur lors de la requête : {}".format(str(e)))
 
     def __showHelp(self) -> None:
         """
