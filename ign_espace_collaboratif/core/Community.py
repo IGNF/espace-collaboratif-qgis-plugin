@@ -132,8 +132,9 @@ class Community(object):
 
     def __getLayers(self, data) -> []:
         """
-        Récupère les infos générales (symbologie par exemple) et spécifiques WFS : __getDataLayerFromTable et WMS :
-        __getDataLayerFromGeoservice pour l'ensemble des couches d'un groupe.
+        Récupère les infos générales et les noms de l'ensemble des couches d'un groupe.
+        Pour les couches WFS (feature-type), seul le nom est récupéré via __getLayerNameFromTable.
+        Les détails complets (colonnes, styles) sont chargés à la demande via loadLayerDetails.
 
         :param data: les données d'une couche
         :type data: dict
@@ -165,12 +166,47 @@ class Community(object):
                 layer.tableid = d['table']
             if PluginHelper.keyExist('type', d):
                 if d['type'] == cst.FEATURE_TYPE:
-                    self.__getDataLayerFromTable(layer)
+                    # Récupération du nom uniquement (sans colonnes ni styles)
+                    self.__getLayerNameFromTable(layer)
                 if d['type'] == cst.GEOSERVICE:
                     if PluginHelper.keyExist('geoservice', d):
-                        self.__getDataLayerFromGeoservice(layer, d['geoservice'])
+                        layer.geoservice.update(d['geoservice'])
+                        if PluginHelper.keyExist('title', d['geoservice']):
+                            layer.setName(d['geoservice']['title'])
             layers.append(layer)
         return layers
+
+    def __getLayerNameFromTable(self, layer) -> None:
+        """
+        Récupère uniquement le nom d'une couche WFS depuis l'API, sans charger les colonnes ni les styles.
+        Appelée lors de l'affichage du dialogue de choix des couches.
+
+        :param layer: couche avec les infos permettant la recherche de son nom
+        :type layer: Layer
+        """
+        self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
+        self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseid, layer.tableid))
+        response = self.__query.simple()
+        if response is None:
+            return
+        data = response.json()
+        if PluginHelper.keyExist('name', data):
+            layer.setName(data['name'])
+            layer.tablename = data['name']
+
+    def loadLayerDetails(self, layer) -> None:
+        """
+        Charge les détails complets d'une couche (colonnes, styles, URL, etc.) en effectuant
+        les requêtes HTTP nécessaires selon le type de couche.
+        À appeler uniquement pour les couches que l'utilisateur a sélectionnées.
+
+        :param layer: la couche pour laquelle charger les détails
+        :type layer: Layer
+        """
+        if layer.type == cst.FEATURE_TYPE:
+            self.__getDataLayerFromTable(layer)
+        elif layer.type == cst.GEOSERVICE:
+            self.__getDataLayerFromGeoservice(layer, layer.geoservice)
 
     def __getDataLayerFromTable(self, layer) -> None:
         """

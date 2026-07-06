@@ -461,7 +461,7 @@ class Contexte(object):
             raise Exception(message)
         if self.getUserCommunity().getLogo() != "":
             image = QImage()
-            image.loadFromData(requests.get(self.getUserCommunity().getLogo(), timeout=30).content)
+            image.loadFromData(requests.get(self.getUserCommunity().getLogo(), timeout=60).content)
             dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
         elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
