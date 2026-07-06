@@ -44,7 +44,7 @@ class Layer(object):
         self.description = ""
         self.minzoom = 0
         self.maxzoom = 20
-        self.isStandard = True
+        self.isBduni = False
         self.tileZoomLevel = 0
         self.readOnly = None
         self.geometryName = ''

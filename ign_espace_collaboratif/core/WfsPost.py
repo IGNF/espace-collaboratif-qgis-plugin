@@ -42,7 +42,7 @@ class WfsPost(object):
         self.__url = "{0}/gcms/api/databases/{1}/transactions".format(context.urlHostEspaceCo, database_id)
         self.__bbox = BBox(context)
         self.__filterName = filterName
-        self.__isTableStandard = True
+        self.__isTableBduni = False
         self.__datasForPost = {}
 
     def __initParametersLayer(self) -> int:
@@ -69,8 +69,9 @@ class WfsPost(object):
         if result is not None:
             for r in result:
                 self.__layer.databasename = r[4]
-                self.__isTableStandard = r[3]
-                self.__layer.isStandard = r[3]
+                # r[3] : colonne 'standard' en base (1 = non-BDUni, 0 = BDUni) → isBduni = inverse
+                self.__isTableBduni = not bool(r[3])
+                self.__layer.isBduni = not bool(r[3])
                 self.__layer.srid = r[6]
                 self.__layer.idNameForDatabase = r[2]
                 self.__layer.geometryNameForDatabase = r[7]
@@ -303,6 +304,41 @@ class WfsPost(object):
                 if bNormalWfsPost:
                     self.__layer.rollBack()
                 self.__layer.reload()
+        if responseTransactions['status'] == cst.STATUS_COMMITTED:
+            if self.__layer.isBduni:
+                # BDUni : application locale des suppressions/mises à jour, puis synchronisation incrémentale
+                SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
+                try:
+                    numrec = self.__synchronize()
+                except Exception as e:
+                    # La transaction est déjà committée côté serveur.
+                    # Les actions locales ont été appliquées (setActionsInTableBDUni),
+                    # on vide l'editBuffer et on recharge la couche pour refléter l'état local.
+                    print("[WARNING] __synchronize failed: {}".format(str(e)))
+                    if bNormalWfsPost:
+                        self.__layer.rollBack()
+                    self.__layer.reload()
+                    # Ne pas relancer l'exception : la transaction a réussi côté serveur,
+                    # l'utilisateur pourra resynchroniser via le bouton "mettre à jour"
+                    responseTransactions['message'] += " (rechargement partiel, utilisez 'mettre à jour' pour resynchroniser)"
+                    return responseTransactions
+                SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
+            else:
+                # Table standard (non-BDUni) : application directe des changements locaux dans SQLite,
+                # sans re-téléchargement complet. Les objets créés n'apparaîtront qu'après une
+                # resynchronisation manuelle (bouton "mettre à jour"), car le serveur assigne leur
+                # identifiant et il n'existe pas de numrec pour filtrer un GET incrémental.
+                SQLiteManager.applyActionsToStandardTable(
+                    self.__layer.name(),
+                    self.__layer.idNameForDatabase,
+                    self.__layer.geometryNameForDatabase,
+                    self.__datasForPost["actions"]
+                )
+                SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), 0)
+            # Le buffer de la couche est vidé et elle est rechargée
+            if bNormalWfsPost:
+                self.__layer.rollBack()
+            self.__layer.reload()
         return responseTransactions
 
     def __deleteTemporaryConflicts(self, cleabss):
@@ -330,32 +366,53 @@ class WfsPost(object):
         NB : pour une table standard (non BDUni), la synchronisation vide les tables SQLite du projet et extrait
         de nouveau l'ensemble des objets intersectant la boite englobante de la zone de travail.
 
+        Pour une couche BDUni, la synchronisation est incrémentale (seuls les objets modifiés depuis le dernier
+        numrec sont récupérés). Les actions locales (Update/Delete) ont déjà été appliquées via
+        setActionsInTableBDUni avant l'appel à cette méthode.
+
         :return: le dernier numéro de mises à jour.
         """
-        # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
+        # La colonne 'detruit' existe uniquement pour une couche BDUni
         bDetruit = True
-        # si c'est une autre table donc standard alors la colonne n'existe pas
-        # et il faut vider la table pour éviter de créer un objet à chaque Get
-        if self.__layer.isStandard:
+        # Pour une couche non-BDUni la colonne n'existe pas :
+        # il faut vider la table pour éviter de dupliquer les objets à chaque Get
+        if not self.__layer.isBduni:
             bDetruit = False
             SQLiteManager.emptyTable(self.__layer.name())
-            SQLiteManager.vacuumDatabase()
-            self.__layer.reload()
 
         numrec = SQLiteManager.selectNumrecTableOfTables(self.__layer.name())
+        print("numrec for synchronize : {}".format(numrec))
         headers = {
             'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
         parameters = {'databasename': self.__layer.databasename, 'layerName': self.__layer.name(),
                       'geometryName': self.__layer.geometryNameForDatabase, 'sridProject': cst.EPSGCRS4326,
                       'sridLayer': self.__layer.srid, 'bbox': self.__bbox.getFromLayer(self.__filterName, False, True),
-                      'detruit': bDetruit, 'isStandard': self.__layer.isStandard,
+                      'detruit': bDetruit, 'isBduni': self.__layer.isBduni,
                       'is3D': self.__layer.geometryDimensionForDatabase,
                       'numrec': numrec, 'role': None,
                       'urlHostEspaceCo': self.__context.urlHostEspaceCo,
                       'headers': headers, 'proxies': self.__context.getProxies(),
                       'databaseid': self.__layer.databaseid, 'tableid': self.__layer.tableid}
         wfsGet = WfsGet(parameters)
-        numrecmessage = wfsGet.gcmsGet()
+
+        # Pour les couches BDUni :
+        #   - numrec (local, issu de SQLite) est la borne inférieure du filtre GET :
+        #     il détermine QUELS objets récupérer (filter: {"gcms_numrec": {"$gte": numrec}})
+        #   - maxNumrec (serveur) est le nouveau watermark à sauvegarder dans SQLite après la sync ;
+        #     il est récupéré ici pour éviter un appel HTTP redondant dans gcmsGet, mais ne modifie pas le filtre.
+        # Pour les couches non-BDUni, maxNumrec vaut 0 (pas de versioning).
+        maxNumrec = None
+        if self.__layer.isBduni:
+            try:
+                maxNumrec = wfsGet.getMaxNumrec()
+            except Exception as e:
+                print("[WARNING] __synchronize: getMaxNumrec failed: {}".format(str(e)))
+                # Transaction OK côté serveur, mais on ne peut pas récupérer le nouveau watermark.
+                # On retourne le numrec actuel, l'utilisateur resynchronisera via le bouton "mettre à jour".
+                return numrec
+
+        numrecmessage = wfsGet.gcmsGet(maxNumrec=maxNumrec)
+        print("numrecmessage : {}".format(numrecmessage))
         if 'error' in numrecmessage[1]:
             message = "Vos modifications ont bien été prises en compte mais la couche n'a pas pu être rechargée " \
                       "dans QGIS. Il faut la ré-importer. En cas de problème, veuillez contacter le gestionnaire " \
@@ -409,7 +466,7 @@ class WfsPost(object):
         if result is not None:
             if result[0] == 1:
                 bBDUni = True
-                self.__isTableStandard = False
+                self.__isTableBduni = True
 
         # Traitement des ajouts
         if len(addedFeatures) != 0:
@@ -435,7 +492,10 @@ class WfsPost(object):
             self.__transactionReporting += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
         endTransaction = self.__gcmsPost(bNormalWfsPost)
         self.__endReporting += self.__setEndReporting(endTransaction)
-        return dict(status=endTransaction['status'], reporting=self.__endReporting)
+        result = dict(status=endTransaction['status'], reporting=self.__endReporting)
+        if endTransaction['status'] != cst.STATUS_COMMITTED:
+            result['message'] = endTransaction.get('message', '')
+        return result
 
     def __setEndReporting(self, endTransactionMessage) -> str:
         """
@@ -485,7 +545,7 @@ class WfsPost(object):
         result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeaturesIds)
         for r in result:
             action = self.__setAction('Delete')
-            if not self.__isTableStandard:
+            if self.__isTableBduni:
                 action['data'].update(self.__setFingerPrint(r[1]))
             action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             self.__datasForPost['actions'].append(action)
@@ -552,7 +612,7 @@ class WfsPost(object):
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
-                if not self.__isTableStandard:
+                if self.__isTableBduni:
                     action['data'].update(self.__setFingerPrint(r[1]))
                 action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             feature = self.__layer.getFeature(featureId)
@@ -577,7 +637,7 @@ class WfsPost(object):
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
-                if not self.__isTableStandard:
+                if self.__isTableBduni:
                     action['data'].update(self.__setFingerPrint(r[1]))
                 action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             if isGeometryAsWkt:
@@ -615,7 +675,7 @@ class WfsPost(object):
             action = self.__setAction('Update')
             result = SQLiteManager.selectRowsInTable(self.__layer, [featureId])
             for r in result:
-                if not self.__isTableStandard:
+                if self.__isTableBduni:
                     action['data'].update(self.__setFingerPrint(r[1]))
                 action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             feature = self.__layer.getFeature(featureId)

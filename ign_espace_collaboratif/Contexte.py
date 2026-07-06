@@ -975,7 +975,7 @@ class Contexte(object):
         :return: un message de fin de traitement
         """
         geometryName = layer.geometryName
-        newVectorLayer.isStandard = layer.isStandard
+        newVectorLayer.isBduni = layer.isBduni
         idNameForDatabase = layer.idName
         newVectorLayer.idNameForDatabase = idNameForDatabase
         newVectorLayer.geometryNameForDatabase = geometryName
@@ -986,7 +986,7 @@ class Contexte(object):
         headers = {'Authorization': '{} {}'.format(self.getTokenType(), self.getTokenAccess())}
         # Remplissage de la table SQLite liée à la couche
         parameters = {'databasename': layer.databasename, 'layerName': layer.name(),
-                      'sridLayer': layer.srid, 'role': layer.role, 'isStandard': layer.isStandard,
+                      'sridLayer': layer.srid, 'role': layer.role, 'isBduni': layer.isBduni,
                       'is3D': layer.is3d, 'geometryName': geometryName, 'sridProject': cst.EPSGCRS4326,
                       'bbox': bbox, 'detruit': bColumnDetruitExist, 'numrec': "0",
                       'urlHostEspaceCo': self.urlHostEspaceCo, 'headers': headers,
@@ -996,10 +996,8 @@ class Contexte(object):
         wfsGet = WfsGet(parameters)
         maxNumrecMessage = wfsGet.gcmsGet(True)
 
-        # Stockage des données utiles à la synchronisation d'une couche après fermeture/ouverture de QGIS
-        valStandard = 1
-        if not layer.isStandard:
-            valStandard = 0
+        # Colonne 'standard' en base (1 = non-BDUni, 0 = BDUni)
+        valStandard = 0 if layer.isBduni else 1
         dim = 0
         if layer.is3d:
             dim = 1

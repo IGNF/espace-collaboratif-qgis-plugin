@@ -209,7 +209,7 @@ class Community(object):
             layer.maxzoom = data['max_zoom_level']
         if PluginHelper.keyExist('database_versioning', data):
             if data['database_versioning'] is True:
-                layer.isStandard = False
+                layer.isBduni = True
         if PluginHelper.keyExist('tile_zoom_level', data):
             layer.tileZoomLevel = data['tile_zoom_level']
         if PluginHelper.keyExist('read_only', data):

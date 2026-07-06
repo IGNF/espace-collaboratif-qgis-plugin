@@ -244,6 +244,18 @@ class RipartPlugin:
         """
         if layer is None:
             return
+        # Déconnecter avant de reconnecter pour éviter les connexions multiples.
+        # __connectSpecificSignals peut être appelé plusieurs fois sur la même couche
+        # (ex. _connectLayerWasAdded + boucle __onProjectLoaded), ce qui ferait
+        # déclencher __connectBeforeCommitChanges N fois par commit.
+        try:
+            layer.nameChanged.disconnect(self.__connectNameChanged)
+        except TypeError:
+            pass
+        try:
+            layer.beforeCommitChanges.disconnect(self.__connectBeforeCommitChanges)
+        except TypeError:
+            pass
         layer.nameChanged.connect(self.__connectNameChanged)
         layer.beforeCommitChanges.connect(self.__connectBeforeCommitChanges)
 
@@ -383,6 +395,8 @@ class RipartPlugin:
         # Connexion à l'Espace collaboratif
         # si res = 0, alors l'utilisateur à annuler son action
         if not self.__doConnexion(False):
+            # Empêcher QGIS de persister les modifications localement sans transaction serveur
+            layer.destroyEditCommand()
             return "error : PluginModule:__saveChangesForOneLayer, pas de connexion, pas de transaction" \
                    " avec l'espace collaboratif."
 
@@ -404,11 +418,41 @@ class RipartPlugin:
         if not editBuffer:
             return "error : PluginModule:__saveChangesForOneLayer, pas de modifications trouvées" \
                    " pour la couche {}".format(layer.name())
+
+        # Si validateBeforeCommit a déjà géré la validation et le rollback-with-preservation
+        # pour cette couche (cas où il s'est exécuté avant ce handler), ne pas ré-envoyer.
+        if getattr(layer, '_validation_already_handled', False):
+            layer._validation_already_handled = False
+            return '<br/><font color="orange"><b>{}</b> : Sauvegarde annulée — contraintes non respectées.' \
+                   ' Corrigez les erreurs et sauvegardez à nouveau.</font>'.format(layer.name())
+
+        # Vérifier les contraintes AVANT d'envoyer au serveur.
+        # Nécessaire car ce handler (beforeCommitChanges) peut s'exécuter avant validateBeforeCommit
+        # selon l'ordre de connexion des signaux (PluginModule connecte avant TableViewConstraints).
+        constraints_handler = getattr(layer, 'tableConstraintsHandler', None)
+        if constraints_handler:
+            constraint_errors = constraints_handler.getValidationErrors(editBuffer)
+            if constraint_errors:
+                constraints_handler.showValidationErrors(constraint_errors)
+                constraints_handler.rollBackAndPreserveChanges()
+                # Positionner le flag pour que validateBeforeCommit (s'il se déclenche après)
+                # ne refasse pas de rollback et ne perde pas les modifications restaurées.
+                layer._validation_already_handled = True
+                return '<br/><font color="orange"><b>{}</b> : Sauvegarde annulée — contraintes non respectées.' \
+                       ' Corrigez les erreurs et sauvegardez à nouveau.</font>'.format(layer.name())
+
         try:
             messages = self.__doPost(layer, editBuffer)
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             PluginHelper.setCursor()
+            if self.__context is not None:
+                self.__context.iface.messageBar().pushMessage(
+                    "Espace Collaboratif",
+                    "Couche '{}' : {}. Vos modifications sont conservées en mode édition.".format(layer.name(), e),
+                    level=Qgis.MessageLevel.Critical,
+                    duration=0
+                )
             return messages
         return messages
 
@@ -464,14 +508,47 @@ class RipartPlugin:
         bNormalWfsPost = False
         commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
         messages = "{0}\n".format(commitLayerResult['reporting'])
-        if commitLayerResult['status'] == "FAILED":
+        if commitLayerResult['status'] != cst.STATUS_COMMITTED:
             layer.destroyEditCommand()
+            error_msg = commitLayerResult.get('message', 'Transaction refusée par le serveur.')
+            self.__context.iface.messageBar().pushMessage(
+                "Espace Collaboratif",
+                "Couche '{}' : {}. Vos modifications sont conservées en mode édition.".format(layer.name(), error_msg),
+                level=Qgis.MessageLevel.Critical,
+                duration=0
+            )
         else:
             # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction
             # commitLayer n'envoie pas d'exception sinon les modifs sont perdues
             # et l'outil redemande une synchronisation
             editBuffer.rollBack()
         return messages
+
+    @staticmethod
+    def __isSessionExpiredError(exception) -> bool:
+        """
+        Vérifie si l'exception est due à un token invalide ou une session expirée.
+        """
+        msg = str(exception)
+        return "Invalid token" in msg or "Unauthorized" in msg
+
+    @staticmethod
+    def __isNetworkError(exception) -> bool:
+        """
+        Vérifie si l'exception est due à un problème réseau (timeout, connexion refusée, proxy…).
+        """
+        msg = str(exception)
+        return any(kw in msg for kw in (
+            "ConnectTimeoutError",
+            "ReadTimeoutError",
+            "Max retries exceeded",
+            "NewConnectionError",
+            "Failed to establish a new connection",
+            "Read timed out",
+            "Connection timed out",
+            "WinError 10013",
+            "WinError 10061",
+        ))
 
     def __sendMessageBarException(self, message, exception) -> None:
         """
@@ -487,8 +564,34 @@ class RipartPlugin:
         if self.__context is None:
             return
         self.__context.iface.messageBar().clearWidgets()
-        self.__logger.error(format(exception))
         errorMessage = "{} : {}".format(message, str(exception))
+        self.__logger.error(errorMessage)
+
+        if self.__isSessionExpiredError(exception):
+            reply = QMessageBox.question(
+                self.__context.iface.mainWindow(),
+                cst.IGNESPACECO,
+                "Votre session a expiré ou n'est plus valide.\n\n"
+                "Voulez-vous vous reconnecter à l'Espace Collaboratif ?",
+                QMessageBox.StandardButton.Yes,
+                QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.__doConnexion(True)
+            PluginHelper.setCursor()
+            return
+
+        if self.__isNetworkError(exception):
+            QMessageBox.warning(
+                self.__context.iface.mainWindow(),
+                cst.IGNESPACECO,
+                "Impossible de joindre le serveur de l'Espace Collaboratif.\n\n"
+                "Vérifiez votre connexion réseau et votre configuration proxy\n"
+                "Si le problème persiste, le serveur est peut-être temporairement indisponible."
+            )
+            PluginHelper.setCursor()
+            return
+
         self.__context.iface.messageBar().pushMessage("Erreur", errorMessage, level=Qgis.MessageLevel.Critical, duration=5)
         PluginHelper.setCursor()
 
@@ -931,7 +1034,9 @@ class RipartPlugin:
                         # exemple :
                         # 8, 'Lignes', 'id_ligne', 1, 'test', 83, 2154, 'geom', 0, 'LineString', 0, 1531)
                         layer.idNameForDatabase = r[2]
-                        parameters['isStandard'] = layer.isStandard = r[3]
+                        # r[3] : colonne 'standard' en base (1 = non-BDUni, 0 = BDUni) → isBduni = inverse
+                        layer.isBduni = not bool(r[3])
+                        parameters['isBduni'] = layer.isBduni
                         parameters['databasename'] = layer.databasename = r[4]
                         parameters['databaseid'] = r[5]
                         parameters['sridLayer'] = r[6]
@@ -941,31 +1046,32 @@ class RipartPlugin:
                         parameters['numrec'] = numrec = r[10]
                         parameters['tableid'] = r[11]
 
-                # la colonne detruit existe pour une table BDUni donc le booleen est mis à True par défaut
+                # La colonne 'detruit' existe uniquement pour une couche BDUni
                 bDetruit = True
-                # si c'est une autre table donc standard alors la colonne n'existe pas
-                # et il faut vider la table pour éviter de créer un objet à chaque Get
-                if layer.isStandard:
+                # Pour une couche non-BDUni la colonne n'existe pas :
+                # il faut vider la table pour éviter de dupliquer les objets à chaque Get
+                if not layer.isBduni:
                     bDetruit = False
                     SQLiteManager.emptyTable(layer.name())
-                    SQLiteManager.vacuumDatabase()
-                    layer.triggerRepaint()
                 parameters['detruit'] = bDetruit
                 # numrec = SQLiteManager.selectNumrecTableOfTables(layer.name())
                 # parameters['numrec'] = numrec
                 wfsGet = WfsGet(parameters)
-                # Si le numrec stocké est le même que celui du serveur, alors il n'y a rien à synchroniser.
-                # Il faut aussi qu'il soit égal à 1, ce numrec correspondant à une table non BDUni
-                if not layer.isStandard:
+                # Pour les couches BDUni : si le numrec local égale le max serveur, rien à synchroniser
+                if layer.isBduni:
                     maxNumrec = wfsGet.getMaxNumrec()
                     if numrec == maxNumrec:
                         endMessage += "<br/>Pas de mise à jour\n\n"
                         continue
-                maxNumRecMessage = wfsGet.gcmsGet()
+                else:
+                    maxNumrec = None  # Non-BDUni : pas de getMaxNumrec
+                maxNumRecMessage = wfsGet.gcmsGet(maxNumrec=maxNumrec)
                 SQLiteManager.updateNumrecTableOfTables(layer.name(), maxNumRecMessage[0])
-                SQLiteManager.vacuumDatabase()
                 endMessage += "<br/>{0}\n".format(maxNumRecMessage[1])
             progress.close()
+
+            # VACUUM une seule fois après toutes les synchronisations
+            SQLiteManager.vacuumDatabase()
 
             PluginHelper.refreshAllLayers()
 

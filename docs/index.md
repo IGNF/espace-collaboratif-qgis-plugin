@@ -1,6 +1,6 @@
 ﻿# Plugin IGN_Espace_collaboratif pour QGIS
 
-## Version 5.0
+## Version 5.0.9
 ![Image0](Image0.png) 
 
 <div  style="background-color: white; border: 1px solid black; padding: 10px; text-align: justify;">
@@ -84,7 +84,7 @@
 ||Évolution filtrage des signalements selon le groupe.||
 ||Contribution directe : Ajout de contraintes entre champs||
 ||Corrections diverses||
-
+|5.0.9|Mise à jour documentation connexion|16/06/2026|
 
 <div  style="background-color: white; border: 1px solid black; padding: 10px; width: 100%; box-sizing: border-box;">
   <h2 id="3-préambule" style="color: #00ADC5">3. Préambule</h2>
@@ -154,36 +154,25 @@ NB : le nom du projet QGIS dans lequel sera utilisé le plugin Espace collaborat
 ### <span style="color: white; background-color: #00ADC5; padding: 2px 5px;">4.1 Procédure d'installation</span>
 
 Pour installer le plugin, suivre les étapes suivantes :
+- Si vous aviez installé le dépôt IGN des extensions QGIS, Allez dans Extensions> Paramètres et supprimer ce dépôt https://espacecollaboratif.ign.fr/plugins/plugin-qgis.xml
+
+- l'installation se fait maintenant via les dépôts officiels QGIS.
+
 - Ouvrir QGIS et se rendre dans le menu **Extension** > **Installer/Gérer les extensions**
 
 <div  style="text-align: center;"> 
-	<img  src="Image1.png"  alt="Figure 1" /> 
+	<img  src="Image1.png"  alt="Figure 1"/> 
 	<p><strong><span style="color: #548DD4">Figure 1 : le menu de gestion des extensions</span></strong></p>
 </div>
 
-- Se rendre dans l’onglet **Paramètres** et cliquer sur « Ajouter… »
-- Ajouter le dépôt avec l’URL : **https://espacecollaboratif.ign.fr/plugins/plugin-qgis.xml**
+- Taper dans Toutes "espace", on a alors le plugin IGN_Espace_Collaboratif proposé
 
 <div  style="text-align: center;"> 
-	<img  src="Image2.png" alt="Figure 2" />
-  <p><strong><span style="color: #548DD4">Figure 2  : configuration du dépôt d’extensions</span></strong></p>
+	<img  src="Image2.png"  alt="Figure 2" height = 400/> 
+	<p><strong><span style="color: #548DD4">Figure 2 : proposition de chargement du plugin</span></strong></p>
 </div>
 
-- Une fois ajouté, s’assurer que les extensions expérimentales sont affichées et que le statut du dépôt Espace collaboratif est « connecté » :
-
-<div  style="text-align: center;"> 
-	<img  src="Image3.png" alt="Figure 3" />
-  <p><strong><span style="color: #548DD4">Figure 3 : Affichage des extensions expérimentales</span></strong></p>
-</div>
-
-- **IGN_Espace_collaboratif** apparait dans l’onglet **Nouvelles**. Il est possible de l’installer en cliquant sur «  Installer l’extension ». Il vous sera alors demandé de vous connecter en utilisant le login et le mot de passe de votre compte Espace collaboratif :
-
-<div  style="text-align: center;"> 
-	<img  src="Image4.png" alt="Figure 4" />
-  <p><strong><span style="color: #548DD4">Figure 4 : Connexion au compte Espace collaboratif pour installation</span></strong></p>
-</div>
-
-- **IGN_Espace_collaboratif apparait alors dans la liste des extensions installées.**
+- Cliquer sur Installer l'extension. **IGN_Espace_collaboratif** apparait dans la liste des extensions **Installées**. 
 	
 <div  style="text-align: center;"> 
 	<img  src="Image5.png" alt="Figure 5" />
@@ -198,6 +187,7 @@ Pour installer le plugin, suivre les étapes suivantes :
 </div>
 
 _Remarque  : Si elle n’apparait pas directement, aller dans « Extensions > Installer/Gérer les extensions », dans l’onglet « Installées », désélectionner puis re-sélectionner la coche devant l’extension « IGN_Espace_collaboratif »_
+
 
 
 ### <span style="color: white; background-color: #00ADC5; padding: 2px 5px; width: 100%; box-sizing: border-box;">4.2 La barre d’outils IGN_Espace_collaboratif</span>
@@ -283,7 +273,7 @@ Dans le cas où la connexion se passe bien :
   <li> 
     vous avez la fenêtre web suivante, vous indiquant que vous pouvez fermer la fenêtre web et retourner dans QGIS :
     <div  style="text-align: center;"> 
-      <img  src="Image10-1.png" />
+      <img  src="Image10-1.png" height = 300/>
     </div>
   </li>
   <li>
@@ -297,6 +287,8 @@ Dans le cas où la connexion se passe bien :
 La fermeture de QGIS interrompt la connexion au service. Il faut donc la rétablir lors de l’utilisation suivante du SIG.
 
 **Note :** En cas d’échec de la connexion (message : « la connexion a échoué »), il peut s’agir d’un problème d’accès au serveur dû au proxy. Il peut être nécessaire de spécifier un proxy dans la configuration du plugin (menu Aide du plugin > Configurer le proxy), cf. §5.12. Attention, la définition d’un proxy dans l’interface de QGIS (menu Préférences > Options > Réseau) ne suffit pas. Une autre solution consiste à définir des variables d’environnement HTTP_PROXY et HTTPS_PROXY avec les valeurs ad-hoc (dépendant de votre établissement) peut régler le problème.
+
+**Note : La connexion utilise le port 7070 en local, si vous obtenez une erreur de connexion pensez à vérifier que le port est ouvert et disponible.**
 
 #### <span style="color: #00ADC5">5.1.1 Cas d'un utilisateur appartenant à aucun groupe</span>
 
