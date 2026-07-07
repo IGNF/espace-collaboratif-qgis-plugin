@@ -1,3 +1,8 @@
+import concurrent.futures
+import json
+from qgis.core import QgsBlockingNetworkRequest
+from qgis.PyQt.QtCore import QUrl
+from qgis.PyQt.QtNetwork import QNetworkRequest
 from . import Constantes as cst
 from .Layer import Layer
 from .Query import Query
@@ -26,6 +31,8 @@ class Community(object):
         self.__logo = ''
         self.__tokenType = params['tokentype']
         self.__tokenAccess = params['tokenaccess']
+        self.__url = params['url']
+        self.__proxies = params['proxies']
         self.__query = Query(params['url'], params['proxies'])
 
     def setUserId(self, userId):
@@ -133,7 +140,7 @@ class Community(object):
     def __getLayers(self, data) -> []:
         """
         Récupère les infos générales et les noms de l'ensemble des couches d'un groupe.
-        Pour les couches WFS (feature-type), seul le nom est récupéré via __getLayerNameFromTable.
+        Pour les couches WFS (feature-type), les noms sont récupérés en parallèle via __fetchLayerNamesInParallel.
         Les détails complets (colonnes, styles) sont chargés à la demande via loadLayerDetails.
 
         :param data: les données d'une couche
@@ -142,6 +149,7 @@ class Community(object):
         :return: la liste des couches disponibles pour un groupe
         """
         layers = []
+        feature_type_layers = []
         for d in data:
             layer = Layer()
             if PluginHelper.keyExist('visibility', d):
@@ -166,33 +174,46 @@ class Community(object):
                 layer.tableid = d['table']
             if PluginHelper.keyExist('type', d):
                 if d['type'] == cst.FEATURE_TYPE:
-                    # Récupération du nom uniquement (sans colonnes ni styles)
-                    self.__getLayerNameFromTable(layer)
-                if d['type'] == cst.GEOSERVICE:
+                    feature_type_layers.append(layer)
+                elif d['type'] == cst.GEOSERVICE:
                     if PluginHelper.keyExist('geoservice', d):
                         layer.geoservice.update(d['geoservice'])
                         if PluginHelper.keyExist('title', d['geoservice']):
                             layer.setName(d['geoservice']['title'])
             layers.append(layer)
+        # Récupération des noms WFS en parallèle
+        if feature_type_layers:
+            self.__fetchLayerNamesInParallel(feature_type_layers)
         return layers
 
-    def __getLayerNameFromTable(self, layer) -> None:
+    def __fetchLayerNamesInParallel(self, layers) -> None:
         """
-        Récupère uniquement le nom d'une couche WFS depuis l'API, sans charger les colonnes ni les styles.
-        Appelée lors de l'affichage du dialogue de choix des couches.
+        Récupère en parallèle le nom de chaque couche WFS via des requêtes HTTP concurrentes.
+        Utilise QgsBlockingNetworkRequest (API QGIS) : proxy et SSL gérés automatiquement
+        par QgsNetworkAccessManager. Chaque thread instancie son propre objet, sans état partagé.
 
-        :param layer: couche avec les infos permettant la recherche de son nom
-        :type layer: Layer
+        :param layers: liste des couches WFS pour lesquelles récupérer le nom
+        :type layers: list
         """
-        self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
-        self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseid, layer.tableid))
-        response = self.__query.simple()
-        if response is None:
-            return
-        data = response.json()
-        if PluginHelper.keyExist('name', data):
-            layer.setName(data['name'])
-            layer.tablename = data['name']
+        auth_header = '{} {}'.format(self.__tokenType, self.__tokenAccess).encode('utf-8')
+
+        def fetch_name(layer):
+            url = "{}/gcms/api/databases/{}/tables/{}".format(self.__url, layer.databaseid, layer.tableid)
+            req = QNetworkRequest(QUrl(url))
+            req.setRawHeader(b'Authorization', auth_header)
+            blocking_req = QgsBlockingNetworkRequest()
+            try:
+                error = blocking_req.get(req, forceRefresh=True)
+                if error == QgsBlockingNetworkRequest.NoError:
+                    data = json.loads(bytes(blocking_req.reply().content()).decode('utf-8'))
+                    if PluginHelper.keyExist('name', data):
+                        layer.setName(data['name'])
+                        layer.tablename = data['name']
+            except Exception:
+                pass  # le nom restera vide, la couche sera toujours présente dans la liste
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            list(executor.map(fetch_name, layers))
 
     def loadLayerDetails(self, layer) -> None:
         """
