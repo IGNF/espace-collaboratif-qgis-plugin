@@ -27,7 +27,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
     # Booléen qui indique si l'utilisateur a cliqué sur le bouton Annuler ou sur la croix de fermeture de la boite
     bRejected = False
 
-    def __init__(self, context, listLayers, parent=None) -> None:
+    def __init__(self, context, listLayers, community, parent=None) -> None:
         """
         Constructeur du dialogue "Charger les couches de mon groupe" et initialisation des différents items
         de la boite.
@@ -39,6 +39,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         :param listLayers: la liste des couches disponibles (Guichet et Fonds Geoservices) dans le profil
                            de l'utilisateur
         :type listLayers: list
+
+        :param community: la communauté utilisée pour charger les détails des couches sélectionnées
+        :type community: Community
         """
         super(FormChargerGuichet, self).__init__(parent)
         self.setupUi(self)
@@ -47,6 +50,7 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
         self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.__context = context
         self.__logger = PluginLogger("FormChargerGuichet").getPluginLogger()
+        self.__community = community
 
         # Il faut inverser l'ordre des couches pour retrouver le paramétrage de la carte du groupe sur le site
         self.__listLayers = listLayers
@@ -226,6 +230,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                         layersQGIS.append(layer)
                         self.__selectedlayers.append(layer)
                         break
+        # Chargement des détails (colonnes, styles) uniquement pour les couches sélectionnées
+        for layer in layersQGIS:
+            self.__community.loadLayerDetails(layer)
         # Téléchargement et import des couches du guichet sur la carte
         self.__doImport(layersQGIS)
 

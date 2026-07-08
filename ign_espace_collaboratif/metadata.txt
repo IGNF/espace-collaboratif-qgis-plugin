@@ -11,7 +11,7 @@ name=IGN_Espace_Collaboratif
 qgisMinimumVersion=3.4
 qgisMaximumVersion=4.99
 description=IGN reporting and contribution service, plugin QGIS3/4
-version=5.1.1
+version=5.1.2
 author=IGN
 email=melanie.mortier@ign.fr
 license=GNU AGPL v3
@@ -25,10 +25,11 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin
 # Recommended items:
 
 # Optional items:
-date=2026-06-24
+date=2026-07-06
 
 # Uncomment the following line and add your changelog:
 changelog=
+    5.1.2 -  Correction de la gestion du proxy, correction de l'ordre de chargement des styles de couche afin d'alléger l'affichage des guichets lourds
     5.1.1 - Modification email metadata
     5.1.0 - Optimisation synchronisation SQLite, amélioration gestion contraintes bloquantes (REGEX #187), gestion erreurs proxy, réduction délai validation serveur, ajout documentation développeur (#178), gestion des erreurs de connexion améliorée, maj documentation
     5.0.9 - Modifications du système d'authentification
