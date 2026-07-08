@@ -5,6 +5,7 @@ from qgis.PyQt.QtCore import QUrl
 from qgis.PyQt.QtNetwork import QNetworkRequest
 from . import Constantes as cst
 from .Layer import Layer
+from .PluginLogger import PluginLogger
 from .Query import Query
 from .Theme import Theme
 from ..PluginHelper import PluginHelper
@@ -196,6 +197,7 @@ class Community(object):
         :type layers: list
         """
         auth_header = '{} {}'.format(self.__tokenType, self.__tokenAccess).encode('utf-8')
+        logger = PluginLogger("Community").getPluginLogger()
 
         def fetch_name(layer):
             url = "{}/gcms/api/databases/{}/tables/{}".format(self.__url, layer.databaseid, layer.tableid)
@@ -209,8 +211,8 @@ class Community(object):
                     if PluginHelper.keyExist('name', data):
                         layer.setName(data['name'])
                         layer.tablename = data['name']
-            except Exception:
-                pass  # le nom restera vide, la couche sera toujours présente dans la liste
+            except Exception as e:
+                logger.warning("Failed to fetch name for layer (id=%s): %s", layer.tableid, e)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             list(executor.map(fetch_name, layers))

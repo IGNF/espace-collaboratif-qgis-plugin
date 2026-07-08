@@ -44,10 +44,10 @@ class HttpRequest(object):
         ssl_verify = "localhost.ign.fr" not in uri
         if params is not None:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    params=params, verify=ssl_verify, timeout=60)
+                                    params=params, verify=ssl_verify, timeout=(15, 60))
         else:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    verify=ssl_verify, timeout=60)
+                                    verify=ssl_verify, timeout=(15, 60))
         response.encoding = 'utf-8'
         return response
 

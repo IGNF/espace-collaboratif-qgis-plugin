@@ -92,8 +92,12 @@ class KeycloakService:
         self._code_verifier = None
 
         token_url = "{}realms/{}/protocol/openid-connect/token".format(self.base_uri, self.realm_name)
-        response = self.session.post(token_url, data=data)
+        print("[KeycloakService] POST token exchange → {}".format(token_url))
+        print("[KeycloakService] Proxy: {}".format(self.session.proxies or 'none (system)'))
+        response = self.session.post(token_url, data=data, timeout=(30, 60))
+        print("[KeycloakService] Token response: status={} | url={}".format(response.status_code, response.url))
         if response.status_code != 200:
+            print("[KeycloakService] Token error body: {}".format(response.text[:500]))
             raise Exception("Failed to get access token: {}".format(response.text))
 
         return response.json()
