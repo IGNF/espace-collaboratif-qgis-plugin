@@ -44,10 +44,10 @@ class HttpRequest(object):
         ssl_verify = "localhost.ign.fr" not in uri
         if params is not None:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    params=params, verify=ssl_verify, timeout=30)
+                                    params=params, verify=ssl_verify, timeout=(15, 60))
         else:
             response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    verify=ssl_verify, timeout=30)
+                                    verify=ssl_verify, timeout=(15, 60))
         response.encoding = 'utf-8'
         return response
 
@@ -123,13 +123,14 @@ class HttpRequest(object):
                 print("  - No parameters")
             print("="*80 + "\n")
             
-            # proxies=None means "read from environment variables" in requests.
-            # Force direct connection when no proxy is configured to avoid env-based proxy picks.
-            effective_proxies = proxies if proxies else {"http": None, "https": None}
-            # timeout=(connect, read): fail fast on silent proxy drops (5s to connect),
-            # but allow the server up to 60s to stream back a large WFS response.
+           
+            # If no explicit proxy is configured, pass None so requests uses system/environment
+            # proxy settings (same behaviour as a browser). Previously forcing {"http": None, "https": None}
+            # bypassed corporate proxies required to reach the server.
+            effective_proxies = proxies if proxies else None
+            # timeout=(connect, read): 20s to connect, 120s to read a large WFS response.
             r = requests.get(url, headers=headers, proxies=effective_proxies,
-                             params=params, verify=True, timeout=(5, 60))
+                             params=params, verify=True, timeout=(20, 120))
             if r.status_code == 200:
                 r.encoding = 'utf-8'
                 response = json.loads(r.text)
@@ -167,7 +168,7 @@ class HttpRequest(object):
             }
 
     @staticmethod
-    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None, timeout=30) -> requests.Response:
+    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None, timeout=60) -> requests.Response:
         """
         Lance une requête HTTP GET, POST ou PATCH en fonction des variables passées en entrée.
 
@@ -215,9 +216,8 @@ class HttpRequest(object):
             HttpRequest.logger.debug("Params: {}".format(params))
             HttpRequest.logger.debug("Proxies: {}".format(proxies))
             
-            # proxies=None means "read from environment variables" in requests.
-            # Force direct connection when no proxy is configured to avoid env-based proxy picks.
-            effective_proxies = proxies if proxies else {"http": None, "https": None}
+            
+            effective_proxies = proxies if proxies else None
             if launchBy == 'gcmsPatch':
                 response = requests.patch(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
             elif data is None and files is None:
