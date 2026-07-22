@@ -1,11 +1,14 @@
 import base64
 import hashlib
+import json
 import os
 import urllib.parse
 import uuid
 import webbrowser
 
-import requests
+from qgis.core import QgsBlockingNetworkRequest
+from qgis.PyQt.QtCore import QUrl, QByteArray
+from qgis.PyQt.QtNetwork import QNetworkRequest
 
 from .KeycloakAuthListener import KeycloakAuthListener
 
@@ -24,16 +27,38 @@ class KeycloakService:
         self.realm_name = realm_name
         self.client_id = client_id
         self.client_secret = client_secret
-        self.session = requests.Session()
-        self.session.verify = ssl_verify
-        if proxies is not None:
-            self.session.proxies.update(proxies)
-            print("session.proxies : {}".format(self.session.proxies))
+        # Le proxy et la vérification SSL sont gérés automatiquement par QgsNetworkAccessManager
+        # (configuration réseau de QGIS). Ces paramètres sont conservés pour compatibilité.
+        self.proxies = proxies
+        self.ssl_verify = ssl_verify
 
         self.ip = "127.0.0.1"
         self.port = 7070
         self.redirect_uri = f"http://{self.ip}:{self.port}/authorization-code/callback"
         self._code_verifier = None
+
+    @staticmethod
+    def _send_request(method, url, data=None):
+        """
+        Lance une requête HTTP (GET ou POST form-urlencoded) via la pile réseau de QGIS.
+
+        :param method: 'GET' ou 'POST'
+        :param url: l'url complète
+        :param data: les données du formulaire pour un POST
+        :return: le couple (status_code, texte de la réponse décodé en utf-8)
+        """
+        request = QNetworkRequest(QUrl(url))
+        blocking = QgsBlockingNetworkRequest()
+        if method == 'POST':
+            request.setRawHeader(b'Content-Type', b'application/x-www-form-urlencoded')
+            body = QByteArray(urllib.parse.urlencode(data or {}).encode('utf-8'))
+            blocking.post(request, body)
+        else:
+            blocking.get(request, forceRefresh=True)
+        reply = blocking.reply()
+        status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        text = bytes(reply.content()).decode('utf-8', errors='replace')
+        return status, text
 
     @staticmethod
     def _generate_pkce_pair():
@@ -93,23 +118,22 @@ class KeycloakService:
 
         token_url = "{}realms/{}/protocol/openid-connect/token".format(self.base_uri, self.realm_name)
         print("[KeycloakService] POST token exchange → {}".format(token_url))
-        print("[KeycloakService] Proxy: {}".format(self.session.proxies or 'none (system)'))
-        response = self.session.post(token_url, data=data, timeout=(30, 60))
-        print("[KeycloakService] Token response: status={} | url={}".format(response.status_code, response.url))
-        if response.status_code != 200:
-            print("[KeycloakService] Token error body: {}".format(response.text[:500]))
-            raise Exception("Failed to get access token: {}".format(response.text))
+        status, text = self._send_request('POST', token_url, data=data)
+        print("[KeycloakService] Token response: status={} | url={}".format(status, token_url))
+        if status != 200:
+            print("[KeycloakService] Token error body: {}".format(text[:500]))
+            raise Exception("Failed to get access token: {}".format(text))
 
-        return response.json()
+        return json.loads(text)
 
     def get_userinfo(self, access_token: str):
         data = {"access_token": access_token}
         userinfo_url = "{}realms/{}/protocol/openid-connect/userinfo".format(self.base_uri, self.realm_name)
-        response = self.session.post(userinfo_url, data=data)
-        if response.status_code != 200:
+        status, text = self._send_request('POST', userinfo_url, data=data)
+        if status != 200:
             raise Exception("Failed to get user info")
 
-        return response.json()
+        return json.loads(text)
 
     def logout(self):
         params_encoded = urllib.parse.urlencode({"client_id": self.client_id})
@@ -123,6 +147,6 @@ class KeycloakService:
         webbrowser.open(logout_url, new=0, autoraise=True)
 
     def get_well_known_config(self) -> dict:
-        response = self.session.get("{}realms/{}/.well-known/openid-configuration".format(self.base_uri,
-                                                                                          self.realm_name))
-        return response.json()
+        well_known_url = "{}realms/{}/.well-known/openid-configuration".format(self.base_uri, self.realm_name)
+        _, text = self._send_request('GET', well_known_url)
+        return json.loads(text)

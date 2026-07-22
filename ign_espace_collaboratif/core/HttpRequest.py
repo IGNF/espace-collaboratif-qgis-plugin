@@ -1,11 +1,69 @@
 import json
-import requests
+import urllib.parse
+import uuid
+
+from qgis.core import QgsBlockingNetworkRequest, QgsNetworkAccessManager
+from qgis.PyQt.QtCore import QUrl, QByteArray, QEventLoop
+from qgis.PyQt.QtNetwork import QNetworkRequest
 from .PluginLogger import PluginLogger
+
+
+class QgisNetworkResponse(object):
+    """
+    Adaptateur exposant une interface compatible avec ``requests.Response`` autour d'une réponse
+    obtenue via la pile réseau de QGIS (``QgsBlockingNetworkRequest`` / ``QgsNetworkAccessManager``).
+
+    Cela permet de remplacer la librairie ``requests`` par l'API réseau native de QGIS (proxy, SSL et
+    authentification gérés automatiquement par ``QgsNetworkAccessManager``) sans modifier le code appelant
+    qui utilise ``status_code``, ``reason``, ``text``, ``content`` et ``json()``.
+    """
+
+    def __init__(self, content, status_code, reason, url) -> None:
+        """
+        Constructeur.
+
+        :param content: le corps de la réponse
+        :type content: bytes
+
+        :param status_code: le code HTTP de la réponse
+        :type status_code: int
+
+        :param reason: le texte associé au code HTTP
+        :type reason: str
+
+        :param url: l'url finale de la requête
+        :type url: str
+        """
+        self._content = content or b''
+        self.status_code = status_code
+        self.reason = reason or ''
+        self.url = url
+        self.encoding = 'utf-8'
+
+    @property
+    def content(self) -> bytes:
+        """
+        :return: le corps brut de la réponse
+        """
+        return self._content
+
+    @property
+    def text(self) -> str:
+        """
+        :return: le corps de la réponse décodé (utf-8 par défaut)
+        """
+        return self._content.decode(self.encoding or 'utf-8', errors='replace')
+
+    def json(self):
+        """
+        :return: le corps de la réponse interprété comme du JSON
+        """
+        return json.loads(self.text)
 
 
 class HttpRequest(object):
     """
-    # Classe implémentant une requête HTTP.
+    # Classe implémentant une requête HTTP au moyen de la pile réseau de QGIS.
     """
     logger = PluginLogger("HttpRequest").getPluginLogger()
 
@@ -19,14 +77,245 @@ class HttpRequest(object):
         :param headers: l'entête d'autorisation
         :type headers: dict
 
-        :param proxies: les noms des serveurs proxy
+        :param proxies: les noms des serveurs proxy (conservé pour compatibilité, le proxy est géré
+                        automatiquement par QgsNetworkAccessManager selon la configuration de QGIS)
         :type proxies: dict
         """
         self.__url = url
         self.__headers = headers
         self.__proxies = proxies
 
-    def getResponse(self, partOfUrl, params=None) -> requests.Response:
+    # ------------------------------------------------------------------
+    # Fonctions utilitaires internes (pile réseau QGIS)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def __toBytes(value) -> bytes:
+        """
+        Convertit une valeur en bytes (utf-8).
+
+        :param value: la valeur à convertir (str, bytes ou autre)
+        :return: la valeur encodée en bytes
+        """
+        if value is None:
+            return b''
+        if isinstance(value, bytes):
+            return value
+        if isinstance(value, str):
+            return value.encode('utf-8')
+        return str(value).encode('utf-8')
+
+    @staticmethod
+    def __decodeReason(reason) -> str:
+        """
+        Décode le texte du code HTTP (``HttpReasonPhraseAttribute``) qui peut être renvoyé
+        sous forme de ``str`` ou de ``QByteArray`` selon la version de Qt.
+
+        :param reason: le texte associé au code HTTP
+        :return: le texte décodé
+        """
+        if reason is None:
+            return ''
+        if isinstance(reason, str):
+            return reason
+        try:
+            return bytes(reason).decode('utf-8', errors='replace')
+        except Exception:
+            return str(reason)
+
+    @staticmethod
+    def __buildRequest(url, headers=None, params=None, timeout=None):
+        """
+        Construit un ``QNetworkRequest`` à partir de l'url, des entêtes, des paramètres et du délai d'attente.
+
+        :param url: l'url de base
+        :type url: str
+
+        :param headers: les entêtes HTTP (dont l'autorisation)
+        :type headers: dict
+
+        :param params: les paramètres de la requête (ajoutés à la query string)
+        :type params: dict
+
+        :param timeout: délai d'attente en secondes (int) ou tuple (connect, read)
+        :type timeout: int or tuple
+
+        :return: le couple (QNetworkRequest, url finale)
+        """
+        if params:
+            query = urllib.parse.urlencode(params)
+            separator = '&' if '?' in url else '?'
+            url = "{}{}{}".format(url, separator, query)
+        request = QNetworkRequest(QUrl(url))
+        if headers:
+            for key, value in headers.items():
+                request.setRawHeader(HttpRequest.__toBytes(key), HttpRequest.__toBytes(value))
+        timeout_ms = HttpRequest.__timeoutToMs(timeout)
+        if timeout_ms is not None and hasattr(request, 'setTransferTimeout'):
+            request.setTransferTimeout(timeout_ms)
+        return request, url
+
+    @staticmethod
+    def __timeoutToMs(timeout):
+        """
+        Convertit un délai d'attente (secondes) en millisecondes.
+
+        :param timeout: délai en secondes (int) ou tuple (connect, read)
+        :return: le délai en millisecondes ou None
+        """
+        if timeout is None:
+            return None
+        if isinstance(timeout, (tuple, list)):
+            if len(timeout) == 0:
+                return None
+            seconds = max(timeout)
+        else:
+            seconds = timeout
+        return int(seconds * 1000)
+
+    @staticmethod
+    def __sendBlocking(verb, request, body=None) -> 'QgisNetworkResponse':
+        """
+        Lance une requête GET ou POST bloquante via ``QgsBlockingNetworkRequest``.
+
+        :param verb: 'GET' ou 'POST'
+        :type verb: str
+
+        :param request: la requête réseau préparée
+        :type request: QNetworkRequest
+
+        :param body: le corps de la requête pour un POST
+        :type body: QByteArray
+
+        :return: la réponse adaptée
+        """
+        blocking = QgsBlockingNetworkRequest()
+        if verb == 'GET':
+            blocking.get(request, forceRefresh=True)
+        elif verb == 'POST':
+            blocking.post(request, body if body is not None else QByteArray())
+        else:
+            raise ValueError("HttpRequest.__sendBlocking : verbe HTTP non supporté : {}".format(verb))
+
+        reply = blocking.reply()
+        status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        reason = HttpRequest.__decodeReason(reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute))
+        content = bytes(reply.content())
+        # Absence de code HTTP => échec au niveau transport (proxy, DNS, SSL...) : on lève une exception
+        # pour reproduire le comportement de requests qui lève sur ce type d'erreur.
+        if status is None:
+            raise Exception(blocking.errorMessage() or reply.errorString() or "Erreur réseau QGIS")
+        return QgisNetworkResponse(content, status, reason, request.url().toString())
+
+    @staticmethod
+    def __sendCustom(verb, request, body=None) -> 'QgisNetworkResponse':
+        """
+        Lance une requête avec un verbe HTTP personnalisé (ex : PATCH) non pris en charge par
+        ``QgsBlockingNetworkRequest``, via ``QgsNetworkAccessManager`` et une boucle d'évènements bloquante.
+
+        :param verb: le verbe HTTP (ex : 'PATCH')
+        :type verb: str
+
+        :param request: la requête réseau préparée
+        :type request: QNetworkRequest
+
+        :param body: le corps de la requête
+        :type body: QByteArray
+
+        :return: la réponse adaptée
+        """
+        nam = QgsNetworkAccessManager.instance()
+        reply = nam.sendCustomRequest(request, QByteArray(HttpRequest.__toBytes(verb)),
+                                      body if body is not None else QByteArray())
+        loop = QEventLoop()
+        reply.finished.connect(loop.quit)
+        loop.exec()
+
+        status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        reason = HttpRequest.__decodeReason(reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute))
+        content = bytes(reply.readAll())
+        error_string = reply.errorString()
+        final_url = reply.url().toString()
+        reply.deleteLater()
+        if status is None:
+            raise Exception(error_string or "Erreur réseau QGIS")
+        return QgisNetworkResponse(content, status, reason, final_url)
+
+    @staticmethod
+    def __buildMultipart(data, files):
+        """
+        Construit un corps de requête ``multipart/form-data`` à partir des champs simples et des fichiers.
+
+        :param data: les champs simples (nom/valeur)
+        :type data: dict
+
+        :param files: les fichiers sous la forme {nom: (nom_fichier, objet_fichier, content_type)}
+        :type files: dict
+
+        :return: le couple (boundary, corps en bytes)
+        """
+        boundary = "----QGISFormBoundary{}".format(uuid.uuid4().hex)
+        crlf = b'\r\n'
+        parts = []
+        for key, value in (data or {}).items():
+            parts.append(('--' + boundary).encode('utf-8'))
+            parts.append('Content-Disposition: form-data; name="{}"'.format(key).encode('utf-8'))
+            parts.append(b'')
+            parts.append(HttpRequest.__toBytes(value))
+        for field_name, file_info in (files or {}).items():
+            filename, file_obj, content_type = HttpRequest.__parseFileTuple(field_name, file_info)
+            file_bytes = HttpRequest.__readFileBytes(file_obj)
+            parts.append(('--' + boundary).encode('utf-8'))
+            parts.append('Content-Disposition: form-data; name="{}"; filename="{}"'.format(
+                field_name, filename).encode('utf-8'))
+            parts.append('Content-Type: {}'.format(content_type or 'application/octet-stream').encode('utf-8'))
+            parts.append(b'')
+            parts.append(file_bytes)
+        parts.append(('--' + boundary + '--').encode('utf-8'))
+        parts.append(b'')
+        return boundary, crlf.join(parts)
+
+    @staticmethod
+    def __parseFileTuple(field_name, file_info):
+        """
+        Extrait (nom_fichier, objet_fichier, content_type) d'une valeur du dictionnaire ``files``.
+
+        :param field_name: le nom du champ (utilisé par défaut comme nom de fichier)
+        :param file_info: soit un objet fichier, soit un tuple (nom, objet, content_type)
+        :return: (nom_fichier, objet_fichier, content_type)
+        """
+        if isinstance(file_info, (tuple, list)):
+            filename = file_info[0] if len(file_info) > 0 and file_info[0] else field_name
+            file_obj = file_info[1] if len(file_info) > 1 else None
+            content_type = file_info[2] if len(file_info) > 2 else None
+            return filename, file_obj, content_type
+        return field_name, file_info, None
+
+    @staticmethod
+    def __readFileBytes(file_obj) -> bytes:
+        """
+        Lit le contenu d'un objet fichier (ouvert en mode binaire) ou renvoie directement les bytes.
+
+        :param file_obj: l'objet fichier ou des bytes
+        :return: le contenu en bytes
+        """
+        if file_obj is None:
+            return b''
+        if isinstance(file_obj, bytes):
+            return file_obj
+        if hasattr(file_obj, 'read'):
+            if hasattr(file_obj, 'seek'):
+                try:
+                    file_obj.seek(0)
+                except Exception:
+                    pass
+            data = file_obj.read()
+            return HttpRequest.__toBytes(data)
+        return HttpRequest.__toBytes(file_obj)
+
+    # ------------------------------------------------------------------
+    # API publique (inchangée)
+    # ------------------------------------------------------------------
+    def getResponse(self, partOfUrl, params=None) -> 'QgisNetworkResponse':
         """
         Lance une requête HTTP GET.
 
@@ -40,16 +329,8 @@ class HttpRequest(object):
         """
         uri = "{}/{}".format(self.__url, partOfUrl)
         print(uri)
-        # Disable SSL verification only for localhost development
-        ssl_verify = "localhost.ign.fr" not in uri
-        if params is not None:
-            response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    params=params, verify=ssl_verify, timeout=(15, 60))
-        else:
-            response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    verify=ssl_verify, timeout=(15, 60))
-        response.encoding = 'utf-8'
-        return response
+        request, _ = HttpRequest.__buildRequest(uri, headers=self.__headers, params=params, timeout=(15, 60))
+        return HttpRequest.__sendBlocking('GET', request)
 
     def getNextResponse(self, partOfUrl, params) -> {}:
         """
@@ -104,7 +385,7 @@ class HttpRequest(object):
         :param headers: l'entête d'autorisation
         :type headers: dict
 
-        :param proxies: les noms des serveurs proxy
+        :param proxies: les noms des serveurs proxy (géré par QGIS, conservé pour compatibilité)
         :type proxies: dict
 
         :param params: paramètres de la requête
@@ -122,17 +403,11 @@ class HttpRequest(object):
             else:
                 print("  - No parameters")
             print("="*80 + "\n")
-            
-           
-            # If no explicit proxy is configured, pass None so requests uses system/environment
-            # proxy settings (same behaviour as a browser). Previously forcing {"http": None, "https": None}
-            # bypassed corporate proxies required to reach the server.
-            effective_proxies = proxies if proxies else None
+
             # timeout=(connect, read): 20s to connect, 120s to read a large WFS response.
-            r = requests.get(url, headers=headers, proxies=effective_proxies,
-                             params=params, verify=True, timeout=(20, 120))
+            request, _ = HttpRequest.__buildRequest(url, headers=headers, params=params, timeout=(20, 120))
+            r = HttpRequest.__sendBlocking('GET', request)
             if r.status_code == 200:
-                r.encoding = 'utf-8'
                 response = json.loads(r.text)
                 if len(response) == params['maxFeatures']:
                     return {'status': 'ok', 'offset': params['offset'] + params['maxFeatures'], 'features': response,
@@ -168,21 +443,21 @@ class HttpRequest(object):
             }
 
     @staticmethod
-    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None, timeout=60) -> requests.Response:
+    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None, timeout=60) -> 'QgisNetworkResponse':
         """
         Lance une requête HTTP GET, POST ou PATCH en fonction des variables passées en entrée.
 
         :param url: l'url complète
         :type url: str
 
-        :param proxies: les noms des serveurs proxy
+        :param proxies: les noms des serveurs proxy (géré par QGIS, conservé pour compatibilité)
         :type proxies: dict
 
         :param params: paramètres de la requête
         :type params: dict
 
         :param data: les données a envoyé sur le serveur
-        :type data: str
+        :type data: str or dict
 
         :param headers: l'entête d'autorisation
         :type headers: dict
@@ -215,29 +490,44 @@ class HttpRequest(object):
             HttpRequest.logger.debug("URL: {}".format(url))
             HttpRequest.logger.debug("Params: {}".format(params))
             HttpRequest.logger.debug("Proxies: {}".format(proxies))
-            
-            
-            effective_proxies = proxies if proxies else None
+
             if launchBy == 'gcmsPatch':
-                response = requests.patch(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                # PATCH : corps JSON brut, verbe non géré par QgsBlockingNetworkRequest
+                request, _ = HttpRequest.__buildRequest(url, headers=headers, timeout=timeout)
+                body = QByteArray(HttpRequest.__toBytes(data))
+                response = HttpRequest.__sendCustom('PATCH', request, body)
             elif data is None and files is None:
-                response = requests.get(url, params=params, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                # GET
+                request, _ = HttpRequest.__buildRequest(url, headers=headers, params=params, timeout=timeout)
+                response = HttpRequest.__sendBlocking('GET', request)
             elif files is None:
-                response = requests.post(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                # POST simple : dict => form-urlencoded, chaîne => corps brut (ex : JSON)
+                request, _ = HttpRequest.__buildRequest(url, headers=headers, timeout=timeout)
+                if isinstance(data, dict):
+                    request.setRawHeader(b'Content-Type', b'application/x-www-form-urlencoded')
+                    body = QByteArray(urllib.parse.urlencode(data).encode('utf-8'))
+                else:
+                    body = QByteArray(HttpRequest.__toBytes(data))
+                response = HttpRequest.__sendBlocking('POST', request, body)
             else:
-                response = requests.post(url, data=data, headers=headers, files=files, proxies=effective_proxies, verify=True, timeout=timeout)
+                # POST multipart/form-data (données + fichiers joints)
+                boundary, multipart_body = HttpRequest.__buildMultipart(data if isinstance(data, dict) else {}, files)
+                request, _ = HttpRequest.__buildRequest(url, headers=headers, timeout=timeout)
+                request.setRawHeader(b'Content-Type',
+                                     'multipart/form-data; boundary={}'.format(boundary).encode('utf-8'))
+                response = HttpRequest.__sendBlocking('POST', request, QByteArray(multipart_body))
 
             # DEBUG: Log response details
             print("Response status: {}".format(response.status_code))
             print("Response reason: {}".format(response.reason))
             print("Response URL: {}".format(response.url))
             print("Response text (first 500 chars): {}".format(response.text[:500]))
-            
+
             HttpRequest.logger.debug("Response status: {}".format(response.status_code))
             HttpRequest.logger.debug("Response reason: {}".format(response.reason))
             HttpRequest.logger.debug("Response URL: {}".format(response.url))
             HttpRequest.logger.debug("Response text (first 500 chars): {}".format(response.text[:500]))
-            
+
             if response.status_code != 200 and response.status_code != 201 and response.status_code != 206:
                 message = "{}:makeHttpRequest [{}]".format(launchBy, response.text)
                 print("ERROR: {}".format(message))
@@ -248,7 +538,6 @@ class HttpRequest(object):
                 HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (ERROR) ===")
                 raise Exception(message)
 
-            response.encoding = 'utf-8'
             print("=== makeHttpRequest DEBUG END (SUCCESS) ===\n")
             HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (SUCCESS) ===")
 

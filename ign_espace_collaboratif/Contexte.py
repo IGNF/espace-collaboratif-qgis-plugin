@@ -11,13 +11,14 @@ import os.path
 import ntpath
 import time
 from typing import Optional
-import requests
 from qgis.PyQt import QtGui
+from qgis.PyQt.QtCore import QUrl
 from qgis.PyQt.QtGui import QImage
+from qgis.PyQt.QtNetwork import QNetworkRequest
 from qgis.PyQt.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
-    QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup
+    QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup, QgsBlockingNetworkRequest
 from .Import_WMTS import importWMTS
 from .Import_WFS import ImportWFS
 from .core.PluginLogger import PluginLogger
@@ -461,7 +462,10 @@ class Contexte(object):
             raise Exception(message)
         if self.getUserCommunity().getLogo() != "":
             image = QImage()
-            image.loadFromData(requests.get(self.getUserCommunity().getLogo(), timeout=60).content)
+            # Téléchargement du logo via la pile réseau QGIS (proxy/SSL gérés par QgsNetworkAccessManager)
+            blockingRequest = QgsBlockingNetworkRequest()
+            blockingRequest.get(QNetworkRequest(QUrl(self.getUserCommunity().getLogo())), forceRefresh=True)
+            image.loadFromData(bytes(blockingRequest.reply().content()))
             dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
         elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))

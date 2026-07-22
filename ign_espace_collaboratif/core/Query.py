@@ -1,6 +1,5 @@
 from qgis.PyQt.QtWidgets import QMessageBox
-from .HttpRequest import HttpRequest
-import requests
+from .HttpRequest import HttpRequest, QgisNetworkResponse
 from . import Constantes as cst
 from .Box import Box
 
@@ -133,7 +132,7 @@ class Query(object):
 
         return data
 
-    def simple(self) -> requests.Response:
+    def simple(self) -> QgisNetworkResponse:
         """
         Requête HTTP simple.
 
