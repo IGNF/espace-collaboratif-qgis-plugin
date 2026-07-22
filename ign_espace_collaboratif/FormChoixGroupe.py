@@ -104,60 +104,60 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         Connexion des signaux en réaction au clic sur un des boutons :
         - save, l'utilisateur veut continuer
         - cancel, l'utilisateur stoppe la procédure
-        - shapeFile, l'utilisateur veut importer une couche shapefile comme zone de travail
+        - vectorFile, l'utilisateur veut importer un fichier vecteur comme zone de travail
         """
         self.buttonBox.button(QDialogButtonBox.StandardButton.Save).setText("Continuer")
         self.buttonBox.button(QDialogButtonBox.StandardButton.Save).clicked.connect(self.save)
         self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setText("Annuler")
         self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).clicked.connect(self.cancel)
-        self.toolButtonShapeFile.clicked.connect(self.openShapeFile)
+        self.toolButtonShapeFile.clicked.connect(self.openVectorFile)
 
-    def openShapeFile(self) -> None:
+    def openVectorFile(self) -> None:
         """
-        L'utilisateur veut importer sa zone de travail à partir d'un fichier shapefile.
+        L'utilisateur veut importer sa zone de travail à partir d'un fichier vecteur.
         L'outil propose l'import et vérifie si les conditions d'import d'une nouvelle zone sont respectées :
-         - si c'est un fichier .shp
+         - si c'est un fichier vecteur supporté (Shapefile, GeoJSON, GeoPackage, KML/KMZ)
          - si la zone contenue dans le fichier est de type polygone
          - si la zone existe déjà dans le projet
         """
         self.__newShapefilesDict.clear()
-        formats = ["shp", "SHP"]
-        filters = u"ESRI Shapefile (*.shp; *.SHP);;"
-        shapefilePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail Shapefile', '.',
-                                                                 filters)
-        if shapefilePath != "":
-            extension = os.path.splitext(shapefilePath)[1]
-            if extension[1:] not in formats:
-                message = u"Le fichier de type '" + extension + u"' n'est pas un fichier Shapefile."
+        formats = ["shp", "geojson", "json", "gpkg", "kml", "kmz"]
+        filters = ("Formats vecteur (*.shp *.geojson *.json *.gpkg *.kml *.kmz);;"
+                   "ESRI Shapefile (*.shp);;"
+                   "GeoJSON (*.geojson *.json);;"
+                   "GeoPackage (*.gpkg);;"
+                   "KML/KMZ (*.kml *.kmz)")
+        filePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Nouvelle zone de travail', '.', filters)
+        if filePath != "":
+            extension = os.path.splitext(filePath)[1].lower().lstrip('.')
+            if extension not in formats:
+                message = u"Le format de fichier '." + extension + u"' n'est pas supporté."
                 PluginHelper.showMessageBox(message)
             else:
-                parts = shapefilePath.split('/')
-                shapefileName = parts[len(parts) - 1]
-                # Nom du shapefile sans extension
-                shapefileLayerName = shapefileName[0:len(shapefileName) - 4]
+                layerName = os.path.splitext(os.path.basename(filePath))[0]
 
-                # On vérifie que le shapefile est surfacique
-                vlayer = QgsVectorLayer(shapefilePath, shapefileLayerName, "ogr")
+                # On vérifie que le fichier est surfacique
+                vlayer = QgsVectorLayer(filePath, layerName, "ogr")
                 if vlayer.geometryType() != 2:  # 2 = Polygon
                     QMessageBox.warning(self, cst.IGNESPACECO, "La zone de travail ne peut être définie "
                                                                "qu'à partir d'une couche d'objets "
                                                                "surfaciques.")
                     return
 
-                # On vérifie que le shapefile n'est pas déjà dans la liste des zones
+                # On vérifie que la couche n'est pas déjà dans la liste des zones
                 bAddItem = True
                 allItems = [self.comboBoxWorkZone.itemText(i) for i in range(self.comboBoxWorkZone.count())]
                 index = 0
                 for item in allItems:
-                    if item == shapefileLayerName:
+                    if item == layerName:
                         bAddItem = False
                         self.comboBoxWorkZone.setCurrentIndex(index)
                         message = "La zone de travail [{}] existe déjà dans la carte. Voulez-vous la supprimer ?\n" \
-                                  "Le nouveau fichier shape sera importé.".format(shapefileLayerName)
+                                  "Le nouveau fichier sera importé.".format(layerName)
                         reply = QMessageBox.question(self, cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
                                                      QMessageBox.StandardButton.No)
                         if reply == QMessageBox.StandardButton.Yes:
-                            removeLayers = QgsProject.instance().mapLayersByName(shapefileLayerName)
+                            removeLayers = QgsProject.instance().mapLayersByName(layerName)
                             if len(removeLayers) == 1:
                                 QgsProject.instance().removeMapLayer(removeLayers[0].id())
                                 QgsProject.instance().write()
@@ -166,15 +166,15 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
                     index += 1
 
                 if bAddItem:
-                    self.__newShapefilesDict[shapefileLayerName] = shapefilePath
-                    self.comboBoxWorkZone.addItem(shapefileLayerName)
-                    self.comboBoxWorkZone.setCurrentText(shapefileLayerName)
+                    self.__newShapefilesDict[layerName] = filePath
+                    self.comboBoxWorkZone.addItem(layerName)
+                    self.comboBoxWorkZone.setCurrentText(layerName)
         else:
             self.comboBoxWorkZone.setCurrentIndex(0)
 
-    def importShapefile(self, shapefileLayerName) -> str:
+    def importVectorFile(self, shapefileLayerName) -> str:
         """
-        Import du fichier shapefile avec quelques vérifications :
+        Import du fichier vecteur avec quelques vérifications :
         - est-ce que le fichier existe ?
         - est-ce que QGIS arrive à créer la couche QgsVectorLayer ?
         - est-ce que le système de coordonnées est renseigné ?
@@ -210,7 +210,7 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         Remarques :
          - Si le nom de la zone de travail est vide → extraction complete
          - Si changement de groupe ou de zone de travail, suppression du groupe et de ses couches associées
-         - Si import d'un shapefile, sauvegarde du nom de la zone de travail dans le fichier xml de configuration
+         - Si import d'un fichier vecteur, sauvegarde du nom de la zone de travail dans le fichier xml de configuration
           - Si l'import s'est mal passé, envoi d'une exception
         """
         # Si le nom de la zone de travail est vide → extraction complete
@@ -237,11 +237,11 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # Si oui, il faut supprimer l'ensemble des couches et le groupe
         self.deleteLayersAndGroup(spatialFilterLayerName)
 
-        # Création d'une nouvelle zone de travail si le dictionnaire est rempli avec un shape
+        # Création d'une nouvelle zone de travail si le dictionnaire est rempli avec un fichier vecteur
         # que l'utilisateur a chargé avec le bouton 'Parcourir'
         message = ""
         if spatialFilterLayerName in self.__newShapefilesDict:
-            message = self.importShapefile(spatialFilterLayerName)
+            message = self.importVectorFile(spatialFilterLayerName)
             # Sauvegarde du nom de la nouvelle zone de travail
             PluginHelper.setXmlTagValue(self.__context.projectDir, PluginHelper.xml_Zone_extraction,
                                         spatialFilterLayerName, PluginHelper.xml_Map)
