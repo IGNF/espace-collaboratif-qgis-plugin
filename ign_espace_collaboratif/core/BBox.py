@@ -55,9 +55,9 @@ class BBox(object):
         :return: la boite englobante issue de la couche 'zone de travail'
         """
         if self.__layerFilter is None:
-            message = "La carte en cours ne contient pas la couche '" + \
+            message = "Le projet QGIS ne contient pas la couche '" + \
                       self.__filterName + \
-                      "' définie comme zone de travail ou celle-ci n'est pas activée.\n\n" + \
+                      "' définie comme zone de travail.\n\n" + \
                       "Souhaitez-vous poursuivre l'import sur la totalité du territoire ? "
             reply = QMessageBox.question(self.__context.iface.mainWindow(), cst.IGNESPACECO, message, QMessageBox.StandardButton.Yes,
                                          QMessageBox.StandardButton.No)
