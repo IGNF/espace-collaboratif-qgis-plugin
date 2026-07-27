@@ -1071,8 +1071,7 @@ class Contexte(object):
 
         :return: la couche dont le nom correspond à celui donné en entrée, None sinon
         """
-        mapLayers = self.mapCan.layers()
-        for ml in mapLayers:
+        for ml in QgsProject.instance().mapLayers().values():
             if ml.name() == layName:
                 return ml
         return None
