@@ -1,8 +1,6 @@
-import json
 import logging
 import os.path
 import configparser
-import requests
 import webbrowser
 
 from qgis.core import QgsFeatureRequest
@@ -15,7 +13,6 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer, Qgis
 from builtins import str
 from .core.BBox import BBox
-from .core.HttpRequest import HttpRequest
 from .core.WfsPost import WfsPost
 from .core.PluginLogger import PluginLogger
 from .core.SQLiteManager import SQLiteManager
@@ -29,6 +26,7 @@ from .Contexte import Contexte
 from .FormChargerGuichet import FormChargerGuichet
 from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
+from .FormStatistics import FormStatistics
 from .ToolsReport import ToolsReport
 from .SeeReport import SeeReport
 from .CreateReport import CreateReport
@@ -1115,7 +1113,7 @@ class RipartPlugin:
 
     def __showStatistics(self) -> None:
         """
-        Récupère et affiche les statistiques de la base de données de la couche active.
+        Ouvre le dialogue des statistiques pour la base de données de la couche active.
         """
         if not self.__doConnexion(False):
             return
@@ -1131,33 +1129,13 @@ class RipartPlugin:
                 u"La couche '{}' n'est pas une couche de l'espace collaboratif.".format(active_layer.name()))
             return
 
-        # Colonnes: id, layer, idName, standard, database, databaseid, srid, ...
-        databaseid = rows[0][5]
+        # Colonnes: id, layer, idName, standard, database(name), databaseid, ...
+        row = rows[0]
+        databaseid = row[5]
+        databasename = row[4]
 
-        url = "{}/gcms/api/databases/{}/statistic".format(self.__context.urlHostEspaceCo, databaseid)
-        headers = {
-            'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())
-        }
-
-        try:
-            ssl_verify = "localhost.ign.fr" not in url
-            response = requests.get(url, headers=headers, proxies=self.__context.getProxies(),
-                                    verify=ssl_verify, timeout=30)
-            response.encoding = 'utf-8'
-
-            if response.status_code == 200:
-                text = json.dumps(response.json(), indent=2, ensure_ascii=False)
-                dlg = QMessageBox(self.iface.mainWindow())
-                dlg.setWindowTitle(u"Statistiques - base {}".format(databaseid))
-                dlg.setText(text)
-                dlg.exec()
-            else:
-                PluginHelper.showMessageBox(
-                    u"Erreur {} lors de la récupération des statistiques.\n{}".format(
-                        response.status_code, response.text))
-        except Exception as e:
-            self.__logger.error("__showStatistics : {}".format(e))
-            PluginHelper.showMessageBox(u"Erreur lors de la requête : {}".format(str(e)))
+        dlg = FormStatistics(self.__context, databaseid, databasename, self.iface.mainWindow())
+        dlg.exec()
 
     def __showHelp(self) -> None:
         """

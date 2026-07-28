@@ -255,6 +255,15 @@ class Contexte(object):
         """
         return self.__includePublicReports
 
+    def isUserCommunityAdmin(self) -> bool:
+        """
+        :return: True si l'utilisateur est administrateur de sa communauté active.
+        """
+        community = self.getUserCommunity()
+        if community is None:
+            return False
+        return community.isAdmin()
+
 
 
 
