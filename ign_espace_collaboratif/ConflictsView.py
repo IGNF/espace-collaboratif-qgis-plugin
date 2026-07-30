@@ -1,5 +1,8 @@
 import json
 import os
+
+from PyQt5.QtCore import QVariant
+
 from .core import Constantes as cst
 from qgis.PyQt import uic
 from qgis.core import (
@@ -306,8 +309,18 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
 
     def __setLabelsConflit(self, feature):
         typeConflict = feature['type_conflict']
+        # Dans le cas d'une création manuelle d'une zone de conflit, si le champ n'est pas rempli,
+        # il est mis à NULL dans QGIS, il faut alors le mettre à vide
+        if type(typeConflict) is QVariant and typeConflict.isNull():
+            typeConflict = ''
         self.label_type_conflict.setText(typeConflict)
-        self.label_layer_name.setText(feature['layer_name'])
+        # Dans le cas d'une création manuelle d'une zone de conflit, si le champ n'est pas rempli,
+        # il est mis à NULL dans QGIS, il faut alors le mettre à vide
+        layerName = feature['layer_name']
+        if type(layerName) is QVariant and layerName.isNull():
+            layerName = ''
+        self.label_layer_name.setText(layerName)
+
         if typeConflict == cst.CONFLICT_MODIFICATION:
             self.label_context_type_conflict.setText('Le même objet a été modifié par un autre utilisateur et par vous '
                                                      'même depuis la dernière transaction.')
@@ -317,6 +330,9 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         elif typeConflict == cst.CONFLICT_SUPPRESSION_CLIENT:
             self.label_context_type_conflict.setText('Le même objet a été modifié par un autre utilisateur et supprimé '
                                                      'par vous même depuis la dernière transaction.')
+        else:
+            # Si le type de conflit est vide alors il faut vider la zone d'explication du conflit
+            self.label_context_type_conflict.setText('')
 
     def __mergeDatasServerAndClient(self, dictServer, dictClient):
         # Si un dict est None ou pas un dict, on le remplace par {}
@@ -371,6 +387,8 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
 
     def __setAttributes(self, feature):
         resultats = self.__mergeDatas(feature)
+        if resultats is None:
+            return
         print("[INFO] Resultat : {}".format(resultats))
         discardFields = ['date_modification', 'gcms_fingerprint', 'id_sqlite_1gnQg1s']
         for k, v in resultats.items():
