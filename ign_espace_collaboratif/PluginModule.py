@@ -187,6 +187,9 @@ class RipartPlugin:
         #             messages = self.__doPost(objectAddedNotCommitted[0], qgsVectorLayerEditBuffer)
         #         return
 
+        # Verrouillage de la couche zone de travail pour empêcher sa suppression accidentelle
+        PluginHelper.lockWorkAreaLayer(self.__context)
+
     def _connectLayerWasAdded(self, layer) -> None:
         """
         Si une couche est ajoutée au projet QGIS de l'utilisateur et qu'elle se trouve dans la table des tables

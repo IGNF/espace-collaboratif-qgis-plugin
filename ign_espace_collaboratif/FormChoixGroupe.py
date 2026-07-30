@@ -255,6 +255,10 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
             print(message)
             raise Exception(message)
 
+        # Verrouillage de la couche zone de travail pour éviter sa suppression accidentelle
+        if spatialFilterLayerName != '':
+            PluginHelper.lockWorkAreaLayer(self.__context)
+
     def getIdAndNameFromSelectedCommunity(self) -> ():
         """
         :return: l'identifiant et le nom du groupe de l'utilisateur en fonction de son choix
@@ -295,6 +299,9 @@ class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):
         # Si rien n'a changé, on sort
         if not bNewGroup and not bNewZone:
             return
+
+        # Déverrouillage de la couche zone de travail avant tout changement de groupe ou de zone
+        PluginHelper.unlockWorkAreaLayer(self.__context)
 
         # Récupération de l'ensemble des noms des couches chargées dans le projet QGIS
         projectLayers = self.__context.getAllMapLayers()
