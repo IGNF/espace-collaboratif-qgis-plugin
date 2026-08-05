@@ -1,6 +1,29 @@
 import json
-import requests
+import uuid
 from .PluginLogger import PluginLogger
+from qgis.core import QgsBlockingNetworkRequest, QgsNetworkAccessManager
+from qgis.PyQt.QtNetwork import QNetworkRequest
+from qgis.PyQt.QtCore import QUrl, QUrlQuery, QEventLoop
+
+class Response(object):
+    """
+    Enveloppe compatible avec l'API de requests.Response, construite à partir
+    d'une réponse QGIS (QgsNetworkReplyContent).
+    """
+
+    def __init__(self, status_code, content, reason='', url='', encoding='utf-8'):
+        self.status_code = status_code
+        self.content = content          # bytes
+        self.reason = reason
+        self.url = url
+        self.encoding = encoding
+
+    @property
+    def text(self):
+        return self.content.decode(self.encoding, errors='replace')
+
+    def json(self):
+        return json.loads(self.text)
 
 
 class HttpRequest(object):
@@ -26,7 +49,7 @@ class HttpRequest(object):
         self.__headers = headers
         self.__proxies = proxies
 
-    def getResponse(self, partOfUrl, params=None) -> requests.Response:
+    def getResponse(self, partOfUrl, params=None) -> 'Response':
         """
         Lance une requête HTTP GET.
 
@@ -38,18 +61,35 @@ class HttpRequest(object):
 
         :return: une réponse encodée en utf-8
         """
-        uri = "{}/{}".format(self.__url, partOfUrl)
-        print(uri)
-        # Disable SSL verification only for localhost development
-        ssl_verify = "localhost.ign.fr" not in uri
+        uri = QUrl("{}/{}".format(self.__url, partOfUrl))
+
         if params is not None:
-            response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    params=params, verify=ssl_verify, timeout=(15, 60))
-        else:
-            response = requests.get(uri, headers=self.__headers, proxies=self.__proxies,
-                                    verify=ssl_verify, timeout=(15, 60))
-        response.encoding = 'utf-8'
-        return response
+            query = QUrlQuery()
+            for k, v in params.items():
+                query.addQueryItem(str(k), str(v))
+            uri.setQuery(query)
+
+        urlString = uri.toString()
+        print(urlString)
+
+        request = QNetworkRequest(uri)
+        for key, value in (self.__headers or {}).items():
+            request.setRawHeader(key.encode(), str(value).encode())
+
+        blocking = QgsBlockingNetworkRequest()
+        err = blocking.get(request)
+        reply = blocking.reply()
+
+        # Erreur réseau/proxy 
+        if err != QgsBlockingNetworkRequest.NoError:
+            raise Exception("HttpRequest.getResponse : {} ({})".format(
+                blocking.errorMessage(), urlString))
+
+        status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+        reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+        content = bytes(reply.content())
+
+        return Response(status_code=status, content=content, reason=reason, url=urlString)  
 
     def getNextResponse(self, partOfUrl, params) -> {}:
         """
@@ -122,50 +162,102 @@ class HttpRequest(object):
             else:
                 print("  - No parameters")
             print("="*80 + "\n")
-            
-           
-            # If no explicit proxy is configured, pass None so requests uses system/environment
-            # proxy settings (same behaviour as a browser). Previously forcing {"http": None, "https": None}
-            # bypassed corporate proxies required to reach the server.
-            effective_proxies = proxies if proxies else None
-            # timeout=(connect, read): 20s to connect, 120s to read a large WFS response.
-            r = requests.get(url, headers=headers, proxies=effective_proxies,
-                             params=params, verify=True, timeout=(20, 120))
-            if r.status_code == 200:
-                r.encoding = 'utf-8'
-                response = json.loads(r.text)
+
+            qurl = QUrl(url)
+            if params:
+                query = QUrlQuery()
+                for k, v in params.items():
+                    query.addQueryItem(str(k), str(v))
+                qurl.setQuery(query)
+
+            request = QNetworkRequest(qurl)
+            for key, value in (headers or {}).items():
+                request.setRawHeader(key.encode(), str(value).encode())
+
+            blocking = QgsBlockingNetworkRequest()
+            err = blocking.get(request)
+            reply = blocking.reply()
+            status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+
+             # Erreur réseau/proxy sans réponse HTTP
+            if err != QgsBlockingNetworkRequest.NoError and status is None:
+                raise Exception(blocking.errorMessage())
+
+            text = bytes(reply.content()).decode('utf-8')
+
+            if status == 200:
+                response = json.loads(text)
                 if len(response) == params['maxFeatures']:
-                    return {'status': 'ok', 'offset': params['offset'] + params['maxFeatures'], 'features': response,
-                            'stop': False}
+                    return {'status': 'ok', 'offset': params['offset'] + params['maxFeatures'],
+                            'features': response, 'stop': False}
                 elif len(response) < params['maxFeatures']:
-                    # le parametre offset est mis à 0, car la récupération des données est finie
                     return {'status': 'ok', 'offset': 0, 'features': response, 'stop': True}
             else:
-                # Detailed error information
+                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
                 return {
                     'status': 'error',
-                    'reason': r.reason,
-                    'code': r.status_code,
-                    'url': r.url,
-                    'details': r.text[:500] if len(r.text) > 0 else 'No response body'
+                    'reason': reason,
+                    'code': status,
+                    'url': url,
+                    'details': text[:500] if len(text) > 0 else 'No response body'
                 }
         except Exception as e:
             error_str = str(e)
             error_type = str(type(e).__name__)
             HttpRequest.logger.error("Request error: {}".format(error_str))
-            
-            # Detect proxy-specific errors
             is_proxy_error = 'ProxyError' in error_str or 'RemoteDisconnected' in error_str or \
                            'proxy' in error_str.lower() or 'Max retries exceeded' in error_str
-            
             return {
                 'status': 'error',
                 'reason': error_str,
-                'code': 'EXCEPTION',
+                'code': status if 'status' in locals() else 'EXCEPTION',
                 'url': url,
                 'details': error_type,
                 'is_proxy_error': is_proxy_error
             }
+
+            # If no explicit proxy is configured, pass None so requests uses system/environment
+            # proxy settings (same behaviour as a browser). Previously forcing {"http": None, "https": None}
+            # bypassed corporate proxies required to reach the server.
+        #     effective_proxies = proxies if proxies else None
+        #     # timeout=(connect, read): 20s to connect, 120s to read a large WFS response.
+        #     r = requests.get(url, headers=headers, proxies=effective_proxies,
+        #                      params=params, verify=True, timeout=(20, 120))
+        #     if r.status_code == 200:
+        #         r.encoding = 'utf-8'
+        #         response = json.loads(r.text)
+        #         if len(response) == params['maxFeatures']:
+        #             return {'status': 'ok', 'offset': params['offset'] + params['maxFeatures'], 'features': response,
+        #                     'stop': False}
+        #         elif len(response) < params['maxFeatures']:
+        #             # le parametre offset est mis à 0, car la récupération des données est finie
+        #             return {'status': 'ok', 'offset': 0, 'features': response, 'stop': True}
+        #     else:
+        #         # Detailed error information
+        #         return {
+        #             'status': 'error',
+        #             'reason': r.reason,
+        #             'code': r.status_code,
+        #             'url': r.url,
+        #             'details': r.text[:500] if len(r.text) > 0 else 'No response body'
+        #         }
+        # except Exception as e:
+        #     error_str = str(e)
+        #     error_type = str(type(e).__name__)
+        #     HttpRequest.logger.error("Request error: {}".format(error_str))
+            
+        #     # Detect proxy-specific errors
+        #     is_proxy_error = 'ProxyError' in error_str or 'RemoteDisconnected' in error_str or \
+        #                    'proxy' in error_str.lower() or 'Max retries exceeded' in error_str
+            
+        #     return {
+        #         'status': 'error',
+        #         'reason': error_str,
+        #         'code': 'EXCEPTION',
+        #         'url': url,
+        #         'details': error_type,
+        #         'is_proxy_error': is_proxy_error
+        #     }
 
     @staticmethod
     def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None, timeout=60) -> requests.Response:

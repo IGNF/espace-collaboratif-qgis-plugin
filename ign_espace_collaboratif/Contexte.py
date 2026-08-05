@@ -11,13 +11,14 @@ import os.path
 import ntpath
 import time
 from typing import Optional
-import requests
 from qgis.PyQt import QtGui
 from qgis.PyQt.QtGui import QImage
 from qgis.PyQt.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
-    QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup
+    QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup, QgsBlockingNetworkRequest
+from qgis.PyQt.QtNetwork import QNetworkRequest
+from qgis.PyQt.QtCore import QUrl
 from .Import_WMTS import importWMTS
 from .Import_WFS import ImportWFS
 from .core.PluginLogger import PluginLogger
@@ -460,9 +461,15 @@ class Contexte(object):
             self.logger.error(message)
             raise Exception(message)
         if self.getUserCommunity().getLogo() != "":
-            image = QImage()
-            image.loadFromData(requests.get(self.getUserCommunity().getLogo(), timeout=60).content)
-            dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
+            requestLogo = QNetworkRequest(QUrl(self.getUserCommunity().getLogo()))
+            blockingNetwork = QgsBlockingNetworkRequest()
+
+            if blockingNetwork.get(requestLogo) == QgsBlockingNetworkRequest.NoError:
+                content = blockingNetwork.reply().content()  
+                image = QImage()
+                image.loadFromData(content)
+                dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
+
         elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
