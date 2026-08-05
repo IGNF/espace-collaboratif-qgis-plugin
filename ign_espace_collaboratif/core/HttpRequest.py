@@ -260,7 +260,41 @@ class HttpRequest(object):
         #     }
 
     @staticmethod
-    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None, timeout=60) -> requests.Response:
+    def _buildMultipart(data, files):
+        """
+        Construit un corps multipart/form-data.
+
+        :param data: champs simples {nom: valeur}
+        :param files: {champ: (filename, fileobj, content_type)}
+        :return: (corps_bytes, valeur_du_header_Content-Type)
+        """
+        boundary = "----QGISFormBoundary{}".format(uuid.uuid4().hex)
+        b = boundary.encode()
+        crlf = b"\r\n"
+        body = b""
+
+        for name, value in (data or {}).items():
+            body += b"--" + b + crlf
+            body += 'Content-Disposition: form-data; name="{}"'.format(name).encode() + crlf + crlf
+            body += str(value).encode('utf-8') + crlf
+
+        for field, fileinfo in (files or {}).items():
+            filename, fileobj, content_type = fileinfo
+            filecontent = fileobj.read()
+            if isinstance(filecontent, str):
+                filecontent = filecontent.encode('utf-8')
+            body += b"--" + b + crlf
+            body += 'Content-Disposition: form-data; name="{}"; filename="{}"'.format(
+                field, filename).encode() + crlf
+            body += 'Content-Type: {}'.format(content_type).encode() + crlf + crlf
+            body += filecontent + crlf
+
+        body += b"--" + b + b"--" + crlf
+        return body, "multipart/form-data; boundary={}".format(boundary)
+    
+
+    @staticmethod
+    def makeHttpRequest(url, proxies=None, params=None, data=None, headers=None, files=None, launchBy=None, timeout=60) -> 'Response':
         """
         Lance une requête HTTP GET, POST ou PATCH en fonction des variables passées en entrée.
 
@@ -292,65 +326,135 @@ class HttpRequest(object):
         :return: les données retournées par le serveur
         """
         try:
-            print("HttpRequest.makeHttpRequest.files : {}".format(files))
-            print("HttpRequest.makeHttpRequest.data : {}".format(data))
+            # print("HttpRequest.makeHttpRequest.files : {}".format(files))
+            # print("HttpRequest.makeHttpRequest.data : {}".format(data))
             
-            # DEBUG: Log request details
-            print("\n=== makeHttpRequest DEBUG START ===")
-            print("LaunchedBy: {}".format(launchBy))
-            print("URL: {}".format(url))
-            print("Params: {}".format(params))
-            print("Proxies: {}".format(proxies))
+            # # DEBUG: Log request details
+            # print("\n=== makeHttpRequest DEBUG START ===")
+            # print("LaunchedBy: {}".format(launchBy))
+            # print("URL: {}".format(url))
+            # print("Params: {}".format(params))
+            # print("Proxies: {}".format(proxies))
             
             HttpRequest.logger.debug("=== makeHttpRequest DEBUG START ===")
-            HttpRequest.logger.debug("LaunchedBy: {}".format(launchBy))
-            HttpRequest.logger.debug("URL: {}".format(url))
-            HttpRequest.logger.debug("Params: {}".format(params))
-            HttpRequest.logger.debug("Proxies: {}".format(proxies))
+            HttpRequest.logger.debug("LaunchedBy: {} | URL: {}".format(launchBy, url))
+            # HttpRequest.logger.debug("Params: {}".format(params))
+            # HttpRequest.logger.debug("Proxies: {}".format(proxies))
+
+            qurl = QUrl(url)
+            if params and data is None and files is None:
+                query = QUrlQuery()
+                for k, v in params.items():
+                    query.addQueryItem(str(k), str(v))
+                qurl.setQuery(query)
+
+            request = QNetworkRequest(qurl)
+            for key, value in (headers or {}).items():
+                request.setRawHeader(key.encode(), str(value).encode())
+
+            blocking = QgsBlockingNetworkRequest()
             
-            
-            effective_proxies = proxies if proxies else None
+            # effective_proxies = proxies if proxies else None
+
+            # --- PATCH 
             if launchBy == 'gcmsPatch':
-                response = requests.patch(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                #response = requests.patch(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                body = data.encode('utf-8') if isinstance(data, str) else bytes(data or b'')
+                nam = QgsNetworkAccessManager.instance()
+                reply = nam.sendCustomRequest(request, b"PATCH", body)
+                loop = QEventLoop()
+                reply.finished.connect(loop.quit)
+                loop.exec()
+                status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                content = bytes(reply.readAll())
+                reply.deleteLater()
+
+            # --- GET 
             elif data is None and files is None:
-                response = requests.get(url, params=params, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                # response = requests.get(url, params=params, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                err = blocking.get(request)
+                if err != QgsBlockingNetworkRequest.NoError and blocking.reply().attribute(
+                        QNetworkRequest.HttpStatusCodeAttribute) is None:
+                    raise Exception(blocking.errorMessage())
+                reply = blocking.reply()
+                status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                content = bytes(reply.content())
+
+            # --- POST 
             elif files is None:
-                response = requests.post(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                #response = requests.post(url, data=data, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
+                if isinstance(data, str):
+                    body = data.encode('utf-8')
+                else:
+                    q = QUrlQuery()
+                    for k, v in (data or {}).items():
+                        q.addQueryItem(str(k), str(v))
+                    body = q.toString(QUrl.FullyEncoded).encode('utf-8')
+                    request.setHeader(QNetworkRequest.ContentTypeHeader,
+                                    "application/x-www-form-urlencoded")
+                err = blocking.post(request, body)
+                if err != QgsBlockingNetworkRequest.NoError and blocking.reply().attribute(
+                        QNetworkRequest.HttpStatusCodeAttribute) is None:
+                    raise Exception(blocking.errorMessage())
+                reply = blocking.reply()
+                status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                content = bytes(reply.content())
+
+            # --- POST multipart
             else:
-                response = requests.post(url, data=data, headers=headers, files=files, proxies=effective_proxies, verify=True, timeout=timeout)
+                #response = requests.post(url, data=data, headers=headers, files=files, proxies=effective_proxies, verify=True, timeout=timeout)
+                body, contentType = HttpRequest._buildMultipart(data, files)
+                request.setHeader(QNetworkRequest.ContentTypeHeader, contentType)
+                err = blocking.post(request, body)
+                if err != QgsBlockingNetworkRequest.NoError and blocking.reply().attribute(
+                        QNetworkRequest.HttpStatusCodeAttribute) is None:
+                    raise Exception(blocking.errorMessage())
+                reply = blocking.reply()
+                status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                content = bytes(reply.content())
+
+            response = Response(status_code=status, content=content,
+                                reason=reason, url=qurl.toString())
+
+            HttpRequest.logger.debug("Response status: {} | reason: {}".format(status, reason))
+            HttpRequest.logger.debug("Response text (first 500): {}".format(response.text[:500]))
 
             # DEBUG: Log response details
-            print("Response status: {}".format(response.status_code))
-            print("Response reason: {}".format(response.reason))
-            print("Response URL: {}".format(response.url))
-            print("Response text (first 500 chars): {}".format(response.text[:500]))
+            # print("Response status: {}".format(response.status_code))
+            # print("Response reason: {}".format(response.reason))
+            # print("Response URL: {}".format(response.url))
+            # print("Response text (first 500 chars): {}".format(response.text[:500]))
             
-            HttpRequest.logger.debug("Response status: {}".format(response.status_code))
-            HttpRequest.logger.debug("Response reason: {}".format(response.reason))
-            HttpRequest.logger.debug("Response URL: {}".format(response.url))
-            HttpRequest.logger.debug("Response text (first 500 chars): {}".format(response.text[:500]))
+            # HttpRequest.logger.debug("Response status: {}".format(response.status_code))
+            # HttpRequest.logger.debug("Response reason: {}".format(response.reason))
+            # HttpRequest.logger.debug("Response URL: {}".format(response.url))
+            # HttpRequest.logger.debug("Response text (first 500 chars): {}".format(response.text[:500]))
             
-            if response.status_code != 200 and response.status_code != 201 and response.status_code != 206:
+            if status not in (200, 201, 206):
                 message = "{}:makeHttpRequest [{}]".format(launchBy, response.text)
                 print("ERROR: {}".format(message))
-                print("Request failed with status {}, URL: {}".format(response.status_code, url))
-                print("=== makeHttpRequest DEBUG END (ERROR) ===\n")
+                # print("Request failed with status {}, URL: {}".format(response.status_code, url))
+                # print("=== makeHttpRequest DEBUG END (ERROR) ===\n")
                 HttpRequest.logger.error(message)
-                HttpRequest.logger.error("Request failed with status {}, URL: {}".format(response.status_code, url))
-                HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (ERROR) ===")
+                # HttpRequest.logger.error("Request failed with status {}, URL: {}".format(response.status_code, url))
+                # HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (ERROR) ===")
                 raise Exception(message)
 
-            response.encoding = 'utf-8'
-            print("=== makeHttpRequest DEBUG END (SUCCESS) ===\n")
-            HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (SUCCESS) ===")
+            # response.encoding = 'utf-8'
+            # print("=== makeHttpRequest DEBUG END (SUCCESS) ===\n")
+            # HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (SUCCESS) ===")
+
+            return response
 
         except Exception as e:
-            print("EXCEPTION in makeHttpRequest: {}".format(format(e)))
-            print("Request details - URL: {}, LaunchedBy: {}".format(url, launchBy))
-            print("=== makeHttpRequest DEBUG END (EXCEPTION) ===\n")
+            # print("EXCEPTION in makeHttpRequest: {}".format(format(e)))
+            # print("Request details - URL: {}, LaunchedBy: {}".format(url, launchBy))
+            # print("=== makeHttpRequest DEBUG END (EXCEPTION) ===\n")
             HttpRequest.logger.error("Exception in makeHttpRequest: {}".format(format(e)))
-            HttpRequest.logger.error("Request details - URL: {}, LaunchedBy: {}".format(url, launchBy))
-            HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (EXCEPTION) ===")
+            HttpRequest.logger.error("Request details - URL: {}, LaunchBy: {}".format(url, launchBy))
+            # HttpRequest.logger.debug("=== makeHttpRequest DEBUG END (EXCEPTION) ===")
             raise Exception(format(e))
-
-        return response
