@@ -85,8 +85,8 @@ class HttpRequest(object):
             raise Exception("HttpRequest.getResponse : {} ({})".format(
                 blocking.errorMessage(), urlString))
 
-        status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-        reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+        status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        reason = reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute) or ''
         content = bytes(reply.content())
 
         return Response(status_code=status, content=content, reason=reason, url=urlString)  
