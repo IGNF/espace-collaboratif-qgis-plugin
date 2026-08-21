@@ -96,6 +96,17 @@ class Query(object):
         """
         self.__params['limit'] = limit
 
+    def setOrdering(self, ordering) -> None:
+        """
+        Fixe le critère de tri pour la variable __params passée à une requête multiple.
+        Utiliser un champ immuable (ex. 'id') garantit une pagination stable : les pages
+        ne se décalent pas si des signalements sont mis à jour pendant le téléchargement.
+
+        :param ordering: le champ de tri, ex. 'id' ou 'opening_date:ASC'
+        :type ordering: str
+        """
+        self.__params['sort'] = ordering
+
     def multiple(self) -> []:
         """
         Enchaine les requêtes HTTP dans le cas d'une réponse à multiples pages.
@@ -105,13 +116,21 @@ class Query(object):
         message = ""
         httpRequest = HttpRequest(self.__url, self.__headers, self.__proxies)
         data = []
+        # Filet de sécurité : écarte les doublons qui passeraient malgré le tri stable
+        # (ex. retry réseau, latence proxy) sans perdre de signalements légitimes.
+        seen_ids = set()
         while True:
             response = httpRequest.getNextResponse(self.__partOfUrl, self.__params)
             if response['status'] == 'error':
                 message += "[Query.multiple.getNextResponse] {0} : {1}".format(response['status'], response['reason'])
                 break
-
             for dt in response['data']:
+                report_id = dt.get('id')
+                if report_id is not None and report_id in seen_ids:
+                    print("[Query] doublon ignoré id={}".format(report_id))
+                    continue
+                if report_id is not None:
+                    seen_ids.add(report_id)
                 data.append(dt)
 
             if response['status'] == 'ok' and response['stop'] is True and response['page'] == 0:
