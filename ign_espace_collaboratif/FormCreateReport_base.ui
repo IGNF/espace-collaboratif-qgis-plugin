@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>dlgCreateRem</class>
  <widget class="QDialog" name="dlgCreateRem">
@@ -40,7 +40,7 @@
    <property name="font">
     <font>
      <pointsize>7</pointsize>
-     <weight>50</weight>
+     <weight>400</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -190,7 +190,7 @@
     <property name="font">
      <font>
       <pointsize>8</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <italic>false</italic>
       <bold>false</bold>
      </font>
@@ -208,7 +208,7 @@
     <property name="font">
      <font>
       <pointsize>9</pointsize>
-      <weight>75</weight>
+      <weight>700</weight>
       <bold>true</bold>
      </font>
     </property>
@@ -228,7 +228,7 @@
     <property name="font">
      <font>
       <pointsize>9</pointsize>
-      <weight>75</weight>
+      <weight>700</weight>
       <bold>true</bold>
      </font>
     </property>
@@ -261,7 +261,7 @@
     <property name="font">
      <font>
       <pointsize>9</pointsize>
-      <weight>75</weight>
+      <weight>700</weight>
       <bold>true</bold>
      </font>
     </property>
