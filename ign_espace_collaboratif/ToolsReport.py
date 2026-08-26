@@ -119,6 +119,8 @@ class ToolsReport(object):
             query.setCommunity(self.__context.getUserCommunity().getId())
         query.setPage(1)
         query.setLimit(100)
+        # Tri par 'id' (immuable) pour éviter les doublons/manquants liés à une pagination instable
+        query.setOrdering('id')
         if box is not None:
             query.setBox(box)
         query.setOpeningDate(date)

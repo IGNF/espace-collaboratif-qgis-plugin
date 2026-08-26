@@ -8,18 +8,11 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from .qt_compat import (
-    QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt,
-    QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform,
-    QAbstractButton, QAbstractItemView, QAbstractScrollArea, QApplication,
-    QDialog, QDialogButtonBox, QHeaderView, QLabel,
-    QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem,
-    QWidget,
+from qgis.PyQt.QtCore import QCoreApplication, QMetaObject, QRect, Qt
+from qgis.PyQt.QtGui import QFont
+from qgis.PyQt.QtWidgets import (
+    QAbstractItemView, QAbstractScrollArea, QDialogButtonBox,
+    QLabel, QPushButton, QSizePolicy, QTableWidget,
 )
 
 class Ui_DialogChargerGuichet(object):
