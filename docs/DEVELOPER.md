@@ -142,7 +142,6 @@ python -m unittest test.test_init.TestInit.test_read_init
 | Bibliothèque | Usage |
 |---|---|
 | `qgis` / `qgis.PyQt` | API QGIS, widgets Qt, CRS, layers, features |
-| `requests` | Appels HTTP REST (auth, proxy) |
 | `xml.etree.ElementTree` | Parsing XML |
 | `json` | Sérialisation JSON |
 | `sqlite3` | Cache local |

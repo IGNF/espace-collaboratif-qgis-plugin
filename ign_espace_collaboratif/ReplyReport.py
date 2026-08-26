@@ -142,9 +142,24 @@ class ReplyReport(object):
         """
         messageReportNoValid = ""
         replyReports = []
+        # for feat in selFeats:
+        #     idReport = feat.attribute('NoSignalement')
+        #     report = self.__toolsReport.getReport(idReport)
+        #     # Le statut du signalement est-il clôturé ?
+
         for feat in selFeats:
             idReport = feat.attribute('NoSignalement')
-            report = self.__toolsReport.getReport(idReport)
+            try:
+                report = self.__toolsReport.getReport(idReport)
+            except Exception as e:
+                # getReport → Query.simple() lève en cas de status != 200 (ex. 401/500).
+                # On ignore ce signalement au lieu d'interrompre tout le lot.
+                self.__logger.error(
+                    "ReplyReport.__isValidReports : échec de récupération du signalement n°{0} : {1}".format(
+                        idReport, e))
+                messageReportNoValid += "Impossible de récupérer le signalement n°{0} " \
+                                        "(erreur réseau ou serveur). Il sera ignoré.\n".format(idReport)
+                continue
             # Le statut du signalement est-il clôturé ?
             pos = 0
             if report.getStatut() not in cst.openStatut:

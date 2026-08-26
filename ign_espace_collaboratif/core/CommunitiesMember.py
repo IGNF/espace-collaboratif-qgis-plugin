@@ -63,8 +63,6 @@ class CommunitiesMember(object):
         self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/users/me")
         response = self.__query.simple()
-        if response is None:
-            return []
 
         data = response.json()
         if PluginHelper.keyExist('id', data):

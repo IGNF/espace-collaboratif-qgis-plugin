@@ -464,7 +464,7 @@ class Contexte(object):
             requestLogo = QNetworkRequest(QUrl(self.getUserCommunity().getLogo()))
             blockingNetwork = QgsBlockingNetworkRequest()
 
-            if blockingNetwork.get(requestLogo) == QgsBlockingNetworkRequest.NoError:
+            if blockingNetwork.get(requestLogo) == QgsBlockingNetworkRequest.ErrorCode.NoError:
                 content = blockingNetwork.reply().content()  
                 image = QImage()
                 image.loadFromData(content)

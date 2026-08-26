@@ -81,7 +81,7 @@ class HttpRequest(object):
         reply = blocking.reply()
 
         # Erreur réseau/proxy 
-        if err != QgsBlockingNetworkRequest.NoError:
+        if err != QgsBlockingNetworkRequest.ErrorCode.NoError:
             raise Exception("HttpRequest.getResponse : {} ({})".format(
                 blocking.errorMessage(), urlString))
 
@@ -177,10 +177,10 @@ class HttpRequest(object):
             blocking = QgsBlockingNetworkRequest()
             err = blocking.get(request)
             reply = blocking.reply()
-            status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+            status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
 
              # Erreur réseau/proxy sans réponse HTTP
-            if err != QgsBlockingNetworkRequest.NoError and status is None:
+            if err != QgsBlockingNetworkRequest.ErrorCode.NoError and status is None:
                 raise Exception(blocking.errorMessage())
 
             text = bytes(reply.content()).decode('utf-8')
@@ -193,7 +193,7 @@ class HttpRequest(object):
                 elif len(response) < params['maxFeatures']:
                     return {'status': 'ok', 'offset': 0, 'features': response, 'stop': True}
             else:
-                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                reason = reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute) or ''
                 return {
                     'status': 'error',
                     'reason': reason,
@@ -365,8 +365,8 @@ class HttpRequest(object):
                 loop = QEventLoop()
                 reply.finished.connect(loop.quit)
                 loop.exec()
-                status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+                reason = reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute) or ''
                 content = bytes(reply.readAll())
                 reply.deleteLater()
 
@@ -374,12 +374,12 @@ class HttpRequest(object):
             elif data is None and files is None:
                 # response = requests.get(url, params=params, headers=headers, proxies=effective_proxies, verify=True, timeout=timeout)
                 err = blocking.get(request)
-                if err != QgsBlockingNetworkRequest.NoError and blocking.reply().attribute(
-                        QNetworkRequest.HttpStatusCodeAttribute) is None:
+                if err != QgsBlockingNetworkRequest.ErrorCode.NoError and blocking.reply().attribute(
+                        QNetworkRequest.Attribute.HttpStatusCodeAttribute) is None:
                     raise Exception(blocking.errorMessage())
                 reply = blocking.reply()
-                status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+                reason = reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute) or ''
                 content = bytes(reply.content())
 
             # --- POST 
@@ -395,12 +395,12 @@ class HttpRequest(object):
                     request.setHeader(QNetworkRequest.ContentTypeHeader,
                                     "application/x-www-form-urlencoded")
                 err = blocking.post(request, body)
-                if err != QgsBlockingNetworkRequest.NoError and blocking.reply().attribute(
-                        QNetworkRequest.HttpStatusCodeAttribute) is None:
+                if err != QgsBlockingNetworkRequest.ErrorCode.NoError and blocking.reply().attribute(
+                        QNetworkRequest.Attribute.HttpStatusCodeAttribute) is None:
                     raise Exception(blocking.errorMessage())
                 reply = blocking.reply()
-                status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+                reason = reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute) or ''
                 content = bytes(reply.content())
 
             # --- POST multipart
@@ -409,12 +409,12 @@ class HttpRequest(object):
                 body, contentType = HttpRequest._buildMultipart(data, files)
                 request.setHeader(QNetworkRequest.ContentTypeHeader, contentType)
                 err = blocking.post(request, body)
-                if err != QgsBlockingNetworkRequest.NoError and blocking.reply().attribute(
-                        QNetworkRequest.HttpStatusCodeAttribute) is None:
+                if err != QgsBlockingNetworkRequest.ErrorCode.NoError and blocking.reply().attribute(
+                        QNetworkRequest.Attribute.HttpStatusCodeAttribute) is None:
                     raise Exception(blocking.errorMessage())
                 reply = blocking.reply()
-                status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-                reason = reply.attribute(QNetworkRequest.HttpReasonPhraseAttribute) or ''
+                status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+                reason = reply.attribute(QNetworkRequest.Attribute.HttpReasonPhraseAttribute) or ''
                 content = bytes(reply.content())
 
             response = Response(status_code=status, content=content,

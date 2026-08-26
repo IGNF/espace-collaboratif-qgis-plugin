@@ -206,7 +206,7 @@ class Community(object):
             blocking_req = QgsBlockingNetworkRequest()
             try:
                 error = blocking_req.get(req, forceRefresh=True)
-                if error == QgsBlockingNetworkRequest.NoError:
+                if error == QgsBlockingNetworkRequest.ErrorCode.NoError:
                     data = json.loads(bytes(blocking_req.reply().content()).decode('utf-8'))
                     if PluginHelper.keyExist('name', data):
                         layer.setName(data['name'])
@@ -242,8 +242,6 @@ class Community(object):
         self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/databases/{0}/tables/{1}".format(layer.databaseid, layer.tableid))
         response = self.__query.simple()
-        if response is None:
-            return
         data = response.json()
         self.__getDataFromTable(data, layer)
 
@@ -311,8 +309,6 @@ class Community(object):
         self.__query.setHeaders(self.__tokenType, self.__tokenAccess)
         self.__query.setPartOfUrl("gcms/api/geoservices/{}".format(geoservice['id']))
         response = self.__query.simple()
-        if response is None:
-            return
         data = response.json()
         self.__getDataFromGeoservice(data, layer)
 

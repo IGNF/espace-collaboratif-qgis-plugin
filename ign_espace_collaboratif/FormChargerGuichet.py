@@ -1,4 +1,5 @@
 import os
+from qgis.core import Qgis
 from qgis.PyQt.QtWidgets import QDialogButtonBox, QTableWidget
 from qgis.PyQt import QtCore, QtWidgets, uic
 from .PluginHelper import PluginHelper
@@ -231,10 +232,29 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                         self.__selectedlayers.append(layer)
                         break
         # Chargement des détails (colonnes, styles) uniquement pour les couches sélectionnées
+        # for layer in layersQGIS:
+        #     self.__community.loadLayerDetails(layer)
+        # # Téléchargement et import des couches du guichet sur la carte
+        # self.__doImport(layersQGIS)
+
+        # Si simple() lève une exception (ex. HTTP 401/500), la couche fautive est ignorée sans bloquer l'import des autres.
+        loadedLayers = []
         for layer in layersQGIS:
-            self.__community.loadLayerDetails(layer)
-        # Téléchargement et import des couches du guichet sur la carte
-        self.__doImport(layersQGIS)
+            try:
+                self.__community.loadLayerDetails(layer)
+                loadedLayers.append(layer)
+            except Exception as e:
+                self.__logger.error(
+                    "FormChargerGuichet.__save : échec du chargement des détails de la couche '{}' : {}".format(
+                        layer.name(), e))
+                self.__context.iface.messageBar().pushMessage(
+                    "Attention",
+                    "Impossible de charger les détails de la couche « {} ». Elle ne sera pas importée.".format(
+                        layer.name()),
+                    level=Qgis.MessageLevel.Warning,
+                    duration=5)
+        # Téléchargement et import des couches chargées avec succès
+        self.__doImport(loadedLayers)
 
     def __doImport(self, selectedLayers) -> None:
         """
