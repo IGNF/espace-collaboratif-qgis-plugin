@@ -280,7 +280,7 @@ class SQLiteManager(object):
         :return: le type de colonne SQLite
         """
         if vType == 'Boolean':
-            return 'INTEGER'
+            return 'BOOLEAN'
         elif vType == 'Integer':
             return 'INTEGER'
         elif vType == 'Double':
@@ -560,6 +560,28 @@ class SQLiteManager(object):
         cur.close()
         connection.close()
         return res
+
+    @staticmethod
+    def getBooleanColumns(tableName) -> set:
+        """
+        Retourne l'ensemble des colonnes déclarées BOOLEAN dans la table SQLite locale (PRAGMA table_info).
+        Sert à convertir 0/1 → false/true à l'envoi : côté serveur ces champs sont de type boolean
+        (PostgreSQL n'a pas de cast implicite int→bool).
+        """
+        cols = set()
+        if not SQLiteManager.isTableExist(tableName):
+            return cols
+        connection = SQLiteManager.sqlite3Connect()
+        try:
+            cur = connection.cursor()
+            for row in cur.execute("PRAGMA table_info({})".format(SQLiteManager._quote_identifier(tableName))):
+                # row: (cid, name, type, notnull, dflt_value, pk)
+                if row[2] and str(row[2]).upper() == 'BOOLEAN':
+                    cols.add(row[1])
+            cur.close()
+        finally:
+            connection.close()
+        return cols
 
     @staticmethod
     def emptyTable(tableName) -> None:

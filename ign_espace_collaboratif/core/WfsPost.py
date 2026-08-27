@@ -43,6 +43,7 @@ class WfsPost(object):
         self.__filterName = filterName
         self.__isTableBduni = False
         self.__datasForPost = {}
+        self.__booleanFields = None
 
     def __initParametersLayer(self) -> int:
         """
@@ -140,6 +141,7 @@ class WfsPost(object):
 
         :return: nom attribut/valeur attribut
         """
+        booleanFields = self.__getBooleanFields()
         fieldsNameValue = {}
         for key, value in attributesChanged.items():
             field = feature.fields()[key]
@@ -152,6 +154,8 @@ class WfsPost(object):
                 # Nullable field: user intentionally cleared it → send JSON null.
                 fieldsNameValue[fieldName] = None
                 continue
+            if fieldName in booleanFields:
+                value = self.__toBool(value)
             fieldsNameValue[fieldName] = value
         return fieldsNameValue
 
@@ -193,6 +197,7 @@ class WfsPost(object):
         
         :return: un dictionnaire contenant l'ensemble des noms/valeurs des attributs modifiés
         """
+        booleanFields = self.__getBooleanFields()
         fieldsNameValue = {}
         for field in feature.fields():
             fieldName = field.name()
@@ -201,8 +206,30 @@ class WfsPost(object):
             fieldValue = feature.attribute(fieldName)
             if fieldValue is None or str(fieldValue) == "NULL":
                 continue
+            if fieldName in booleanFields:
+                fieldValue = self.__toBool(fieldValue)
             fieldsNameValue[fieldName] = fieldValue
         return fieldsNameValue
+
+    def __getBooleanFields(self) -> set:
+        """Colonnes booléennes de la couche (schéma SQLite local), en cache pour la durée du POST."""
+        if self.__booleanFields is None:
+            self.__booleanFields = SQLiteManager.getBooleanColumns(self.__layer.name())
+        return self.__booleanFields
+
+    @staticmethod
+    def __toBool(value):
+        """Convertit une valeur locale (0/1, '0'/'1', bool) en booléen pour l'API (colonne boolean serveur)."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        s = str(value).strip().lower()
+        if s in ('1', 'true', 't', 'vrai', 'oui'):
+            return True
+        if s in ('0', 'false', 'f', 'faux', 'non'):
+            return False
+        return value
 
     def __checkResponseTransactions(self, response) -> {}:
         """
@@ -492,7 +519,29 @@ class WfsPost(object):
             action = self.__setAction('Insert')
             action['data'].update(self.__setFieldsNameValue(feature))
             action['data'].update(self.__setPostGeometry(feature.geometry(), bBDUni))
+            self.__setAncestor(action, feature)
             self.__datasForPost['actions'].append(action)
+
+    def __setAncestor(self, action, feature) -> None:
+        """
+        Si l'objet inséré provient d'une découpe (plugin Outil_Decoupe_QGIS), ajoute le champ
+        'ancestor' à l'action 'Insert' avec le cleabs de l'objet d'origine, retrouvé via le
+        registre partagé (sys._ign_cutting_ancestors) puis SQLiteManager.
+        """
+        try:
+            from .ancestor_registry import get as getAncestor
+        except ImportError:
+            return
+        originalFid = getAncestor(self.__layer.id(), feature.id())
+        if originalFid is None:
+            return
+        result = SQLiteManager.selectRowsInTable(self.__layer, [originalFid])
+        if not result:
+            return
+        ancestorId = result[0][0]
+        if ancestorId is None or str(ancestorId) == "NULL":
+            return
+        action['ancestor'] = ancestorId
 
     def __pushChangedAttributeValues(self, changedAttributeValues) -> None:
         """
