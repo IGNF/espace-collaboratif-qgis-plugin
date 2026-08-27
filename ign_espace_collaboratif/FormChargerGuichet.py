@@ -231,11 +231,6 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
                         layersQGIS.append(layer)
                         self.__selectedlayers.append(layer)
                         break
-        # Chargement des détails (colonnes, styles) uniquement pour les couches sélectionnées
-        # for layer in layersQGIS:
-        #     self.__community.loadLayerDetails(layer)
-        # # Téléchargement et import des couches du guichet sur la carte
-        # self.__doImport(layersQGIS)
 
         # Si simple() lève une exception (ex. HTTP 401/500), la couche fautive est ignorée sans bloquer l'import des autres.
         loadedLayers = []

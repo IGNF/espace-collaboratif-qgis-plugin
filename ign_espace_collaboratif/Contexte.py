@@ -353,8 +353,6 @@ class Contexte(object):
 
         self.logger.debug("getConnexionEspaceCollaboratifWithKeycloak")
         self.__tokenTimerStart = time.perf_counter()
-        # IGN_PROXY = "http://proxy.ign.fr:3128"
-        # proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
         self.__keycloakService = KeycloakService(cst.KEYCLOAK_SERVER_URI, cst.KEYCLOAK_REALM_NAME,
                                                  cst.KEYCLOAK_CLIENT_ID,
                                                  proxies=self.__proxies)
@@ -363,9 +361,6 @@ class Contexte(object):
         self.__tokenAccess = r["access_token"]
         self.__tokenExpireIn = r["expires_in"]
         self.__tokenType = r["token_type"]
-        # TODO à supprimer
-        # r = self.__keycloakService.get_userinfo(r["access_token"])
-        # self.login = r['email']
         return self.__connectToService()
 
     def __connectToService(self) -> bool:
@@ -382,7 +377,6 @@ class Contexte(object):
 
         :return: True si la connexion est établie et si l'utilisateur n'a pas annulé son choix, False sinon
         """
-        # PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Login, self.login, PluginHelper.xml_Serveur)
         xmlgroupeactif = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur").text
         if xmlgroupeactif is not None:
             self.__activeCommunityName = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif,

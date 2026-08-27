@@ -94,18 +94,10 @@ class KeycloakService:
         token_url = "{}realms/{}/protocol/openid-connect/token".format(self.base_uri, self.realm_name)
         print("[KeycloakService] POST token exchange → {}".format(token_url))
         print("[KeycloakService] Proxy: {}".format(self.proxies or 'none (system)'))
-        # print("[KeycloakService] Proxy: {}".format(self.session.proxies or 'none (system)'))
-        # response = self.session.post(token_url, data=data, timeout=(30, 60))
-        # print("[KeycloakService] Token response: status={} | url={}".format(response.status_code, response.url))
 
         status, text = self._send(token_url, data=data)
         print("[KeycloakService] Token response: status={}".format(status))
     
-        # if response.status_code != 200:
-        #     print("[KeycloakService] Token error body: {}".format(response.text[:500]))
-        #     raise Exception("Failed to get access token: {}".format(response.text))
-
-        # return response.json()
         if status != 200:
             print("[KeycloakService] Token error body: {}".format(text[:500]))
             raise Exception("Failed to get access token: {}".format(text))
@@ -116,11 +108,6 @@ class KeycloakService:
     def get_userinfo(self, access_token: str):
         data = {"access_token": access_token}
         userinfo_url = "{}realms/{}/protocol/openid-connect/userinfo".format(self.base_uri, self.realm_name)
-        # response = self.session.post(userinfo_url, data=data)
-        # if response.status_code != 200:
-        #     raise Exception("Failed to get user info")
-
-        # return response.json()
         status, text = self._send(userinfo_url, data=data)
         if status != 200:
             raise Exception("Failed to get user info")
@@ -138,9 +125,6 @@ class KeycloakService:
         webbrowser.open(logout_url, new=0, autoraise=True)
 
     def get_well_known_config(self) -> dict:
-        # response = self.session.get("{}realms/{}/.well-known/openid-configuration".format(self.base_uri,
-        #                                                                                   self.realm_name))
-        # return response.json()
         url = "{}realms/{}/.well-known/openid-configuration".format(self.base_uri, self.realm_name)
         status, text = self._send(url)
         return json.loads(text)

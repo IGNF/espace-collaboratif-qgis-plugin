@@ -142,10 +142,6 @@ class ReplyReport(object):
         """
         messageReportNoValid = ""
         replyReports = []
-        # for feat in selFeats:
-        #     idReport = feat.attribute('NoSignalement')
-        #     report = self.__toolsReport.getReport(idReport)
-        #     # Le statut du signalement est-il clôturé ?
 
         for feat in selFeats:
             idReport = feat.attribute('NoSignalement')
