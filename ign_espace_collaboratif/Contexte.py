@@ -11,13 +11,14 @@ import os.path
 import ntpath
 import time
 from typing import Optional
-import requests
 from qgis.PyQt import QtGui
 from qgis.PyQt.QtGui import QImage
 from qgis.PyQt.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
-    QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup
+    QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup, QgsBlockingNetworkRequest
+from qgis.PyQt.QtNetwork import QNetworkRequest
+from qgis.PyQt.QtCore import QUrl
 from .Import_WMTS import importWMTS
 from .Import_WFS import ImportWFS
 from .core.PluginLogger import PluginLogger
@@ -352,8 +353,6 @@ class Contexte(object):
 
         self.logger.debug("getConnexionEspaceCollaboratifWithKeycloak")
         self.__tokenTimerStart = time.perf_counter()
-        # IGN_PROXY = "http://proxy.ign.fr:3128"
-        # proxies = {"http": IGN_PROXY, "https": IGN_PROXY}
         self.__keycloakService = KeycloakService(cst.KEYCLOAK_SERVER_URI, cst.KEYCLOAK_REALM_NAME,
                                                  cst.KEYCLOAK_CLIENT_ID,
                                                  proxies=self.__proxies)
@@ -362,9 +361,6 @@ class Contexte(object):
         self.__tokenAccess = r["access_token"]
         self.__tokenExpireIn = r["expires_in"]
         self.__tokenType = r["token_type"]
-        # TODO à supprimer
-        # r = self.__keycloakService.get_userinfo(r["access_token"])
-        # self.login = r['email']
         return self.__connectToService()
 
     def __connectToService(self) -> bool:
@@ -381,7 +377,6 @@ class Contexte(object):
 
         :return: True si la connexion est établie et si l'utilisateur n'a pas annulé son choix, False sinon
         """
-        # PluginHelper.setXmlTagValue(self.projectDir, PluginHelper.xml_Login, self.login, PluginHelper.xml_Serveur)
         xmlgroupeactif = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif, "Serveur").text
         if xmlgroupeactif is not None:
             self.__activeCommunityName = PluginHelper.load_XmlTag(self.projectDir, PluginHelper.xml_GroupeActif,
@@ -460,9 +455,15 @@ class Contexte(object):
             self.logger.error(message)
             raise Exception(message)
         if self.getUserCommunity().getLogo() != "":
-            image = QImage()
-            image.loadFromData(requests.get(self.getUserCommunity().getLogo(), timeout=60).content)
-            dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
+            requestLogo = QNetworkRequest(QUrl(self.getUserCommunity().getLogo()))
+            blockingNetwork = QgsBlockingNetworkRequest()
+
+            if blockingNetwork.get(requestLogo) == QgsBlockingNetworkRequest.ErrorCode.NoError:
+                content = blockingNetwork.reply().content()  
+                image = QImage()
+                image.loadFromData(content)
+                dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
+
         elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
             dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")

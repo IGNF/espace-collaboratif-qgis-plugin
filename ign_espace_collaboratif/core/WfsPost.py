@@ -209,7 +209,7 @@ class WfsPost(object):
         Décode la réponse passée en entrée de fonction.
 
         :param response: la réponse d'une HttpRequest
-        :type response: requests.Response
+        :type response: Response
 
         Attention, les réponses sont de deux types :
          - FAILED {'code': 400, 'message': 'String for field email is invalid'}

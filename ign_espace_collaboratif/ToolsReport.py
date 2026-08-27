@@ -6,7 +6,6 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsVectorLayer, QgsProject, \
     QgsRectangle, QgsPointXY, QgsGeometry
 
-import requests
 from .PluginHelper import PluginHelper
 from .FormCreateReport import FormCreateReport
 from .core.DynamicProgressBar import DynamicProgressBar
@@ -16,7 +15,7 @@ from .core.NoProfileException import NoProfileException
 from .core.SQLiteManager import SQLiteManager
 from .core.Query import Query
 from .core.Report import Report
-from .core.HttpRequest import HttpRequest
+from .core.HttpRequest import HttpRequest, Response
 from .core import Constantes as cst
 
 
@@ -223,40 +222,6 @@ class ToolsReport(object):
 
         PluginHelper.showMessageBox(resultMessage)
 
-    # def setFormAttributes(self) -> None:
-    #     """
-    #     Mise en forme d'un attribut au format json.
-    #     NOTE : non utilisée mais peut servir ;-)
-    #     """
-    #     listLayers = QgsProject.instance().mapLayersByName(cst.nom_Calque_Signalement)
-    #     if len(listLayers) == 0:
-    #         return
-    #     features = None
-    #     for layer in listLayers:
-    #         features = layer.getFeatures()
-    #         break
-    #     fields = None
-    #     for feature in features:
-    #         fields = feature.fields()
-    #         break
-    #     if fields is None or len(fields) == 0:
-    #         return
-    #     index = -1
-    #     for field in fields:
-    #         name = field.name()
-    #         if name == 'Thèmes':
-    #             index = fields.indexOf(name)
-    #             break
-    #     # Si l'attribut "Thèmes" n'existe pas, on ne fait rien, on laisse faire QGIS
-    #     if index == -1:
-    #         return
-    #     # modification du formulaire QGIS pour l'attribut "Thèmes"
-    #     # Type:JsonEdit
-    #     QgsEWS_type = 'JsonEdit'
-    #     # Config:{'DefaultView': 1, 'FormatJson': 0}
-    #     QgsEWS_config = {'DefaultView': 1, 'FormatJson': 0}
-    #     setup = QgsEditorWidgetSetup(QgsEWS_type, QgsEWS_config)
-    #     listLayers[0].setEditorWidgetSetup(index, setup)
 
     def __setCoordinateTransform(self) -> QgsCoordinateTransform:
         """
@@ -394,7 +359,7 @@ class ToolsReport(object):
             return
         return responseFromServer.json()
 
-    def __sendRequest(self, datas, filesAttachments) -> Optional[requests.Response]:
+    def __sendRequest(self, datas, filesAttachments) -> Optional['Response']:
         """
         Envoi de la requête POST de création de signalement(s) avec ou sans croquis.
 
