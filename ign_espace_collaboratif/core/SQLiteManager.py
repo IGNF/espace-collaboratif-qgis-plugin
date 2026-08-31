@@ -2,6 +2,7 @@ import ntpath
 import json
 import os.path
 import sqlite3
+import datetime
 from sqlite3 import OperationalError
 from qgis.core import QgsProject
 from . import Constantes as cst
@@ -813,6 +814,119 @@ class SQLiteManager(object):
               u"geometryDimension INTEGER, geometryType TEXT, numrec INTEGER, " \
               u"tableid INTEGER)".format(cst.TABLEOFTABLES)
         SQLiteManager.executeSQL(sql)
+
+    @staticmethod
+    def createPendingTransactionsTable() -> None:
+        """
+        Création de la table locale (outbox) qui stocke le contenu JSON des transactions construites.
+        Permet de conserver durablement une transaction si son envoi au serveur échoue ou est différé
+        (hors connexion, pré-diffusion, espace collaboratif indisponible).
+        """
+        SQLiteManager.findAndDeleteLock()
+        sql = u"CREATE TABLE IF NOT EXISTS {0} (id INTEGER PRIMARY KEY AUTOINCREMENT, database TEXT, " \
+              u"databaseid INTEGER, layer TEXT, payload_json TEXT NOT NULL, status TEXT NOT NULL, " \
+              u"created_at TEXT, updated_at TEXT, last_error TEXT, retry_count INTEGER DEFAULT 0, " \
+              u"server_transaction_id INTEGER)".format(cst.PENDING_TRANSACTIONS)
+        SQLiteManager.executeSQL(sql)
+
+    @staticmethod
+    def insertPendingTransaction(database, databaseid, layer, payloadJson, status) -> int:
+        """
+        Enregistre une transaction dans l'outbox local AVANT toute tentative d'envoi.
+
+        :param database: nom de la base cible
+        :param databaseid: identifiant de la base cible
+        :param layer: nom de la couche concernée
+        :param payloadJson: corps JSON de la transaction (datasForPost sérialisé)
+        :param status: statut initial (généralement cst.PENDING_STATUS_PENDING)
+
+        :return: l'identifiant de la ligne insérée, ou -1 en cas d'échec
+        """
+        SQLiteManager.createPendingTransactionsTable()
+        SQLiteManager.findAndDeleteLock()
+        now = datetime.datetime.now().isoformat()
+        sql = "INSERT INTO {} (database, databaseid, layer, payload_json, status, created_at, updated_at, " \
+              "retry_count) VALUES (?, ?, ?, ?, ?, ?, ?, 0)".format(cst.PENDING_TRANSACTIONS)  # nosec B608
+        connection = SQLiteManager.sqlite3Connect()
+        newId = -1
+        try:
+            cur = connection.cursor()
+            cur.execute(sql, (database, databaseid, layer, payloadJson, status, now, now))
+            connection.commit()
+            newId = cur.lastrowid
+            cur.close()
+        except Exception as e:
+            if connection:
+                connection.rollback()
+            print(f"Erreur SQL : {e}", "SQLiteManager")
+        finally:
+            connection.close()
+        return newId
+
+    @staticmethod
+    def updatePendingTransactionStatus(pendingId, status, lastError=None, serverTransactionId=None,
+                                       incrementRetry=False) -> None:
+        """
+        Met à jour le statut (et les métadonnées) d'une transaction de l'outbox.
+
+        :param pendingId: identifiant de la ligne outbox
+        :param status: nouveau statut (pending/sent/conflict/failed)
+        :param lastError: message d'erreur éventuel à conserver
+        :param serverTransactionId: identifiant de la transaction côté serveur si connu
+        :param incrementRetry: si True, incrémente le compteur de tentatives
+        """
+        if not SQLiteManager.isTableExist(cst.PENDING_TRANSACTIONS):
+            return
+        SQLiteManager.findAndDeleteLock()
+        setParts = ['status = ?', 'updated_at = ?']
+        values = [status, datetime.datetime.now().isoformat()]
+        if lastError is not None:
+            setParts.append('last_error = ?')
+            values.append(lastError)
+        if serverTransactionId is not None:
+            setParts.append('server_transaction_id = ?')
+            values.append(serverTransactionId)
+        if incrementRetry:
+            setParts.append('retry_count = retry_count + 1')
+        values.append(pendingId)
+        sql = "UPDATE {} SET {} WHERE id = ?".format(  # nosec B608
+            cst.PENDING_TRANSACTIONS, ', '.join(setParts))
+        SQLiteManager.executeSQLWithParams(sql, tuple(values))
+
+    @staticmethod
+    def selectPendingTransactions(status=None) -> list:
+        """
+        Retourne les transactions de l'outbox, ordonnées par ordre de création (rejeu chronologique).
+
+        :param status: si fourni, ne retourne que les transactions de ce statut
+        """
+        if not SQLiteManager.isTableExist(cst.PENDING_TRANSACTIONS):
+            return []
+        connection = SQLiteManager.sqlite3Connect()
+        cur = connection.cursor()
+        if status is None:
+            sql = "SELECT * FROM {} ORDER BY id ASC".format(cst.PENDING_TRANSACTIONS)  # nosec B608
+            cur.execute(sql)
+        else:
+            sql = "SELECT * FROM {} WHERE status = ? ORDER BY id ASC".format(cst.PENDING_TRANSACTIONS)  # nosec B608
+            cur.execute(sql, (status,))
+        rows = cur.fetchall()
+        cur.close()
+        connection.close()
+        return rows
+
+    @staticmethod
+    def deletePendingTransaction(pendingId) -> None:
+        """
+        Supprime une transaction de l'outbox (par exemple après un envoi confirmé).
+
+        :param pendingId: identifiant de la ligne outbox
+        """
+        if not SQLiteManager.isTableExist(cst.PENDING_TRANSACTIONS):
+            return
+        SQLiteManager.findAndDeleteLock()
+        sql = "DELETE FROM {} WHERE id = ?".format(cst.PENDING_TRANSACTIONS)  # nosec B608
+        SQLiteManager.executeSQLWithParams(sql, (pendingId,))
 
     @staticmethod
     def InsertIntoTableOfTables(parameters) -> None:

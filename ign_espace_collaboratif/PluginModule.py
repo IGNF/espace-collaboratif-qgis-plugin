@@ -2,6 +2,7 @@ import logging
 import os.path
 import configparser
 import webbrowser
+import json
 
 from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
@@ -14,6 +15,7 @@ from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer, Qgis
 from builtins import str
 from .core.BBox import BBox
 from .core.WfsPost import WfsPost
+from .core.HttpRequest import HttpRequest
 from .core.PluginLogger import PluginLogger
 from .core.SQLiteManager import SQLiteManager
 from .core.WfsGet import WfsGet
@@ -498,23 +500,140 @@ class RipartPlugin:
         # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
         # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
         bNormalWfsPost = False
-        commitLayerResult = wfsPost.commitLayer(layer.name(), editBuffer, bNormalWfsPost)
+        # Construction de la transaction PUIS persistance dans l'outbox local AVANT tout envoi :
+        # ainsi son contenu n'est jamais perdu si l'envoi échoue (hors connexion, pré-diffusion, serveur indisponible).
+        wfsPost.buildActions(layer.name(), editBuffer)
+        payload = wfsPost.getPayload()
+        pendingId = None
+        if payload.get('actions'):
+            database = getattr(layer, 'databasename', '')
+            databaseid = getattr(layer, 'databaseid', None)
+            pendingId = SQLiteManager.insertPendingTransaction(
+                database, databaseid, layer.name(), json.dumps(payload), cst.PENDING_STATUS_PENDING)
+        try:
+            commitLayerResult = wfsPost.sendActions(bNormalWfsPost)
+        except Exception:
+            # Échec d'envoi (réseau/serveur) : la transaction reste en attente dans l'outbox pour un envoi différé.
+            if pendingId is not None:
+                SQLiteManager.updatePendingTransactionStatus(
+                    pendingId, cst.PENDING_STATUS_PENDING,
+                    lastError="Envoi impossible (réseau/serveur indisponible). Transaction enregistrée pour envoi différé.",
+                    incrementRetry=True)
+            raise
         messages = "{0}\n".format(commitLayerResult['reporting'])
         if commitLayerResult['status'] != cst.STATUS_COMMITTED:
             layer.destroyEditCommand()
             error_msg = commitLayerResult.get('message', 'Transaction refusée par le serveur.')
+            if pendingId is not None:
+                status = cst.PENDING_STATUS_CONFLICT if self.__isConflictMessage(error_msg) \
+                    else cst.PENDING_STATUS_FAILED
+                SQLiteManager.updatePendingTransactionStatus(pendingId, status, lastError=error_msg)
             self.__context.iface.messageBar().pushMessage(
                 "Espace Collaboratif",
-                "Couche '{}' : {}. Vos modifications sont conservées en mode édition.".format(layer.name(), error_msg),
+                "Couche '{}' : {}. Vos modifications sont conservées et la transaction est enregistrée localement "
+                "(envoi différé possible).".format(layer.name(), error_msg),
                 level=Qgis.MessageLevel.Critical,
                 duration=0
             )
         else:
+            if pendingId is not None:
+                SQLiteManager.updatePendingTransactionStatus(pendingId, cst.PENDING_STATUS_SENT)
             # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction
             # commitLayer n'envoie pas d'exception sinon les modifs sont perdues
             # et l'outil redemande une synchronisation
             editBuffer.rollBack()
         return messages
+
+    @staticmethod
+    def __isConflictMessage(message) -> bool:
+        """
+        Détermine si le refus serveur correspond à un conflit de réconciliation (géré côté API).
+        """
+        msg = str(message).lower()
+        return 'conflit' in msg or 'conflict' in msg or '409' in msg
+
+    def __sendPendingTransactions(self) -> None:
+        """
+        Envoi différé (bouton de test) : rejoue les transactions enregistrées dans l'outbox local
+        (statut 'pending'), dans leur ordre de création. Le statut de chaque ligne est mis à jour
+        (sent / conflict / failed). Après un envoi réussi, lancez « Mettre à jour les couches »
+        pour resynchroniser l'affichage local.
+        """
+        if not self.__doConnexion(False):
+            if self.__context is not None:
+                self.__context.iface.messageBar().pushMessage(
+                    cst.IGNESPACECO,
+                    "Connexion à l'Espace collaboratif impossible, envoi différé annulé.",
+                    level=Qgis.MessageLevel.Warning, duration=5)
+            return
+
+        pendings = SQLiteManager.selectPendingTransactions(cst.PENDING_STATUS_PENDING)
+        if not pendings:
+            QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO,
+                                   "Aucune transaction en attente d'envoi.")
+            return
+
+        sent = conflict = failed = 0
+        reporting = "<b>Envoi des transactions hors connexion</b><br/>"
+        headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(),
+                                                    self.__context.getTokenAccess())}
+        proxies = self.__context.getProxies()
+        for row in pendings:
+            pendingId, layerName, databaseid, payloadJson = row[0], row[3], row[2], row[4]
+            url = "{0}/gcms/api/databases/{1}/transactions".format(self.__context.urlHostEspaceCo, databaseid)
+            try:
+                response = HttpRequest.makeHttpRequest(url, proxies=proxies, data=payloadJson,
+                                                       headers=headers, launchBy='__sendPendingTransactions')
+                result = self.__parsePendingResponse(response)
+            except Exception as e:
+                SQLiteManager.updatePendingTransactionStatus(
+                    pendingId, cst.PENDING_STATUS_PENDING, lastError=str(e), incrementRetry=True)
+                failed += 1
+                reporting += '<br/><font color="orange">#{0} ({1}) : envoi impossible, conservée pour ' \
+                             'un envoi ultérieur.</font>'.format(pendingId, layerName)
+                continue
+
+            if result.get('status') == cst.STATUS_COMMITTED:
+                SQLiteManager.updatePendingTransactionStatus(
+                    pendingId, cst.PENDING_STATUS_SENT, serverTransactionId=result.get('id'))
+                sent += 1
+                reporting += '<br/><font color="green">#{0} ({1}) : envoyée avec succès.</font>'.format(
+                    pendingId, layerName)
+            elif result.get('status') == cst.STATUS_CONFLICTING or result.get('code') == 409 \
+                    or self.__isConflictMessage(result.get('message', '')):
+                SQLiteManager.updatePendingTransactionStatus(
+                    pendingId, cst.PENDING_STATUS_CONFLICT, lastError=result.get('message', ''))
+                conflict += 1
+                reporting += '<br/><font color="red">#{0} ({1}) : conflit détecté (à traiter).</font>'.format(
+                    pendingId, layerName)
+            else:
+                SQLiteManager.updatePendingTransactionStatus(
+                    pendingId, cst.PENDING_STATUS_FAILED, lastError=result.get('message', ''))
+                failed += 1
+                reporting += '<br/><font color="red">#{0} ({1}) : refusée par le serveur : {2}</font>'.format(
+                    pendingId, layerName, result.get('message', ''))
+
+        reporting += "<br/><br/>Bilan : {0} envoyée(s), {1} conflit(s), {2} échec(s).".format(sent, conflict, failed)
+        if sent > 0:
+            reporting += "<br/>Pensez à « Mettre à jour les couches » pour resynchroniser l'affichage."
+        dlgInfo = FormInfo()
+        dlgInfo.textInfo.setText(reporting)
+        dlgInfo.textInfo.setOpenExternalLinks(True)
+        dlgInfo.exec()
+
+    @staticmethod
+    def __parsePendingResponse(response) -> dict:
+        """
+        Décode la réponse serveur d'un envoi de transaction (même format que WfsPost).
+        """
+        responseToDict = json.loads(response.text)
+        if 'status' in responseToDict:
+            return {'code': 200, 'message': responseToDict.get('message', ''),
+                    'status': responseToDict['status'], 'id': responseToDict.get('id')}
+        if 'code' in responseToDict:
+            return {'code': responseToDict['code'], 'message': responseToDict.get('message', ''),
+                    'status': 'error', 'id': None}
+        return {'code': response.status_code, 'message': response.text, 'status': 'error', 'id': None}
 
     @staticmethod
     def __isSessionExpiredError(exception) -> bool:
@@ -702,6 +821,14 @@ class RipartPlugin:
             text=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
             callback=self.__synchronizeDataFromAllLayers,
             status_tip=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
+            parent=self.iface.mainWindow())
+
+        icon_path = ':/plugins/RipartPlugin/images/save.png'
+        self.__addAction(
+            icon_path,
+            text=self.__translate(u'Envoyer les transactions hors connexion'),
+            callback=self.__sendPendingTransactions,
+            status_tip=self.__translate(u'Envoyer les transactions enregistrées localement (envoi différé)'),
             parent=self.iface.mainWindow())
 
         self.config.triggered.connect(self.__configurePlugin)

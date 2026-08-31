@@ -363,6 +363,28 @@ class WfsPost(object):
 
         :return: le statut de la transaction et le message de fin de transaction
         """
+        self.buildActions(currentLayer, editBuffer)
+        return self.sendActions(bNormalWfsPost)
+
+    def getPayload(self) -> dict:
+        """
+        Retourne le corps JSON (comment + actions) de la transaction construite par buildActions.
+        """
+        return self.__datasForPost
+
+    def buildActions(self, currentLayer, editBuffer) -> dict:
+        """
+        Construit le corps de la transaction (__datasForPost) à partir de l'editBuffer, sans rien envoyer.
+        Permet de persister durablement la transaction avant toute tentative d'envoi.
+
+        :param currentLayer: le nom de la couche à synchroniser
+        :type currentLayer: str
+
+        :param editBuffer: stockage mémoire des modifications des couches d'un projet
+        :type editBuffer: QgsVectorLayerEditBuffer
+
+        :return: le corps de la transaction (dict avec 'comment' et 'actions')
+        """
         # Ecriture du rapport de fin de synchronisation
         self.__transactionReporting += "<br/>Couche {0}\n".format(currentLayer)
 
@@ -378,14 +400,12 @@ class WfsPost(object):
         changedAttributeValues = editBuffer.changedAttributeValues()
         deletedFeaturesId = editBuffer.deletedFeatureIds()
 
-        # Si pas de mises à jour, on sort avec un message de fin
+        # Si pas de mises à jour, on sort avec un corps vide (sendActions gérera le message)
         if len(addedFeatures) == 0 and \
                 len(changedGeometries) == 0 and \
                 len(changedAttributeValues) == 0 and \
                 len(deletedFeaturesId) == 0:
-            self.__transactionReporting += "<br/>Rien à synchroniser\n"
-            self.__endReporting += self.__transactionReporting
-            return dict(status=cst.STATUS_COMMITTED, reporting=self.__endReporting)
+            return self.__datasForPost
 
         # Est-ce une table BDUni
         result = SQLiteManager.isColumnExist(currentLayer, cst.FINGERPRINT)
@@ -413,10 +433,27 @@ class WfsPost(object):
             self.__pushDeletedFeatures(deletedFeaturesId)
             self.__transactionReporting += "<br/>Objets détruits : {0}\n".format(len(deletedFeaturesId))
 
-        # Lancement de la transaction
         nbObjModified = len(self.__datasForPost['actions']) - (len(deletedFeaturesId) + len(addedFeatures))
         if nbObjModified >= 1:
             self.__transactionReporting += "<br/>Objets modifiés : {0}\n".format(nbObjModified)
+        return self.__datasForPost
+
+    def sendActions(self, bNormalWfsPost) -> {}:
+        """
+        Envoie au serveur la transaction préalablement construite par buildActions.
+
+        :param bNormalWfsPost: à False pour éviter un plantage de QGIS (editBuffer déjà vidé)
+        :type bNormalWfsPost: bool
+
+        :return: le statut de la transaction et le message de fin de transaction
+        """
+        # Si pas de mises à jour, on sort avec un message de fin
+        if len(self.__datasForPost.get('actions', [])) == 0:
+            self.__transactionReporting += "<br/>Rien à synchroniser\n"
+            self.__endReporting += self.__transactionReporting
+            return dict(status=cst.STATUS_COMMITTED, reporting=self.__endReporting)
+
+        # Lancement de la transaction
         endTransaction = self.__gcmsPost(bNormalWfsPost)
         self.__endReporting += self.__setEndReporting(endTransaction)
         result = dict(status=endTransaction['status'], reporting=self.__endReporting)

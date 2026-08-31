@@ -48,6 +48,14 @@ ID_SQLITE = 'id_sqlite_1gnQg1s'
 FINGERPRINT = 'gcms_fingerprint'
 NUMREC = 'gcms_numrec'
 TABLEOFTABLES = 'tableoftables'
+
+# Table locale (outbox) : transactions construites mais dont l'envoi au serveur peut être différé
+PENDING_TRANSACTIONS = 'gcms_pending_transaction'
+# Statuts locaux de l'outbox (distincts du STATUS_COMMITTED renvoyé par le serveur)
+PENDING_STATUS_PENDING = 'pending'
+PENDING_STATUS_SENT = 'sent'
+PENDING_STATUS_CONFLICT = 'conflict'
+PENDING_STATUS_FAILED = 'failed'
 LOADINGTEXTPROGRESS = "Chargement des couches du guichet"
 UPDATETEXTPROGRESS = "Mise à jour des couches du guichet"
 ESPACECO = "[ESPACE CO] "
@@ -64,6 +72,8 @@ KEYCLOAK_REALM_NAME = "geoplateforme"
 KEYCLOAK_CLIENT_ID = "espaceco-qgis-plugin"
 
 STATUS_COMMITTED = 'committed'
+# Statut renvoyé par l'Espace collaboratif lorsqu'un conflit de réconciliation est détecté
+STATUS_CONFLICTING = 'conflicting'
 
 PROJECT_NOREGISTERED = "Votre projet QGIS doit être enregistré avant de pouvoir utiliser les fonctionnalités " \
                           "du plugin de l'espace collaboratif"
