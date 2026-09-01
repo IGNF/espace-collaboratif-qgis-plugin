@@ -5,7 +5,7 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
-## [5.2.0] - 2026-08-24
+## [5.2.0] - 2026-08-27
 
 ### Ajouté
 - Ajout des formats vecteurs GeoJSON/JSON, GeoPackage, KML/KMZ lors de la sélection d'emprise (#221)
@@ -14,10 +14,12 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 ### Modifié
 - Abandon de la compatibilité QGIS 3.x — le plugin requiert désormais QGIS 4.x (Qt6) exclusivement
 - Suppression de la couche de compatibilité Qt5/Qt6 (`qt_compat`) et migration complète vers Qt6
+- Remplacement de la bibliothèque `requests` par l'API réseau de QGIS (`QgsNetworkAccessManager`) pour l'ensemble des requêtes HTTP
 
 ### Corrigé
 - Verrouillage de la couche d'emprise pour éviter des suppressions accidentelles (#226)
 - Blocage de la création de signalement si l'utilisateur ne les a pas téléchargés au préalable (#227)
+- Correction des doublons de signalements lors de la pagination, par ajout d'un tri (#230, #231)
 
 ## [5.1.2] - 2026-07-06
 
