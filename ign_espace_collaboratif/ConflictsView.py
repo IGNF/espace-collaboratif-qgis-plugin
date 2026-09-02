@@ -16,6 +16,7 @@ from qgis.PyQt.QtGui import QIcon, QColor
 from .PluginHelper import PluginHelper
 from .CreateReport import CreateReport
 
+
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ConflictsView_base.ui'))
 
 

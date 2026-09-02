@@ -17,7 +17,7 @@ from qgis.PyQt.QtGui import QImage
 from qgis.PyQt.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
-    QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup
+    QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup, QgsMapLayer
 from .Import_WMTS import importWMTS
 from .Import_WFS import ImportWFS
 from .core.PluginLogger import PluginLogger
@@ -142,7 +142,7 @@ class Contexte(object):
             self.logger.error("init contexte:" + format(e))
             raise
 
-    def getProxies(self) -> {}:
+    def getProxies(self) -> dict:
         """
         Retourne le contenu du dictionnaire des proxys
         """
@@ -165,7 +165,7 @@ class Contexte(object):
             os.environ['https_proxy'] = proxy
             os.environ['HTTPS_PROXY'] = proxy
 
-    def getCommunities(self) -> []:
+    def getCommunities(self) -> list:
         """
         :return: les groupes auxquels l'utilisateur est abonné.
         """
@@ -180,7 +180,7 @@ class Contexte(object):
         """
         self.__communities = communities
 
-    def getListNameIdFromAllUserCommunities(self) -> []:
+    def getListNameIdFromAllUserCommunities(self) -> list:
         """
         :return: la liste des noms de groupes de l'utilisateur
         """
@@ -538,7 +538,7 @@ class Contexte(object):
                 vlayer.loadNamedStyle(style)
         self.mapCan.refresh()
 
-    def importWFS(self, layer) -> ():
+    def importWFS(self, layer) -> tuple[GuichetVectorLayer, bool]:
         """
         Import des couches WFS sélectionnées dans la boite de dialogue "Charger les couches de mon groupe"
         dans le projet QGIS de l'utilisateur.
@@ -1053,7 +1053,7 @@ class Contexte(object):
         print(message)
         return message
 
-    def getAllMapLayers(self) -> {}:
+    def getAllMapLayers(self) -> list[QgsMapLayer]:
         """
         Recherche l'ensemble des couches du projet utilisateur.
 
@@ -1066,7 +1066,7 @@ class Contexte(object):
             maplayers[layer.name()] = layer
         return maplayers
 
-    def getMapPolygonLayers(self) -> {}:
+    def getMapPolygonLayers(self) -> dict:
         """
         Recherche dans le projet les couches qui sont de type 'polygon' ou 'multipolygon'.
 
@@ -1137,7 +1137,7 @@ class Contexte(object):
                     return True
         return False
 
-    def makeSketchFromSelection(self) -> []:
+    def makeSketchFromSelection(self) -> list[Sketch]:
         """
         Transformation en croquis du (ou des) objet(s) sélectionné(s) par l'utilisateur (peu importe la couche utilisée
         pour cette création).
