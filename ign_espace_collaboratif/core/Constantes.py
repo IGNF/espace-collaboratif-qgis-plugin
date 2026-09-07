@@ -56,6 +56,11 @@ PENDING_STATUS_PENDING = 'pending'
 PENDING_STATUS_SENT = 'sent'
 PENDING_STATUS_CONFLICT = 'conflict'
 PENDING_STATUS_FAILED = 'failed'
+# Limites de débit imposées côté serveur (cf. bduni_max_actions_per_transaction et associés) : utilisées
+# uniquement pour alerter l'utilisateur, le serveur restant seul juge de l'acceptation de la transaction.
+MAX_ACTIONS_PER_TRANSACTION = 40
+MAX_TRANSACTIONS_PER_HOUR = 300
+MAX_TRANSACTIONS_PER_DAY = 1200
 LOADINGTEXTPROGRESS = "Chargement des couches du guichet"
 UPDATETEXTPROGRESS = "Mise à jour des couches du guichet"
 ESPACECO = "[ESPACE CO] "
