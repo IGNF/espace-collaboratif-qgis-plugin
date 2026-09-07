@@ -916,6 +916,25 @@ class SQLiteManager(object):
         return rows
 
     @staticmethod
+    def countPendingTransactionsSince(sinceIso) -> int:
+        """
+        Compte les transactions de l'outbox créées depuis la date indiquée (ISO 8601). Sert d'estimation
+        locale de la consommation des quotas serveur (transactions par heure / par jour).
+
+        :param sinceIso: date de référence au format ISO 8601
+        """
+        if not SQLiteManager.isTableExist(cst.PENDING_TRANSACTIONS):
+            return 0
+        connection = SQLiteManager.sqlite3Connect()
+        cur = connection.cursor()
+        sql = "SELECT COUNT(*) FROM {} WHERE created_at >= ?".format(cst.PENDING_TRANSACTIONS)  # nosec B608
+        cur.execute(sql, (sinceIso,))
+        result = cur.fetchone()
+        cur.close()
+        connection.close()
+        return result[0] if result else 0
+
+    @staticmethod
     def deletePendingTransaction(pendingId) -> None:
         """
         Supprime une transaction de l'outbox (par exemple après un envoi confirmé).

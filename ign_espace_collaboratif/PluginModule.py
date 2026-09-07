@@ -3,6 +3,7 @@ import os.path
 import configparser
 import webbrowser
 import json
+import datetime
 
 from qgis.core import QgsFeatureRequest
 # Initialize Qt resources from file resources.py
@@ -28,6 +29,7 @@ from .Contexte import Contexte
 from .FormChargerGuichet import FormChargerGuichet
 from .FormInfo import FormInfo
 from .FormConfigure import FormConfigure
+from .FormPendingTransactions import FormPendingTransactions
 from .ToolsReport import ToolsReport
 from .SeeReport import SeeReport
 from .CreateReport import CreateReport
@@ -510,6 +512,7 @@ class RipartPlugin:
             databaseid = getattr(layer, 'databaseid', None)
             pendingId = SQLiteManager.insertPendingTransaction(
                 database, databaseid, layer.name(), json.dumps(payload), cst.PENDING_STATUS_PENDING)
+            self.__checkTransactionLimits(len(payload.get('actions')))
         try:
             commitLayerResult = wfsPost.sendActions(bNormalWfsPost)
         except Exception:
@@ -552,29 +555,53 @@ class RipartPlugin:
         msg = str(message).lower()
         return 'conflit' in msg or 'conflict' in msg or '409' in msg
 
-    def __sendPendingTransactions(self) -> None:
+    def __checkTransactionLimits(self, actionsCount) -> None:
         """
-        Envoi différé (bouton de test) : rejoue les transactions enregistrées dans l'outbox local
-        (statut 'pending'), dans leur ordre de création. Le statut de chaque ligne est mis à jour
-        (sent / conflict / failed). Après un envoi réussi, lancez « Mettre à jour les couches »
-        pour resynchroniser l'affichage local.
-        """
-        if not self.__doConnexion(False):
-            if self.__context is not None:
-                self.__context.iface.messageBar().pushMessage(
-                    cst.IGNESPACECO,
-                    "Connexion à l'Espace collaboratif impossible, envoi différé annulé.",
-                    level=Qgis.MessageLevel.Warning, duration=5)
-            return
+        Alerte l'utilisateur (sans bloquer l'envoi) lorsqu'une transaction ou son historique récent
+        approche ou dépasse les limites imposées par le serveur (40 actions/transaction, 300
+        transactions/heure, 1200 transactions/jour). Le serveur reste seul juge de l'acceptation finale.
 
+        :param actionsCount: nombre d'actions contenues dans la transaction qui vient d'être construite
+        """
+        warnings = []
+        if actionsCount > cst.MAX_ACTIONS_PER_TRANSACTION:
+            warnings.append(
+                "cette transaction contient {0} actions, ce qui dépasse la limite serveur de {1} actions "
+                "par transaction et sera probablement rejetée.".format(
+                    actionsCount, cst.MAX_ACTIONS_PER_TRANSACTION))
+
+        now = datetime.datetime.now()
+        hourCount = SQLiteManager.countPendingTransactionsSince((now - datetime.timedelta(hours=1)).isoformat())
+        if hourCount >= cst.MAX_TRANSACTIONS_PER_HOUR:
+            warnings.append(
+                "{0} transactions ont déjà été enregistrées au cours de la dernière heure (limite serveur "
+                ": {1}/heure).".format(hourCount, cst.MAX_TRANSACTIONS_PER_HOUR))
+
+        dayCount = SQLiteManager.countPendingTransactionsSince((now - datetime.timedelta(days=1)).isoformat())
+        if dayCount >= cst.MAX_TRANSACTIONS_PER_DAY:
+            warnings.append(
+                "{0} transactions ont déjà été enregistrées au cours des dernières 24h (limite serveur : "
+                "{1}/jour).".format(dayCount, cst.MAX_TRANSACTIONS_PER_DAY))
+
+        if warnings and self.__context is not None:
+            self.__context.iface.messageBar().pushMessage(
+                cst.IGNESPACECO,
+                "Limite de transactions atteinte : " + " ".join(warnings),
+                level=Qgis.MessageLevel.Warning, duration=10)
+
+    def __sendPendingTransactionsCore(self) -> tuple:
+        """
+        Rejoue les transactions enregistrées dans l'outbox local (statut 'pending'), dans leur ordre de
+        création. Ne gère ni la connexion, ni l'affichage : à appeler après un `__doConnexion` réussi.
+
+        :return: tuple (nb envoyées, nb en conflit, nb en échec, compte-rendu HTML)
+        """
         pendings = SQLiteManager.selectPendingTransactions(cst.PENDING_STATUS_PENDING)
-        if not pendings:
-            QMessageBox.information(self.iface.mainWindow(), cst.IGNESPACECO,
-                                   "Aucune transaction en attente d'envoi.")
-            return
-
         sent = conflict = failed = 0
         reporting = "<b>Envoi des transactions hors connexion</b><br/>"
+        if not pendings:
+            return sent, conflict, failed, reporting + "<br/>Aucune transaction en attente d'envoi."
+
         headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(),
                                                     self.__context.getTokenAccess())}
         proxies = self.__context.getProxies()
@@ -616,10 +643,24 @@ class RipartPlugin:
         reporting += "<br/><br/>Bilan : {0} envoyée(s), {1} conflit(s), {2} échec(s).".format(sent, conflict, failed)
         if sent > 0:
             reporting += "<br/>Pensez à « Mettre à jour les couches » pour resynchroniser l'affichage."
-        dlgInfo = FormInfo()
-        dlgInfo.textInfo.setText(reporting)
-        dlgInfo.textInfo.setOpenExternalLinks(True)
-        dlgInfo.exec()
+        return sent, conflict, failed, reporting
+
+    def __sendPendingTransactionsForDialog(self) -> tuple:
+        """
+        Callback utilisé par la fenêtre « Transactions hors connexion » pour déclencher l'envoi.
+        Gère la connexion avant de déléguer à `__sendPendingTransactionsCore`.
+        """
+        if not self.__doConnexion(False):
+            return 0, 0, 0, "Connexion à l'Espace collaboratif impossible, envoi différé annulé."
+        return self.__sendPendingTransactionsCore()
+
+    def __showPendingTransactionsDialog(self) -> None:
+        """
+        Ouvre la fenêtre listant les transactions hors connexion en attente d'envoi (outbox local),
+        avec un bouton d'envoi.
+        """
+        dlg = FormPendingTransactions(self.__sendPendingTransactionsForDialog, self.iface.mainWindow())
+        dlg.exec()
 
     @staticmethod
     def __parsePendingResponse(response) -> dict:
@@ -826,9 +867,9 @@ class RipartPlugin:
         icon_path = ':/plugins/RipartPlugin/images/save.png'
         self.__addAction(
             icon_path,
-            text=self.__translate(u'Envoyer les transactions hors connexion'),
-            callback=self.__sendPendingTransactions,
-            status_tip=self.__translate(u'Envoyer les transactions enregistrées localement (envoi différé)'),
+            text=self.__translate(u'Voir les transactions hors connexion'),
+            callback=self.__showPendingTransactionsDialog,
+            status_tip=self.__translate(u'Voir et envoyer les transactions enregistrées localement (envoi différé)'),
             parent=self.iface.mainWindow())
 
         self.config.triggered.connect(self.__configurePlugin)
