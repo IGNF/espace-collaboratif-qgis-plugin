@@ -20,6 +20,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - Verrouillage de la couche d'emprise pour éviter des suppressions accidentelles (#226)
 - Blocage de la création de signalement si l'utilisateur ne les a pas téléchargés au préalable (#227)
 - Correction des doublons de signalements lors de la pagination, par ajout d'un tri (#230, #231)
+- Renommage de `resources.qrc` en `resources.qrc.src` pour empêcher `qgis-plugin-ci` de régénérer à l'empaquetage un `resources_rc.py`
 
 ## [5.1.2] - 2026-07-06
 
