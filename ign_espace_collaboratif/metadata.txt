@@ -11,7 +11,7 @@ name=IGN_Espace_Collaboratif
 qgisMinimumVersion=4.0
 qgisMaximumVersion=4.99
 description=IGN reporting and contribution service, plugin QGIS4
-version=5.2.0
+version=5.2.1
 author=IGN
 email=melanie.mortier@ign.fr
 license=GNU AGPL v3
@@ -25,10 +25,11 @@ repository=https://github.com/IGNF/espace-collaboratif-qgis-plugin
 # Recommended items:
 
 # Optional items:
-date=2026-08-27
+date=2026-09-08
 
 # Uncomment the following line and add your changelog:
 changelog=
+    5.2.1 - correction enum Qt6
     5.2.0 - Abandon compatibilité QGIS 3.x, migration complète Qt6/QGIS 4.x ; remplacement de requests par l'API réseau QGIS; ajout formats vecteurs GeoJSON/JSON, GeoPackage, KML/KMZ pour la sélection d'emprise (#221) ; extraction/téléchargement des signalements sans couche d'emprise affichée (#222/#223) ; verrouillage couche d'emprise (#226) ; blocage création signalement sans téléchargement préalable (#227) ; correction des doublons de signalements lors de la pagination (#230/#231) ; renommage de resources.qrc en resources.qrc.src pour empêcher qgis-plugin-ci de régénérer un resources_rc.py incompatible Qt6
     5.1.2 -  Correction de la gestion du proxy, correction de l'ordre de chargement des styles de couche afin d'alléger l'affichage des guichets lourds
     5.1.1 - Modification email metadata
