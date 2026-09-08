@@ -11,8 +11,6 @@
 from qgis.PyQt.QtCore import QCoreApplication, QMetaObject, QRect, Qt
 from qgis.PyQt.QtGui import QBrush, QColor, QFont, QPalette, QPixmap
 from qgis.PyQt.QtWidgets import QFrame, QLabel, QPushButton, QTextBrowser
-
-from .ResourcesPath import images_path
 class Ui_InfoDialog(object):
     def setupUi(self, InfoDialog):
         if not InfoDialog.objectName():
@@ -35,14 +33,14 @@ class Ui_InfoDialog(object):
         self.label = QLabel(InfoDialog)
         self.label.setObjectName(u"label")
         self.label.setGeometry(QRect(20, 20, 46, 13))
-        self.label.setPixmap(QPixmap(str(images_path("icon.png"))))
+        self.label.setPixmap(QPixmap(u":/plugins/RipartPlugin/icon.png"))
         self.logo = QLabel(InfoDialog)
         self.logo.setObjectName(u"logo")
         self.logo.setGeometry(QRect(10, 0, 121, 141))
         font = QFont()
         font.setPointSize(10)
         self.logo.setFont(font)
-        self.logo.setPixmap(QPixmap(str(images_path("logo_IGN.png"))))
+        self.logo.setPixmap(QPixmap(u":/plugins/RipartPlugin/images/logo_IGN.png"))
         self.logo.setScaledContents(True)
         self.textInfo = QTextBrowser(InfoDialog)
         self.textInfo.setObjectName(u"textInfo")

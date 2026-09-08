@@ -102,7 +102,7 @@
     <string/>
    </property>
    <property name="pixmap">
-    <pixmap>images/icon.png</pixmap>
+    <pixmap>:/plugins/RipartPlugin/icon.png</pixmap>
    </property>
   </widget>
   <widget class="QLabel" name="logo">
@@ -123,7 +123,7 @@
     <string/>
    </property>
    <property name="pixmap">
-    <pixmap>images/logo_IGN.png</pixmap>
+    <pixmap resource="resources.qrc">:/plugins/RipartPlugin/images/logo_IGN.png</pixmap>
    </property>
    <property name="scaledContents">
     <bool>true</bool>

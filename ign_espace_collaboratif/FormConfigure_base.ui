@@ -26,7 +26,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>images/ign.png</normaloff>images/ign.png</iconset>
+    <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
   </property>
   <property name="modal">
    <bool>true</bool>

@@ -16,8 +16,6 @@ from qgis.PyQt.QtWidgets import (
     QTextEdit, QTreeWidget, QTreeWidgetItem, QWidget,
 )
 
-from .ResourcesPath import images_path
-
 class Ui_dlgCreateRem(object):
     def setupUi(self, dlgCreateRem):
         if not dlgCreateRem.objectName():
@@ -27,7 +25,7 @@ class Ui_dlgCreateRem(object):
         font.setPointSize(7)
         dlgCreateRem.setFont(font)
         icon = QIcon()
-        icon.addFile(str(images_path("ign.png")), QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/plugins/RipartPlugin/images/ign.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         dlgCreateRem.setWindowIcon(icon)
         dlgCreateRem.setToolTipDuration(-4)
         dlgCreateRem.setStyleSheet(u"QDialog {background-color: rgb(255, 255, 255)}")
