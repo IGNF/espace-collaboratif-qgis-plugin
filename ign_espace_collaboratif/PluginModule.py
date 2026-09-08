@@ -32,6 +32,7 @@ from .CreateReport import CreateReport
 from .Magicwand import Magicwand
 from .PluginHelper import PluginHelper
 from .ReplyReport import ReplyReport
+from .Conflicts import Conflicts
 
 
 # QGIS Plugin Implementation
@@ -83,6 +84,9 @@ class RipartPlugin:
         self.menu = self.__translate(u'&IGN_Espace_Collaboratif')
         self.toolbar = self.iface.addToolBar(u'RipartPlugin')
         self.toolbar.setObjectName(u'RipartPlugin')
+
+        # La classe de gestion des conflits
+        self.__conflicts = None
 
         # En fin de chargement du projet ou à l'ajout d'une couche, il y a connexion de signaux
         # - quand le nom de la couche est changé
@@ -138,6 +142,11 @@ class RipartPlugin:
 
         if self.__context.urlHostEspaceCo is None or self.__context.urlHostEspaceCo == "":
             return
+
+        # Ajout de la table SQLite et de la couche conflits au projet
+        self.__conflicts = Conflicts(self.__context)
+        self.__conflicts.createTable()
+        self.__conflicts.createLayer()
 
         root = QgsProject.instance().layerTreeRoot()
         nodesGroup = root.findGroups()
@@ -494,7 +503,9 @@ class RipartPlugin:
 
         :return: message de fin de transaction
         """
-        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_XmlTag(self.__context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text)
+        wfsPost = WfsPost(self.__context, layer, PluginHelper.load_XmlTag(self.__context.projectDir,
+                                                                          PluginHelper.xml_Zone_extraction,
+                                                                          PluginHelper.xml_Map).text)
         # Juste avant la sauvegarde de QGIS, les modifications d'une couche sont envoyées au serveur,
         # le buffer est vidé, il ne faut pas laisser QGIS vider le buffer une deuxième fois sinon plantage
         bNormalWfsPost = False
@@ -702,6 +713,14 @@ class RipartPlugin:
             text=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
             callback=self.__synchronizeDataFromAllLayers,
             status_tip=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
+            parent=self.iface.mainWindow())
+
+        icon_path = ':/plugins/RipartPlugin/images/conflict_menu.png'
+        self.__addAction(
+            icon_path,
+            text=self.__translate(u'Résoudre un conflit'),
+            callback=self.__conflictsView,
+            status_tip=self.__translate(u'Lancer la boite de gestion des conflits'),
             parent=self.iface.mainWindow())
 
         self.config.triggered.connect(self.__configurePlugin)
@@ -1065,6 +1084,13 @@ class RipartPlugin:
             dlgInfo.exec()
         except Exception as e:
             self.__sendMessageBarException('PluginModule.__synchronizeDataFromAllLayers', e)
+
+    def __conflictsView(self):
+        if not self.__doConnexion(False):
+            return False
+        if self.__conflicts is None:
+            self.__conflicts = Conflicts(self.__context)
+        self.__conflicts.do()
 
     def __configurePlugin(self) -> None:
         """

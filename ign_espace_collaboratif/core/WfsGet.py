@@ -420,7 +420,8 @@ class WfsGet(object):
         if response.status_code in (200, 201):
             return response.json()
         else:
-            message = "code : {} raison : {} response_text: {}".format(response.status_code, response.reason, response.text)
+            message = "code : {} raison : {} response_text: {}".format(response.status_code, response.reason,
+                                                                       response.text)
             print("[ERROR] getMaxNumrec failed: {}".format(message))
             self.__logger.error("getMaxNumrec failed: {}".format(message))
             raise Exception("WfsGet.getMaxNumrec -> {}".format(message))
@@ -528,4 +529,3 @@ class WfsGet(object):
         :type maxFeatures: int
         """
         self.parametersGcmsGet['maxFeatures'] = maxFeatures
-

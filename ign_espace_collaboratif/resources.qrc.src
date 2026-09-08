@@ -19,5 +19,15 @@
 		<file>images/synchroniser.png</file>
 		<file>images/modifyFieldJson.png</file>
 		<file>images/no_logo.png</file>
+		<file>images/conflict_menu.png</file>
+		<file>images/conflict_create.png</file>
+		<file>images/conflict_delete.png</file>
+		<file>images/conflict_next.png</file>
+		<file>images/conflict_previous.png</file>
+		<file>images/conflict_reload.png</file>
+		<file>images/conflict_see_all_fields.png</file>
+		<file>images/conflict_undo.png</file>
+		<file>images/conflict_validate.png</file>
+		<file>images/conflict_validate_all.png</file>
     </qresource>
 </RCC>

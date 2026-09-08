@@ -1,4 +1,3 @@
-import ntpath
 import json
 import os.path
 import sqlite3
@@ -532,7 +531,6 @@ class SQLiteManager(object):
         return totalRows
 
     @staticmethod
-    #
     def selectRowsInTable(layer, ids) -> list:
         """
         Retourne le nom de la clé primaire (et la clé MD5 d'une empreinte numérique de l'objet) pour une table non BDUni
@@ -560,6 +558,20 @@ class SQLiteManager(object):
         cur.close()
         connection.close()
         return res
+
+    @staticmethod
+    def selectRow(layer, id, nameGeometryColumn):
+        sql = "SELECT *, ST_AsText({}) AS geom_wkt FROM {} WHERE {} = {}".format(nameGeometryColumn, layer.name(),
+                                                                                 cst.ID_SQLITE, id)
+        connection = SQLiteManager.sqlite3Connect()
+        connection.row_factory = sqlite3.Row
+        cur = connection.cursor()
+        cur.execute(sql)
+        rows = cur.fetchone()
+        records = dict(rows) if rows else None
+        cur.close()
+        connection.close()
+        return records
 
     @staticmethod
     def emptyTable(tableName) -> None:
@@ -970,3 +982,25 @@ class SQLiteManager(object):
                 connection.close()
             except Exception:  # nosec B110
                 pass
+    @staticmethod
+    def createTableConflicts():
+        # Est-ce la base est verrouillée ?
+        SQLiteManager.findAndDeleteLock()
+        if SQLiteManager.isTableExist(cst.CONFLICT_LAYER):
+            return
+        sql = u"CREATE TABLE " + cst.CONFLICT_LAYER + " (" + \
+              u"id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " + \
+              u"date_conflict TEXT, " + \
+              u"layer_name TEXT, " + \
+              u"id_object_client INTEGER, " + \
+              u"cleabs TEXT, " + \
+              u"type_conflict TEXT, " + \
+              u"data_server TEXT, " + \
+              u"data_client TEXT, " + \
+              u"geometry_conflict TEXT) "
+        SQLiteManager.executeSQL(sql)
+        # creating a POINT or LINE or POLYGON Geometry column
+        sql = "SELECT AddGeometryColumn('" + cst.CONFLICT_LAYER + "',"
+        sql += "'geom', " + str(cst.EPSGCRS4326) + ", 'MULTIPOLYGON', 'XYZ')"
+        SQLiteManager.executeSQL(sql)
+        SQLiteManager.vacuumDatabase()

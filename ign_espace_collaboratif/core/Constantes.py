@@ -64,8 +64,14 @@ KEYCLOAK_REALM_NAME = "geoplateforme"
 KEYCLOAK_CLIENT_ID = "espaceco-qgis-plugin"
 
 STATUS_COMMITTED = 'committed'
+STATUS_CONFLICTING = 'conflicting'
 
 PROJECT_NOREGISTERED = "Votre projet QGIS doit être enregistré avant de pouvoir utiliser les fonctionnalités " \
                           "du plugin de l'espace collaboratif"
 
 DEFAULTPROFILE = "Profil par défaut"
+
+CONFLICT_LAYER = "conflits"
+CONFLICT_MODIFICATION = "Modification"
+CONFLICT_SUPPRESSION_SERVEUR = "Suppression sur serveur"
+CONFLICT_SUPPRESSION_CLIENT = "Suppression sur client"

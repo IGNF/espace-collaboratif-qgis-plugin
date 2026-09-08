@@ -283,6 +283,9 @@ class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):
             # Création de la table des tables
             SQLiteManager.createTableOfTables()
 
+            # Création de la table des conflits
+            SQLiteManager.createTableConflicts()
+
             # Import des couches du guichet sélectionnées par l'utilisateur
             self.__context.addGuichetLayersToMap(selectedLayers, box, self.__context.getUserCommunity().getName())
 

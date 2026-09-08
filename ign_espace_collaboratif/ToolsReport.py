@@ -159,7 +159,7 @@ class ToolsReport(object):
         self.__context.createTablesReportsAndSketchs()
 
         # Création des couches dans QGIS et des liens vers la base SQLite
-        self.__addReportSketchLayersToTheCurrentMap()
+        self.__context.addReportSketchLayersToTheCurrentMap()
 
         # Téléchargement des signalements
         self.__progress.setValue(1)

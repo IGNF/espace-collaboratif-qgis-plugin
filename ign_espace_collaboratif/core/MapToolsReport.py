@@ -29,7 +29,6 @@ class MapToolsReport(QgsMapTool):
         self.__snapcolor = QgsSettings().value("/qgis/digitizing/snap_color", QColor(Qt.GlobalColor.red))
         self.__canvas.setMapTool(self)
         self.setCursor(Qt.CursorShape.CrossCursor)
-        # self.activate()
 
     def canvasReleaseEvent(self, event) -> None:
         """

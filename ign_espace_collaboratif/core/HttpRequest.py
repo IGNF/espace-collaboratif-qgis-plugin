@@ -364,6 +364,11 @@ class HttpRequest(object):
             
             if status not in (200, 201, 206):
                 message = "{}:makeHttpRequest [{}]".format(launchBy, response.text)
+                if response.status_code == 404 and response.reason == 'Not Found':
+                    message += "\nAttention, le guichet sur lequel vous travaillez est mal configuré. Il s'agit " \
+                               "peut-être d'un objet que vous tentez de mettre à jour qui a été supprimé " \
+                               "par un autre utilisateur, un conflit de suppression aurait du être signalé. " \
+                               "Veuillez contactez le gestionnaire du guichet."
                 print("ERROR: {}".format(message))
                 HttpRequest.logger.error(message)
                 raise Exception(message)

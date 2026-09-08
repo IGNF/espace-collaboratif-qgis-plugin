@@ -7,6 +7,7 @@ from .WfsGet import WfsGet
 from .Wkt import Wkt
 from .BBox import BBox
 from .HttpRequest import HttpRequest
+from .BufferFeatures import BufferFeatures
 from . import Constantes as cst
 
 
@@ -147,7 +148,7 @@ class WfsPost(object):
             if value is None or value == qgis.core.NULL or value == "NULL":
                 # If the field has a NOT NULL constraint it is required: a NULL here is a spurious QGIS
                 # signal (e.g. ValueMap/ENUM widget init). Skip it to avoid a server constraint violation.
-                if field.constraints().constraints() & qgis.core.QgsFieldConstraints.ConstraintNotNull:
+                if field.constraints().constraints() & qgis.core.QgsFieldConstraints.Constraint.ConstraintNotNull:
                     continue
                 # Nullable field: user intentionally cleared it → send JSON null.
                 fieldsNameValue[fieldName] = None
@@ -221,16 +222,34 @@ class WfsPost(object):
 
          :return: la liste des messages décodés
         """
-        message = ''
+        message = {}
+        code = response.status_code
         responseToDict = json.loads(response.text)
-        print("responseToDict : {}".format(responseToDict))
-        if 'code' in responseToDict:
-            message = {'code': responseToDict['code'], 'message': responseToDict['message'],
-                       'status': 'error', 'id': [-1]}
+        print("[INFO] Réponse (httprequest) : {}".format(responseToDict))
+        # if 'code' in responseToDict:
+        #     message = {'code': responseToDict['code'], 'message': responseToDict['message'],
+        #                'status': 'error', 'id': [-1], 'cleabs': responseToDict['conflicts'][0]['server_object'].cleabs
         if 'status' in responseToDict:
-            message = {'code': 200, 'message': responseToDict["message"],
-                       'status': responseToDict["status"], 'id': []}
-            message['id'].append(responseToDict["id"])
+            message = {'code': code, 'message': responseToDict["message"],
+                       'status': responseToDict["status"], 'id_transaction': responseToDict["id"]}
+            print("[INFO] code : {}".format(code))
+            print("[INFO] message : {}".format(responseToDict["message"]))
+            print("[INFO] status : {}".format(responseToDict["status"]))
+            print("[INFO] transaction n° {}".format(responseToDict["id"]))
+            if len(responseToDict['conflicts']) >= 1:
+                listcleabs = []
+                for conflit in responseToDict['conflicts']:
+                    print("[INFO] conflit : {}".format(conflit['server_object']))
+                    print("[INFO] cleabs : {}".format(conflit['server_object']['cleabs']))
+                    listcleabs.append(conflit['server_object']['cleabs'])
+                message.update({'cleabs': listcleabs})
+            if responseToDict["status"] == cst.STATUS_COMMITTED:
+                listcleabs = []
+                actions = responseToDict["actions"]
+                for action in actions:
+                    if action['state'] == 'Delete':
+                        listcleabs.append(action['server_feature_id'])
+                message.update({'cleabs': listcleabs})
         return message
 
     def __gcmsPost(self, bNormalWfsPost) -> {}:
@@ -250,6 +269,41 @@ class WfsPost(object):
         response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxies, data=json.dumps(self.__datasForPost),
                                                headers=headers, launchBy='__gcmsPost')
         responseTransactions = self.__checkResponseTransactions(response)
+        print('responseTransactions : {}'.format(responseTransactions))
+        if responseTransactions['status'] == cst.STATUS_CONFLICTING:
+            for cleabs in responseTransactions['cleabs']:
+                bf = BufferFeatures(self.__context, self.__layer)
+                params = {
+                    'database_id': self.__layer.databaseid,
+                    'table_id': self.__layer.tableid,
+                    'attr_val': cleabs,
+                    'attr': 'cleabs'
+                }
+                bf.setFeatureByAttribute(params)
+        else:
+            if responseTransactions['status'] == cst.STATUS_COMMITTED:
+                # Il faut détruire la (ou les) zone(s) de conflit créées pour sauvegarder les objets clients
+                self.__deleteTemporaryConflicts(responseTransactions['cleabs'])
+
+                # Mise à jour de la base SQLite pour les objets détruits et modifiés d'une couche BDUni
+                if not self.__layer.isStandard:
+                    SQLiteManager.setActionsInTableBDUni(self.__layer.name(), self.__datasForPost["actions"])
+                # Mise à jour de la couche
+                try:
+                    # Le numrec est égal à 0 pour une couche standard à un numéro pour une couche BDUni
+                    numrec = self.__synchronize()
+                except Exception as e:
+                    # QMessageBox.information(self.__context.iface.mainWindow(), cst.IGNESPACECO, format(e))
+                    # Il faut vider l'editbuffer de la couche active
+                    self.__layer.rollBack()
+                    raise Exception(e)
+                # Mise à jour du numrec pour la couche dans la table des tables
+                SQLiteManager.updateNumrecTableOfTables(self.__layer.name(), numrec)
+                SQLiteManager.vacuumDatabase()
+                # Le buffer de la couche est vidée et elle est rechargée
+                if bNormalWfsPost:
+                    self.__layer.rollBack()
+                self.__layer.reload()
         if responseTransactions['status'] == cst.STATUS_COMMITTED:
             if self.__layer.isBduni:
                 # BDUni : application locale des suppressions/mises à jour, puis synchronisation incrémentale
@@ -286,6 +340,25 @@ class WfsPost(object):
                 self.__layer.rollBack()
             self.__layer.reload()
         return responseTransactions
+
+    def __deleteTemporaryConflicts(self, cleabss):
+        # Recherche de la couche "conflits"
+        listLayers = QgsProject.instance().mapLayersByName(cst.CONFLICT_LAYER)
+        if len(listLayers) != 1:
+            return
+        features = list(listLayers[0].getFeatures())
+        if len(features) == 0:
+            return
+        idx = listLayers[0].fields().indexOf('cleabs')
+        if idx < 0:
+            return
+        ids = []
+        for feature in features:
+            if feature['cleabs'] in cleabss:
+                ids.append(feature.id())
+        dp = listLayers[0].dataProvider()
+        dp.deleteFeatures(ids)
+        listLayers[0].triggerRepaint()
 
     def __synchronize(self) -> int:
         """
@@ -439,7 +512,7 @@ class WfsPost(object):
         if status == cst.STATUS_COMMITTED:
             information = self.__transactionReporting
             information += '<br/>{0}'.format(message)
-            fid = endTransactionMessage['id'][0]
+            fid = str(endTransactionMessage['id_transaction'])
             information += '<br/><a href="{0}/{1}" target="_blank">{2}</a>'.format(self.__url, fid, fid)
         else:
             information = '<br/><font color="red">error : {0}</font>'.format(message)
@@ -461,21 +534,54 @@ class WfsPost(object):
         }
         return action
 
-    def __pushDeletedFeatures(self, deletedFeatures) -> None:
+    def __pushDeletedFeatures(self, deletedFeaturesIds) -> None:
         """
         Complète le dictionnaire général des actions (__datasForPost) par une liste d'actions 'Delete'
         sur la destruction d'objets.
 
-        :param deletedFeatures: liste des objets détruits (QgsFeature) sur une couche
-        :type deletedFeatures: list
+        :param deletedFeaturesIds: liste des objets détruits (QgsFeature) sur une couche
+        :type deletedFeaturesIds: list
         """
-        result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeatures)
+        result = SQLiteManager.selectRowsInTable(self.__layer, deletedFeaturesIds)
         for r in result:
             action = self.__setAction('Delete')
             if self.__isTableBduni:
                 action['data'].update(self.__setFingerPrint(r[1]))
             action['data'].update(self.__setKey(self.__layer.idNameForDatabase, r[0]))
             self.__datasForPost['actions'].append(action)
+        self.__captureDeletedFeaturesAndPutToConflictsLayer(deletedFeaturesIds)
+
+    def __captureDeletedFeaturesAndPutToConflictsLayer(self, deletedFeatureIds):
+        """
+        Capture des objets détruits en prévention d'un conflit de suppression sur client.
+        Création d'un objet conflit temporaire qui sera détruit de la couche "conflits" si pas de conflits.
+        """
+        bf = BufferFeatures(self.__context, self.__layer)
+        params = {'sourceLayerName': self.__layer.name()}
+        for fid in deletedFeatureIds:
+            params['idFeature'] = fid
+            rec = SQLiteManager.selectRow(self.__layer, fid, self.__layer.geometryNameForDatabase)
+            if rec:
+                fields = {}
+                for col_name in rec.keys():
+                    field = {}
+                    value = rec[col_name]
+                    if col_name == "cleabs":
+                        params['cleabs'] = value
+                    # On zappe la géométrie en bytes
+                    if col_name == self.__layer.geometryNameForDatabase:
+                        continue
+                    # --- Géométrie ---
+                    if col_name == "geom_wkt":
+                        params['geom_wkt'] = value
+                        continue
+                    if value == NULL:
+                        field[col_name] = None
+                    else:
+                        field[col_name] = value
+                    fields.update(field)
+                params['fields'] = fields
+            bf.insertDeletedClientFeature(params)
 
     def __pushAddedFeatures(self, addedFeatures, bBDUni) -> None:
         """
