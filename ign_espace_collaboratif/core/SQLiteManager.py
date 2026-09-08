@@ -903,6 +903,7 @@ class SQLiteManager(object):
         if not SQLiteManager.isTableExist(cst.PENDING_TRANSACTIONS):
             return []
         connection = SQLiteManager.sqlite3Connect()
+        connection.row_factory = SQLiteManager.sqlite3.Row
         cur = connection.cursor()
         if status is None:
             sql = "SELECT * FROM {} ORDER BY id ASC".format(cst.PENDING_TRANSACTIONS)  # nosec B608

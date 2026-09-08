@@ -353,14 +353,23 @@ class Contexte(object):
 
         self.logger.debug("getConnexionEspaceCollaboratifWithKeycloak")
         self.__tokenTimerStart = time.perf_counter()
-        self.__keycloakService = KeycloakService(cst.KEYCLOAK_SERVER_URI, cst.KEYCLOAK_REALM_NAME,
-                                                 cst.KEYCLOAK_CLIENT_ID,
-                                                 proxies=self.__proxies)
-        r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
-        r = self.__keycloakService.get_access_token(r["code"][0])
-        self.__tokenAccess = r["access_token"]
-        self.__tokenExpireIn = r["expires_in"]
-        self.__tokenType = r["token_type"]
+        try:
+            self.__keycloakService = KeycloakService(cst.KEYCLOAK_SERVER_URI, cst.KEYCLOAK_REALM_NAME,
+                                                     cst.KEYCLOAK_CLIENT_ID,
+                                                     proxies=self.__proxies)
+            r = self.__keycloakService.get_authorization_code(["email", "profile", "openid", "roles"])
+            r = self.__keycloakService.get_access_token(r["code"][0])
+            self.__tokenAccess = r["access_token"]
+            self.__tokenExpireIn = r["expires_in"]
+            self.__tokenType = r["token_type"]
+        except Exception as e:
+            # SSO injoignable/timeout : on évite de laisser remonter une exception non gérée qui
+            # bloquerait l'appelant (ex. sauvegarde d'une transaction) ; on retombe simplement en échec
+            # de connexion, ce qui permet à l'appelant de basculer en mode hors connexion.
+            self.logger.error("getConnexionEspaceCollaboratifWithKeycloak : connexion Keycloak/SSO "
+                              "impossible : {}".format(e))
+            self.__keycloakService = None
+            return False
         return self.__connectToService()
 
     def __connectToService(self) -> bool:

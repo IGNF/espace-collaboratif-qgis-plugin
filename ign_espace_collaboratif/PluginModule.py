@@ -392,13 +392,20 @@ class RipartPlugin:
             return "error : PluginModule:__saveChangesForOneLayer, la couche n'est pas valable (None)."
         # Connexion à l'Espace collaboratif
         # si res = 0, alors l'utilisateur à annuler son action
-        if not self.__doConnexion(False):
-            # Empêcher QGIS de persister les modifications localement sans transaction serveur
+        try:
+            isConnected = self.__doConnexion(False)
+        except Exception as e:
+            self.__logger.error("Connexion à l'Espace collaboratif impossible : {}".format(e))
+            isConnected = False
+
+        if self.__context is None:
+            # Aucun projet enregistré / contexte non initialisé : impossible de construire la
+            # transaction (pas d'URL serveur, pas de base cible connue), les modifications sont perdues.
             layer.destroyEditCommand()
             return "error : PluginModule:__saveChangesForOneLayer, pas de connexion, pas de transaction" \
                    " avec l'espace collaboratif."
 
-        if layer.name() == cst.nom_Calque_Signalement:
+        if isConnected and layer.name() == cst.nom_Calque_Signalement:
             if self.__saveMoveReport():
                 return "Le signalement a été déplacé."
 
@@ -440,7 +447,7 @@ class RipartPlugin:
                        ' Corrigez les erreurs et sauvegardez à nouveau.</font>'.format(layer.name())
 
         try:
-            messages = self.__doPost(layer, editBuffer)
+            messages = self.__doPost(layer, editBuffer, isConnected=isConnected)
         except Exception as e:
             messages = '<br/><font color="red"><b>{0}</b> : {1}</font>'.format(layer.name(), e)
             PluginHelper.setCursor()
@@ -485,7 +492,7 @@ class RipartPlugin:
                 return self.__context.getConnexionEspaceCollaboratifWithKeycloak(True)
         return True
 
-    def __doPost(self, layer, editBuffer) -> str:
+    def __doPost(self, layer, editBuffer, isConnected=True) -> str:
         """
         Envoi par une requête POST, les mises à jour d'une couche vers le serveur de l'espace collaboratif.
         Ces mises à jour sont stockées par QGIS avec la classe QgsVectorLayerEditBuffer.
@@ -495,6 +502,12 @@ class RipartPlugin:
 
         :param editBuffer: les mises à jour stockées en mémoire pas QGIS
         :type editBuffer: QgsVectorLayerEditBuffer
+
+        :param isConnected: si False, la connexion à l'Espace collaboratif est déjà connue comme
+                            indisponible (SSO en panne, timeout...) : la transaction est construite et
+                            enregistrée dans l'outbox local mais aucune tentative d'envoi réseau n'est
+                            faite.
+        :type isConnected: bool
 
         :return: message de fin de transaction
         """
@@ -513,6 +526,27 @@ class RipartPlugin:
             pendingId = SQLiteManager.insertPendingTransaction(
                 database, databaseid, layer.name(), json.dumps(payload), cst.PENDING_STATUS_PENDING)
             self.__checkTransactionLimits(len(payload.get('actions')))
+
+        if not isConnected:
+            # Pas de connexion connue (SSO indisponible) : inutile de tenter l'envoi réseau, la
+            # transaction reste enregistrée dans l'outbox local pour un envoi différé.
+            if pendingId is None:
+                return "<br/>{0} : aucune modification à enregistrer.".format(layer.name())
+            SQLiteManager.updatePendingTransactionStatus(
+                pendingId, cst.PENDING_STATUS_PENDING,
+                lastError="Connexion à l'Espace collaboratif indisponible. Transaction enregistrée pour "
+                          "envoi différé.")
+            self.__context.iface.messageBar().pushMessage(
+                "Espace Collaboratif",
+                "Couche '{}' : pas de connexion à l'Espace collaboratif. Vos modifications sont "
+                "conservées et la transaction est enregistrée localement (envoi différé possible)."
+                .format(layer.name()),
+                level=Qgis.MessageLevel.Warning,
+                duration=0
+            )
+            return '<br/><font color="orange"><b>{0}</b> : hors connexion, transaction enregistrée ' \
+                   'localement pour un envoi différé.</font>'.format(layer.name())
+
         try:
             commitLayerResult = wfsPost.sendActions(bNormalWfsPost)
         except Exception:
