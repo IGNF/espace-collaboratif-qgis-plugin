@@ -332,7 +332,7 @@ class HttpRequest(object):
                     for k, v in (data or {}).items():
                         q.addQueryItem(str(k), str(v))
                     body = q.toString(QUrl.FullyEncoded).encode('utf-8')
-                    request.setHeader(QNetworkRequest.ContentTypeHeader,
+                    request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader,
                                     "application/x-www-form-urlencoded")
                 err = blocking.post(request, body)
                 if err != QgsBlockingNetworkRequest.ErrorCode.NoError and blocking.reply().attribute(
@@ -346,7 +346,7 @@ class HttpRequest(object):
             # POST multipart
             else:
                 body, contentType = HttpRequest._buildMultipart(data, files)
-                request.setHeader(QNetworkRequest.ContentTypeHeader, contentType)
+                request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, contentType)
                 err = blocking.post(request, body)
                 if err != QgsBlockingNetworkRequest.ErrorCode.NoError and blocking.reply().attribute(
                         QNetworkRequest.Attribute.HttpStatusCodeAttribute) is None:
