@@ -8,7 +8,7 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform
 )
-from PyQt5 import QtCore, QtWidgets
+from qgis.PyQt import QtCore, QtWidgets
 from qgis.PyQt.QtGui import QIcon, QColor
 from .PluginHelper import PluginHelper
 from .CreateReport import CreateReport
@@ -213,7 +213,7 @@ class ConflictsView(QtWidgets.QDialog, FORM_CLASS):
         self.__initDialog()
 
     def __initDialog(self):
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         if self.__nbConflicts >= 1:
             self.setWindowTitle("Gestion des conflits - {} conflit(s)".format(self.__nbConflicts))
         self.__initTableWidget()

@@ -2,7 +2,7 @@ import json
 import re
 from . import Constantes as cst
 from datetime import datetime
-from qgis.PyQt.QtCore import NULL
+from qgis.PyQt.QtCore import NULL, QMetaType
 from qgis.core import (
     QgsVectorLayer,
     QgsProject,
@@ -13,7 +13,6 @@ from qgis.core import (
     QgsGeometry,
     QgsCoordinateReferenceSystem
 )
-from PyQt5.QtCore import QVariant
 from .Query import Query
 from ..Conflicts import Conflicts
 from ..PluginHelper import PluginHelper
@@ -36,11 +35,11 @@ def sanitize_name(name: str) -> str:
 def map_qvariant_to_sqlite_type(qfield: QgsField) -> str:
     """Mappe le type QGIS -> type SQLite."""
     t = qfield.type()
-    if t in (QVariant.Int, QVariant.LongLong, QVariant.UInt, QVariant.ULongLong, QVariant.Bool):
+    if t in (QMetaType.Type.Int, QMetaType.Type.LongLong, QMetaType.Type.UInt, QMetaType.Type.ULongLong, QMetaType.Type.Bool):
         return "INTEGER"
-    if t in (QVariant.Double,):
+    if t in (QMetaType.Type.Double,):
         return "REAL"
-    if t in (QVariant.ByteArray,):
+    if t in (QMetaType.Type.QByteArray,):
         return "BLOB"
     # Dates/Heures, String, autres -> TEXT
     return "TEXT"
