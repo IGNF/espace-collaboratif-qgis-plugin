@@ -16,6 +16,8 @@ from qgis.PyQt.QtWidgets import (
     QSpinBox, QTreeWidget, QTreeWidgetItem,
 )
 
+from .ResourcesPath import images_path
+
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
@@ -30,7 +32,7 @@ class Ui_Dialog(object):
         font.setPointSize(10)
         Dialog.setFont(font)
         icon = QIcon()
-        icon.addFile(u":/plugins/RipartPlugin/images/ign.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(str(images_path("ign.png")), QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         Dialog.setWindowIcon(icon)
         Dialog.setModal(True)
         self.buttonBox = QDialogButtonBox(Dialog)

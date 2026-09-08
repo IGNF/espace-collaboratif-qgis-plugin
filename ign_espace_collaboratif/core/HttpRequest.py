@@ -331,7 +331,7 @@ class HttpRequest(object):
                     q = QUrlQuery()
                     for k, v in (data or {}).items():
                         q.addQueryItem(str(k), str(v))
-                    body = q.toString(QUrl.FullyEncoded).encode('utf-8')
+                    body = q.toString(QUrl.ComponentFormattingOption.FullyEncoded).encode('utf-8')
                     request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader,
                                     "application/x-www-form-urlencoded")
                 err = blocking.post(request, body)

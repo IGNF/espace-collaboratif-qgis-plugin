@@ -14,6 +14,7 @@ from typing import Optional
 from qgis.PyQt import QtGui
 from qgis.PyQt.QtGui import QImage
 from qgis.PyQt.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QTextEdit, QDialogButtonBox
+from .ResourcesPath import images_path
 from qgis.core import QgsCoordinateReferenceSystem, QgsFeatureRequest, QgsCoordinateTransform, QgsGeometry,\
     QgsVectorLayer, QgsRasterLayer, QgsProject, QgsWkbTypes, QgsLayerTreeGroup, QgsDataSourceUri,\
     QgsLayerTreeLayer, Qgis, QgsEditorWidgetSetup, QgsBlockingNetworkRequest
@@ -465,7 +466,7 @@ class Contexte(object):
                 dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
 
         elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
-            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
+            dlgInfo.logo.setPixmap(QtGui.QPixmap(str(images_path("logo_IGN.png"))))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))
         dlgInfo.textInfo.append("Login : {}".format(self.getUserNameCommunity()))
