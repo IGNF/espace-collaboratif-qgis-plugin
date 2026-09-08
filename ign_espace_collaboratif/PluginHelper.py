@@ -794,6 +794,37 @@ class PluginHelper:
         return intersectingDatas
 
     @staticmethod
+    def lockWorkAreaLayer(context) -> None:
+        """
+        Verrouille la couche zone de travail en la marquant comme obligatoire dans le projet QGIS,
+        afin d'empêcher sa suppression accidentelle.
+        """
+        workAreaName = PluginHelper.load_XmlTag(context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text
+        if not workAreaName:
+            return
+        layers = QgsProject.instance().mapLayersByName(workAreaName)
+        if len(layers) != 1:
+            return
+        required = QgsProject.instance().requiredLayers()
+        required.add(layers[0])
+        QgsProject.instance().setRequiredLayers(required)
+
+    @staticmethod
+    def unlockWorkAreaLayer(context) -> None: # Actuellement non utilisé, mais peut être utile pour des tests ou des fonctionnalités futures
+        """
+        Déverrouille la couche zone de travail en la retirant des couches obligatoires du projet QGIS.
+        """
+        workAreaName = PluginHelper.load_XmlTag(context.projectDir, PluginHelper.xml_Zone_extraction, PluginHelper.xml_Map).text
+        if not workAreaName:
+            return
+        layers = QgsProject.instance().mapLayersByName(workAreaName)
+        if len(layers) != 1:
+            return
+        required = QgsProject.instance().requiredLayers()
+        required.discard(layers[0])
+        QgsProject.instance().setRequiredLayers(required)
+
+    @staticmethod
     def setCursor():
         """
         Restaure tous les curseurs empilés en fonction du nombre réel de curseurs empilés

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>ReplyReportView</class>
  <widget class="QDialog" name="ReplyReportView">
@@ -90,7 +90,7 @@
    <property name="font">
     <font>
      <pointsize>9</pointsize>
-     <weight>75</weight>
+     <weight>700</weight>
      <bold>true</bold>
     </font>
    </property>

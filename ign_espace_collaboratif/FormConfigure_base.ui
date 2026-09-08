@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>Dialog</class>
  <widget class="QDialog" name="Dialog">
@@ -62,7 +62,7 @@
    <property name="font">
     <font>
      <pointsize>10</pointsize>
-     <weight>75</weight>
+     <weight>700</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -87,7 +87,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -107,7 +107,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -130,7 +130,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -156,7 +156,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -179,7 +179,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -208,7 +208,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -231,7 +231,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -257,7 +257,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -277,7 +277,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -310,7 +310,7 @@
    <property name="font">
     <font>
      <pointsize>10</pointsize>
-     <weight>50</weight>
+     <weight>400</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -336,7 +336,7 @@
    <property name="font">
     <font>
      <pointsize>10</pointsize>
-     <weight>75</weight>
+     <weight>700</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -367,7 +367,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -435,7 +435,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -461,7 +461,7 @@
     <property name="font">
      <font>
       <pointsize>8</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -487,7 +487,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -507,7 +507,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>

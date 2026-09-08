@@ -6,6 +6,7 @@ Updated on 26 aout 2025
 @author: AChang-Wailing, EPeyrouse, NGremeaux
 """
 from qgis.core import QgsPointXY, Qgis
+from .Contexte import Contexte
 from .core.MapToolsReport import MapToolsReport
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
@@ -36,6 +37,17 @@ class CreateReport(object):
         NB : appeler dans PluginModule.py, fonction : __createReport
         """
         try:
+            # Vérification que la structure signalement est présente dans le projet
+            if not Contexte.IsLayerInMap(cst.nom_Calque_Signalement):
+                mess = ("Pas de couche '{}' dans la carte.\n"
+                        "Il est donc impossible de créer un signalement.\n"
+                        "Il faut télécharger les signalements de votre groupe au préalable.").format(
+                    cst.nom_Calque_Signalement)
+                self.__context.iface.messageBar().pushMessage(
+                    "Attention", mess, level=Qgis.MessageLevel.Warning, duration=5)
+                self.__logger.warning(mess)
+                return
+
             bSelectedFeature = self.__context.asSelectedFeaturesInMap()
             # Sans croquis, en cliquant simplement sur la carte
             if not bSelectedFeature:

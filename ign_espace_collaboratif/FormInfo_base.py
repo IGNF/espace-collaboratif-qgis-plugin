@@ -8,17 +8,9 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from .qt_compat import (
-    QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt,
-    QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform,
-    QApplication, QDialog, QFrame, QLabel,
-    QPushButton, QSizePolicy, QTextBrowser, QWidget,
-)
+from qgis.PyQt.QtCore import QCoreApplication, QMetaObject, QRect, Qt
+from qgis.PyQt.QtGui import QBrush, QColor, QFont, QPalette, QPixmap
+from qgis.PyQt.QtWidgets import QFrame, QLabel, QPushButton, QTextBrowser
 class Ui_InfoDialog(object):
     def setupUi(self, InfoDialog):
         if not InfoDialog.objectName():

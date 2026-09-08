@@ -391,15 +391,14 @@ class WfsGet(object):
         """
         Récupère le max-numrec au niveau de la base de données (table reconciliations).
         Plus rapide car cette table est bien indexée.
-        Utilise un timeout (connect=5s, read=30s) : la connexion doit s'établir rapidement
-        (échoue vite en cas de proxy silencieux), mais le serveur peut prendre jusqu'à 30s à répondre.
+        Utilise un timeout (connect=20s, read=60s).
 
         :return: le numéro de la mise à jour.
         """
         url = "{0}/gcms/api/databases/{1}/max-numrec".format(self.urlHostEspaceCo, self.databaseid)
         response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
                                                launchBy='getMaxNumrecFromDatabase : {}'.format(self.layerName),
-                                               timeout=(5, 30))
+                                               timeout=(20, 60))
         if response.status_code in (200, 201):
             return response.json()
         else:
@@ -409,8 +408,7 @@ class WfsGet(object):
         """
         Récupère le max-numrec au niveau d'une table spécifique.
         Peut être lent sur les vues métier si le numrec n'est pas indexé.
-        Utilise un timeout (connect=5s, read=30s) : la connexion doit s'établir rapidement
-        (échoue vite en cas de proxy silencieux), mais le serveur peut prendre jusqu'à 30s à répondre.
+        Utilise un timeout (connect=20s, read=60s).
 
         :return: le numéro de la mise à jour.
         """
@@ -418,7 +416,7 @@ class WfsGet(object):
                                                                         self.tableid)
         response = HttpRequest.makeHttpRequest(url, proxies=self.proxies, headers=self.headers,
                                                launchBy='getMaxNumrecFromTable : {}'.format(self.layerName),
-                                               timeout=(5, 30))
+                                               timeout=(20, 60))
         if response.status_code in (200, 201):
             return response.json()
         else:

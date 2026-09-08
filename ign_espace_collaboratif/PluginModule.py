@@ -196,6 +196,9 @@ class RipartPlugin:
         #             messages = self.__doPost(objectAddedNotCommitted[0], qgsVectorLayerEditBuffer)
         #         return
 
+        # Verrouillage de la couche zone de travail pour empêcher sa suppression accidentelle
+        PluginHelper.lockWorkAreaLayer(self.__context)
+
     def _connectLayerWasAdded(self, layer) -> None:
         """
         Si une couche est ajoutée au projet QGIS de l'utilisateur et qu'elle se trouve dans la table des tables
@@ -930,7 +933,7 @@ class RipartPlugin:
             if listLayers is None or len(listLayers) == 0:
                 raise Exception(u"Votre communauté n'a pas paramétré sa carte, il n'y a pas de données à charger.")
             # et les présenter à l'utilisateur pour qu'il fasse son choix de travail
-            dlgChargerGuichet = FormChargerGuichet(self.__context, listLayers)
+            dlgChargerGuichet = FormChargerGuichet(self.__context, listLayers, community)
             # L'utilisateur a cliqué sur le bouton Annuler ou la croix du dialogue
             if dlgChargerGuichet.bRejected:
                 return
