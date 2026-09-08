@@ -56,6 +56,18 @@ PENDING_STATUS_PENDING = 'pending'
 PENDING_STATUS_SENT = 'sent'
 PENDING_STATUS_CONFLICT = 'conflict'
 PENDING_STATUS_FAILED = 'failed'
+# Libellés affichés dans la fenêtre "Transactions hors connexion" pour chaque statut de l'outbox
+PENDING_STATUS_LABELS = {
+    PENDING_STATUS_PENDING: "En attente",
+    PENDING_STATUS_CONFLICT: "Conflit",
+    PENDING_STATUS_FAILED: "Échec",
+}
+# Couleurs associées à chaque statut dans cette même fenêtre
+PENDING_STATUS_COLORS = {
+    PENDING_STATUS_PENDING: "#9a6d00",
+    PENDING_STATUS_CONFLICT: "#b3261e",
+    PENDING_STATUS_FAILED: "#b3261e",
+}
 # Limites de débit imposées côté serveur (cf. bduni_max_actions_per_transaction et associés) : utilisées
 # uniquement pour alerter l'utilisateur, le serveur restant seul juge de l'acceptation de la transaction.
 MAX_ACTIONS_PER_TRANSACTION = 40

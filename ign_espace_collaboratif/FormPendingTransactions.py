@@ -14,17 +14,9 @@ from .core.SQLiteManager import SQLiteManager
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormPendingTransactions_base.ui'))
 
-STATUS_LABELS = {
-    cst.PENDING_STATUS_PENDING: "En attente",
-    cst.PENDING_STATUS_CONFLICT: "Conflit",
-    cst.PENDING_STATUS_FAILED: "Échec",
-}
-
-STATUS_COLORS = {
-    cst.PENDING_STATUS_PENDING: QtGui.QColor("#9a6d00"),
-    cst.PENDING_STATUS_CONFLICT: QtGui.QColor("#b3261e"),
-    cst.PENDING_STATUS_FAILED: QtGui.QColor("#b3261e"),
-}
+# Couleurs Qt construites à partir des codes hexadécimaux définis dans Constantes.py
+STATUS_COLORS = {status: QtGui.QColor(hexColor)
+                 for status, hexColor in cst.PENDING_STATUS_COLORS.items()}
 
 
 class FormPendingTransactions(QtWidgets.QDialog, FORM_CLASS):
@@ -65,27 +57,31 @@ class FormPendingTransactions(QtWidgets.QDialog, FORM_CLASS):
 
     def refresh(self) -> None:
         """
-        Recharge la liste des transactions de l'outbox local (en attente, en conflit ou en échec).
+        Recharge la liste des transactions dans la base de données locale (en attente, en conflit ou en échec).
         """
-        pendings = SQLiteManager.selectPendingTransactions(cst.PENDING_STATUS_PENDING)
-        others = [row for row in SQLiteManager.selectPendingTransactions()
-                  if row[5] in (cst.PENDING_STATUS_CONFLICT, cst.PENDING_STATUS_FAILED)]
+    
+        rows = SQLiteManager.selectPendingTransactions()
+        pendings = [row for row in rows if row['status'] == cst.PENDING_STATUS_PENDING]
+        others = [row for row in rows if row['status'] in (cst.PENDING_STATUS_CONFLICT,
+                                                           cst.PENDING_STATUS_FAILED)]
         rows = pendings + others
-        self.__pendingIds = [row[0] for row in rows]
+        self.__pendingIds = [row['id'] for row in rows]
 
+        self.table.setUpdatesEnabled(False)
         self.table.setRowCount(len(rows))
+        setItem = self.table.setItem
         for i, row in enumerate(rows):
-            _pendingId, database, layer, status, createdAt, retryCount, lastError = \
-                row[0], row[1], row[3], row[5], row[6], row[9], row[8]
-
-            values = [database, layer, STATUS_LABELS.get(status, status), self.__formatDate(createdAt),
-                      str(retryCount), lastError or ""]
-            color = STATUS_COLORS.get(status)
+            values = [row['database'], row['layer'],
+                      cst.PENDING_STATUS_LABELS.get(row['status'], row['status']),
+                      self.__formatDate(row['created_at']), str(row['retry_count']),
+                      row['last_error'] or ""]
+            color = STATUS_COLORS.get(row['status'])
             for j, value in enumerate(values):
                 item = QtWidgets.QTableWidgetItem(value)
                 if color is not None:
                     item.setForeground(color)
-                self.table.setItem(i, j, item)
+                setItem(i, j, item)
+        self.table.setUpdatesEnabled(True)
 
         isEmpty = len(rows) == 0
         self.table.setVisible(not isEmpty)
