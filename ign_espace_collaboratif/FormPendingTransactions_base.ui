@@ -162,6 +162,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="btnDeleteAll">
+       <property name="styleSheet">
+        <string notr="true">color: #b3261e;</string>
+       </property>
+       <property name="text">
+        <string>Tout supprimer</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>

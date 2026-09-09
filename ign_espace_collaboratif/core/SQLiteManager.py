@@ -903,7 +903,7 @@ class SQLiteManager(object):
         if not SQLiteManager.isTableExist(cst.PENDING_TRANSACTIONS):
             return []
         connection = SQLiteManager.sqlite3Connect()
-        connection.row_factory = SQLiteManager.sqlite3.Row
+        connection.row_factory = sqlite3.Row
         cur = connection.cursor()
         if status is None:
             sql = "SELECT * FROM {} ORDER BY id ASC".format(cst.PENDING_TRANSACTIONS)  # nosec B608
@@ -938,7 +938,7 @@ class SQLiteManager(object):
     @staticmethod
     def deletePendingTransaction(pendingId) -> None:
         """
-        Supprime une transaction de l'outbox (par exemple après un envoi confirmé).
+        Supprime une transaction de la db locale.
 
         :param pendingId: identifiant de la ligne outbox
         """
@@ -947,6 +947,30 @@ class SQLiteManager(object):
         SQLiteManager.findAndDeleteLock()
         sql = "DELETE FROM {} WHERE id = ?".format(cst.PENDING_TRANSACTIONS)  # nosec B608
         SQLiteManager.executeSQLWithParams(sql, (pendingId,))
+
+    @staticmethod
+    def purgeSentTransactions() -> None:
+        """
+        Supprime de la db locale toutes les transactions déjà envoyées avec succès (statut 'sent'),
+        y compris celles laissées par d'anciennes versions du plugin qui conservaient ce statut au
+        lieu de supprimer la ligne.
+        """
+        if not SQLiteManager.isTableExist(cst.PENDING_TRANSACTIONS):
+            return
+        SQLiteManager.findAndDeleteLock()
+        sql = "DELETE FROM {} WHERE status = ?".format(cst.PENDING_TRANSACTIONS)  # nosec B608
+        SQLiteManager.executeSQLWithParams(sql, (cst.PENDING_STATUS_SENT,))
+
+    @staticmethod
+    def deleteAllPendingTransactions() -> None:
+        """
+        Vide entièrement la table des transactions hors connexion, quel que soit leur statut.
+        """
+        if not SQLiteManager.isTableExist(cst.PENDING_TRANSACTIONS):
+            return
+        SQLiteManager.findAndDeleteLock()
+        sql = "DELETE FROM {}".format(cst.PENDING_TRANSACTIONS)  # nosec B608
+        SQLiteManager.executeSQL(sql)
 
     @staticmethod
     def InsertIntoTableOfTables(parameters) -> None:

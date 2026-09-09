@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Boîte de dialogue "Transactions hors connexion" : liste les transactions en attente dans l'outbox
-local (SQLite) et permet de déclencher leur envoi vers le serveur.
+Boîte de dialogue "Transactions hors connexion" : liste les transactions en attente dans la db local (SQLite) et permet de déclencher leur envoi vers le serveur.
 """
 
 import datetime
@@ -14,16 +13,15 @@ from .core.SQLiteManager import SQLiteManager
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormPendingTransactions_base.ui'))
 
-# Couleurs Qt construites à partir des codes hexadécimaux définis dans Constantes.py
+
 STATUS_COLORS = {status: QtGui.QColor(hexColor)
                  for status, hexColor in cst.PENDING_STATUS_COLORS.items()}
 
 
 class FormPendingTransactions(QtWidgets.QDialog, FORM_CLASS):
     """
-    Fenêtre listant les transactions hors connexion en attente d'envoi (outbox local), avec un bouton
+    Fenêtre listant les transactions hors connexion en attente d'envoi, avec un bouton
     d'envoi et la possibilité d'abandonner une transaction en échec ou en conflit.
-    L'interface est définie dans le fichier FormPendingTransactions_base.ui (éditable avec Qt Designer).
     """
 
     def __init__(self, sendCallback, parent=None) -> None:
@@ -50,6 +48,7 @@ class FormPendingTransactions(QtWidgets.QDialog, FORM_CLASS):
         self.table.itemSelectionChanged.connect(self.__onSelectionChanged)
         self.btnDiscard.clicked.connect(self.__onDiscard)
         self.btnRefresh.clicked.connect(self.refresh)
+        self.btnDeleteAll.clicked.connect(self.__onDeleteAll)
         self.btnSend.clicked.connect(self.__onSend)
         self.btnClose.clicked.connect(self.close)
 
@@ -59,7 +58,9 @@ class FormPendingTransactions(QtWidgets.QDialog, FORM_CLASS):
         """
         Recharge la liste des transactions dans la base de données locale (en attente, en conflit ou en échec).
         """
-    
+        # Nettoyage des transactions déjà envoyées avec succès (statut 'sent'), qui ne doivent pas s'accumuler.
+        SQLiteManager.purgeSentTransactions()
+
         rows = SQLiteManager.selectPendingTransactions()
         pendings = [row for row in rows if row['status'] == cst.PENDING_STATUS_PENDING]
         others = [row for row in rows if row['status'] in (cst.PENDING_STATUS_CONFLICT,
@@ -108,7 +109,7 @@ class FormPendingTransactions(QtWidgets.QDialog, FORM_CLASS):
 
     def __onDiscard(self) -> None:
         """
-        Supprime définitivement de l'outbox local la transaction sélectionnée (permet d'abandonner une
+        Supprime définitivement de la db local la transaction sélectionnée (permet d'abandonner une
         transaction en échec ou en conflit qu'on ne souhaite pas retenter).
         """
         selectedRows = self.table.selectionModel().selectedRows()
@@ -126,6 +127,22 @@ class FormPendingTransactions(QtWidgets.QDialog, FORM_CLASS):
             return
 
         SQLiteManager.deletePendingTransaction(pendingId)
+        self.refresh()
+
+    def __onDeleteAll(self) -> None:
+        """
+        Vide entièrement la table des transactions hors connexion (en attente, envoyées, en conflit
+        ou en échec), après confirmation de l'utilisateur.
+        """
+        reply = QtWidgets.QMessageBox.question(
+            self, cst.IGNESPACECO,
+            "Voulez-vous vraiment supprimer TOUTES les transactions hors connexion (en attente, "
+            "envoyées, en conflit ou en échec) ? Cette action est irréversible.",
+            QtWidgets.QMessageBox.StandardButton.Yes, QtWidgets.QMessageBox.StandardButton.No)
+        if reply != QtWidgets.QMessageBox.StandardButton.Yes:
+            return
+
+        SQLiteManager.deleteAllPendingTransactions()
         self.refresh()
 
     def __onSend(self) -> None:

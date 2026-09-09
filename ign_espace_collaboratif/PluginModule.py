@@ -574,7 +574,8 @@ class RipartPlugin:
             )
         else:
             if pendingId is not None:
-                SQLiteManager.updatePendingTransactionStatus(pendingId, cst.PENDING_STATUS_SENT)
+                # Envoi réussi : la transaction n'a plus besoin d'être conservée dans la db local.
+                SQLiteManager.deletePendingTransaction(pendingId)
             # Pour la couche synchronisée, il faut vider le buffer en mémoire en vérifiant que la fonction
             # commitLayer n'envoie pas d'exception sinon les modifs sont perdues
             # et l'outil redemande une synchronisation
@@ -655,8 +656,8 @@ class RipartPlugin:
                 continue
 
             if result.get('status') == cst.STATUS_COMMITTED:
-                SQLiteManager.updatePendingTransactionStatus(
-                    pendingId, cst.PENDING_STATUS_SENT, serverTransactionId=result.get('id'))
+                # Envoi réussi : purge de la table gcms_pending
+                SQLiteManager.deletePendingTransaction(pendingId)
                 sent += 1
                 reporting += '<br/><font color="green">#{0} ({1}) : envoyée avec succès.</font>'.format(
                     pendingId, layerName)
