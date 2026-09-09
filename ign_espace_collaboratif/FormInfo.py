@@ -11,6 +11,9 @@ version 4.0.6, 30/12/2021
 import os
 
 from qgis.PyQt import QtCore, QtWidgets, uic
+from qgis.PyQt.QtGui import QPixmap
+
+from .PluginPath import resources_path
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo_base.ui'))
 
@@ -27,6 +30,7 @@ class FormInfo(QtWidgets.QDialog, FORM_CLASS):
         super(FormInfo, self).__init__(parent)
 
         self.setupUi(self)
+        self.logo.setPixmap(QPixmap(str(resources_path('logo_IGN.png'))))
 
         # +20 en hauteur sinon le bouton OK est coupé
         self.setFixedSize(self.width(), self.height()+20)

@@ -9,7 +9,7 @@
 ################################################################################
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaObject, QRect, QSize, Qt
-from qgis.PyQt.QtGui import QFont, QIcon
+from qgis.PyQt.QtGui import QFont
 from qgis.PyQt.QtWidgets import (
     QAbstractItemView, QCalendarWidget, QCheckBox, QDialogButtonBox,
     QGroupBox, QLabel, QLineEdit, QSizePolicy,
@@ -29,9 +29,6 @@ class Ui_Dialog(object):
         font = QFont()
         font.setPointSize(10)
         Dialog.setFont(font)
-        icon = QIcon()
-        icon.addFile(u":/plugins/RipartPlugin/images/ign.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        Dialog.setWindowIcon(icon)
         Dialog.setModal(True)
         self.buttonBox = QDialogButtonBox(Dialog)
         self.buttonBox.setObjectName(u"buttonBox")

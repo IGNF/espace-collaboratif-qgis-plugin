@@ -14,9 +14,11 @@ import calendar
 
 from qgis.PyQt import QtCore, QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QDate
+from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QTreeWidgetItem, QDialogButtonBox
 from qgis.core import QgsVectorLayer, QgsProject
 from .PluginHelper import PluginHelper
+from .PluginPath import resources_path
 from .core.SQLiteManager import SQLiteManager
 from .core import Constantes as cst
 
@@ -38,6 +40,7 @@ class FormConfigure(QtWidgets.QDialog, FORM_CLASS):
         """
         super(FormConfigure, self).__init__(parent)
         self.setupUi(self)
+        self.setWindowIcon(QIcon(str(resources_path('ign.png'))))
         self.context = context
         self.setFocus()
         self.setFixedSize(self.width(), self.height())
