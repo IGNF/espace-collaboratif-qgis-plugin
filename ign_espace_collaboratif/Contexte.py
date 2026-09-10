@@ -21,6 +21,7 @@ from qgis.PyQt.QtNetwork import QNetworkRequest
 from qgis.PyQt.QtCore import QUrl
 from .Import_WMTS import importWMTS
 from .Import_WFS import ImportWFS
+from .PluginPath import resources_path
 from .core.PluginLogger import PluginLogger
 from .core.SketchAttributes import SketchAttributes
 from .core.Point import Point
@@ -465,7 +466,7 @@ class Contexte(object):
                 dlgInfo.logo.setPixmap(QtGui.QPixmap(image))
 
         elif self.getUserCommunity().getName() == cst.DEFAULTPROFILE:
-            dlgInfo.logo.setPixmap(QtGui.QPixmap(":/plugins/ign_espace_collaboratif_qgis/images/logo_IGN.png"))
+            dlgInfo.logo.setPixmap(QtGui.QPixmap(str(resources_path('logo_IGN.png'))))
         dlgInfo.textInfo.setText(u"<b>Connexion réussie à l'Espace collaboratif</b>")
         dlgInfo.textInfo.append("<br/>Serveur : {}".format(self.urlHostEspaceCo))
         dlgInfo.textInfo.append("Login : {}".format(self.getUserNameCommunity()))

@@ -24,10 +24,6 @@
   <property name="windowTitle">
    <string>Configuration du plugin Espace Collaboratif</string>
   </property>
-  <property name="windowIcon">
-   <iconset>
-    <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
-  </property>
   <property name="modal">
    <bool>true</bool>
   </property>
