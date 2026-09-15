@@ -157,7 +157,6 @@ dmypy.json
 Thumbs.db
 
 # QGIS Plugin Specific
-resources.py
 *.zip
 plugins.xml
 

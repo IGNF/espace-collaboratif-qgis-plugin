@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>Dialog</class>
  <widget class="QDialog" name="Dialog">
@@ -23,10 +23,6 @@
   </property>
   <property name="windowTitle">
    <string>Configuration du plugin Espace Collaboratif</string>
-  </property>
-  <property name="windowIcon">
-   <iconset>
-    <normaloff>:/plugins/RipartPlugin/images/ign.png</normaloff>:/plugins/RipartPlugin/images/ign.png</iconset>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -62,7 +58,7 @@
    <property name="font">
     <font>
      <pointsize>10</pointsize>
-     <weight>75</weight>
+     <weight>700</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -87,7 +83,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -107,7 +103,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -130,7 +126,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -156,7 +152,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -179,7 +175,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -208,7 +204,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -231,7 +227,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -257,7 +253,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -277,7 +273,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -310,7 +306,7 @@
    <property name="font">
     <font>
      <pointsize>10</pointsize>
-     <weight>50</weight>
+     <weight>400</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -336,7 +332,7 @@
    <property name="font">
     <font>
      <pointsize>10</pointsize>
-     <weight>75</weight>
+     <weight>700</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -367,7 +363,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -435,7 +431,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -461,7 +457,7 @@
     <property name="font">
      <font>
       <pointsize>8</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -487,7 +483,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>
@@ -507,7 +503,7 @@
     <property name="font">
      <font>
       <pointsize>10</pointsize>
-      <weight>50</weight>
+      <weight>400</weight>
       <bold>false</bold>
      </font>
     </property>

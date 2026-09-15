@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>DialogChargerGuichet</class>
  <widget class="QDialog" name="DialogChargerGuichet">
@@ -44,7 +44,7 @@
    <property name="font">
     <font>
      <pointsize>9</pointsize>
-     <weight>75</weight>
+     <weight>700</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -64,7 +64,7 @@
    <property name="font">
     <font>
      <pointsize>9</pointsize>
-     <weight>75</weight>
+     <weight>700</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -227,7 +227,7 @@
    <property name="font">
     <font>
      <pointsize>9</pointsize>
-     <weight>75</weight>
+     <weight>700</weight>
      <italic>false</italic>
      <bold>true</bold>
     </font>

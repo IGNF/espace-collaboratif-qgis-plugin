@@ -4,8 +4,11 @@ import os
 import urllib.parse
 import uuid
 import webbrowser
+import json
 
-import requests
+from qgis.core import QgsBlockingNetworkRequest
+from qgis.PyQt.QtNetwork import QNetworkRequest, QSslConfiguration, QSslSocket
+from qgis.PyQt.QtCore import QUrl
 
 from .KeycloakAuthListener import KeycloakAuthListener
 
@@ -24,11 +27,8 @@ class KeycloakService:
         self.realm_name = realm_name
         self.client_id = client_id
         self.client_secret = client_secret
-        self.session = requests.Session()
-        self.session.verify = ssl_verify
-        if proxies is not None:
-            self.session.proxies.update(proxies)
-            print("session.proxies : {}".format(self.session.proxies))
+        self.ssl_verify = ssl_verify
+        self.proxies = proxies
 
         self.ip = "127.0.0.1"
         self.port = 7070
@@ -93,23 +93,25 @@ class KeycloakService:
 
         token_url = "{}realms/{}/protocol/openid-connect/token".format(self.base_uri, self.realm_name)
         print("[KeycloakService] POST token exchange → {}".format(token_url))
-        print("[KeycloakService] Proxy: {}".format(self.session.proxies or 'none (system)'))
-        response = self.session.post(token_url, data=data, timeout=(30, 60))
-        print("[KeycloakService] Token response: status={} | url={}".format(response.status_code, response.url))
-        if response.status_code != 200:
-            print("[KeycloakService] Token error body: {}".format(response.text[:500]))
-            raise Exception("Failed to get access token: {}".format(response.text))
+        print("[KeycloakService] Proxy: {}".format(self.proxies or 'none (system)'))
 
-        return response.json()
+        status, text = self._send(token_url, data=data)
+        print("[KeycloakService] Token response: status={}".format(status))
+    
+        if status != 200:
+            print("[KeycloakService] Token error body: {}".format(text[:500]))
+            raise Exception("Failed to get access token: {}".format(text))
+
+        return json.loads(text)
+    
 
     def get_userinfo(self, access_token: str):
         data = {"access_token": access_token}
         userinfo_url = "{}realms/{}/protocol/openid-connect/userinfo".format(self.base_uri, self.realm_name)
-        response = self.session.post(userinfo_url, data=data)
-        if response.status_code != 200:
+        status, text = self._send(userinfo_url, data=data)
+        if status != 200:
             raise Exception("Failed to get user info")
-
-        return response.json()
+        return json.loads(text)
 
     def logout(self):
         params_encoded = urllib.parse.urlencode({"client_id": self.client_id})
@@ -123,6 +125,40 @@ class KeycloakService:
         webbrowser.open(logout_url, new=0, autoraise=True)
 
     def get_well_known_config(self) -> dict:
-        response = self.session.get("{}realms/{}/.well-known/openid-configuration".format(self.base_uri,
-                                                                                          self.realm_name))
-        return response.json()
+        url = "{}realms/{}/.well-known/openid-configuration".format(self.base_uri, self.realm_name)
+        status, text = self._send(url)
+        return json.loads(text)
+
+    def _send(self, url, data=None):
+        """
+        Envoie une requête GET (data=None) ou POST (data=dict, form-urlencoded) via l'API réseau de QGIS.
+
+        :return: (status_code, text)
+        """
+        request = QNetworkRequest(QUrl(url))
+
+        # Équivalent de session.verify = False
+        if not self.ssl_verify:
+            sslConfig = QSslConfiguration.defaultConfiguration()
+            sslConfig.setPeerVerifyMode(QSslSocket.PeerVerifyMode.VerifyNone)
+            request.setSslConfiguration(sslConfig)
+
+        blocking = QgsBlockingNetworkRequest()
+
+        if data is None:
+            err = blocking.get(request)
+        else:
+            request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader,
+                            "application/x-www-form-urlencoded")
+            body = urllib.parse.urlencode(data).encode("utf-8")
+            err = blocking.post(request, body)
+
+        reply = blocking.reply()
+        status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+
+        # Erreur réseau/proxy sans réponse HTTP exploitable
+        if err != QgsBlockingNetworkRequest.ErrorCode.NoError and status is None:
+            raise Exception("KeycloakService : erreur réseau {}".format(blocking.errorMessage()))
+
+        text = bytes(reply.content()).decode("utf-8")
+        return status, text

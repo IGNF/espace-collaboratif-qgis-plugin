@@ -10,6 +10,7 @@ from .core.Theme import Theme
 from .core.Community import Community
 from .core.ThemeAttributes import ThemeAttributes
 from .PluginHelper import PluginHelper
+from .PluginPath import resources_path
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreateReport_base.ui'))
@@ -62,6 +63,7 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.setWindowIcon(QtGui.QIcon(str(resources_path('ign.png'))))
         self.setFixedSize(self.width(), self.height())
         self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.__context = context

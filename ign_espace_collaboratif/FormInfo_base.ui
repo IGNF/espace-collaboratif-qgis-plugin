@@ -122,9 +122,6 @@
    <property name="text">
     <string/>
    </property>
-   <property name="pixmap">
-    <pixmap resource="resources.qrc">:/plugins/RipartPlugin/images/logo_IGN.png</pixmap>
-   </property>
    <property name="scaledContents">
     <bool>true</bool>
    </property>
