@@ -1,301 +1,301 @@
 # -*- coding: utf-8 -*-
-import requests
+import json
+import os
+
+from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QDate
-from qgis.PyQt.QtGui import QFont, QColor
+from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtWidgets import (
-    QApplication, QCheckBox, QDateEdit, QDialog, QDialogButtonBox, QGroupBox,
-    QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
-    QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QApplication, QDialog, QFrame, QHeaderView, QLabel, QTableWidget,
+    QTableWidgetItem, QVBoxLayout,
 )
+
 from .core.PluginLogger import PluginLogger
+from .core.StatisticsCharts import (
+    DonutChart, HBarChart,
+    COLOR_INSERT, COLOR_UPDATE, COLOR_DELETE, COLOR_TX, COLOR_FAIL, CLIENT_PALETTE,
+)
+from .core.StatisticsData import StatisticsData
+from .core.StatisticsService import StatisticsService
 
-# Mapping raw API client identifiers → display labels
-CLIENT_LABELS = {
-    "SIG-QGIS": "QGIS Plugin",
-    "WEB": "Interface Web",
-    "API": "API directe",
-    "MOBILE": "Application Mobile",
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), 'FormStatistics_base.ui'))
+
+DIALOG_STYLE = """
+QGroupBox {
+    font-weight: 600;
+    border: 1px solid #CFD8DC;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding: 10px 8px 8px 8px;
 }
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 4px;
+    color: #37474F;
+}
+QFrame#kpiCard, QFrame#donutCard, QFrame#clientCard {
+    border: 1px solid #CFD8DC;
+    border-radius: 8px;
+    background: palette(base);
+}
+QFrame#headerBanner { background: #0D3B66; border-radius: 8px; }
+QLabel#headerTitle { color: white; font-size: 15px; font-weight: 600; }
+QLabel#headerPeriod { color: #BBDEFB; font-size: 11px; }
+QLabel#donutTitle, QLabel#clientTitle, QLabel#userTitle {
+    color: #455A64; font-weight: 600;
+}
+"""
 
 
-class FormStatistics(QDialog):
+class FormStatistics(QDialog, FORM_CLASS):
     """
     Dialogue d'affichage des statistiques d'une base de données de l'espace collaboratif.
 
-    Permet de filtrer par période (dates de début/fin) et, si l'utilisateur
-    est administrateur du groupe, de filtrer par identifiant utilisateur.
+    La structure statique est décrite dans ``FormStatistics_base.ui`` ; l'accès
+    réseau est délégué à :class:`StatisticsService` et la mise en forme des
+    données à :class:`StatisticsData`.
     """
 
     def __init__(self, context, databaseid: int, databasename: str, parent=None) -> None:
         super(FormStatistics, self).__init__(parent)
+        self.setupUi(self)
+
         self.__context = context
         self.__databaseid = databaseid
         self.__databasename = databasename
         self.__logger = PluginLogger("FormStatistics").getPluginLogger()
-        self.__isAdmin = context.isUserCommunityAdmin()
+        self.__service = StatisticsService(context)
+        self.__kpi = {}
 
-        self.setWindowTitle(u"Statistiques – {}".format(databasename if databasename else "base {}".format(databaseid)))
-        self.setMinimumWidth(580)
-        self.setMinimumHeight(560)
-        self.setSizeGripEnabled(True)
+        self.setWindowTitle(u"Statistiques – {}".format(
+            databasename if databasename else u"base {}".format(databaseid)))
+        self.setStyleSheet(DIALOG_STYLE)
 
-        self.__buildUi()
+        self.__setupWidgets()
+        self.__connectSignals()
         self.__loadStatistics()
 
     # ------------------------------------------------------------------
-    # UI construction
+    # UI wiring
     # ------------------------------------------------------------------
 
-    def __buildUi(self) -> None:
-        main = QVBoxLayout(self)
-        main.setSpacing(10)
-        main.setContentsMargins(12, 12, 12, 12)
+    def __setupWidgets(self) -> None:
+        self.headerTitle.setText(self.windowTitle())
 
-        main.addWidget(self.__buildFilterGroup())
+        self.dateStart.setDate(QDate.currentDate().addMonths(-1))
+        self.dateEnd.setDate(QDate.currentDate())
+        self.userRow.setVisible(self.__context.isUserCommunityAdmin())
 
-        self.__periodLabel = QLabel(u"Période effective : –")
-        self.__periodLabel.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        font = QFont()
-        font.setItalic(True)
-        self.__periodLabel.setFont(font)
-        main.addWidget(self.__periodLabel)
+        for key, caption, accent in (
+            ("contrib", u"Contributions", "#0D3B66"),
+            ("insert", u"Insertions", COLOR_INSERT),
+            ("update", u"Modifications", COLOR_UPDATE),
+            ("delete", u"Suppressions", COLOR_DELETE),
+            ("tx", u"Transactions", COLOR_TX),
+            ("fail", u"Échecs", COLOR_FAIL),
+        ):
+            self.kpiRow.layout().addWidget(self.__makeKpiCard(key, caption, accent))
 
-        main.addWidget(self.__buildContribGroup())
-        main.addWidget(self.__buildTransGroup())
+        self.__donut = DonutChart()
+        self.donutContainer.layout().addWidget(self.__donut)
+        self.__clientChart = HBarChart()
+        self.clientContainer.layout().addWidget(self.__clientChart)
+        self.__userChart = HBarChart()
+        self.userChartContainer.layout().addWidget(self.__userChart)
 
-        self.__statusLabel = QLabel(u"")
-        self.__statusLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.__statusLabel.setWordWrap(True)
-        main.addWidget(self.__statusLabel)
-
-        btnBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        btnBox.rejected.connect(self.reject)
-        main.addWidget(btnBox)
-
-    def __buildFilterGroup(self) -> QGroupBox:
-        group = QGroupBox(u"Filtres")
-        layout = QVBoxLayout(group)
-        layout.setSpacing(8)
-
-        # Date row
-        dateRow = QHBoxLayout()
-
-        dateRow.addWidget(QLabel(u"Du :"))
-        self.__dateStart = QDateEdit()
-        self.__dateStart.setDisplayFormat("dd/MM/yyyy")
-        self.__dateStart.setCalendarPopup(True)
-        self.__dateStart.setDate(QDate.currentDate().addMonths(-1))
-        self.__dateStart.setMinimumDate(QDate(2000, 1, 1))
-        self.__dateStart.setEnabled(False)
-        dateRow.addWidget(self.__dateStart)
-
-        self.__cbStart = QCheckBox(u"Activer")
-        self.__cbStart.setChecked(False)
-        self.__cbStart.toggled.connect(self.__dateStart.setEnabled)
-        dateRow.addWidget(self.__cbStart)
-
-        dateRow.addSpacing(24)
-
-        dateRow.addWidget(QLabel(u"Au :"))
-        self.__dateEnd = QDateEdit()
-        self.__dateEnd.setDisplayFormat("dd/MM/yyyy")
-        self.__dateEnd.setCalendarPopup(True)
-        self.__dateEnd.setDate(QDate.currentDate())
-        self.__dateEnd.setMinimumDate(QDate(2000, 1, 1))
-        self.__dateEnd.setEnabled(False)
-        dateRow.addWidget(self.__dateEnd)
-
-        self.__cbEnd = QCheckBox(u"Activer")
-        self.__cbEnd.setChecked(False)
-        self.__cbEnd.toggled.connect(self.__dateEnd.setEnabled)
-        dateRow.addWidget(self.__cbEnd)
-
-        dateRow.addStretch()
-        layout.addLayout(dateRow)
-
-        # User ID row (admin only)
-        self.__userRow = QWidget()
-        userLayout = QHBoxLayout(self.__userRow)
-        userLayout.setContentsMargins(0, 0, 0, 0)
-        userLayout.addWidget(QLabel(u"Filtrer par utilisateur (id) :"))
-        self.__userIdEdit = QLineEdit()
-        self.__userIdEdit.setPlaceholderText(u"Laisser vide pour tous les utilisateurs")
-        self.__userIdEdit.setMaximumWidth(220)
-        userLayout.addWidget(self.__userIdEdit)
-        userLayout.addStretch()
-        layout.addWidget(self.__userRow)
-        self.__userRow.setVisible(self.__isAdmin)
-
-        # Refresh button
-        btnRow = QHBoxLayout()
-        btnRow.addStretch()
-        self.__btnRefresh = QPushButton(u"Rafraîchir")
-        self.__btnRefresh.setFixedWidth(120)
-        self.__btnRefresh.clicked.connect(self.__loadStatistics)
-        btnRow.addWidget(self.__btnRefresh)
-        layout.addLayout(btnRow)
-
-        return group
-
-    def __buildContribGroup(self) -> QGroupBox:
-        group = QGroupBox(u"Contributions par client")
-        layout = QVBoxLayout(group)
-        self.__contribTable = QTableWidget(0, 2)
-        self.__contribTable.setHorizontalHeaderLabels([u"Client", u"Contributions"])
-        self.__contribTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.__contribTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        self.__contribTable.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.__contribTable.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.__contribTable.setAlternatingRowColors(True)
-        self.__contribTable.verticalHeader().setVisible(False)
-        self.__contribTable.setMinimumHeight(110)
-        self.__contribTable.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        layout.addWidget(self.__contribTable)
-        return group
-
-    def __buildTransGroup(self) -> QGroupBox:
-        group = QGroupBox(u"Transactions")
-        layout = QVBoxLayout(group)
-
-        totalRow = QHBoxLayout()
-        totalRow.addWidget(QLabel(u"Total de transactions :"))
-        self.__transTotal = QLabel(u"0")
         boldFont = QFont()
         boldFont.setBold(True)
         boldFont.setPointSize(11)
-        self.__transTotal.setFont(boldFont)
-        totalRow.addWidget(self.__transTotal)
-        totalRow.addStretch()
-        layout.addLayout(totalRow)
+        self.labelTransTotal.setFont(boldFont)
+        self.labelTransFailed.setFont(boldFont)
+        self.labelTransFailed.setStyleSheet("color: {};".format(COLOR_FAIL))
 
-        layout.addWidget(QLabel(u"Tables modifiées :"))
-        self.__tablesTable = QTableWidget(0, 1)
-        self.__tablesTable.setHorizontalHeaderLabels([u"Table"])
-        self.__tablesTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.__tablesTable.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.__tablesTable.setAlternatingRowColors(True)
-        self.__tablesTable.verticalHeader().setVisible(False)
-        self.__tablesTable.setMinimumHeight(80)
-        self.__tablesTable.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        layout.addWidget(self.__tablesTable)
-        return group
+        self.__initTable(self.tableByUser,
+                         [u"Utilisateur", u"Insertions", u"Modifications",
+                          u"Suppressions", u"Transactions"])
+        self.__initTable(self.tableTables, [u"Table"])
+        self.groupByUser.setVisible(False)
 
+    def __connectSignals(self) -> None:
+        self.cbStart.toggled.connect(self.dateStart.setEnabled)
+        self.cbEnd.toggled.connect(self.dateEnd.setEnabled)
+        self.btnRefresh.clicked.connect(self.__loadStatistics)
+        self.buttonBox.rejected.connect(self.reject)
+
+    def __makeKpiCard(self, key: str, caption: str, accent: str) -> QFrame:
+        card = QFrame()
+        card.setObjectName("kpiCard")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(2)
+
+        value = QLabel(u"0")
+        font = QFont()
+        font.setPointSize(18)
+        font.setBold(True)
+        value.setFont(font)
+        value.setStyleSheet("color: {}; border: none;".format(accent))
+
+        caption_label = QLabel(caption)
+        caption_label.setStyleSheet("color: #607D8B; border: none;")
+
+        layout.addWidget(value)
+        layout.addWidget(caption_label)
+        self.__kpi[key] = value
+        return card
+
+    @staticmethod
+    def __initTable(table: QTableWidget, headers: list) -> None:
+        table.setColumnCount(len(headers))
+        table.setHorizontalHeaderLabels(headers)
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        for col in range(1, len(headers)):
+            table.horizontalHeader().setSectionResizeMode(
+                col, QHeaderView.ResizeMode.ResizeToContents)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setAlternatingRowColors(True)
+        table.verticalHeader().setVisible(False)
+
+    # ------------------------------------------------------------------
+    # Networking
+    # ------------------------------------------------------------------
 
     def __buildParams(self) -> dict:
         params = {}
-        if self.__cbStart.isChecked():
-            params['startDate'] = self.__dateStart.date().toString("yyyy-MM-dd")
-        if self.__cbEnd.isChecked():
-            params['endDate'] = self.__dateEnd.date().toString("yyyy-MM-dd")
-        if self.__isAdmin:
-            uid = self.__userIdEdit.text().strip()
+        if self.cbStart.isChecked():
+            params['startDate'] = self.dateStart.date().toString("yyyy-MM-dd")
+        if self.cbEnd.isChecked():
+            params['endDate'] = self.dateEnd.date().toString("yyyy-MM-dd")
+        if self.userRow.isVisible():
+            uid = self.userIdEdit.text().strip()
             if uid:
                 params['user_id'] = uid
         return params
 
     def __loadStatistics(self) -> None:
-        self.__btnRefresh.setEnabled(False)
-        self.__statusLabel.setStyleSheet("")
-        self.__statusLabel.setText(u"Chargement en cours…")
+        self.btnRefresh.setEnabled(False)
+        self.statusLabel.setStyleSheet("")
+        self.statusLabel.setText(u"Chargement en cours…")
         QApplication.processEvents()
 
         try:
-            url = "{}/gcms/api/databases/{}/statistic".format(
-                self.__context.urlHostEspaceCo, self.__databaseid)
-            headers = {
-                'Authorization': '{} {}'.format(
-                    self.__context.getTokenType(), self.__context.getTokenAccess())
-            }
-            ssl_verify = "localhost.ign.fr" not in url
-            response = requests.get(
-                url,
-                headers=headers,
-                proxies=self.__context.getProxies(),
-                params=self.__buildParams(),
-                verify=ssl_verify,
-                timeout=30,
-            )
-            response.encoding = 'utf-8'
-
-            if response.status_code == 200:
-                self.__fillData(response.json())
-                self.__statusLabel.setText(u"")
+            params = self.__buildParams()
+            result = self.__service.getStatistics(self.__databaseid, params)
+            if result.ok:
+                payload = result.payload
+                self.__printDebugContext(params, payload)
+                # reveal user filter if the API confirms elevated access
+                if isinstance(payload.get('aggregate'), dict):
+                    self.userRow.setVisible(True)
+                self.__fillData(StatisticsData.fromPayload(payload))
+                self.statusLabel.setText(u"")
             else:
-                self.__statusLabel.setStyleSheet("color: red;")
-                self.__statusLabel.setText(
-                    u"Erreur {} : {}".format(response.status_code, response.text[:300]))
+                self.statusLabel.setStyleSheet("color: red;")
+                code = result.status_code if result.status_code is not None else u"?"
+                self.statusLabel.setText(
+                    u"Erreur {} : {}".format(code, result.error[:300]))
         except Exception as e:
             self.__logger.error("FormStatistics.__loadStatistics : {}".format(e))
-            self.__statusLabel.setStyleSheet("color: red;")
-            self.__statusLabel.setText(u"Erreur de connexion : {}".format(str(e)))
+            self.statusLabel.setStyleSheet("color: red;")
+            self.statusLabel.setText(u"Erreur de connexion : {}".format(str(e)))
         finally:
-            self.__btnRefresh.setEnabled(True)
+            self.btnRefresh.setEnabled(True)
+
+    def __printDebugContext(self, params: dict, payload: dict) -> None:
+        message = {
+            'database_id': self.__databaseid,
+            'database_name': self.__databasename,
+            'params': params,
+            'response_mode': 'aggregate' if isinstance(payload.get('aggregate'), dict) else 'user',
+            'response_keys': sorted(payload.keys()),
+            'api_debug': payload.get('debug', {}),
+        }
+        print("[STATISTICS DEBUG] {}".format(json.dumps(message, ensure_ascii=False, sort_keys=True)))
 
     # ------------------------------------------------------------------
     # Data display
     # ------------------------------------------------------------------
 
-    def __fillData(self, data: dict) -> None:
-        self.__fillPeriod(data.get('period', {}))
-        # Group-admin response wraps results under 'aggregate'; regular users expose them at top level
-        if 'aggregate' in data:
-            agg = data['aggregate']
-            self.__fillContributions(agg.get('contributions', {}).get('by_client', {}))
-            self.__fillTransactions(agg.get('transactions', {}))
-        else:
-            self.__fillContributions(data.get('contributions', {}).get('by_client', {}))
-            self.__fillTransactions(data.get('transactions', {}))
+    def __fillData(self, data: StatisticsData) -> None:
+        self.__fillPeriod(data)
 
-    def __fillPeriod(self, period: dict) -> None:
-        start = period.get('start') or u"–"
-        end = period.get('end') or u"–"
-        self.__periodLabel.setText(u"Période effective : {} → {}".format(start, end))
+        self.__kpi['contrib'].setText(str(data.contrib_total))
+        self.__kpi['insert'].setText(str(data.inserts))
+        self.__kpi['update'].setText(str(data.updates))
+        self.__kpi['delete'].setText(str(data.deletes))
+        self.__kpi['tx'].setText(str(data.tx_total))
+        self.__kpi['fail'].setText(str(data.tx_failed))
 
-    def __fillContributions(self, by_client: dict) -> None:
-        self.__contribTable.clearSpans()
-        self.__contribTable.setRowCount(0)
+        self.__donut.setSegments([
+            (u"Insertions", data.inserts, COLOR_INSERT),
+            (u"Modifications", data.updates, COLOR_UPDATE),
+            (u"Suppressions", data.deletes, COLOR_DELETE),
+        ])
+        self.__clientChart.setBars([
+            (label, count, CLIENT_PALETTE[index % len(CLIENT_PALETTE)])
+            for index, (label, count) in enumerate(data.clients)
+        ])
 
-        # API returns {clientName: {Insert: N, Update: N, Delete: N}}
-        if not by_client:
-            self.__contribTable.setRowCount(1)
-            item = QTableWidgetItem(u"Aucune contribution sur cette période")
-            item.setForeground(QColor("#888888"))
-            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.__contribTable.setItem(0, 0, item)
-            self.__contribTable.setSpan(0, 0, 1, 2)
-            return
+        self.__fillTransactions(data)
+        self.__fillByUser(data)
 
-        for client_name, counts in by_client.items():
-            row = self.__contribTable.rowCount()
-            self.__contribTable.insertRow(row)
+    def __fillPeriod(self, data: StatisticsData) -> None:
+        self.headerPeriod.setText(
+            u"Période effective : {} → {}".format(data.start, data.end))
 
-            label = CLIENT_LABELS.get(client_name, client_name)
-            total = counts.get('Insert', 0) + counts.get('Update', 0) + counts.get('Delete', 0)
+        # Sans filtre explicite, la route renvoie la 1ère/dernière date de
+        # transaction : on cale les sélecteurs dessus pour servir de base.
+        startDate = QDate.fromString(data.start, "yyyy-MM-dd")
+        endDate = QDate.fromString(data.end, "yyyy-MM-dd")
+        if startDate.isValid() and not self.cbStart.isChecked():
+            self.dateStart.setMinimumDate(startDate)
+            self.dateStart.setDate(startDate)
+        if endDate.isValid() and not self.cbEnd.isChecked():
+            self.dateEnd.setDate(endDate)
 
-            client_item = QTableWidgetItem(label)
-            self.__contribTable.setItem(row, 0, client_item)
+    def __fillTransactions(self, data: StatisticsData) -> None:
+        self.labelTransTotal.setText(str(data.tx_total))
+        self.labelTransFailed.setText(str(data.tx_failed))
 
-            count_item = QTableWidgetItem(str(total))
-            count_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
-            self.__contribTable.setItem(row, 1, count_item)
-
-    def __fillTransactions(self, transactions: dict) -> None:
-        self.__transTotal.setText(str(transactions.get('total', 0)))
-
-        touched = transactions.get('touched_tables', [])
-        self.__tablesTable.clearSpans()
-        self.__tablesTable.setRowCount(0)
-
-        if not touched:
-            self.__tablesTable.setRowCount(1)
+        self.tableTables.clearSpans()
+        self.tableTables.setRowCount(0)
+        if not data.tables:
+            self.tableTables.setRowCount(1)
             item = QTableWidgetItem(u"Aucune table modifiée")
             item.setForeground(QColor("#888888"))
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.__tablesTable.setItem(0, 0, item)
+            self.tableTables.setItem(0, 0, item)
             return
 
-        for table in touched:
-            row = self.__tablesTable.rowCount()
-            self.__tablesTable.insertRow(row)
+        for table in data.tables:
+            row = self.tableTables.rowCount()
+            self.tableTables.insertRow(row)
             name = table if isinstance(table, str) else table.get('name', str(table))
-            self.__tablesTable.setItem(row, 0, QTableWidgetItem(name))
+            self.tableTables.setItem(row, 0, QTableWidgetItem(name))
+
+    def __fillByUser(self, data: StatisticsData) -> None:
+        self.tableByUser.setRowCount(0)
+
+        if not data.users:
+            self.groupByUser.setVisible(False)
+            self.__userChart.setBars([])
+            return
+
+        self.groupByUser.setVisible(True)
+        for entry in data.users:
+            row = self.tableByUser.rowCount()
+            self.tableByUser.insertRow(row)
+            self.tableByUser.setItem(row, 0, QTableWidgetItem(entry['username']))
+            values = [entry['inserts'], entry['updates'], entry['deletes'], entry['tx_total']]
+            for col, val in enumerate(values, start=1):
+                item = QTableWidgetItem(str(val))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
+                self.tableByUser.setItem(row, col, item)
+
+        top = sorted(data.users, key=lambda entry: entry['total'], reverse=True)[:10]
+        self.__userChart.setBars([
+            (entry['username'], entry['total'], CLIENT_PALETTE[index % len(CLIENT_PALETTE)])
+            for index, entry in enumerate(top)
+        ])
