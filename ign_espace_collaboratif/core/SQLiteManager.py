@@ -639,6 +639,36 @@ class SQLiteManager(object):
         return result
 
     @staticmethod
+    def ensureColumnExists(tableName, columnName, columnType) -> None:
+        """
+        S'assure qu'une colonne existe dans une table donnée et l'ajoute si besoin (migration défensive).
+
+        Utile lorsque la table existait déjà (créée par une version antérieure du plugin ou suite à un
+        échec silencieux d'un DROP/CREATE TABLE, ex. base momentanément verrouillée par une couche déjà
+        chargée) et qu'elle ne possède donc pas encore toutes les colonnes attendues par la version
+        courante du plugin.
+
+        :param tableName: nom de la table
+        :type tableName: str
+
+        :param columnName: nom de la colonne à vérifier/ajouter
+        :type columnName: str
+
+        :param columnType: type SQL de la colonne à ajouter (ex. 'TEXT', 'INTEGER')
+        :type columnType: str
+        """
+        if not SQLiteManager.isTableExist(tableName):
+            return
+        result = SQLiteManager.isColumnExist(tableName, columnName)
+        if result is not None and result[0] == 1:
+            return
+        tName = SQLiteManager._quote_identifier(tableName)
+        cName = SQLiteManager._quote_identifier(columnName)
+        sql = u"ALTER TABLE {} ADD COLUMN {} {}".format(tName, cName, columnType)  # nosec B608
+        SQLiteManager.executeSQL(sql)
+        print("SQLiteManager.ensureColumnExists : colonne {} ajoutée à la table {}.".format(columnName, tableName))
+
+    @staticmethod
     def selectColumnFromTable(tableName, columnName) -> ():
         """
         :param tableName: nom de la table
@@ -872,6 +902,7 @@ class SQLiteManager(object):
               u"Auteur TEXT, " + \
               u"Commune TEXT, " + \
               u"Insee TEXT, " + \
+              u"Groupe TEXT, " + \
               u"Département TEXT, " + \
               u"Département_id TEXT, " + \
               u"Date_création TEXT, " + \
@@ -889,6 +920,10 @@ class SQLiteManager(object):
         # creating a POINT Geometry column
         sql = "SELECT AddGeometryColumn('Signalement', 'geom', " + str(cst.EPSGCRS4326) + ", 'POINT', 'XY')"
         SQLiteManager.executeSQL(sql)
+        # Migration défensive : si la table existait déjà (DROP TABLE précédent en échec silencieux,
+        # ex. base verrouillée par une couche déjà chargée dans le projet), s'assure que la colonne
+        # 'Groupe' est bien présente.
+        SQLiteManager.ensureColumnExists('Signalement', 'Groupe', 'TEXT')
 
     @staticmethod
     def createSketchTable(nameTable, geometryType) -> None:

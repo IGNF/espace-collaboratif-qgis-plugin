@@ -15,6 +15,7 @@ class Report(object):
     __author = ''
     __commune = ''
     __insee = ''
+    __communityName = ''
     __departement = ''
     __departementId = ''
     __dateCreation = ''
@@ -51,6 +52,8 @@ class Report(object):
             self.__commune = data['commune']['title']
         if PluginHelper.keysExists('commune', 'name', data):
             self.__insee = data['commune']['name']
+        if PluginHelper.keyExist('community_name', data):
+            self.__communityName = data['community_name']
         if PluginHelper.keysExists('departement', 'title', data):
             self.__departement = data['departement']['title']
         if PluginHelper.keysExists('departement', 'name', data):
@@ -99,6 +102,29 @@ class Report(object):
         :return: le numéro insee de la commune
         """
         return self.__insee
+
+    def getCommunityName(self) -> str:
+        """
+        :return: le nom du groupe (communauté) auquel appartient le signalement
+        """
+        return self.__communityName
+
+    def __extractCommunityNameFromAttributes(self, attributes) -> str:
+        """
+        Récupère le nom du groupe (community_name) à partir de la liste des thèmes/attributs d'un signalement,
+        lorsque cette information n'est pas présente directement à la racine du json.
+
+        :param attributes: la liste des thèmes ("attributes") d'un signalement
+        :type attributes: list
+
+        :return: le nom du groupe trouvé, une chaine vide sinon
+        """
+        if attributes is None:
+            return ''
+        for attribute in attributes:
+            if PluginHelper.keyExist('community_name', attribute):
+                return attribute['community_name']
+        return ''
 
     def getStatut(self) -> str:
         """
@@ -155,6 +181,7 @@ class Report(object):
             'Auteur': self.getStrAuthor(),
             'Commune': self.__commune,
             'Insee': self.__insee,
+            'Groupe': self.__communityName,
             'Département': self.__departement,
             'Département_id': self.__departementId,
             'Date_création': self.getStrDateCreation(),
