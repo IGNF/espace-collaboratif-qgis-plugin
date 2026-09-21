@@ -4,16 +4,18 @@ from typing import Optional
 from qgis.PyQt import QtGui, QtWidgets, QtCore, uic
 from qgis.PyQt.QtCore import Qt, QDate, QDateTime, QTime
 from qgis.PyQt.QtWidgets import QTreeWidgetItem, QDialogButtonBox, QDateEdit, QDateTimeEdit
-from .core.PluginLogger import PluginLogger
-from .core import Constantes as cst
-from .core.Theme import Theme
-from .core.Community import Community
-from .core.ThemeAttributes import ThemeAttributes
-from .PluginHelper import PluginHelper
-from .PluginPath import resources_path
+from ..core.PluginLogger import PluginLogger
+from ..core import Constantes as cst
+from ..core.Theme import Theme
+from ..core.Community import Community
+from ..core.ThemeAttributes import ThemeAttributes
+from ..PluginHelper import PluginHelper
+from ..PluginPath import resources_path
 
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormCreateReport_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "form_create_report_base.ui")
+)
 
 
 class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):

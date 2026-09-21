@@ -22,9 +22,9 @@ from .core.Community import Community
 from .core.FlagProject import FlagProject
 from .core import Constantes as cst
 from .Contexte import Contexte
-from .FormChargerGuichet import FormChargerGuichet
-from .FormInfo import FormInfo
-from .FormConfigure import FormConfigure
+from .gui.form_charger_guichet import FormChargerGuichet
+from .gui.form_info import FormInfo
+from .gui.form_configure import FormConfigure
 from .ToolsReport import ToolsReport
 from .SeeReport import SeeReport
 from .CreateReport import CreateReport

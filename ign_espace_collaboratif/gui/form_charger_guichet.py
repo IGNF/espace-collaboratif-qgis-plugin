@@ -2,14 +2,16 @@ import os
 from qgis.core import Qgis
 from qgis.PyQt.QtWidgets import QDialogButtonBox, QTableWidget
 from qgis.PyQt import QtCore, QtWidgets, uic
-from .PluginHelper import PluginHelper
-from .core.BBox import BBox
-from .core.NoProfileException import NoProfileException
-from .core.SQLiteManager import SQLiteManager
-from .core.PluginLogger import PluginLogger
-from .core import Constantes as cst
+from ..PluginHelper import PluginHelper
+from ..core.BBox import BBox
+from ..core.NoProfileException import NoProfileException
+from ..core.SQLiteManager import SQLiteManager
+from ..core.PluginLogger import PluginLogger
+from ..core import Constantes as cst
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChargerGuichet_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "form_charger_guichet_base.ui")
+)
 
 
 class FormChargerGuichet(QtWidgets.QDialog, FORM_CLASS):

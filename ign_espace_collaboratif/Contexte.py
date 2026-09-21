@@ -40,8 +40,8 @@ from .Import_WMSR import ImportWMSR
 from .Import_WFS import ImportWFS
 from .TableViewConstraints import TableViewConstraints
 from .PluginHelper import PluginHelper
-from .FormInfo import FormInfo
-from .FormChoixGroupe import FormChoixGroupe
+from .gui.form_info import FormInfo
+from .gui.form_choix_groupe import FormChoixGroupe
 
 
 class Contexte(object):
