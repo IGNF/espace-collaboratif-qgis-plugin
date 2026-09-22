@@ -200,7 +200,9 @@ class Community(object):
         logger = PluginLogger("Community").getPluginLogger()
 
         def fetch_name(layer):
-            url = "{}/gcms/api/databases/{}/tables/{}".format(self.__url, layer.databaseid, layer.tableid)
+            url = "{}/gcms/api/databases/{}/tables/{}".format(
+                self.__url.rstrip("/"), layer.databaseid, layer.tableid
+            )
             req = QNetworkRequest(QUrl(url))
             req.setRawHeader(b'Authorization', auth_header)
             blocking_req = QgsBlockingNetworkRequest()

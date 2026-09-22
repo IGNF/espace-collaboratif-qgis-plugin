@@ -14,6 +14,4 @@ help export-ignore
 README.md export-ignore
 CONTRIBUTING.md export-ignore
 Makefile export-ignore
-pb_tool.cfg export-ignore
-pylintrc export-ignore
 plugin_upload.py export-ignore

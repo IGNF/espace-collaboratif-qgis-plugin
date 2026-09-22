@@ -8,7 +8,7 @@
 
 [general]
 name=IGN_Espace_Collaboratif
-qgisMinimumVersion=4.0
+qgisMinimumVersion=3.44
 qgisMaximumVersion=4.99
 description=IGN reporting and contribution service, plugin QGIS4
 version=5.2.1
