@@ -42,10 +42,9 @@ class ToolsReport(object):
 
     def __addReportSketchLayersToTheCurrentMap(self) -> None:
         """
-        Ajoute les couches 'Signalement', 'Croquis_EC_Point', 'Croquis_EC_Ligne', 'Croquis_EC_Polygone'
-        dans le projet courant ainsi que les liens de connexion vers la base SQLite 'nomProjet_espaceco.sqlite'.
-        Si les couches existent déjà (projet issu d'une version antérieure), leur source de données est mise à jour
-        pour pointer vers le SQLite courant.
+        Ajoute les couches dans le projet courant ainsi que les liens de connexion vers la base SQLite
+        Si les couches existent déjà, elles sont retirées puis recréées afin de forcer QGIS à relire la
+        liste complète des champs depuis la base SQLite.
         """
         uri = self.__context.getUriDatabaseSqlite()
         self.__logger.debug(uri.uri())
@@ -54,23 +53,21 @@ class ToolsReport(object):
         for table in PluginHelper.reportSketchLayersName:
             uri.setDataSource('', table, 'geom')
             uri.setSrid(str(cst.EPSGCRS4326))
-            if not PluginHelper.keyExist(table, maplayers):
-                vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
-                vlayer.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326))
-                QgsProject.instance().addMapLayer(vlayer, False)
-                root.insertLayer(0, vlayer)
-                self.__logger.debug("Layer " + vlayer.name() + " added to map")
-                # ajoute les styles aux couches
-                style = os.path.join(self.__context.projectDir, "espacecoStyles", table + ".qml")
-                vlayer.loadNamedStyle(style)
-            else:
-                # La couche existe déjà (potentiellement depuis une ancienne version).
-                # On met à jour sa source de données pour pointer vers le SQLite courant
-                # afin d'éviter les erreurs dues aux différences de schéma (#176).
+            # La couche existe déjà on la retire du projet pour la recréer entièrement,
+            # ce qui garantit que la liste des champs est bien à jour.
+            if PluginHelper.keyExist(table, maplayers):
                 existingLayer = maplayers[table]
-                existingLayer.setDataSource(uri.uri(), table, 'spatialite')
-                existingLayer.reload()
-                self.__logger.debug("Layer " + table + " reconnected to current SQLite")
+                QgsProject.instance().removeMapLayer(existingLayer.id())
+                self.__logger.debug("Layer " + table + " removed to be recreated with up-to-date fields")
+
+            vlayer = QgsVectorLayer(uri.uri(), table, 'spatialite')
+            vlayer.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(cst.EPSGCRS4326))
+            QgsProject.instance().addMapLayer(vlayer, False)
+            root.insertLayer(0, vlayer)
+            self.__logger.debug("Layer " + vlayer.name() + " added to map")
+            # ajoute les styles aux couches
+            style = os.path.join(self.__context.projectDir, "espacecoStyles", table + ".qml")
+            vlayer.loadNamedStyle(style)
         self.__context.mapCan.refresh()
 
     def getReport(self, idReport) -> Report:
