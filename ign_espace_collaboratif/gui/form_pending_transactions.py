@@ -8,10 +8,10 @@ import os
 
 from qgis.PyQt import QtCore, QtGui, QtWidgets, uic
 
-from .core import Constantes as cst
-from .core.SQLiteManager import SQLiteManager
+from ..core import Constantes as cst
+from ..core.SQLiteManager import SQLiteManager
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormPendingTransactions_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'form_pending_transactions_base.ui'))
 
 
 STATUS_COLORS = {status: QtGui.QColor(hexColor)
