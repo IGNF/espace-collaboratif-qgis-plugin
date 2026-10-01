@@ -7,7 +7,7 @@ from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform
     QgsRectangle, QgsPointXY, QgsGeometry
 
 from .PluginHelper import PluginHelper
-from .FormCreateReport import FormCreateReport
+from .gui.form_create_report import FormCreateReport
 from .core.DynamicProgressBar import DynamicProgressBar
 from .core.BBox import BBox
 from .core.PluginLogger import PluginLogger

@@ -1,11 +1,13 @@
 import os
 from qgis.PyQt import QtCore, QtWidgets, uic
-from .core.Wkt import Wkt
-from .core.PluginLogger import PluginLogger
-from .core.Report import Report
-from .core import Constantes as cst
+from ..core.Wkt import Wkt
+from ..core.PluginLogger import PluginLogger
+from ..core.Report import Report
+from ..core import Constantes as cst
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'SeeReportView_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "see_report_view_base.ui")
+)
 
 
 class SeeReportView(QtWidgets.QDialog, FORM_CLASS):

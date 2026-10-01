@@ -13,9 +13,11 @@ import os
 from qgis.PyQt import QtCore, QtWidgets, uic
 from qgis.PyQt.QtGui import QPixmap
 
-from .PluginPath import resources_path
+from ..PluginPath import resources_path
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormInfo_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "form_info_base.ui")
+)
 
 
 class FormInfo(QtWidgets.QDialog, FORM_CLASS):
