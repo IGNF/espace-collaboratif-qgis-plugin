@@ -354,6 +354,8 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     valuesToDisplay.append(c)
             elif type(attValues) is list:
                 valuesToDisplay = attValues
+
+            # Liste déroulante à choix unique, y compris pour les attributs marqués "multiple" côté serveur.
             item_value = QtWidgets.QComboBox(self.treeWidget)
             item_value.insertItems(0, valuesToDisplay)
 
@@ -593,7 +595,10 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                     errors.append((errorMessage, widgetValue))
                 valueChangedIfTypeAttributeIsJson = self.__convertJsonValue(thItem.text(0), nameAttributeFromItemWidget,
                                                                             valueFromWidget)
-                selectedAttributes[nameAttributeFromItemWidget] = str(valueChangedIfTypeAttributeIsJson)
+                if isinstance(valueChangedIfTypeAttributeIsJson, (list, dict)):
+                    selectedAttributes[nameAttributeFromItemWidget] = valueChangedIfTypeAttributeIsJson
+                else:
+                    selectedAttributes[nameAttributeFromItemWidget] = str(valueChangedIfTypeAttributeIsJson)
             if len(errors) == 0:
                 self.__datas['attributes'] = selectedAttributes
         return errors
@@ -622,15 +627,18 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
                 if attribute.getName() != attributeName:
                     continue
                 if attribute.getType() == 'integer':
-                    if value != '' and not value.isdigit():
+                    if value != '' and not isinstance(value, list) and not value.isdigit():
                         bError = True
                 if attribute.getType() == 'double' or attribute.getType() == 'float':
-                    if value != '':
+                    if value != '' and not isinstance(value, list):
                         tmp = value.replace('.', '')
                         if not tmp.isdigit():
                             bError = True
                 if attribute.getMandatory() is True:
-                    if value == '' or value is None or value == '0':
+                    if isinstance(value, list):
+                        if len(value) == 0:
+                            bError = True
+                    elif value == '' or value is None or value == '0':
                         bError = True
                 if bError:
                     error = "L'attribut {0} n'est pas valide.".format(attribute.switchNameToAlias())
@@ -703,11 +711,35 @@ class FormCreateReport(QtWidgets.QDialog, FORM_CLASS):
         elif type(widgetAttributeName) == QtWidgets.QComboBox:
             form_value = widgetAttributeName.currentText()
             val = self.__getKeyFromListOfValues(form_value, widgetAttributeValue, themeName)
+            attribute = self.__getAttributeObject(themeName, widgetAttributeValue)
+            if attribute is not None and attribute.getMultiple():
+                val = [val] if val not in ('', None) else []
 
         else:
             val = widgetAttributeName.currentText()
 
         return val
+
+
+    def __getAttributeObject(self, theme_name, widg_label) -> Optional[ThemeAttributes]:
+        """
+        Retourne l'objet ThemeAttributes correspondant à l'alias donné pour le thème indiqué.
+
+        :param theme_name: le nom du thème
+        :type theme_name: str
+
+        :param widg_label: l'alias de l'attribut (libellé affiché)
+        :type widg_label: str
+
+        :return: l'objet ThemeAttributes ou None si non trouvé
+        """
+        th = self.__getThemeObject(theme_name)
+        if th is None:
+            return None
+        for att in th.getAttributes():
+            if att.switchNameToAlias() == widg_label:
+                return att
+        return None
 
     def __getKeyFromListOfValues(self, form_value, widg_label, theme_name):
         """Dans le cas d'une liste déroulante, on remplace si besoin la valeur récupérée dans le formulaire
