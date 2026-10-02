@@ -49,11 +49,6 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-# Translations
-# *.qm files are compiled from *.ts during the build process
-# They will be added during GitHub Actions workflow
-*.qm
-
 # Django stuff:
 *.log
 local_settings.py
@@ -114,8 +109,6 @@ venv.bak/
 
 # Plugin packaging
 *.zip
-pylintrc
-.pylintrc
 
 # QGIS
 *.qgs~
