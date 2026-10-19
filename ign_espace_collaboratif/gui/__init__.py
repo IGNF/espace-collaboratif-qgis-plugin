@@ -1,0 +1,1 @@
+"""Dialog and view classes for the IGN Espace Collaboratif plugin."""

@@ -8,8 +8,8 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from qgis.PyQt.QtCore import QCoreApplication, QMetaObject, QRect, QSize, Qt
-from qgis.PyQt.QtGui import QFont, QIcon
+from qgis.PyQt.QtCore import QCoreApplication, QMetaObject, QRect, Qt
+from qgis.PyQt.QtGui import QFont
 from qgis.PyQt.QtWidgets import (
     QCheckBox, QComboBox, QDialogButtonBox, QGroupBox,
     QLabel, QRadioButton, QSizePolicy, QTabWidget,
@@ -24,9 +24,6 @@ class Ui_dlgCreateRem(object):
         font = QFont()
         font.setPointSize(7)
         dlgCreateRem.setFont(font)
-        icon = QIcon()
-        icon.addFile(u":/plugins/RipartPlugin/images/ign.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        dlgCreateRem.setWindowIcon(icon)
         dlgCreateRem.setToolTipDuration(-4)
         dlgCreateRem.setStyleSheet(u"QDialog {background-color: rgb(255, 255, 255)}")
         self.groupBoxProfil = QGroupBox(dlgCreateRem)

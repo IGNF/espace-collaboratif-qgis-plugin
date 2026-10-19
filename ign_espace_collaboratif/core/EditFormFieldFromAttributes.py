@@ -158,7 +158,7 @@ class EditFormFieldFromAttributes(object):
         self.layer.setFieldConstraint(
             self.index,
             QgsFieldConstraints.Constraint.ConstraintExpression,
-            QgsFieldConstraints.ConstraintStrengthHard
+            QgsFieldConstraints.ConstraintStrength.ConstraintStrengthHard
         )
     def getAllKeys(self, attributesSets) -> list:
         """

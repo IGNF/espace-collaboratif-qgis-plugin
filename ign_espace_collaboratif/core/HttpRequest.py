@@ -49,6 +49,13 @@ class HttpRequest(object):
         self.__headers = headers
         self.__proxies = proxies
 
+    @staticmethod
+    def _normalized_url(url):
+        """Return a QUrl whose path starts with exactly one slash."""
+        qurl = QUrl(url)
+        qurl.setPath("/{}".format(qurl.path().lstrip("/")))
+        return qurl
+
     def getResponse(self, partOfUrl, params=None) -> 'Response':
         """
         Lance une requête HTTP GET.
@@ -61,7 +68,9 @@ class HttpRequest(object):
 
         :return: une réponse encodée en utf-8
         """
-        uri = QUrl("{}/{}".format(self.__url, partOfUrl))
+        uri = self._normalized_url(
+            "{}/{}".format(self.__url.rstrip("/"), partOfUrl.lstrip("/"))
+        )
 
         if params is not None:
             query = QUrlQuery()
@@ -163,7 +172,7 @@ class HttpRequest(object):
                 print("  - No parameters")
             print("="*80 + "\n")
 
-            qurl = QUrl(url)
+            qurl = HttpRequest._normalized_url(url)
             if params:
                 query = QUrlQuery()
                 for k, v in params.items():
@@ -286,7 +295,7 @@ class HttpRequest(object):
             HttpRequest.logger.debug("=== makeHttpRequest DEBUG START ===")
             HttpRequest.logger.debug("LaunchedBy: {} | URL: {}".format(launchBy, url))
 
-            qurl = QUrl(url)
+            qurl = HttpRequest._normalized_url(url)
             if params and data is None and files is None:
                 query = QUrlQuery()
                 for k, v in params.items():
@@ -331,8 +340,8 @@ class HttpRequest(object):
                     q = QUrlQuery()
                     for k, v in (data or {}).items():
                         q.addQueryItem(str(k), str(v))
-                    body = q.toString(QUrl.FullyEncoded).encode('utf-8')
-                    request.setHeader(QNetworkRequest.ContentTypeHeader,
+                    body = q.toString(QUrl.ComponentFormattingOption.FullyEncoded).encode('utf-8')
+                    request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader,
                                     "application/x-www-form-urlencoded")
                 err = blocking.post(request, body)
                 if err != QgsBlockingNetworkRequest.ErrorCode.NoError and blocking.reply().attribute(
@@ -346,7 +355,7 @@ class HttpRequest(object):
             # POST multipart
             else:
                 body, contentType = HttpRequest._buildMultipart(data, files)
-                request.setHeader(QNetworkRequest.ContentTypeHeader, contentType)
+                request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, contentType)
                 err = blocking.post(request, body)
                 if err != QgsBlockingNetworkRequest.ErrorCode.NoError and blocking.reply().attribute(
                         QNetworkRequest.Attribute.HttpStatusCodeAttribute) is None:

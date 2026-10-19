@@ -40,7 +40,6 @@ class Ui_InfoDialog(object):
         font = QFont()
         font.setPointSize(10)
         self.logo.setFont(font)
-        self.logo.setPixmap(QPixmap(u":/plugins/RipartPlugin/images/logo_IGN.png"))
         self.logo.setScaledContents(True)
         self.textInfo = QTextBrowser(InfoDialog)
         self.textInfo.setObjectName(u"textInfo")

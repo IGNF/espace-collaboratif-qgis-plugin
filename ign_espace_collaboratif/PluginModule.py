@@ -4,10 +4,9 @@ import configparser
 import webbrowser
 
 from qgis.core import QgsFeatureRequest
-# Initialize Qt resources from file resources.py
-from . import resources
+from .PluginPath import resources_path
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from qgis.PyQt.QtCore import QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsProject, QgsMapLayer, QgsVectorLayerEditBuffer, Qgis
@@ -23,9 +22,9 @@ from .core.Community import Community
 from .core.FlagProject import FlagProject
 from .core import Constantes as cst
 from .Contexte import Contexte
-from .FormChargerGuichet import FormChargerGuichet
-from .FormInfo import FormInfo
-from .FormConfigure import FormConfigure
+from .gui.form_charger_guichet import FormChargerGuichet
+from .gui.form_info import FormInfo
+from .gui.form_configure import FormConfigure
 from .ToolsReport import ToolsReport
 from .SeeReport import SeeReport
 from .CreateReport import CreateReport
@@ -53,30 +52,17 @@ class RipartPlugin:
         self.__logger = self.__ripartLogger.getPluginLogger()
         # Save reference to the QGIS interface
         self.iface = iface
-        self.config = QAction(QIcon(":/plugins/RipartPlugin/images/config.png"), u"Configurer le plugin",
+        self.config = QAction(QIcon(str(resources_path('config.png'))), u"Configurer le plugin",
                               self.iface.mainWindow())
-        self.help = QAction(QIcon(":/plugins/RipartPlugin/images/Book.png"), "Ouvrir le manuel utilisateur du plugin",
+        self.help = QAction(QIcon(str(resources_path('Book.png'))), "Ouvrir le manuel utilisateur du plugin",
                             self.iface.mainWindow())
-        self.log = QAction(QIcon(":/plugins/RipartPlugin/images/Log.png"), "Ouvrir le fichier de log du plugin",
+        self.log = QAction(QIcon(str(resources_path('Log.png'))), "Ouvrir le fichier de log du plugin",
                            self.iface.mainWindow())
-        self.about = QAction(QIcon(":/plugins/RipartPlugin/images/About.png"), "A propos du plugin",
+        self.about = QAction(QIcon(str(resources_path('About.png'))), "A propos du plugin",
                              self.iface.mainWindow())
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-        # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'RipartPlugin_{}.qm'.format(locale))
-
-        if os.path.exists(locale_path):
-            self.translator = QTranslator()
-            self.translator.load(locale_path)
-
-            if qVersion() > '4.3.3':
-                QCoreApplication.installTranslator(messageFile=self.translator)
 
         # La toolbar du plugin
         self.actions = []
@@ -624,7 +610,7 @@ class RipartPlugin:
         """
         Create the menu entries and toolbar icons inside the QGIS GUI.
         """
-        icon_path = ':/plugins/RipartPlugin/images/connect.png'
+        icon_path = str(resources_path('connect.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Se connecter a l\'Espace Collaboratif'),
@@ -632,7 +618,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Se connecter a l\'Espace Collaboratif'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/update.png'
+        icon_path = str(resources_path('update.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Télécharger les signalements'),
@@ -640,7 +626,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Télécharger les signalements'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/viewRem.png'
+        icon_path = str(resources_path('viewRem.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Voir le signalement'),
@@ -648,7 +634,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Voir le signalement'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/answer.png'
+        icon_path = str(resources_path('answer.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Répondre à un signalement'),
@@ -656,7 +642,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Répondre à un signalement'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/create.png'
+        icon_path = str(resources_path('create.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Créer un nouveau signalement'),
@@ -664,7 +650,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Créer un nouveau signalement'),
             parent=self.iface.mainWindow())
 
-        # icon_path = ':/plugins/RipartPlugin/images/disk.png'
+        # icon_path = str(resources_path('disk.png'))
         # self.__addAction(
         #     icon_path,
         #     text=self.__translate(u"Test extraction/écriture geopackage"),
@@ -672,7 +658,7 @@ class RipartPlugin:
         #     status_tip=self.__translate(u"Test extraction/écriture geopackage"),
         #     parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/cleaning.png'
+        icon_path = str(resources_path('cleaning.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Supprimer les signalements et les croquis associés de la carte en cours'),
@@ -680,7 +666,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Supprimer les signalements et les croquis associés de la carte en cours'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/magicwand.png'
+        icon_path = str(resources_path('magicwand.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Voir les objets associés'),
@@ -688,7 +674,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Voir les objets associés'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/charger.png'
+        icon_path = str(resources_path('charger.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Charger les couches de ma communauté'),
@@ -696,7 +682,7 @@ class RipartPlugin:
             status_tip=self.__translate(u'Charger les couches de ma communauté'),
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/RipartPlugin/images/synchroniser.png'
+        icon_path = str(resources_path('synchroniser.png'))
         self.__addAction(
             icon_path,
             text=self.__translate(u'Mettre à jour les couches Espace collaboratif'),
