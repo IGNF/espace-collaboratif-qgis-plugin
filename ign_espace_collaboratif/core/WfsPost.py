@@ -8,6 +8,7 @@ from .Wkt import Wkt
 from .BBox import BBox
 from .HttpRequest import HttpRequest
 from . import Constantes as cst
+from .ancestor_field import FIELD_NAME as ANCESTOR_FIELD_NAME, get_ancestor
 
 
 class WfsPost(object):
@@ -146,6 +147,8 @@ class WfsPost(object):
         for key, value in attributesChanged.items():
             field = feature.fields()[key]
             fieldName = field.name()
+            if fieldName == ANCESTOR_FIELD_NAME:
+                continue
             if value is None or value == qgis.core.NULL or value == "NULL":
                 # If the field has a NOT NULL constraint it is required: a NULL here is a spurious QGIS
                 # signal (e.g. ValueMap/ENUM widget init). Skip it to avoid a server constraint violation.
@@ -201,7 +204,7 @@ class WfsPost(object):
         fieldsNameValue = {}
         for field in feature.fields():
             fieldName = field.name()
-            if fieldName == cst.ID_SQLITE:
+            if fieldName == cst.ID_SQLITE or fieldName == ANCESTOR_FIELD_NAME:
                 continue
             fieldValue = feature.attribute(fieldName)
             if fieldValue is None or str(fieldValue) == "NULL":
@@ -525,21 +528,11 @@ class WfsPost(object):
     def __setAncestor(self, action, feature) -> None:
         """
         Si l'objet inséré provient d'une découpe (plugin Outil_Decoupe_QGIS), ajoute le champ
-        'ancestor' à l'action 'Insert' avec le cleabs de l'objet d'origine, retrouvé via le
-        registre partagé (sys._ign_cutting_ancestors) puis SQLiteManager.
+        'ancestor' à l'action 'Insert' avec le cleabs de l'objet d'origine, porté directement
+        par la feature dans un champ caché local (voir core/ancestor_field.py).
         """
-        try:
-            from .ancestor_registry import get as getAncestor
-        except ImportError:
-            return
-        originalFid = getAncestor(self.__layer.id(), feature.id())
-        if originalFid is None:
-            return
-        result = SQLiteManager.selectRowsInTable(self.__layer, [originalFid])
-        if not result:
-            return
-        ancestorId = result[0][0]
-        if ancestorId is None or str(ancestorId) == "NULL":
+        ancestorId = get_ancestor(feature)
+        if ancestorId is None:
             return
         action['ancestor'] = ancestorId
 
