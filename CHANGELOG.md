@@ -5,13 +5,15 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
-## [Non publié]
+
+## [5.2.2] - 2026-10-16
+
+### Ajouté
+- Ajout du champ Groupe dans la table des signalements
 
 ### Modifié
 - Abandon du fichier de ressources Qt compilé (`resources.py` / `resources.qrc.src`) au profit d'un chargement direct des icônes depuis le dossier `images/` via `PluginPath.resources_path()`, ce qui supprime le besoin de recompiler un fichier QRC
-
-## [5.2.2] - 2026-09-17
-- Ajout du champs Groupe dans la table des signalements
+- Retour compatibilité version 3.44.X
 
 ## [5.2.1] - 2026-09-08
 - Correction enum Qt6
