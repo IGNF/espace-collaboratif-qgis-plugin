@@ -17,6 +17,7 @@ class ThemeAttributes(object):
         self.__default = None
         self.__required = False
         self.__mandatory = False
+        self.__multiple = False
         self.__switchNameToAlias = {}
 
     def setAttributes(self, data) -> None:
@@ -40,6 +41,10 @@ class ThemeAttributes(object):
             self.__required = data['required']
         if PluginHelper.keyExist('mandatory', data):
             self.__mandatory = data['mandatory']
+        if PluginHelper.keyExist('multiple', data):
+            self.__multiple = bool(data['multiple'])
+        elif PluginHelper.keyExist('cardinality', data):
+            self.__multiple = str(data['cardinality']).lower() in ('many', 'multiple', 'n')
 
     def getName(self) -> str:
         """
@@ -76,6 +81,13 @@ class ThemeAttributes(object):
         :return: la valeur obligatoire
         """
         return self.__mandatory
+
+    def getMultiple(self) -> bool:
+        """
+        :return: à True si l'attribut de type 'list' accepte une sélection multiple de valeurs.
+                 Dans ce cas, le serveur attend la valeur de l'attribut sous forme de tableau (array).
+        """
+        return self.__multiple
 
     def getNameAndAlias(self) -> {}:
         """

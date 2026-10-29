@@ -3,12 +3,14 @@ from qgis.PyQt import QtWidgets, QtCore, uic
 from qgis.PyQt.QtWidgets import QDialogButtonBox, QMessageBox
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsProject, QgsVectorLayer
-from .core.SQLiteManager import SQLiteManager
-from .core.Layer import Layer
-from .core import Constantes as cst
-from .PluginHelper import PluginHelper
+from ..core.SQLiteManager import SQLiteManager
+from ..core.Layer import Layer
+from ..core import Constantes as cst
+from ..PluginHelper import PluginHelper
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'FormChoixGroupe_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "form_choix_groupe_base.ui")
+)
 
 
 class FormChoixGroupe(QtWidgets.QDialog, FORM_CLASS):

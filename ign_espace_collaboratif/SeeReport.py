@@ -1,7 +1,7 @@
 from typing import Optional
 from qgis.core import Qgis
 from .ToolsReport import ToolsReport
-from .SeeReportView import SeeReportView
+from .gui.see_report_view import SeeReportView
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 

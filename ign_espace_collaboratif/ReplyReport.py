@@ -1,9 +1,9 @@
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import Qgis
 
-from .FormInfo import FormInfo
+from .gui.form_info import FormInfo
 from .ToolsReport import ToolsReport
-from .ReplyReportView import ReplyReportView
+from .gui.reply_report_view import ReplyReportView
 from .core.PluginLogger import PluginLogger
 from .core import Constantes as cst
 
