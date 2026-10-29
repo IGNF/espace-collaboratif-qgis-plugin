@@ -6,13 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>960</width>
-    <height>860</height>
+    <width>1200</width>
+    <height>940</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>820</width>
+    <width>1000</width>
     <height>760</height>
    </size>
   </property>
@@ -175,20 +175,17 @@
          <item>
           <widget class="QLabel" name="labelUser">
            <property name="text">
-            <string>Filtrer par utilisateur (id) — gestionnaire de groupe uniquement :</string>
+             <string>Utilisateur</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="userIdEdit">
-           <property name="maximumSize">
+            <widget class="QComboBox" name="userCombo">
+             <property name="minimumSize">
             <size>
-             <width>220</width>
+               <width>260</width>
              <height>16777215</height>
             </size>
-           </property>
-           <property name="placeholderText">
-            <string>Laisser vide pour tous les membres du groupe</string>
            </property>
           </widget>
          </item>
@@ -224,15 +221,22 @@
          </spacer>
         </item>
         <item>
+         <widget class="QPushButton" name="btnReset">
+          <property name="text">
+           <string>Réinitialiser</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="btnRefresh">
           <property name="minimumSize">
            <size>
-            <width>120</width>
+            <width>90</width>
             <height>0</height>
            </size>
           </property>
           <property name="text">
-           <string>Rafraîchir</string>
+           <string>Valider</string>
           </property>
          </widget>
         </item>
@@ -396,13 +400,13 @@
        <item>
         <widget class="QGroupBox" name="groupByUser">
          <property name="title">
-          <string>Détail par utilisateur</string>
+           <string>Détail contributeurs</string>
          </property>
          <layout class="QVBoxLayout" name="byUserLayout">
           <item>
            <widget class="QLabel" name="userTitle">
             <property name="text">
-             <string>Top contributeurs</string>
+             <string>Contributions et transactions par utilisateur</string>
             </property>
            </widget>
           </item>
@@ -440,7 +444,7 @@
        <item>
         <widget class="QGroupBox" name="groupTrans">
          <property name="title">
-          <string>Transactions</string>
+           <string>Détail tables</string>
          </property>
          <layout class="QVBoxLayout" name="transLayout">
           <item>
@@ -448,7 +452,7 @@
             <item>
              <widget class="QLabel" name="labelTotalCaption">
               <property name="text">
-               <string>Total :</string>
+              <string>Transactions :</string>
               </property>
              </widget>
             </item>

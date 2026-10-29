@@ -31,6 +31,7 @@ from .CreateReport import CreateReport
 from .Magicwand import Magicwand
 from .PluginHelper import PluginHelper
 from .ReplyReport import ReplyReport
+from .FormStatistics import FormStatistics
 
 
 # QGIS Plugin Implementation

@@ -6,14 +6,14 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QDate
 from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtWidgets import (
-    QApplication, QDialog, QFrame, QHeaderView, QLabel, QTableWidget,
-    QTableWidgetItem, QVBoxLayout,
+    QApplication, QComboBox, QDialog, QFrame, QHBoxLayout, QHeaderView, QLabel,
+    QTableWidget, QTableWidgetItem, QVBoxLayout,
 )
 
 from .core.PluginLogger import PluginLogger
 from .core.StatisticsCharts import (
-    DonutChart, HBarChart,
-    COLOR_INSERT, COLOR_UPDATE, COLOR_DELETE, COLOR_TX, COLOR_FAIL, CLIENT_PALETTE,
+    ContributionBreakdown, HBarChart,
+    COLOR_INSERT, COLOR_UPDATE, COLOR_DELETE, COLOR_TX, COLOR_FAIL,
 )
 from .core.StatisticsData import StatisticsData
 from .core.StatisticsService import StatisticsService
@@ -36,13 +36,13 @@ QGroupBox::title {
     color: #37474F;
 }
 QFrame#kpiCard, QFrame#donutCard, QFrame#clientCard {
-    border: 1px solid #CFD8DC;
+    border: 1px solid #E3E6EB;
     border-radius: 8px;
     background: palette(base);
 }
-QFrame#headerBanner { background: #0D3B66; border-radius: 8px; }
-QLabel#headerTitle { color: white; font-size: 15px; font-weight: 600; }
-QLabel#headerPeriod { color: #BBDEFB; font-size: 11px; }
+QFrame#headerBanner { background: #EFF6FF; border-radius: 8px; }
+QLabel#headerTitle { color: #1A1A1A; font-size: 15px; font-weight: 600; }
+QLabel#headerPeriod { color: #5B5B5B; font-size: 11px; }
 QLabel#donutTitle, QLabel#clientTitle, QLabel#userTitle {
     color: #455A64; font-weight: 600;
 }
@@ -68,6 +68,10 @@ class FormStatistics(QDialog, FORM_CLASS):
         self.__logger = PluginLogger("FormStatistics").getPluginLogger()
         self.__service = StatisticsService(context)
         self.__kpi = {}
+        self.__isAdmin = context.isUserCommunityAdmin()
+        self.__hasLoaded = False
+        self.__defaultStart = None
+        self.__defaultEnd = None
 
         self.setWindowTitle(u"Statistiques – {}".format(
             databasename if databasename else u"base {}".format(databaseid)))
@@ -86,24 +90,59 @@ class FormStatistics(QDialog, FORM_CLASS):
 
         self.dateStart.setDate(QDate.currentDate().addMonths(-1))
         self.dateEnd.setDate(QDate.currentDate())
-        self.userRow.setVisible(self.__context.isUserCommunityAdmin())
+        self.dateStart.setEnabled(True)
+        self.dateEnd.setEnabled(True)
+        self.cbStart.hide()
+        self.cbEnd.hide()
+        self.labelUser.setText(u"Utilisateur")
+        if self.__isAdmin:
+            self.userCombo.addItem(u"Tous les utilisateurs", None)
+        else:
+            self.userCombo.addItem(
+                self.__context.getUserNameCommunity() or u"Utilisateur connecté", None)
+            self.userCombo.setEnabled(False)
+
+        self.filtersLayout.removeItem(self.dateRow)
+        self.filtersLayout.removeWidget(self.userRow)
+        self.userRowLayout.takeAt(self.userRowLayout.count() - 1)
+        self.userRowLayout.setDirection(QHBoxLayout.Direction.TopToBottom)
+        self.filterFieldsRow = QFrame(self.groupFilters)
+        self.filterFieldsLayout = QHBoxLayout(self.filterFieldsRow)
+        self.filterFieldsLayout.setContentsMargins(0, 0, 0, 0)
+        self.filterFieldsLayout.setSpacing(24)
+
+        self.labelPeriod = QLabel(u"Période", self.filterFieldsRow)
+        self.periodDefaultLabel = QLabel(self.filterFieldsRow)
+        self.periodDefaultLabel.setStyleSheet("color: #5B5B5B; font-size: 10px;")
+        self.periodDefaultLabel.setWordWrap(True)
+        self.periodColumn = QVBoxLayout()
+        self.periodColumn.setSpacing(6)
+        self.periodColumn.addWidget(self.labelPeriod)
+        self.periodColumn.addLayout(self.dateRow)
+        self.periodColumn.addWidget(self.periodDefaultLabel)
+        self.filterFieldsLayout.addLayout(self.periodColumn, 1)
+        self.filterFieldsLayout.addWidget(self.userRow, 1)
+        self.filtersLayout.insertWidget(0, self.filterFieldsRow)
 
         for key, caption, accent in (
-            ("contrib", u"Contributions", "#0D3B66"),
-            ("insert", u"Insertions", COLOR_INSERT),
-            ("update", u"Modifications", COLOR_UPDATE),
-            ("delete", u"Suppressions", COLOR_DELETE),
             ("tx", u"Transactions", COLOR_TX),
+            ("contrib", u"Contributions", "#1E3E85"),
             ("fail", u"Échecs", COLOR_FAIL),
         ):
-            self.kpiRow.layout().addWidget(self.__makeKpiCard(key, caption, accent))
+            self.kpiRow.layout().addWidget(
+                self.__makeKpiCard(key, caption, accent), 1)
 
-        self.__donut = DonutChart()
-        self.donutContainer.layout().addWidget(self.__donut)
+        self.__breakdown = ContributionBreakdown()
+        self.donutContainer.layout().addWidget(self.__breakdown)
         self.__clientChart = HBarChart()
         self.clientContainer.layout().addWidget(self.__clientChart)
-        self.__userChart = HBarChart()
-        self.userChartContainer.layout().addWidget(self.__userChart)
+        self.clientNote = QLabel(
+            u"Non identifié : contributions dont le client n'a pas pu être déterminé.",
+            self.clientCard)
+        self.clientNote.setWordWrap(True)
+        self.clientNote.setStyleSheet("color: #5B5B5B; font-size: 10px; border: none;")
+        self.clientCardLayout.insertWidget(2, self.clientNote)
+        self.userChartContainer.hide()
 
         boldFont = QFont()
         boldFont.setBold(True)
@@ -113,15 +152,34 @@ class FormStatistics(QDialog, FORM_CLASS):
         self.labelTransFailed.setStyleSheet("color: {};".format(COLOR_FAIL))
 
         self.__initTable(self.tableByUser,
-                         [u"Utilisateur", u"Insertions", u"Modifications",
-                          u"Suppressions", u"Transactions"])
+                 [u"Rang", u"Utilisateur", u"Contributions", u"Transactions",
+                  u"Insertions", u"Modifications", u"Suppressions"])
         self.__initTable(self.tableTables, [u"Table"])
-        self.groupByUser.setVisible(False)
+        self.groupByUser.setVisible(True)
+        self.userTitle.hide()
+        self.labelTotalCaption.hide()
+        self.labelTransTotal.hide()
+        self.labelFailedCaption.hide()
+        self.labelTransFailed.hide()
+        self.transLayout.removeItem(self.transRow)
+        self.tableTables.setShowGrid(False)
+        self.tableTables.horizontalHeader().hide()
+
+        self.scrollLayout.removeWidget(self.groupByUser)
+        self.scrollLayout.removeWidget(self.groupTrans)
+        self.detailsRow = QFrame(self.scrollContent)
+        self.detailsLayout = QHBoxLayout(self.detailsRow)
+        self.detailsLayout.setContentsMargins(0, 0, 0, 0)
+        self.detailsLayout.setSpacing(10)
+        self.groupByUser.setParent(self.detailsRow)
+        self.groupTrans.setParent(self.detailsRow)
+        self.detailsLayout.addWidget(self.groupByUser, 7)
+        self.detailsLayout.addWidget(self.groupTrans, 3)
+        self.scrollLayout.insertWidget(2, self.detailsRow)
 
     def __connectSignals(self) -> None:
-        self.cbStart.toggled.connect(self.dateStart.setEnabled)
-        self.cbEnd.toggled.connect(self.dateEnd.setEnabled)
         self.btnRefresh.clicked.connect(self.__loadStatistics)
+        self.btnReset.clicked.connect(self.__resetFilters)
         self.buttonBox.rejected.connect(self.reject)
 
     def __makeKpiCard(self, key: str, caption: str, accent: str) -> QFrame:
@@ -143,6 +201,26 @@ class FormStatistics(QDialog, FORM_CLASS):
 
         layout.addWidget(value)
         layout.addWidget(caption_label)
+        descriptions = {
+            "tx": u"Opérations regroupées en une unité de travail.",
+            "contrib": u"Insertions, modifications et suppressions.",
+        }
+        if key in descriptions:
+            info_row = QHBoxLayout()
+            info_row.setSpacing(5)
+            info_icon = QLabel(u"i")
+            info_icon.setFixedSize(14, 14)
+            info_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            info_icon.setToolTip(descriptions[key])
+            info_icon.setStyleSheet(
+                "color: #5B5B5B; border: 1px solid #9AA3AF; border-radius: 7px;"
+                "font-size: 9px; font-weight: bold;")
+            info_text = QLabel(descriptions[key])
+            info_text.setWordWrap(True)
+            info_text.setStyleSheet("color: #5B5B5B; font-size: 10px; border: none;")
+            info_row.addWidget(info_icon, 0, Qt.AlignmentFlag.AlignTop)
+            info_row.addWidget(info_text, 1)
+            layout.addLayout(info_row)
         self.__kpi[key] = value
         return card
 
@@ -164,15 +242,20 @@ class FormStatistics(QDialog, FORM_CLASS):
 
     def __buildParams(self) -> dict:
         params = {}
-        if self.cbStart.isChecked():
+        if self.__hasLoaded:
             params['startDate'] = self.dateStart.date().toString("yyyy-MM-dd")
-        if self.cbEnd.isChecked():
             params['endDate'] = self.dateEnd.date().toString("yyyy-MM-dd")
-        if self.userRow.isVisible():
-            uid = self.userIdEdit.text().strip()
-            if uid:
-                params['user_id'] = uid
+        if self.__isAdmin and self.userCombo.currentData() is not None:
+            params['user_id'] = str(self.userCombo.currentData())
         return params
+
+    def __resetFilters(self) -> None:
+        self.userCombo.setCurrentIndex(0)
+        if self.__defaultStart is not None:
+            self.dateStart.setDate(self.__defaultStart)
+        if self.__defaultEnd is not None:
+            self.dateEnd.setDate(self.__defaultEnd)
+        self.__loadStatistics()
 
     def __loadStatistics(self) -> None:
         self.btnRefresh.setEnabled(False)
@@ -186,10 +269,12 @@ class FormStatistics(QDialog, FORM_CLASS):
             if result.ok:
                 payload = result.payload
                 self.__printDebugContext(params, payload)
-                # reveal user filter if the API confirms elevated access
-                if isinstance(payload.get('aggregate'), dict):
-                    self.userRow.setVisible(True)
+                if isinstance(payload.get('aggregate'), dict) and not self.__isAdmin:
+                    self.__isAdmin = True
+                    self.userCombo.setItemText(0, u"Tous les utilisateurs")
+                    self.userCombo.setEnabled(True)
                 self.__fillData(StatisticsData.fromPayload(payload))
+                self.__hasLoaded = True
                 self.statusLabel.setText(u"")
             else:
                 self.statusLabel.setStyleSheet("color: red;")
@@ -220,26 +305,41 @@ class FormStatistics(QDialog, FORM_CLASS):
 
     def __fillData(self, data: StatisticsData) -> None:
         self.__fillPeriod(data)
+        self.__populateUsers(data)
 
         self.__kpi['contrib'].setText(str(data.contrib_total))
-        self.__kpi['insert'].setText(str(data.inserts))
-        self.__kpi['update'].setText(str(data.updates))
-        self.__kpi['delete'].setText(str(data.deletes))
         self.__kpi['tx'].setText(str(data.tx_total))
         self.__kpi['fail'].setText(str(data.tx_failed))
 
-        self.__donut.setSegments([
+        self.__breakdown.setSegments([
             (u"Insertions", data.inserts, COLOR_INSERT),
             (u"Modifications", data.updates, COLOR_UPDATE),
             (u"Suppressions", data.deletes, COLOR_DELETE),
         ])
         self.__clientChart.setBars([
-            (label, count, CLIENT_PALETTE[index % len(CLIENT_PALETTE)])
-            for index, (label, count) in enumerate(data.clients)
+            (label, count, "#5B7FD0")
+            for label, count in data.clients
         ])
 
         self.__fillTransactions(data)
         self.__fillByUser(data)
+
+    def __populateUsers(self, data: StatisticsData) -> None:
+        if not self.__isAdmin:
+            return
+        selected = self.userCombo.currentData()
+        known_ids = {
+            str(self.userCombo.itemData(index))
+            for index in range(1, self.userCombo.count())
+        }
+        for entry in data.users:
+            user_id = entry.get('user_id')
+            if user_id is None or str(user_id) in known_ids:
+                continue
+            self.userCombo.addItem(entry['username'], user_id)
+            known_ids.add(str(user_id))
+        selected_index = self.userCombo.findData(selected)
+        self.userCombo.setCurrentIndex(max(0, selected_index))
 
     def __fillPeriod(self, data: StatisticsData) -> None:
         self.headerPeriod.setText(
@@ -249,11 +349,17 @@ class FormStatistics(QDialog, FORM_CLASS):
         # transaction : on cale les sélecteurs dessus pour servir de base.
         startDate = QDate.fromString(data.start, "yyyy-MM-dd")
         endDate = QDate.fromString(data.end, "yyyy-MM-dd")
-        if startDate.isValid() and not self.cbStart.isChecked():
-            self.dateStart.setMinimumDate(startDate)
-            self.dateStart.setDate(startDate)
-        if endDate.isValid() and not self.cbEnd.isChecked():
-            self.dateEnd.setDate(endDate)
+        if not self.__hasLoaded:
+            if startDate.isValid():
+                self.__defaultStart = startDate
+                self.dateStart.setDate(startDate)
+            if endDate.isValid():
+                self.__defaultEnd = endDate
+                self.dateEnd.setDate(endDate)
+            start_text = self.__defaultStart.toString("dd/MM/yyyy") if self.__defaultStart else u"–"
+            end_text = self.__defaultEnd.toString("dd/MM/yyyy") if self.__defaultEnd else u"–"
+            self.periodDefaultLabel.setText(
+                u"Période par défaut du {} au {}".format(start_text, end_text))
 
     def __fillTransactions(self, data: StatisticsData) -> None:
         self.labelTransTotal.setText(str(data.tx_total))
@@ -276,26 +382,27 @@ class FormStatistics(QDialog, FORM_CLASS):
             self.tableTables.setItem(row, 0, QTableWidgetItem(name))
 
     def __fillByUser(self, data: StatisticsData) -> None:
+        self.tableByUser.clearSpans()
         self.tableByUser.setRowCount(0)
 
         if not data.users:
-            self.groupByUser.setVisible(False)
-            self.__userChart.setBars([])
+            self.tableByUser.setRowCount(1)
+            item = QTableWidgetItem(u"Aucune donnée contributeur")
+            item.setForeground(QColor("#888888"))
+            self.tableByUser.setItem(0, 1, item)
+            self.tableByUser.setSpan(0, 1, 1, self.tableByUser.columnCount() - 1)
             return
 
         self.groupByUser.setVisible(True)
-        for entry in data.users:
+        ranked_users = sorted(data.users, key=lambda entry: entry['total'], reverse=True)
+        for rank, entry in enumerate(ranked_users, start=1):
             row = self.tableByUser.rowCount()
             self.tableByUser.insertRow(row)
-            self.tableByUser.setItem(row, 0, QTableWidgetItem(entry['username']))
-            values = [entry['inserts'], entry['updates'], entry['deletes'], entry['tx_total']]
-            for col, val in enumerate(values, start=1):
+            values = [rank, entry['username'], entry['total'], entry['tx_total'],
+                      entry['inserts'], entry['updates'], entry['deletes']]
+            for col, val in enumerate(values):
                 item = QTableWidgetItem(str(val))
-                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
+                alignment = Qt.AlignmentFlag.AlignVCenter
+                alignment |= Qt.AlignmentFlag.AlignLeft if col == 1 else Qt.AlignmentFlag.AlignCenter
+                item.setTextAlignment(alignment)
                 self.tableByUser.setItem(row, col, item)
-
-        top = sorted(data.users, key=lambda entry: entry['total'], reverse=True)[:10]
-        self.__userChart.setBars([
-            (entry['username'], entry['total'], CLIENT_PALETTE[index % len(CLIENT_PALETTE)])
-            for index, entry in enumerate(top)
-        ])

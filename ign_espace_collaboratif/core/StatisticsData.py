@@ -3,11 +3,14 @@
 
 # Correspondance identifiant client brut → libellé affiché.
 CLIENT_LABELS = {
-    "SIG-QGIS": "QGIS Plugin",
+    "SIG-QGIS": "QGIS",
     "WEB": "Interface Web",
     "API": "API directe",
-    "MOBILE": "Application Mobile",
+    "MOBILE": "Mobile",
 }
+UNKNOWN_CLIENT_LABEL = u"Non identifié  ?"
+UNKNOWN_CLIENT_VALUES = {u"", u"unknown", u"unknow", u"inconnu", u"non identifié",
+                         u"non identifie", u"null", u"none"}
 
 
 class StatisticsData(object):
@@ -82,18 +85,23 @@ class StatisticsData(object):
                 if isinstance(counts, dict):
                     total = sum(int(counts.get(state, 0) or 0)
                                 for state in ('Insert', 'Update', 'Delete'))
-                rows.append((CLIENT_LABELS.get(client, client), total))
+                rows.append((StatisticsData.__clientLabel(client), total))
         elif isinstance(by_client, list):
             for entry in by_client:
                 if not isinstance(entry, dict):
                     continue
-                raw = (entry.get('client') or entry.get('client_device')
-                       or entry.get('name') or str(entry))
+                raw = entry.get('client') or entry.get('client_device') or entry.get('name')
                 count = (entry.get('count') or entry.get('contributions')
                          or entry.get('total') or 0)
-                rows.append((CLIENT_LABELS.get(raw, raw), count))
+                rows.append((StatisticsData.__clientLabel(raw), int(count or 0)))
         rows.sort(key=lambda item: item[1], reverse=True)
         return rows
+
+    @staticmethod
+    def __clientLabel(client) -> str:
+        if client is None or str(client).strip().lower() in UNKNOWN_CLIENT_VALUES:
+            return UNKNOWN_CLIENT_LABEL
+        return CLIENT_LABELS.get(client, str(client))
 
     @classmethod
     def __users(cls, by_user) -> list:
@@ -101,11 +109,20 @@ class StatisticsData(object):
         for entry in by_user:
             if not isinstance(entry, dict):
                 continue
-            username = (entry.get('user') or {}).get('username', u'?')
+            user = entry.get('user') or {}
+            if not isinstance(user, dict):
+                user = {}
+            username = user.get('username') or entry.get('username') or u'?'
+            user_id = user.get('id')
+            if user_id is None:
+                user_id = user.get('user_id')
+            if user_id is None:
+                user_id = entry.get('user_id', entry.get('userId'))
             by_client = (entry.get('contributions') or {}).get('by_client', {})
             inserts, updates, deletes = cls.__sumIUD(by_client)
             tx_total = (entry.get('transactions') or {}).get('total', 0)
             users.append({
+                'user_id': user_id,
                 'username': username,
                 'inserts': inserts,
                 'updates': updates,

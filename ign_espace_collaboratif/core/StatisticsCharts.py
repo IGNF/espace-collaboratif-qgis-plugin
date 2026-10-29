@@ -5,9 +5,9 @@ from qgis.PyQt.QtGui import QColor, QFont, QPainter, QPalette
 from qgis.PyQt.QtWidgets import QSizePolicy, QWidget
 
 # Palette partagée entre les cartes KPI et les graphiques.
-COLOR_INSERT = "#2E7D32"   # vert  – insertions
-COLOR_UPDATE = "#1565C0"   # bleu  – modifications
-COLOR_DELETE = "#C62828"   # rouge – suppressions
+COLOR_INSERT = "#845BD0"   # violet – insertions
+COLOR_UPDATE = "#3D9665"   # vert – modifications
+COLOR_DELETE = "#C46F2A"   # orange – suppressions
 COLOR_TX = "#00838F"       # cyan  – transactions
 COLOR_FAIL = "#EF6C00"     # orange – échecs
 CLIENT_PALETTE = [
@@ -15,6 +15,59 @@ CLIENT_PALETTE = [
     "#6A1B9A", "#AD1457", "#4E342E", "#546E7A",
 ]
 EMPTY_COLOR = "#9E9E9E"
+
+
+class ContributionBreakdown(QWidget):
+    """Stacked contribution bar with a compact count and percentage legend."""
+
+    def __init__(self, parent=None) -> None:
+        super(ContributionBreakdown, self).__init__(parent)
+        self.__segments = []
+        self.setMinimumHeight(116)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    def setSegments(self, segments) -> None:
+        self.__segments = [(str(label), max(0.0, float(value)), QColor(color))
+                           for label, value, color in segments]
+        self.update()
+
+    def paintEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        total = sum(value for _, value, _ in self.__segments)
+        track = QRectF(0, 4, max(self.width(), 1), 8)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor("#ECEEF1"))
+        painter.drawRoundedRect(track, 4, 4)
+
+        x = track.left()
+        for _, value, color in self.__segments:
+            if total <= 0 or value <= 0:
+                continue
+            width = track.width() * value / total
+            painter.setBrush(color)
+            painter.drawRect(QRectF(x, track.top(), width, track.height()))
+            x += width
+
+        row_height = 30
+        for index, (label, value, color) in enumerate(self.__segments):
+            y = 24 + index * row_height
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(color)
+            painter.drawRoundedRect(QRectF(0, y + 7, 10, 10), 2, 2)
+            painter.setPen(QColor("#1A1A1A"))
+            painter.drawText(QRectF(18, y, self.width() - 112, row_height),
+                             Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+                             label)
+            percentage = 100.0 * value / total if total else 0.0
+            painter.setPen(QColor("#1A1A1A"))
+            painter.drawText(QRectF(self.width() - 104, y, 34, row_height),
+                             Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
+                             str(int(value)))
+            painter.setPen(QColor("#5B5B5B"))
+            painter.drawText(QRectF(self.width() - 64, y, 64, row_height),
+                             Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
+                             u"· {:.0f} %".format(percentage))
 
 
 class DonutChart(QWidget):
@@ -130,8 +183,9 @@ class HBarChart(QWidget):
             max((fm.horizontalAdvance(lbl) for lbl, _, _ in self.__bars), default=40) + 12,
             width * 0.4,
         )
-        value_w = 52.0
+        value_w = 76.0
         max_val = max((val for _, val, _ in self.__bars), default=0) or 1
+        total = sum(val for _, val, _ in self.__bars)
         track_w = max(width - label_w - value_w - 10, 10.0)
         bar_h = self.ROW_H - 12
         y = 4.0
@@ -154,9 +208,10 @@ class HBarChart(QWidget):
                 painter.drawRoundedRect(QRectF(label_w, y + 3, max(bar_w, 2.0), bar_h), 4, 4)
 
             painter.setPen(QColor("#263238"))
+            percentage = 100.0 * value / total if total else 0.0
             painter.drawText(
                 QRectF(label_w + track_w + 6, y, value_w, self.ROW_H - 6),
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
-                str(int(value)),
+                u"{}  ·  {:.0f}%".format(int(value), percentage),
             )
             y += self.ROW_H
