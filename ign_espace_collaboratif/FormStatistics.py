@@ -15,11 +15,17 @@ from .core.StatisticsCharts import (
     ContributionBreakdown, HBarChart,
     COLOR_INSERT, COLOR_UPDATE, COLOR_DELETE, COLOR_TX, COLOR_FAIL,
 )
-from .core.StatisticsData import StatisticsData
+from .core.StatisticsData import StatisticsData, UNKNOWN_CLIENT_LABEL
 from .core.StatisticsService import StatisticsService
 
 FORM_CLASS, _ = uic.loadUiType(
     os.path.join(os.path.dirname(__file__), 'FormStatistics_base.ui'))
+
+NO_STATISTICS_MESSAGE = (
+    u"Aucune donnée statistique à afficher\n"
+    u"Aucune contribution ne correspond à la période et à l’utilisateur sélectionnés. "
+    u"Élargissez la période ou choisissez « Tous les utilisateurs », puis cliquez sur Valider."
+)
 
 DIALOG_STYLE = """
 QGroupBox {
@@ -35,7 +41,7 @@ QGroupBox::title {
     padding: 0 4px;
     color: #37474F;
 }
-QFrame#kpiCard, QFrame#donutCard, QFrame#clientCard {
+QFrame#statisticsMetricCard, QFrame#contributionBreakdownCard, QFrame#clientCard {
     border: 1px solid #E3E6EB;
     border-radius: 8px;
     background: palette(base);
@@ -43,7 +49,7 @@ QFrame#kpiCard, QFrame#donutCard, QFrame#clientCard {
 QFrame#headerBanner { background: #EFF6FF; border-radius: 8px; }
 QLabel#headerTitle { color: #1A1A1A; font-size: 15px; font-weight: 600; }
 QLabel#headerPeriod { color: #5B5B5B; font-size: 11px; }
-QLabel#donutTitle, QLabel#clientTitle, QLabel#userTitle {
+QLabel#contributionBreakdownTitle, QLabel#clientTitle, QLabel#userTitle {
     color: #455A64; font-weight: 600;
 }
 """
@@ -61,13 +67,15 @@ class FormStatistics(QDialog, FORM_CLASS):
     def __init__(self, context, databaseid: int, databasename: str, parent=None) -> None:
         super(FormStatistics, self).__init__(parent)
         self.setupUi(self)
+        self.__fullDialogSize = self.size()
+        self.__fullDialogMinimumSize = self.minimumSize()
 
         self.__context = context
         self.__databaseid = databaseid
         self.__databasename = databasename
         self.__logger = PluginLogger("FormStatistics").getPluginLogger()
         self.__service = StatisticsService(context)
-        self.__kpi = {}
+        self.__metricValueLabels = {}
         self.__isAdmin = context.isUserCommunityAdmin()
         self.__hasLoaded = False
         self.__defaultStart = None
@@ -81,10 +89,7 @@ class FormStatistics(QDialog, FORM_CLASS):
         self.__connectSignals()
         self.__loadStatistics()
 
-    # ------------------------------------------------------------------
-    # UI wiring
-    # ------------------------------------------------------------------
-
+ 
     def __setupWidgets(self) -> None:
         self.headerTitle.setText(self.windowTitle())
 
@@ -125,15 +130,15 @@ class FormStatistics(QDialog, FORM_CLASS):
         self.filtersLayout.insertWidget(0, self.filterFieldsRow)
 
         for key, caption, accent in (
-            ("tx", u"Transactions", COLOR_TX),
-            ("contrib", u"Contributions", "#1E3E85"),
-            ("fail", u"Échecs", COLOR_FAIL),
+            ("transactions", u"Transactions", COLOR_TX),
+            ("contributions", u"Contributions", "#1E3E85"),
+            ("failed_transactions", u"Échecs", COLOR_FAIL),
         ):
-            self.kpiRow.layout().addWidget(
-                self.__makeKpiCard(key, caption, accent), 1)
+            self.statisticsMetricRow.layout().addWidget(
+                self.__createStatisticsMetricCard(key, caption, accent), 1)
 
         self.__breakdown = ContributionBreakdown()
-        self.donutContainer.layout().addWidget(self.__breakdown)
+        self.contributionBreakdownContainer.layout().addWidget(self.__breakdown)
         self.__clientChart = HBarChart()
         self.clientContainer.layout().addWidget(self.__clientChart)
         self.clientNote = QLabel(
@@ -182,9 +187,14 @@ class FormStatistics(QDialog, FORM_CLASS):
         self.btnReset.clicked.connect(self.__resetFilters)
         self.buttonBox.rejected.connect(self.reject)
 
-    def __makeKpiCard(self, key: str, caption: str, accent: str) -> QFrame:
+    def __createStatisticsMetricCard(
+            self, key: str, caption: str, accent: str) -> QFrame:
+        """Crée une carte indicateur et conserve son libellé de valeur.
+
+        :return: le cadre contenant la valeur, le titre et l'aide facultative.
+        """
         card = QFrame()
-        card.setObjectName("kpiCard")
+        card.setObjectName("statisticsMetricCard")
         layout = QVBoxLayout(card)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.setSpacing(2)
@@ -202,8 +212,8 @@ class FormStatistics(QDialog, FORM_CLASS):
         layout.addWidget(value)
         layout.addWidget(caption_label)
         descriptions = {
-            "tx": u"Opérations regroupées en une unité de travail.",
-            "contrib": u"Insertions, modifications et suppressions.",
+            "transactions": u"Opérations regroupées en une unité de travail.",
+            "contributions": u"Insertions, modifications et suppressions.",
         }
         if key in descriptions:
             info_row = QHBoxLayout()
@@ -221,7 +231,7 @@ class FormStatistics(QDialog, FORM_CLASS):
             info_row.addWidget(info_icon, 0, Qt.AlignmentFlag.AlignTop)
             info_row.addWidget(info_text, 1)
             layout.addLayout(info_row)
-        self.__kpi[key] = value
+        self.__metricValueLabels[key] = value
         return card
 
     @staticmethod
@@ -236,10 +246,7 @@ class FormStatistics(QDialog, FORM_CLASS):
         table.setAlternatingRowColors(True)
         table.verticalHeader().setVisible(False)
 
-    # ------------------------------------------------------------------
-    # Networking
-    # ------------------------------------------------------------------
-
+   
     def __buildParams(self) -> dict:
         params = {}
         if self.__hasLoaded:
@@ -273,9 +280,23 @@ class FormStatistics(QDialog, FORM_CLASS):
                     self.__isAdmin = True
                     self.userCombo.setItemText(0, u"Tous les utilisateurs")
                     self.userCombo.setEnabled(True)
-                self.__fillData(StatisticsData.fromPayload(payload))
+                data = StatisticsData.fromPayload(payload)
+                if data.has_statistics:
+                    self.setMinimumSize(self.__fullDialogMinimumSize)
+                    self.resize(self.__fullDialogSize)
+                    self.__fillData(data)
+                    self.scrollArea.show()
+                    self.statusLabel.setText(u"")
+                else:
+                    self.__fillPeriod(data)
+                    self.__populateUsers(data)
+                    self.scrollArea.hide()
+                    self.statusLabel.setStyleSheet(
+                        "color: #37474F; font-size: 14px; font-weight: 500; padding: 14px;")
+                    self.statusLabel.setText(NO_STATISTICS_MESSAGE)
+                    self.setMinimumSize(820, 0)
+                    self.resize(1000, 480)
                 self.__hasLoaded = True
-                self.statusLabel.setText(u"")
             else:
                 self.statusLabel.setStyleSheet("color: red;")
                 code = result.status_code if result.status_code is not None else u"?"
@@ -299,17 +320,21 @@ class FormStatistics(QDialog, FORM_CLASS):
         }
         print("[STATISTICS DEBUG] {}".format(json.dumps(message, ensure_ascii=False, sort_keys=True)))
 
-    # ------------------------------------------------------------------
-    # Data display
-    # ------------------------------------------------------------------
-
+  
     def __fillData(self, data: StatisticsData) -> None:
+        """Distribue les statistiques normalisées dans les vues du dialogue.
+
+        Les trois cartes affichent les totaux de contributions, transactions et
+        échecs. Le graphique de répartition reçoit les comptes par opération; les barres
+        client reçoivent leurs nombres et signalent le client non identifié.
+        Les utilisateurs et les tables sont affichés par leurs méthodes dédiées.
+        """
         self.__fillPeriod(data)
         self.__populateUsers(data)
 
-        self.__kpi['contrib'].setText(str(data.contrib_total))
-        self.__kpi['tx'].setText(str(data.tx_total))
-        self.__kpi['fail'].setText(str(data.tx_failed))
+        self.__metricValueLabels['contributions'].setText(str(data.contrib_total))
+        self.__metricValueLabels['transactions'].setText(str(data.tx_total))
+        self.__metricValueLabels['failed_transactions'].setText(str(data.tx_failed))
 
         self.__breakdown.setSegments([
             (u"Insertions", data.inserts, COLOR_INSERT),
@@ -317,7 +342,7 @@ class FormStatistics(QDialog, FORM_CLASS):
             (u"Suppressions", data.deletes, COLOR_DELETE),
         ])
         self.__clientChart.setBars([
-            (label, count, "#5B7FD0")
+            (label, count, "#5B7FD0", label == UNKNOWN_CLIENT_LABEL)
             for label, count in data.clients
         ])
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Widgets de graphiques (dessinés avec QPainter) pour le panneau statistiques."""
 from qgis.PyQt.QtCore import Qt, QRectF
-from qgis.PyQt.QtGui import QColor, QFont, QPainter, QPalette
+from qgis.PyQt.QtGui import QColor, QPainter
 from qgis.PyQt.QtWidgets import QSizePolicy, QWidget
 
 # Palette partagée entre les cartes KPI et les graphiques.
@@ -10,15 +10,11 @@ COLOR_UPDATE = "#3D9665"   # vert – modifications
 COLOR_DELETE = "#C46F2A"   # orange – suppressions
 COLOR_TX = "#00838F"       # cyan  – transactions
 COLOR_FAIL = "#EF6C00"     # orange – échecs
-CLIENT_PALETTE = [
-    "#1565C0", "#00838F", "#2E7D32", "#F9A825",
-    "#6A1B9A", "#AD1457", "#4E342E", "#546E7A",
-]
 EMPTY_COLOR = "#9E9E9E"
 
 
 class ContributionBreakdown(QWidget):
-    """Stacked contribution bar with a compact count and percentage legend."""
+    """Affiche la répartition des contributions."""
 
     def __init__(self, parent=None) -> None:
         super(ContributionBreakdown, self).__init__(parent)
@@ -27,11 +23,21 @@ class ContributionBreakdown(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
     def setSegments(self, segments) -> None:
+        """Stocke des éléments ``(libellé, nombre, couleur)`` à dessiner.
+
+        Les nombres sont convertis en flottants positifs ou nuls. Les
+        pourcentages de la légende sont calculés sur le total des segments.
+        """
         self.__segments = [(str(label), max(0.0, float(value)), QColor(color))
                            for label, value, color in segments]
         self.update()
 
-    def paintEvent(self, event) -> None:  # noqa: N802 (Qt override)
+    def paintEvent(self, event) -> None:  
+        """Dessine la barre proportionnelle et une ligne par type de contribution.
+
+        Chaque ligne affiche le libellé, le nombre absolu et la part du total.
+        Si tous les nombres sont nuls, la barre reste vide et les parts valent 0.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         total = sum(value for _, value, _ in self.__segments)
@@ -70,87 +76,13 @@ class ContributionBreakdown(QWidget):
                              u"· {:.0f} %".format(percentage))
 
 
-class DonutChart(QWidget):
-    """Anneau (donut) proportionnel dessiné avec QPainter, avec légende."""
-
-    def __init__(self, parent=None) -> None:
-        super(DonutChart, self).__init__(parent)
-        self.__segments = []  # list of (label, value, QColor)
-        self.setMinimumHeight(190)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-
-    def setSegments(self, segments) -> None:
-        self.__segments = [(str(lbl), max(0.0, float(val)), QColor(col))
-                           for lbl, val, col in segments]
-        self.update()
-
-    def paintEvent(self, event) -> None:  # noqa: N802 (Qt override)
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        total = sum(val for _, val, _ in self.__segments)
-        height = self.height()
-        width = self.width()
-        diameter = max(min(height - 16, width * 0.5), 10.0)
-        cx = 10.0 + diameter / 2.0
-        cy = height / 2.0
-        outer = QRectF(cx - diameter / 2.0, cy - diameter / 2.0, diameter, diameter)
-        ring = diameter * 0.24
-
-        if total <= 0:
-            painter.setPen(QColor(EMPTY_COLOR))
-            painter.setBrush(Qt.BrushStyle.NoBrush)
-            painter.drawEllipse(outer)
-            painter.drawText(outer, Qt.AlignmentFlag.AlignCenter, u"Aucune donnée")
-            return
-
-        # Filled pie slices, then a hole to make it a donut.
-        start = 90 * 16
-        painter.setPen(Qt.PenStyle.NoPen)
-        for _, value, color in self.__segments:
-            if value <= 0:
-                continue
-            span = -int(round(360 * 16 * value / total))
-            painter.setBrush(color)
-            painter.drawPie(outer, start, span)
-            start += span
-
-        hole = QRectF(outer.left() + ring, outer.top() + ring,
-                      outer.width() - 2 * ring, outer.height() - 2 * ring)
-        painter.setBrush(self.palette().color(QPalette.ColorRole.Base))
-        painter.drawEllipse(hole)
-
-        # Grand total in the centre.
-        painter.setPen(QColor("#263238"))
-        bold = QFont(self.font())
-        bold.setBold(True)
-        bold.setPointSize(bold.pointSize() + 3)
-        painter.setFont(bold)
-        painter.drawText(hole, Qt.AlignmentFlag.AlignCenter, str(int(total)))
-
-        # Legend on the right.
-        painter.setFont(self.font())
-        legend_x = cx + diameter / 2.0 + 18
-        swatch = 11
-        line_h = 22
-        legend_h = line_h * len(self.__segments)
-        y = cy - legend_h / 2.0
-        for label, value, color in self.__segments:
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(color)
-            painter.drawRoundedRect(QRectF(legend_x, y + 3, swatch, swatch), 2, 2)
-            pct = 100.0 * value / total
-            painter.setPen(QColor("#37474F"))
-            painter.drawText(
-                QRectF(legend_x + swatch + 8, y, width - legend_x - swatch - 12, line_h),
-                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
-                u"{}  {}  ({:.0f}%)".format(label, int(value), pct),
-            )
-            y += line_h
-
-
 class HBarChart(QWidget):
-    """Barres horizontales dessinées avec QPainter (label · barre · valeur)."""
+    """Dessine des barres horizontales avec libellés, nombres et pourcentages.
+
+    Chaque barre est un tuple ``(libellé, valeur, couleur)`` ou
+    ``(libellé, valeur, couleur, afficher_info)``. Sa longueur est rapportée à
+    la valeur maximale; son pourcentage est calculé sur la somme des valeurs.
+    """
 
     ROW_H = 30
 
@@ -161,14 +93,30 @@ class HBarChart(QWidget):
         self.setMinimumHeight(self.ROW_H)
 
     def setBars(self, bars) -> None:
-        self.__bars = [(str(lbl), max(0.0, float(val)), QColor(col))
-                       for lbl, val, col in bars]
+        """Normalise les barres et adapte la hauteur au nombre de lignes.
+
+        Les valeurs deviennent des flottants positifs ou nuls et les couleurs
+        des objets ``QColor``. Le quatrième champ facultatif affiche un repère
+        d'information après le libellé; les tuples à trois champs restent valides.
+        """
+        normalized_bars = []
+        for bar in bars:
+            label, value, color = bar[:3]
+            show_info = len(bar) > 3 and bool(bar[3])
+            normalized_bars.append((str(label), max(0.0, float(value)),
+                                    QColor(color), show_info))
+        self.__bars = normalized_bars
         count = max(1, len(self.__bars))
         self.setMinimumHeight(self.ROW_H * count + 8)
         self.updateGeometry()
         self.update()
 
     def paintEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        """Dessine une ligne par barre, ou le message d'absence de données.
+
+        Chaque ligne contient un libellé éventuellement raccourci, une piste
+        remplie selon la valeur maximale, puis le nombre et sa part du total.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -179,23 +127,33 @@ class HBarChart(QWidget):
 
         fm = painter.fontMetrics()
         width = self.width()
-        label_w = min(
-            max((fm.horizontalAdvance(lbl) for lbl, _, _ in self.__bars), default=40) + 12,
-            width * 0.4,
+        label_width = max(
+            (fm.horizontalAdvance(label) + (16 if show_info else 0)
+             for label, _, _, show_info in self.__bars),
+            default=40,
         )
+        label_w = min(label_width + 12, width * 0.4)
         value_w = 76.0
-        max_val = max((val for _, val, _ in self.__bars), default=0) or 1
-        total = sum(val for _, val, _ in self.__bars)
+        max_val = max((value for _, value, _, _ in self.__bars), default=0) or 1
+        total = sum(value for _, value, _, _ in self.__bars)
         track_w = max(width - label_w - value_w - 10, 10.0)
         bar_h = self.ROW_H - 12
         y = 4.0
-        for label, value, color in self.__bars:
+        for label, value, color, show_info in self.__bars:
             painter.setPen(QColor("#37474F"))
+            text_width = label_w - 8 - (16 if show_info else 0)
             painter.drawText(
-                QRectF(0, y, label_w - 8, self.ROW_H - 6),
+                QRectF(0, y, text_width, self.ROW_H - 6),
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
-                fm.elidedText(label, Qt.TextElideMode.ElideRight, int(label_w - 10)),
+                fm.elidedText(label, Qt.TextElideMode.ElideRight, int(text_width - 2)),
             )
+            if show_info:
+                info_x = min(fm.horizontalAdvance(label), text_width) + 4
+                info_rect = QRectF(info_x, y + 6, 12, 12)
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.setPen(QColor("#5B5B5B"))
+                painter.drawEllipse(info_rect)
+                painter.drawText(info_rect, Qt.AlignmentFlag.AlignCenter, "i")
 
             track = QRectF(label_w, y + 3, track_w, bar_h)
             painter.setPen(Qt.PenStyle.NoPen)

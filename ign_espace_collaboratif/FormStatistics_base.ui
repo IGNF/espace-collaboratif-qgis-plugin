@@ -271,8 +271,8 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QWidget" name="kpiRow" native="true">
-         <layout class="QHBoxLayout" name="kpiLayout">
+        <widget class="QWidget" name="statisticsMetricRow" native="true">
+         <layout class="QHBoxLayout" name="statisticsMetricLayout">
           <property name="spacing">
            <number>8</number>
           </property>
@@ -297,8 +297,8 @@
           <number>10</number>
          </property>
          <item>
-          <widget class="QFrame" name="donutCard">
-           <layout class="QVBoxLayout" name="donutCardLayout">
+          <widget class="QFrame" name="contributionBreakdownCard">
+           <layout class="QVBoxLayout" name="contributionBreakdownLayout">
             <property name="leftMargin">
              <number>12</number>
             </property>
@@ -312,15 +312,15 @@
              <number>10</number>
             </property>
             <item>
-             <widget class="QLabel" name="donutTitle">
+             <widget class="QLabel" name="contributionBreakdownTitle">
               <property name="text">
                <string>Répartition des contributions</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QWidget" name="donutContainer" native="true">
-              <layout class="QVBoxLayout" name="donutContainerLayout">
+             <widget class="QWidget" name="contributionBreakdownContainer" native="true">
+              <layout class="QVBoxLayout" name="contributionBreakdownContainerLayout">
                <property name="leftMargin">
                 <number>0</number>
                </property>

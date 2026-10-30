@@ -8,7 +8,7 @@ CLIENT_LABELS = {
     "API": "API directe",
     "MOBILE": "Mobile",
 }
-UNKNOWN_CLIENT_LABEL = u"Non identifié  ?"
+UNKNOWN_CLIENT_LABEL = u"Non identifié"
 UNKNOWN_CLIENT_VALUES = {u"", u"unknown", u"unknow", u"inconnu", u"non identifié",
                          u"non identifie", u"null", u"none"}
 
@@ -33,8 +33,28 @@ class StatisticsData(object):
     def contrib_total(self) -> int:
         return self.inserts + self.updates + self.deletes
 
+    @property
+    def has_statistics(self) -> bool:
+        """Indique si au moins un indicateur ou détail contient une donnée utile."""
+        return any((
+            self.contrib_total,
+            self.tx_total,
+            self.tx_failed,
+            self.tables,
+            any(count for _, count in self.clients),
+            any(user['total'] or user['tx_total'] for user in self.users),
+        ))
+
     @classmethod
     def fromPayload(cls, payload: dict) -> "StatisticsData":
+        """Convertit la réponse API en données consommées par le dialogue.
+
+        "clients" contient des couples libellé/nombre pour le graphique
+        horizontal; "users" contient les comptes par utilisateur pour le
+        tableau classé et le filtre administrateur. Les totaux de contributions
+        et de transactions alimentent les cartes et le graphique de répartition.
+        Une réponse de premier niveau invalide renvoie les valeurs par défaut.
+        """
         data = cls()
         if not isinstance(payload, dict):
             return data
@@ -78,6 +98,7 @@ class StatisticsData(object):
 
     @staticmethod
     def __clients(by_client) -> list:
+        """Renvoie les couples libellé/nombre client, triés par nombre décroissant."""
         rows = []
         if isinstance(by_client, dict):
             for client, counts in by_client.items():
@@ -105,6 +126,7 @@ class StatisticsData(object):
 
     @classmethod
     def __users(cls, by_user) -> list:
+        """Renvoie les utilisateurs avec identifiant, nom et totaux par opération."""
         users = []
         for entry in by_user:
             if not isinstance(entry, dict):

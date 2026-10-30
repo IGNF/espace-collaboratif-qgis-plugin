@@ -35,7 +35,7 @@ from .FormStatistics import FormStatistics
 
 
 # QGIS Plugin Implementation
-class RipartPlugin:
+class EspaceCollaboratifPlugin:
     """
     Classe d'implémentation du plugin espace collaboratif (ex Ripart).
     """
@@ -50,8 +50,8 @@ class RipartPlugin:
         self.helpMenu = None
         self.__context = None
         self.__dlgConfigure = None
-        self.__ripartLogger = PluginLogger("RipartPlugin")
-        self.__logger = self.__ripartLogger.getPluginLogger()
+        self.__pluginLogger = PluginLogger("EspaceCollaboratifPlugin")
+        self.__logger = self.__pluginLogger.getPluginLogger()
         # Save reference to the QGIS interface
         self.iface = iface
         self.config = QAction(QIcon(str(resources_path('config.png'))), u"Configurer le plugin",
@@ -69,8 +69,8 @@ class RipartPlugin:
         # La toolbar du plugin
         self.actions = []
         self.menu = self.__translate(u'&IGN_Espace_Collaboratif')
-        self.toolbar = self.iface.addToolBar(u'RipartPlugin')
-        self.toolbar.setObjectName(u'RipartPlugin')
+        self.toolbar = self.iface.addToolBar(u'EspaceCollaboratifPlugin')
+        self.toolbar.setObjectName(u'EspaceCollaboratifPlugin')
 
         # En fin de chargement du projet ou à l'ajout d'une couche, il y a connexion de signaux
         # - quand le nom de la couche est changé
@@ -579,7 +579,7 @@ class RipartPlugin:
         """
         Fonction de traduction des noms de menus.
         """
-        return QCoreApplication.translate('RipartPlugin', message)
+        return QCoreApplication.translate('EspaceCollaboratifPlugin', message)
 
     def __addAction(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True,
                     status_tip=None, whats_this=None, parent=None) -> QAction:
@@ -1118,7 +1118,7 @@ class RipartPlugin:
                 u"La couche '{}' n'est pas une couche de l'espace collaboratif.".format(active_layer.name()))
             return
 
-        # Colonnes: id, layer, idName, standard, database(name), databaseid, ...
+        # Colonnes: id, layer, idName, standard, database(name), databaseid dans la table des tables
         row = rows[0]
         databaseid = row[5]
         databasename = row[4]
@@ -1136,7 +1136,7 @@ class RipartPlugin:
         """
         Ouvre le dernier fichier de log.
         """
-        logpath = self.__ripartLogger.getLogpath()
+        logpath = self.__pluginLogger.getLogpath()
         if logpath is not None:
             PluginHelper.open_file(logpath)
 
