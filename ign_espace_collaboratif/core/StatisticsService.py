@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """Accès aux statistiques d'une base via l'API réseau QGIS.
 
-Utilise QgsBlockingNetworkRequest : le proxy et la vérification SSL sont gérés
-automatiquement par QgsNetworkAccessManager (configuration QGIS), sans passer
-par la bibliothèque ``requests``.
+Utilise QgsNetworkAccessManager de façon asynchrone : le proxy et la vérification
+SSL suivent la configuration QGIS, sans passer par la bibliothèque ``requests``.
 """
 import json
 
-from qgis.core import QgsBlockingNetworkRequest
+from qgis.core import QgsNetworkAccessManager
 from qgis.PyQt.QtCore import QUrl, QUrlQuery
-from qgis.PyQt.QtNetwork import QNetworkRequest
+from qgis.PyQt.QtNetwork import QNetworkReply, QNetworkRequest
 
 from .PluginLogger import PluginLogger
 
@@ -31,12 +30,12 @@ class StatisticsService(object):
         self.__context = context
         self.__logger = PluginLogger("StatisticsService").getPluginLogger()
 
-    def getStatistics(self, databaseid, params=None) -> StatisticsResult:
-        """Récupère les statistiques d'une base.
+    def requestStatistics(self, databaseid, params=None) -> QNetworkReply:
+        """Lance une requête asynchrone pour récupérer les statistiques.
 
         :param databaseid: identifiant de la base
         :param params: filtres optionnels (startDate, endDate, user_id)
-        :return: un :class:`StatisticsResult`
+        :return: la réponse réseau, à traiter lorsque son signal ``finished`` est émis
         """
         url = QUrl("{}/gcms/api/databases/{}/statistics".format(
             self.__context.urlHostEspaceCo, databaseid))
@@ -51,21 +50,22 @@ class StatisticsService(object):
             self.__context.getTokenType(), self.__context.getTokenAccess()).encode('utf-8')
         request.setRawHeader(b'Authorization', auth)
 
-        blocking = QgsBlockingNetworkRequest()
-        error = blocking.get(request, forceRefresh=True)
-        reply = blocking.reply()
-        status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
-        content = bytes(reply.content()).decode('utf-8', errors='replace')
+        return QgsNetworkAccessManager.instance().get(request)
 
-        if error != QgsBlockingNetworkRequest.NoError:
-            message = blocking.errorMessage() or content[:300]
-            self.__logger.error("StatisticsService.getStatistics : {}".format(message))
+    def parseStatisticsReply(self, reply: QNetworkReply) -> StatisticsResult:
+        """Convertit une réponse réseau terminée en résultat exploitable."""
+        status = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        content = bytes(reply.readAll()).decode('utf-8', errors='replace')
+
+        if reply.error() != QNetworkReply.NetworkError.NoError:
+            message = reply.errorString() or content[:300]
+            self.__logger.error("StatisticsService.parseStatisticsReply : {}".format(message))
             return StatisticsResult(False, status_code=status, error=message)
 
         try:
             payload = json.loads(content) if content else {}
         except ValueError as e:
-            self.__logger.error("StatisticsService.getStatistics JSON : {}".format(e))
+            self.__logger.error("StatisticsService.parseStatisticsReply JSON : {}".format(e))
             return StatisticsResult(
                 False, status_code=status,
                 error=u"Réponse non JSON : {}".format(content[:300]))

@@ -5,8 +5,9 @@ import os
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QDate
 from qgis.PyQt.QtGui import QColor, QFont
+from qgis.PyQt.QtNetwork import QNetworkReply
 from qgis.PyQt.QtWidgets import (
-    QApplication, QComboBox, QDialog, QFrame, QHBoxLayout, QHeaderView, QLabel,
+    QComboBox, QDialog, QFrame, QHBoxLayout, QHeaderView, QLabel,
     QTableWidget, QTableWidgetItem, QVBoxLayout,
 )
 
@@ -75,6 +76,8 @@ class FormStatistics(QDialog, FORM_CLASS):
         self.__databasename = databasename
         self.__logger = PluginLogger("FormStatistics").getPluginLogger()
         self.__service = StatisticsService(context)
+        self.__pendingReply = None
+        self.__requestParams = {}
         self.__metricValueLabels = {}
         self.__isAdmin = context.isUserCommunityAdmin()
         self.__hasLoaded = False
@@ -186,6 +189,7 @@ class FormStatistics(QDialog, FORM_CLASS):
         self.btnRefresh.clicked.connect(self.__loadStatistics)
         self.btnReset.clicked.connect(self.__resetFilters)
         self.buttonBox.rejected.connect(self.reject)
+        self.finished.connect(self.__cancelPendingRequest)
 
     def __createStatisticsMetricCard(
             self, key: str, caption: str, accent: str) -> QFrame:
@@ -265,17 +269,38 @@ class FormStatistics(QDialog, FORM_CLASS):
         self.__loadStatistics()
 
     def __loadStatistics(self) -> None:
+        if self.__pendingReply is not None:
+            return
+
+        params = self.__buildParams()
         self.btnRefresh.setEnabled(False)
+        self.groupFilters.setEnabled(False)
         self.statusLabel.setStyleSheet("")
         self.statusLabel.setText(u"Chargement en cours…")
-        QApplication.processEvents()
 
         try:
-            params = self.__buildParams()
-            result = self.__service.getStatistics(self.__databaseid, params)
+            reply = self.__service.requestStatistics(self.__databaseid, params)
+            self.__pendingReply = reply
+            self.__requestParams = params
+            reply.finished.connect(self.__onStatisticsReply)
+        except Exception as e:
+            self.__logger.error("FormStatistics.__loadStatistics : {}".format(e))
+            self.statusLabel.setStyleSheet("color: red;")
+            self.statusLabel.setText(u"Erreur de connexion : {}".format(str(e)))
+            self.__setLoading(False)
+
+    def __onStatisticsReply(self) -> None:
+        reply = self.sender()
+        if not isinstance(reply, QNetworkReply) or reply is not self.__pendingReply:
+            return
+
+        params = self.__requestParams
+        self.__pendingReply = None
+        self.__requestParams = {}
+        try:
+            result = self.__service.parseStatisticsReply(reply)
             if result.ok:
                 payload = result.payload
-                self.__printDebugContext(params, payload)
                 if isinstance(payload.get('aggregate'), dict) and not self.__isAdmin:
                     self.__isAdmin = True
                     self.userCombo.setItemText(0, u"Tous les utilisateurs")
@@ -303,22 +328,24 @@ class FormStatistics(QDialog, FORM_CLASS):
                 self.statusLabel.setText(
                     u"Erreur {} : {}".format(code, result.error[:300]))
         except Exception as e:
-            self.__logger.error("FormStatistics.__loadStatistics : {}".format(e))
+            self.__logger.error("FormStatistics.__onStatisticsReply : {}".format(e))
             self.statusLabel.setStyleSheet("color: red;")
             self.statusLabel.setText(u"Erreur de connexion : {}".format(str(e)))
         finally:
-            self.btnRefresh.setEnabled(True)
+            reply.deleteLater()
+            self.__setLoading(False)
 
-    def __printDebugContext(self, params: dict, payload: dict) -> None:
-        message = {
-            'database_id': self.__databaseid,
-            'database_name': self.__databasename,
-            'params': params,
-            'response_mode': 'aggregate' if isinstance(payload.get('aggregate'), dict) else 'user',
-            'response_keys': sorted(payload.keys()),
-            'api_debug': payload.get('debug', {}),
-        }
-        print("[STATISTICS DEBUG] {}".format(json.dumps(message, ensure_ascii=False, sort_keys=True)))
+    def __setLoading(self, loading: bool) -> None:
+        self.groupFilters.setEnabled(not loading)
+        self.btnRefresh.setEnabled(not loading)
+
+    def __cancelPendingRequest(self, _result: int) -> None:
+        reply = self.__pendingReply
+        self.__pendingReply = None
+        self.__requestParams = {}
+        if reply is not None:
+            reply.abort()
+            reply.deleteLater()
 
   
     def __fillData(self, data: StatisticsData) -> None:
