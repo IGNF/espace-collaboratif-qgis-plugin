@@ -63,6 +63,7 @@ La documentation de l'API collaborative est disponible ici :
 
 **Authentification** : OAuth2/Keycloak (PKCE), gérée par ign_keycloak/KeycloakService.py et KeycloakAuthListener.py
 **Proxy** : lu depuis les paramètres QGIS (`QSettings`) et injecté dans `Client.__proxies`.
+Les statistiques utilisent une requête asynchrone via `QgsNetworkAccessManager` afin de ne pas bloquer le thread de l’interface.
 
 | Endpoint | Méthode | Rôle | Format |
 |---|---|---|---|
