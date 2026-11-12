@@ -11,13 +11,13 @@ from qgis.PyQt.QtWidgets import (
     QTableWidget, QTableWidgetItem, QVBoxLayout,
 )
 
-from .core.PluginLogger import PluginLogger
-from .core.StatisticsCharts import (
+from ..core.PluginLogger import PluginLogger
+from ..core.StatisticsCharts import (
     ContributionBreakdown, HBarChart,
     COLOR_INSERT, COLOR_UPDATE, COLOR_DELETE, COLOR_TX, COLOR_FAIL,
 )
-from .core.StatisticsData import StatisticsData, UNKNOWN_CLIENT_LABEL
-from .core.StatisticsService import StatisticsService
+from ..core.StatisticsData import StatisticsData, UNKNOWN_CLIENT_LABEL
+from ..core.StatisticsService import StatisticsService
 
 FORM_CLASS, _ = uic.loadUiType(
     os.path.join(os.path.dirname(__file__), 'FormStatistics_base.ui'))
