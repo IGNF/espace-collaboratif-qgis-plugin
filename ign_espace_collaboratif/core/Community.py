@@ -26,6 +26,7 @@ class Community(object):
         self.__name = cst.DEFAULTPROFILE
         self.__id = -1
         self.__userId = -1
+        self.__role = ''
         self.__emprises = []
         self.__theme = []
         self.__active = False
@@ -54,6 +55,8 @@ class Community(object):
             self.__id = data['community_id']
         if PluginHelper.keyExist('user_id', data):
             self.__userId = data['user_id']
+        if PluginHelper.keyExist('role', data):
+            self.__role = data['role']
         if PluginHelper.keyExist('emprises', data):
             self.__emprises = data['emprises']
         if PluginHelper.keyExist('profile', data):
@@ -112,6 +115,18 @@ class Community(object):
         :return: le logo du groupe
         """
         return self.__logo
+
+    def getRole(self) -> str:
+        """
+        :return: le rôle de l'utilisateur dans ce groupe ('admin', 'member', etc.)
+        """
+        return self.__role
+
+    def isAdmin(self) -> bool:
+        """
+        :return: True si l'utilisateur est administrateur de ce groupe
+        """
+        return self.__role in ('admin', 'administrator', 'manager')
 
     def extractLayers(self, communityId, page, limit) -> []:
         """

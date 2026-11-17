@@ -64,8 +64,8 @@ class Wkt(object):
         de type géométrique MULTIPOLYGON Z sur le serveur de l'espace collaboratif alors que QGIS renvoie
         un type POLYGON Z.
 
-        Cas particulier de la BDUni : les Z sont codés à -1000 en cas de création d'objet, ajout de point, déplacement.
-        Voir ticket http://sd-redmine.ign.fr/issues/15746.
+        Les Z existants sont conservés. Pour une couche BDUni 3D, une géométrie
+        sans Z est complétée avec la valeur -1000.
 
         :param qgsGeometryObject: la géométrie QGIS d'un objet de la carte
         :type qgsGeometryObject: QgsGeometry
@@ -91,9 +91,8 @@ class Wkt(object):
         qgsGeometryObject.transform(self.crsTransform)
 
         # Cas particulier de la BDUni
-        if bBDUni is True and is3D == 1:
+        if bBDUni is True and is3D == 1 and not QgsWkbTypes.hasZ(qgsGeometryObject.wkbType()):
             geometryWithModifiedZ = qgsGeometryObject.get()
-            geometryWithModifiedZ.dropZValue()
             geometryWithModifiedZ.addZValue(-1000.)
             qgsGeometryObject.set(geometryWithModifiedZ)
 
