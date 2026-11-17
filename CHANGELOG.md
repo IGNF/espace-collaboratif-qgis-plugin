@@ -6,6 +6,11 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 
+## [Unreleased]
+
+### Corrigé
+- Conservation des Z existants lors de l'envoi des créations et modifications BDUni ; la valeur -1000 est ajoutée uniquement aux géométries sans Z.
+
 ## [5.2.2] - 2026-10-16
 
 ### Ajouté
