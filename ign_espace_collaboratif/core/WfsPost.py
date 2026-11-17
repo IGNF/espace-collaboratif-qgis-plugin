@@ -275,6 +275,12 @@ class WfsPost(object):
 
         :return: le statut et le message de fin de transaction
         """
+        for action in self.__datasForPost['actions']:
+            ancestorId = action['data'].pop(ANCESTOR_FIELD_NAME, None)
+            if action['state'] != 'Insert' or ancestorId is None or str(ancestorId) in ('', 'NULL'):
+                continue
+            if action.get('ancestor') in (None, '', 'NULL'):
+                action['ancestor'] = ancestorId
         print("Post_action : {}".format(json.dumps(self.__datasForPost)))
         headers = {'Authorization': '{} {}'.format(self.__context.getTokenType(), self.__context.getTokenAccess())}
         response = HttpRequest.makeHttpRequest(self.__url, proxies=self.__proxies, data=json.dumps(self.__datasForPost),
