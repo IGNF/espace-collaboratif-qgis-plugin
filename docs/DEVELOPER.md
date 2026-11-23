@@ -64,6 +64,7 @@ La documentation de l'API collaborative est disponible ici :
 **Authentification** : OAuth2/Keycloak (PKCE), gérée par ign_keycloak/KeycloakService.py et KeycloakAuthListener.py
 **Proxy** : lu depuis les paramètres QGIS (`QSettings`) et injecté dans `Client.__proxies`.
 
+
 | Endpoint | Méthode | Rôle | Format |
 |---|---|---|---|
 | `/gcms/wfs` | GET | Features guichet (WFS GetFeature) | JSON |

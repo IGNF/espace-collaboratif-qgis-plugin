@@ -31,10 +31,11 @@ from .CreateReport import CreateReport
 from .Magicwand import Magicwand
 from .PluginHelper import PluginHelper
 from .ReplyReport import ReplyReport
+from .FormStatistics import FormStatistics
 
 
 # QGIS Plugin Implementation
-class RipartPlugin:
+class EspaceCollaboratifPlugin:
     """
     Classe d'implémentation du plugin espace collaboratif (ex Ripart).
     """
@@ -45,11 +46,12 @@ class RipartPlugin:
         :param iface: interface du plugin
         """
         self.toolButton2 = None
+        self.statButton = None
         self.helpMenu = None
         self.__context = None
         self.__dlgConfigure = None
-        self.__ripartLogger = PluginLogger("RipartPlugin")
-        self.__logger = self.__ripartLogger.getPluginLogger()
+        self.__pluginLogger = PluginLogger("EspaceCollaboratifPlugin")
+        self.__logger = self.__pluginLogger.getPluginLogger()
         # Save reference to the QGIS interface
         self.iface = iface
         self.config = QAction(QIcon(str(resources_path('config.png'))), u"Configurer le plugin",
@@ -67,8 +69,8 @@ class RipartPlugin:
         # La toolbar du plugin
         self.actions = []
         self.menu = self.__translate(u'&IGN_Espace_Collaboratif')
-        self.toolbar = self.iface.addToolBar(u'RipartPlugin')
-        self.toolbar.setObjectName(u'RipartPlugin')
+        self.toolbar = self.iface.addToolBar(u'EspaceCollaboratifPlugin')
+        self.toolbar.setObjectName(u'EspaceCollaboratifPlugin')
 
         # En fin de chargement du projet ou à l'ajout d'une couche, il y a connexion de signaux
         # - quand le nom de la couche est changé
@@ -577,7 +579,7 @@ class RipartPlugin:
         """
         Fonction de traduction des noms de menus.
         """
-        return QCoreApplication.translate('RipartPlugin', message)
+        return QCoreApplication.translate('EspaceCollaboratifPlugin', message)
 
     def __addAction(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True,
                     status_tip=None, whats_this=None, parent=None) -> QAction:
@@ -695,6 +697,13 @@ class RipartPlugin:
         self.about.triggered.connect(self.__ripAbout)
         self.help.triggered.connect(self.__showHelp)
         self.log.triggered.connect(self.__showLog)
+
+        self.statButton = QToolButton()
+        self.statButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        self.statButton.setText(self.__translate(u'Statistiques'))
+        self.statButton.setStatusTip(self.__translate(u'Afficher les statistiques de la base de la couche active'))
+        self.statButton.clicked.connect(self.__showStatistics)
+        self.toolbar.addWidget(self.statButton)
 
         self.helpMenu = QMenu("Aide")
         self.helpMenu.addAction(self.config)
@@ -1091,6 +1100,32 @@ class RipartPlugin:
         dlgInfo.textInfo.append(u"\u00A9 IGN - " + date)
         dlgInfo.exec()
 
+    def __showStatistics(self) -> None:
+        """
+        Ouvre le dialogue des statistiques pour la base de données de la couche active.
+        """
+        if not self.__doConnexion(False):
+            return
+
+        active_layer = self.iface.activeLayer()
+        if active_layer is None:
+            PluginHelper.showMessageBox(u"Veuillez sélectionner une couche active.")
+            return
+
+        rows = SQLiteManager.selectRowsInTableOfTables(active_layer.name())
+        if not rows:
+            PluginHelper.showMessageBox(
+                u"La couche '{}' n'est pas une couche de l'espace collaboratif.".format(active_layer.name()))
+            return
+
+        # Colonnes: id, layer, idName, standard, database(name), databaseid dans la table des tables
+        row = rows[0]
+        databaseid = row[5]
+        databasename = row[4]
+
+        dlg = FormStatistics(self.__context, databaseid, databasename, self.iface.mainWindow())
+        dlg.exec()
+
     def __showHelp(self) -> None:
         """
         Ouvre la documentation en ligne dans le navigateur.
@@ -1101,7 +1136,7 @@ class RipartPlugin:
         """
         Ouvre le dernier fichier de log.
         """
-        logpath = self.__ripartLogger.getLogpath()
+        logpath = self.__pluginLogger.getLogpath()
         if logpath is not None:
             PluginHelper.open_file(logpath)
 
