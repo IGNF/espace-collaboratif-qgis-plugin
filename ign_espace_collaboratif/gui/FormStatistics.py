@@ -107,7 +107,7 @@ class FormStatistics(QDialog, FORM_CLASS):
             self.userCombo.addItem(u"Tous les utilisateurs", None)
         else:
             self.userCombo.addItem(
-                self.__context.getUserNameCommunity() or u"Utilisateur connecté", None)
+                str(self.__context.getUserNameCommunity() or u"Utilisateur connecté"), None)
             self.userCombo.setEnabled(False)
 
         self.filtersLayout.removeItem(self.dateRow)

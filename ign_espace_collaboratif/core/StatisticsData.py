@@ -134,7 +134,7 @@ class StatisticsData(object):
             user = entry.get('user') or {}
             if not isinstance(user, dict):
                 user = {}
-            username = user.get('username') or entry.get('username') or u'?'
+            username = str(user.get('username') or entry.get('username') or u'?')
             user_id = user.get('id')
             if user_id is None:
                 user_id = user.get('user_id')
