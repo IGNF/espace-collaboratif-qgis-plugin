@@ -8,6 +8,8 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [5.2.3] - 2026-11-25
+
 ### Corrigé
 - Correction de l'ouverture des statistiques et du filtre administrateur lorsque l'API renvoie un nom d'utilisateur numérique.
 - Conservation des Z existants lors de l'envoi des créations et modifications BDUni ; la valeur -1000 est ajoutée uniquement aux géométries sans Z.
