@@ -10,6 +10,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Corrigé
 - Conservation des Z existants lors de l'envoi des créations et modifications BDUni ; la valeur -1000 est ajoutée uniquement aux géométries sans Z.
+- Envoi des transactions d'édition (POST) et des déplacements de signalement (PATCH) avec l'en-tête `Content-Type: application/json` ; sans lui, Qt envoyait le corps en `application/x-www-form-urlencoded` et le serveur rejetait la requête avec `Le paramètre [{"comment": "SIG-QGIS", "actions": ...}] n'est pas autorisé`.
 
 ## [5.2.2] - 2026-10-16
 
