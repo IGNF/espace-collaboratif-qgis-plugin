@@ -306,6 +306,13 @@ class HttpRequest(object):
             for key, value in (headers or {}).items():
                 request.setRawHeader(key.encode(), str(value).encode())
 
+            # Un corps passé sous forme de chaîne est un document JSON déjà sérialisé. Sans Content-Type
+            # explicite, Qt envoie par défaut application/x-www-form-urlencoded et le serveur interprète
+            # alors tout le JSON comme un nom de paramètre ("Le paramètre [...] n'est pas autorisé").
+            hasContentType = any(k.lower() == 'content-type' for k in (headers or {}))
+            if isinstance(data, str) and files is None and not hasContentType:
+                request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/json")
+
             blocking = QgsBlockingNetworkRequest()
             
             # PATCH 
